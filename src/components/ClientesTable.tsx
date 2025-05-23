@@ -1,13 +1,8 @@
 
-import { useState, useEffect } from 'react'
-import { supabase, type Cliente } from '@/lib/supabase'
+import { useState } from 'react'
+import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { useToast } from '@/hooks/use-toast'
-import { Download, Search, Filter } from 'lucide-react'
 import {
   Table,
   TableBody,
@@ -15,214 +10,147 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from '@/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Download, Search, Filter, RefreshCw, Calendar } from 'lucide-react'
+import { toast } from '@/hooks/use-toast'
 
-const statusOptions = ['Planejamento', 'Brief', 'Criativo', 'No Ar']
+interface ClientesTableProps {
+  selectedManager: string
+}
 
-export function ClientesTable() {
-  const [clientes, setClientes] = useState<Cliente[]>([])
-  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([])
-  const [loading, setLoading] = useState(true)
+export function ClientesTable({ selectedManager }: ClientesTableProps) {
+  const { isAdmin } = useAuth()
+  const { clientes, loading, error, updateCliente, refetch } = useManagerData(selectedManager)
+  
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [editingCell, setEditingCell] = useState<{id: string, field: string} | null>(null)
   const [editValue, setEditValue] = useState('')
-  const { user, isAdmin } = useAuth()
-  const { toast } = useToast()
 
-  useEffect(() => {
-    fetchClientes()
-  }, [user])
+  const filteredClientes = clientes.filter(cliente => {
+    const matchesSearch = 
+      cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      cliente.telefone?.includes(searchTerm) ||
+      cliente.nome_vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
+    
+    const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
-  useEffect(() => {
-    filterClientes()
-  }, [clientes, searchTerm, statusFilter])
+  const handleCellEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingCell({ id: clienteId, field })
+    setEditValue(currentValue)
+  }
 
-  const fetchClientes = async () => {
-    if (!user) {
-      console.log('Usuário não autenticado')
-      setLoading(false)
-      return
-    }
+  const handleSaveEdit = async () => {
+    if (!editingCell) return
 
-    try {
-      console.log('Iniciando busca de clientes...')
-      console.log('Usuário:', user.email)
-      console.log('É admin:', isAdmin)
-
-      // Primeiro, tenta buscar todos os dados sem filtro para diagnóstico
-      const { data: allData, error: allError } = await supabase
-        .from('clientes')
-        .select('*')
-
-      console.log('Todos os dados na tabela:', allData)
-      console.log('Erro ao buscar todos os dados:', allError)
-
-      // Agora faz a busca com filtro se não for admin
-      let query = supabase.from('clientes').select('*')
-      
-      if (!isAdmin) {
-        query = query.eq('email_gestor_responsavel', user.email)
-        console.log('Filtrando por email_gestor_responsavel:', user.email)
-      }
-
-      const { data, error } = await query.order('created_at', { ascending: false })
-
-      console.log('Dados filtrados:', data)
-      console.log('Erro na consulta filtrada:', error)
-
-      if (error) {
-        console.error('Erro ao buscar clientes:', error)
-        toast({
-          title: "Erro",
-          description: `Não foi possível carregar os dados: ${error.message}`,
-          variant: "destructive"
-        })
-      } else {
-        console.log('Dados carregados com sucesso:', data?.length || 0, 'registros')
-        setClientes(data || [])
-      }
-    } catch (error) {
-      console.error('Erro:', error)
+    const success = await updateCliente(editingCell.id, editingCell.field, editValue)
+    
+    if (success) {
+      toast({
+        title: "Sucesso",
+        description: "Cliente atualizado com sucesso",
+      })
+    } else {
       toast({
         title: "Erro",
-        description: "Erro inesperado ao carregar dados",
-        variant: "destructive"
+        description: "Erro ao atualizar cliente",
+        variant: "destructive",
       })
-    } finally {
-      setLoading(false)
     }
-  }
-
-  const filterClientes = () => {
-    let filtered = clientes
-
-    if (searchTerm) {
-      filtered = filtered.filter(cliente =>
-        (cliente.nome_cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cliente.email_cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (cliente.nome_vendedor || '').toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    }
-
-    if (statusFilter && statusFilter !== 'all') {
-      filtered = filtered.filter(cliente => cliente.status_campanha === statusFilter)
-    }
-
-    setFilteredClientes(filtered)
-  }
-
-  const startEdit = (id: string, field: string, currentValue: string) => {
-    setEditingCell({id, field})
-    setEditValue(currentValue || '')
-  }
-
-  const cancelEdit = () => {
+    
     setEditingCell(null)
     setEditValue('')
   }
 
-  const saveEdit = async () => {
-    if (!editingCell) return
-
-    try {
-      const { error } = await supabase
-        .from('clientes')
-        .update({ [editingCell.field]: editValue })
-        .eq('id', editingCell.id)
-
-      if (error) {
-        throw error
-      }
-
-      setClientes(prev => prev.map(cliente => 
-        cliente.id === editingCell.id 
-          ? { ...cliente, [editingCell.field]: editValue } 
-          : cliente
-      ))
-
-      toast({
-        title: "Sucesso",
-        description: "Campo atualizado com sucesso"
-      })
-
-      setEditingCell(null)
-      setEditValue('')
-    } catch (error) {
-      console.error('Erro ao atualizar:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o campo",
-        variant: "destructive"
-      })
-    }
+  const handleCancelEdit = () => {
+    setEditingCell(null)
+    setEditValue('')
   }
 
-  const updateFieldQuick = async (id: string, field: string, value: string) => {
-    try {
-      const { error } = await supabase
-        .from('clientes')
-        .update({ [field]: value })
-        .eq('id', id)
+  const renderEditableCell = (cliente: any, field: string, value: string) => {
+    const isEditing = editingCell?.id === cliente.id && editingCell?.field === field
 
-      if (error) {
-        throw error
-      }
-
-      setClientes(prev => prev.map(cliente => 
-        cliente.id === id ? { ...cliente, [field]: value } : cliente
-      ))
-
-      toast({
-        title: "Sucesso",
-        description: "Campo atualizado com sucesso"
-      })
-    } catch (error) {
-      console.error('Erro ao atualizar:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível atualizar o campo",
-        variant: "destructive"
-      })
+    if (isEditing) {
+      return (
+        <div className="flex gap-1">
+          <Input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            className="h-8 text-xs"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSaveEdit()
+              if (e.key === 'Escape') handleCancelEdit()
+            }}
+            autoFocus
+          />
+        </div>
+      )
     }
+
+    return (
+      <div
+        className="cursor-pointer hover:bg-gray-50 p-1 rounded min-h-[20px]"
+        onClick={() => handleCellEdit(cliente.id, field, value)}
+      >
+        {value || '-'}
+      </div>
+    )
   }
 
   const exportToCSV = () => {
+    if (filteredClientes.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Nenhum cliente para exportar",
+      })
+      return
+    }
+
     const headers = [
-      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 
-      'Vendedor', 'Comissão', 'Email Gestor', 'Status Campanha', 'Data Limite', 
-      'Data Subida', 'Link Grupo', 'Link Briefing', 'Link Criativo', 
-      'Link Site', 'Número BM'
+      'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
+      'Email Gestor', 'Status Campanha', 'Data Limite', 'Data Subida',
+      'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 'BM', 'Comissão'
     ]
-
-    const csvData = filteredClientes.map(cliente => [
-      cliente.id,
-      cliente.data_venda || '',
-      cliente.nome_cliente || '',
-      cliente.telefone || '',
-      cliente.email_cliente || '',
-      cliente.nome_vendedor || '',
-      cliente.comissao || '',
-      cliente.email_gestor_responsavel || '',
-      cliente.status_campanha || '',
-      cliente.data_limite || '',
-      cliente.data_subida_campanha || '',
-      cliente.link_grupo || '',
-      cliente.link_reuniao_1 || '', 
-      cliente.link_reuniao_2 || '', 
-      cliente.link_reuniao_3 || '', 
-      cliente.bm_identificacao || '' 
-    ])
-
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n')
+    
+    const csvContent = [
+      headers.join(','),
+      ...filteredClientes.map(cliente => [
+        cliente.data_venda || '',
+        cliente.nome_cliente || '',
+        cliente.telefone || '',
+        cliente.email_cliente || '',
+        cliente.nome_vendedor || '',
+        cliente.email_gestor_responsavel || '',
+        cliente.status_campanha || '',
+        cliente.data_limite || '',
+        cliente.data_subida_campanha || '',
+        cliente.link_grupo || '',
+        cliente.link_reuniao_1 || '', 
+        cliente.link_reuniao_2 || '', 
+        cliente.link_reuniao_3 || '', 
+        cliente.bm_identificacao || '',
+        cliente.comissao || ''
+      ].map(field => `"${field}"`).join(','))
+    ].join('\n')
 
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `clientes_${selectedManager.toLowerCase().replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -230,202 +158,176 @@ export function ClientesTable() {
 
     toast({
       title: "Sucesso",
-      description: "Dados exportados com sucesso"
+      description: "Arquivo CSV exportado com sucesso",
     })
-  }
-
-  const renderEditableCell = (cliente: Cliente, field: string, value: string, isSelect: boolean = false) => {
-    if (editingCell?.id === cliente.id && editingCell?.field === field) {
-      if (isSelect) {
-        return (
-          <Select
-            value={editValue}
-            onValueChange={(newValue) => {
-              setEditValue(newValue)
-              updateFieldQuick(cliente.id, field, newValue)
-              setEditingCell(null)
-            }}
-            onOpenChange={(open) => !open && cancelEdit()}
-          >
-            <SelectTrigger className="w-32">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {statusOptions.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-      } else {
-        return (
-          <Input
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            onBlur={saveEdit}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') saveEdit()
-              if (e.key === 'Escape') cancelEdit()
-            }}
-            autoFocus
-            className="w-32"
-          />
-        )
-      }
-    }
-
-    return (
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => startEdit(cliente.id, field, value)}
-        className="h-auto p-1 font-normal justify-start text-left max-w-32 truncate"
-      >
-        {value || 'Clique para editar'}
-      </Button>
-    )
   }
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Carregando dados...</div>
+      <div className="flex items-center justify-center py-8">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          <span>Carregando clientes de {selectedManager}...</span>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-8">
+        <p className="text-red-600 mb-4">{error}</p>
+        <Button onClick={refetch} variant="outline">
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Tentar Novamente
+        </Button>
       </div>
     )
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <span>Clientes ({filteredClientes.length})</span>
-          <div className="flex gap-2">
-            <Button onClick={fetchClientes} variant="outline" size="sm">
-              Recarregar Dados
-            </Button>
-            <Button onClick={exportToCSV} size="sm">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar
-            </Button>
-          </div>
-        </CardTitle>
-        <div className="flex gap-4">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
-            <Input
-              placeholder="Buscar por nome, email ou vendedor..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-48">
-              <Filter className="w-4 h-4 mr-2" />
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              {statusOptions.map(status => (
-                <SelectItem key={status} value={status}>{status}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+    <div className="space-y-4">
+      {/* Header com título e ações */}
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h2 className="text-xl font-semibold">Clientes - {selectedManager}</h2>
+          <p className="text-sm text-gray-600">{filteredClientes.length} clientes encontrados</p>
         </div>
-      </CardHeader>
-      <CardContent>
-        {clientes.length === 0 ? (
-          <div className="text-center py-8">
-            <p className="text-gray-500 mb-4">Nenhum dado encontrado na tabela.</p>
-            <p className="text-sm text-gray-400 mb-4">
-              Isso pode acontecer se:
-            </p>
-            <ul className="text-sm text-gray-400 text-left max-w-md mx-auto mb-4">
-              <li>• A tabela estiver vazia</li>
-              <li>• Há problemas com as políticas de segurança (RLS)</li>
-              <li>• Seu usuário não tem permissão para ver os dados</li>
-            </ul>
-            <Button onClick={fetchClientes} variant="outline">
-              Tentar Novamente
-            </Button>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
+        
+        <div className="flex gap-2">
+          <Button onClick={refetch} variant="outline" size="sm">
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Atualizar
+          </Button>
+          <Button onClick={exportToCSV} variant="outline" size="sm">
+            <Download className="w-4 h-4 mr-2" />
+            Exportar CSV
+          </Button>
+        </div>
+      </div>
+
+      {/* Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            placeholder="Pesquisar por nome, email, telefone ou vendedor..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+        
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-full sm:w-48">
+            <Filter className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Status da campanha" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="Pendente">Pendente</SelectItem>
+            <SelectItem value="Em andamento">Em andamento</SelectItem>
+            <SelectItem value="Concluída">Concluída</SelectItem>
+            <SelectItem value="Cancelada">Cancelada</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Tabela */}
+      <div className="border rounded-lg overflow-hidden">
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Data Venda</TableHead>
+                <TableHead className="min-w-[200px]">Nome Cliente</TableHead>
+                <TableHead className="min-w-[120px]">Telefone</TableHead>
+                <TableHead className="min-w-[200px]">Email Cliente</TableHead>
+                <TableHead className="min-w-[150px]">Vendedor</TableHead>
+                <TableHead className="min-w-[180px]">Email Gestor</TableHead>
+                <TableHead className="min-w-[130px]">Status Campanha</TableHead>
+                <TableHead className="min-w-[100px]">Data Limite</TableHead>
+                <TableHead className="min-w-[100px]">Data Subida</TableHead>
+                <TableHead className="min-w-[200px]">Link Grupo</TableHead>
+                <TableHead className="min-w-[200px]">Link Briefing</TableHead>
+                <TableHead className="min-w-[200px]">Link Criativo</TableHead>
+                <TableHead className="min-w-[200px]">Link Site</TableHead>
+                <TableHead className="min-w-[120px]">BM ID</TableHead>
+                <TableHead className="min-w-[100px]">Comissão</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredClientes.length === 0 ? (
                 <TableRow>
-                  <TableHead className="min-w-[100px]">Data Venda</TableHead>
-                  <TableHead className="min-w-[150px]">Nome Cliente</TableHead>
-                  <TableHead className="min-w-[120px]">Telefone</TableHead>
-                  <TableHead className="min-w-[180px]">Email Cliente</TableHead>
-                  <TableHead className="min-w-[120px]">Vendedor</TableHead>
-                  <TableHead className="min-w-[100px]">Comissão</TableHead>
-                  <TableHead className="min-w-[180px]">Email Gestor</TableHead>
-                  <TableHead className="min-w-[120px]">Status Campanha</TableHead>
-                  <TableHead className="min-w-[100px]">Data Limite</TableHead>
-                  <TableHead className="min-w-[100px]">Data Subida</TableHead>
-                  <TableHead className="min-w-[120px]">Link Grupo</TableHead>
-                  <TableHead className="min-w-[120px]">Link Briefing</TableHead>
-                  <TableHead className="min-w-[120px]">Link Criativo</TableHead>
-                  <TableHead className="min-w-[120px]">Link Site</TableHead>
-                  <TableHead className="min-w-[100px]">Número BM</TableHead>
+                  <TableCell colSpan={15} className="text-center py-8 text-gray-500">
+                    Nenhum cliente encontrado para {selectedManager}
+                  </TableCell>
                 </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredClientes.length > 0 ? (
-                  filteredClientes.map((cliente) => (
-                    <TableRow key={cliente.id}>
-                      <TableCell>
-                        {cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {cliente.nome_cliente || '-'}
-                      </TableCell>
-                      <TableCell>{cliente.telefone || '-'}</TableCell>
-                      <TableCell>{cliente.email_cliente || '-'}</TableCell>
-                      <TableCell>{cliente.nome_vendedor || '-'}</TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
-                      </TableCell>
-                      <TableCell>{cliente.email_gestor_responsavel || '-'}</TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'status_campanha', cliente.status_campanha || '', true)}
-                      </TableCell>
-                      <TableCell>
-                        {cliente.data_limite || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {cliente.data_subida_campanha || '-'}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
-                      </TableCell>
-                      <TableCell>
-                        {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={15} className="text-center py-8 text-gray-500">
-                      Nenhum cliente encontrado com os filtros aplicados
+              ) : (
+                filteredClientes.map((cliente) => (
+                  <TableRow key={cliente.id} className="hover:bg-gray-50">
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-gray-400" />
+                        {cliente.data_venda || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {cliente.nome_cliente || '-'}
+                    </TableCell>
+                    <TableCell>{cliente.telefone || '-'}</TableCell>
+                    <TableCell>{cliente.email_cliente || '-'}</TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'nome_vendedor', cliente.nome_vendedor || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'email_gestor_responsavel', cliente.email_gestor_responsavel || '')}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={
+                        cliente.status_campanha === 'Concluída' ? 'default' :
+                        cliente.status_campanha === 'Em andamento' ? 'secondary' :
+                        cliente.status_campanha === 'Cancelada' ? 'destructive' : 'outline'
+                      }>
+                        {cliente.status_campanha || 'Pendente'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {cliente.data_limite || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {cliente.data_subida_campanha || '-'}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+
+      {/* Informação sobre edição */}
+      <div className="text-xs text-gray-500 mt-4">
+        💡 Clique em qualquer campo editável para modificar os dados
+      </div>
+    </div>
   )
 }

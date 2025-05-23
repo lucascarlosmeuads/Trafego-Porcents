@@ -9,58 +9,73 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      clientes: {
+      "Clientes - Andreza": {
         Row: {
-          bm_identificacao: string | null
-          created_at: string | null
-          data_venda: string
+          comissao: string | null
+          created_at: string
+          data_agendamento: string | null
+          data_limite: string | null
+          data_subida_campanha: string | null
+          data_venda: string | null
           email_cliente: string | null
-          email_gestor_responsavel: string
+          email_gestor: string | null
           id: number
+          link_briefing: string | null
+          link_criativo: string | null
           link_grupo: string | null
-          link_reuniao_1: string | null
-          link_reuniao_2: string | null
-          link_reuniao_3: string | null
-          nome_cliente: string
-          nome_vendedor: string | null
+          link_site: string | null
+          nome_cliente: string | null
+          numero_bm: string | null
           status_campanha: string | null
-          telefone: string
+          status_envio: string | null
+          telefone: string | null
+          vendedor: string | null
         }
         Insert: {
-          bm_identificacao?: string | null
-          created_at?: string | null
-          data_venda: string
+          comissao?: string | null
+          created_at?: string
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
           email_cliente?: string | null
-          email_gestor_responsavel: string
-          id?: never
+          email_gestor?: string | null
+          id?: number
+          link_briefing?: string | null
+          link_criativo?: string | null
           link_grupo?: string | null
-          link_reuniao_1?: string | null
-          link_reuniao_2?: string | null
-          link_reuniao_3?: string | null
-          nome_cliente: string
-          nome_vendedor?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
           status_campanha?: string | null
-          telefone: string
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
         }
         Update: {
-          bm_identificacao?: string | null
-          created_at?: string | null
-          data_venda?: string
+          comissao?: string | null
+          created_at?: string
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
           email_cliente?: string | null
-          email_gestor_responsavel?: string
-          id?: never
+          email_gestor?: string | null
+          id?: number
+          link_briefing?: string | null
+          link_criativo?: string | null
           link_grupo?: string | null
-          link_reuniao_1?: string | null
-          link_reuniao_2?: string | null
-          link_reuniao_3?: string | null
-          nome_cliente?: string
-          nome_vendedor?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
           status_campanha?: string | null
-          telefone?: string
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
         }
         Relationships: []
       }
-      Clientes: {
+      "Clientes - Lucas Falcão": {
         Row: {
           comissao: string | null
           created_at: string
