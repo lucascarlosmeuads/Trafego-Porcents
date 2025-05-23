@@ -24,8 +24,9 @@ export function ClientesTable() {
   const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
   const [editingCell, setEditingCell] = useState<{id: string, field: string} | null>(null)
+  const [editValue, setEditValue] = useState('')
   const { user, isAdmin } = useAuth()
   const { toast } = useToast()
 
@@ -44,7 +45,6 @@ export function ClientesTable() {
       let query = supabase.from('clientes').select('*')
       
       if (!isAdmin) {
-        // Update to use email_gestor_responsavel which exists in the database
         query = query.eq('email_gestor_responsavel', user.email)
       }
 
@@ -58,6 +58,7 @@ export function ClientesTable() {
           variant: "destructive"
         })
       } else {
+        console.log('Dados carregados:', data)
         setClientes(data || [])
       }
     } catch (error) {
@@ -72,11 +73,12 @@ export function ClientesTable() {
 
     if (searchTerm) {
       filtered = filtered.filter(cliente =>
-        (cliente.nome_cliente || '').toLowerCase().includes(searchTerm.toLowerCase())
+        (cliente.nome_cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.email_cliente || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (cliente.nome_vendedor || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
-    // Modified to ignore 'all' value as requested
     if (statusFilter && statusFilter !== 'all') {
       filtered = filtered.filter(cliente => cliente.status_campanha === statusFilter)
     }
@@ -84,7 +86,53 @@ export function ClientesTable() {
     setFilteredClientes(filtered)
   }
 
-  const updateField = async (id: string, field: string, value: string) => {
+  const startEdit = (id: string, field: string, currentValue: string) => {
+    setEditingCell({id, field})
+    setEditValue(currentValue || '')
+  }
+
+  const cancelEdit = () => {
+    setEditingCell(null)
+    setEditValue('')
+  }
+
+  const saveEdit = async () => {
+    if (!editingCell) return
+
+    try {
+      const { error } = await supabase
+        .from('clientes')
+        .update({ [editingCell.field]: editValue })
+        .eq('id', editingCell.id)
+
+      if (error) {
+        throw error
+      }
+
+      setClientes(prev => prev.map(cliente => 
+        cliente.id === editingCell.id 
+          ? { ...cliente, [editingCell.field]: editValue } 
+          : cliente
+      ))
+
+      toast({
+        title: "Sucesso",
+        description: "Campo atualizado com sucesso"
+      })
+
+      setEditingCell(null)
+      setEditValue('')
+    } catch (error) {
+      console.error('Erro ao atualizar:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível atualizar o campo",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const updateFieldQuick = async (id: string, field: string, value: string) => {
     try {
       const { error } = await supabase
         .from('clientes')
@@ -160,6 +208,58 @@ export function ClientesTable() {
     })
   }
 
+  const renderEditableCell = (cliente: Cliente, field: string, value: string, isSelect: boolean = false) => {
+    if (editingCell?.id === cliente.id && editingCell?.field === field) {
+      if (isSelect) {
+        return (
+          <Select
+            value={editValue}
+            onValueChange={(newValue) => {
+              setEditValue(newValue)
+              updateFieldQuick(cliente.id, field, newValue)
+              setEditingCell(null)
+            }}
+            onOpenChange={(open) => !open && cancelEdit()}
+          >
+            <SelectTrigger className="w-32">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {statusOptions.map(status => (
+                <SelectItem key={status} value={status}>{status}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )
+      } else {
+        return (
+          <Input
+            value={editValue}
+            onChange={(e) => setEditValue(e.target.value)}
+            onBlur={saveEdit}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') saveEdit()
+              if (e.key === 'Escape') cancelEdit()
+            }}
+            autoFocus
+            className="w-32"
+          />
+        )
+      }
+    }
+
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => startEdit(cliente.id, field, value)}
+        className="h-auto p-1 font-normal justify-start text-left max-w-32 truncate"
+      >
+        {value || 'Clique para editar'}
+      </Button>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -172,7 +272,7 @@ export function ClientesTable() {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Clientes</span>
+          <span>Clientes ({filteredClientes.length})</span>
           <Button onClick={exportToCSV} size="sm">
             <Download className="w-4 h-4 mr-2" />
             Exportar
@@ -182,7 +282,7 @@ export function ClientesTable() {
           <div className="relative flex-1">
             <Search className="w-4 h-4 absolute left-3 top-3 text-gray-400" />
             <Input
-              placeholder="Buscar por nome do cliente..."
+              placeholder="Buscar por nome, email ou vendedor..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="pl-10"
@@ -207,170 +307,63 @@ export function ClientesTable() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Data Venda</TableHead>
-                <TableHead>Nome Cliente</TableHead>
-                <TableHead>Telefone</TableHead>
-                <TableHead>Email Cliente</TableHead>
-                <TableHead>Vendedor</TableHead>
-                <TableHead>Comissão</TableHead>
-                <TableHead>Email Gestor</TableHead>
-                <TableHead>Status Campanha</TableHead>
-                <TableHead>Data Limite</TableHead>
-                <TableHead>Data Subida</TableHead>
-                <TableHead>Link Grupo</TableHead>
-                <TableHead>Link Briefing</TableHead>
-                <TableHead>Link Criativo</TableHead>
-                <TableHead>Link Site</TableHead>
-                <TableHead>Número BM</TableHead>
+                <TableHead className="min-w-[100px]">Data Venda</TableHead>
+                <TableHead className="min-w-[150px]">Nome Cliente</TableHead>
+                <TableHead className="min-w-[120px]">Telefone</TableHead>
+                <TableHead className="min-w-[180px]">Email Cliente</TableHead>
+                <TableHead className="min-w-[120px]">Vendedor</TableHead>
+                <TableHead className="min-w-[100px]">Comissão</TableHead>
+                <TableHead className="min-w-[180px]">Email Gestor</TableHead>
+                <TableHead className="min-w-[120px]">Status Campanha</TableHead>
+                <TableHead className="min-w-[100px]">Data Limite</TableHead>
+                <TableHead className="min-w-[100px]">Data Subida</TableHead>
+                <TableHead className="min-w-[120px]">Link Grupo</TableHead>
+                <TableHead className="min-w-[120px]">Link Briefing</TableHead>
+                <TableHead className="min-w-[120px]">Link Criativo</TableHead>
+                <TableHead className="min-w-[120px]">Link Site</TableHead>
+                <TableHead className="min-w-[100px]">Número BM</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClientes.length > 0 ? (
                 filteredClientes.map((cliente) => (
                   <TableRow key={cliente.id}>
-                    <TableCell>{cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                    <TableCell className="font-medium">{cliente.nome_cliente || '-'}</TableCell>
+                    <TableCell>
+                      {cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {cliente.nome_cliente || '-'}
+                    </TableCell>
                     <TableCell>{cliente.telefone || '-'}</TableCell>
                     <TableCell>{cliente.email_cliente || '-'}</TableCell>
                     <TableCell>{cliente.nome_vendedor || '-'}</TableCell>
-                    <TableCell>{cliente.comissao || '-'}</TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
+                    </TableCell>
                     <TableCell>{cliente.email_gestor_responsavel || '-'}</TableCell>
                     <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'status_campanha' ? (
-                        <Select
-                          value={cliente.status_campanha || ''}
-                          onValueChange={(value) => {
-                            updateField(cliente.id, 'status_campanha', value)
-                            setEditingCell(null)
-                          }}
-                          onOpenChange={(open) => !open && setEditingCell(null)}
-                        >
-                          <SelectTrigger className="w-32">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {statusOptions.map(status => (
-                              <SelectItem key={status} value={status}>{status}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'status_campanha'})}
-                          className="h-auto p-1 font-normal justify-start"
-                        >
-                          {cliente.status_campanha || 'Clique para editar'}
-                        </Button>
-                      )}
-                    </TableCell>
-                    <TableCell>{cliente.data_limite ? new Date(cliente.data_limite).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                    <TableCell>{cliente.data_subida ? new Date(cliente.data_subida).toLocaleDateString('pt-BR') : '-'}</TableCell>
-                    <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'link_grupo' ? (
-                        <Input
-                          value={cliente.link_grupo || ''}
-                          onChange={(e) => updateField(cliente.id, 'link_grupo', e.target.value)}
-                          onBlur={() => setEditingCell(null)}
-                          onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
-                          autoFocus
-                          className="w-32"
-                        />
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'link_grupo'})}
-                          className="h-auto p-1 font-normal justify-start text-blue-600"
-                        >
-                          {cliente.link_grupo || 'Clique para editar'}
-                        </Button>
-                      )}
+                      {renderEditableCell(cliente, 'status_campanha', cliente.status_campanha || '', true)}
                     </TableCell>
                     <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'link_reuniao_1' ? (
-                        <Input
-                          value={cliente.link_reuniao_1 || ''}
-                          onChange={(e) => updateField(cliente.id, 'link_reuniao_1', e.target.value)}
-                          onBlur={() => setEditingCell(null)}
-                          onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
-                          autoFocus
-                          className="w-32"
-                        />
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'link_reuniao_1'})}
-                          className="h-auto p-1 font-normal justify-start text-blue-600"
-                        >
-                          {cliente.link_reuniao_1 || 'Clique para editar'}
-                        </Button>
-                      )}
+                      {cliente.data_limite || '-'}
                     </TableCell>
                     <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'link_reuniao_2' ? (
-                        <Input
-                          value={cliente.link_reuniao_2 || ''}
-                          onChange={(e) => updateField(cliente.id, 'link_reuniao_2', e.target.value)}
-                          onBlur={() => setEditingCell(null)}
-                          onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
-                          autoFocus
-                          className="w-32"
-                        />
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'link_reuniao_2'})}
-                          className="h-auto p-1 font-normal justify-start text-blue-600"
-                        >
-                          {cliente.link_reuniao_2 || 'Clique para editar'}
-                        </Button>
-                      )}
+                      {cliente.data_subida || '-'}
                     </TableCell>
                     <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'link_reuniao_3' ? (
-                        <Input
-                          value={cliente.link_reuniao_3 || ''}
-                          onChange={(e) => updateField(cliente.id, 'link_reuniao_3', e.target.value)}
-                          onBlur={() => setEditingCell(null)}
-                          onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
-                          autoFocus
-                          className="w-32"
-                        />
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'link_reuniao_3'})}
-                          className="h-auto p-1 font-normal justify-start text-blue-600"
-                        >
-                          {cliente.link_reuniao_3 || 'Clique para editar'}
-                        </Button>
-                      )}
+                      {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
                     </TableCell>
                     <TableCell>
-                      {editingCell?.id === cliente.id && editingCell?.field === 'bm_identificacao' ? (
-                        <Input
-                          value={cliente.bm_identificacao || ''}
-                          onChange={(e) => updateField(cliente.id, 'bm_identificacao', e.target.value)}
-                          onBlur={() => setEditingCell(null)}
-                          onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
-                          autoFocus
-                          className="w-32"
-                        />
-                      ) : (
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => setEditingCell({id: cliente.id, field: 'bm_identificacao'})}
-                          className="h-auto p-1 font-normal justify-start text-blue-600"
-                        >
-                          {cliente.bm_identificacao || 'Clique para editar'}
-                        </Button>
-                      )}
+                      {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
+                    </TableCell>
+                    <TableCell>
+                      {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
                     </TableCell>
                   </TableRow>
                 ))
