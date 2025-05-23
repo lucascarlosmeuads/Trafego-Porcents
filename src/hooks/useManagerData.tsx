@@ -28,9 +28,11 @@ export function useManagerData(selectedManager: string) {
 
       if (error) {
         console.error('Erro ao buscar clientes:', error)
-        setError(`Erro ao carregar dados de ${selectedManager}`)
+        setError(`Erro ao carregar dados de ${selectedManager}: ${error.message}`)
         setClientes([])
       } else {
+        console.log(`Dados encontrados para ${selectedManager}:`, data)
+        
         // Mapear os dados para o formato esperado
         const clientesFormatados = (data || []).map((item: any) => ({
           id: item.id?.toString() || '',
@@ -53,6 +55,7 @@ export function useManagerData(selectedManager: string) {
           comissao: item.comissao || ''
         }))
         
+        console.log(`Clientes formatados para ${selectedManager}:`, clientesFormatados)
         setClientes(clientesFormatados)
       }
     } catch (err) {
@@ -82,6 +85,8 @@ export function useManagerData(selectedManager: string) {
 
       const dbField = fieldMapping[field] || field
       
+      console.log(`Atualizando ${tableName} - ID: ${id}, Campo: ${dbField}, Valor: ${value}`)
+      
       const { error } = await supabase
         .from(tableName)
         .update({ [dbField]: value })
@@ -101,6 +106,7 @@ export function useManagerData(selectedManager: string) {
         )
       )
 
+      console.log('Cliente atualizado com sucesso')
       return true
     } catch (err) {
       console.error('Erro:', err)

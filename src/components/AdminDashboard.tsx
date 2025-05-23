@@ -1,200 +1,194 @@
 
 import { useState, useEffect } from 'react'
-import { supabase, type Cliente } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Download, Filter } from 'lucide-react'
+import { Download, Filter, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { AdminTable } from './AdminTable'
-
-const statusColors = {
-  'Planejamento': '#3B82F6',
-  'Brief': '#F59E0B',
-  'Criativo': '#8B5CF6',
-  'No Ar': '#10B981'
-}
+import { ClientesTable } from './ClientesTable'
 
 export function AdminDashboard() {
-  const [clientes, setClientes] = useState<Cliente[]>([])
-  const [filteredClientes, setFilteredClientes] = useState<Cliente[]>([])
+  const [selectedManager, setSelectedManager] = useState('Andreza')
+  const [managers, setManagers] = useState<string[]>(['Andreza', 'Lucas Falcão'])
+  const [totalStats, setTotalStats] = useState({
+    totalClientes: 0,
+    clientesAtivos: 0,
+    comissaoTotal: 0
+  })
   const [loading, setLoading] = useState(true)
-  const [gestorFilter, setGestorFilter] = useState('all')
-  const [gestores, setGestores] = useState<string[]>([])
   const { toast } = useToast()
 
   useEffect(() => {
-    fetchClientes()
+    fetchTotalStats()
   }, [])
 
-  useEffect(() => {
-    if (clientes.length > 0) {
-      filterClientesByGestor()
-      extractGestores()
-    }
-  }, [clientes, gestorFilter])
-
-  const fetchClientes = async () => {
+  const fetchTotalStats = async () => {
     try {
-      const { data, error } = await supabase
-        .from('clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
+      setLoading(true)
+      let totalClientes = 0
+      let clientesAtivos = 0
+      let comissaoTotal = 0
 
-      if (error) {
-        console.error('Erro ao buscar clientes:', error)
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar os dados",
-          variant: "destructive"
-        })
-      } else {
-        setClientes(data || [])
-        setFilteredClientes(data || [])
+      // Buscar dados de todas as tabelas dos gerentes
+      for (const manager of managers) {
+        const tableName = `Clientes - ${manager}`
+        
+        const { data, error } = await supabase
+          .from(tableName)
+          .select('*')
+
+        if (!error && data) {
+          totalClientes += data.length
+          clientesAtivos += data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Concluída').length
+          
+          // Calcular comissão total
+          const comissaoTabela = data.reduce((total, cliente) => {
+            const comissao = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
+            return total + comissao
+          }, 0)
+          comissaoTotal += comissaoTabela
+        }
       }
+
+      setTotalStats({
+        totalClientes,
+        clientesAtivos,
+        comissaoTotal
+      })
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('Erro ao buscar estatísticas:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar as estatísticas",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
   }
 
-  const extractGestores = () => {
-    const uniqueGestores = Array.from(new Set(
-      clientes
-        .map(cliente => cliente.email_gestor_responsavel)
-        .filter(email => email)
-    )) as string[];
-    
-    setGestores(uniqueGestores);
-  }
+  const exportAllData = async () => {
+    try {
+      const allData: any[] = []
+      
+      for (const manager of managers) {
+        const tableName = `Clientes - ${manager}`
+        
+        const { data, error } = await supabase
+          .from(tableName)
+          .select('*')
 
-  const filterClientesByGestor = () => {
-    if (gestorFilter === 'all') {
-      setFilteredClientes(clientes)
-    } else {
-      const filtered = clientes.filter(cliente => 
-        cliente.email_gestor_responsavel === gestorFilter
-      )
-      setFilteredClientes(filtered)
+        if (!error && data) {
+          // Adicionar coluna do gerente aos dados
+          const dataWithManager = data.map(item => ({
+            ...item,
+            gerente: manager
+          }))
+          allData.push(...dataWithManager)
+        }
+      }
+
+      if (allData.length === 0) {
+        toast({
+          title: "Aviso",
+          description: "Nenhum dado encontrado para exportar",
+        })
+        return
+      }
+
+      const headers = [
+        'Gerente', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 
+        'Vendedor', 'Comissão', 'Email Gestor', 'Status Campanha', 'Data Limite', 
+        'Data Subida', 'Link Grupo', 'Link Briefing', 'Link Criativo', 
+        'Link Site', 'Número BM'
+      ]
+
+      const csvData = allData.map(cliente => [
+        cliente.gerente || '',
+        cliente.data_venda || '',
+        cliente.nome_cliente || '',
+        cliente.telefone || '',
+        cliente.email_cliente || '',
+        cliente.vendedor || '',
+        cliente.comissao || '',
+        cliente.email_gestor || '',
+        cliente.status_campanha || '',
+        cliente.data_limite || '',
+        cliente.data_subida_campanha || '',
+        cliente.link_grupo || '',
+        cliente.link_briefing || '', 
+        cliente.link_criativo || '', 
+        cliente.link_site || '', 
+        cliente.numero_bm || ''
+      ])
+
+      const csvContent = [headers, ...csvData]
+        .map(row => row.map(field => `"${field}"`).join(','))
+        .join('\n')
+
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+      const link = document.createElement('a')
+      const url = URL.createObjectURL(blob)
+      link.setAttribute('href', url)
+      link.setAttribute('download', `relatorio_completo_${new Date().toISOString().split('T')[0]}.csv`)
+      link.style.visibility = 'hidden'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+
+      toast({
+        title: "Sucesso",
+        description: "Relatório completo exportado com sucesso"
+      })
+    } catch (error) {
+      console.error('Erro ao exportar:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao exportar relatório",
+        variant: "destructive"
+      })
     }
   }
 
-  // Métricas por status
-  const statusMetrics = Object.entries(
-    filteredClientes.reduce((acc, cliente) => {
-      const status = cliente.status_campanha || 'Sem Status'
-      acc[status] = (acc[status] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-  ).map(([status, count]) => ({
-    status,
-    count,
-    color: statusColors[status as keyof typeof statusColors] || '#6B7280'
-  }))
-
-  const gestorMetrics = Object.entries(
-    clientes.reduce((acc, cliente) => {
-      const gestor = cliente.email_gestor || cliente.email_gestor_responsavel || 'Sem Gestor'
-      acc[gestor] = (acc[gestor] || 0) + 1
-      return acc
-    }, {} as Record<string, number>)
-  ).map(([gestor, count]) => ({
-    gestor: gestor.split('@')[0],
-    count
-  }))
-
-  const totalClientes = filteredClientes.length
-  const clientesAtivos = filteredClientes.filter(c => c.status_campanha === 'No Ar').length
-  const comissaoTotal = filteredClientes.reduce((total, cliente) => {
-    const comissao = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
-    return total + comissao
-  }, 0)
-
-  const exportToCSV = () => {
-    const headers = [
-      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 
-      'Vendedor', 'Comissão', 'Email Gestor', 'Status Campanha', 'Data Limite', 
-      'Data Subida', 'Link Grupo', 'Link Briefing', 'Link Criativo', 
-      'Link Site', 'Número BM'
-    ]
-
-    const csvData = filteredClientes.map(cliente => [
-      cliente.id,
-      cliente.data_venda || '',
-      cliente.nome_cliente || '',
-      cliente.telefone || '',
-      cliente.email_cliente || '',
-      cliente.nome_vendedor || '',
-      cliente.comissao || '',
-      cliente.email_gestor_responsavel || '',
-      cliente.status_campanha || '',
-      cliente.data_limite || '',
-      cliente.data_subida_campanha || '',
-      cliente.link_grupo || '',
-      cliente.link_reuniao_1 || '', 
-      cliente.link_reuniao_2 || '', 
-      cliente.link_reuniao_3 || '', 
-      cliente.bm_identificacao || '' 
-    ])
-
-    const csvContent = [headers, ...csvData]
-      .map(row => row.map(field => `"${field}"`).join(','))
-      .join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `relatorio_clientes_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    toast({
-      title: "Sucesso",
-      description: "Relatório exportado com sucesso"
-    })
-  }
-
   if (loading) {
-    return <div className="text-center py-8">Carregando dashboard...</div>
+    return (
+      <div className="flex items-center justify-center py-8">
+        <div className="flex items-center gap-2">
+          <RefreshCw className="w-4 h-4 animate-spin" />
+          <span>Carregando dados...</span>
+        </div>
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       <Tabs defaultValue="overview" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="table">Tabela Completa</TabsTrigger>
+          <TabsTrigger value="overview">Resumo Geral</TabsTrigger>
+          <TabsTrigger value="manager">Por Gerente</TabsTrigger>
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Filtro por gestor */}
+          {/* Header com filtro e exportação */}
           <Card>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <Filter className="w-4 h-4 text-gray-400" />
-                  <Select value={gestorFilter} onValueChange={setGestorFilter}>
-                    <SelectTrigger className="w-64">
-                      <SelectValue placeholder="Filtrar por gestor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Todos os gestores</SelectItem>
-                      {gestores.map(gestor => (
-                        <SelectItem key={gestor} value={gestor}>{gestor}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <h2 className="text-lg font-semibold">Resumo Geral - Todos os Gerentes</h2>
                 </div>
-                <Button onClick={exportToCSV} variant="outline">
-                  <Download className="w-4 h-4 mr-2" />
-                  Exportar Relatório Geral
-                </Button>
+                <div className="flex gap-2">
+                  <Button onClick={fetchTotalStats} variant="outline" size="sm">
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Atualizar
+                  </Button>
+                  <Button onClick={exportAllData} variant="outline" size="sm">
+                    <Download className="w-4 h-4 mr-2" />
+                    Exportar Tudo
+                  </Button>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -206,7 +200,7 @@ export function AdminDashboard() {
                 <CardTitle className="text-sm font-medium text-gray-600">Total de Clientes</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">{totalClientes}</div>
+                <div className="text-2xl font-bold">{totalStats.totalClientes}</div>
               </CardContent>
             </Card>
 
@@ -215,7 +209,7 @@ export function AdminDashboard() {
                 <CardTitle className="text-sm font-medium text-gray-600">Campanhas Ativas</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-green-600">{clientesAtivos}</div>
+                <div className="text-2xl font-bold text-green-600">{totalStats.clientesAtivos}</div>
               </CardContent>
             </Card>
 
@@ -225,7 +219,7 @@ export function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  R$ {comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                  R$ {totalStats.comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                 </div>
               </CardContent>
             </Card>
@@ -236,85 +230,116 @@ export function AdminDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {totalClientes > 0 ? Math.round((clientesAtivos / totalClientes) * 100) : 0}%
+                  {totalStats.totalClientes > 0 ? Math.round((totalStats.clientesAtivos / totalStats.totalClientes) * 100) : 0}%
                 </div>
               </CardContent>
             </Card>
           </div>
 
-          {/* Gráficos */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Campanhas por Status</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <PieChart>
-                    <Pie
-                      data={statusMetrics}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ status, count }) => `${status}: ${count}`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="count"
-                    >
-                      {statusMetrics.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle>Clientes por Gestor</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={gestorMetrics}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="gestor" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="count" fill="#3B82F6" />
-                  </BarChart>
-                </ResponsiveContainer>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Resumo por Status */}
+          {/* Resumo por Gerente */}
           <Card>
             <CardHeader>
-              <CardTitle>Resumo por Status</CardTitle>
+              <CardTitle>Resumo por Gerente</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {statusMetrics.map(({ status, count, color }) => (
-                  <div key={status} className="flex items-center space-x-2">
-                    <div
-                      className="w-4 h-4 rounded"
-                      style={{ backgroundColor: color }}
-                    />
-                    <span className="text-sm font-medium">{status}</span>
-                    <span className="text-sm text-gray-600">({count})</span>
-                  </div>
+              <div className="space-y-4">
+                {managers.map(manager => (
+                  <ManagerSummary key={manager} managerName={manager} />
                 ))}
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="table">
-          <AdminTable />
+        <TabsContent value="manager" className="space-y-6">
+          {/* Filtro por gerente */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center space-x-4">
+                <Filter className="w-4 h-4 text-gray-400" />
+                <Select value={selectedManager} onValueChange={setSelectedManager}>
+                  <SelectTrigger className="w-64">
+                    <SelectValue placeholder="Selecionar gerente" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managers.map(manager => (
+                      <SelectItem key={manager} value={manager}>{manager}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <ClientesTable selectedManager={selectedManager} />
         </TabsContent>
       </Tabs>
+    </div>
+  )
+}
+
+// Componente para resumo individual de cada gerente
+function ManagerSummary({ managerName }: { managerName: string }) {
+  const [stats, setStats] = useState({ total: 0, ativos: 0, comissao: 0 })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    fetchManagerStats()
+  }, [managerName])
+
+  const fetchManagerStats = async () => {
+    try {
+      const tableName = `Clientes - ${managerName}`
+      
+      const { data, error } = await supabase
+        .from(tableName)
+        .select('*')
+
+      if (!error && data) {
+        const total = data.length
+        const ativos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Concluída').length
+        const comissao = data.reduce((total, cliente) => {
+          const comissaoValue = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
+          return total + comissaoValue
+        }, 0)
+
+        setStats({ total, ativos, comissao })
+      }
+    } catch (error) {
+      console.error(`Erro ao buscar dados de ${managerName}:`, error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center gap-2 p-4 border rounded">
+        <RefreshCw className="w-4 h-4 animate-spin" />
+        <span>Carregando dados de {managerName}...</span>
+      </div>
+    )
+  }
+
+  return (
+    <div className="p-4 border rounded-lg">
+      <h3 className="font-semibold text-lg mb-2">{managerName}</h3>
+      <div className="grid grid-cols-3 gap-4 text-sm">
+        <div>
+          <span className="text-gray-600">Total: </span>
+          <span className="font-bold">{stats.total}</span>
+        </div>
+        <div>
+          <span className="text-gray-600">Ativos: </span>
+          <span className="font-bold text-green-600">{stats.ativos}</span>
+        </div>
+        <div>
+          <span className="text-gray-600">Comissão: </span>
+          <span className="font-bold text-blue-600">
+            R$ {stats.comissao.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          </span>
+        </div>
+      </div>
     </div>
   )
 }
