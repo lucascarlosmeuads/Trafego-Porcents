@@ -23,11 +23,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isGestor = !isAdmin && user?.email !== null
 
   useEffect(() => {
+    // Configuração inicial - verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
       setLoading(false)
     })
 
+    // Configuração do listener para mudanças de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null)
       setLoading(false)

@@ -1,25 +1,9 @@
 
 import { createClient } from '@supabase/supabase-js'
 
-// For development only - in production these would come from environment variables
-const FALLBACK_SUPABASE_URL = 'https://your-project-id.supabase.co'
-const FALLBACK_SUPABASE_ANON_KEY = 'your-anon-key'
-
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || FALLBACK_SUPABASE_URL
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || FALLBACK_SUPABASE_ANON_KEY
-
-// Check if we have the necessary values before creating client
-if (!supabaseUrl || supabaseUrl === 'https://your-project-id.supabase.co') {
-  console.warn(
-    'Missing Supabase URL. Please set VITE_SUPABASE_URL environment variable or connect with Supabase integration.'
-  )
-}
-
-if (!supabaseAnonKey || supabaseAnonKey === 'your-anon-key') {
-  console.warn(
-    'Missing Supabase Anon Key. Please set VITE_SUPABASE_ANON_KEY environment variable or connect with Supabase integration.'
-  )
-}
+// Usando os valores do arquivo de configuração do Supabase
+const supabaseUrl = "https://rxpgqunqsegypssoqpyf.supabase.co"
+const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4cGdxdW5xc2VneXBzc29xcHlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NzEyODcsImV4cCI6MjA2MzE0NzI4N30.9ZzV-alsdI4EqrzRwFDxP9Vjr2l_KXHMPN9dVyf5ZWI"
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
