@@ -18,7 +18,7 @@ export type Cliente = {
   email_gestor?: string
   status_campanha: string
   data_limite?: string
-  data_subida?: string
+  data_subida_campanha?: string
   link_grupo: string
   link_reuniao_1: string
   link_reuniao_2: string

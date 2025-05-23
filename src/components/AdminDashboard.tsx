@@ -5,9 +5,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Download, Filter } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { Input } from '@/components/ui/input'
+import { AdminTable } from './AdminTable'
 
 const statusColors = {
   'Planejamento': '#3B82F6',
@@ -94,10 +95,8 @@ export function AdminDashboard() {
     color: statusColors[status as keyof typeof statusColors] || '#6B7280'
   }))
 
-  // Métricas por gestor
   const gestorMetrics = Object.entries(
     clientes.reduce((acc, cliente) => {
-      // Use email_gestor_responsavel if email_gestor is not available
       const gestor = cliente.email_gestor || cliente.email_gestor_responsavel || 'Sem Gestor'
       acc[gestor] = (acc[gestor] || 0) + 1
       return acc
@@ -110,7 +109,6 @@ export function AdminDashboard() {
   const totalClientes = filteredClientes.length
   const clientesAtivos = filteredClientes.filter(c => c.status_campanha === 'No Ar').length
   const comissaoTotal = filteredClientes.reduce((total, cliente) => {
-    // Handle case where comissao may not exist
     const comissao = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
     return total + comissao
   }, 0)
@@ -134,7 +132,7 @@ export function AdminDashboard() {
       cliente.email_gestor_responsavel || '',
       cliente.status_campanha || '',
       cliente.data_limite || '',
-      cliente.data_subida || '',
+      cliente.data_subida_campanha || '',
       cliente.link_grupo || '',
       cliente.link_reuniao_1 || '', 
       cliente.link_reuniao_2 || '', 
@@ -168,142 +166,155 @@ export function AdminDashboard() {
 
   return (
     <div className="space-y-6">
-      {/* Filtro por gestor */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <Filter className="w-4 h-4 text-gray-400" />
-              <Select value={gestorFilter} onValueChange={setGestorFilter}>
-                <SelectTrigger className="w-64">
-                  <SelectValue placeholder="Filtrar por gestor" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos os gestores</SelectItem>
-                  {gestores.map(gestor => (
-                    <SelectItem key={gestor} value={gestor}>{gestor}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <Button onClick={exportToCSV} variant="outline">
-              <Download className="w-4 h-4 mr-2" />
-              Exportar Relatório Geral
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="table">Tabela Completa</TabsTrigger>
+        </TabsList>
 
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Total de Clientes</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{totalClientes}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Campanhas Ativas</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{clientesAtivos}</div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Comissão Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              R$ {comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium text-gray-600">Taxa de Conversão</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">
-              {totalClientes > 0 ? Math.round((clientesAtivos / totalClientes) * 100) : 0}%
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Gráficos */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Campanhas por Status</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={statusMetrics}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ status, count }) => `${status}: ${count}`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="count"
-                >
-                  {statusMetrics.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Clientes por Gestor</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={gestorMetrics}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="gestor" />
-                <YAxis />
-                <Tooltip />
-                <Bar dataKey="count" fill="#3B82F6" />
-              </BarChart>
-            </ResponsiveContainer>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tabela de Status */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Resumo por Status</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {statusMetrics.map(({ status, count, color }) => (
-              <div key={status} className="flex items-center space-x-2">
-                <div
-                  className="w-4 h-4 rounded"
-                  style={{ backgroundColor: color }}
-                />
-                <span className="text-sm font-medium">{status}</span>
-                <span className="text-sm text-gray-600">({count})</span>
+        <TabsContent value="overview" className="space-y-6">
+          {/* Filtro por gestor */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-4">
+                  <Filter className="w-4 h-4 text-gray-400" />
+                  <Select value={gestorFilter} onValueChange={setGestorFilter}>
+                    <SelectTrigger className="w-64">
+                      <SelectValue placeholder="Filtrar por gestor" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Todos os gestores</SelectItem>
+                      {gestores.map(gestor => (
+                        <SelectItem key={gestor} value={gestor}>{gestor}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={exportToCSV} variant="outline">
+                  <Download className="w-4 h-4 mr-2" />
+                  Exportar Relatório Geral
+                </Button>
               </div>
-            ))}
+            </CardContent>
+          </Card>
+
+          {/* Cards de Resumo */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Total de Clientes</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalClientes}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Campanhas Ativas</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-green-600">{clientesAtivos}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Comissão Total</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-blue-600">
+                  R$ {comissaoTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Taxa de Conversão</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-purple-600">
+                  {totalClientes > 0 ? Math.round((clientesAtivos / totalClientes) * 100) : 0}%
+                </div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+
+          {/* Gráficos */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Campanhas por Status</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={statusMetrics}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ status, count }) => `${status}: ${count}`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="count"
+                    >
+                      {statusMetrics.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Clientes por Gestor</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={gestorMetrics}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="gestor" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="count" fill="#3B82F6" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Resumo por Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumo por Status</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {statusMetrics.map(({ status, count, color }) => (
+                  <div key={status} className="flex items-center space-x-2">
+                    <div
+                      className="w-4 h-4 rounded"
+                      style={{ backgroundColor: color }}
+                    />
+                    <span className="text-sm font-medium">{status}</span>
+                    <span className="text-sm text-gray-600">({count})</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="table">
+          <AdminTable />
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
