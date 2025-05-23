@@ -25,16 +25,33 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   useEffect(() => {
     const fetchManagerTables = async () => {
       try {
-        // Buscar todas as tabelas que começam com "Clientes -"
-        const { data, error } = await supabase.rpc('get_manager_tables')
+        // Lista fixa dos gerentes com base nas novas tabelas
+        const availableManagers = ['Andreza', 'Lucas Falcão']
         
-        if (error) {
-          console.error('Erro ao buscar tabelas dos gerentes:', error)
-          // Fallback para gerentes conhecidos
-          setManagers(['Andreza', 'Lucas Falcão'])
-        } else {
-          setManagers(data || ['Andreza', 'Lucas Falcão'])
+        // Verificar se as tabelas existem no Supabase
+        const verifiedManagers: string[] = []
+        
+        for (const manager of availableManagers) {
+          const tableName = manager === 'Lucas Falcão' ? 'clientes_lucas_falcao' : 'clientes_andreza'
+          
+          try {
+            const { error } = await supabase
+              .from(tableName)
+              .select('id')
+              .limit(1)
+            
+            if (!error) {
+              verifiedManagers.push(manager)
+              console.log(`Tabela ${tableName} verificada com sucesso`)
+            } else {
+              console.warn(`Tabela ${tableName} não encontrada:`, error)
+            }
+          } catch (err) {
+            console.warn(`Erro ao verificar tabela ${tableName}:`, err)
+          }
         }
+        
+        setManagers(verifiedManagers.length > 0 ? verifiedManagers : availableManagers)
       } catch (err) {
         console.error('Erro:', err)
         // Fallback para gerentes conhecidos

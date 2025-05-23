@@ -141,6 +141,138 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes_andreza: {
+        Row: {
+          comissao: string | null
+          created_at: string | null
+          data_agendamento: string | null
+          data_limite: string | null
+          data_subida_campanha: string | null
+          data_venda: string | null
+          email_cliente: string | null
+          email_gestor: string | null
+          id: number | null
+          link_briefing: string | null
+          link_criativo: string | null
+          link_grupo: string | null
+          link_site: string | null
+          nome_cliente: string | null
+          numero_bm: string | null
+          status_campanha: string | null
+          status_envio: string | null
+          telefone: string | null
+          vendedor: string | null
+        }
+        Insert: {
+          comissao?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
+          email_cliente?: string | null
+          email_gestor?: string | null
+          id?: number | null
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_grupo?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
+          status_campanha?: string | null
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
+        }
+        Update: {
+          comissao?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
+          email_cliente?: string | null
+          email_gestor?: string | null
+          id?: number | null
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_grupo?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
+          status_campanha?: string | null
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
+      clientes_lucas_falcao: {
+        Row: {
+          comissao: string | null
+          created_at: string | null
+          data_agendamento: string | null
+          data_limite: string | null
+          data_subida_campanha: string | null
+          data_venda: string | null
+          email_cliente: string | null
+          email_gestor: string | null
+          id: number | null
+          link_briefing: string | null
+          link_criativo: string | null
+          link_grupo: string | null
+          link_site: string | null
+          nome_cliente: string | null
+          numero_bm: string | null
+          status_campanha: string | null
+          status_envio: string | null
+          telefone: string | null
+          vendedor: string | null
+        }
+        Insert: {
+          comissao?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
+          email_cliente?: string | null
+          email_gestor?: string | null
+          id?: number | null
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_grupo?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
+          status_campanha?: string | null
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
+        }
+        Update: {
+          comissao?: string | null
+          created_at?: string | null
+          data_agendamento?: string | null
+          data_limite?: string | null
+          data_subida_campanha?: string | null
+          data_venda?: string | null
+          email_cliente?: string | null
+          email_gestor?: string | null
+          id?: number | null
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_grupo?: string | null
+          link_site?: string | null
+          nome_cliente?: string | null
+          numero_bm?: string | null
+          status_campanha?: string | null
+          status_envio?: string | null
+          telefone?: string | null
+          vendedor?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

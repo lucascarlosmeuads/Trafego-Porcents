@@ -20,6 +20,14 @@ export function AdminDashboard() {
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
+  const getTableName = (managerName: string) => {
+    const tableMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'clientes_lucas_falcao',
+      'Andreza': 'clientes_andreza'
+    }
+    return tableMapping[managerName] || 'clientes_andreza'
+  }
+
   useEffect(() => {
     fetchTotalStats()
   }, [])
@@ -33,13 +41,15 @@ export function AdminDashboard() {
 
       // Buscar dados de todas as tabelas dos gerentes
       for (const manager of managers) {
-        const tableName = `Clientes - ${manager}`
+        const tableName = getTableName(manager)
+        console.log(`Buscando estatísticas da tabela: ${tableName}`)
         
         const { data, error } = await supabase
           .from(tableName)
           .select('*')
 
         if (!error && data) {
+          console.log(`Dados encontrados para ${manager}:`, data.length, 'registros')
           totalClientes += data.length
           clientesAtivos += data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Concluída').length
           
@@ -49,9 +59,12 @@ export function AdminDashboard() {
             return total + comissao
           }, 0)
           comissaoTotal += comissaoTabela
+        } else if (error) {
+          console.error(`Erro ao buscar dados de ${manager}:`, error)
         }
       }
 
+      console.log('Estatísticas totais:', { totalClientes, clientesAtivos, comissaoTotal })
       setTotalStats({
         totalClientes,
         clientesAtivos,
@@ -74,7 +87,7 @@ export function AdminDashboard() {
       const allData: any[] = []
       
       for (const manager of managers) {
-        const tableName = `Clientes - ${manager}`
+        const tableName = getTableName(manager)
         
         const { data, error } = await supabase
           .from(tableName)
@@ -283,13 +296,22 @@ function ManagerSummary({ managerName }: { managerName: string }) {
   const [stats, setStats] = useState({ total: 0, ativos: 0, comissao: 0 })
   const [loading, setLoading] = useState(true)
 
+  const getTableName = (managerName: string) => {
+    const tableMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'clientes_lucas_falcao',
+      'Andreza': 'clientes_andreza'
+    }
+    return tableMapping[managerName] || 'clientes_andreza'
+  }
+
   useEffect(() => {
     fetchManagerStats()
   }, [managerName])
 
   const fetchManagerStats = async () => {
     try {
-      const tableName = `Clientes - ${managerName}`
+      const tableName = getTableName(managerName)
+      console.log(`Buscando resumo para ${managerName} na tabela ${tableName}`)
       
       const { data, error } = await supabase
         .from(tableName)
@@ -303,7 +325,10 @@ function ManagerSummary({ managerName }: { managerName: string }) {
           return total + comissaoValue
         }, 0)
 
+        console.log(`Estatísticas de ${managerName}:`, { total, ativos, comissao })
         setStats({ total, ativos, comissao })
+      } else {
+        console.error(`Erro ao buscar dados de ${managerName}:`, error)
       }
     } catch (error) {
       console.error(`Erro ao buscar dados de ${managerName}:`, error)

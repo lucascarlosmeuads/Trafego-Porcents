@@ -8,7 +8,13 @@ export function useManagerData(selectedManager: string) {
   const [error, setError] = useState<string | null>(null)
 
   const getTableName = (managerName: string) => {
-    return `Clientes - ${managerName}`
+    // Mapear nomes dos gerentes para as novas tabelas
+    const tableMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'clientes_lucas_falcao',
+      'Andreza': 'clientes_andreza'
+    }
+    
+    return tableMapping[managerName] || 'clientes_andreza'
   }
 
   const fetchClientes = async () => {
