@@ -15,13 +15,15 @@ export type Cliente = {
   email_cliente: string
   nome_vendedor: string
   email_gestor_responsavel: string
-  email_gestor?: string // Added for AdminDashboard
+  email_gestor?: string
   status_campanha: string
+  data_limite?: string
+  data_subida?: string
   link_grupo: string
   link_reuniao_1: string
   link_reuniao_2: string
   link_reuniao_3: string
   bm_identificacao: string
   created_at: string
-  comissao?: string // Added for AdminDashboard
+  comissao?: string
 }

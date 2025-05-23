@@ -9,6 +9,7 @@ import { User } from 'lucide-react'
 
 export function Dashboard() {
   const { user, signOut, isAdmin } = useAuth()
+  const [activeTab, setActiveTab] = useState(isAdmin ? "dashboard" : "clientes")
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -38,7 +39,7 @@ export function Dashboard() {
       {/* Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {isAdmin ? (
-          <Tabs defaultValue="dashboard" className="w-full">
+          <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
             <TabsList className="grid w-full grid-cols-2 max-w-md">
               <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
               <TabsTrigger value="clientes">Clientes</TabsTrigger>
