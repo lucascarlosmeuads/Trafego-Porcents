@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -39,30 +38,56 @@ export function ClientesTable() {
   }, [clientes, searchTerm, statusFilter])
 
   const fetchClientes = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('Usuário não autenticado')
+      setLoading(false)
+      return
+    }
 
     try {
+      console.log('Iniciando busca de clientes...')
+      console.log('Usuário:', user.email)
+      console.log('É admin:', isAdmin)
+
+      // Primeiro, tenta buscar todos os dados sem filtro para diagnóstico
+      const { data: allData, error: allError } = await supabase
+        .from('clientes')
+        .select('*')
+
+      console.log('Todos os dados na tabela:', allData)
+      console.log('Erro ao buscar todos os dados:', allError)
+
+      // Agora faz a busca com filtro se não for admin
       let query = supabase.from('clientes').select('*')
       
       if (!isAdmin) {
         query = query.eq('email_gestor_responsavel', user.email)
+        console.log('Filtrando por email_gestor_responsavel:', user.email)
       }
 
       const { data, error } = await query.order('created_at', { ascending: false })
+
+      console.log('Dados filtrados:', data)
+      console.log('Erro na consulta filtrada:', error)
 
       if (error) {
         console.error('Erro ao buscar clientes:', error)
         toast({
           title: "Erro",
-          description: "Não foi possível carregar os dados",
+          description: `Não foi possível carregar os dados: ${error.message}`,
           variant: "destructive"
         })
       } else {
-        console.log('Dados carregados:', data)
+        console.log('Dados carregados com sucesso:', data?.length || 0, 'registros')
         setClientes(data || [])
       }
     } catch (error) {
       console.error('Erro:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar dados",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
@@ -263,7 +288,7 @@ export function ClientesTable() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="text-lg">Carregando...</div>
+        <div className="text-lg">Carregando dados...</div>
       </div>
     )
   }
@@ -273,10 +298,15 @@ export function ClientesTable() {
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
           <span>Clientes ({filteredClientes.length})</span>
-          <Button onClick={exportToCSV} size="sm">
-            <Download className="w-4 h-4 mr-2" />
-            Exportar
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={fetchClientes} variant="outline" size="sm">
+              Recarregar Dados
+            </Button>
+            <Button onClick={exportToCSV} size="sm">
+              <Download className="w-4 h-4 mr-2" />
+              Exportar
+            </Button>
+          </div>
         </CardTitle>
         <div className="flex gap-4">
           <div className="relative flex-1">
@@ -303,80 +333,97 @@ export function ClientesTable() {
         </div>
       </CardHeader>
       <CardContent>
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="min-w-[100px]">Data Venda</TableHead>
-                <TableHead className="min-w-[150px]">Nome Cliente</TableHead>
-                <TableHead className="min-w-[120px]">Telefone</TableHead>
-                <TableHead className="min-w-[180px]">Email Cliente</TableHead>
-                <TableHead className="min-w-[120px]">Vendedor</TableHead>
-                <TableHead className="min-w-[100px]">Comissão</TableHead>
-                <TableHead className="min-w-[180px]">Email Gestor</TableHead>
-                <TableHead className="min-w-[120px]">Status Campanha</TableHead>
-                <TableHead className="min-w-[100px]">Data Limite</TableHead>
-                <TableHead className="min-w-[100px]">Data Subida</TableHead>
-                <TableHead className="min-w-[120px]">Link Grupo</TableHead>
-                <TableHead className="min-w-[120px]">Link Briefing</TableHead>
-                <TableHead className="min-w-[120px]">Link Criativo</TableHead>
-                <TableHead className="min-w-[120px]">Link Site</TableHead>
-                <TableHead className="min-w-[100px]">Número BM</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClientes.length > 0 ? (
-                filteredClientes.map((cliente) => (
-                  <TableRow key={cliente.id}>
-                    <TableCell>
-                      {cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {cliente.nome_cliente || '-'}
-                    </TableCell>
-                    <TableCell>{cliente.telefone || '-'}</TableCell>
-                    <TableCell>{cliente.email_cliente || '-'}</TableCell>
-                    <TableCell>{cliente.nome_vendedor || '-'}</TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
-                    </TableCell>
-                    <TableCell>{cliente.email_gestor_responsavel || '-'}</TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'status_campanha', cliente.status_campanha || '', true)}
-                    </TableCell>
-                    <TableCell>
-                      {cliente.data_limite || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {cliente.data_subida || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
+        {clientes.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-gray-500 mb-4">Nenhum dado encontrado na tabela.</p>
+            <p className="text-sm text-gray-400 mb-4">
+              Isso pode acontecer se:
+            </p>
+            <ul className="text-sm text-gray-400 text-left max-w-md mx-auto mb-4">
+              <li>• A tabela estiver vazia</li>
+              <li>• Há problemas com as políticas de segurança (RLS)</li>
+              <li>• Seu usuário não tem permissão para ver os dados</li>
+            </ul>
+            <Button onClick={fetchClientes} variant="outline">
+              Tentar Novamente
+            </Button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="min-w-[100px]">Data Venda</TableHead>
+                  <TableHead className="min-w-[150px]">Nome Cliente</TableHead>
+                  <TableHead className="min-w-[120px]">Telefone</TableHead>
+                  <TableHead className="min-w-[180px]">Email Cliente</TableHead>
+                  <TableHead className="min-w-[120px]">Vendedor</TableHead>
+                  <TableHead className="min-w-[100px]">Comissão</TableHead>
+                  <TableHead className="min-w-[180px]">Email Gestor</TableHead>
+                  <TableHead className="min-w-[120px]">Status Campanha</TableHead>
+                  <TableHead className="min-w-[100px]">Data Limite</TableHead>
+                  <TableHead className="min-w-[100px]">Data Subida</TableHead>
+                  <TableHead className="min-w-[120px]">Link Grupo</TableHead>
+                  <TableHead className="min-w-[120px]">Link Briefing</TableHead>
+                  <TableHead className="min-w-[120px]">Link Criativo</TableHead>
+                  <TableHead className="min-w-[120px]">Link Site</TableHead>
+                  <TableHead className="min-w-[100px]">Número BM</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClientes.length > 0 ? (
+                  filteredClientes.map((cliente) => (
+                    <TableRow key={cliente.id}>
+                      <TableCell>
+                        {cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {cliente.nome_cliente || '-'}
+                      </TableCell>
+                      <TableCell>{cliente.telefone || '-'}</TableCell>
+                      <TableCell>{cliente.email_cliente || '-'}</TableCell>
+                      <TableCell>{cliente.nome_vendedor || '-'}</TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
+                      </TableCell>
+                      <TableCell>{cliente.email_gestor_responsavel || '-'}</TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'status_campanha', cliente.status_campanha || '', true)}
+                      </TableCell>
+                      <TableCell>
+                        {cliente.data_limite || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {cliente.data_subida || '-'}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={15} className="text-center py-8 text-gray-500">
+                      Nenhum cliente encontrado com os filtros aplicados
                     </TableCell>
                   </TableRow>
-                ))
-              ) : (
-                <TableRow>
-                  <TableCell colSpan={15} className="text-center py-8 text-gray-500">
-                    Nenhum cliente encontrado
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        )}
       </CardContent>
     </Card>
   )
