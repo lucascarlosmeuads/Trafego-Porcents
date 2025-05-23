@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -58,7 +57,8 @@ export function AdminDashboard() {
   // Métricas por gestor
   const gestorMetrics = Object.entries(
     clientes.reduce((acc, cliente) => {
-      const gestor = cliente.email_gestor || 'Sem Gestor'
+      // Use email_gestor_responsavel if email_gestor is not available
+      const gestor = cliente.email_gestor || cliente.email_gestor_responsavel || 'Sem Gestor'
       acc[gestor] = (acc[gestor] || 0) + 1
       return acc
     }, {} as Record<string, number>)
@@ -70,7 +70,8 @@ export function AdminDashboard() {
   const totalClientes = clientes.length
   const clientesAtivos = clientes.filter(c => c.status_campanha === 'No Ar').length
   const comissaoTotal = clientes.reduce((total, cliente) => {
-    const comissao = parseFloat(cliente.comissao?.replace(/[^\d,]/g, '').replace(',', '.')) || 0
+    // Handle case where comissao may not exist
+    const comissao = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
     return total + comissao
   }, 0)
 
