@@ -36,7 +36,8 @@ export function ClientesTable() {
       let query = supabase.from('clientes').select('*')
       
       if (!isAdmin) {
-        query = query.eq('email_gestor', user.email)
+        // Update to use email_gestor_responsavel which exists in the database
+        query = query.eq('email_gestor_responsavel', user.email)
       }
 
       const { data, error } = await query.order('created_at', { ascending: false })
@@ -63,11 +64,12 @@ export function ClientesTable() {
 
     if (searchTerm) {
       filtered = filtered.filter(cliente =>
-        cliente.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase())
+        (cliente.nome_cliente || '').toLowerCase().includes(searchTerm.toLowerCase())
       )
     }
 
-    if (statusFilter) {
+    // Modified to ignore 'all' value as requested
+    if (statusFilter && statusFilter !== 'all') {
       filtered = filtered.filter(cliente => cliente.status_campanha === statusFilter)
     }
 
@@ -106,25 +108,24 @@ export function ClientesTable() {
   const exportToCSV = () => {
     const headers = [
       'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 
-      'Vendedor', 'Comissão', 'Email Gestor', 'Status Campanha',
+      'Vendedor', 'Email Gestor', 'Status Campanha',
       'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 'Número BM'
     ]
 
     const csvData = filteredClientes.map(cliente => [
       cliente.id,
-      cliente.data_venda,
-      cliente.nome_cliente,
-      cliente.telefone,
-      cliente.email_cliente,
-      cliente.vendedor,
-      cliente.comissao,
-      cliente.email_gestor,
-      cliente.status_campanha,
-      cliente.link_grupo,
-      cliente.link_briefing,
-      cliente.link_criativo,
-      cliente.link_site,
-      cliente.numero_bm
+      cliente.data_venda || '',
+      cliente.nome_cliente || '',
+      cliente.telefone || '',
+      cliente.email_cliente || '',
+      cliente.nome_vendedor || '',
+      cliente.email_gestor_responsavel || '',
+      cliente.status_campanha || '',
+      cliente.link_grupo || '',
+      cliente.link_reuniao_1 || '', // Changed from link_briefing to match database
+      cliente.link_reuniao_2 || '', // Changed from link_criativo to match database
+      cliente.link_reuniao_3 || '', // Changed from link_site to match database
+      cliente.bm_identificacao || '' // Changed from numero_bm to match database
     ])
 
     const csvContent = [headers, ...csvData]
@@ -199,22 +200,22 @@ export function ClientesTable() {
                 <th className="p-3 text-left">Telefone</th>
                 <th className="p-3 text-left">Status Campanha</th>
                 <th className="p-3 text-left">Link Grupo</th>
-                <th className="p-3 text-left">Link Briefing</th>
-                <th className="p-3 text-left">Link Criativo</th>
-                <th className="p-3 text-left">Link Site</th>
-                <th className="p-3 text-left">Número BM</th>
+                <th className="p-3 text-left">Link Reunião 1</th>
+                <th className="p-3 text-left">Link Reunião 2</th>
+                <th className="p-3 text-left">Link Reunião 3</th>
+                <th className="p-3 text-left">BM Identificação</th>
               </tr>
             </thead>
             <tbody>
               {filteredClientes.map((cliente) => (
                 <tr key={cliente.id} className="border-b hover:bg-gray-50">
-                  <td className="p-3">{new Date(cliente.data_venda).toLocaleDateString('pt-BR')}</td>
-                  <td className="p-3 font-medium">{cliente.nome_cliente}</td>
-                  <td className="p-3">{cliente.telefone}</td>
+                  <td className="p-3">{cliente.data_venda ? new Date(cliente.data_venda).toLocaleDateString('pt-BR') : '-'}</td>
+                  <td className="p-3 font-medium">{cliente.nome_cliente || '-'}</td>
+                  <td className="p-3">{cliente.telefone || '-'}</td>
                   <td className="p-3">
                     {editingCell?.id === cliente.id && editingCell?.field === 'status_campanha' ? (
                       <Select
-                        value={cliente.status_campanha}
+                        value={cliente.status_campanha || ''}
                         onValueChange={(value) => {
                           updateField(cliente.id, 'status_campanha', value)
                           setEditingCell(null)
@@ -241,11 +242,12 @@ export function ClientesTable() {
                       </Button>
                     )}
                   </td>
-                  {['link_grupo', 'link_briefing', 'link_criativo', 'link_site', 'numero_bm'].map(field => (
+                  {/* Updated field names to match the database schema */}
+                  {['link_grupo', 'link_reuniao_1', 'link_reuniao_2', 'link_reuniao_3', 'bm_identificacao'].map(field => (
                     <td key={field} className="p-3">
                       {editingCell?.id === cliente.id && editingCell?.field === field ? (
                         <Input
-                          value={cliente[field as keyof Cliente] as string}
+                          value={(cliente[field as keyof typeof cliente] as string) || ''}
                           onChange={(e) => updateField(cliente.id, field, e.target.value)}
                           onBlur={() => setEditingCell(null)}
                           onKeyPress={(e) => e.key === 'Enter' && setEditingCell(null)}
@@ -259,7 +261,7 @@ export function ClientesTable() {
                           onClick={() => setEditingCell({id: cliente.id, field})}
                           className="h-auto p-1 font-normal justify-start text-blue-600"
                         >
-                          {(cliente[field as keyof Cliente] as string) || 'Clique para editar'}
+                          {(cliente[field as keyof typeof cliente] as string) || 'Clique para editar'}
                         </Button>
                       )}
                     </td>

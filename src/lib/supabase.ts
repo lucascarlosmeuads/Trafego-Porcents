@@ -13,18 +13,13 @@ export type Cliente = {
   nome_cliente: string
   telefone: string
   email_cliente: string
-  vendedor: string
-  comissao: string
-  email_gestor: string
-  status_envio: string
-  data_limite: string
+  nome_vendedor: string
+  email_gestor_responsavel: string
   status_campanha: string
-  data_subida_campanha: string
   link_grupo: string
-  link_briefing: string
-  link_criativo: string
-  link_site: string
-  data_agendamento: string
-  numero_bm: string
+  link_reuniao_1: string
+  link_reuniao_2: string
+  link_reuniao_3: string
+  bm_identificacao: string
   created_at: string
 }
