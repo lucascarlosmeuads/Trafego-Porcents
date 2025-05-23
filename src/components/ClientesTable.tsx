@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -205,7 +206,7 @@ export function ClientesTable() {
       cliente.email_gestor_responsavel || '',
       cliente.status_campanha || '',
       cliente.data_limite || '',
-      cliente.data_subida || '',
+      cliente.data_subida_campanha || '',
       cliente.link_grupo || '',
       cliente.link_reuniao_1 || '', 
       cliente.link_reuniao_2 || '', 
@@ -394,7 +395,7 @@ export function ClientesTable() {
                         {cliente.data_limite || '-'}
                       </TableCell>
                       <TableCell>
-                        {cliente.data_subida || '-'}
+                        {cliente.data_subida_campanha || '-'}
                       </TableCell>
                       <TableCell>
                         {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
