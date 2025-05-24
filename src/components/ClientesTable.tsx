@@ -65,7 +65,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
 
-  // Define utility functions first, before they're used
   const getFilteredClientes = (clientesList: typeof clientes) => {
     return clientesList.filter(cliente => {
       const matchesSearch = 
