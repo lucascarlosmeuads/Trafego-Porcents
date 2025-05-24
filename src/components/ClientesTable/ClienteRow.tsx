@@ -372,19 +372,21 @@ export function ClienteRow({
     }
     
     try {
-      // Primeiro definir o valor do link para que onLinkSave possa usá-lo
+      // Primeiro salvar o link do site usando o sistema existente de linkValue
       setLinkValue(siteLinkInput)
       
-      // Salvar o link do site
+      // Salvar o link
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
-        // Depois atualizar o status para finalizado
+        // Depois atualizar o status para finalizado para que apareça o botão "Ver site"
         await onStatusChange(cliente.id, 'finalizado')
         
+        // Limpar os estados de edição
         setEditingSiteLink(false)
         setSiteLinkInput('')
-        console.log('✅ Link salvo e status atualizado com sucesso')
+        
+        console.log('✅ Link salvo e status atualizado para finalizado')
       } else {
         console.error('❌ Falha ao salvar o link')
       }
