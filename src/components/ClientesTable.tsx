@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -36,6 +35,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -91,32 +91,39 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   }
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
-    console.log(`Alterando status do cliente ${clienteId} para: ${newStatus}`)
+    console.log(`=== ALTERANDO STATUS ===`)
+    console.log(`Cliente ID: ${clienteId}`)
+    console.log(`Novo Status: ${newStatus}`)
+    console.log(`Manager: ${selectedManager}`)
+    
+    setUpdatingStatus(clienteId)
     
     try {
       const success = await updateCliente(clienteId, 'status_campanha', newStatus)
       
       if (success) {
-        console.log('Status atualizado com sucesso')
+        console.log('✅ Status atualizado com sucesso')
         toast({
           title: "Sucesso",
-          description: "Status da campanha atualizado",
+          description: `Status alterado para: ${newStatus}`,
         })
       } else {
-        console.error('Falha ao atualizar status')
+        console.error('❌ Falha ao atualizar status')
         toast({
           title: "Erro",
-          description: "Erro ao atualizar status da campanha",
+          description: "Erro ao atualizar status da campanha. Verifique os logs do console.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error('Erro na atualização:', error)
+      console.error('❌ Erro na atualização:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao atualizar status",
         variant: "destructive",
       })
+    } finally {
+      setUpdatingStatus(null)
     }
   }
 
@@ -298,7 +305,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
               ) : (
                 filteredClientes.map((cliente, index) => (
                   <TableRow 
-                    key={cliente.id} 
+                    key={`${selectedManager}-${cliente.id}-${index}`}
                     className="border-border hover:bg-muted/10 transition-colors"
                   >
                     <TableCell className="font-mono text-xs text-foreground">
@@ -335,15 +342,21 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       <Select 
                         value={cliente.status_campanha || ''}
                         onValueChange={(value) => handleStatusChange(cliente.id, value)}
+                        disabled={updatingStatus === cliente.id}
                       >
                         <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
                           <SelectValue>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                              {cliente.status_campanha || 'Selecionar Status'}
-                            </span>
+                            <div className="flex items-center gap-2">
+                              {updatingStatus === cliente.id && (
+                                <RefreshCw className="w-3 h-3 animate-spin" />
+                              )}
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
+                                {cliente.status_campanha || 'Selecionar Status'}
+                              </span>
+                            </div>
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="bg-card border-border z-50">
+                        <SelectContent className="bg-card border-border z-[100]">
                           {STATUS_CAMPANHA.map(status => (
                             <SelectItem key={status} value={status}>
                               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>

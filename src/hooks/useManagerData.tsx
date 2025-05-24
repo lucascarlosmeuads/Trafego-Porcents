@@ -81,24 +81,49 @@ export function useManagerData(selectedManager: string) {
     try {
       const tableName = getTableName(selectedManager)
       
-      console.log(`Atualizando ${tableName} - ID: ${id}, Campo: ${field}, Valor: ${value}`)
+      console.log(`=== INICIANDO ATUALIZAÇÃO ===`)
+      console.log(`Tabela: ${tableName}`)
+      console.log(`ID original: ${id}`)
+      console.log(`Campo: ${field}`)
+      console.log(`Valor: ${value}`)
       
-      // Converter ID para número se necessário
-      const numericId = parseInt(id)
-      if (isNaN(numericId)) {
-        console.error('ID inválido:', id)
+      // Primeiro, vamos verificar se o registro existe
+      const { data: existingData, error: checkError } = await supabase
+        .from(tableName)
+        .select('id')
+        .eq('id', parseInt(id))
+        .single()
+
+      if (checkError) {
+        console.error('Erro ao verificar existência do registro:', checkError)
+        if (checkError.code === 'PGRST116') {
+          console.error('Registro não encontrado com ID:', id)
+          return false
+        }
         return false
       }
+
+      console.log('Registro encontrado:', existingData)
       
-      const { error } = await supabase
+      // Agora fazer a atualização
+      const { data: updateData, error: updateError } = await supabase
         .from(tableName)
         .update({ [field]: value })
-        .eq('id', numericId)
+        .eq('id', parseInt(id))
+        .select()
 
-      if (error) {
-        console.error('Erro ao atualizar cliente:', error)
+      if (updateError) {
+        console.error('Erro ao atualizar cliente:', updateError)
+        console.error('Detalhes do erro:', {
+          code: updateError.code,
+          message: updateError.message,
+          details: updateError.details,
+          hint: updateError.hint
+        })
         return false
       }
+
+      console.log('Dados atualizados no Supabase:', updateData)
 
       // Atualizar o estado local imediatamente
       setClientes(prev => 
@@ -109,10 +134,10 @@ export function useManagerData(selectedManager: string) {
         )
       )
 
-      console.log('Cliente atualizado com sucesso no estado local e no banco')
+      console.log('=== ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
       return true
     } catch (err) {
-      console.error('Erro na atualização:', err)
+      console.error('Erro na atualização (catch):', err)
       return false
     }
   }
