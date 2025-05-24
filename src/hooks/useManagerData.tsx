@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -8,7 +7,7 @@ export function useManagerData(selectedManager: string) {
   const [error, setError] = useState<string | null>(null)
 
   const getTableName = (managerName: string) => {
-    // Mapear nomes dos gerentes para as novas tabelas
+    // Mapear nomes dos gerentes para as tabelas
     const tableMapping: { [key: string]: string } = {
       'Lucas Falcão': 'clientes_lucas_falcao',
       'Andreza': 'clientes_andreza'
@@ -42,23 +41,22 @@ export function useManagerData(selectedManager: string) {
         // Mapear os dados para o formato esperado
         const clientesFormatados = (data || []).map((item: any) => ({
           id: item.id?.toString() || '',
-          data_venda: item.data_venda || '',
           nome_cliente: item.nome_cliente || '',
           telefone: item.telefone || '',
           email_cliente: item.email_cliente || '',
-          nome_vendedor: item.vendedor || '',
-          email_gestor_responsavel: item.email_gestor || '',
+          vendedor: item.vendedor || '',
           email_gestor: item.email_gestor || '',
-          status_campanha: item.status_campanha || '',
+          status_campanha: item.status_campanha || 'Preenchimento do Formulário',
+          data_venda: item.data_venda || '',
           data_limite: item.data_limite || '',
-          data_subida_campanha: item.data_subida_campanha || '',
           link_grupo: item.link_grupo || '',
-          link_reuniao_1: item.link_briefing || '',
-          link_reuniao_2: item.link_criativo || '',
-          link_reuniao_3: item.link_site || '',
-          bm_identificacao: item.numero_bm || '',
-          created_at: item.created_at || '',
-          comissao: item.comissao || ''
+          link_briefing: item.link_briefing || '',
+          link_criativo: item.link_criativo || '',
+          link_site: item.link_site || '',
+          numero_bm: item.numero_bm || '',
+          comissao_paga: item.comissao_paga || false,
+          valor_comissao: item.valor_comissao || 60.00,
+          created_at: item.created_at || ''
         }))
         
         console.log(`Clientes formatados para ${selectedManager}:`, clientesFormatados)
@@ -73,29 +71,17 @@ export function useManagerData(selectedManager: string) {
     }
   }
 
-  const updateCliente = async (id: string, field: string, value: string) => {
+  const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
     if (!selectedManager) return false
 
     try {
       const tableName = getTableName(selectedManager)
       
-      // Mapear campos da interface para campos do banco
-      const fieldMapping: { [key: string]: string } = {
-        'nome_vendedor': 'vendedor',
-        'email_gestor_responsavel': 'email_gestor',
-        'link_reuniao_1': 'link_briefing',
-        'link_reuniao_2': 'link_criativo',
-        'link_reuniao_3': 'link_site',
-        'bm_identificacao': 'numero_bm'
-      }
-
-      const dbField = fieldMapping[field] || field
-      
-      console.log(`Atualizando ${tableName} - ID: ${id}, Campo: ${dbField}, Valor: ${value}`)
+      console.log(`Atualizando ${tableName} - ID: ${id}, Campo: ${field}, Valor: ${value}`)
       
       const { error } = await supabase
         .from(tableName)
-        .update({ [dbField]: value })
+        .update({ [field]: value })
         .eq('id', parseInt(id))
 
       if (error) {
@@ -148,23 +134,22 @@ export function useManagerData(selectedManager: string) {
             // Adicionar novo cliente ao estado
             const novoCliente = {
               id: payload.new.id?.toString() || '',
-              data_venda: payload.new.data_venda || '',
               nome_cliente: payload.new.nome_cliente || '',
               telefone: payload.new.telefone || '',
               email_cliente: payload.new.email_cliente || '',
-              nome_vendedor: payload.new.vendedor || '',
-              email_gestor_responsavel: payload.new.email_gestor || '',
+              vendedor: payload.new.vendedor || '',
               email_gestor: payload.new.email_gestor || '',
               status_campanha: payload.new.status_campanha || '',
+              data_venda: payload.new.data_venda || '',
               data_limite: payload.new.data_limite || '',
-              data_subida_campanha: payload.new.data_subida_campanha || '',
               link_grupo: payload.new.link_grupo || '',
-              link_reuniao_1: payload.new.link_briefing || '',
-              link_reuniao_2: payload.new.link_criativo || '',
-              link_reuniao_3: payload.new.link_site || '',
-              bm_identificacao: payload.new.numero_bm || '',
+              link_briefing: payload.new.link_briefing || '',
+              link_criativo: payload.new.link_criativo || '',
+              link_site: payload.new.link_site || '',
+              numero_bm: payload.new.numero_bm || '',
               created_at: payload.new.created_at || '',
-              comissao: payload.new.comissao || ''
+              comissao_paga: payload.new.comissao_paga || false,
+              valor_comissao: payload.new.valor_comissao || 60.00
             }
             
             setClientes(prev => [novoCliente, ...prev])
@@ -173,23 +158,22 @@ export function useManagerData(selectedManager: string) {
             // Atualizar cliente existente
             const clienteAtualizado = {
               id: payload.new.id?.toString() || '',
-              data_venda: payload.new.data_venda || '',
               nome_cliente: payload.new.nome_cliente || '',
               telefone: payload.new.telefone || '',
               email_cliente: payload.new.email_cliente || '',
-              nome_vendedor: payload.new.vendedor || '',
-              email_gestor_responsavel: payload.new.email_gestor || '',
+              vendedor: payload.new.vendedor || '',
               email_gestor: payload.new.email_gestor || '',
               status_campanha: payload.new.status_campanha || '',
+              data_venda: payload.new.data_venda || '',
               data_limite: payload.new.data_limite || '',
-              data_subida_campanha: payload.new.data_subida_campanha || '',
               link_grupo: payload.new.link_grupo || '',
-              link_reuniao_1: payload.new.link_briefing || '',
-              link_reuniao_2: payload.new.link_criativo || '',
-              link_reuniao_3: payload.new.link_site || '',
-              bm_identificacao: payload.new.numero_bm || '',
+              link_briefing: payload.new.link_briefing || '',
+              link_criativo: payload.new.link_criativo || '',
+              link_site: payload.new.link_site || '',
+              numero_bm: payload.new.numero_bm || '',
               created_at: payload.new.created_at || '',
-              comissao: payload.new.comissao || ''
+              comissao_paga: payload.new.comissao_paga || false,
+              valor_comissao: payload.new.valor_comissao || 60.00
             }
             
             setClientes(prev => 

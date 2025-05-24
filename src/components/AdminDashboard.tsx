@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Download, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { ClientesTable } from './ClientesTable'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface AdminDashboardProps {
   selectedManager: string
@@ -30,17 +31,6 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     return tableMapping[managerName] || 'clientes_andreza'
   }
 
-  // Os 7 status do processo
-  const statusList = [
-    { key: 'Formulário', label: 'Formulário', description: 'Aguardando preenchimento' },
-    { key: 'Brief', label: 'Brief', description: 'Briefing preenchido' },
-    { key: 'Criativo', label: 'Criativo', description: 'Criativos em produção' },
-    { key: 'Site', label: 'Site', description: 'Landing page sendo criada' },
-    { key: 'Agendamento', label: 'Agendamento', description: 'Campanha sendo agendada' },
-    { key: 'No Ar', label: 'No Ar', description: 'Campanha rodando' },
-    { key: 'Otimização', label: 'Otimização', description: 'Analisando e otimizando' }
-  ]
-
   useEffect(() => {
     fetchManagerStats()
   }, [selectedManager])
@@ -61,25 +51,25 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         const totalClientes = data.length
         const clientesAtivos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
         
-        // Contar status
+        // Contar status usando os novos status
         const statusCounts: {[key: string]: number} = {}
-        statusList.forEach(status => {
-          statusCounts[status.key] = 0
+        STATUS_CAMPANHA.forEach(status => {
+          statusCounts[status] = 0
         })
 
         data.forEach(cliente => {
-          const status = cliente.status_campanha || 'Formulário'
+          const status = cliente.status_campanha || 'Preenchimento do Formulário'
           if (statusCounts.hasOwnProperty(status)) {
             statusCounts[status]++
           } else {
-            statusCounts['Formulário']++
+            statusCounts['Preenchimento do Formulário']++
           }
         })
         
         // Calcular comissão total
         const comissaoTotal = data.reduce((total, cliente) => {
-          const comissao = cliente.comissao ? parseFloat(cliente.comissao.replace(/[^\d,]/g, '').replace(',', '.')) : 0
-          return total + comissao
+          const valor = cliente.valor_comissao ? parseFloat(cliente.valor_comissao) : 60.00
+          return total + valor
         }, 0)
 
         console.log(`Estatísticas de ${selectedManager}:`, { totalClientes, clientesAtivos, comissaoTotal })
@@ -124,28 +114,27 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         }
 
         const headers = [
-          'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 
-          'Vendedor', 'Comissão', 'Email Gestor', 'Status Campanha', 'Data Limite', 
-          'Data Subida', 'Link Grupo', 'Link Briefing', 'Link Criativo', 
-          'Link Site', 'Número BM'
+          'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor', 'Email Gestor', 
+          'Status Campanha', 'Data Venda', 'Data Limite', 'Link Grupo', 'Link Briefing', 
+          'Link Criativo', 'Link Site', 'Número BM', 'Comissão Paga', 'Valor Comissão'
         ]
 
         const csvData = data.map(cliente => [
-          cliente.data_venda || '',
           cliente.nome_cliente || '',
           cliente.telefone || '',
           cliente.email_cliente || '',
           cliente.vendedor || '',
-          cliente.comissao || '',
           cliente.email_gestor || '',
           cliente.status_campanha || '',
+          cliente.data_venda || '',
           cliente.data_limite || '',
-          cliente.data_subida_campanha || '',
           cliente.link_grupo || '',
           cliente.link_briefing || '', 
           cliente.link_criativo || '', 
           cliente.link_site || '', 
-          cliente.numero_bm || ''
+          cliente.numero_bm || '',
+          cliente.comissao_paga ? 'Pago' : 'Não Pago',
+          `R$ ${(cliente.valor_comissao || 60.00).toFixed(2)}`
         ])
 
         const csvContent = [headers, ...csvData]
@@ -268,16 +257,22 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                {statusList.map(status => (
-                  <div key={status.key} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                {STATUS_CAMPANHA.map(status => (
+                  <div key={status} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
                     <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-semibold text-sm">{status.label}</h3>
+                      <h3 className="font-semibold text-sm">{status}</h3>
                       <span className="text-2xl font-bold text-blue-600">
-                        {statusStats[status.key] || 0}
+                        {statusStats[status] || 0}
                       </span>
                     </div>
                     <p className="text-xs text-gray-600 dark:text-gray-400">
-                      {status.description}
+                      {status === 'Preenchimento do Formulário' && 'Cliente adicionado, aguardando preenchimento'}
+                      {status === 'Brief' && 'Cliente preencheu o formulário de briefing'}
+                      {status === 'Criativo' && 'Criativos em produção ou em revisão'}
+                      {status === 'Site' && 'Landing page sendo construída (opcional)'}
+                      {status === 'Agendamento' && 'Campanha agendada, configurando BM (opcional)'}
+                      {status === 'No Ar' && 'Campanha rodando, analisando resultados'}
+                      {status === 'Otimização' && 'Otimizando anúncios e melhorando ROAS'}
                     </p>
                   </div>
                 ))}

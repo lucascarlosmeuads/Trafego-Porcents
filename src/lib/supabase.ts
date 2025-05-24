@@ -9,21 +9,33 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export type Cliente = {
   id: string
-  data_venda: string
   nome_cliente: string
   telefone: string
   email_cliente: string
-  nome_vendedor: string
-  email_gestor_responsavel: string
-  email_gestor?: string
+  vendedor: string
+  email_gestor: string
   status_campanha: string
-  data_limite?: string
-  data_subida_campanha?: string
+  data_venda: string
+  data_limite: string
   link_grupo: string
-  link_reuniao_1: string
-  link_reuniao_2: string
-  link_reuniao_3: string
-  bm_identificacao: string
+  link_briefing: string
+  link_criativo: string
+  link_site: string
+  numero_bm: string
+  comissao_paga: boolean
+  valor_comissao: number
   created_at: string
-  comissao?: string
 }
+
+// Status operacionais disponíveis
+export const STATUS_CAMPANHA = [
+  'Preenchimento do Formulário',
+  'Brief',
+  'Criativo', 
+  'Site',
+  'Agendamento',
+  'No Ar',
+  'Otimização'
+] as const
+
+export type StatusCampanha = typeof STATUS_CAMPANHA[number]

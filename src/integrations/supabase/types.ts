@@ -144,6 +144,7 @@ export type Database = {
       clientes_andreza: {
         Row: {
           comissao: string | null
+          comissao_paga: boolean | null
           created_at: string | null
           data_agendamento: string | null
           data_limite: string | null
@@ -161,10 +162,12 @@ export type Database = {
           status_campanha: string | null
           status_envio: string | null
           telefone: string | null
+          valor_comissao: number | null
           vendedor: string | null
         }
         Insert: {
           comissao?: string | null
+          comissao_paga?: boolean | null
           created_at?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
@@ -182,10 +185,12 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          valor_comissao?: number | null
           vendedor?: string | null
         }
         Update: {
           comissao?: string | null
+          comissao_paga?: boolean | null
           created_at?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
@@ -203,6 +208,7 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          valor_comissao?: number | null
           vendedor?: string | null
         }
         Relationships: []
@@ -210,6 +216,7 @@ export type Database = {
       clientes_lucas_falcao: {
         Row: {
           comissao: string | null
+          comissao_paga: boolean | null
           created_at: string | null
           data_agendamento: string | null
           data_limite: string | null
@@ -227,10 +234,12 @@ export type Database = {
           status_campanha: string | null
           status_envio: string | null
           telefone: string | null
+          valor_comissao: number | null
           vendedor: string | null
         }
         Insert: {
           comissao?: string | null
+          comissao_paga?: boolean | null
           created_at?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
@@ -248,10 +257,12 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          valor_comissao?: number | null
           vendedor?: string | null
         }
         Update: {
           comissao?: string | null
+          comissao_paga?: boolean | null
           created_at?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
@@ -269,6 +280,7 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          valor_comissao?: number | null
           vendedor?: string | null
         }
         Relationships: []
