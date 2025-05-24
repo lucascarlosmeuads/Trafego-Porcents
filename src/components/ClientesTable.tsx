@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -745,8 +744,13 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       key={`${selectedManager}-${clienteId}-${index}`}
                       className="border-border hover:bg-muted/10 transition-colors"
                     >
-                      <TableCell className="font-mono text-xs text-white">
-                        {clienteId}
+                      <TableCell className="font-mono text-xs bg-gradient-to-br from-slate-700/30 via-slate-600/20 to-slate-800/30 border-r border-slate-600/30 relative">
+                        <div className="flex items-center justify-center h-full">
+                          <span className="text-white font-semibold tracking-wider text-sm drop-shadow-sm bg-slate-800/40 px-2 py-1 rounded border border-slate-500/30 shadow-inner">
+                            #{clienteId}
+                          </span>
+                        </div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-slate-400/5 to-transparent pointer-events-none"></div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
