@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -184,16 +183,12 @@ export function ClienteRow({
     )
   }
 
-  const handleSiteStatusUpdate = async (newStatus: string) => {
-    try {
-      // Usar onStatusChange que já existe para atualizar o site_status
-      await onStatusChange(cliente.id, newStatus)
-    } catch (error) {
-      console.error('Erro ao atualizar status do site:', error)
-    }
-  }
-
   const renderSiteCell = () => {
+    console.log(`🔍 Renderizando site cell para cliente ${cliente.id}:`, {
+      site_status: (cliente as any).site_status,
+      link_site: cliente.link_site
+    })
+
     // Determinar o status do site baseado nos dados existentes
     const siteStatus = (cliente as any).site_status || 'pendente'
     const siteLink = cliente.link_site
@@ -215,6 +210,7 @@ export function ClienteRow({
             className="h-6 w-6 p-0"
             onClick={async () => {
               if (siteUrl) {
+                console.log(`💾 Salvando URL do site: ${siteUrl}`)
                 // Primeiro salvar o link usando a função existente
                 setLinkValue(siteUrl)
                 await onLinkSave(cliente.id, 'link_site')
@@ -275,6 +271,7 @@ export function ClienteRow({
           size="sm"
           className="h-6 px-2 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
           onClick={() => {
+            console.log(`🟡 Clicou em aguardando link para cliente ${cliente.id}`)
             setSiteUrl('')
             setEditingSiteLink(true)
           }}
@@ -300,7 +297,8 @@ export function ClienteRow({
           <DropdownMenuContent className="w-48">
             <DropdownMenuItem
               onClick={async () => {
-                await handleSiteStatusUpdate('aguardando_link')
+                console.log(`✅ Mudando para "aguardando_link" para cliente ${cliente.id}`)
+                await onStatusChange(cliente.id, 'aguardando_link')
               }}
             >
               ✅ Sim, precisa de site
@@ -325,14 +323,16 @@ export function ClienteRow({
         <DropdownMenuContent className="w-48">
           <DropdownMenuItem
             onClick={async () => {
-              await handleSiteStatusUpdate('aguardando_link')
+              console.log(`✅ Clicou em "Sim, precisa de site" para cliente ${cliente.id}`)
+              await onStatusChange(cliente.id, 'aguardando_link')
             }}
           >
             ✅ Sim, precisa de site
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
-              await handleSiteStatusUpdate('nao_precisa')
+              console.log(`❌ Clicou em "Não precisa de site" para cliente ${cliente.id}`)
+              await onStatusChange(cliente.id, 'nao_precisa')
             }}
           >
             ❌ Não precisa de site
