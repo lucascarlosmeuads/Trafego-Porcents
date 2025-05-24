@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle } from 'lucide-react'
+import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle, Check, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { calculateDataLimite, getDataLimiteMensagem } from '@/utils/dateUtils'
@@ -37,6 +37,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
+  const [linkValue, setLinkValue] = useState('')
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -161,19 +163,112 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     }
   }
 
-  const renderLinkButton = (url: string, label: string) => {
-    if (!url) return <span className="text-muted-foreground">-</span>
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue || '')
+  }
+
+  const handleLinkSave = async (clienteId: string, field: string) => {
+    try {
+      const success = await updateCliente(clienteId, field, linkValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Link atualizado com sucesso",
+        })
+        setEditingLink(null)
+        setLinkValue('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar link",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao salvar link:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar link",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const renderLinkField = (cliente: any, field: string, label: string) => {
+    const clienteId = String(cliente.id || '')
+    const currentValue = cliente[field]
+    const isEditing = editingLink?.clienteId === clienteId && editingLink?.field === field
+
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1 min-w-[120px]">
+          <Input
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
+            placeholder="Cole o link aqui..."
+            className="h-6 text-xs px-2"
+            autoFocus
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => handleLinkSave(clienteId, field)}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={handleLinkCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    if (!currentValue) {
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => handleLinkEdit(clienteId, field, currentValue)}
+        >
+          Adicionar link
+        </Button>
+      )
+    }
     
     return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-6 px-2 text-xs"
-        onClick={() => window.open(url, '_blank')}
-      >
-        <ExternalLink className="w-3 h-3 mr-1" />
-        Ver
-      </Button>
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={() => window.open(currentValue, '_blank')}
+        >
+          <ExternalLink className="w-3 h-3 mr-1" />
+          Ver
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+          onClick={() => handleLinkEdit(clienteId, field, currentValue)}
+        >
+          <Edit2 className="w-3 h-3" />
+        </Button>
+      </div>
     )
   }
 
@@ -431,16 +526,16 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                         {renderDataLimite(cliente)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {renderLinkButton(cliente.link_grupo, 'Grupo')}
+                        {renderLinkField(cliente, 'link_grupo', 'Grupo')}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {renderLinkButton(cliente.link_briefing, 'Briefing')}
+                        {renderLinkField(cliente, 'link_briefing', 'Briefing')}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {renderLinkButton(cliente.link_criativo, 'Criativo')}
+                        {renderLinkField(cliente, 'link_criativo', 'Criativo')}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
-                        {renderLinkButton(cliente.link_site, 'Site')}
+                        {renderLinkField(cliente, 'link_site', 'Site')}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
                         <span className="text-foreground">{cliente.numero_bm || '-'}</span>
