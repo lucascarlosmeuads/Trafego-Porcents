@@ -282,14 +282,19 @@ export function ClienteRow({
             >
               🟡 Aguardando link
             </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => handleSiteStatusChange('pendente')}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
+            <Select value="" onValueChange={handleSiteStatusChange}>
+              <SelectTrigger className="h-6 w-6 p-0 border-none bg-transparent">
+                <Edit2 className="w-3 h-3 text-muted-foreground" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border z-50">
+                <SelectItem value="nao_precisa">
+                  <span className="text-xs">❌ Não precisa de site</span>
+                </SelectItem>
+                <SelectItem value="pendente">
+                  <span className="text-xs">⚪️ Voltar para pendente</span>
+                </SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         )
 
@@ -316,7 +321,6 @@ export function ClienteRow({
             </div>
           )
         } else {
-          // Fallback se não tiver link mas status é finalizado
           return (
             <Button
               variant="outline"
@@ -342,7 +346,6 @@ export function ClienteRow({
     console.log('🎯 Mudando status do site:', { clienteId: cliente.id, newStatus })
     
     try {
-      // Atualizar o site_status via onStatusChange (que deve ser modificado para aceitar site_status)
       await onStatusChange(cliente.id, newStatus)
     } catch (error) {
       console.error('❌ Erro ao atualizar status do site:', error)
@@ -365,8 +368,10 @@ export function ClienteRow({
     console.log('💾 Salvando link do site:', siteLinkInput)
     
     try {
-      // Salvar o link e atualizar status para finalizado
+      // Primeiro salvar o link
       await onLinkSave(cliente.id, 'link_site')
+      
+      // Depois atualizar o status para finalizado
       await onStatusChange(cliente.id, 'finalizado')
       
       setEditingSiteLink(false)

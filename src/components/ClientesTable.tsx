@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -162,6 +161,33 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     }
   }
 
+  const handleLinkSave = async (clienteId: string, field: string) => {
+    try {
+      const success = await updateCliente(clienteId, field, linkValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Link atualizado com sucesso",
+        })
+        setEditingLink(null)
+        setLinkValue('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar link",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao salvar link:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar link",
+      })
+    }
+  }
+
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
     console.log(`🆔 Cliente ID: "${clienteId}"`)
@@ -227,39 +253,6 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
     setEditingLink({ clienteId, field })
     setLinkValue(currentValue || '')
-  }
-
-  const handleLinkSave = async (clienteId: string, field: string) => {
-    try {
-      const success = await updateCliente(clienteId, field, linkValue)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Link atualizado com sucesso",
-        })
-        setEditingLink(null)
-        setLinkValue('')
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar link",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao salvar link:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar link",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleLinkCancel = () => {
-    setEditingLink(null)
-    setLinkValue('')
   }
 
   const handleBMEdit = (clienteId: string, currentValue: string) => {
@@ -368,6 +361,11 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const handleComissionValueCancel = () => {
     setEditingComissionValue(null)
     setComissionValueInput('')
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
   }
 
   const handleAddClient = async (clienteData: any) => {
