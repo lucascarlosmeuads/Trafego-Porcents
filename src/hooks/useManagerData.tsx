@@ -31,7 +31,7 @@ export function useManagerData(selectedManager: string) {
       const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact' })
-        .order('id', { ascending: true, nullsLast: true })
+        .order('id', { ascending: true, nullsFirst: false })
 
       console.log('📊 Resposta do Supabase:', {
         data: data?.length || 0,
