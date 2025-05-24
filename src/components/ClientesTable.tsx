@@ -24,9 +24,10 @@ import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
+  filterType?: 'ativos' | 'inativos' | 'problemas'
 }
 
-export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps) {
+export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
   const { isAdmin, user } = useAuth()
   
   // FILTRO CRÍTICO: Para admin: usa selectedManager; para gestor: usa email do usuário
@@ -37,7 +38,8 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     isAdmin,
     emailToUse,
     selectedManager,
-    userEmail: user?.email
+    userEmail: user?.email,
+    filterType
   })
   
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
@@ -64,6 +66,38 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const [addingClient, setAddingClient] = useState(false)
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
+
+  // Filtrar clientes baseado no filterType
+  let clientesFiltrados = clientes
+  if (filterType === 'ativos') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Reembolso' && 
+      cliente.status_campanha !== 'Problema'
+    )
+  } else if (filterType === 'inativos') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    )
+  } else if (filterType === 'problemas') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha === 'Problema'
+    )
+  } else {
+    // Comportamento padrão (manter as abas existentes)
+    const clientesAtivos = clientes.filter(cliente => 
+      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Reembolso' && 
+      cliente.status_campanha !== 'Problema'
+    )
+    
+    const clientesInativos = clientes.filter(cliente => 
+      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    )
+
+    // Retornar o componente com abas se não há filterType específico
+    return renderWithTabs(clientesAtivos, clientesInativos)
+  }
 
   useEffect(() => {
     const checkConnection = () => {
@@ -163,14 +197,6 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     verificarPermissoes()
   }, [user?.email, isAdmin])
 
-  const clientesAtivos = clientes.filter(cliente => 
-    cliente.status_campanha !== 'Off' && cliente.status_campanha !== 'Reembolso'
-  )
-  
-  const clientesInativos = clientes.filter(cliente => 
-    cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
-  )
-
   const getFilteredClientes = (clientesList: typeof clientes) => {
     return clientesList.filter(cliente => {
       const matchesSearch = 
@@ -185,8 +211,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     })
   }
 
-  const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
-  const filteredClientesInativos = getFilteredClientes(clientesInativos)
+  const filteredClientes = getFilteredClientes(clientesFiltrados)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -626,6 +651,81 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     </div>
   )
 
+  function renderWithTabs(clientesAtivos: typeof clientes, clientesInativos: typeof clientes) {
+    const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
+    const filteredClientesInativos = getFilteredClientes(clientesInativos)
+
+    return (
+      <div className="space-y-4 p-4 lg:p-0">
+        {/* Indicador de Segurança para Gestores */}
+        {!isAdmin && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-green-600 text-sm">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span>🔒 Filtro de Segurança Ativo - Visualizando apenas seus clientes ({emailToUse})</span>
+            </div>
+          </div>
+        )}
+        
+        <Tabs defaultValue="ativos" className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="ativos">Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
+            <TabsTrigger value="inativos">Clientes Inativos ({clientesInativos.length})</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="ativos" className="space-y-4">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <TableActions
+                selectedManager={currentManager || managerName}
+                filteredClientesCount={filteredClientesAtivos.length}
+                realtimeConnected={realtimeConnected}
+                onRefresh={refetch}
+                onExport={exportToCSV}
+              />
+              
+              {podeAdicionarCliente && !loadingPermissoes && (
+                <AddClientModal
+                  selectedManager={currentManager || managerName}
+                  onClienteAdicionado={refetch}
+                />
+              )}
+            </div>
+
+            <TableFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              getStatusColor={getStatusColor}
+            />
+
+            {renderClientesTable(filteredClientesAtivos)}
+          </TabsContent>
+
+          <TabsContent value="inativos" className="space-y-4">
+            <TableActions
+              selectedManager={currentManager || managerName}
+              filteredClientesCount={filteredClientesInativos.length}
+              realtimeConnected={realtimeConnected}
+              onRefresh={refetch}
+              onExport={exportToCSV}
+            />
+
+            <TableFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              getStatusColor={getStatusColor}
+            />
+
+            {renderClientesTable(filteredClientesInativos, true)}
+          </TabsContent>
+        </Tabs>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 px-4">
@@ -649,6 +749,22 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     )
   }
 
+  // Se não é um filterType específico, renderizar com abas
+  if (!filterType) {
+    const clientesAtivos = clientes.filter(cliente => 
+      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Reembolso' && 
+      cliente.status_campanha !== 'Problema'
+    )
+    
+    const clientesInativos = clientes.filter(cliente => 
+      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    )
+
+    return renderWithTabs(clientesAtivos, clientesInativos)
+  }
+
+  // Renderizar tabela simples para filterType específico
   return (
     <div className="space-y-4 p-4 lg:p-0">
       {/* Indicador de Segurança para Gestores */}
@@ -661,61 +777,32 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
         </div>
       )}
       
-      <Tabs defaultValue="ativos" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="ativos">Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="inativos">Clientes Inativos ({clientesInativos.length})</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="ativos" className="space-y-4">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <TableActions
-              selectedManager={currentManager || managerName}
-              filteredClientesCount={filteredClientesAtivos.length}
-              realtimeConnected={realtimeConnected}
-              onRefresh={refetch}
-              onExport={exportToCSV}
-            />
-            
-            {podeAdicionarCliente && !loadingPermissoes && (
-              <AddClientModal
-                selectedManager={currentManager || managerName}
-                onClienteAdicionado={refetch}
-              />
-            )}
-          </div>
-
-          <TableFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            getStatusColor={getStatusColor}
-          />
-
-          {renderClientesTable(filteredClientesAtivos)}
-        </TabsContent>
-
-        <TabsContent value="inativos" className="space-y-4">
-          <TableActions
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <TableActions
+          selectedManager={currentManager || managerName}
+          filteredClientesCount={filteredClientes.length}
+          realtimeConnected={realtimeConnected}
+          onRefresh={refetch}
+          onExport={exportToCSV}
+        />
+        
+        {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
+          <AddClientModal
             selectedManager={currentManager || managerName}
-            filteredClientesCount={filteredClientesInativos.length}
-            realtimeConnected={realtimeConnected}
-            onRefresh={refetch}
-            onExport={exportToCSV}
+            onClienteAdicionado={refetch}
           />
+        )}
+      </div>
 
-          <TableFilters
-            searchTerm={searchTerm}
-            setSearchTerm={setSearchTerm}
-            statusFilter={statusFilter}
-            setStatusFilter={setStatusFilter}
-            getStatusColor={getStatusColor}
-          />
+      <TableFilters
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        statusFilter={statusFilter}
+        setStatusFilter={setStatusFilter}
+        getStatusColor={getStatusColor}
+      />
 
-          {renderClientesTable(filteredClientesInativos, true)}
-        </TabsContent>
-      </Tabs>
+      {renderClientesTable(filteredClientes, filterType === 'inativos')}
     </div>
   )
 }

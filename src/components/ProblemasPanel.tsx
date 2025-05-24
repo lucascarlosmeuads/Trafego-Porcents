@@ -1,6 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -14,6 +15,14 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { AlertTriangle, CheckCircle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface ClienteComProblema {
   id: string
@@ -23,20 +32,33 @@ interface ClienteComProblema {
   descricao_problema: string
 }
 
-export function ProblemasPanel() {
+interface ProblemasPanelProps {
+  gestorMode?: boolean
+}
+
+export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
+  const { user, isAdmin } = useAuth()
   const [clientesComProblema, setClientesComProblema] = useState<ClienteComProblema[]>([])
   const [loading, setLoading] = useState(true)
-  const [resolvendo, setResolvendo] = useState<string | null>(null)
+  const [atualizandoStatus, setAtualizandoStatus] = useState<string | null>(null)
 
   const buscarClientesComProblema = async () => {
     try {
       console.log('🔍 [ProblemasPanel] Buscando clientes com status Problema...')
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('todos_clientes')
         .select('id, nome_cliente, email_gestor, status_campanha, descricao_problema')
         .eq('status_campanha', 'Problema')
         .order('id', { ascending: true })
+
+      // Se for gestor mode (não admin), filtrar por email do usuário
+      if (gestorMode && !isAdmin && user?.email) {
+        query = query.eq('email_gestor', user.email)
+        console.log('🔒 [ProblemasPanel] Filtro de gestor aplicado:', user.email)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.error('❌ [ProblemasPanel] Erro ao buscar clientes com problema:', error)
@@ -62,47 +84,53 @@ export function ProblemasPanel() {
     }
   }
 
-  const marcarComoResolvido = async (clienteId: string) => {
-    setResolvendo(clienteId)
+  const alterarStatusCliente = async (clienteId: string, novoStatus: string) => {
+    setAtualizandoStatus(clienteId)
     
     try {
-      console.log('🔧 [ProblemasPanel] Marcando cliente como resolvido:', clienteId)
+      console.log('🔧 [ProblemasPanel] Alterando status do cliente:', clienteId, 'para:', novoStatus)
       
+      const updates: any = { 
+        status_campanha: novoStatus
+      }
+
+      // Se está saindo do status Problema, limpar a descrição
+      if (novoStatus !== 'Problema') {
+        updates.descricao_problema = null
+      }
+
       const { error } = await supabase
         .from('todos_clientes')
-        .update({ 
-          status_campanha: 'Preenchimento do Formulário',
-          descricao_problema: null
-        })
+        .update(updates)
         .eq('id', parseInt(clienteId))
 
       if (error) {
-        console.error('❌ [ProblemasPanel] Erro ao resolver problema:', error)
+        console.error('❌ [ProblemasPanel] Erro ao alterar status:', error)
         toast({
           title: "Erro",
-          description: "Erro ao marcar como resolvido",
+          description: "Erro ao alterar status",
           variant: "destructive"
         })
         return
       }
 
-      console.log('✅ [ProblemasPanel] Problema resolvido com sucesso')
+      console.log('✅ [ProblemasPanel] Status alterado com sucesso')
       toast({
         title: "Sucesso",
-        description: "Problema marcado como resolvido"
+        description: `Status alterado para: ${novoStatus}`
       })
       
       // Atualizar a lista
       buscarClientesComProblema()
     } catch (err) {
-      console.error('💥 [ProblemasPanel] Erro ao resolver:', err)
+      console.error('💥 [ProblemasPanel] Erro ao alterar status:', err)
       toast({
         title: "Erro",
         description: "Erro inesperado",
         variant: "destructive"
       })
     } finally {
-      setResolvendo(null)
+      setAtualizandoStatus(null)
     }
   }
 
@@ -130,7 +158,7 @@ export function ProblemasPanel() {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [])
+  }, [gestorMode, user?.email, isAdmin])
 
   if (loading) {
     return (
@@ -155,7 +183,7 @@ export function ProblemasPanel() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <AlertTriangle className="w-5 h-5 text-amber-500" />
-          Problemas ({clientesComProblema.length})
+          {gestorMode ? 'Meus Problemas' : 'Todos os Problemas'} ({clientesComProblema.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -201,22 +229,21 @@ export function ProblemasPanel() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => marcarComoResolvido(cliente.id)}
-                        disabled={resolvendo === cliente.id}
-                        className="text-green-600 border-green-600 hover:bg-green-50"
+                      <Select
+                        disabled={atualizandoStatus === cliente.id}
+                        onValueChange={(novoStatus) => alterarStatusCliente(cliente.id, novoStatus)}
                       >
-                        {resolvendo === cliente.id ? (
-                          'Resolvendo...'
-                        ) : (
-                          <>
-                            <CheckCircle className="w-4 h-4 mr-1" />
-                            Marcar como Resolvido
-                          </>
-                        )}
-                      </Button>
+                        <SelectTrigger className="w-[180px]">
+                          <SelectValue placeholder="Alterar status..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {STATUS_CAMPANHA.filter(status => status !== 'Problema').map((status) => (
+                            <SelectItem key={status} value={status}>
+                              {status}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                   </TableRow>
                 ))}

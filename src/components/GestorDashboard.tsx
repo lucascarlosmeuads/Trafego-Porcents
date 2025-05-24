@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
+import { ProblemasPanel } from './ProblemasPanel'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorPermissions } from '@/hooks/useGestorPermissions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -12,6 +13,21 @@ export function GestorDashboard() {
   const { user, currentManagerName, isAdmin } = useAuth()
   const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
+
+  // Separar clientes por status
+  const clientesAtivos = clientes.filter(cliente => 
+    cliente.status_campanha !== 'Off' && 
+    cliente.status_campanha !== 'Reembolso' && 
+    cliente.status_campanha !== 'Problema'
+  )
+  
+  const clientesInativos = clientes.filter(cliente => 
+    cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+  )
+
+  const clientesProblemas = clientes.filter(cliente => 
+    cliente.status_campanha === 'Problema'
+  )
 
   // Log de segurança para verificar se o filtro está funcionando
   useEffect(() => {
@@ -67,9 +83,11 @@ export function GestorDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">📊 Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes">📋 Tabela de Clientes</TabsTrigger>
+          <TabsTrigger value="clientes">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
+          <TabsTrigger value="problemas">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
+          <TabsTrigger value="inativos">📋 Inativos ({clientesInativos.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="dashboard" className="space-y-6">
@@ -77,7 +95,15 @@ export function GestorDashboard() {
         </TabsContent>
         
         <TabsContent value="clientes" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} />
+          <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
+        </TabsContent>
+
+        <TabsContent value="problemas" className="space-y-6">
+          <ProblemasPanel gestorMode={true} />
+        </TabsContent>
+
+        <TabsContent value="inativos" className="space-y-6">
+          <ClientesTable selectedManager={currentManagerName} filterType="inativos" />
         </TabsContent>
       </Tabs>
     </div>
