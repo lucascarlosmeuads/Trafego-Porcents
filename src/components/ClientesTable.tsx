@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -52,7 +53,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   // Estado para controlar permissão de adicionar cliente
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
-  const [loadingPermissoes, setLoadingPermissoes] = useState(false)
+  const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
 
   useEffect(() => {
@@ -81,8 +82,19 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   // Verificar permissões do gestor
   useEffect(() => {
     const verificarPermissoes = async () => {
-      if (!user?.email || isAdmin) {
-        setPodeAdicionarCliente(isAdmin) // Admin sempre pode
+      console.log('🔍 Verificando permissões para:', user?.email)
+      
+      if (!user?.email) {
+        console.log('❌ Usuário não logado')
+        setPodeAdicionarCliente(false)
+        setLoadingPermissoes(false)
+        return
+      }
+
+      if (isAdmin) {
+        console.log('✅ Usuário é admin - pode adicionar')
+        setPodeAdicionarCliente(true)
+        setLoadingPermissoes(false)
         return
       }
 
@@ -95,13 +107,20 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
           .single()
 
         if (error) {
-          console.log('Gestor não encontrado na tabela gestores')
+          console.log('⚠️ Gestor não encontrado na tabela gestores:', error)
           setPodeAdicionarCliente(false)
         } else {
-          setPodeAdicionarCliente(data.pode_adicionar_cliente && data.ativo)
+          const canAdd = data.pode_adicionar_cliente && data.ativo
+          console.log('📊 Permissões do gestor:', { 
+            email: user.email, 
+            pode_adicionar_cliente: data.pode_adicionar_cliente, 
+            ativo: data.ativo,
+            canAdd 
+          })
+          setPodeAdicionarCliente(canAdd)
         }
       } catch (error) {
-        console.error('Erro ao verificar permissões:', error)
+        console.error('💥 Erro ao verificar permissões:', error)
         setPodeAdicionarCliente(false)
       } finally {
         setLoadingPermissoes(false)
@@ -507,6 +526,18 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
                 isLoading={addingClient}
                 getStatusColor={getStatusColor}
               />
+            )}
+            
+            {/* Debug info - remover em produção */}
+            {!isInactive && (
+              <TableRow className="border-border opacity-50">
+                <TableCell colSpan={15} className="text-center py-2 text-xs text-muted-foreground">
+                  Debug: podeAdicionarCliente={String(podeAdicionarCliente)} | 
+                  loadingPermissoes={String(loadingPermissoes)} | 
+                  isAdmin={String(isAdmin)} | 
+                  email={user?.email}
+                </TableCell>
+              </TableRow>
             )}
           </TableBody>
         </Table>
