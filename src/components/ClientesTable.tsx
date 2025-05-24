@@ -98,6 +98,21 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     }
   }
 
+  // Função para abrir links com protocolo correto
+  const openLink = (url: string) => {
+    if (!url) return
+    
+    let formattedUrl = url.trim()
+    
+    // Se não começar com http:// ou https://, adiciona https://
+    if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
+      formattedUrl = `https://${formattedUrl}`
+    }
+    
+    console.log(`🔗 Abrindo link: ${formattedUrl}`)
+    window.open(formattedUrl, '_blank')
+  }
+
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
     console.log(`🆔 Cliente ID recebido: "${clienteId}" (tipo: ${typeof clienteId})`)
@@ -353,7 +368,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
           variant="outline"
           size="sm"
           className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-300 dark:hover:text-blue-200 transition-all duration-200 shadow-sm hover:shadow-md"
-          onClick={() => window.open(currentValue, '_blank')}
+          onClick={() => openLink(currentValue)}
         >
           <ExternalLink className="w-3 h-3 mr-1" />
           Ver
