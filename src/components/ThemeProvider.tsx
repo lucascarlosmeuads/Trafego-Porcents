@@ -1,67 +1,35 @@
 
-import { createContext, useContext, useEffect, useState } from "react"
-
-type Theme = "dark" | "light" | "system"
+import { createContext, useContext, useEffect } from "react"
 
 type ThemeProviderProps = {
   children: React.ReactNode
-  defaultTheme?: Theme
-  storageKey?: string
 }
 
 type ThemeProviderState = {
-  theme: Theme
-  setTheme: (theme: Theme) => void
+  theme: "dark"
 }
 
 const initialState: ThemeProviderState = {
-  theme: "system",
-  setTheme: () => null,
+  theme: "dark",
 }
 
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState)
 
 export function ThemeProvider({
   children,
-  defaultTheme = "light",
-  storageKey = "lovable-theme",
   ...props
 }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(() => {
-    const stored = localStorage.getItem(storageKey)
-    return (stored as Theme) || defaultTheme
-  })
-
   useEffect(() => {
     const root = window.document.documentElement
-    console.log('Theme effect running with theme:', theme)
-
-    // Remove all theme classes
+    console.log('Setting dark mode permanently')
+    
+    // Remove all theme classes and set dark mode
     root.classList.remove("light", "dark")
-
-    if (theme === "system") {
-      const systemTheme = window.matchMedia("(prefers-color-scheme: dark)")
-        .matches
-        ? "dark"
-        : "light"
-      
-      console.log('System theme detected:', systemTheme)
-      root.classList.add(systemTheme)
-    } else {
-      console.log('Adding theme class:', theme)
-      root.classList.add(theme)
-    }
-  }, [theme])
-
-  const setTheme = (newTheme: Theme) => {
-    console.log('Setting theme to:', newTheme)
-    localStorage.setItem(storageKey, newTheme)
-    setThemeState(newTheme)
-  }
+    root.classList.add("dark")
+  }, [])
 
   const value = {
-    theme,
-    setTheme,
+    theme: "dark" as const,
   }
 
   return (

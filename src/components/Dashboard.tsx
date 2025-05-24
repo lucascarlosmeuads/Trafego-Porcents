@@ -6,7 +6,6 @@ import { ClientesTable } from './ClientesTable'
 import { AdminDashboard } from './AdminDashboard'
 import { GestorDashboard } from './GestorDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
-import { ThemeToggle } from './ThemeToggle'
 import { User } from 'lucide-react'
 import { useState } from 'react'
 
@@ -90,7 +89,6 @@ export function Dashboard() {
                   <User className="w-4 h-4" />
                   <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
                 </div>
-                <ThemeToggle />
                 <Button 
                   variant="outline" 
                   onClick={handleSignOut}
