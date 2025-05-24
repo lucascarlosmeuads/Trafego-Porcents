@@ -5,7 +5,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
@@ -102,26 +102,6 @@ export function AdminTable() {
     }
   }
 
-  const isDataLimiteVencida = (dataLimite: string) => {
-    if (!dataLimite) return false
-    const hoje = new Date()
-    const limite = new Date(dataLimite)
-    return hoje > limite
-  }
-
-  const getDataLimiteStyle = (dataLimite: string) => {
-    if (!dataLimite) return 'bg-muted'
-    
-    const hoje = new Date()
-    const limite = new Date(dataLimite)
-    
-    if (hoje > limite) {
-      return 'bg-red-100 text-red-800 border-red-300'
-    } else {
-      return 'bg-green-100 text-green-800 border-green-300'
-    }
-  }
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Preenchimento do Formulário':
@@ -138,25 +118,13 @@ export function AdminTable() {
         return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      case 'Off':
+        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Reembolso':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
       default:
         return 'bg-muted text-muted-foreground border border-border'
     }
-  }
-
-  const renderLinkButton = (url: string, label: string) => {
-    if (!url) return <span className="text-muted-foreground">-</span>
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-6 px-2 text-xs"
-        onClick={() => window.open(url, '_blank')}
-      >
-        <ExternalLink className="w-3 h-3 mr-1" />
-        Ver
-      </Button>
-    )
   }
 
   if (loading) {
@@ -208,8 +176,8 @@ export function AdminTable() {
                     <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-muted-foreground">Vendedor:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.vendedor || '-'}</span>
+                    <span className="font-medium text-muted-foreground">Email Gestor:</span>
+                    <span className="ml-2 text-card-foreground">{cliente.email_gestor || '-'}</span>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Status:</span>
@@ -236,11 +204,8 @@ export function AdminTable() {
                 <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                 <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
-                <TableHead className="min-w-[200px] text-muted-foreground">Email Cliente</TableHead>
-                <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
-                <TableHead className="min-w-[120px] text-muted-foreground">Data Limite</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -264,16 +229,6 @@ export function AdminTable() {
                     </div>
                   </TableCell>
                   <TableCell className="text-foreground">{cliente.telefone}</TableCell>
-                  <TableCell>
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.email_cliente}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <div className="max-w-[150px] truncate text-foreground">
-                      {cliente.vendedor}
-                    </div>
-                  </TableCell>
                   <TableCell>
                     <div className="max-w-[180px] truncate text-foreground">
                       {cliente.email_gestor}
@@ -301,14 +256,6 @@ export function AdminTable() {
                         ))}
                       </SelectContent>
                     </Select>
-                  </TableCell>
-                  <TableCell>
-                    <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
-                      {isDataLimiteVencida(cliente.data_limite) && (
-                        <AlertTriangle className="w-3 h-3" />
-                      )}
-                      <span>{cliente.data_limite || '-'}</span>
-                    </div>
                   </TableCell>
                 </TableRow>
               ))}
