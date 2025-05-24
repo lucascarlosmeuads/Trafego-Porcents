@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -6,6 +5,12 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2 } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -64,6 +69,10 @@ export function ClienteRow({
   comissionValueInput,
   setComissionValueInput
 }: ClienteRowProps) {
+  // Estado local para controlar edição do site
+  const [editingSiteLink, setEditingSiteLink] = useState(false)
+  const [siteUrl, setSiteUrl] = useState('')
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
     try {
@@ -171,6 +180,159 @@ export function ClienteRow({
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
       </div>
+    )
+  }
+
+  const renderSiteCell = () => {
+    // Determinar o status do site baseado nos dados existentes
+    const siteStatus = (cliente as any).site_status || 'pendente'
+    const siteLink = cliente.link_site
+
+    // Estado: Editando o link do site
+    if (editingSiteLink) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={siteUrl}
+            onChange={(e) => setSiteUrl(e.target.value)}
+            className="h-6 text-xs"
+            placeholder="https://..."
+            autoFocus
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={async () => {
+              if (siteUrl) {
+                // Salvar o link e atualizar status para finalizado
+                await onLinkSave(cliente.id, 'link_site')
+                // Também atualizar o status do site
+                await onStatusChange(cliente.id, 'site_status')
+                setEditingSiteLink(false)
+                setSiteUrl('')
+              }
+            }}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => {
+              setEditingSiteLink(false)
+              setSiteUrl('')
+            }}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Estado: Site finalizado com link
+    if (siteStatus === 'finalizado' && siteLink) {
+      return (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+            onClick={() => window.open(siteLink, '_blank')}
+          >
+            🌐 Ver site
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => {
+              setSiteUrl(siteLink)
+              setEditingSiteLink(true)
+            }}
+          >
+            <Edit2 className="w-3 h-3 text-muted-foreground" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Estado: Aguardando link
+    if (siteStatus === 'aguardando_link') {
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
+          onClick={() => {
+            setSiteUrl('')
+            setEditingSiteLink(true)
+          }}
+        >
+          🟡 Aguardando link
+        </Button>
+      )
+    }
+
+    // Estado: Não precisa de site
+    if (siteStatus === 'nao_precisa') {
+      return (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
+            >
+              ❌ Não precisa
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent className="w-48">
+            <DropdownMenuItem
+              onClick={async () => {
+                // Alterar para precisa de site
+                await onStatusChange(cliente.id, 'site_status')
+              }}
+            >
+              ✅ Sim, precisa de site
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )
+    }
+
+    // Estado: Pendente (padrão)
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+          >
+            ⚪️ Pendente
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-48">
+          <DropdownMenuItem
+            onClick={async () => {
+              // Atualizar status para aguardando_link
+              await onStatusChange(cliente.id, 'site_status')
+            }}
+          >
+            ✅ Sim, precisa de site
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={async () => {
+              // Atualizar status para nao_precisa
+              await onStatusChange(cliente.id, 'site_status')
+            }}
+          >
+            ❌ Não precisa de site
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     )
   }
 
@@ -381,7 +543,7 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_site || '', 'link_site', 'Site')}
+        {renderSiteCell()}
       </TableCell>
       
       <TableCell className="hidden xl:table-cell">

@@ -8,7 +8,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string>('')
 
-  // Buscar qual tabela contém o email do gestor
   const findManagerTable = async (email: string): Promise<{ tableName: string; managerName: string } | null> => {
     console.log('🔍 Buscando tabela para email:', email)
     
@@ -44,9 +43,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     return null
   }
 
-  // Determinar o gestor baseado no email logado ou gestor selecionado (para admin)
   const determineManager = async (email: string, selectedMgr?: string): Promise<{ manager: string; tableName: string }> => {
-    // Se for admin e tiver gestor selecionado, usar o gestor selecionado
     if (isAdmin && selectedMgr) {
       return {
         manager: selectedMgr,
@@ -61,7 +58,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       }
     }
     
-    // Mapear emails específicos para gestores (mapeamento direto)
     const managerMapping: { [key: string]: { manager: string; table: string } } = {
       'andreza@gestor.com': { manager: 'Andreza', table: 'clientes_andreza' },
       'lucas.falcao@gestor.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' },
@@ -69,7 +65,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' }
     }
     
-    // Se for um email específico mapeado, usar o mapeamento
     if (managerMapping[email]) {
       return {
         manager: managerMapping[email].manager,
@@ -77,7 +72,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       }
     }
     
-    // 🚀 NOVA LÓGICA: Buscar automaticamente em qual tabela o email existe
     const foundTable = await findManagerTable(email)
     if (foundTable) {
       return {
@@ -86,23 +80,21 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       }
     }
     
-    // Se não encontrou em nenhuma tabela, extrair nome do email se for @trafegoporcents.com
     if (email.endsWith('@trafegoporcents.com')) {
       const username = email.split('@')[0]
       const managerName = username.charAt(0).toUpperCase() + username.slice(1)
       return {
         manager: managerName,
-        tableName: 'clientes_andreza' // Fallback para Andreza
+        tableName: 'clientes_andreza'
       }
     }
     
     return {
       manager: 'Gestor',
-      tableName: 'clientes_andreza' // Fallback para Andreza
+      tableName: 'clientes_andreza'
     }
   }
 
-  // Determinar tabela baseada no nome do gestor
   const getTableName = (managerName: string): string => {
     const tableMapping: { [key: string]: string } = {
       'Lucas Falcão': 'clientes_lucas_falcao',
@@ -112,7 +104,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     return tableMapping[managerName] || 'clientes_andreza'
   }
 
-  // Determinar email do gestor baseado no nome do gestor (para filtros RLS)
   const getManagerEmail = (managerName: string): string => {
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
@@ -141,13 +132,11 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         isAdmin 
       })
       
-      // Construir query com filtro por email_gestor se não for admin
       let query = supabase
         .from(tableName)
         .select('*', { count: 'exact' })
         .order('id', { ascending: true })
 
-      // Se não for admin, filtrar apenas registros com email_gestor = email logado
       if (!isAdmin) {
         query = query.eq('email_gestor', userEmail)
         console.log('🔒 Aplicando filtro RLS por email_gestor:', userEmail)
@@ -201,6 +190,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
             numero_bm: item.numero_bm || '',
             comissao_paga: item.comissao_paga || false,
             valor_comissao: item.valor_comissao || 60.00,
+            site_status: item.site_status || 'pendente', // Novo campo
             created_at: item.created_at || ''
           }
           
@@ -277,10 +267,9 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log('🔍 Verificando se o registro existe...')
       let checkQuery = supabase
         .from(tableName)
-        .select('id, status_campanha, nome_cliente')
+        .select('id, status_campanha, nome_cliente, site_status')
         .eq('id', numericId)
 
-      // Se não for admin, aplicar filtro por email_gestor
       if (!isAdmin) {
         checkQuery = checkQuery.eq('email_gestor', userEmail)
       }
@@ -299,30 +288,47 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       console.log('✅ Registro encontrado:', existingData)
       
+      // Lógica especial para atualização do site_status
+      let updateData: any = { [field]: value }
+      
+      if (field === 'site_status') {
+        const currentSiteStatus = existingData.site_status || 'pendente'
+        
+        if (currentSiteStatus === 'pendente') {
+          // Se for pendente, o próximo estado depende da escolha do usuário
+          updateData.site_status = value === 'sim' ? 'aguardando_link' : 'nao_precisa'
+        } else if (currentSiteStatus === 'nao_precisa') {
+          // Se não precisava, agora precisa
+          updateData.site_status = 'aguardando_link'
+        } else if (currentSiteStatus === 'aguardando_link' && field === 'link_site' && value) {
+          // Se estava aguardando link e recebeu um link, marcar como finalizado
+          updateData.site_status = 'finalizado'
+        }
+      }
+      
       console.log('🔄 Executando UPDATE...')
       let updateQuery = supabase
         .from(tableName)
-        .update({ [field]: value })
+        .update(updateData)
         .eq('id', numericId)
 
-      // Se não for admin, aplicar filtro por email_gestor
       if (!isAdmin) {
         updateQuery = updateQuery.eq('email_gestor', userEmail)
       }
 
-      const { data: updateData, error: updateError } = await updateQuery.select()
+      const { data: updateData_result, error: updateError } = await updateQuery.select()
 
       if (updateError) {
         console.error('❌ Erro ao atualizar cliente:', updateError)
         return false
       }
 
-      console.log('✅ Dados atualizados no Supabase:', updateData)
+      console.log('✅ Dados atualizados no Supabase:', updateData_result)
 
       setClientes(prev => 
         prev.map(cliente => 
           cliente.id === id 
-            ? { ...cliente, [field]: value }
+            ? { ...cliente, ...updateData }
             : cliente
         )
       )
@@ -348,10 +354,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log(`📋 Tabela de destino: ${tableName}`)
       console.log(`👤 Manager: ${manager}`)
       
-      // Preparar dados do cliente com email_gestor automaticamente preenchido
       const novoCliente = {
         ...clienteData,
-        email_gestor: userEmail, // Preenchimento automático com email do usuário logado
+        email_gestor: userEmail,
+        site_status: 'pendente', // Inicializar como pendente
         created_at: new Date().toISOString()
       }
 
@@ -374,8 +380,12 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       console.log('✅ Cliente adicionado com sucesso:', data)
       
-      // Forçar atualização da tabela após inserção
       await fetchClientes()
+      
+      toast({
+        title: "Sucesso",
+        description: "Cliente adicionado com sucesso!",
+      })
       
       return true
     } catch (error) {
@@ -389,7 +399,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
   }
 
-  // Configurar listener de realtime para atualizações automáticas
   useEffect(() => {
     if (!userEmail) return
 
@@ -398,10 +407,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       
       console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName, selectedManager })
 
-      // Buscar dados iniciais
       fetchClientes()
 
-      // Configurar canal de realtime
       const channel = supabase
         .channel(`public:${tableName}`)
         .on(
@@ -414,7 +421,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           (payload) => {
             console.log('🔄 Mudança detectada na tabela:', tableName, payload)
             
-            // Se não for admin, verificar se a mudança é relevante para este gestor
             if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
               console.log('🚫 Mudança não relevante para este gestor')
               return
@@ -440,7 +446,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
                   numero_bm: (payload.new.numero_bm as string) || '',
                   created_at: (payload.new.created_at as string) || '',
                   comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
+                  site_status: (payload.new.site_status as string) || 'pendente'
                 }
                 
                 setClientes(prev => {
@@ -472,7 +479,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
                   numero_bm: (payload.new.numero_bm as string) || '',
                   created_at: (payload.new.created_at as string) || '',
                   comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
+                  site_status: (payload.new.site_status as string) || 'pendente'
                 }
                 
                 setClientes(prev => 
