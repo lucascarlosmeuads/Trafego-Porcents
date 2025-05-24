@@ -4,7 +4,7 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2 } from 'lucide-react'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
 
 interface ClienteRowProps {
@@ -104,6 +104,31 @@ export function ClienteRow({
         style: 'bg-blue-100 text-blue-800 border-blue-300'
       }
     }
+  }
+
+  const renderWhatsAppButton = (telefone: string) => {
+    if (!telefone) return <span className="text-xs text-white">-</span>
+    
+    // Limpar o número removendo caracteres especiais
+    const cleanPhone = telefone.replace(/\D/g, '')
+    
+    // Se não tiver DDD, assumir 55 (Brasil)
+    const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-white">{telefone}</span>
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+          onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
+        >
+          <MessageCircle className="w-3 h-3 mr-1" />
+          WhatsApp
+        </Button>
+      </div>
+    )
   }
 
   const renderLinkCell = (url: string, field: string, label: string) => {
@@ -316,7 +341,7 @@ export function ClienteRow({
         </div>
       </TableCell>
       
-      <TableCell className="text-white">{cliente.telefone}</TableCell>
+      <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
       
       <TableCell>
         <div className="max-w-[150px] truncate text-white">
