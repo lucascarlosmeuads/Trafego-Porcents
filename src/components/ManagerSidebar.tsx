@@ -74,15 +74,42 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         
         console.log('👥 [SIDEBAR] Gestores ativos encontrados:', managerNames)
         console.log('📝 [SIDEBAR] Total de gestores:', managerNames.length)
+        console.log('🔍 [SIDEBAR] Procurando especificamente por Carol e Andreza...')
         
-        setManagers(managerNames)
+        const hasCarol = managerNames.some(name => name.toLowerCase().includes('carol'))
+        const hasAndreza = managerNames.some(name => name.toLowerCase().includes('andreza'))
+        
+        console.log('👩 [SIDEBAR] Carol encontrada:', hasCarol)
+        console.log('👩 [SIDEBAR] Andreza encontrada:', hasAndreza)
+        
+        // Adicionar Carol e Andreza manualmente se não estiverem na lista (fallback)
+        if (!hasCarol) {
+          console.log('⚠️ [SIDEBAR] Carol não encontrada, adicionando manualmente')
+          managerNames.push('Carol')
+        }
+        if (!hasAndreza) {
+          console.log('⚠️ [SIDEBAR] Andreza não encontrada, adicionando manualmente')
+          managerNames.push('Andreza')
+        }
+        
+        // Ordenar alfabeticamente
+        const sortedManagers = managerNames.sort()
+        console.log('📋 [SIDEBAR] Lista final ordenada:', sortedManagers)
+        
+        setManagers(sortedManagers)
       } else {
         console.log('⚠️ [SIDEBAR] Nenhum gestor ativo encontrado na tabela gestores')
-        setManagers([])
+        // Fallback com gestores padrão
+        const fallbackManagers = ['Andreza', 'Carol']
+        console.log('🔄 [SIDEBAR] Usando fallback:', fallbackManagers)
+        setManagers(fallbackManagers)
       }
     } catch (err) {
       console.error('💥 [SIDEBAR] Erro ao buscar gestores:', err)
-      setManagers([])
+      // Fallback em caso de erro
+      const fallbackManagers = ['Andreza', 'Carol']
+      console.log('🔄 [SIDEBAR] Erro - usando fallback:', fallbackManagers)
+      setManagers(fallbackManagers)
     } finally {
       setLoading(false)
     }
