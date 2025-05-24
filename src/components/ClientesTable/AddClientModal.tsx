@@ -29,18 +29,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
   })
   const { user, isAdmin } = useAuth()
 
-  const getTableName = (managerName?: string): string => {
-    if (managerName === 'Lucas Falcão') return 'clientes_lucas_falcao'
-    if (managerName === 'Andreza') return 'clientes_andreza'
-    
-    // Fallback baseado no email do usuário
-    if (user?.email === 'lucas@admin.com' || user?.email === 'lucas.falcao@gestor.com') {
-      return 'clientes_lucas_falcao'
-    }
-    
-    return 'clientes_andreza'
-  }
-
   const handleSubmit = async () => {
     // Validações
     if (!formData.nome_cliente.trim()) {
@@ -64,52 +52,69 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
     setLoading(true)
     
     try {
-      const tableName = getTableName(selectedManager)
+      console.log('🚀 [AddClientModal] Adicionando cliente na tabela todos_clientes')
+      console.log('📥 [AddClientModal] Dados do formulário:', formData)
+      console.log('👤 [AddClientModal] Usuário logado:', user?.email)
+      console.log('🔒 [AddClientModal] É admin?', isAdmin)
+      console.log('🏷️ [AddClientModal] Manager selecionado:', selectedManager)
       
-      console.log('🚀 Modal: Adicionando cliente na tabela:', tableName)
-      console.log('📥 Modal: Dados do formulário:', formData)
+      // Para gestores não-admin, SEMPRE usar o email do usuário logado como email_gestor
+      // Para admin, usar o email do gestor selecionado ou o próprio email se não houver seleção
+      const emailGestorFinal = isAdmin ? 
+        (selectedManager ? await getManagerEmailFromName(selectedManager) : user?.email) : 
+        user?.email
+
+      console.log('📧 [AddClientModal] Email gestor final:', emailGestorFinal)
       
       // Criar objeto ABSOLUTAMENTE limpo - GARANTINDO que não há ID
       const cleanClienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
-        email_cliente: formData.email_cliente.trim(),
+        email_cliente: formData.email_cliente.trim() || null,
         vendedor: formData.vendedor.trim() || selectedManager || 'Gestor',
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
-        email_gestor: user?.email || '',
+        email_gestor: emailGestorFinal,
         comissao_paga: false,
         valor_comissao: 60.00,
-        site_status: 'pendente'
+        site_status: 'pendente',
+        data_limite: '',
+        link_grupo: '',
+        link_briefing: '',
+        link_criativo: '',
+        link_site: '',
+        numero_bm: ''
       }
 
-      // Remover qualquer campo que seja null, undefined ou string vazia
+      // Remover qualquer campo que seja null, undefined ou string vazia (exceto campos específicos)
       const finalData = Object.fromEntries(
         Object.entries(cleanClienteData).filter(([key, value]) => {
-          // Manter apenas campos que não sejam null, undefined ou string vazia (exceto campos booleanos e numéricos)
+          // Manter campos booleanos e numéricos sempre
           if (typeof value === 'boolean' || typeof value === 'number') return true
+          // Manter campos de string mesmo se vazios para alguns campos específicos
+          if (['data_limite', 'link_grupo', 'link_briefing', 'link_criativo', 'link_site', 'numero_bm'].includes(key)) return true
+          // Filtrar campos null, undefined ou string vazia para o resto
           return value !== null && value !== undefined && value !== ''
         })
       )
 
-      console.log('🧹 Modal: Objeto final LIMPO (sem id):', finalData)
-      console.log('🔍 Modal: Tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
-      console.log('🔍 Modal: Tem campo created_at?', 'created_at' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
-      console.log('🔍 Modal: Todas as chaves:', Object.keys(finalData))
+      console.log('🧹 [AddClientModal] Objeto final LIMPO (sem id):', finalData)
+      console.log('🔍 [AddClientModal] Tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
+      console.log('🔍 [AddClientModal] Todas as chaves:', Object.keys(finalData))
 
-      console.log('📤 Modal: Enviando para Supabase...')
+      console.log('📤 [AddClientModal] Enviando para tabela todos_clientes...')
 
       const { data, error } = await supabase
-        .from(tableName)
+        .from('todos_clientes')
         .insert([finalData])
         .select()
 
       if (error) {
-        console.error('❌ Modal: Erro do Supabase:', error)
+        console.error('❌ [AddClientModal] Erro do Supabase:', error)
         throw error
       }
 
-      console.log('✅ Modal: Cliente adicionado com sucesso:', data)
+      console.log('✅ [AddClientModal] Cliente adicionado com sucesso:', data)
 
       toast({
         title: "Sucesso",
@@ -130,7 +135,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       onClienteAdicionado()
 
     } catch (error: any) {
-      console.error('💥 Modal: Erro geral:', error)
+      console.error('💥 [AddClientModal] Erro geral:', error)
       toast({
         title: "Erro",
         description: `Erro ao adicionar cliente: ${error.message}`,
@@ -139,6 +144,55 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
     } finally {
       setLoading(false)
     }
+  }
+
+  // Função auxiliar para obter email do gestor (igual a do useManagerData)
+  const getManagerEmailFromName = async (managerName: string): Promise<string> => {
+    console.log('🔍 [AddClientModal] Buscando email para o gestor:', managerName)
+    
+    // Primeiro, tentar buscar na tabela gestores
+    try {
+      const { data: gestorData, error: gestorError } = await supabase
+        .from('gestores')
+        .select('nome, email')
+        .eq('nome', managerName)
+        .eq('ativo', true)
+        .single()
+
+      if (!gestorError && gestorData) {
+        console.log('✅ [AddClientModal] Email encontrado na tabela gestores:', gestorData.email)
+        return gestorData.email
+      }
+    } catch (err) {
+      console.warn('⚠️ [AddClientModal] Gestor não encontrado na tabela gestores, usando mapeamento manual')
+    }
+
+    // Fallback para mapeamento manual expandido
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@trafegoporcents.com',
+      'Carol': 'carol@trafegoporcents.com',
+      'Junior': 'junior@trafegoporcents.com',
+      'Junior Gestor': 'junior@trafegoporcents.com',
+      'Daniel': 'daniel@gestor.com',
+      'Danielmoreira': 'danielmoreira@trafegoporcents.com',
+      'Danielribeiro': 'danielribeiro@trafegoporcents.com',
+      'Kimberlly': 'kimberlly@trafegoporcents.com',
+      'Andresa': 'andresa@gestor.com',
+      'Jose': 'jose@trafegoporcents.com',
+      'Emily': 'emily@trafegoporcents.com',
+      'Falcao': 'falcao@trafegoporcents.com',
+      'Felipe Almeida': 'felipealmeida@trafegoporcents.com',
+      'Franciellen': 'franciellen@trafegoporcents.com',
+      'Guilherme': 'guilherme@trafegoporcents.com',
+      'Leandrodrumzique': 'leandrodrumzique@trafegoporcents.com',
+      'Matheuspaviani': 'matheuspaviani@trafegoporcents.com',
+      'Rullian': 'rullian@trafegoporcents.com'
+    }
+    
+    const email = emailMapping[managerName] || user?.email || 'andreza@trafegoporcents.com'
+    console.log('📧 [AddClientModal] Email do mapeamento manual:', email, 'para gestor:', managerName)
+    return email
   }
 
   return (

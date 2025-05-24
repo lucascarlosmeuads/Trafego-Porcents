@@ -4,11 +4,16 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { useManagerData } from '@/hooks/useManagerData'
+import { useGestorPermissions } from '@/hooks/useGestorPermissions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
+import { AddClientModal } from './ClientesTable/AddClientModal'
 
 export function GestorDashboard() {
   const { user, currentManagerName, isAdmin } = useAuth()
-  const { clientes, loading } = useManagerData(user?.email || '', false)
+  const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
+  const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
 
   // Log de segurança para verificar se o filtro está funcionando
   useEffect(() => {
@@ -33,7 +38,7 @@ export function GestorDashboard() {
     }
   }, [clientes, user?.email, isAdmin])
 
-  if (loading) {
+  if (loading || permissionsLoading) {
     return <div className="flex items-center justify-center py-8">Carregando...</div>
   }
 
@@ -49,6 +54,18 @@ export function GestorDashboard() {
             </div>
           )}
         </div>
+        
+        {canAddClients && (
+          <div className="flex items-center gap-2">
+            <AddClientModal 
+              selectedManager={currentManagerName} 
+              onClienteAdicionado={refetch}
+            />
+            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+              ✅ Pode adicionar clientes
+            </span>
+          </div>
+        )}
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
