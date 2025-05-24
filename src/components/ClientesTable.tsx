@@ -82,6 +82,60 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     })
   }
 
+  // Move exportToCSV function here, before it's used
+  const exportToCSV = () => {
+    if (clientes.length === 0) {
+      toast({
+        title: "Aviso",
+        description: "Nenhum cliente para exportar",
+      })
+      return
+    }
+
+    const headers = [
+      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
+      'Email Gestor', 'Status Campanha', 'Data Limite',
+      'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 
+      'Número BM', 'Comissão Paga'
+    ]
+    
+    const csvContent = [
+      headers.join(','),
+      ...clientes.map(cliente => [
+        cliente.id || '',
+        cliente.data_venda || '',
+        cliente.nome_cliente || '',
+        cliente.telefone || '',
+        cliente.email_cliente || '',
+        cliente.vendedor || '',
+        cliente.email_gestor || '',
+        cliente.status_campanha || '',
+        cliente.data_limite || '',
+        cliente.link_grupo || '',
+        cliente.link_briefing || '', 
+        cliente.link_criativo || '', 
+        cliente.link_site || '', 
+        cliente.numero_bm || '',
+        cliente.comissao_paga ? 'Pago - R$ 60,00' : 'Não Pago'
+      ].map(field => `"${field}"`).join(','))
+    ].join('\n')
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    const url = URL.createObjectURL(blob)
+    link.setAttribute('href', url)
+    link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
+    link.style.visibility = 'hidden'
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+
+    toast({
+      title: "Sucesso",
+      description: "Arquivo CSV exportado com sucesso",
+    })
+  }
+
   // Filtrar clientes baseado no filterType
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
@@ -529,59 +583,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     } finally {
       setAddingClient(false)
     }
-  }
-
-  const exportToCSV = () => {
-    if (clientes.length === 0) {
-      toast({
-        title: "Aviso",
-        description: "Nenhum cliente para exportar",
-      })
-      return
-    }
-
-    const headers = [
-      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
-      'Email Gestor', 'Status Campanha', 'Data Limite',
-      'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 
-      'Número BM', 'Comissão Paga'
-    ]
-    
-    const csvContent = [
-      headers.join(','),
-      ...clientes.map(cliente => [
-        cliente.id || '',
-        cliente.data_venda || '',
-        cliente.nome_cliente || '',
-        cliente.telefone || '',
-        cliente.email_cliente || '',
-        cliente.vendedor || '',
-        cliente.email_gestor || '',
-        cliente.status_campanha || '',
-        cliente.data_limite || '',
-        cliente.link_grupo || '',
-        cliente.link_briefing || '', 
-        cliente.link_criativo || '', 
-        cliente.link_site || '', 
-        cliente.numero_bm || '',
-        cliente.comissao_paga ? 'Pago - R$ 60,00' : 'Não Pago'
-      ].map(field => `"${field}"`).join(','))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    toast({
-      title: "Sucesso",
-      description: "Arquivo CSV exportado com sucesso",
-    })
   }
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
