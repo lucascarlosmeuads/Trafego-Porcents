@@ -24,7 +24,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
-import { calculateDataLimite, getDataLimiteStyle } from '@/utils/dateUtils'
+import { calculateDataLimite, getDataLimiteMensagem } from '@/utils/dateUtils'
 
 interface ClientesTableProps {
   selectedManager: string
@@ -180,17 +180,16 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const renderDataLimite = (cliente: any) => {
     // Calcula a data limite baseada na data de venda
     const dataLimiteCalculada = cliente.data_venda ? calculateDataLimite(cliente.data_venda) : cliente.data_limite
-    const dataParaExibir = dataLimiteCalculada || cliente.data_limite || '-'
     
-    if (dataParaExibir === '-') {
+    if (!dataLimiteCalculada) {
       return <span className="text-muted-foreground">-</span>
     }
     
-    const styleClass = getDataLimiteStyle(dataLimiteCalculada, cliente.status_campanha)
+    const { texto, estilo } = getDataLimiteMensagem(dataLimiteCalculada, cliente.status_campanha)
     
     return (
-      <span className={styleClass}>
-        {dataParaExibir}
+      <span className={estilo}>
+        {texto}
       </span>
     )
   }
