@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -32,6 +33,39 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string | null>(null)
+
+  // Função para mapear email para tabela e manager
+  const getTableAndManagerFromEmail = (email: string) => {
+    console.log(`🔍 Mapeando email: "${email}"`)
+    
+    // Mapeamento direto para emails específicos
+    const directMapping: { [key: string]: { table: string, manager: string } } = {
+      'andreza@mktfy.com.br': { table: 'clientes_andreza', manager: 'Andreza' },
+      'andreza@trafegoporcents.com': { table: 'clientes_andreza', manager: 'Andreza' },
+      'andreza@gestor.com': { table: 'clientes_andreza', manager: 'Andreza' },
+      'lucas@mktfy.com.br': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
+      'lucas.falcao@trafegoporcents.com': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
+      'lucas.falcao@gestor.com': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
+      'carol@trafegoporcents.com': { table: 'clientes_andreza', manager: 'Carol' }
+    }
+
+    if (directMapping[email]) {
+      console.log(`✅ Mapeamento direto encontrado:`, directMapping[email])
+      return directMapping[email]
+    }
+
+    // Mapeamento automático para domínio @trafegoporcents.com
+    if (email.endsWith('@trafegoporcents.com')) {
+      const username = email.split('@')[0]
+      console.log(`🔄 Usuário do domínio trafegoporcents: "${username}"`)
+      
+      // Para novos gestores, usar tabela da Andreza como padrão
+      return { table: 'clientes_andreza', manager: username.charAt(0).toUpperCase() + username.slice(1) }
+    }
+
+    console.log(`❌ Email não reconhecido para mapeamento`)
+    return null
+  }
 
   const fetchClientes = useCallback(async () => {
     console.log(`🔄 === FETCH CLIENTES ===`)
@@ -68,19 +102,17 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
           return
         }
       } else {
-        // Para gestor: usar o email do usuário
-        if (emailToUse === 'andreza@mktfy.com.br') {
-          tableName = 'clientes_andreza'
-          managerName = 'Andreza'
-        } else if (emailToUse === 'lucas@mktfy.com.br') {
-          tableName = 'clientes_lucas_falcao'
-          managerName = 'Lucas Falcão'
-        } else {
+        // Para gestor: usar o mapeamento de email
+        const mapping = getTableAndManagerFromEmail(emailToUse)
+        if (!mapping) {
           console.log('❌ Email não reconhecido para busca na tabela')
-          setError('Gestor não encontrado')
+          setError('Gestor não autorizado ou não encontrado')
           setLoading(false)
           return
         }
+        
+        tableName = mapping.table
+        managerName = mapping.manager
       }
 
       console.log(`🗂️ Buscando na tabela: "${tableName}"`)
@@ -134,14 +166,12 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
         return false
       }
     } else {
-      if (emailToUse === 'andreza@mktfy.com.br') {
-        tableName = 'clientes_andreza'
-      } else if (emailToUse === 'lucas@mktfy.com.br') {
-        tableName = 'clientes_lucas_falcao'
-      } else {
+      const mapping = getTableAndManagerFromEmail(emailToUse)
+      if (!mapping) {
         console.error('❌ Email não reconhecido para update:', emailToUse)
         return false
       }
+      tableName = mapping.table
     }
 
     try {
@@ -250,11 +280,8 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
         return false
       }
     } else {
-      if (emailToUse === 'andreza@mktfy.com.br') {
-        tableName = 'clientes_andreza'
-      } else if (emailToUse === 'lucas@mktfy.com.br') {
-        tableName = 'clientes_lucas_falcao'
-      } else {
+      const mapping = getTableAndManagerFromEmail(emailToUse)
+      if (!mapping) {
         console.error('❌ Email não reconhecido para adicionar cliente:', emailToUse)
         toast({
           title: "Erro",
@@ -263,6 +290,7 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
         })
         return false
       }
+      tableName = mapping.table
     }
 
     try {

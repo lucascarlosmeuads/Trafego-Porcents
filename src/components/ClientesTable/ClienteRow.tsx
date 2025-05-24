@@ -1,9 +1,10 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2 } from 'lucide-react'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
 import {
   DropdownMenu,
@@ -113,6 +114,45 @@ export function ClienteRow({
         style: 'bg-blue-100 text-blue-800 border-blue-300'
       }
     }
+  }
+
+  const formatWhatsAppNumber = (phone: string | null) => {
+    if (!phone) return null
+    
+    // Remove todos os caracteres não numéricos
+    const cleaned = phone.replace(/\D/g, '')
+    
+    // Se não começar com 55, adiciona o código do Brasil
+    if (!cleaned.startsWith('55')) {
+      return `55${cleaned}`
+    }
+    
+    return cleaned
+  }
+
+  const renderPhoneCell = () => {
+    if (!cliente.telefone) {
+      return <span className="text-xs text-white">-</span>
+    }
+
+    const whatsappNumber = formatWhatsAppNumber(cliente.telefone)
+    
+    return (
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-white">{cliente.telefone}</span>
+        {whatsappNumber && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs bg-green-600 border-green-600 text-white hover:bg-green-700"
+            onClick={() => window.open(`https://wa.me/${whatsappNumber}`, '_blank')}
+          >
+            <MessageCircle className="w-3 h-3 mr-1" />
+            WhatsApp
+          </Button>
+        )}
+      </div>
+    )
   }
 
   const renderLinkCell = (url: string, field: string, label: string) => {
@@ -484,7 +524,9 @@ export function ClienteRow({
         </div>
       </TableCell>
       
-      <TableCell className="text-white">{cliente.telefone}</TableCell>
+      <TableCell>
+        {renderPhoneCell()}
+      </TableCell>
       
       <TableCell>
         <div className="max-w-[150px] truncate text-white">
