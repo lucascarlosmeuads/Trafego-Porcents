@@ -13,6 +13,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
 
 interface GestorInfo {
@@ -118,7 +119,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   if (loading) {
     return (
       <Sidebar variant="sidebar" className="w-80 border-r bg-card">
-        <SidebarHeader className="border-b p-4">
+        <SidebarHeader className="border-b p-6">
           <h2 className="text-lg font-semibold text-foreground">Carregando...</h2>
         </SidebarHeader>
       </Sidebar>
@@ -127,25 +128,30 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
 
   return (
     <Sidebar variant="sidebar" className="w-80 border-r bg-card">
-      <SidebarHeader className="border-b p-4">
+      <SidebarHeader className="border-b p-6">
         <h2 className="text-lg font-semibold text-foreground">Painel Administrativo</h2>
         <p className="text-sm text-muted-foreground">Gestão de clientes por responsável</p>
       </SidebarHeader>
       
-      <SidebarContent className="p-4">
+      <SidebarContent className="p-4 space-y-6">
+        {/* Seção Principal - Gestores */}
         <SidebarGroup>
-          <SidebarGroupLabel>Gestores ({gestores.length})</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-medium mb-3">
+            Gestores ({gestores.length})
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => onManagerSelect(null)}
                   isActive={selectedManager === null}
-                  className="w-full justify-start"
+                  className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                 >
-                  <Users className="w-4 h-4" />
-                  <span>Todos os Clientes</span>
-                  <Badge variant="secondary" className="ml-auto">
+                  <div className="flex items-center gap-3">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <span className="font-medium">Todos os Clientes</span>
+                  </div>
+                  <Badge variant="secondary" className="ml-auto min-w-[2rem] text-center">
                     {totalClientes}
                   </Badge>
                 </SidebarMenuButton>
@@ -156,11 +162,13 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
                   <SidebarMenuButton
                     onClick={() => onManagerSelect(gestor.nome)}
                     isActive={selectedManager === gestor.nome}
-                    className="w-full justify-start"
+                    className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                   >
-                    <User className="w-4 h-4" />
-                    <span className="truncate">{gestor.nome}</span>
-                    <Badge variant="secondary" className="ml-auto">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <User className="w-4 h-4 text-green-600 flex-shrink-0" />
+                      <span className="font-medium truncate">{gestor.nome}</span>
+                    </div>
+                    <Badge variant="secondary" className="ml-3 min-w-[2rem] text-center flex-shrink-0">
                       {gestor.total_clientes}
                     </Badge>
                   </SidebarMenuButton>
@@ -170,19 +178,27 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
           </SidebarGroupContent>
         </SidebarGroup>
 
+        {/* Separador Visual */}
+        <SidebarSeparator className="my-4" />
+
+        {/* Seção Gestão de Problemas */}
         <SidebarGroup>
-          <SidebarGroupLabel className="text-amber-700">Gestão de Problemas</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sm font-medium mb-3 text-amber-700">
+            Gestão de Problemas
+          </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => onManagerSelect('__PROBLEMAS__')}
                   isActive={selectedManager === '__PROBLEMAS__'}
-                  className="w-full justify-start text-amber-700 hover:bg-amber-50"
+                  className="w-full justify-between h-10 px-3 rounded-md hover:bg-amber-50 border border-amber-200 bg-amber-25 transition-colors"
                 >
-                  <AlertTriangle className="w-4 h-4" />
-                  <span>Problemas Pendentes</span>
-                  <Badge variant="destructive" className="ml-auto bg-amber-500">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="w-4 h-4 text-amber-600" />
+                    <span className="font-medium text-amber-800">Problemas Pendentes</span>
+                  </div>
+                  <Badge variant="destructive" className="ml-auto min-w-[2rem] text-center bg-amber-500 hover:bg-amber-600">
                     {problemasCount}
                   </Badge>
                 </SidebarMenuButton>
