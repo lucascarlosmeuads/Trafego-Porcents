@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -19,7 +18,7 @@ import { TableHeader } from './ClientesTable/TableHeader'
 import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
-import { AddClientRow } from './ClientesTable/AddClientRow'
+import { AddClientModal } from './ClientesTable/AddClientModal'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -518,27 +517,6 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
                 />
               ))
             )}
-            
-            {/* Linha de adição de cliente - só para clientes ativos e se tiver permissão */}
-            {!isInactive && podeAdicionarCliente && !loadingPermissoes && (
-              <AddClientRow
-                onAddClient={handleAddClient}
-                isLoading={addingClient}
-                getStatusColor={getStatusColor}
-              />
-            )}
-            
-            {/* Debug info - remover em produção */}
-            {!isInactive && (
-              <TableRow className="border-border opacity-50">
-                <TableCell colSpan={15} className="text-center py-2 text-xs text-muted-foreground">
-                  Debug: podeAdicionarCliente={String(podeAdicionarCliente)} | 
-                  loadingPermissoes={String(loadingPermissoes)} | 
-                  isAdmin={String(isAdmin)} | 
-                  email={user?.email}
-                </TableCell>
-              </TableRow>
-            )}
           </TableBody>
         </Table>
       </div>
@@ -577,13 +555,22 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
         </TabsList>
 
         <TabsContent value="ativos" className="space-y-4">
-          <TableActions
-            selectedManager={currentManager || managerName}
-            filteredClientesCount={filteredClientesAtivos.length}
-            realtimeConnected={realtimeConnected}
-            onRefresh={refetch}
-            onExport={exportToCSV}
-          />
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <TableActions
+              selectedManager={currentManager || managerName}
+              filteredClientesCount={filteredClientesAtivos.length}
+              realtimeConnected={realtimeConnected}
+              onRefresh={refetch}
+              onExport={exportToCSV}
+            />
+            
+            {podeAdicionarCliente && !loadingPermissoes && (
+              <AddClientModal
+                selectedManager={currentManager || managerName}
+                onClienteAdicionado={refetch}
+              />
+            )}
+          </div>
 
           <TableFilters
             searchTerm={searchTerm}
