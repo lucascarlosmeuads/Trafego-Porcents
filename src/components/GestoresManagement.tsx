@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -99,8 +100,8 @@ export function GestoresManagement() {
         throw new Error(result.error || 'Erro ao criar gestor')
       }
 
-      // Verify the response has the expected data
-      if (!result || !result.success) {
+      // Verify the response has the expected data with the new format
+      if (!result.success || !result.user) {
         throw new Error('Resposta inválida do servidor')
       }
 
