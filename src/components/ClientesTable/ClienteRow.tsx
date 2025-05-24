@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -303,14 +304,9 @@ export function ClienteRow({
       case 'aguardando_link':
         return (
           <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200"
-              onClick={handleAguardandoLinkClick}
-            >
+            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
               🟡 Aguardando link
-            </Button>
+            </span>
             <Button
               size="sm"
               variant="ghost"
@@ -347,14 +343,9 @@ export function ClienteRow({
         } else {
           return (
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300"
-                onClick={handleAguardandoLinkClick}
-              >
+              <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
                 🟡 Aguardando link
-              </Button>
+              </span>
               <Button
                 size="sm"
                 variant="ghost"
@@ -389,17 +380,6 @@ export function ClienteRow({
       setShowSiteOptions(false)
     } catch (error) {
       console.error('❌ Erro ao atualizar opção do site:', error)
-    }
-  }
-
-  const handleSiteStatusChange = async (newStatus: string) => {
-    console.log('🎯 Mudando status do site:', { clienteId: cliente.id, newStatus })
-    
-    try {
-      await onStatusChange(cliente.id, newStatus)
-      setShowSiteOptions(false)
-    } catch (error) {
-      console.error('❌ Erro ao atualizar status do site:', error)
     }
   }
 
@@ -545,7 +525,7 @@ export function ClienteRow({
               ? 'bg-green-600 hover:bg-green-700 text-white' 
               : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
           }`}
-          onClick={()={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
+          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
           disabled={updatingComission === cliente.id}
         >
           {updatingComission === cliente.id ? (
