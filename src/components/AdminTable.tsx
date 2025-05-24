@@ -5,15 +5,13 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Smartphone, Monitor } from 'lucide-react'
+import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
-  const [editingCell, setEditingCell] = useState<string | null>(null)
-  const [saving, setSaving] = useState<string | null>(null)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   const { toast } = useToast()
 
@@ -53,7 +51,6 @@ export function AdminTable() {
   }
 
   const updateField = async (id: string, field: keyof Cliente, value: string) => {
-    setSaving(`${id}-${field}`)
     try {
       const { error } = await supabase
         .from('clientes')
@@ -84,9 +81,6 @@ export function AdminTable() {
         description: "Erro inesperado ao salvar",
         variant: "destructive"
       })
-    } finally {
-      setSaving(null)
-      setEditingCell(null)
     }
   }
 
@@ -111,25 +105,54 @@ export function AdminTable() {
     return hoje > limite
   }
 
+  const getDataLimiteStyle = (dataLimite: string) => {
+    if (!dataLimite) return 'bg-muted'
+    
+    const hoje = new Date()
+    const limite = new Date(dataLimite)
+    
+    if (hoje > limite) {
+      return 'bg-red-100 text-red-800 border-red-300'
+    } else {
+      return 'bg-green-100 text-green-800 border-green-300'
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Preenchimento do Formulário':
-        return 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
       case 'Brief':
-        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
       case 'Criativo':
-        return 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
       case 'Site':
-        return 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
       case 'Agendamento':
-        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
       case 'No Ar':
-        return 'bg-green-500/20 text-green-400 border border-green-500/30'
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
-        return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
       default:
         return 'bg-muted text-muted-foreground border border-border'
     }
+  }
+
+  const renderLinkButton = (url: string, label: string) => {
+    if (!url) return <span className="text-muted-foreground">-</span>
+    
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-xs"
+        onClick={() => window.open(url, '_blank')}
+      >
+        <ExternalLink className="w-3 h-3 mr-1" />
+        Ver
+      </Button>
+    )
   }
 
   if (loading) {
@@ -205,7 +228,7 @@ export function AdminTable() {
           <Table className="table-dark">
             <TableHeader>
               <TableRow className="border-border hover:bg-muted/20">
-                <TableHead className="w-20 text-muted-foreground">ID</TableHead>
+                <TableHead className="w-16 text-muted-foreground">ID</TableHead>
                 <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                 <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
@@ -213,18 +236,22 @@ export function AdminTable() {
                 <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Data Limite</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clientes.map((cliente) => (
                 <TableRow 
                   key={cliente.id} 
-                  className={`border-border hover:bg-muted/20 transition-colors ${
-                    isDataLimiteVencida(cliente.data_limite) ? 'bg-red-500/10' : ''
-                  }`}
+                  className="border-border hover:bg-muted/20 transition-colors"
                 >
                   <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
-                  <TableCell className="text-xs text-foreground">{formatDate(cliente.data_venda)}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-muted-foreground" />
+                      <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
+                    </div>
+                  </TableCell>
                   <TableCell className="font-medium">
                     <div className="max-w-[200px] truncate text-foreground">
                       {cliente.nome_cliente}
@@ -268,9 +295,14 @@ export function AdminTable() {
                         ))}
                       </SelectContent>
                     </Select>
-                    {saving === `${cliente.id}-status_campanha` && (
-                      <Loader2 className="w-4 h-4 animate-spin ml-2" />
-                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
+                      {isDataLimiteVencida(cliente.data_limite) && (
+                        <AlertTriangle className="w-3 h-3" />
+                      )}
+                      <span>{cliente.data_limite || '-'}</span>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

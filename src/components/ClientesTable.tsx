@@ -36,8 +36,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [editingCell, setEditingCell] = useState<{id: string, field: string} | null>(null)
-  const [editValue, setEditValue] = useState('')
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -58,104 +56,55 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     return hoje > limite
   }
 
-  const handleCellEdit = (clienteId: string, field: string, currentValue: string) => {
-    setEditingCell({ id: clienteId, field })
-    setEditValue(currentValue)
+  const getDataLimiteStyle = (dataLimite: string) => {
+    if (!dataLimite) return 'bg-muted'
+    
+    const hoje = new Date()
+    const limite = new Date(dataLimite)
+    
+    if (hoje > limite) {
+      return 'bg-red-100 text-red-800 border-red-300'
+    } else {
+      return 'bg-green-100 text-green-800 border-green-300'
+    }
   }
 
-  const handleSaveEdit = async () => {
-    if (!editingCell) return
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Preenchimento do Formulário':
+        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
+      case 'Brief':
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+      case 'Criativo':
+        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
+      case 'Site':
+        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
+      case 'Agendamento':
+        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
+      case 'No Ar':
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
+      case 'Otimização':
+        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      default:
+        return 'bg-muted text-muted-foreground border border-border'
+    }
+  }
 
-    const success = await updateCliente(editingCell.id, editingCell.field, editValue)
+  const handleStatusChange = async (clienteId: string, newStatus: string) => {
+    const success = await updateCliente(clienteId, 'status_campanha', newStatus)
     
     if (success) {
       toast({
         title: "Sucesso",
-        description: "Cliente atualizado com sucesso",
+        description: "Status da campanha atualizado",
       })
     } else {
       toast({
         title: "Erro",
-        description: "Erro ao atualizar cliente",
+        description: "Erro ao atualizar status da campanha",
         variant: "destructive",
       })
     }
-    
-    setEditingCell(null)
-    setEditValue('')
-  }
-
-  const handleCancelEdit = () => {
-    setEditingCell(null)
-    setEditValue('')
-  }
-
-  const handleCheckboxChange = async (clienteId: string, checked: boolean) => {
-    const success = await updateCliente(clienteId, 'comissao_paga', checked)
-    
-    if (success) {
-      toast({
-        title: "Sucesso",
-        description: "Status da comissão atualizado",
-      })
-    } else {
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar status da comissão",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const renderEditableCell = (cliente: any, field: string, value: string) => {
-    const isEditing = editingCell?.id === cliente.id && editingCell?.field === field
-
-    if (isEditing) {
-      if (field === 'status_campanha') {
-        return (
-          <Select value={editValue} onValueChange={(newValue) => {
-            updateCliente(cliente.id, field, newValue)
-            setEditingCell(null)
-          }}>
-            <SelectTrigger className="h-8 bg-background border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              {STATUS_CAMPANHA.map(status => (
-                <SelectItem key={status} value={status}>
-                  {status}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        )
-      }
-
-      return (
-        <div className="flex gap-1 min-w-[120px]">
-          <Input
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="h-8 text-xs bg-background border-border"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleSaveEdit()
-              if (e.key === 'Escape') handleCancelEdit()
-            }}
-            autoFocus
-          />
-        </div>
-      )
-    }
-
-    return (
-      <div
-        className="editable-cell cursor-pointer p-1 rounded min-h-[20px] flex items-center gap-1 group"
-        onClick={() => handleCellEdit(cliente.id, field, value)}
-      >
-        <span className="truncate flex-1 text-foreground">{value || '-'}</span>
-        <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity text-muted-foreground" />
-      </div>
-    )
   }
 
   const renderLinkButton = (url: string, label: string) => {
@@ -184,8 +133,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     }
 
     const headers = [
-      'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
-      'Email Gestor', 'Status Campanha', 'Data Venda', 'Data Limite',
+      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
+      'Email Gestor', 'Status Campanha', 'Data Limite',
       'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 
       'Número BM', 'Comissão Paga', 'Valor Comissão'
     ]
@@ -193,13 +142,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     const csvContent = [
       headers.join(','),
       ...filteredClientes.map(cliente => [
+        cliente.id || '',
+        cliente.data_venda || '',
         cliente.nome_cliente || '',
         cliente.telefone || '',
         cliente.email_cliente || '',
         cliente.vendedor || '',
         cliente.email_gestor || '',
         cliente.status_campanha || '',
-        cliente.data_venda || '',
         cliente.data_limite || '',
         cliente.link_grupo || '',
         cliente.link_briefing || '', 
@@ -292,7 +242,9 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
             <SelectItem value="all">Todos os status</SelectItem>
             {STATUS_CAMPANHA.map(status => (
               <SelectItem key={status} value={status}>
-                {status}
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                  {status}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -305,14 +257,15 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
           <Table className="table-dark">
             <TableHeader>
               <TableRow className="border-border hover:bg-muted/20">
+                <TableHead className="w-16 text-muted-foreground">ID</TableHead>
+                <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                 <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                 <TableHead className="min-w-[200px] hidden sm:table-cell text-muted-foreground">Email Cliente</TableHead>
                 <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
                 <TableHead className="min-w-[180px] hidden md:table-cell text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
-                <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
-                <TableHead className="min-w-[100px] text-muted-foreground">Data Limite</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Data Limite</TableHead>
                 <TableHead className="min-w-[80px] hidden lg:table-cell text-muted-foreground">Grupo</TableHead>
                 <TableHead className="min-w-[80px] hidden lg:table-cell text-muted-foreground">Briefing</TableHead>
                 <TableHead className="min-w-[80px] hidden lg:table-cell text-muted-foreground">Criativo</TableHead>
@@ -325,7 +278,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={15} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
                     Nenhum cliente encontrado para {selectedManager}
                   </TableCell>
                 </TableRow>
@@ -333,42 +286,65 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 filteredClientes.map((cliente) => (
                   <TableRow 
                     key={cliente.id} 
-                    className={`border-border hover:bg-muted/10 transition-colors ${
-                      isDataLimiteVencida(cliente.data_limite) ? 'bg-red-500/10' : ''
-                    }`}
+                    className="border-border hover:bg-muted/10 transition-colors"
                   >
-                    <TableCell className="font-medium">
-                      <div className="max-w-[200px] truncate text-foreground">
-                        {cliente.nome_cliente || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'telefone', cliente.telefone || '')}
-                    </TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      {renderEditableCell(cliente, 'email_cliente', cliente.email_cliente || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'vendedor', cliente.vendedor || '')}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {renderEditableCell(cliente, 'email_gestor', cliente.email_gestor || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'status_campanha', cliente.status_campanha || '')}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-muted-foreground" />
                         <span className="text-xs text-foreground">{cliente.data_venda || '-'}</span>
                       </div>
                     </TableCell>
-                    <TableCell className={isDataLimiteVencida(cliente.data_limite) ? 'bg-red-500/20' : ''}>
-                      <div className="flex items-center gap-1">
+                    <TableCell className="font-medium">
+                      <div className="max-w-[200px] truncate text-foreground">
+                        {cliente.nome_cliente || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground">{cliente.telefone || '-'}</TableCell>
+                    <TableCell className="hidden sm:table-cell">
+                      <div className="max-w-[200px] truncate text-foreground">
+                        {cliente.email_cliente || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="max-w-[150px] truncate text-foreground">
+                        {cliente.vendedor || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell className="hidden md:table-cell">
+                      <div className="max-w-[180px] truncate text-foreground">
+                        {cliente.email_gestor || '-'}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select 
+                        value={cliente.status_campanha || ''}
+                        onValueChange={(value) => handleStatusChange(cliente.id, value)}
+                      >
+                        <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                          <SelectValue>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
+                              {cliente.status_campanha || 'Selecionar Status'}
+                            </span>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border">
+                          {STATUS_CAMPANHA.map(status => (
+                            <SelectItem key={status} value={status}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                                {status}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
                         {isDataLimiteVencida(cliente.data_limite) && (
-                          <AlertTriangle className="w-3 h-3 text-red-500" />
+                          <AlertTriangle className="w-3 h-3" />
                         )}
-                        <span className="text-xs text-foreground">{cliente.data_limite || '-'}</span>
+                        <span>{cliente.data_limite || '-'}</span>
                       </div>
                     </TableCell>
                     <TableCell className="hidden lg:table-cell">
@@ -384,13 +360,13 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       {renderLinkButton(cliente.link_site, 'Site')}
                     </TableCell>
                     <TableCell className="hidden xl:table-cell">
-                      {renderEditableCell(cliente, 'numero_bm', cliente.numero_bm || '')}
+                      <span className="text-foreground">{cliente.numero_bm || '-'}</span>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
                           checked={cliente.comissao_paga || false}
-                          onCheckedChange={(checked) => handleCheckboxChange(cliente.id, !!checked)}
+                          disabled
                         />
                         <span className="text-xs">
                           {cliente.comissao_paga ? 'Pago' : 'Não Pago'}
@@ -408,11 +384,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
             </TableBody>
           </Table>
         </div>
-      </div>
-
-      {/* Informação sobre edição */}
-      <div className="text-xs text-muted-foreground mt-4 text-center lg:text-left">
-        💡 Clique em qualquer campo editável para modificar os dados
       </div>
     </div>
   )
