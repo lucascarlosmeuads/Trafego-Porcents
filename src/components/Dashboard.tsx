@@ -40,6 +40,20 @@ export function Dashboard() {
     }
   }
 
+  const handleSignOutTouch = async (e: React.TouchEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log('🚪 [Dashboard] Botão Sair clicado (touch)')
+    
+    try {
+      await signOut()
+      console.log('✅ [Dashboard] Logout realizado com sucesso')
+    } catch (error) {
+      console.error('❌ [Dashboard] Erro ao fazer logout:', error)
+    }
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -82,7 +96,7 @@ export function Dashboard() {
                     variant="outline" 
                     onClick={handleSignOut}
                     onMouseDown={handleSignOut}
-                    onTouchStart={handleSignOut}
+                    onTouchStart={handleSignOutTouch}
                     size="sm"
                     className="cursor-pointer select-none touch-manipulation"
                     style={{ 
