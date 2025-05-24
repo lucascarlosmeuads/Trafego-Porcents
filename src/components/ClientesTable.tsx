@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -90,17 +91,30 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   }
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
-    const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+    console.log(`Alterando status do cliente ${clienteId} para: ${newStatus}`)
     
-    if (success) {
-      toast({
-        title: "Sucesso",
-        description: "Status da campanha atualizado",
-      })
-    } else {
+    try {
+      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+      
+      if (success) {
+        console.log('Status atualizado com sucesso')
+        toast({
+          title: "Sucesso",
+          description: "Status da campanha atualizado",
+        })
+      } else {
+        console.error('Falha ao atualizar status')
+        toast({
+          title: "Erro",
+          description: "Erro ao atualizar status da campanha",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro na atualização:', error)
       toast({
         title: "Erro",
-        description: "Erro ao atualizar status da campanha",
+        description: "Erro inesperado ao atualizar status",
         variant: "destructive",
       })
     }
@@ -324,12 +338,12 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       >
                         <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
                           <SelectValue>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
                               {cliente.status_campanha || 'Selecionar Status'}
                             </span>
                           </SelectValue>
                         </SelectTrigger>
-                        <SelectContent className="bg-card border-border">
+                        <SelectContent className="bg-card border-border z-50">
                           {STATUS_CAMPANHA.map(status => (
                             <SelectItem key={status} value={status}>
                               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>

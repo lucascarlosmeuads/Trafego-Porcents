@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -51,6 +52,8 @@ export function AdminTable() {
 
   const updateField = async (id: string, field: keyof Cliente, value: string) => {
     try {
+      console.log(`Atualizando cliente admin ${id}: ${field} = ${value}`)
+      
       const { error } = await supabase
         .from('clientes')
         .update({ [field]: value })
@@ -68,6 +71,7 @@ export function AdminTable() {
         setClientes(prev => prev.map(cliente => 
           cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
+        console.log('Campo atualizado com sucesso na tabela admin')
         toast({
           title: "Sucesso",
           description: "Campo atualizado com sucesso"
@@ -84,6 +88,7 @@ export function AdminTable() {
   }
 
   const handleStatusChange = (id: string, newStatus: string) => {
+    console.log(`Admin alterando status do cliente ${id} para: ${newStatus}`)
     updateField(id, 'status_campanha', newStatus)
   }
 
@@ -281,12 +286,12 @@ export function AdminTable() {
                     >
                       <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
                         <SelectValue>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
                             {cliente.status_campanha || 'Selecionar Status'}
                           </span>
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent className="bg-card border-border">
+                      <SelectContent className="bg-card border-border z-50">
                         {STATUS_CAMPANHA.map(status => (
                           <SelectItem key={status} value={status}>
                             <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>

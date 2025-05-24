@@ -73,24 +73,34 @@ export function useManagerData(selectedManager: string) {
   }
 
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
-    if (!selectedManager) return false
+    if (!selectedManager) {
+      console.error('Manager não selecionado')
+      return false
+    }
 
     try {
       const tableName = getTableName(selectedManager)
       
       console.log(`Atualizando ${tableName} - ID: ${id}, Campo: ${field}, Valor: ${value}`)
       
+      // Converter ID para número se necessário
+      const numericId = parseInt(id)
+      if (isNaN(numericId)) {
+        console.error('ID inválido:', id)
+        return false
+      }
+      
       const { error } = await supabase
         .from(tableName)
         .update({ [field]: value })
-        .eq('id', parseInt(id))
+        .eq('id', numericId)
 
       if (error) {
         console.error('Erro ao atualizar cliente:', error)
         return false
       }
 
-      // Atualizar o estado local
+      // Atualizar o estado local imediatamente
       setClientes(prev => 
         prev.map(cliente => 
           cliente.id === id 
@@ -99,10 +109,10 @@ export function useManagerData(selectedManager: string) {
         )
       )
 
-      console.log('Cliente atualizado com sucesso')
+      console.log('Cliente atualizado com sucesso no estado local e no banco')
       return true
     } catch (err) {
-      console.error('Erro:', err)
+      console.error('Erro na atualização:', err)
       return false
     }
   }
@@ -155,7 +165,7 @@ export function useManagerData(selectedManager: string) {
             
             setClientes(prev => [novoCliente, ...prev])
           } else if (payload.eventType === 'UPDATE') {
-            console.log('Cliente atualizado:', payload.new)
+            console.log('Cliente atualizado via realtime:', payload.new)
             // Atualizar cliente existente
             const clienteAtualizado = {
               id: payload.new.id?.toString() || '',
