@@ -344,23 +344,39 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
 
     try {
-      console.log('🚀 Adicionando novo cliente...')
+      console.log('🚀 === INICIANDO ADIÇÃO DE CLIENTE ===')
       console.log('📥 Dados recebidos:', clienteData)
+      console.log('👤 User Email:', userEmail)
       
       const { manager, tableName } = await determineManager(userEmail, selectedManager)
       
       console.log(`📋 Tabela de destino: ${tableName}`)
       console.log(`👤 Manager: ${manager}`)
-      
-      // Criar objeto limpo apenas com os campos que queremos enviar
+
+      // Verificar o próximo ID disponível na tabela
+      console.log('🔍 Verificando próximo ID disponível...')
+      const { data: maxIdData, error: maxIdError } = await supabase
+        .from(tableName)
+        .select('id')
+        .order('id', { ascending: false })
+        .limit(1)
+
+      if (maxIdError) {
+        console.error('❌ Erro ao verificar próximo ID:', maxIdError)
+      } else {
+        const nextId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id + 1 : 1
+        console.log('🔢 Próximo ID será:', nextId)
+      }
+
+      // Criar objeto ABSOLUTAMENTE limpo - GARANTINDO que não há ID
       const novoCliente = {
-        nome_cliente: clienteData.nome_cliente || '',
-        telefone: clienteData.telefone || '',
-        email_cliente: clienteData.email_cliente || '',
-        data_venda: clienteData.data_venda || '',
-        vendedor: clienteData.vendedor || '',
-        status_campanha: clienteData.status_campanha || 'Preenchimento do Formulário',
-        email_gestor: userEmail,
+        nome_cliente: String(clienteData.nome_cliente || ''),
+        telefone: String(clienteData.telefone || ''),
+        email_cliente: String(clienteData.email_cliente || ''),
+        data_venda: clienteData.data_venda || null,
+        vendedor: String(clienteData.vendedor || ''),
+        status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
+        email_gestor: String(userEmail),
         comissao_paga: false,
         valor_comissao: 60.00,
         site_status: 'pendente',
@@ -372,17 +388,27 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         numero_bm: ''
       }
 
-      console.log('🧹 Dados limpos para inserção:', novoCliente)
-      console.log('🔍 Verificando se existe campo id:', 'id' in novoCliente ? 'SIM - ERRO!' : 'NÃO - OK!')
-      console.log('🔍 Verificando se existe campo created_at:', 'created_at' in novoCliente ? 'SIM - ERRO!' : 'NÃO - OK!')
+      console.log('🧹 === DADOS FINAIS PARA INSERÇÃO ===')
+      console.log('📊 Objeto completo:', JSON.stringify(novoCliente, null, 2))
+      console.log('🔍 Tem campo ID?', 'id' in novoCliente ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
+      console.log('🔍 Tem campo created_at?', 'created_at' in novoCliente ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
+      console.log('🔍 Todas as chaves:', Object.keys(novoCliente))
+      console.log('🔍 Total de campos:', Object.keys(novoCliente).length)
 
+      console.log('📤 Enviando para Supabase...')
       const { data, error } = await supabase
         .from(tableName)
         .insert([novoCliente])
         .select()
 
       if (error) {
-        console.error('❌ Erro ao adicionar cliente:', error)
+        console.error('❌ === ERRO DETALHADO DO SUPABASE ===')
+        console.error('🔥 Código do erro:', error.code)
+        console.error('🔥 Mensagem:', error.message)
+        console.error('🔥 Detalhes:', error.details)
+        console.error('🔥 Hint:', error.hint)
+        console.error('🔥 Objeto completo do erro:', error)
+        
         toast({
           title: "Erro",
           description: `Erro ao adicionar cliente: ${error.message}`,
@@ -391,14 +417,21 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         return false
       }
 
-      console.log('✅ Cliente adicionado com sucesso:', data)
+      console.log('✅ === SUCESSO ===')
+      console.log('🎉 Cliente adicionado com sucesso:', data)
       
       // Forçar atualização da tabela após inserção
       await fetchClientes()
       
+      toast({
+        title: "Sucesso",
+        description: "Cliente adicionado com sucesso!"
+      })
+      
       return true
     } catch (error) {
-      console.error('💥 Erro na adição do cliente:', error)
+      console.error('💥 === ERRO GERAL ===')
+      console.error('💥 Erro capturado no catch:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
