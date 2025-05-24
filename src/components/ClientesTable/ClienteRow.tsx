@@ -293,7 +293,7 @@ export function ClienteRow({
               size="sm"
               variant="ghost"
               className="h-6 w-6 p-0"
-              onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
+              onClick={() => setShowSiteOptions(true)}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
@@ -326,7 +326,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
+                onClick={() => setShowSiteOptions(true)}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -342,7 +342,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
+                onClick={() => setShowSiteOptions(true)}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
