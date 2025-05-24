@@ -37,11 +37,26 @@ export function useManagerData(selectedManager: string) {
         setClientes([])
       } else {
         console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
-        console.log('🔍 Primeiro registro raw:', data?.[0])
+        console.log('🔍 Dados brutos do Supabase:', data?.[0])
         
         const clientesFormatados = (data || []).map((item: any, index: number) => {
+          // CORREÇÃO PRINCIPAL: Garantir que o ID seja sempre um número válido
+          let clienteId = item.id
+          
+          // Se o ID vier como string, converter para número
+          if (typeof clienteId === 'string') {
+            clienteId = parseInt(clienteId)
+          }
+          
+          // Se não conseguiu converter ou é inválido, usar o índice + timestamp como fallback
+          if (!clienteId || isNaN(clienteId) || clienteId <= 0) {
+            console.warn(`⚠️ ID inválido encontrado no registro ${index}:`, item.id, 'Dados do item:', item)
+            // Não usar fallback, pois precisamos do ID real para updates
+            clienteId = null
+          }
+          
           const cliente = {
-            id: String(item.id || ''),
+            id: clienteId ? String(clienteId) : '', // Converter para string mas garantir que não seja vazio
             data_venda: item.data_venda || '',
             nome_cliente: item.nome_cliente || '',
             telefone: item.telefone || '',
@@ -61,16 +76,28 @@ export function useManagerData(selectedManager: string) {
           }
           
           console.log(`📝 Cliente ${index + 1} formatado:`, {
-            id: cliente.id,
+            idOriginal: item.id,
+            idProcessado: cliente.id,
             nome: cliente.nome_cliente,
-            status: cliente.status_campanha
+            status: cliente.status_campanha,
+            tipoIdOriginal: typeof item.id,
+            tipoIdProcessado: typeof cliente.id
           })
           
           return cliente
         })
         
-        console.log(`📋 Total de clientes formatados para ${selectedManager}:`, clientesFormatados.length)
-        setClientes(clientesFormatados)
+        // Filtrar clientes sem ID válido para evitar problemas
+        const clientesValidos = clientesFormatados.filter(cliente => {
+          const isValid = cliente.id && cliente.id.trim() !== ''
+          if (!isValid) {
+            console.warn('❌ Cliente sem ID válido removido:', cliente.nome_cliente)
+          }
+          return isValid
+        })
+        
+        console.log(`📋 Total de clientes válidos para ${selectedManager}:`, clientesValidos.length)
+        setClientes(clientesValidos)
       }
     } catch (err) {
       console.error('💥 Erro:', err)
@@ -82,13 +109,25 @@ export function useManagerData(selectedManager: string) {
   }
 
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
+    console.log(`🚀 === INICIANDO ATUALIZAÇÃO ===`)
+    console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
+    console.log(`🎯 Campo: ${field}`)
+    console.log(`💾 Valor: ${value}`)
+    console.log(`👤 Manager: ${selectedManager}`)
+
+    // VALIDAÇÕES RIGOROSAS DO ID
+    if (!id || id.trim() === '') {
+      console.error('❌ ID do cliente está vazio ou inválido:', id)
+      return false
+    }
+
     if (!selectedManager) {
       console.error('❌ Manager não selecionado')
       return false
     }
 
-    if (!id || id.trim() === '') {
-      console.error('❌ ID do cliente está vazio ou inválido:', id)
+    if (!field || field.trim() === '') {
+      console.error('❌ Campo está vazio ou inválido:', field)
       return false
     }
 
@@ -96,22 +135,19 @@ export function useManagerData(selectedManager: string) {
       const tableName = getTableName(selectedManager)
       const numericId = parseInt(id)
       
-      console.log(`🔄 === INICIANDO ATUALIZAÇÃO ===`)
       console.log(`📋 Tabela: ${tableName}`)
-      console.log(`🆔 ID original: "${id}" (tipo: ${typeof id})`)
       console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
-      console.log(`🏷️ Campo: ${field}`)
-      console.log(`💾 Valor: ${value}`)
       
       if (isNaN(numericId) || numericId <= 0) {
         console.error('❌ ID inválido após conversão:', { original: id, converted: numericId })
         return false
       }
 
-      // Verificar se o registro existe
+      // Verificar se o registro existe antes de tentar atualizar
+      console.log('🔍 Verificando se o registro existe...')
       const { data: existingData, error: checkError } = await supabase
         .from(tableName)
-        .select('id, status_campanha')
+        .select('id, status_campanha, nome_cliente')
         .eq('id', numericId)
         .single()
 
@@ -119,8 +155,12 @@ export function useManagerData(selectedManager: string) {
         console.error('❌ Erro ao verificar existência do registro:', checkError)
         if (checkError.code === 'PGRST116') {
           console.error('❌ Registro não encontrado com ID:', numericId)
-          return false
         }
+        return false
+      }
+
+      if (!existingData) {
+        console.error('❌ Nenhum registro encontrado com ID:', numericId)
         return false
       }
 
@@ -128,6 +168,7 @@ export function useManagerData(selectedManager: string) {
       console.log(`🔄 Status atual: "${existingData.status_campanha}" -> Novo status: "${value}"`)
       
       // Fazer a atualização
+      console.log('🔄 Executando UPDATE...')
       const { data: updateData, error: updateError } = await supabase
         .from(tableName)
         .update({ [field]: value })

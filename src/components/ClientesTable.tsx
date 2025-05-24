@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -96,12 +97,24 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`🎯 Novo Status: "${newStatus}"`)
     console.log(`👤 Manager: ${selectedManager}`)
     
-    // Validações detalhadas
+    // VALIDAÇÃO CRÍTICA DO ID
     if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ID do cliente está vazio ou inválido:', clienteId)
+      console.error('❌ ERRO CRÍTICO: ID do cliente está vazio ou inválido:', clienteId)
       toast({
-        title: "Erro",
-        description: "ID do cliente não encontrado",
+        title: "Erro Crítico",
+        description: "ID do cliente não encontrado. Verifique os dados do registro.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Verificar se é um número válido
+    const numericId = parseInt(clienteId)
+    if (isNaN(numericId) || numericId <= 0) {
+      console.error('❌ ERRO CRÍTICO: ID não é um número válido:', { clienteId, numericId })
+      toast({
+        title: "Erro Crítico",
+        description: "ID do cliente tem formato inválido.",
         variant: "destructive",
       })
       return
@@ -124,22 +137,23 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       console.log('📋 Clientes disponíveis:', clientes.map(c => ({ id: c.id, nome: c.nome_cliente })))
       toast({
         title: "Erro",
-        description: "Cliente não encontrado",
+        description: "Cliente não encontrado na lista local",
         variant: "destructive",
       })
       return
     }
 
-    console.log(`📋 Cliente encontrado:`, {
+    console.log(`📋 Cliente encontrado na lista local:`, {
       id: clienteAtual.id,
       nome: clienteAtual.nome_cliente,
-      statusAtual: clienteAtual.status_campanha
+      statusAtual: clienteAtual.status_campanha,
+      clienteCompleto: clienteAtual
     })
     
     setUpdatingStatus(clienteId)
     
     try {
-      console.log('🔄 Iniciando atualização...')
+      console.log('🔄 Iniciando atualização via updateCliente...')
       const success = await updateCliente(clienteId, 'status_campanha', newStatus)
       
       if (success) {
@@ -149,15 +163,15 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
           description: `Status alterado para: ${newStatus}`,
         })
       } else {
-        console.error('❌ Falha ao atualizar status')
+        console.error('❌ Falha ao atualizar status - função retornou false')
         toast({
           title: "Erro",
-          description: "Erro ao atualizar status da campanha. Verifique os logs do console.",
+          description: "Falha ao atualizar status. Verifique os logs do console para mais detalhes.",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error('💥 Erro na atualização:', error)
+      console.error('💥 Erro na atualização (catch):', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao atualizar status",
@@ -345,15 +359,23 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 </TableRow>
               ) : (
                 filteredClientes.map((cliente, index) => {
-                  // Garantir que o ID seja uma string válida
+                  // CORREÇÃO PRINCIPAL: Garantir que o ID seja válido
                   const clienteId = String(cliente.id || '')
                   
+                  // Log crítico para debugging
                   console.log(`🔍 Renderizando cliente ${index + 1}:`, {
-                    id: cliente.id,
+                    idOriginal: cliente.id,
                     idProcessado: clienteId,
                     nome: cliente.nome_cliente,
-                    status: cliente.status_campanha
+                    status: cliente.status_campanha,
+                    dadosCompletos: cliente
                   })
+
+                  // Se o ID não for válido, não renderizar este cliente
+                  if (!clienteId || clienteId.trim() === '') {
+                    console.warn(`⚠️ Cliente ${index + 1} tem ID inválido, não será renderizado:`, cliente)
+                    return null
+                  }
 
                   return (
                     <TableRow 
@@ -397,13 +419,29 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                             console.log(`🎯 Select onChange disparado:`, {
                               clienteId: clienteId,
                               novoStatus: value,
-                              clienteOriginal: cliente
+                              clienteOriginal: cliente,
+                              validacao: {
+                                idValido: !!(clienteId && clienteId.trim() !== ''),
+                                statusValido: !!(value && value.trim() !== '')
+                              }
                             })
+                            
+                            // Validação extra antes de chamar handleStatusChange
+                            if (!clienteId || clienteId.trim() === '') {
+                              console.error('❌ ERRO: ID inválido no onChange:', clienteId)
+                              toast({
+                                title: "Erro",
+                                description: "ID do cliente inválido",
+                                variant: "destructive",
+                              })
+                              return
+                            }
+                            
                             handleStatusChange(clienteId, value)
                           }}
                           disabled={updatingStatus === clienteId}
                         >
-                          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground z-[400]">
                             <SelectValue>
                               <div className="flex items-center gap-2">
                                 {updatingStatus === clienteId && (
@@ -415,7 +453,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                               </div>
                             </SelectValue>
                           </SelectTrigger>
-                          <SelectContent className="bg-card border-border z-[300]">
+                          <SelectContent className="bg-card border-border z-[500]">
                             {STATUS_CAMPANHA.map(status => (
                               <SelectItem key={status} value={status}>
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
