@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -13,35 +12,23 @@ export function LoginForm() {
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [logoSrc, setLogoSrc] = useState('/images/logo-preto.png')
   const { signIn, signUp } = useAuth()
   const { theme } = useTheme()
   const { toast } = useToast()
 
-  // Atualizar logo baseado no tema
-  useEffect(() => {
-    const updateLogo = () => {
-      if (theme === 'dark') {
-        setLogoSrc('/images/logo-branco.png')
-      } else if (theme === 'light') {
-        setLogoSrc('/images/logo-preto.png')
-      } else {
-        // Para tema 'system', detectar preferência do sistema
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        setLogoSrc(systemTheme === 'dark' ? '/images/logo-branco.png' : '/images/logo-preto.png')
-      }
+  const getLogoSrc = () => {
+    if (theme === 'dark') {
+      return '/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png'
+    } else if (theme === 'light') {
+      return '/lovable-uploads/72bf6b35-f140-4b4f-8383-6b472d7baeff.png'
+    } else {
+      // Para tema 'system', detectar preferência do sistema
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      return systemTheme === 'dark' 
+        ? '/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png'
+        : '/lovable-uploads/72bf6b35-f140-4b4f-8383-6b472d7baeff.png'
     }
-
-    updateLogo()
-
-    // Listener para mudanças no tema do sistema quando em modo 'system'
-    if (theme === 'system') {
-      const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-      const handleChange = () => updateLogo()
-      mediaQuery.addEventListener('change', handleChange)
-      return () => mediaQuery.removeEventListener('change', handleChange)
-    }
-  }, [theme])
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -82,7 +69,7 @@ export function LoginForm() {
         <CardHeader className="text-center">
           <div className="flex justify-center mb-6">
             <img 
-              src={logoSrc} 
+              src={getLogoSrc()}
               alt="Tráfego Porcents Logo" 
               className="h-20 w-auto object-contain"
               style={{ transition: 'opacity 0.2s ease-in-out' }}
