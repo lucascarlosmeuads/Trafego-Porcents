@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -226,11 +227,7 @@ export function ClienteRow({
             size="sm"
             variant="ghost"
             className="h-6 w-6 p-0"
-            onClick={() => {
-              setEditingSiteLink(false)
-              setSiteLinkInput('')
-              setShowSiteOptions(false)
-            }}
+            onClick={handleCancelSiteEdit}
           >
             <X className="w-3 h-3 text-red-600" />
           </Button>
@@ -311,7 +308,7 @@ export function ClienteRow({
               size="sm"
               variant="ghost"
               className="h-6 w-6 p-0"
-              onClick={handleAguardandoLinkClick}
+              onClick={handleStartLinkEdit}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
@@ -334,7 +331,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={handleEditSiteLink}
+                onClick={handleStartLinkEdit}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -350,7 +347,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={handleAguardandoLinkClick}
+                onClick={handleStartLinkEdit}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -383,17 +380,17 @@ export function ClienteRow({
     }
   }
 
-  const handleAguardandoLinkClick = () => {
-    console.log('🔗 Abrindo input para link do site')
+  const handleStartLinkEdit = () => {
+    console.log('🔗 Iniciando edição do link do site')
     setSiteLinkInput(cliente.link_site || '')
     setEditingSiteLink(true)
     setShowSiteOptions(false)
   }
 
-  const handleEditSiteLink = () => {
-    console.log('✏️ Editando link do site existente')
-    setSiteLinkInput(cliente.link_site || '')
-    setEditingSiteLink(true)
+  const handleCancelSiteEdit = () => {
+    console.log('❌ Cancelando edição do link do site')
+    setEditingSiteLink(false)
+    setSiteLinkInput('')
     setShowSiteOptions(false)
   }
 
@@ -648,3 +645,4 @@ export function ClienteRow({
     </TableRow>
   )
 }
+
