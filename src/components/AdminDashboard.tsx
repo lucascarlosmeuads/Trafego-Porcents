@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -29,6 +28,28 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       'Andreza': 'clientes_andreza'
     }
     return tableMapping[managerName] || 'clientes_andreza'
+  }
+
+  // Função para obter as mesmas cores usadas na tabela
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Preenchimento do Formulário':
+        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
+      case 'Brief':
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+      case 'Criativo':
+        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
+      case 'Site':
+        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
+      case 'Agendamento':
+        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
+      case 'No Ar':
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
+      case 'Otimização':
+        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      default:
+        return 'bg-muted text-muted-foreground border border-border'
+    }
   }
 
   useEffect(() => {
@@ -258,14 +279,14 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                 {STATUS_CAMPANHA.map(status => (
-                  <div key={status} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                  <div key={status} className={`p-4 rounded-lg ${getStatusColor(status)}`}>
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="font-semibold text-sm">{status}</h3>
-                      <span className="text-2xl font-bold text-blue-600">
+                      <span className="text-2xl font-bold">
                         {statusStats[status] || 0}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                    <p className="text-xs opacity-75">
                       {status === 'Preenchimento do Formulário' && 'Cliente adicionado, aguardando preenchimento'}
                       {status === 'Brief' && 'Cliente preencheu o formulário de briefing'}
                       {status === 'Criativo' && 'Criativos em produção ou em revisão'}
