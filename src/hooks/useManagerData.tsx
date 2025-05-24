@@ -3,14 +3,19 @@ import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
-export function useManagerData(userEmail: string, isAdmin: boolean) {
+export function useManagerData(userEmail: string, isAdmin: boolean, selectedManager?: string) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string>('')
 
-  // Determinar o gestor baseado no email logado
-  const determineManager = (email: string): string => {
+  // Determinar o gestor baseado no email logado ou gestor selecionado (para admin)
+  const determineManager = (email: string, selectedMgr?: string): string => {
+    // Se for admin e tiver gestor selecionado, usar o gestor selecionado
+    if (isAdmin && selectedMgr) {
+      return selectedMgr
+    }
+    
     if (email === 'lucas@admin.com') {
       return 'Lucas Falcão' // Admin pode ver Lucas por padrão
     }
@@ -24,15 +29,24 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
     return managerMapping[email] || 'Andreza' // Fallback para Andreza
   }
 
-  // Determinar tabela baseada no email do gestor
-  const getTableName = (email: string): string => {
-    const manager = determineManager(email)
+  // Determinar tabela baseada no nome do gestor
+  const getTableName = (managerName: string): string => {
     const tableMapping: { [key: string]: string } = {
       'Lucas Falcão': 'clientes_lucas_falcao',
       'Andreza': 'clientes_andreza'
     }
     
-    return tableMapping[manager] || 'clientes_andreza'
+    return tableMapping[managerName] || 'clientes_andreza'
+  }
+
+  // Determinar email do gestor baseado no nome do gestor (para filtros RLS)
+  const getManagerEmail = (managerName: string): string => {
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@gestor.com'
+    }
+    
+    return emailMapping[managerName] || 'andreza@gestor.com'
   }
 
   const fetchClientes = async (showToast = false) => {
@@ -42,12 +56,18 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
     setError(null)
 
     try {
-      const manager = determineManager(userEmail)
-      const tableName = getTableName(userEmail)
+      const manager = determineManager(userEmail, selectedManager)
+      const tableName = getTableName(manager)
       
       setCurrentManager(manager)
       
-      console.log('🔍 Buscando dados para:', { userEmail, manager, tableName })
+      console.log('🔍 Buscando dados para:', { 
+        userEmail, 
+        manager, 
+        tableName, 
+        selectedManager, 
+        isAdmin 
+      })
       
       const { data, error, count } = await supabase
         .from(tableName)
@@ -59,7 +79,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
         count,
         error,
         tableName,
-        userEmail
+        manager
       })
 
       if (error) {
@@ -155,7 +175,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
     }
 
     try {
-      const tableName = getTableName(userEmail)
+      const manager = determineManager(userEmail, selectedManager)
+      const tableName = getTableName(manager)
       const numericId = parseInt(id)
       
       console.log(`📋 Tabela: ${tableName}`)
@@ -219,10 +240,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
   useEffect(() => {
     if (!userEmail) return
 
-    const tableName = getTableName(userEmail)
-    const manager = determineManager(userEmail)
+    const manager = determineManager(userEmail, selectedManager)
+    const tableName = getTableName(manager)
     
-    console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName })
+    console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName, selectedManager })
 
     // Buscar dados iniciais
     fetchClientes()
@@ -322,7 +343,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean) {
       console.log('🧹 Removendo canal de realtime para:', tableName)
       supabase.removeChannel(channel)
     }
-  }, [userEmail])
+  }, [userEmail, selectedManager])
 
   const refetchWithToast = () => fetchClientes(true)
 

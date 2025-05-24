@@ -29,7 +29,11 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const emailToUse = userEmail || user?.email || ''
   const managerName = selectedManager || 'Próprios dados'
   
-  const { clientes, loading, error, updateCliente, refetch, currentManager } = useManagerData(emailToUse, isAdmin)
+  const { clientes, loading, error, updateCliente, refetch, currentManager } = useManagerData(
+    emailToUse, 
+    isAdmin, 
+    selectedManager
+  )
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -58,11 +62,12 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     console.log(`🔍 ClientesTable: Total de clientes carregados:`, clientes.length)
     console.log(`📊 Manager atual:`, currentManager)
     console.log(`📊 Email usado:`, emailToUse)
+    console.log(`📊 Selected Manager:`, selectedManager)
     
     if (clientes.length > 0) {
       console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
-  }, [clientes, currentManager, emailToUse])
+  }, [clientes, currentManager, emailToUse, selectedManager])
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 

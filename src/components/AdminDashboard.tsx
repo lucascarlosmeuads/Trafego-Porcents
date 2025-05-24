@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,7 +62,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (showToast) setRefreshing(true)
       setLoading(true)
       const tableName = getTableName(selectedManager)
-      console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela: ${tableName}`)
+      console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela: ${tableName} para gestor: ${selectedManager}`)
       
       const { data, error, count } = await supabase
         .from(tableName)
