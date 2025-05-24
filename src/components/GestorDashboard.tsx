@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -38,6 +37,10 @@ export function GestorDashboard() {
         return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      case 'Off':
+        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Reembolso':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
       default:
         return 'bg-muted text-muted-foreground border border-border'
     }
@@ -264,6 +267,8 @@ export function GestorDashboard() {
                       {status === 'Agendamento' && 'Campanha agendada, configurando BM (opcional)'}
                       {status === 'No Ar' && 'Campanha rodando, analisando resultados'}
                       {status === 'Otimização' && 'Otimizando anúncios e melhorando ROAS'}
+                      {status === 'Off' && 'Cliente pausou temporariamente'}
+                      {status === 'Reembolso' && 'Cliente solicitou ou recebeu reembolso'}
                     </p>
                   </div>
                 ))}

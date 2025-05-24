@@ -97,6 +97,10 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
         return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      case 'Off':
+        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Reembolso':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
       default:
         return 'bg-muted text-muted-foreground border border-border'
     }
@@ -357,7 +361,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={12} className="text-center py-8 text-white">
+                  <TableCell colSpan={13} className="text-center py-8 text-white">
                     {clientes.length === 0 
                       ? `Nenhum cliente encontrado`
                       : `Nenhum cliente corresponde aos filtros aplicados (${clientes.length} clientes no total)`

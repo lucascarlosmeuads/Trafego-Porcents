@@ -320,6 +320,16 @@ export function ClienteRow({
         {renderWhatsAppButton(cliente.telefone)}
       </TableCell>
       <TableCell>
+        <div className="max-w-[150px] truncate text-white text-xs">
+          {cliente.vendedor || '-'}
+        </div>
+      </TableCell>
+      <TableCell>
+        <div className="max-w-[150px] truncate text-white text-xs">
+          {cliente.email_gestor || '-'}
+        </div>
+      </TableCell>
+      <TableCell>
         <Select 
           value={cliente.status_campanha || ''}
           onValueChange={(value) => onStatusChange(clienteId, value)}
