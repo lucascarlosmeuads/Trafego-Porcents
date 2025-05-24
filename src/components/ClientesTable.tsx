@@ -298,7 +298,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
-            placeholder="Pesquisar por nome, email, telefone ou vendedor..."
+            placeholder="Pesquisar por nome, telefone..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="pl-10 bg-background border-border text-foreground"
@@ -333,9 +333,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                 <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
-                <TableHead className="min-w-[200px] hidden sm:table-cell text-muted-foreground">Email Cliente</TableHead>
-                <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
-                <TableHead className="min-w-[180px] hidden md:table-cell text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Data Limite</TableHead>
                 <TableHead className="min-w-[80px] hidden lg:table-cell text-muted-foreground">Grupo</TableHead>
@@ -350,7 +347,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={16} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
                     Nenhum cliente encontrado para {selectedManager}
                   </TableCell>
                 </TableRow>
@@ -384,21 +381,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                         </div>
                       </TableCell>
                       <TableCell className="text-foreground">{cliente.telefone || '-'}</TableCell>
-                      <TableCell className="hidden sm:table-cell">
-                        <div className="max-w-[200px] truncate text-foreground">
-                          {cliente.email_cliente || '-'}
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <div className="max-w-[150px] truncate text-foreground">
-                          {cliente.vendedor || '-'}
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell">
-                        <div className="max-w-[180px] truncate text-foreground">
-                          {cliente.email_gestor || '-'}
-                        </div>
-                      </TableCell>
                       <TableCell>
                         <Select 
                           value={cliente.status_campanha || ''}
