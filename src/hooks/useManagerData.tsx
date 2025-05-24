@@ -410,7 +410,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
-        variant: "destructiva"
+        variant: "destructive"
       })
       return false
     }
