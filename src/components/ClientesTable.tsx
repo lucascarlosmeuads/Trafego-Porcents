@@ -67,6 +67,21 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
 
+  // Move getFilteredClientes function here, before it's used
+  const getFilteredClientes = (clientesList: typeof clientes) => {
+    return clientesList.filter(cliente => {
+      const matchesSearch = 
+        cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cliente.telefone?.includes(searchTerm) ||
+        cliente.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
+      
+      return matchesSearch && matchesStatus
+    })
+  }
+
   // Filtrar clientes baseado no filterType
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
@@ -196,20 +211,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     verificarPermissoes()
   }, [user?.email, isAdmin])
-
-  const getFilteredClientes = (clientesList: typeof clientes) => {
-    return clientesList.filter(cliente => {
-      const matchesSearch = 
-        cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        cliente.telefone?.includes(searchTerm) ||
-        cliente.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
-      
-      const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
-      
-      return matchesSearch && matchesStatus
-    })
-  }
 
   const filteredClientes = getFilteredClientes(clientesFiltrados)
 
