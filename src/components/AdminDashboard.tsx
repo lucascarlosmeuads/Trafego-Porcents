@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Download, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { ClientesTable } from './ClientesTable'
+import { GestoresManagement } from './GestoresManagement'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface AdminDashboardProps {
@@ -223,9 +224,10 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="gestores">Gestores</TabsTrigger>
         </TabsList>
 
         <TabsContent value="dashboard" className="space-y-6">
@@ -340,6 +342,10 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
         <TabsContent value="clientes" className="space-y-6">
           <ClientesTable selectedManager={selectedManager} />
+        </TabsContent>
+
+        <TabsContent value="gestores" className="space-y-6">
+          <GestoresManagement />
         </TabsContent>
       </Tabs>
     </div>
