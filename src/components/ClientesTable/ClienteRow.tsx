@@ -63,8 +63,6 @@ export function ClienteRow({
   comissionValueInput,
   setComissionValueInput
 }: ClienteRowProps) {
-  const [editingSiteLink, setEditingSiteLink] = useState(false)
-  const [siteLinkInput, setSiteLinkInput] = useState('')
   const [showSiteOptions, setShowSiteOptions] = useState(false)
 
   const formatDate = (dateString: string | null) => {
@@ -204,12 +202,13 @@ export function ClienteRow({
     const siteUrl = cliente.link_site || ''
     
     // Se está editando o link do site
-    if (editingSiteLink) {
+    const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
+    if (isEditingLink) {
       return (
         <div className="flex items-center gap-1">
           <Input
-            value={siteLinkInput}
-            onChange={(e) => setSiteLinkInput(e.target.value)}
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
             className="h-6 text-xs"
             placeholder="https://..."
           />
@@ -225,7 +224,7 @@ export function ClienteRow({
             size="sm"
             variant="ghost"
             className="h-6 w-6 p-0"
-            onClick={handleCancelSiteEdit}
+            onClick={onLinkCancel}
           >
             <X className="w-3 h-3 text-red-600" />
           </Button>
@@ -243,7 +242,7 @@ export function ClienteRow({
             className="h-7 px-2 text-xs bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
             onClick={() => handleSiteOptionSelect('aguardando_link')}
           >
-            ✅ Sim
+            ✅ Precisa de site
           </Button>
           <Button
             variant="outline"
@@ -251,7 +250,7 @@ export function ClienteRow({
             className="h-7 px-2 text-xs bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
             onClick={() => handleSiteOptionSelect('nao_precisa')}
           >
-            ❌ Não
+            ❌ Não precisa
           </Button>
           <Button
             size="sm"
@@ -265,20 +264,8 @@ export function ClienteRow({
       )
     }
 
-    // Estados do site
+    // Estados simplificados do site
     switch (siteStatus) {
-      case 'pendente':
-        return (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200"
-            onClick={() => setShowSiteOptions(true)}
-          >
-            📎 Precisa de site?
-          </Button>
-        )
-
       case 'nao_precisa':
         return (
           <div className="flex items-center gap-1">
@@ -306,7 +293,7 @@ export function ClienteRow({
               size="sm"
               variant="ghost"
               className="h-6 w-6 p-0"
-              onClick={handleStartLinkEdit}
+              onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
@@ -329,7 +316,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={handleStartLinkEdit}
+                onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -345,7 +332,7 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={handleStartLinkEdit}
+                onClick={() => onLinkEdit(cliente.id, 'link_site', siteUrl)}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -354,15 +341,18 @@ export function ClienteRow({
         }
 
       default:
+        // Estado inicial - traço cinza
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200"
-            onClick={() => setShowSiteOptions(true)}
-          >
-            📎 Precisa de site?
-          </Button>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-gray-400 hover:text-gray-600"
+              onClick={() => setShowSiteOptions(true)}
+            >
+              —
+            </Button>
+          </div>
         )
     }
   }
@@ -371,6 +361,7 @@ export function ClienteRow({
     console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
     
     try {
+      // Atualizar o site_status
       await onStatusChange(cliente.id, option)
       setShowSiteOptions(false)
     } catch (error) {
@@ -378,42 +369,21 @@ export function ClienteRow({
     }
   }
 
-  const handleStartLinkEdit = () => {
-    console.log('🔗 Iniciando edição do link do site')
-    setSiteLinkInput(cliente.link_site || '')
-    setEditingSiteLink(true)
-    setShowSiteOptions(false)
-  }
-
-  const handleCancelSiteEdit = () => {
-    console.log('❌ Cancelando edição do link do site')
-    setEditingSiteLink(false)
-    setSiteLinkInput('')
-    setShowSiteOptions(false)
-  }
-
   const handleSiteLinkSave = async () => {
-    console.log('💾 Salvando link do site:', siteLinkInput)
+    console.log('💾 Salvando link do site:', linkValue)
     
-    if (!siteLinkInput.trim()) {
+    if (!linkValue.trim()) {
       console.error('❌ Link do site está vazio')
       return
     }
     
     try {
-      // Primeiro salvar o link do site
-      setLinkValue(siteLinkInput)
+      // Salvar o link do site
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
-        // Depois atualizar o status para finalizado
+        // Atualizar o status para finalizado
         await onStatusChange(cliente.id, 'finalizado')
-        
-        // Limpar os estados de edição
-        setEditingSiteLink(false)
-        setSiteLinkInput('')
-        setShowSiteOptions(false)
-        
         console.log('✅ Link salvo e status atualizado para finalizado')
       } else {
         console.error('❌ Falha ao salvar o link')
