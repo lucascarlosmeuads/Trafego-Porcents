@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -24,12 +23,34 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       }
     }
     
-    // Mapear emails específicos para gestores
+    // Buscar primeiro na tabela gestores para nomes corretos
+    try {
+      console.log('🔍 [useManagerData] Buscando gestor por email na tabela gestores:', email)
+      
+      const { data: gestorData, error: gestorError } = await supabase
+        .from('gestores')
+        .select('nome, email, ativo')
+        .eq('email', email)
+        .eq('ativo', true)
+        .single()
+
+      if (!gestorError && gestorData) {
+        console.log('✅ [useManagerData] Gestor encontrado na tabela gestores:', gestorData.nome)
+        return {
+          manager: gestorData.nome
+        }
+      }
+    } catch (err) {
+      console.warn('[useManagerData] Gestor não encontrado na tabela gestores, usando fallback')
+    }
+    
+    // Mapear emails específicos para gestores (fallback)
     const managerMapping: { [key: string]: { manager: string } } = {
       'andreza@gestor.com': { manager: 'Andreza' },
       'lucas.falcao@gestor.com': { manager: 'Lucas Falcão' },
       'andreza@trafegoporcents.com': { manager: 'Andreza' },
-      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão' }
+      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão' },
+      'carol@trafegoporcents.com': { manager: 'Carol' }
     }
     
     // Se for um email específico mapeado, usar o mapeamento
@@ -37,26 +58,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       return {
         manager: managerMapping[email].manager
       }
-    }
-    
-    // Buscar automaticamente em qual gestor o email existe na tabela unificada
-    try {
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .select('email_gestor')
-        .eq('email_gestor', email)
-        .limit(1)
-
-      if (!error && data && data.length > 0) {
-        // Derivar nome do gestor baseado no email
-        if (email.includes('andreza')) {
-          return { manager: 'Andreza' }
-        } else if (email.includes('lucas')) {
-          return { manager: 'Lucas Falcão' }
-        }
-      }
-    } catch (err) {
-      console.warn('Erro ao buscar gestor na tabela unificada:', err)
     }
     
     // Se não encontrou, extrair nome do email se for @trafegoporcents.com
@@ -84,14 +85,14 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       
       setCurrentManager(manager)
       
-      console.log('🔍 Buscando dados da tabela unificada:', { 
+      console.log('🔍 [useManagerData] Buscando dados da tabela todos_clientes:', { 
         userEmail, 
         manager, 
         selectedManager, 
         isAdmin 
       })
       
-      // Construir query da tabela unificada
+      // Construir query da tabela unificada todos_clientes
       let query = supabase
         .from('todos_clientes')
         .select('*', { count: 'exact' })
@@ -100,12 +101,12 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       // Se não for admin, filtrar apenas registros com email_gestor = email logado
       if (!isAdmin) {
         query = query.eq('email_gestor', userEmail)
-        console.log('🔒 Aplicando filtro RLS por email_gestor:', userEmail)
+        console.log('🔒 [useManagerData] Aplicando filtro RLS por email_gestor:', userEmail)
       }
 
       const { data, error, count } = await query
 
-      console.log('📊 Resposta do Supabase (tabela unificada):', {
+      console.log('📊 [useManagerData] Resposta do Supabase (tabela todos_clientes):', {
         data: data?.length || 0,
         count,
         error,
@@ -114,7 +115,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       })
 
       if (error) {
-        console.error('❌ Erro ao buscar clientes:', error)
+        console.error('❌ [useManagerData] Erro ao buscar clientes:', error)
         setError(`Erro ao carregar dados: ${error.message}`)
         setClientes([])
         if (showToast) {
@@ -125,11 +126,11 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           })
         }
       } else {
-        console.log(`✅ Dados recebidos para ${manager}:`, data?.length || 0)
+        console.log(`✅ [useManagerData] Dados recebidos para ${manager}:`, data?.length || 0)
         
         const clientesFormatados = (data || []).map((item: any) => {
           if (!item.id || item.id === null || item.id === undefined) {
-            console.error('⚠️ Registro sem ID encontrado:', item)
+            console.error('⚠️ [useManagerData] Registro sem ID encontrado:', item)
             return null
           }
           
@@ -157,10 +158,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           return cliente
         }).filter(Boolean)
         
-        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
+        console.log(`🎯 [useManagerData] RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
         
         if (clientesFormatados.length === 0 && !isAdmin) {
-          console.log('ℹ️ Nenhum cliente encontrado para este gestor')
+          console.log('ℹ️ [useManagerData] Nenhum cliente encontrado para este gestor')
           setError('Nenhum cliente atribuído a este gestor ainda.')
         }
         
@@ -174,7 +175,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         }
       }
     } catch (err) {
-      console.error('💥 Erro na busca:', err)
+      console.error('💥 [useManagerData] Erro na busca:', err)
       setError(`Erro ao carregar dados`)
       setClientes([])
       if (showToast) {
@@ -190,7 +191,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
   }
 
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
-    console.log(`🚀 === INICIANDO ATUALIZAÇÃO ===`)
+    console.log(`🚀 [useManagerData] === INICIANDO ATUALIZAÇÃO ===`)
     console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
     console.log(`🎯 Campo: ${field}`)
     console.log(`💾 Valor: ${value}`)
@@ -198,32 +199,32 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     console.log(`👤 Manager: ${currentManager}`)
 
     if (!id || id.trim() === '') {
-      console.error('❌ ID do cliente está vazio ou inválido:', id)
+      console.error('❌ [useManagerData] ID do cliente está vazio ou inválido:', id)
       return false
     }
 
     if (!userEmail) {
-      console.error('❌ Email do usuário não fornecido')
+      console.error('❌ [useManagerData] Email do usuário não fornecido')
       return false
     }
 
     if (!field || field.trim() === '') {
-      console.error('❌ Campo está vazio ou inválido:', field)
+      console.error('❌ [useManagerData] Campo está vazio ou inválido:', field)
       return false
     }
 
     try {
       const numericId = parseInt(id)
       
-      console.log(`📋 Tabela: todos_clientes`)
+      console.log(`📋 [useManagerData] Tabela: todos_clientes`)
       console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
       
       if (isNaN(numericId) || numericId <= 0) {
-        console.error('❌ ID inválido após conversão:', { original: id, converted: numericId })
+        console.error('❌ [useManagerData] ID inválido após conversão:', { original: id, converted: numericId })
         return false
       }
 
-      console.log('🔍 Verificando se o registro existe...')
+      console.log('🔍 [useManagerData] Verificando se o registro existe...')
       let checkQuery = supabase
         .from('todos_clientes')
         .select('id, status_campanha, nome_cliente')
@@ -237,18 +238,18 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       const { data: existingData, error: checkError } = await checkQuery.single()
 
       if (checkError) {
-        console.error('❌ Erro ao verificar existência do registro:', checkError)
+        console.error('❌ [useManagerData] Erro ao verificar existência do registro:', checkError)
         return false
       }
 
       if (!existingData) {
-        console.error('❌ Nenhum registro encontrado com ID:', numericId)
+        console.error('❌ [useManagerData] Nenhum registro encontrado com ID:', numericId)
         return false
       }
 
-      console.log('✅ Registro encontrado:', existingData)
+      console.log('✅ [useManagerData] Registro encontrado:', existingData)
       
-      console.log('🔄 Executando UPDATE...')
+      console.log('🔄 [useManagerData] Executando UPDATE...')
       let updateQuery = supabase
         .from('todos_clientes')
         .update({ [field]: value })
@@ -262,11 +263,11 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       const { data: updateData, error: updateError } = await updateQuery.select()
 
       if (updateError) {
-        console.error('❌ Erro ao atualizar cliente:', updateError)
+        console.error('❌ [useManagerData] Erro ao atualizar cliente:', updateError)
         return false
       }
 
-      console.log('✅ Dados atualizados no Supabase:', updateData)
+      console.log('✅ [useManagerData] Dados atualizados no Supabase:', updateData)
 
       setClientes(prev => 
         prev.map(cliente => 
@@ -276,29 +277,29 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         )
       )
 
-      console.log('🎉 === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
+      console.log('🎉 [useManagerData] === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
       return true
     } catch (err) {
-      console.error('💥 Erro na atualização (catch):', err)
+      console.error('💥 [useManagerData] Erro na atualização (catch):', err)
       return false
     }
   }
 
   const addCliente = async (clienteData: any) => {
     if (!userEmail) {
-      console.error('❌ Email do usuário não fornecido')
+      console.error('❌ [useManagerData] Email do usuário não fornecido')
       return false
     }
 
     try {
-      console.log('🚀 === INICIANDO ADIÇÃO DE CLIENTE ===')
+      console.log('🚀 [useManagerData] === INICIANDO ADIÇÃO DE CLIENTE ===')
       console.log('📥 Dados recebidos:', clienteData)
       console.log('👤 User Email:', userEmail)
       
       console.log(`📋 Tabela de destino: todos_clientes`)
 
       // Verificar o próximo ID disponível na tabela
-      console.log('🔍 Verificando próximo ID disponível...')
+      console.log('🔍 [useManagerData] Verificando próximo ID disponível...')
       const { data: maxIdData, error: maxIdError } = await supabase
         .from('todos_clientes')
         .select('id')
@@ -306,10 +307,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         .limit(1)
 
       if (maxIdError) {
-        console.error('❌ Erro ao verificar próximo ID:', maxIdError)
+        console.error('❌ [useManagerData] Erro ao verificar próximo ID:', maxIdError)
       } else {
         const nextId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id + 1 : 1
-        console.log('🔢 Próximo ID será:', nextId)
+        console.log('🔢 [useManagerData] Próximo ID será:', nextId)
       }
 
       // Criar objeto limpo para inserção
@@ -332,17 +333,17 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         numero_bm: ''
       }
 
-      console.log('🧹 === DADOS FINAIS PARA INSERÇÃO ===')
+      console.log('🧹 [useManagerData] === DADOS FINAIS PARA INSERÇÃO ===')
       console.log('📊 Objeto completo:', JSON.stringify(novoCliente, null, 2))
 
-      console.log('📤 Enviando para Supabase...')
+      console.log('📤 [useManagerData] Enviando para Supabase...')
       const { data, error } = await supabase
         .from('todos_clientes')
         .insert([novoCliente])
         .select()
 
       if (error) {
-        console.error('❌ === ERRO DETALHADO DO SUPABASE ===')
+        console.error('❌ [useManagerData] === ERRO DETALHADO DO SUPABASE ===')
         console.error('🔥 Código do erro:', error.code)
         console.error('🔥 Mensagem:', error.message)
         console.error('🔥 Detalhes:', error.details)
@@ -357,7 +358,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         return false
       }
 
-      console.log('✅ === SUCESSO ===')
+      console.log('✅ [useManagerData] === SUCESSO ===')
       console.log('🎉 Cliente adicionado com sucesso:', data)
       
       // Forçar atualização da tabela após inserção
@@ -370,7 +371,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       
       return true
     } catch (error) {
-      console.error('💥 === ERRO GERAL ===')
+      console.error('💥 [useManagerData] === ERRO GERAL ===')
       console.error('💥 Erro capturado no catch:', error)
       toast({
         title: "Erro",
@@ -388,14 +389,14 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     const setupRealtime = async () => {
       const { manager } = await determineManager(userEmail, selectedManager)
       
-      console.log('🔴 Configurando realtime para tabela unificada:', { userEmail, manager, selectedManager })
+      console.log('🔴 [useManagerData] Configurando realtime para tabela todos_clientes:', { userEmail, manager, selectedManager })
 
       // Buscar dados iniciais
       fetchClientes()
 
       // Configurar canal de realtime para a tabela unificada
       const channel = supabase
-        .channel(`public:todos_clientes`)
+        .channel(`public:todos_clientes-${userEmail}`)
         .on(
           'postgres_changes',
           {
@@ -404,102 +405,33 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
             table: 'todos_clientes'
           },
           (payload) => {
-            console.log('🔄 Mudança detectada na tabela unificada:', payload)
+            console.log('🔄 [useManagerData] Mudança detectada na tabela todos_clientes:', payload)
             
             // Se não for admin, verificar se a mudança é relevante para este gestor
             if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
-              console.log('🚫 Mudança não relevante para este gestor')
+              console.log('🚫 [useManagerData] Mudança não relevante para este gestor')
               return
             }
             
-            if (payload.eventType === 'INSERT') {
-              console.log('➕ Novo cliente inserido:', payload.new)
-              if (payload.new && typeof payload.new === 'object') {
-                const novoCliente = {
-                  id: String(payload.new.id || ''),
-                  nome_cliente: (payload.new.nome_cliente as string) || '',
-                  telefone: (payload.new.telefone as string) || '',
-                  email_cliente: (payload.new.email_cliente as string) || '',
-                  vendedor: (payload.new.vendedor as string) || '',
-                  email_gestor: (payload.new.email_gestor as string) || '',
-                  status_campanha: (payload.new.status_campanha as string) || '',
-                  data_venda: (payload.new.data_venda as string) || '',
-                  data_limite: (payload.new.data_limite as string) || '',
-                  link_grupo: (payload.new.link_grupo as string) || '',
-                  link_briefing: (payload.new.link_briefing as string) || '',
-                  link_criativo: (payload.new.link_criativo as string) || '',
-                  link_site: (payload.new.link_site as string) || '',
-                  numero_bm: (payload.new.numero_bm as string) || '',
-                  created_at: (payload.new.created_at as string) || '',
-                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
-                  site_status: (payload.new.site_status as string) || 'pendente'
-                }
-                
-                setClientes(prev => {
-                  const updated = [novoCliente, ...prev]
-                  return updated.sort((a, b) => {
-                    const aId = parseInt(a.id) || 0
-                    const bId = parseInt(b.id) || 0
-                    return aId - bId
-                  })
-                })
-              }
-            } else if (payload.eventType === 'UPDATE') {
-              console.log('🔄 Cliente atualizado via realtime:', payload.new)
-              if (payload.new && typeof payload.new === 'object') {
-                const clienteAtualizado = {
-                  id: String(payload.new.id || ''),
-                  nome_cliente: (payload.new.nome_cliente as string) || '',
-                  telefone: (payload.new.telefone as string) || '',
-                  email_cliente: (payload.new.email_cliente as string) || '',
-                  vendedor: (payload.new.vendedor as string) || '',
-                  email_gestor: (payload.new.email_gestor as string) || '',
-                  status_campanha: (payload.new.status_campanha as string) || '',
-                  data_venda: (payload.new.data_venda as string) || '',
-                  data_limite: (payload.new.data_limite as string) || '',
-                  link_grupo: (payload.new.link_grupo as string) || '',
-                  link_briefing: (payload.new.link_briefing as string) || '',
-                  link_criativo: (payload.new.link_criativo as string) || '',
-                  link_site: (payload.new.link_site as string) || '',
-                  numero_bm: (payload.new.numero_bm as string) || '',
-                  created_at: (payload.new.created_at as string) || '',
-                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
-                  site_status: (payload.new.site_status as string) || 'pendente'
-                }
-                
-                setClientes(prev => 
-                  prev.map(cliente => 
-                    cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
-                  )
-                )
-              }
-            } else if (payload.eventType === 'DELETE') {
-              console.log('🗑️ Cliente removido:', payload.old)
-              if (payload.old && typeof payload.old === 'object' && 'id' in payload.old) {
-                setClientes(prev => 
-                  prev.filter(cliente => cliente.id !== String(payload.old.id))
-                )
-              }
-            }
+            // Refresh data when changes occur
+            fetchClientes()
           }
         )
         .subscribe((status) => {
-          console.log(`📡 Status do realtime para todos_clientes:`, status)
+          console.log(`📡 [useManagerData] Status do realtime para todos_clientes:`, status)
           if (status === 'SUBSCRIBED') {
-            console.log('✅ Realtime conectado com sucesso!')
+            console.log('✅ [useManagerData] Realtime conectado com sucesso!')
           } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Erro no canal de realtime')
+            console.error('❌ [useManagerData] Erro no canal de realtime')
             setTimeout(() => {
-              console.log('🔄 Tentando reconectar realtime...')
+              console.log('🔄 [useManagerData] Tentando reconectar realtime...')
               fetchClientes()
             }, 2000)
           }
         })
 
       return () => {
-        console.log('🧹 Removendo canal de realtime para todos_clientes')
+        console.log('🧹 [useManagerData] Removendo canal de realtime para todos_clientes')
         supabase.removeChannel(channel)
       }
     }

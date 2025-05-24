@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -32,6 +33,27 @@ export function GestoresManagement() {
   useEffect(() => {
     if (!authLoading && user) {
       fetchGestores()
+      
+      // Subscribe to real-time changes in gestores table
+      const channel = supabase
+        .channel('gestores-management-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'gestores'
+          },
+          (payload) => {
+            console.log('🔄 Real-time change detected in gestores table:', payload)
+            fetchGestores()
+          }
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     } else if (!authLoading && !user) {
       setLoading(false)
     }
@@ -90,6 +112,8 @@ export function GestoresManagement() {
 
     setCreating(true)
     try {
+      console.log('🚀 Criando novo gestor:', formData.nome, formData.email)
+      
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.access_token) {
@@ -120,6 +144,8 @@ export function GestoresManagement() {
         throw new Error('Resposta inválida do servidor')
       }
 
+      console.log('✅ Gestor criado com sucesso!')
+      
       toast({
         title: "Sucesso",
         description: "Gestor criado com sucesso"
@@ -127,9 +153,13 @@ export function GestoresManagement() {
 
       setModalOpen(false)
       setFormData({ nome: '', email: '', senha: '', pode_adicionar_cliente: false })
-      fetchGestores()
+      
+      // Aguardar um pouco antes de buscar novamente para garantir que a mudança foi processada
+      setTimeout(() => {
+        fetchGestores()
+      }, 1000)
     } catch (error: any) {
-      console.error('Erro ao criar gestor:', error)
+      console.error('💥 Erro ao criar gestor:', error)
       toast({
         title: "Erro",
         description: error.message || "Erro ao criar gestor",
@@ -145,14 +175,12 @@ export function GestoresManagement() {
     try {
       console.log('🗑️ Iniciando exclusão do gestor:', email)
 
-      // Get the current session token
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.access_token) {
         throw new Error('Usuário não autenticado')
       }
 
-      // Call the edge function to delete the user completely
       const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/delete-gestor`, {
         method: 'POST',
         headers: {
@@ -175,17 +203,16 @@ export function GestoresManagement() {
         throw new Error('Falha na exclusão do gestor')
       }
 
+      console.log('✅ Gestor excluído com sucesso!')
+
       toast({
         title: "Sucesso",
         description: "Gestor excluído permanentemente"
       })
 
-      // Refresh the list
-      fetchGestores()
-
-      // Force a page reload to ensure all components are updated
+      // Aguardar um pouco antes de buscar novamente para garantir que a mudança foi processada
       setTimeout(() => {
-        window.location.reload()
+        fetchGestores()
       }, 1000)
 
     } catch (error: any) {
@@ -202,6 +229,8 @@ export function GestoresManagement() {
 
   const togglePermissao = async (gestorId: string, currentPermission: boolean) => {
     try {
+      console.log('🔄 Alterando permissão do gestor:', gestorId, 'para:', !currentPermission)
+      
       const { error } = await supabase
         .from('gestores')
         .update({ pode_adicionar_cliente: !currentPermission })
@@ -216,7 +245,7 @@ export function GestoresManagement() {
 
       fetchGestores()
     } catch (error) {
-      console.error('Erro ao alterar permissão:', error)
+      console.error('💥 Erro ao alterar permissão:', error)
       toast({
         title: "Erro",
         description: "Erro ao alterar permissão",
@@ -227,6 +256,8 @@ export function GestoresManagement() {
 
   const toggleStatus = async (gestorId: string, currentStatus: boolean) => {
     try {
+      console.log('🔄 Alterando status do gestor:', gestorId, 'para:', !currentStatus)
+      
       const { error } = await supabase
         .from('gestores')
         .update({ ativo: !currentStatus })
@@ -241,7 +272,7 @@ export function GestoresManagement() {
 
       fetchGestores()
     } catch (error) {
-      console.error('Erro ao alterar status:', error)
+      console.error('💥 Erro ao alterar status:', error)
       toast({
         title: "Erro",
         description: "Erro ao alterar status",
