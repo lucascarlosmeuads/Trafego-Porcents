@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -19,10 +20,10 @@ export function AdminTable() {
   }, [])
 
   const fetchAllClientes = async () => {
-    console.log('Carregando todos os clientes...')
+    console.log('Carregando todos os clientes da tabela unificada...')
     try {
       const { data, error } = await supabase
-        .from('clientes')
+        .from('todos_clientes')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -34,7 +35,7 @@ export function AdminTable() {
           variant: "destructive"
         })
       } else {
-        console.log('Dados carregados:', data?.length || 0, 'registros')
+        console.log('Dados carregados da tabela unificada:', data?.length || 0, 'registros')
         setClientes(data || [])
       }
     } catch (error) {
@@ -54,7 +55,7 @@ export function AdminTable() {
       console.log(`Atualizando cliente admin ${id}: ${field} = ${value}`)
       
       const { error } = await supabase
-        .from('clientes')
+        .from('todos_clientes')
         .update({ [field]: value })
         .eq('id', id)
 
@@ -70,7 +71,7 @@ export function AdminTable() {
         setClientes(prev => prev.map(cliente => 
           cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
-        console.log('Campo atualizado com sucesso na tabela admin')
+        console.log('Campo atualizado com sucesso na tabela unificada')
         toast({
           title: "Sucesso",
           description: "Campo atualizado com sucesso"

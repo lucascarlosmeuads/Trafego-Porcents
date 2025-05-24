@@ -23,45 +23,59 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchManagerTables = async () => {
+    const fetchManagers = async () => {
       try {
-        // Lista fixa dos gerentes com base nas novas tabelas
-        const availableManagers = ['Andreza', 'Lucas Falcão']
+        console.log('🔍 Buscando gestores únicos da tabela unificada...')
         
-        // Verificar se as tabelas existem no Supabase
-        const verifiedManagers: string[] = []
-        
-        for (const manager of availableManagers) {
-          const tableName = manager === 'Lucas Falcão' ? 'clientes_lucas_falcao' : 'clientes_andreza'
-          
-          try {
-            const { error } = await supabase
-              .from(tableName)
-              .select('id')
-              .limit(1)
-            
-            if (!error) {
-              verifiedManagers.push(manager)
-              console.log(`Tabela ${tableName} verificada com sucesso`)
-            } else {
-              console.warn(`Tabela ${tableName} não encontrada:`, error)
-            }
-          } catch (err) {
-            console.warn(`Erro ao verificar tabela ${tableName}:`, err)
-          }
+        // Buscar todos os gestores únicos da tabela unificada
+        const { data, error } = await supabase
+          .from('todos_clientes')
+          .select('email_gestor')
+          .not('email_gestor', 'is', null)
+
+        if (error) {
+          console.error('❌ Erro ao buscar gestores:', error)
+          // Fallback para gestores conhecidos
+          setManagers(['Andreza', 'Lucas Falcão'])
+          return
         }
-        
-        setManagers(verifiedManagers.length > 0 ? verifiedManagers : availableManagers)
+
+        if (data && data.length > 0) {
+          // Extrair emails únicos e mapear para nomes de gestores
+          const uniqueEmails = [...new Set(data.map(item => item.email_gestor))]
+          console.log('📧 Emails únicos encontrados:', uniqueEmails)
+          
+          const managerNames = uniqueEmails.map(email => {
+            if (email.includes('andreza')) {
+              return 'Andreza'
+            } else if (email.includes('lucas')) {
+              return 'Lucas Falcão'
+            } else {
+              // Extrair nome do email se possível
+              const username = email.split('@')[0]
+              return username.charAt(0).toUpperCase() + username.slice(1)
+            }
+          }).filter(Boolean)
+
+          // Remover duplicatas e ordenar
+          const uniqueManagers = [...new Set(managerNames)].sort()
+          console.log('👥 Gestores encontrados:', uniqueManagers)
+          
+          setManagers(uniqueManagers.length > 0 ? uniqueManagers : ['Andreza', 'Lucas Falcão'])
+        } else {
+          console.log('⚠️ Nenhum gestor encontrado, usando fallback')
+          setManagers(['Andreza', 'Lucas Falcão'])
+        }
       } catch (err) {
-        console.error('Erro:', err)
-        // Fallback para gerentes conhecidos
+        console.error('💥 Erro ao buscar gestores:', err)
+        // Fallback para gestores conhecidos
         setManagers(['Andreza', 'Lucas Falcão'])
       } finally {
         setLoading(false)
       }
     }
 
-    fetchManagerTables()
+    fetchManagers()
   }, [])
 
   if (loading) {
@@ -81,7 +95,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
       <SidebarContent className="bg-sidebar-background">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-            Gerentes
+            Gestores
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1 px-2">

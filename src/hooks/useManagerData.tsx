@@ -9,118 +9,68 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string>('')
 
-  // Buscar qual tabela contém o email do gestor
-  const findManagerTable = async (email: string): Promise<{ tableName: string; managerName: string } | null> => {
-    console.log('🔍 Buscando tabela para email:', email)
-    
-    const tablesToCheck = [
-      { name: 'clientes_andreza', manager: 'Andreza' },
-      { name: 'clientes_lucas_falcao', manager: 'Lucas Falcão' }
-    ]
-
-    for (const table of tablesToCheck) {
-      try {
-        const { data, error } = await supabase
-          .from(table.name)
-          .select('email_gestor')
-          .eq('email_gestor', email)
-          .limit(1)
-
-        if (error) {
-          console.error(`❌ Erro ao verificar tabela ${table.name}:`, error)
-          continue
-        }
-
-        if (data && data.length > 0) {
-          console.log(`✅ Email encontrado na tabela: ${table.name}`)
-          return { tableName: table.name, managerName: table.manager }
-        }
-      } catch (err) {
-        console.error(`💥 Erro na busca da tabela ${table.name}:`, err)
-        continue
-      }
-    }
-
-    console.log('❌ Email não encontrado em nenhuma tabela')
-    return null
-  }
-
   // Determinar o gestor baseado no email logado ou gestor selecionado (para admin)
-  const determineManager = async (email: string, selectedMgr?: string): Promise<{ manager: string; tableName: string }> => {
+  const determineManager = async (email: string, selectedMgr?: string): Promise<{ manager: string }> => {
     // Se for admin e tiver gestor selecionado, usar o gestor selecionado
     if (isAdmin && selectedMgr) {
       return {
-        manager: selectedMgr,
-        tableName: getTableName(selectedMgr)
+        manager: selectedMgr
       }
     }
     
     if (email === 'lucas@admin.com') {
       return {
-        manager: 'Lucas Falcão',
-        tableName: 'clientes_lucas_falcao'
+        manager: 'Lucas Falcão'
       }
     }
     
-    // Mapear emails específicos para gestores (mapeamento direto)
-    const managerMapping: { [key: string]: { manager: string; table: string } } = {
-      'andreza@gestor.com': { manager: 'Andreza', table: 'clientes_andreza' },
-      'lucas.falcao@gestor.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' },
-      'andreza@trafegoporcents.com': { manager: 'Andreza', table: 'clientes_andreza' },
-      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' }
+    // Mapear emails específicos para gestores
+    const managerMapping: { [key: string]: { manager: string } } = {
+      'andreza@gestor.com': { manager: 'Andreza' },
+      'lucas.falcao@gestor.com': { manager: 'Lucas Falcão' },
+      'andreza@trafegoporcents.com': { manager: 'Andreza' },
+      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão' }
     }
     
     // Se for um email específico mapeado, usar o mapeamento
     if (managerMapping[email]) {
       return {
-        manager: managerMapping[email].manager,
-        tableName: managerMapping[email].table
+        manager: managerMapping[email].manager
       }
     }
     
-    // 🚀 NOVA LÓGICA: Buscar automaticamente em qual tabela o email existe
-    const foundTable = await findManagerTable(email)
-    if (foundTable) {
-      return {
-        manager: foundTable.managerName,
-        tableName: foundTable.tableName
+    // Buscar automaticamente em qual gestor o email existe na tabela unificada
+    try {
+      const { data, error } = await supabase
+        .from('todos_clientes')
+        .select('email_gestor')
+        .eq('email_gestor', email)
+        .limit(1)
+
+      if (!error && data && data.length > 0) {
+        // Derivar nome do gestor baseado no email
+        if (email.includes('andreza')) {
+          return { manager: 'Andreza' }
+        } else if (email.includes('lucas')) {
+          return { manager: 'Lucas Falcão' }
+        }
       }
+    } catch (err) {
+      console.warn('Erro ao buscar gestor na tabela unificada:', err)
     }
     
-    // Se não encontrou em nenhuma tabela, extrair nome do email se for @trafegoporcents.com
+    // Se não encontrou, extrair nome do email se for @trafegoporcents.com
     if (email.endsWith('@trafegoporcents.com')) {
       const username = email.split('@')[0]
       const managerName = username.charAt(0).toUpperCase() + username.slice(1)
       return {
-        manager: managerName,
-        tableName: 'clientes_andreza' // Fallback para Andreza
+        manager: managerName
       }
     }
     
     return {
-      manager: 'Gestor',
-      tableName: 'clientes_andreza' // Fallback para Andreza
+      manager: 'Gestor'
     }
-  }
-
-  // Determinar tabela baseada no nome do gestor
-  const getTableName = (managerName: string): string => {
-    const tableMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'clientes_lucas_falcao',
-      'Andreza': 'clientes_andreza'
-    }
-    
-    return tableMapping[managerName] || 'clientes_andreza'
-  }
-
-  // Determinar email do gestor baseado no nome do gestor (para filtros RLS)
-  const getManagerEmail = (managerName: string): string => {
-    const emailMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com'
-    }
-    
-    return emailMapping[managerName] || 'andreza@gestor.com'
   }
 
   const fetchClientes = async (showToast = false) => {
@@ -130,21 +80,20 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     setError(null)
 
     try {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      const { manager } = await determineManager(userEmail, selectedManager)
       
       setCurrentManager(manager)
       
-      console.log('🔍 Buscando dados para:', { 
+      console.log('🔍 Buscando dados da tabela unificada:', { 
         userEmail, 
         manager, 
-        tableName, 
         selectedManager, 
         isAdmin 
       })
       
-      // Construir query com filtro por email_gestor se não for admin
+      // Construir query da tabela unificada
       let query = supabase
-        .from(tableName)
+        .from('todos_clientes')
         .select('*', { count: 'exact' })
         .order('id', { ascending: true })
 
@@ -156,11 +105,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       const { data, error, count } = await query
 
-      console.log('📊 Resposta do Supabase:', {
+      console.log('📊 Resposta do Supabase (tabela unificada):', {
         data: data?.length || 0,
         count,
         error,
-        tableName,
         manager,
         filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)'
       })
@@ -265,10 +213,9 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
 
     try {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
       const numericId = parseInt(id)
       
-      console.log(`📋 Tabela: ${tableName}`)
+      console.log(`📋 Tabela: todos_clientes`)
       console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
       
       if (isNaN(numericId) || numericId <= 0) {
@@ -278,7 +225,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       console.log('🔍 Verificando se o registro existe...')
       let checkQuery = supabase
-        .from(tableName)
+        .from('todos_clientes')
         .select('id, status_campanha, nome_cliente')
         .eq('id', numericId)
 
@@ -303,7 +250,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       
       console.log('🔄 Executando UPDATE...')
       let updateQuery = supabase
-        .from(tableName)
+        .from('todos_clientes')
         .update({ [field]: value })
         .eq('id', numericId)
 
@@ -348,15 +295,12 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log('📥 Dados recebidos:', clienteData)
       console.log('👤 User Email:', userEmail)
       
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
-      
-      console.log(`📋 Tabela de destino: ${tableName}`)
-      console.log(`👤 Manager: ${manager}`)
+      console.log(`📋 Tabela de destino: todos_clientes`)
 
       // Verificar o próximo ID disponível na tabela
       console.log('🔍 Verificando próximo ID disponível...')
       const { data: maxIdData, error: maxIdError } = await supabase
-        .from(tableName)
+        .from('todos_clientes')
         .select('id')
         .order('id', { ascending: false })
         .limit(1)
@@ -368,7 +312,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         console.log('🔢 Próximo ID será:', nextId)
       }
 
-      // Criar objeto ABSOLUTAMENTE limpo - GARANTINDO que não há ID
+      // Criar objeto limpo para inserção
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
@@ -390,14 +334,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       console.log('🧹 === DADOS FINAIS PARA INSERÇÃO ===')
       console.log('📊 Objeto completo:', JSON.stringify(novoCliente, null, 2))
-      console.log('🔍 Tem campo ID?', 'id' in novoCliente ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
-      console.log('🔍 Tem campo created_at?', 'created_at' in novoCliente ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
-      console.log('🔍 Todas as chaves:', Object.keys(novoCliente))
-      console.log('🔍 Total de campos:', Object.keys(novoCliente).length)
 
       console.log('📤 Enviando para Supabase...')
       const { data, error } = await supabase
-        .from(tableName)
+        .from('todos_clientes')
         .insert([novoCliente])
         .select()
 
@@ -446,25 +386,25 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     if (!userEmail) return
 
     const setupRealtime = async () => {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      const { manager } = await determineManager(userEmail, selectedManager)
       
-      console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName, selectedManager })
+      console.log('🔴 Configurando realtime para tabela unificada:', { userEmail, manager, selectedManager })
 
       // Buscar dados iniciais
       fetchClientes()
 
-      // Configurar canal de realtime
+      // Configurar canal de realtime para a tabela unificada
       const channel = supabase
-        .channel(`public:${tableName}`)
+        .channel(`public:todos_clientes`)
         .on(
           'postgres_changes',
           {
             event: '*',
             schema: 'public',
-            table: tableName
+            table: 'todos_clientes'
           },
           (payload) => {
-            console.log('🔄 Mudança detectada na tabela:', tableName, payload)
+            console.log('🔄 Mudança detectada na tabela unificada:', payload)
             
             // Se não for admin, verificar se a mudança é relevante para este gestor
             if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
@@ -546,7 +486,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           }
         )
         .subscribe((status) => {
-          console.log(`📡 Status do realtime para ${tableName}:`, status)
+          console.log(`📡 Status do realtime para todos_clientes:`, status)
           if (status === 'SUBSCRIBED') {
             console.log('✅ Realtime conectado com sucesso!')
           } else if (status === 'CHANNEL_ERROR') {
@@ -559,7 +499,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         })
 
       return () => {
-        console.log('🧹 Removendo canal de realtime para:', tableName)
+        console.log('🧹 Removendo canal de realtime para todos_clientes')
         supabase.removeChannel(channel)
       }
     }

@@ -8,6 +8,7 @@ import { Download, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
+import { AdminTable } from './AdminTable'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface AdminDashboardProps {
@@ -25,12 +26,13 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
-  const getTableName = (managerName: string) => {
-    const tableMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'clientes_lucas_falcao',
-      'Andreza': 'clientes_andreza'
+  const getManagerEmail = (managerName: string): string => {
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@gestor.com'
     }
-    return tableMapping[managerName] || 'clientes_andreza'
+    
+    return emailMapping[managerName] || 'andreza@gestor.com'
   }
 
   const getStatusColor = (status: string) => {
@@ -66,12 +68,25 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     try {
       if (showToast) setRefreshing(true)
       setLoading(true)
-      const tableName = getTableName(selectedManager)
-      console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela: ${tableName} para gestor: ${selectedManager}`)
       
+      console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela unificada para gestor: ${selectedManager}`)
+      
+      // Determinar email do gestor para filtro
+      const gestorEmail = getManagerEmail(selectedManager)
+      
+      // Buscar dados da tabela unificada filtrados por gestor
       const { data, error, count } = await supabase
-        .from(tableName)
+        .from('todos_clientes')
         .select('*', { count: 'exact' })
+        .eq('email_gestor', gestorEmail)
+
+      console.log('📊 Resposta do Supabase (tabela unificada):', {
+        data: data?.length || 0,
+        count,
+        error,
+        selectedManager,
+        gestorEmail
+      })
 
       if (!error && data) {
         console.log(`✅ Admin Dashboard: Dados encontrados para ${selectedManager}:`, data.length, 'registros')
@@ -142,11 +157,12 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
   const exportManagerData = async () => {
     try {
-      const tableName = getTableName(selectedManager)
+      const gestorEmail = getManagerEmail(selectedManager)
       
       const { data, error } = await supabase
-        .from(tableName)
+        .from('todos_clientes')
         .select('*')
+        .eq('email_gestor', gestorEmail)
 
       if (!error && data) {
         if (data.length === 0) {
@@ -224,9 +240,10 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   return (
     <div className="space-y-6">
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="dashboard">Dashboard</TabsTrigger>
           <TabsTrigger value="clientes">Clientes</TabsTrigger>
+          <TabsTrigger value="todos">Todos os Clientes</TabsTrigger>
           <TabsTrigger value="gestores">Gestores</TabsTrigger>
         </TabsList>
 
@@ -342,6 +359,10 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
         <TabsContent value="clientes" className="space-y-6">
           <ClientesTable selectedManager={selectedManager} />
+        </TabsContent>
+
+        <TabsContent value="todos" className="space-y-6">
+          <AdminTable />
         </TabsContent>
 
         <TabsContent value="gestores" className="space-y-6">
