@@ -362,73 +362,79 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
             console.log('🔄 Mudança detectada na tabela:', tableName, payload)
             
             // Se não for admin, verificar se a mudança é relevante para este gestor
-            if (!isAdmin && payload.new && payload.new.email_gestor !== userEmail) {
+            if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
               console.log('🚫 Mudança não relevante para este gestor')
               return
             }
             
             if (payload.eventType === 'INSERT') {
               console.log('➕ Novo cliente inserido:', payload.new)
-              const novoCliente = {
-                id: String(payload.new.id),
-                nome_cliente: payload.new.nome_cliente || '',
-                telefone: payload.new.telefone || '',
-                email_cliente: payload.new.email_cliente || '',
-                vendedor: payload.new.vendedor || '',
-                email_gestor: payload.new.email_gestor || '',
-                status_campanha: payload.new.status_campanha || '',
-                data_venda: payload.new.data_venda || '',
-                data_limite: payload.new.data_limite || '',
-                link_grupo: payload.new.link_grupo || '',
-                link_briefing: payload.new.link_briefing || '',
-                link_criativo: payload.new.link_criativo || '',
-                link_site: payload.new.link_site || '',
-                numero_bm: payload.new.numero_bm || '',
-                created_at: payload.new.created_at || '',
-                comissao_paga: payload.new.comissao_paga || false,
-                valor_comissao: payload.new.valor_comissao || 60.00
-              }
-              
-              setClientes(prev => {
-                const updated = [novoCliente, ...prev]
-                return updated.sort((a, b) => {
-                  const aId = parseInt(a.id) || 0
-                  const bId = parseInt(b.id) || 0
-                  return aId - bId
+              if (payload.new && typeof payload.new === 'object') {
+                const novoCliente = {
+                  id: String(payload.new.id || ''),
+                  nome_cliente: (payload.new.nome_cliente as string) || '',
+                  telefone: (payload.new.telefone as string) || '',
+                  email_cliente: (payload.new.email_cliente as string) || '',
+                  vendedor: (payload.new.vendedor as string) || '',
+                  email_gestor: (payload.new.email_gestor as string) || '',
+                  status_campanha: (payload.new.status_campanha as string) || '',
+                  data_venda: (payload.new.data_venda as string) || '',
+                  data_limite: (payload.new.data_limite as string) || '',
+                  link_grupo: (payload.new.link_grupo as string) || '',
+                  link_briefing: (payload.new.link_briefing as string) || '',
+                  link_criativo: (payload.new.link_criativo as string) || '',
+                  link_site: (payload.new.link_site as string) || '',
+                  numero_bm: (payload.new.numero_bm as string) || '',
+                  created_at: (payload.new.created_at as string) || '',
+                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                }
+                
+                setClientes(prev => {
+                  const updated = [novoCliente, ...prev]
+                  return updated.sort((a, b) => {
+                    const aId = parseInt(a.id) || 0
+                    const bId = parseInt(b.id) || 0
+                    return aId - bId
+                  })
                 })
-              })
+              }
             } else if (payload.eventType === 'UPDATE') {
               console.log('🔄 Cliente atualizado via realtime:', payload.new)
-              const clienteAtualizado = {
-                id: String(payload.new.id),
-                nome_cliente: payload.new.nome_cliente || '',
-                telefone: payload.new.telefone || '',
-                email_cliente: payload.new.email_cliente || '',
-                vendedor: payload.new.vendedor || '',
-                email_gestor: payload.new.email_gestor || '',
-                status_campanha: payload.new.status_campanha || '',
-                data_venda: payload.new.data_venda || '',
-                data_limite: payload.new.data_limite || '',
-                link_grupo: payload.new.link_grupo || '',
-                link_briefing: payload.new.link_briefing || '',
-                link_criativo: payload.new.link_criativo || '',
-                link_site: payload.new.link_site || '',
-                numero_bm: payload.new.numero_bm || '',
-                created_at: payload.new.created_at || '',
-                comissao_paga: payload.new.comissao_paga || false,
-                valor_comissao: payload.new.valor_comissao || 60.00
-              }
-              
-              setClientes(prev => 
-                prev.map(cliente => 
-                  cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
+              if (payload.new && typeof payload.new === 'object') {
+                const clienteAtualizado = {
+                  id: String(payload.new.id || ''),
+                  nome_cliente: (payload.new.nome_cliente as string) || '',
+                  telefone: (payload.new.telefone as string) || '',
+                  email_cliente: (payload.new.email_cliente as string) || '',
+                  vendedor: (payload.new.vendedor as string) || '',
+                  email_gestor: (payload.new.email_gestor as string) || '',
+                  status_campanha: (payload.new.status_campanha as string) || '',
+                  data_venda: (payload.new.data_venda as string) || '',
+                  data_limite: (payload.new.data_limite as string) || '',
+                  link_grupo: (payload.new.link_grupo as string) || '',
+                  link_briefing: (payload.new.link_briefing as string) || '',
+                  link_criativo: (payload.new.link_criativo as string) || '',
+                  link_site: (payload.new.link_site as string) || '',
+                  numero_bm: (payload.new.numero_bm as string) || '',
+                  created_at: (payload.new.created_at as string) || '',
+                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                }
+                
+                setClientes(prev => 
+                  prev.map(cliente => 
+                    cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
+                  )
                 )
-              )
+              }
             } else if (payload.eventType === 'DELETE') {
               console.log('🗑️ Cliente removido:', payload.old)
-              setClientes(prev => 
-                prev.filter(cliente => cliente.id !== String(payload.old.id))
-              )
+              if (payload.old && typeof payload.old === 'object' && 'id' in payload.old) {
+                setClientes(prev => 
+                  prev.filter(cliente => cliente.id !== String(payload.old.id))
+                )
+              }
             }
           }
         )
