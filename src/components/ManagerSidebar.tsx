@@ -23,60 +23,108 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchManagers = async () => {
-      try {
-        console.log('🔍 Buscando gestores únicos da tabela unificada...')
-        
-        // Buscar todos os gestores únicos da tabela unificada
-        const { data, error } = await supabase
-          .from('todos_clientes')
-          .select('email_gestor')
-          .not('email_gestor', 'is', null)
-
-        if (error) {
-          console.error('❌ Erro ao buscar gestores:', error)
-          // Fallback para gestores conhecidos
-          setManagers(['Andreza', 'Lucas Falcão'])
-          return
-        }
-
-        if (data && data.length > 0) {
-          // Extrair emails únicos e mapear para nomes de gestores
-          const uniqueEmails = [...new Set(data.map(item => item.email_gestor))]
-          console.log('📧 Emails únicos encontrados:', uniqueEmails)
-          
-          const managerNames = uniqueEmails.map(email => {
-            if (email.includes('andreza')) {
-              return 'Andreza'
-            } else if (email.includes('lucas')) {
-              return 'Lucas Falcão'
-            } else {
-              // Extrair nome do email se possível
-              const username = email.split('@')[0]
-              return username.charAt(0).toUpperCase() + username.slice(1)
-            }
-          }).filter(Boolean)
-
-          // Remover duplicatas e ordenar
-          const uniqueManagers = [...new Set(managerNames)].sort()
-          console.log('👥 Gestores encontrados:', uniqueManagers)
-          
-          setManagers(uniqueManagers.length > 0 ? uniqueManagers : ['Andreza', 'Lucas Falcão'])
-        } else {
-          console.log('⚠️ Nenhum gestor encontrado, usando fallback')
-          setManagers(['Andreza', 'Lucas Falcão'])
-        }
-      } catch (err) {
-        console.error('💥 Erro ao buscar gestores:', err)
-        // Fallback para gestores conhecidos
-        setManagers(['Andreza', 'Lucas Falcão'])
-      } finally {
-        setLoading(false)
-      }
-    }
-
     fetchManagers()
+    
+    // Subscribe to real-time changes in gestores table
+    const channel = supabase
+      .channel('gestores-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'gestores'
+        },
+        (payload) => {
+          console.log('🔄 Mudança detectada na tabela gestores:', payload)
+          // Refresh managers list when any change occurs
+          fetchManagers()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
+
+  const fetchManagers = async () => {
+    try {
+      console.log('🔍 Buscando gestores ativos da tabela gestores...')
+      
+      // Buscar gestores ativos da tabela gestores
+      const { data: gestoresData, error: gestoresError } = await supabase
+        .from('gestores')
+        .select('nome, email, ativo')
+        .eq('ativo', true)
+        .order('nome')
+
+      if (gestoresError) {
+        console.error('❌ Erro ao buscar gestores:', gestoresError)
+        // Fallback: buscar da tabela todos_clientes
+        await fetchManagersFromClientes()
+        return
+      }
+
+      if (gestoresData && gestoresData.length > 0) {
+        const managerNames = gestoresData.map(gestor => gestor.nome).filter(Boolean)
+        console.log('👥 Gestores ativos encontrados:', managerNames)
+        setManagers(managerNames)
+      } else {
+        console.log('⚠️ Nenhum gestor ativo encontrado na tabela gestores, buscando fallback')
+        await fetchManagersFromClientes()
+      }
+    } catch (err) {
+      console.error('💥 Erro ao buscar gestores:', err)
+      await fetchManagersFromClientes()
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchManagersFromClientes = async () => {
+    try {
+      console.log('🔍 Fallback: Buscando gestores únicos da tabela todos_clientes...')
+      
+      const { data, error } = await supabase
+        .from('todos_clientes')
+        .select('email_gestor')
+        .not('email_gestor', 'is', null)
+
+      if (error) {
+        console.error('❌ Erro ao buscar gestores da todos_clientes:', error)
+        setManagers(['Andreza', 'Lucas Falcão'])
+        return
+      }
+
+      if (data && data.length > 0) {
+        const uniqueEmails = [...new Set(data.map(item => item.email_gestor))]
+        console.log('📧 Emails únicos encontrados:', uniqueEmails)
+        
+        const managerNames = uniqueEmails.map(email => {
+          if (email.includes('andreza')) {
+            return 'Andreza'
+          } else if (email.includes('lucas')) {
+            return 'Lucas Falcão'
+          } else {
+            const username = email.split('@')[0]
+            return username.charAt(0).toUpperCase() + username.slice(1)
+          }
+        }).filter(Boolean)
+
+        const uniqueManagers = [...new Set(managerNames)].sort()
+        console.log('👥 Gestores encontrados (fallback):', uniqueManagers)
+        
+        setManagers(uniqueManagers.length > 0 ? uniqueManagers : ['Andreza', 'Lucas Falcão'])
+      } else {
+        console.log('⚠️ Nenhum gestor encontrado, usando fallback')
+        setManagers(['Andreza', 'Lucas Falcão'])
+      }
+    } catch (err) {
+      console.error('💥 Erro no fallback:', err)
+      setManagers(['Andreza', 'Lucas Falcão'])
+    }
+  }
 
   if (loading) {
     return (

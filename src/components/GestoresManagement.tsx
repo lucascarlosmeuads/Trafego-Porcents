@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Users, Check, X, UserPlus, UserMinus } from 'lucide-react'
+import { Plus, Users, Check, X, UserPlus, UserMinus, Trash2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
@@ -18,6 +19,7 @@ export function GestoresManagement() {
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [deleting, setDeleting] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -28,11 +30,9 @@ export function GestoresManagement() {
   const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    // Só busca gestores se a autenticação já carregou e há um usuário logado
     if (!authLoading && user) {
       fetchGestores()
     } else if (!authLoading && !user) {
-      // Se não há usuário, para o loading
       setLoading(false)
     }
   }, [authLoading, user])
@@ -50,7 +50,6 @@ export function GestoresManagement() {
         throw error
       }
 
-      // Garantir que sempre temos um array, mesmo se data for null/undefined
       const gestoresData = data ?? []
       console.log('✅ Gestores carregados:', gestoresData.length, 'registros')
       console.log('📊 Dados dos gestores:', gestoresData)
@@ -64,7 +63,6 @@ export function GestoresManagement() {
         variant: "destructive"
       })
       
-      // Define array vazio em caso de erro
       setGestores([])
     } finally {
       setLoading(false)
@@ -92,14 +90,12 @@ export function GestoresManagement() {
 
     setCreating(true)
     try {
-      // Get the current session token
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.access_token) {
         throw new Error('Usuário não autenticado')
       }
 
-      // Call the edge function to create the user
       const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/create-gestor`, {
         method: 'POST',
         headers: {
@@ -120,7 +116,6 @@ export function GestoresManagement() {
         throw new Error(result.error || 'Erro ao criar gestor')
       }
 
-      // Verify the response has the expected data with the new format
       if (!result.success || !result.user) {
         throw new Error('Resposta inválida do servidor')
       }
@@ -142,6 +137,66 @@ export function GestoresManagement() {
       })
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleDeleteGestor = async (gestorId: string, email: string) => {
+    setDeleting(gestorId)
+    try {
+      console.log('🗑️ Iniciando exclusão do gestor:', email)
+
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      // Call the edge function to delete the user completely
+      const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/delete-gestor`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          gestorId: gestorId,
+          email: email
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao excluir gestor')
+      }
+
+      if (!result.success) {
+        throw new Error('Falha na exclusão do gestor')
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Gestor excluído permanentemente"
+      })
+
+      // Refresh the list
+      fetchGestores()
+
+      // Force a page reload to ensure all components are updated
+      setTimeout(() => {
+        window.location.reload()
+      }, 1000)
+
+    } catch (error: any) {
+      console.error('💥 Erro ao excluir gestor:', error)
+      toast({
+        title: "Erro",
+        description: error.message || "Erro ao excluir gestor",
+        variant: "destructive"
+      })
+    } finally {
+      setDeleting(null)
     }
   }
 
@@ -199,12 +254,10 @@ export function GestoresManagement() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  // Mostra loading se ainda está carregando autenticação ou gestores
   if (authLoading || loading) {
     return <div className="flex items-center justify-center py-8">Carregando gestores...</div>
   }
 
-  // Se não há usuário autenticado, não mostra nada
   if (!user) {
     return <div className="flex items-center justify-center py-8">Acesso não autorizado</div>
   }
@@ -349,6 +402,45 @@ export function GestoresManagement() {
                           </>
                         )}
                       </Button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            disabled={deleting === gestor.id}
+                          >
+                            <Trash2 className="w-3 h-3 mr-1" />
+                            {deleting === gestor.id ? 'Excluindo...' : 'Excluir'}
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Tem certeza que deseja excluir permanentemente este gestor?
+                              <br /><br />
+                              <strong>Esta ação irá:</strong>
+                              <ul className="list-disc list-inside mt-2 space-y-1">
+                                <li>Remover o gestor do painel de gerenciamento</li>
+                                <li>Remover o acesso ao sistema</li>
+                                <li>Excluir o usuário da autenticação</li>
+                                <li>Remover da sidebar de gestores</li>
+                              </ul>
+                              <br />
+                              <span className="text-red-600 font-medium">Esta ação não pode ser desfeita!</span>
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteGestor(gestor.id, gestor.email)}
+                              className="bg-red-600 hover:bg-red-700"
+                            >
+                              Excluir Permanentemente
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </div>
                   </TableCell>
                 </TableRow>
