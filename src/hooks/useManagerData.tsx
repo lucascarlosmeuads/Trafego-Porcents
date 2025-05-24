@@ -8,7 +8,6 @@ export function useManagerData(selectedManager: string) {
   const [error, setError] = useState<string | null>(null)
 
   const getTableName = (managerName: string) => {
-    // Mapear nomes dos gerentes para as tabelas
     const tableMapping: { [key: string]: string } = {
       'Lucas Falcão': 'clientes_lucas_falcao',
       'Andreza': 'clientes_andreza'
@@ -25,7 +24,7 @@ export function useManagerData(selectedManager: string) {
 
     try {
       const tableName = getTableName(selectedManager)
-      console.log('Buscando dados da tabela:', tableName)
+      console.log('🔍 Buscando dados da tabela:', tableName)
       
       const { data, error } = await supabase
         .from(tableName)
@@ -33,15 +32,14 @@ export function useManagerData(selectedManager: string) {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Erro ao buscar clientes:', error)
+        console.error('❌ Erro ao buscar clientes:', error)
         setError(`Erro ao carregar dados de ${selectedManager}: ${error.message}`)
         setClientes([])
       } else {
-        console.log(`Dados encontrados para ${selectedManager}:`, data)
+        console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
         
-        // Mapear os dados para o formato esperado
         const clientesFormatados = (data || []).map((item: any) => ({
-          id: item.id?.toString() || '',
+          id: String(item.id || ''),
           data_venda: item.data_venda || '',
           nome_cliente: item.nome_cliente || '',
           telefone: item.telefone || '',
@@ -60,11 +58,11 @@ export function useManagerData(selectedManager: string) {
           created_at: item.created_at || ''
         }))
         
-        console.log(`Clientes formatados para ${selectedManager}:`, clientesFormatados)
+        console.log(`📋 Clientes formatados para ${selectedManager}:`, clientesFormatados.length)
         setClientes(clientesFormatados)
       }
     } catch (err) {
-      console.error('Erro:', err)
+      console.error('💥 Erro:', err)
       setError(`Erro ao carregar dados de ${selectedManager}`)
       setClientes([])
     } finally {
@@ -74,47 +72,54 @@ export function useManagerData(selectedManager: string) {
 
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
     if (!selectedManager) {
-      console.error('Manager não selecionado')
+      console.error('❌ Manager não selecionado')
       return false
     }
 
     try {
       const tableName = getTableName(selectedManager)
+      const numericId = parseInt(id)
       
-      console.log(`=== INICIANDO ATUALIZAÇÃO ===`)
-      console.log(`Tabela: ${tableName}`)
-      console.log(`ID original: ${id}`)
-      console.log(`Campo: ${field}`)
-      console.log(`Valor: ${value}`)
+      console.log(`🔄 === INICIANDO ATUALIZAÇÃO ===`)
+      console.log(`📋 Tabela: ${tableName}`)
+      console.log(`🆔 ID: ${id} (convertido para: ${numericId})`)
+      console.log(`🏷️ Campo: ${field}`)
+      console.log(`💾 Valor: ${value}`)
       
-      // Primeiro, vamos verificar se o registro existe
+      if (isNaN(numericId)) {
+        console.error('❌ ID inválido:', id)
+        return false
+      }
+
+      // Verificar se o registro existe
       const { data: existingData, error: checkError } = await supabase
         .from(tableName)
-        .select('id')
-        .eq('id', parseInt(id))
+        .select('id, status_campanha')
+        .eq('id', numericId)
         .single()
 
       if (checkError) {
-        console.error('Erro ao verificar existência do registro:', checkError)
+        console.error('❌ Erro ao verificar existência do registro:', checkError)
         if (checkError.code === 'PGRST116') {
-          console.error('Registro não encontrado com ID:', id)
+          console.error('❌ Registro não encontrado com ID:', numericId)
           return false
         }
         return false
       }
 
-      console.log('Registro encontrado:', existingData)
+      console.log('✅ Registro encontrado:', existingData)
+      console.log(`🔄 Status atual: "${existingData.status_campanha}" -> Novo status: "${value}"`)
       
-      // Agora fazer a atualização
+      // Fazer a atualização
       const { data: updateData, error: updateError } = await supabase
         .from(tableName)
         .update({ [field]: value })
-        .eq('id', parseInt(id))
+        .eq('id', numericId)
         .select()
 
       if (updateError) {
-        console.error('Erro ao atualizar cliente:', updateError)
-        console.error('Detalhes do erro:', {
+        console.error('❌ Erro ao atualizar cliente:', updateError)
+        console.error('🔍 Detalhes do erro:', {
           code: updateError.code,
           message: updateError.message,
           details: updateError.details,
@@ -123,7 +128,7 @@ export function useManagerData(selectedManager: string) {
         return false
       }
 
-      console.log('Dados atualizados no Supabase:', updateData)
+      console.log('✅ Dados atualizados no Supabase:', updateData)
 
       // Atualizar o estado local imediatamente
       setClientes(prev => 
@@ -134,10 +139,10 @@ export function useManagerData(selectedManager: string) {
         )
       )
 
-      console.log('=== ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
+      console.log('🎉 === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
       return true
     } catch (err) {
-      console.error('Erro na atualização (catch):', err)
+      console.error('💥 Erro na atualização (catch):', err)
       return false
     }
   }
@@ -147,7 +152,7 @@ export function useManagerData(selectedManager: string) {
     if (!selectedManager) return
 
     const tableName = getTableName(selectedManager)
-    console.log('Configurando realtime para tabela:', tableName)
+    console.log('🔴 Configurando realtime para tabela:', tableName)
 
     // Buscar dados iniciais
     fetchClientes()
@@ -158,18 +163,17 @@ export function useManagerData(selectedManager: string) {
       .on(
         'postgres_changes',
         {
-          event: '*', // Escutar todos os eventos (INSERT, UPDATE, DELETE)
+          event: '*',
           schema: 'public',
           table: tableName
         },
         (payload) => {
-          console.log('Mudança detectada na tabela:', payload)
+          console.log('🔄 Mudança detectada na tabela:', payload)
           
           if (payload.eventType === 'INSERT') {
-            console.log('Novo cliente inserido:', payload.new)
-            // Adicionar novo cliente ao estado
+            console.log('➕ Novo cliente inserido:', payload.new)
             const novoCliente = {
-              id: payload.new.id?.toString() || '',
+              id: String(payload.new.id || ''),
               nome_cliente: payload.new.nome_cliente || '',
               telefone: payload.new.telefone || '',
               email_cliente: payload.new.email_cliente || '',
@@ -190,10 +194,9 @@ export function useManagerData(selectedManager: string) {
             
             setClientes(prev => [novoCliente, ...prev])
           } else if (payload.eventType === 'UPDATE') {
-            console.log('Cliente atualizado via realtime:', payload.new)
-            // Atualizar cliente existente
+            console.log('🔄 Cliente atualizado via realtime:', payload.new)
             const clienteAtualizado = {
-              id: payload.new.id?.toString() || '',
+              id: String(payload.new.id || ''),
               nome_cliente: payload.new.nome_cliente || '',
               telefone: payload.new.telefone || '',
               email_cliente: payload.new.email_cliente || '',
@@ -218,21 +221,20 @@ export function useManagerData(selectedManager: string) {
               )
             )
           } else if (payload.eventType === 'DELETE') {
-            console.log('Cliente removido:', payload.old)
-            // Remover cliente do estado
+            console.log('🗑️ Cliente removido:', payload.old)
             setClientes(prev => 
-              prev.filter(cliente => cliente.id !== payload.old.id?.toString())
+              prev.filter(cliente => cliente.id !== String(payload.old.id))
             )
           }
         }
       )
       .subscribe((status) => {
-        console.log(`Status do realtime para ${tableName}:`, status)
+        console.log(`📡 Status do realtime para ${tableName}:`, status)
       })
 
     // Cleanup do canal quando o componente desmontar ou gerente mudar
     return () => {
-      console.log('Removendo canal de realtime para:', tableName)
+      console.log('🧹 Removendo canal de realtime para:', tableName)
       supabase.removeChannel(channel)
     }
   }, [selectedManager])
