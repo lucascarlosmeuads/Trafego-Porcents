@@ -1,8 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, User, Settings } from 'lucide-react'
-import { Badge } from '@/components/ui/badge'
+import { Users, BarChart3, AlertTriangle, Settings } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -15,73 +14,34 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-interface GestorInfo {
-  nome: string
-  email: string
-  total_clientes: number
-}
-
 interface ManagerSidebarProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
+  activeTab: string
+  onTabChange: (tab: string) => void
 }
 
-export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSidebarProps) {
-  const [gestores, setGestores] = useState<GestorInfo[]>([])
-  const [totalClientes, setTotalClientes] = useState(0)
+export function ManagerSidebar({ selectedManager, onManagerSelect, activeTab, onTabChange }: ManagerSidebarProps) {
+  const [problemasCount, setProblemasCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  const buscarGestores = async () => {
+  const buscarProblemasCount = async () => {
     try {
-      console.log('🔍 [ManagerSidebar] Buscando gestores e contagens...')
-      
-      // Buscar contagem total de clientes
-      const { count: totalCount } = await supabase
+      const { count } = await supabase
         .from('todos_clientes')
         .select('*', { count: 'exact', head: true })
+        .eq('status_campanha', 'Problema')
 
-      setTotalClientes(totalCount || 0)
-
-      // Buscar gestores ativos
-      const { data: gestoresData, error: gestoresError } = await supabase
-        .from('gestores')
-        .select('nome, email')
-        .eq('ativo', true)
-        .order('nome')
-
-      if (gestoresError) {
-        console.error('❌ [ManagerSidebar] Erro ao buscar gestores:', gestoresError)
-        return
-      }
-
-      // Para cada gestor, contar seus clientes
-      const gestoresComContagem = await Promise.all(
-        (gestoresData || []).map(async (gestor) => {
-          const { count } = await supabase
-            .from('todos_clientes')
-            .select('*', { count: 'exact', head: true })
-            .eq('email_gestor', gestor.email)
-
-          return {
-            ...gestor,
-            total_clientes: count || 0
-          }
-        })
-      )
-
-      console.log('✅ [ManagerSidebar] Gestores carregados:', gestoresComContagem.length)
-      console.log('📊 [ManagerSidebar] Total de clientes:', totalCount)
-      
-      setGestores(gestoresComContagem)
+      setProblemasCount(count || 0)
     } catch (error) {
-      console.error('💥 [ManagerSidebar] Erro na busca:', error)
+      console.error('❌ [ManagerSidebar] Erro ao buscar contagem de problemas:', error)
     } finally {
       setLoading(false)
     }
   }
 
   useEffect(() => {
-    buscarGestores()
+    buscarProblemasCount()
     
     // Configurar listener de realtime para atualizações automáticas
     const channel = supabase
@@ -95,7 +55,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         },
         () => {
           console.log('🔄 [ManagerSidebar] Atualizando contagens...')
-          buscarGestores()
+          buscarProblemasCount()
         }
       )
       .subscribe()
@@ -105,9 +65,25 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
     }
   }, [])
 
+  const handleMenuClick = (action: string) => {
+    if (action === 'dashboard') {
+      onTabChange('dashboard')
+      onManagerSelect(null)
+    } else if (action === 'clientes') {
+      onTabChange('clientes')
+      // Mantém o gestor selecionado se houver um
+    } else if (action === 'problemas') {
+      onTabChange('problemas')
+      onManagerSelect('__PROBLEMAS__')
+    } else if (action === 'gestores') {
+      onTabChange('clientes')
+      onManagerSelect('__GESTORES__')
+    }
+  }
+
   if (loading) {
     return (
-      <Sidebar variant="sidebar" className="w-72 border-r bg-card">
+      <Sidebar variant="sidebar" className="w-64 border-r bg-card">
         <SidebarHeader className="border-b p-6">
           <h2 className="text-lg font-semibold text-foreground">Carregando...</h2>
         </SidebarHeader>
@@ -116,72 +92,72 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   }
 
   return (
-    <Sidebar variant="sidebar" className="w-72 border-r bg-card">
+    <Sidebar variant="sidebar" className="w-64 border-r bg-card">
       <SidebarHeader className="border-b p-6">
         <h2 className="text-lg font-semibold text-foreground">Painel Administrativo</h2>
-        <p className="text-sm text-muted-foreground">Gestão de clientes por responsável</p>
+        <p className="text-sm text-muted-foreground">Gestão centralizada</p>
       </SidebarHeader>
       
       <SidebarContent className="p-4">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-medium mb-3">
-            Gestores ({gestores.length})
+            Navegação Principal
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => onManagerSelect(null)}
-                  isActive={selectedManager === null}
-                  className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
+                  onClick={() => handleMenuClick('dashboard')}
+                  isActive={activeTab === 'dashboard'}
+                  className="w-full justify-start h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
-                    <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                    <span className="font-medium truncate">Todos os Clientes</span>
+                    <BarChart3 className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span className="font-medium">Dashboard</span>
                   </div>
-                  <Badge variant="secondary" className="ml-2 flex-shrink-0 w-8 h-6 text-center justify-center text-xs">
-                    {totalClientes}
-                  </Badge>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               
-              {gestores.map((gestor) => (
-                <SidebarMenuItem key={gestor.nome}>
-                  <SidebarMenuButton
-                    onClick={() => onManagerSelect(gestor.nome)}
-                    isActive={selectedManager === gestor.nome}
-                    className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
-                  >
-                    <div className="flex items-center gap-3 min-w-0 flex-1">
-                      <User className="w-4 h-4 text-green-600 flex-shrink-0" />
-                      <span className="font-medium truncate">{gestor.nome}</span>
-                    </div>
-                    <Badge variant="secondary" className="ml-2 flex-shrink-0 w-8 h-6 text-center justify-center text-xs">
-                      {gestor.total_clientes}
-                    </Badge>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Seção de Gerenciamento */}
-        <SidebarGroup className="mt-6">
-          <SidebarGroupLabel className="text-sm font-medium mb-3">
-            Gerenciamento
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu className="space-y-1">
               <SidebarMenuItem>
                 <SidebarMenuButton
-                  onClick={() => onManagerSelect('__GESTORES__')}
+                  onClick={() => handleMenuClick('clientes')}
+                  isActive={activeTab === 'clientes' && selectedManager !== '__GESTORES__' && selectedManager !== '__PROBLEMAS__'}
+                  className="w-full justify-start h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Users className="w-4 h-4 text-green-600 flex-shrink-0" />
+                    <span className="font-medium">Clientes</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleMenuClick('problemas')}
+                  isActive={activeTab === 'problemas' || selectedManager === '__PROBLEMAS__'}
+                  className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
+                >
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <AlertTriangle className="w-4 h-4 text-red-600 flex-shrink-0" />
+                    <span className="font-medium">Problemas Pendentes</span>
+                  </div>
+                  {problemasCount > 0 && (
+                    <span className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center ml-2 flex-shrink-0">
+                      {problemasCount}
+                    </span>
+                  )}
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => handleMenuClick('gestores')}
                   isActive={selectedManager === '__GESTORES__'}
                   className="w-full justify-start h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                 >
                   <div className="flex items-center gap-3 min-w-0 flex-1">
                     <Settings className="w-4 h-4 text-purple-600 flex-shrink-0" />
-                    <span className="font-medium truncate">Gestores</span>
+                    <span className="font-medium">Gestores</span>
                   </div>
                 </SidebarMenuButton>
               </SidebarMenuItem>

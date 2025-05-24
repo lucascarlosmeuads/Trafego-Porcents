@@ -2,7 +2,6 @@
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
-import { ClientesTable } from './ClientesTable'
 import { AdminDashboard } from './AdminDashboard'
 import { GestorDashboard } from './GestorDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
@@ -12,15 +11,24 @@ import { useState } from 'react'
 export function Dashboard() {
   const { user, signOut, isAdmin, currentManagerName } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<string>('clientes')
 
   const getDisplayTitle = () => {
     if (!isAdmin) return currentManagerName
+    
+    if (activeTab === 'dashboard') return 'Dashboard Geral'
+    if (activeTab === 'problemas' || selectedManager === '__PROBLEMAS__') return 'Problemas Pendentes'
+    if (selectedManager === '__GESTORES__') return 'Gerenciamento de Gestores'
     if (selectedManager === null) return 'Todos os Clientes'
     return selectedManager
   }
 
   const getDisplaySubtitle = () => {
     if (!isAdmin) return 'Gestor'
+    
+    if (activeTab === 'dashboard') return 'Análise Completa'
+    if (activeTab === 'problemas' || selectedManager === '__PROBLEMAS__') return 'Resolução de Problemas'
+    if (selectedManager === '__GESTORES__') return 'Configuração de Equipe'
     if (selectedManager === null) return 'Visualização Completa'
     return 'Gestor Individual'
   }
@@ -60,7 +68,9 @@ export function Dashboard() {
         {isAdmin && (
           <ManagerSidebar 
             selectedManager={selectedManager} 
-            onManagerSelect={setSelectedManager} 
+            onManagerSelect={setSelectedManager}
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
           />
         )}
         
@@ -111,7 +121,11 @@ export function Dashboard() {
           {/* Content responsivo com padding adequado */}
           <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
             {isAdmin ? (
-              <AdminDashboard selectedManager={selectedManager} />
+              <AdminDashboard 
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                activeTab={activeTab}
+              />
             ) : (
               <GestorDashboard />
             )}
