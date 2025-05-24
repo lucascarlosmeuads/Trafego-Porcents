@@ -1,4 +1,3 @@
-
 import { useState, useEffect, createContext, useContext } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -33,10 +32,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const managerMapping: { [key: string]: string } = {
       'andreza@gestor.com': 'Andreza',
-      'lucas.falcao@gestor.com': 'Lucas Falcão'
+      'lucas.falcao@gestor.com': 'Lucas Falcão',
+      'andreza@trafegoporcents.com': 'Andreza',
+      'lucas.falcao@trafegoporcents.com': 'Lucas Falcão'
     }
     
-    return managerMapping[email] || 'Gestor'
+    // Se for um email específico mapeado, usar o mapeamento
+    if (managerMapping[email]) {
+      return managerMapping[email]
+    }
+    
+    // Se for um email @trafegoporcents.com, extrair o nome do usuário
+    if (email.endsWith('@trafegoporcents.com')) {
+      const username = email.split('@')[0]
+      return username.charAt(0).toUpperCase() + username.slice(1)
+    }
+    
+    return 'Gestor'
   }
 
   const currentManagerName = getCurrentManagerName(user?.email)

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -20,13 +19,25 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       return 'Lucas Falcão' // Admin pode ver Lucas por padrão
     }
     
-    // Mapear outros emails para gestores
+    // Mapear emails específicos para gestores
     const managerMapping: { [key: string]: string } = {
       'andreza@gestor.com': 'Andreza',
-      'lucas.falcao@gestor.com': 'Lucas Falcão'
+      'lucas.falcao@gestor.com': 'Lucas Falcão',
+      'andreza@trafegoporcents.com': 'Andreza',
+      'lucas.falcao@trafegoporcents.com': 'Lucas Falcão'
     }
     
-    return managerMapping[email] || 'Andreza' // Fallback para Andreza
+    // Se for um email específico mapeado, usar o mapeamento
+    if (managerMapping[email]) {
+      return managerMapping[email]
+    }
+    
+    // Se for um email @trafegoporcents.com, mapear para Andreza por padrão
+    if (email.endsWith('@trafegoporcents.com')) {
+      return 'Andreza'
+    }
+    
+    return 'Andreza' // Fallback para Andreza
   }
 
   // Determinar tabela baseada no nome do gestor
