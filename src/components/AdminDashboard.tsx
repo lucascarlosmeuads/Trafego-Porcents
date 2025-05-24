@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
+import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, Users, BarChart3 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -88,15 +88,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     
     // Verificar qual aba está ativa
     if (activeTab === 'dashboard') {
-      return (
-        <div className="space-y-6">
-          <div className="text-center py-8">
-            <BarChart3 className="w-16 h-16 mx-auto text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Dashboard em Desenvolvimento</h3>
-            <p className="text-muted-foreground">Métricas e indicadores gerais serão exibidos aqui</p>
-          </div>
-        </div>
-      )
+      return <StatusFunnelDashboard />
     } else if (activeTab === 'problemas') {
       return <ProblemasPanel />
     } else {
@@ -108,7 +100,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     <div className="space-y-6">
       {/* Navigation Tabs - apenas quando não estiver gerenciando gestores */}
       {selectedManager !== '__GESTORES__' && (
-        <div className="border-b">
+        <div className="border-b border-border">
           <div className="flex gap-2 p-1">
             <Button
               variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
