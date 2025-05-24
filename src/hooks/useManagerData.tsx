@@ -352,24 +352,29 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log(`📋 Tabela de destino: ${tableName}`)
       console.log(`👤 Manager: ${manager}`)
       
-      // Garantir que NÃO há campo id nos dados
-      const {
-        id,           // Remover id
-        created_at,   // Remover created_at se existir
-        ...dadosLimpos
-      } = clienteData
-      
-      // Preparar dados finais sem campos que podem causar conflito
+      // Criar objeto limpo apenas com os campos que queremos enviar
       const novoCliente = {
-        ...dadosLimpos,
+        nome_cliente: clienteData.nome_cliente || '',
+        telefone: clienteData.telefone || '',
+        email_cliente: clienteData.email_cliente || '',
+        data_venda: clienteData.data_venda || '',
+        vendedor: clienteData.vendedor || '',
+        status_campanha: clienteData.status_campanha || 'Preenchimento do Formulário',
         email_gestor: userEmail,
         comissao_paga: false,
         valor_comissao: 60.00,
-        site_status: 'pendente'
+        site_status: 'pendente',
+        data_limite: '',
+        link_grupo: '',
+        link_briefing: '',
+        link_criativo: '',
+        link_site: '',
+        numero_bm: ''
       }
 
-      console.log('🧹 Dados limpos (sem ID):', novoCliente)
+      console.log('🧹 Dados limpos para inserção:', novoCliente)
       console.log('🔍 Verificando se existe campo id:', 'id' in novoCliente ? 'SIM - ERRO!' : 'NÃO - OK!')
+      console.log('🔍 Verificando se existe campo created_at:', 'created_at' in novoCliente ? 'SIM - ERRO!' : 'NÃO - OK!')
 
       const { data, error } = await supabase
         .from(tableName)
