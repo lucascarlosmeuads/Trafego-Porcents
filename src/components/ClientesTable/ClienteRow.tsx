@@ -1,10 +1,45 @@
+
 import { useState } from 'react'
-import { TableCell, TableRow } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
-import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select'
+import { 
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { Check, X, Edit, Loader, MoreVertical } from 'lucide-react'
+import { format } from 'date-fns'
+
+interface Cliente {
+  id: string
+  nome_cliente?: string
+  telefone?: string
+  email_cliente?: string
+  vendedor?: string
+  email_gestor?: string
+  status_campanha?: string
+  site_status?: string
+  data_limite?: string
+  data_venda?: string
+  link_grupo?: string
+  link_briefing?: string
+  link_criativo?: string
+  link_site?: string
+  numero_bm?: string
+  comissao_paga?: boolean
+  valor_comissao?: number
+  descricao_problema?: string
+}
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -18,21 +53,21 @@ interface ClienteRowProps {
   bmValue: string
   setBmValue: (value: string) => void
   updatingComission: string | null
+  editingComissionValue: string | null
+  comissionValueInput: string
+  setComissionValueInput: (value: string) => void
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string, field: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
-  onBMSave: (clienteId: string) => void
+  onBMSave: (clienteId: string) => Promise<void>
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => void
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
-  onComissionValueSave: (clienteId: string, newValue: number) => void
+  onComissionValueSave: (clienteId: string, newValue: number) => Promise<void>
   onComissionValueCancel: () => void
-  editingComissionValue: string | null
-  comissionValueInput: string
-  setComissionValueInput: (value: string) => void
 }
 
 export function ClienteRow({
@@ -47,6 +82,9 @@ export function ClienteRow({
   bmValue,
   setBmValue,
   updatingComission,
+  editingComissionValue,
+  comissionValueInput,
+  setComissionValueInput,
   getStatusColor,
   onStatusChange,
   onLinkEdit,
@@ -58,546 +96,185 @@ export function ClienteRow({
   onComissionToggle,
   onComissionValueEdit,
   onComissionValueSave,
-  onComissionValueCancel,
-  editingComissionValue,
-  comissionValueInput,
-  setComissionValueInput
+  onComissionValueCancel
 }: ClienteRowProps) {
-  const [showSiteOptions, setShowSiteOptions] = useState(false)
+  const [siteLinkInput, setSiteLinkInput] = useState('')
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
-    } catch {
-      return dateString
-    }
-  }
-
-  const calculateDateLimit = (dataVenda: string | null) => {
-    if (!dataVenda) return { text: '-', style: '' }
-    
-    const venda = new Date(dataVenda)
-    const limite = new Date(venda)
-    limite.setDate(limite.getDate() + 15)
-    
-    const hoje = new Date()
-    const diffTime = limite.getTime() - hoje.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
-    // Se o status é "No Ar" ou "Otimização", mostrar como cumprido
-    if (cliente.status_campanha === 'No Ar' || cliente.status_campanha === 'Otimização') {
-      return {
-        text: 'Cumprido',
-        style: 'bg-green-100 text-green-800 border-green-300'
-      }
-    }
-    
-    if (diffDays < 0) {
-      return {
-        text: `Atrasado ${Math.abs(diffDays)} dias`,
-        style: 'bg-red-100 text-red-800 border-red-300'
-      }
-    } else {
-      return {
-        text: `Faltam ${diffDays} dias`,
-        style: 'bg-blue-100 text-blue-800 border-blue-300'
-      }
-    }
-  }
-
-  const renderWhatsAppButton = (telefone: string) => {
-    if (!telefone) return <span className="text-xs text-contrast">-</span>
-    
-    // Limpar o número removendo caracteres especiais
-    const cleanPhone = telefone.replace(/\D/g, '')
-    
-    // Se não tiver DDD, assumir 55 (Brasil)
-    const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
-        onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
-      >
-        <MessageCircle className="w-3 h-3 mr-1" />
-        WhatsApp
-      </Button>
-    )
-  }
-
-  const renderLinkCell = (url: string, field: string, label: string) => {
-    const isEditing = editingLink?.clienteId === cliente.id && editingLink?.field === field
-    
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={linkValue}
-            onChange={(e) => setLinkValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="https://..."
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onLinkSave(cliente.id, field)}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onLinkCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    if (!url) {
-      return (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-6 px-2 text-xs"
-          onClick={() => window.open(url, '_blank')}
-        >
-          <ExternalLink className="w-3 h-3 mr-1" />
-          Ver
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      </div>
-    )
-  }
-
-  const renderSiteCell = () => {
-    const siteStatus = cliente.site_status || 'pendente'
-    const siteUrl = cliente.link_site || ''
-    
-    // Se está editando o link do site
-    const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
-    if (isEditingLink) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={linkValue}
-            onChange={(e) => setLinkValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="https://..."
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={handleSiteLinkSave}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onLinkCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Se está mostrando as opções Sim/Não
-    if (showSiteOptions) {
-      return (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-            onClick={() => handleSiteOptionSelect('aguardando_link')}
-          >
-            ✅ Precisa de site
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
-            onClick={() => handleSiteOptionSelect('nao_precisa')}
-          >
-            ❌ Não precisa
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => setShowSiteOptions(false)}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Estados do site com ícone de edição sempre presente
-    switch (siteStatus) {
-      case 'nao_precisa':
-        return (
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
-              ❌ Não precisa
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-
-      case 'aguardando_link':
-        return (
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-              🟡 Aguardando link
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                // Limpar o link existente quando voltamos para aguardando link
-                onLinkEdit(cliente.id, 'link_site', '')
-              }}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-
-      case 'finalizado':
-        if (siteUrl) {
-          return (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
-                onClick={() => {
-                  // Corrigir a abertura do link: usar exatamente o valor salvo
-                  let urlToOpen = siteUrl.trim()
-                  
-                  // Se não começar com http:// ou https://, adicionar https://
-                  if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
-                    urlToOpen = `https://${urlToOpen}`
-                  }
-                  
-                  window.open(urlToOpen, '_blank')
-                }}
-              >
-                🌐 Ver site
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => setShowSiteOptions(true)}
-              >
-                <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </Button>
-            </div>
-          )
-        } else {
-          return (
-            <div className="flex items-center gap-1">
-              <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-                🟡 Aguardando link
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => {
-                  // Limpar o link existente quando voltamos para aguardando link
-                  onLinkEdit(cliente.id, 'link_site', '')
-                }}
-              >
-                <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </Button>
-            </div>
-          )
-        }
-
-      default:
-        // Estado inicial - traço cinza com opção de editar
-        return (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-gray-400 hover:text-gray-600"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              —
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-    }
-  }
-
-  const handleSiteOptionSelect = async (option: string) => {
-    console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
-    
-    try {
-      // Atualizar o site_status
-      await onStatusChange(cliente.id, option)
-      setShowSiteOptions(false)
-      
-      // Se mudou para "aguardando_link", limpar o link_site existente
-      if (option === 'aguardando_link') {
-        console.log('🧹 Limpando link_site existente')
-        await onStatusChange(cliente.id, 'aguardando_link')
-        // Limpar o link do site se existir
-        if (cliente.link_site) {
-          await onLinkSave(cliente.id, 'link_site')
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erro ao atualizar opção do site:', error)
-    }
+  const handleSiteLinkEdit = () => {
+    setSiteLinkInput(cliente.link_site || '')
+    onLinkEdit(cliente.id, 'link_site', cliente.link_site || '')
   }
 
   const handleSiteLinkSave = async () => {
-    console.log('💾 Salvando link do site:', linkValue)
-    
-    if (!linkValue.trim()) {
-      console.error('❌ Link do site está vazio')
-      return
-    }
-    
-    try {
-      // Salvar o link do site
-      const linkSuccess = await onLinkSave(cliente.id, 'link_site')
-      
-      if (linkSuccess) {
-        // Atualizar o status para finalizado
-        await onStatusChange(cliente.id, 'finalizado')
-        console.log('✅ Link salvo e status atualizado para finalizado')
-      } else {
-        console.error('❌ Falha ao salvar o link')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao salvar link do site:', error)
+    setLinkValue(siteLinkInput)
+    const success = await onLinkSave(cliente.id, 'link_site')
+    if (success) {
+      setSiteLinkInput('')
     }
   }
 
-  const renderBMCell = () => {
-    const isEditing = editingBM === cliente.id
+  const handleSiteLinkCancel = () => {
+    setSiteLinkInput('')
+    onLinkCancel()
+  }
+
+  const handleComissionValueSave = async () => {
+    const newValue = parseFloat(comissionValueInput)
+    if (isNaN(newValue) || newValue < 0) {
+      return
+    }
+    await onComissionValueSave(cliente.id, newValue)
+  }
+
+  const renderLinkCell = (field: string, currentValue: string) => {
+    const isEditing = editingLink?.clienteId === cliente.id && editingLink?.field === field
     
-    if (isEditing) {
+    if (field === 'link_site') {
+      const isEditingSiteLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
+      
+      if (isEditingSiteLink) {
+        return (
+          <div className="flex items-center gap-2">
+            <Input
+              value={siteLinkInput}
+              onChange={(e) => setSiteLinkInput(e.target.value)}
+              className="h-8 text-xs bg-background border-border text-white"
+              placeholder="https://"
+            />
+            <Button
+              size="sm"
+              onClick={handleSiteLinkSave}
+              className="h-8 px-2"
+            >
+              <Check className="w-3 h-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={handleSiteLinkCancel}
+              className="h-8 px-2"
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        )
+      }
+
       return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={bmValue}
-            onChange={(e) => setBmValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="Número BM"
-          />
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 break-all">
+            {currentValue || 'Não definido'}
+          </span>
           <Button
             size="sm"
             variant="ghost"
+            onClick={handleSiteLinkEdit}
             className="h-6 w-6 p-0"
-            onClick={() => onBMSave(cliente.id)}
           >
-            <Check className="w-3 h-3 text-green-600" />
+            <Edit className="w-3 h-3" />
+          </Button>
+        </div>
+      )
+    }
+    
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-2">
+          <Input
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
+            className="h-8 text-xs bg-background border-border text-white"
+            placeholder="https://"
+          />
+          <Button
+            size="sm"
+            onClick={() => onLinkSave(cliente.id, field)}
+            className="h-8 px-2"
+          >
+            <Check className="w-3 h-3" />
           </Button>
           <Button
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onBMCancel}
+            onClick={onLinkCancel}
+            className="h-8 px-2"
           >
-            <X className="w-3 h-3 text-red-600" />
+            <X className="w-3 h-3" />
           </Button>
         </div>
       )
     }
 
     return (
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-contrast">
-          {cliente.numero_bm || '-'}
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-gray-400 break-all">
+          {currentValue || 'Não definido'}
         </span>
         <Button
           size="sm"
           variant="ghost"
+          onClick={() => onLinkEdit(cliente.id, field, currentValue)}
           className="h-6 w-6 p-0"
-          onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
         >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
+          <Edit className="w-3 h-3" />
         </Button>
       </div>
     )
   }
-
-  const renderComissionCell = () => {
-    const isEditingValue = editingComissionValue === cliente.id
-    const valorComissao = cliente.valor_comissao || 0
-    
-    if (isEditingValue) {
-      return (
-        <div className="flex items-center gap-1">
-          <div className="flex items-center">
-            <span className="text-green-400 text-xs mr-1">R$</span>
-            <Input
-              value={comissionValueInput}
-              onChange={(e) => setComissionValueInput(e.target.value)}
-              className="h-6 text-xs w-20"
-              placeholder="0.00"
-              type="number"
-              step="0.01"
-            />
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onComissionValueSave(cliente.id, parseFloat(comissionValueInput) || 0)}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onComissionValueCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant={cliente.comissao_paga ? "default" : "outline"}
-          size="sm"
-          className={`h-7 text-xs flex items-center gap-1 ${
-            cliente.comissao_paga 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
-              : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
-          }`}
-          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
-          disabled={updatingComission === cliente.id}
-        >
-          {updatingComission === cliente.id ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : cliente.comissao_paga ? (
-            <Check className="w-3 h-3 mr-1" />
-          ) : null}
-          <span>R$ {valorComissao.toFixed(2)}</span>
-          {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
-          {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      </div>
-    )
-  }
-
-  const dateLimit = calculateDateLimit(cliente.data_venda)
 
   return (
-    <TableRow className="border-border hover:bg-muted/20 transition-colors">
-      <TableCell className="font-mono text-xs text-contrast">
-        {String(index + 1).padStart(3, '0')}
+    <TableRow className="border-border hover:bg-muted/20">
+      {/* ID Column */}
+      <TableCell className="text-white text-xs">{index + 1}</TableCell>
+      
+      {/* Data Venda */}
+      <TableCell className="text-white text-xs">
+        {cliente.data_venda ? format(new Date(cliente.data_venda), 'dd/MM/yyyy') : 'N/A'}
       </TableCell>
       
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-contrast">{formatDate(cliente.data_venda)}</span>
-        </div>
+      {/* Nome Cliente */}
+      <TableCell className="text-white text-xs font-medium">
+        {cliente.nome_cliente || 'N/A'}
       </TableCell>
       
-      <TableCell className="font-medium">
-        <div className="max-w-[200px] truncate text-contrast">
-          {cliente.nome_cliente}
-        </div>
+      {/* Telefone */}
+      <TableCell className="text-white text-xs">
+        {cliente.telefone || 'N/A'}
       </TableCell>
       
-      <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
-      
-      <TableCell>
-        <div className="max-w-[150px] truncate text-contrast">
-          {cliente.email_gestor}
-        </div>
+      {/* Email Cliente */}
+      <TableCell className="text-white text-xs break-all">
+        {cliente.email_cliente || 'N/A'}
       </TableCell>
       
-      <TableCell>
-        <Select 
+      {/* Vendedor */}
+      <TableCell className="text-white text-xs">
+        {cliente.vendedor || 'N/A'}
+      </TableCell>
+      
+      {/* Email Gestor */}
+      <TableCell className="text-white text-xs break-all">
+        {cliente.email_gestor || 'N/A'}
+      </TableCell>
+      
+      {/* Status Campanha */}
+      <TableCell className="text-white">
+        <Select
           value={cliente.status_campanha || ''}
           onValueChange={(value) => onStatusChange(cliente.id, value)}
           disabled={updatingStatus === cliente.id}
         >
-          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-            <SelectValue>
-              {updatingStatus === cliente.id ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Atualizando...</span>
-                </div>
-              ) : (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                  {cliente.status_campanha || 'Sem status'}
-                </span>
-              )}
-            </SelectValue>
+          <SelectTrigger className="w-40 h-8 text-xs bg-background border-border text-white">
+            {updatingStatus === cliente.id ? (
+              <div className="flex items-center gap-2">
+                <Loader className="w-3 h-3 animate-spin" />
+                <span>Atualizando...</span>
+              </div>
+            ) : (
+              <SelectValue placeholder="Sem status" />
+            )}
           </SelectTrigger>
-          <SelectContent className="bg-card border-border z-50">
+          <SelectContent className="bg-card border-border max-h-60 overflow-y-auto">
             {STATUS_CAMPANHA.map(status => (
               <SelectItem key={status} value={status}>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
@@ -609,40 +286,136 @@ export function ClienteRow({
         </Select>
       </TableCell>
       
-      <TableCell>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${dateLimit.style}`}>
-          {dateLimit.text.includes('Faltam') && (
-            <Calendar className="w-3 h-3" />
-          )}
-          {dateLimit.text.includes('Atrasado') && (
-            <AlertTriangle className="w-3 h-3" />
-          )}
-          <span>{dateLimit.text}</span>
+      {/* Data Limite */}
+      <TableCell className="text-white text-xs">
+        {cliente.data_limite || 'N/A'}
+      </TableCell>
+      
+      {/* Link Grupo */}
+      <TableCell className="min-w-40">
+        {renderLinkCell('link_grupo', cliente.link_grupo || '')}
+      </TableCell>
+      
+      {/* Link Briefing */}
+      <TableCell className="min-w-40">
+        {renderLinkCell('link_briefing', cliente.link_briefing || '')}
+      </TableCell>
+      
+      {/* Link Criativo */}
+      <TableCell className="min-w-40">
+        {renderLinkCell('link_criativo', cliente.link_criativo || '')}
+      </TableCell>
+      
+      {/* Link Site */}
+      <TableCell className="min-w-40">
+        {renderLinkCell('link_site', cliente.link_site || '')}
+      </TableCell>
+      
+      {/* Número BM */}
+      <TableCell className="text-white">
+        {editingBM === cliente.id ? (
+          <div className="flex items-center gap-2">
+            <Input
+              value={bmValue}
+              onChange={(e) => setBmValue(e.target.value)}
+              className="h-8 w-32 text-xs bg-background border-border text-white"
+              placeholder="Número BM"
+            />
+            <Button
+              size="sm"
+              onClick={() => onBMSave(cliente.id)}
+              className="h-8 px-2"
+            >
+              <Check className="w-3 h-3" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onBMCancel}
+              className="h-8 px-2"
+            >
+              <X className="w-3 h-3" />
+            </Button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-400">
+              {cliente.numero_bm || 'Não definido'}
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
+              className="h-6 w-6 p-0"
+            >
+              <Edit className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
+      </TableCell>
+      
+      {/* Comissão */}
+      <TableCell className="text-white">
+        <div className="flex flex-col gap-1">
+          <Button
+            size="sm"
+            variant={cliente.comissao_paga ? "default" : "outline"}
+            onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
+            disabled={updatingComission === cliente.id}
+            className="h-7 text-xs"
+          >
+            {updatingComission === cliente.id ? (
+              <Loader className="w-3 h-3 animate-spin" />
+            ) : (
+              cliente.comissao_paga ? 'Pago' : 'Não Pago'
+            )}
+          </Button>
+          
+          <div className="flex items-center gap-1">
+            {editingComissionValue === cliente.id ? (
+              <div className="flex items-center gap-1">
+                <Input
+                  value={comissionValueInput}
+                  onChange={(e) => setComissionValueInput(e.target.value)}
+                  className="h-6 w-20 text-xs bg-background border-border text-white"
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                />
+                <Button
+                  size="sm"
+                  onClick={handleComissionValueSave}
+                  className="h-6 px-1"
+                >
+                  <Check className="w-3 h-3" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onComissionValueCancel}
+                  className="h-6 px-1"
+                >
+                  <X className="w-3 h-3" />
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1">
+                <span className="text-xs text-gray-400">
+                  R$ {(cliente.valor_comissao || 60).toFixed(2)}
+                </span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onComissionValueEdit(cliente.id, cliente.valor_comissao || 60)}
+                  className="h-4 w-4 p-0"
+                >
+                  <Edit className="w-2 h-2" />
+                </Button>
+              </div>
+            )}
+          </div>
         </div>
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_grupo || '', 'link_grupo', 'Grupo')}
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_briefing || '', 'link_briefing', 'Briefing')}
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderSiteCell()}
-      </TableCell>
-      
-      <TableCell className="hidden xl:table-cell">
-        {renderBMCell()}
-      </TableCell>
-      
-      <TableCell>
-        {renderComissionCell()}
       </TableCell>
     </TableRow>
   )
