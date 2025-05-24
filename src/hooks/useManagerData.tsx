@@ -351,7 +351,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       // Preparar dados do cliente com email_gestor automaticamente preenchido
       const novoCliente = {
         ...clienteData,
-        email_gestor: userEmail, // Preenchimento automático
+        email_gestor: userEmail, // Preenchimento automático com email do usuário logado
         created_at: new Date().toISOString()
       }
 
@@ -364,15 +364,27 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       if (error) {
         console.error('❌ Erro ao adicionar cliente:', error)
+        toast({
+          title: "Erro",
+          description: `Erro ao adicionar cliente: ${error.message}`,
+          variant: "destructive"
+        })
         return false
       }
 
       console.log('✅ Cliente adicionado com sucesso:', data)
       
-      // Não precisa atualizar manualmente o estado, o realtime fará isso
+      // Forçar atualização da tabela após inserção
+      await fetchClientes()
+      
       return true
     } catch (error) {
       console.error('💥 Erro na adição do cliente:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao adicionar cliente",
+        variant: "destructive"
+      })
       return false
     }
   }
