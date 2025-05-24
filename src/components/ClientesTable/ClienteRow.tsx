@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -22,7 +21,7 @@ interface ClienteRowProps {
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string, field: string) => void
+  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
@@ -373,7 +372,10 @@ export function ClienteRow({
     }
     
     try {
-      // Primeiro salvar o link do site diretamente
+      // Primeiro definir o valor do link para que onLinkSave possa usá-lo
+      setLinkValue(siteLinkInput)
+      
+      // Salvar o link do site
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
