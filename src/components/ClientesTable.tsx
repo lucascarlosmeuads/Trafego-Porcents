@@ -39,6 +39,9 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
   const [linkValue, setLinkValue] = useState('')
+  const [editingBM, setEditingBM] = useState<string | null>(null)
+  const [bmValue, setBmValue] = useState('')
+  const [updatingComission, setUpdatingComission] = useState<string | null>(null)
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -201,6 +204,79 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     setLinkValue('')
   }
 
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue || '')
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    try {
+      const success = await updateCliente(clienteId, 'numero_bm', bmValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Número BM atualizado com sucesso",
+        })
+        setEditingBM(null)
+        setBmValue('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar número BM",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao salvar BM:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar número BM",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
+    if (currentStatus) {
+      // Já está pago, não fazer nada
+      return
+    }
+
+    setUpdatingComission(clienteId)
+    
+    try {
+      const success = await updateCliente(clienteId, 'comissao_paga', true)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Comissão marcada como paga",
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar comissão",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar comissão:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar comissão",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
   const renderLinkField = (cliente: any, field: string, label: string) => {
     const clienteId = String(cliente.id || '')
     const currentValue = cliente[field]
@@ -269,6 +345,97 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
           <Edit2 className="w-3 h-3" />
         </Button>
       </div>
+    )
+  }
+
+  const renderBMField = (cliente: any) => {
+    const clienteId = String(cliente.id || '')
+    const currentValue = cliente.numero_bm
+    const isEditing = editingBM === clienteId
+
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1 min-w-[120px]">
+          <Input
+            value={bmValue}
+            onChange={(e) => setBmValue(e.target.value)}
+            placeholder="Número BM..."
+            className="h-6 text-xs px-2"
+            autoFocus
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={() => handleBMSave(clienteId)}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-6 w-6 p-0"
+            onClick={handleBMCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    if (!currentValue) {
+      return (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 px-2 text-xs text-muted-foreground hover:text-foreground"
+          onClick={() => handleBMEdit(clienteId, currentValue)}
+        >
+          Adicionar número
+        </Button>
+      )
+    }
+    
+    return (
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-foreground">{currentValue}</span>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 opacity-50 hover:opacity-100"
+          onClick={() => handleBMEdit(clienteId, currentValue)}
+        >
+          <Edit2 className="w-3 h-3" />
+        </Button>
+      </div>
+    )
+  }
+
+  const renderComissionField = (cliente: any) => {
+    const clienteId = String(cliente.id || '')
+    const isPaid = cliente.comissao_paga
+    const isUpdating = updatingComission === clienteId
+
+    if (isPaid) {
+      return (
+        <div className="flex items-center gap-1">
+          <Check className="w-3 h-3 text-green-600" />
+          <span className="text-xs text-green-600 font-medium">R$ 60,00</span>
+        </div>
+      )
+    }
+
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-xs"
+        onClick={() => handleComissionToggle(clienteId, isPaid)}
+        disabled={isUpdating}
+      >
+        {isUpdating && <RefreshCw className="w-3 h-3 mr-1 animate-spin" />}
+        Não Pago
+      </Button>
     )
   }
 
@@ -538,18 +705,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                         {renderLinkField(cliente, 'link_site', 'Site')}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
-                        <span className="text-foreground">{cliente.numero_bm || '-'}</span>
+                        {renderBMField(cliente)}
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center space-x-2">
-                          <Checkbox 
-                            checked={cliente.comissao_paga || false}
-                            disabled
-                          />
-                          <span className="text-xs">
-                            {cliente.comissao_paga ? 'Pago' : 'Não Pago'}
-                          </span>
-                        </div>
+                        {renderComissionField(cliente)}
                       </TableCell>
                       <TableCell>
                         <span className="text-sm font-medium text-foreground">
