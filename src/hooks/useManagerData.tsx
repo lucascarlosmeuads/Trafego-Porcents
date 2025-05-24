@@ -113,7 +113,7 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
 
   const updateCliente = async (clienteId: string, field: string, value: any): Promise<boolean> => {
     console.log(`🔄 === UPDATE CLIENTE ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🆔 Cliente ID: "${clienteId}" (tipo: ${typeof clienteId})`)
     console.log(`🔧 Campo: "${field}"`)
     console.log(`💾 Valor: "${value}"`)
 
@@ -157,6 +157,8 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
           updateData.site_status = 'finalizado'
         }
         
+        console.log(`🔄 Update data para site_status:`, updateData)
+        
         const { error } = await supabase
           .from(tableName)
           .update(updateData)
@@ -168,12 +170,16 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
         }
       } else if (field === 'link_site') {
         // When updating link_site, also update site_status to finalizado
+        const updateData = { 
+          link_site: value,
+          site_status: 'finalizado'
+        }
+        
+        console.log(`🔄 Update data para link_site:`, updateData)
+        
         const { error } = await supabase
           .from(tableName)
-          .update({ 
-            link_site: value,
-            site_status: 'finalizado'
-          })
+          .update(updateData)
           .eq('id', clienteId)
 
         if (error) {
@@ -182,9 +188,12 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
         }
       } else {
         // Regular field update
+        const updateData = { [field]: value }
+        console.log(`🔄 Update data regular:`, updateData)
+        
         const { error } = await supabase
           .from(tableName)
-          .update({ [field]: value })
+          .update(updateData)
           .eq('id', clienteId)
 
         if (error) {
@@ -195,7 +204,7 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
 
       console.log('✅ Update realizado com sucesso')
       
-      // Refresh the data
+      // Refresh the data without changing order
       await fetchClientes()
       return true
     } catch (error) {

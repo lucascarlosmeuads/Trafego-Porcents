@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -164,10 +163,12 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🆔 Cliente ID: "${clienteId}" (tipo: ${typeof clienteId})`)
     console.log(`🎯 Novo Status: "${newStatus}"`)
     
-    if (!clienteId || clienteId.trim() === '') {
+    // Converter para string se necessário e validar
+    const clienteIdStr = String(clienteId)
+    if (!clienteIdStr || clienteIdStr.trim() === '') {
       console.error('❌ ID do cliente inválido:', clienteId)
       toast({
         title: "Erro",
@@ -177,12 +178,13 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       return
     }
 
-    setUpdatingStatus(clienteId)
+    setUpdatingStatus(clienteIdStr)
     
     try {
       // Check if it's a site status update
       if (newStatus === 'aguardando_link' || newStatus === 'nao_precisa' || newStatus === 'finalizado') {
-        const success = await updateCliente(clienteId, 'site_status', newStatus)
+        console.log(`🌐 Atualizando site_status para: ${newStatus}`)
+        const success = await updateCliente(clienteIdStr, 'site_status', newStatus)
         
         if (success) {
           toast({
@@ -198,7 +200,8 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
         }
       } else {
         // Regular campaign status update
-        const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+        console.log(`📈 Atualizando status_campanha para: ${newStatus}`)
+        const success = await updateCliente(clienteIdStr, 'status_campanha', newStatus)
         
         if (success) {
           toast({
@@ -302,12 +305,19 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   }
 
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
-    setUpdatingComission(clienteId)
+    const clienteIdStr = String(clienteId)
+    console.log(`💰 === TOGGLE COMISSÃO ===`)
+    console.log(`🆔 Cliente ID: "${clienteIdStr}"`)
+    console.log(`📊 Status atual: ${currentStatus}`)
+    
+    setUpdatingComission(clienteIdStr)
     
     try {
       // Toggle the current status - if it's paid, make it unpaid, and vice versa
       const newStatus = !currentStatus
-      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
+      console.log(`🔄 Novo status: ${newStatus}`)
+      
+      const success = await updateCliente(clienteIdStr, 'comissao_paga', newStatus)
       
       if (success) {
         toast({
