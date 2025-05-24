@@ -141,3 +141,76 @@
   color: hsl(var(--sidebar-primary-foreground));
   border-left: 3px solid hsl(var(--sidebar-ring));
 }
+
+/* Melhor contraste para modo escuro no dashboard */
+.dark .dashboard-status-card {
+  color: #FFFFFF !important;
+}
+
+.dark .dashboard-status-card h3 {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .dashboard-status-card .text-2xl {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dark .dashboard-status-card .text-xs {
+  color: #E5E5E5 !important;
+}
+
+/* Melhorar contraste nos cards de status específicos */
+.dark .bg-gray-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-blue-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-purple-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-orange-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-yellow-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-green-500\/20 {
+  color: #FFFFFF !important;
+}
+
+.dark .bg-emerald-500\/20 {
+  color: #FFFFFF !important;
+}
+
+/* Melhorar contraste nos números dos status */
+.dark .bg-gray-500\/20 .text-2xl,
+.dark .bg-blue-500\/20 .text-2xl,
+.dark .bg-purple-500\/20 .text-2xl,
+.dark .bg-orange-500\/20 .text-2xl,
+.dark .bg-yellow-500\/20 .text-2xl,
+.dark .bg-green-500\/20 .text-2xl,
+.dark .bg-emerald-500\/20 .text-2xl {
+  color: #FFFFFF !important;
+  font-weight: 700 !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+/* Melhorar contraste nos títulos dos status */
+.dark .bg-gray-500\/20 .font-semibold,
+.dark .bg-blue-500\/20 .font-semibold,
+.dark .bg-purple-500\/20 .font-semibold,
+.dark .bg-orange-500\/20 .font-semibold,
+.dark .bg-yellow-500\/20 .font-semibold,
+.dark .bg-green-500\/20 .font-semibold,
+.dark .bg-emerald-500\/20 .font-semibold {
+  color: #FFFFFF !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
