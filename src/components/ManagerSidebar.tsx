@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, User, AlertTriangle } from 'lucide-react'
+import { Users, User } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import {
   Sidebar,
@@ -13,7 +13,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar'
 
 interface GestorInfo {
@@ -30,7 +29,6 @@ interface ManagerSidebarProps {
 export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSidebarProps) {
   const [gestores, setGestores] = useState<GestorInfo[]>([])
   const [totalClientes, setTotalClientes] = useState(0)
-  const [problemasCount, setProblemasCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
   const buscarGestores = async () => {
@@ -43,14 +41,6 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         .select('*', { count: 'exact', head: true })
 
       setTotalClientes(totalCount || 0)
-
-      // Buscar contagem de problemas
-      const { count: problemasTotal } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact', head: true })
-        .eq('status_campanha', 'Problema')
-
-      setProblemasCount(problemasTotal || 0)
 
       // Buscar gestores ativos
       const { data: gestoresData, error: gestoresError } = await supabase
@@ -81,7 +71,6 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
 
       console.log('✅ [ManagerSidebar] Gestores carregados:', gestoresComContagem.length)
       console.log('📊 [ManagerSidebar] Total de clientes:', totalCount)
-      console.log('⚠️ [ManagerSidebar] Problemas pendentes:', problemasTotal)
       
       setGestores(gestoresComContagem)
     } catch (error) {
@@ -118,7 +107,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
 
   if (loading) {
     return (
-      <Sidebar variant="sidebar" className="w-80 border-r bg-card">
+      <Sidebar variant="sidebar" className="w-72 border-r bg-card">
         <SidebarHeader className="border-b p-6">
           <h2 className="text-lg font-semibold text-foreground">Carregando...</h2>
         </SidebarHeader>
@@ -127,14 +116,13 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   }
 
   return (
-    <Sidebar variant="sidebar" className="w-80 border-r bg-card">
+    <Sidebar variant="sidebar" className="w-72 border-r bg-card">
       <SidebarHeader className="border-b p-6">
         <h2 className="text-lg font-semibold text-foreground">Painel Administrativo</h2>
         <p className="text-sm text-muted-foreground">Gestão de clientes por responsável</p>
       </SidebarHeader>
       
-      <SidebarContent className="p-4 space-y-6">
-        {/* Seção Principal - Gestores */}
+      <SidebarContent className="p-4">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sm font-medium mb-3">
             Gestores ({gestores.length})
@@ -147,11 +135,11 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
                   isActive={selectedManager === null}
                   className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                 >
-                  <div className="flex items-center gap-3">
-                    <Users className="w-4 h-4 text-blue-600" />
-                    <span className="font-medium">Todos os Clientes</span>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                    <span className="font-medium truncate">Todos os Clientes</span>
                   </div>
-                  <Badge variant="secondary" className="ml-auto min-w-[2rem] text-center">
+                  <Badge variant="secondary" className="ml-2 flex-shrink-0 w-8 h-6 text-center justify-center text-xs">
                     {totalClientes}
                   </Badge>
                 </SidebarMenuButton>
@@ -164,45 +152,16 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
                     isActive={selectedManager === gestor.nome}
                     className="w-full justify-between h-10 px-3 rounded-md hover:bg-accent/60 transition-colors"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
                       <User className="w-4 h-4 text-green-600 flex-shrink-0" />
                       <span className="font-medium truncate">{gestor.nome}</span>
                     </div>
-                    <Badge variant="secondary" className="ml-3 min-w-[2rem] text-center flex-shrink-0">
+                    <Badge variant="secondary" className="ml-2 flex-shrink-0 w-8 h-6 text-center justify-center text-xs">
                       {gestor.total_clientes}
                     </Badge>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Separador Visual */}
-        <SidebarSeparator className="my-4" />
-
-        {/* Seção Gestão de Problemas */}
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-sm font-medium mb-3 text-amber-700">
-            Gestão de Problemas
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={() => onManagerSelect('__PROBLEMAS__')}
-                  isActive={selectedManager === '__PROBLEMAS__'}
-                  className="w-full justify-between h-10 px-3 rounded-md hover:bg-amber-50 border border-amber-200 bg-amber-25 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="w-4 h-4 text-amber-600" />
-                    <span className="font-medium text-amber-800">Problemas Pendentes</span>
-                  </div>
-                  <Badge variant="destructive" className="ml-auto min-w-[2rem] text-center bg-amber-500 hover:bg-amber-600">
-                    {problemasCount}
-                  </Badge>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
