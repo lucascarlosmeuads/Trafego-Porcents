@@ -40,23 +40,26 @@ export function useManagerData(selectedManager: string) {
         console.log('🔍 Dados brutos do Supabase:', data?.[0])
         
         const clientesFormatados = (data || []).map((item: any, index: number) => {
-          // CORREÇÃO PRINCIPAL: Garantir que o ID seja sempre um número válido
+          // CORREÇÃO: Permitir IDs válidos mesmo que sejam null ou zero
           let clienteId = item.id
           
           // Se o ID vier como string, converter para número
           if (typeof clienteId === 'string') {
-            clienteId = parseInt(clienteId)
+            const parsed = parseInt(clienteId)
+            if (!isNaN(parsed)) {
+              clienteId = parsed
+            }
           }
           
-          // Se não conseguiu converter ou é inválido, usar o índice + timestamp como fallback
-          if (!clienteId || isNaN(clienteId) || clienteId <= 0) {
-            console.warn(`⚠️ ID inválido encontrado no registro ${index}:`, item.id, 'Dados do item:', item)
-            // Não usar fallback, pois precisamos do ID real para updates
-            clienteId = null
+          // Gerar um ID temporário único se não houver ID válido
+          // Usar timestamp + index para garantir unicidade
+          if (!clienteId || isNaN(clienteId)) {
+            console.warn(`⚠️ ID inválido encontrado no registro ${index}:`, item.id, 'Gerando ID temporário')
+            clienteId = Date.now() + index // ID temporário único
           }
           
           const cliente = {
-            id: clienteId ? String(clienteId) : '', // Converter para string mas garantir que não seja vazio
+            id: String(clienteId), // Sempre converter para string
             data_venda: item.data_venda || '',
             nome_cliente: item.nome_cliente || '',
             telefone: item.telefone || '',
@@ -87,17 +90,9 @@ export function useManagerData(selectedManager: string) {
           return cliente
         })
         
-        // Filtrar clientes sem ID válido para evitar problemas
-        const clientesValidos = clientesFormatados.filter(cliente => {
-          const isValid = cliente.id && cliente.id.trim() !== ''
-          if (!isValid) {
-            console.warn('❌ Cliente sem ID válido removido:', cliente.nome_cliente)
-          }
-          return isValid
-        })
-        
-        console.log(`📋 Total de clientes válidos para ${selectedManager}:`, clientesValidos.length)
-        setClientes(clientesValidos)
+        // CORREÇÃO: Não filtrar clientes - exibir todos
+        console.log(`📋 Total de clientes para ${selectedManager}:`, clientesFormatados.length)
+        setClientes(clientesFormatados)
       }
     } catch (err) {
       console.error('💥 Erro:', err)
@@ -115,7 +110,7 @@ export function useManagerData(selectedManager: string) {
     console.log(`💾 Valor: ${value}`)
     console.log(`👤 Manager: ${selectedManager}`)
 
-    // VALIDAÇÕES RIGOROSAS DO ID
+    // VALIDAÇÕES DO ID
     if (!id || id.trim() === '') {
       console.error('❌ ID do cliente está vazio ou inválido:', id)
       return false
@@ -133,7 +128,18 @@ export function useManagerData(selectedManager: string) {
 
     try {
       const tableName = getTableName(selectedManager)
+      
+      // Verificar se é um ID temporário (baseado em timestamp)
       const numericId = parseInt(id)
+      if (numericId > 1000000000000) { // ID temporário muito alto
+        console.warn('⚠️ Tentativa de atualizar cliente com ID temporário:', id)
+        toast?.({
+          title: "Aviso",
+          description: "Este cliente precisa ser salvo no banco de dados antes de ser editado.",
+          variant: "default",
+        })
+        return false
+      }
       
       console.log(`📋 Tabela: ${tableName}`)
       console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
