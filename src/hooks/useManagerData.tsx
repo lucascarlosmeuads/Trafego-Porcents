@@ -37,28 +37,39 @@ export function useManagerData(selectedManager: string) {
         setClientes([])
       } else {
         console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
+        console.log('🔍 Primeiro registro raw:', data?.[0])
         
-        const clientesFormatados = (data || []).map((item: any) => ({
-          id: String(item.id || ''),
-          data_venda: item.data_venda || '',
-          nome_cliente: item.nome_cliente || '',
-          telefone: item.telefone || '',
-          email_cliente: item.email_cliente || '',
-          vendedor: item.vendedor || '',
-          email_gestor: item.email_gestor || '',
-          status_campanha: item.status_campanha || 'Preenchimento do Formulário',
-          data_limite: item.data_limite || '',
-          link_grupo: item.link_grupo || '',
-          link_briefing: item.link_briefing || '',
-          link_criativo: item.link_criativo || '',
-          link_site: item.link_site || '',
-          numero_bm: item.numero_bm || '',
-          comissao_paga: item.comissao_paga || false,
-          valor_comissao: item.valor_comissao || 60.00,
-          created_at: item.created_at || ''
-        }))
+        const clientesFormatados = (data || []).map((item: any, index: number) => {
+          const cliente = {
+            id: String(item.id || ''),
+            data_venda: item.data_venda || '',
+            nome_cliente: item.nome_cliente || '',
+            telefone: item.telefone || '',
+            email_cliente: item.email_cliente || '',
+            vendedor: item.vendedor || '',
+            email_gestor: item.email_gestor || '',
+            status_campanha: item.status_campanha || 'Preenchimento do Formulário',
+            data_limite: item.data_limite || '',
+            link_grupo: item.link_grupo || '',
+            link_briefing: item.link_briefing || '',
+            link_criativo: item.link_criativo || '',
+            link_site: item.link_site || '',
+            numero_bm: item.numero_bm || '',
+            comissao_paga: item.comissao_paga || false,
+            valor_comissao: item.valor_comissao || 60.00,
+            created_at: item.created_at || ''
+          }
+          
+          console.log(`📝 Cliente ${index + 1} formatado:`, {
+            id: cliente.id,
+            nome: cliente.nome_cliente,
+            status: cliente.status_campanha
+          })
+          
+          return cliente
+        })
         
-        console.log(`📋 Clientes formatados para ${selectedManager}:`, clientesFormatados.length)
+        console.log(`📋 Total de clientes formatados para ${selectedManager}:`, clientesFormatados.length)
         setClientes(clientesFormatados)
       }
     } catch (err) {
@@ -76,18 +87,24 @@ export function useManagerData(selectedManager: string) {
       return false
     }
 
+    if (!id || id.trim() === '') {
+      console.error('❌ ID do cliente está vazio ou inválido:', id)
+      return false
+    }
+
     try {
       const tableName = getTableName(selectedManager)
       const numericId = parseInt(id)
       
       console.log(`🔄 === INICIANDO ATUALIZAÇÃO ===`)
       console.log(`📋 Tabela: ${tableName}`)
-      console.log(`🆔 ID: ${id} (convertido para: ${numericId})`)
+      console.log(`🆔 ID original: "${id}" (tipo: ${typeof id})`)
+      console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
       console.log(`🏷️ Campo: ${field}`)
       console.log(`💾 Valor: ${value}`)
       
-      if (isNaN(numericId)) {
-        console.error('❌ ID inválido:', id)
+      if (isNaN(numericId) || numericId <= 0) {
+        console.error('❌ ID inválido após conversão:', { original: id, converted: numericId })
         return false
       }
 

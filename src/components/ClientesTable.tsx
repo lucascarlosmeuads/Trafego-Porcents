@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -93,20 +92,49 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID: ${clienteId}`)
-    console.log(`📋 Status atual: ${clientes.find(c => c.id === clienteId)?.status_campanha}`)
-    console.log(`🎯 Novo Status: ${newStatus}`)
+    console.log(`🆔 Cliente ID recebido: "${clienteId}" (tipo: ${typeof clienteId})`)
+    console.log(`🎯 Novo Status: "${newStatus}"`)
     console.log(`👤 Manager: ${selectedManager}`)
     
-    if (!clienteId || !newStatus) {
-      console.error('❌ ID do cliente ou novo status não fornecido')
+    // Validações detalhadas
+    if (!clienteId || clienteId.trim() === '') {
+      console.error('❌ ID do cliente está vazio ou inválido:', clienteId)
       toast({
         title: "Erro",
-        description: "ID do cliente ou status inválido",
+        description: "ID do cliente não encontrado",
         variant: "destructive",
       })
       return
     }
+
+    if (!newStatus || newStatus.trim() === '') {
+      console.error('❌ Novo status está vazio ou inválido:', newStatus)
+      toast({
+        title: "Erro",
+        description: "Status inválido",
+        variant: "destructive",
+      })
+      return
+    }
+
+    // Verificar se o cliente existe na lista local
+    const clienteAtual = clientes.find(c => c.id === clienteId)
+    if (!clienteAtual) {
+      console.error('❌ Cliente não encontrado na lista local:', clienteId)
+      console.log('📋 Clientes disponíveis:', clientes.map(c => ({ id: c.id, nome: c.nome_cliente })))
+      toast({
+        title: "Erro",
+        description: "Cliente não encontrado",
+        variant: "destructive",
+      })
+      return
+    }
+
+    console.log(`📋 Cliente encontrado:`, {
+      id: clienteAtual.id,
+      nome: clienteAtual.nome_cliente,
+      statusAtual: clienteAtual.status_campanha
+    })
     
     setUpdatingStatus(clienteId)
     
@@ -316,111 +344,130 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClientes.map((cliente, index) => (
-                  <TableRow 
-                    key={`${selectedManager}-${cliente.id}-${index}`}
-                    className="border-border hover:bg-muted/10 transition-colors"
-                  >
-                    <TableCell className="font-mono text-xs text-foreground">
-                      {String(index + 1).padStart(3, '0')}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-muted-foreground" />
-                        <span className="text-xs text-foreground">{cliente.data_venda || '-'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <div className="max-w-[200px] truncate text-foreground">
-                        {cliente.nome_cliente || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-foreground">{cliente.telefone || '-'}</TableCell>
-                    <TableCell className="hidden sm:table-cell">
-                      <div className="max-w-[200px] truncate text-foreground">
-                        {cliente.email_cliente || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="max-w-[150px] truncate text-foreground">
-                        {cliente.vendedor || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      <div className="max-w-[180px] truncate text-foreground">
-                        {cliente.email_gestor || '-'}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <Select 
-                        value={cliente.status_campanha || ''}
-                        onValueChange={(value) => handleStatusChange(cliente.id, value)}
-                        disabled={updatingStatus === cliente.id}
-                      >
-                        <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-                          <SelectValue>
-                            <div className="flex items-center gap-2">
-                              {updatingStatus === cliente.id && (
-                                <RefreshCw className="w-3 h-3 animate-spin" />
-                              )}
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                                {cliente.status_campanha || 'Selecionar Status'}
-                              </span>
-                            </div>
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border z-[200]">
-                          {STATUS_CAMPANHA.map(status => (
-                            <SelectItem key={status} value={status}>
-                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                                {status}
-                              </span>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell>
-                      <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
-                        {isDataLimiteVencida(cliente.data_limite) && (
-                          <AlertTriangle className="w-3 h-3" />
-                        )}
-                        <span>{cliente.data_limite || '-'}</span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {renderLinkButton(cliente.link_grupo, 'Grupo')}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {renderLinkButton(cliente.link_briefing, 'Briefing')}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {renderLinkButton(cliente.link_criativo, 'Criativo')}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      {renderLinkButton(cliente.link_site, 'Site')}
-                    </TableCell>
-                    <TableCell className="hidden xl:table-cell">
-                      <span className="text-foreground">{cliente.numero_bm || '-'}</span>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          checked={cliente.comissao_paga || false}
-                          disabled
-                        />
-                        <span className="text-xs">
-                          {cliente.comissao_paga ? 'Pago' : 'Não Pago'}
+                filteredClientes.map((cliente, index) => {
+                  // Garantir que o ID seja uma string válida
+                  const clienteId = String(cliente.id || '')
+                  
+                  console.log(`🔍 Renderizando cliente ${index + 1}:`, {
+                    id: cliente.id,
+                    idProcessado: clienteId,
+                    nome: cliente.nome_cliente,
+                    status: cliente.status_campanha
+                  })
+
+                  return (
+                    <TableRow 
+                      key={`${selectedManager}-${clienteId}-${index}`}
+                      className="border-border hover:bg-muted/10 transition-colors"
+                    >
+                      <TableCell className="font-mono text-xs text-foreground">
+                        {String(index + 1).padStart(3, '0')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-foreground">{cliente.data_venda || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="max-w-[200px] truncate text-foreground">
+                          {cliente.nome_cliente || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-foreground">{cliente.telefone || '-'}</TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="max-w-[200px] truncate text-foreground">
+                          {cliente.email_cliente || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[150px] truncate text-foreground">
+                          {cliente.vendedor || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <div className="max-w-[180px] truncate text-foreground">
+                          {cliente.email_gestor || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Select 
+                          value={cliente.status_campanha || ''}
+                          onValueChange={(value) => {
+                            console.log(`🎯 Select onChange disparado:`, {
+                              clienteId: clienteId,
+                              novoStatus: value,
+                              clienteOriginal: cliente
+                            })
+                            handleStatusChange(clienteId, value)
+                          }}
+                          disabled={updatingStatus === clienteId}
+                        >
+                          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                            <SelectValue>
+                              <div className="flex items-center gap-2">
+                                {updatingStatus === clienteId && (
+                                  <RefreshCw className="w-3 h-3 animate-spin" />
+                                )}
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
+                                  {cliente.status_campanha || 'Selecionar Status'}
+                                </span>
+                              </div>
+                            </SelectValue>
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border z-[300]">
+                            {STATUS_CAMPANHA.map(status => (
+                              <SelectItem key={status} value={status}>
+                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                                  {status}
+                                </span>
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </TableCell>
+                      <TableCell>
+                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
+                          {isDataLimiteVencida(cliente.data_limite) && (
+                            <AlertTriangle className="w-3 h-3" />
+                          )}
+                          <span>{cliente.data_limite || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {renderLinkButton(cliente.link_grupo, 'Grupo')}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {renderLinkButton(cliente.link_briefing, 'Briefing')}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {renderLinkButton(cliente.link_criativo, 'Criativo')}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {renderLinkButton(cliente.link_site, 'Site')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        <span className="text-foreground">{cliente.numero_bm || '-'}</span>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            checked={cliente.comissao_paga || false}
+                            disabled
+                          />
+                          <span className="text-xs">
+                            {cliente.comissao_paga ? 'Pago' : 'Não Pago'}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-foreground">
+                          R$ {cliente.valor_comissao?.toFixed(2) || '60,00'}
                         </span>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium text-foreground">
-                        R$ {cliente.valor_comissao?.toFixed(2) || '60,00'}
-                      </span>
-                    </TableCell>
-                  </TableRow>
-                ))
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
