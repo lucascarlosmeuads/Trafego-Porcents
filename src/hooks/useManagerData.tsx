@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -350,13 +351,15 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log(`👤 Manager: ${manager}`)
       
       // Preparar dados do cliente com email_gestor automaticamente preenchido
+      // e remover o campo id se existir
+      const { id, ...clienteDataSemId } = clienteData
       const novoCliente = {
-        ...clienteData,
+        ...clienteDataSemId,
         email_gestor: userEmail, // Preenchimento automático com email do usuário logado
         created_at: new Date().toISOString()
       }
 
-      console.log('💾 Dados do novo cliente:', novoCliente)
+      console.log('💾 Dados do novo cliente (sem ID):', novoCliente)
 
       const { data, error } = await supabase
         .from(tableName)
