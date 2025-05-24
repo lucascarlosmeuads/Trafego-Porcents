@@ -152,7 +152,7 @@ export type Database = {
           data_venda: string | null
           email_cliente: string | null
           email_gestor: string | null
-          id: number | null
+          id: number
           link_briefing: string | null
           link_criativo: string | null
           link_grupo: string | null
@@ -175,7 +175,7 @@ export type Database = {
           data_venda?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
-          id?: number | null
+          id?: number
           link_briefing?: string | null
           link_criativo?: string | null
           link_grupo?: string | null
@@ -198,7 +198,7 @@ export type Database = {
           data_venda?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
-          id?: number | null
+          id?: number
           link_briefing?: string | null
           link_criativo?: string | null
           link_grupo?: string | null
@@ -224,7 +224,7 @@ export type Database = {
           data_venda: string | null
           email_cliente: string | null
           email_gestor: string | null
-          id: number | null
+          id: number
           link_briefing: string | null
           link_criativo: string | null
           link_grupo: string | null
@@ -247,7 +247,7 @@ export type Database = {
           data_venda?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
-          id?: number | null
+          id?: number
           link_briefing?: string | null
           link_criativo?: string | null
           link_grupo?: string | null
@@ -270,7 +270,7 @@ export type Database = {
           data_venda?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
-          id?: number | null
+          id?: number
           link_briefing?: string | null
           link_criativo?: string | null
           link_grupo?: string | null

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,13 +62,11 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (showToast) setRefreshing(true)
       setLoading(true)
       const tableName = getTableName(selectedManager)
-      console.log(`📊 Dashboard: Buscando TODAS as estatísticas da tabela: ${tableName}`)
+      console.log(`📊 Dashboard: Buscando estatísticas da tabela: ${tableName}`)
       
-      // GARANTINDO QUE TODOS OS DADOS SEJAM BUSCADOS SEM LIMITAÇÃO
       const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact' })
-        // SEM .limit() - queremos TODOS os registros para as estatísticas
 
       console.log(`📊 Dashboard: Resposta do Supabase:`, {
         data: data?.length || 0,
@@ -77,12 +76,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       })
 
       if (!error && data) {
-        console.log(`✅ Dashboard: TOTAL de dados encontrados para ${selectedManager}:`, data.length, 'registros')
-        console.log(`📊 Dashboard: Count exato do banco:`, count)
-        
-        if (data.length !== count) {
-          console.warn(`⚠️ DISCREPÂNCIA no Dashboard: Dados recebidos: ${data.length}, Count do DB: ${count}`)
-        }
+        console.log(`✅ Dashboard: Dados encontrados para ${selectedManager}:`, data.length, 'registros')
         
         const totalClientes = data.length
         const clientesAtivos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
@@ -121,7 +115,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         if (showToast) {
           toast({
             title: "Sucesso",
-            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados (${count} no banco)`
+            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados`
           })
         }
       } else if (error) {
@@ -155,11 +149,9 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     try {
       const tableName = getTableName(selectedManager)
       
-      // GARANTINDO QUE TODOS OS DADOS SEJAM EXPORTADOS
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
-        // SEM .limit() - queremos TODOS os registros para exportação
 
       if (!error && data) {
         if (data.length === 0) {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -49,24 +50,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   // Log para debug quando os dados mudarem
   useEffect(() => {
-    console.log(`🔍 ClientesTable: TOTAL de clientes carregados para ${selectedManager}:`, clientes.length)
+    console.log(`🔍 ClientesTable: Total de clientes carregados para ${selectedManager}:`, clientes.length)
     console.log(`📊 Lista completa de IDs:`, clientes.map(c => c.id))
     
     if (clientes.length > 0) {
-      const clientesComIdTemp = clientes.filter(c => c.id.toString().startsWith('temp-'))
-      const clientesComIdValido = clientes.filter(c => !c.id.toString().startsWith('temp-'))
-      
-      console.log(`📊 Clientes com ID válido: ${clientesComIdValido.length}`)
-      console.log(`⚠️ Clientes com ID temporário: ${clientesComIdTemp.length}`)
-      
-      if (clientesComIdTemp.length > 0) {
-        console.warn('⚠️ Clientes com problema de ID:', clientesComIdTemp.map(c => ({
-          id: c.id,
-          nome: c.nome_cliente,
-          data_venda: c.data_venda
-        })))
-      }
-      
       console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
       console.log(`📊 Últimos 5 clientes:`, clientes.slice(-5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
@@ -88,25 +75,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   useEffect(() => {
     console.log(`🔍 FILTROS aplicados - Busca: "${searchTerm}", Status: "${statusFilter}"`)
     console.log(`📊 RESULTADO: ${filteredClientes.length} clientes exibidos de ${clientes.length} total`)
-    
-    if (filteredClientes.length !== clientes.length) {
-      const filtradosPorBusca = clientes.filter(c => {
-        const matchesSearch = 
-          c.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          c.telefone?.includes(searchTerm) ||
-          c.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
-        return !matchesSearch
-      })
-      
-      const filtradosPorStatus = clientes.filter(c => {
-        const matchesStatus = statusFilter === 'all' || c.status_campanha === statusFilter
-        return !matchesStatus
-      })
-      
-      console.log(`🔍 ${filtradosPorBusca.length} clientes filtrados pela busca`)
-      console.log(`🔍 ${filtradosPorStatus.length} clientes filtrados pelo status`)
-    }
   }, [filteredClientes, clientes, searchTerm, statusFilter])
 
   const getStatusColor = (status: string) => {
@@ -135,17 +103,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`🆔 Cliente ID recebido: "${clienteId}" (tipo: ${typeof clienteId})`)
     console.log(`🎯 Novo Status: "${newStatus}"`)
     console.log(`👤 Manager: ${selectedManager}`)
-    
-    // Verificar se é um ID temporário
-    if (clienteId.toString().startsWith('temp-')) {
-      console.error('❌ ERRO: Tentativa de alterar status de cliente com ID temporário:', clienteId)
-      toast({
-        title: "Erro",
-        description: "Não é possível alterar o status deste cliente pois ele não tem um ID válido no banco de dados. Verifique a integridade dos dados.",
-        variant: "destructive",
-      })
-      return
-    }
     
     if (!clienteId || clienteId.trim() === '') {
       console.error('❌ ERRO CRÍTICO: ID do cliente está vazio ou inválido:', clienteId)
@@ -193,8 +150,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`📋 Cliente encontrado na lista local:`, {
       id: clienteAtual.id,
       nome: clienteAtual.nome_cliente,
-      statusAtual: clienteAtual.status_campanha,
-      isTemp: clienteAtual.id.toString().startsWith('temp-')
+      statusAtual: clienteAtual.status_campanha
     })
     
     setUpdatingStatus(clienteId)
@@ -448,13 +404,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                // RENDERIZANDO TODOS OS CLIENTES FILTRADOS - SEM LIMITAÇÃO
                 filteredClientes.map((cliente, index) => {
                   console.log(`🎯 Renderizando cliente ${index + 1}/${filteredClientes.length}:`, {
                     id: cliente.id,
                     nome: cliente.nome_cliente,
-                    index,
-                    isTemp: cliente.id.toString().startsWith('temp-')
+                    index
                   })
                   
                   return (
@@ -493,11 +447,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 mt-2">
           Debug: {clientes.length} total no hook, {filteredClientes.length} após filtros, {filteredClientes.length} renderizados na tabela
-          {clientes.filter(c => c.id.toString().startsWith('temp-')).length > 0 && (
-            <span className="text-orange-500 ml-2">
-              ⚠️ {clientes.filter(c => c.id.toString().startsWith('temp-')).length} registros com ID temporário
-            </span>
-          )}
         </div>
       )}
     </div>
