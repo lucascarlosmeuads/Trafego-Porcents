@@ -57,7 +57,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [bmValue, setBmValue] = useState('')
   const [updatingComission, setUpdatingComission] = useState<string | null>(null)
   const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
-  const [comissionValueInput, setComissionValueInput] = useState('')
+  const [comissionValueInput, setEditingComissionValueInput] = useState('')
   const [realtimeConnected, setRealtimeConnected] = useState(false)
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
@@ -220,7 +220,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     updatingComission={updatingComission}
                     editingComissionValue={editingComissionValue}
                     comissionValueInput={comissionValueInput}
-                    setComissionValueInput={setComissionValueInput}
+                    setEditingComissionValueInput={setEditingComissionValueInput}
                     getStatusColor={getStatusColor}
                     onStatusChange={handleStatusChange}
                     onLinkEdit={handleLinkEdit}
@@ -567,7 +567,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
     setEditingComissionValue(clienteId)
-    setComissionValueInput(currentValue.toFixed(2))
+    setEditingComissionValueInput(currentValue.toFixed(2))
   }
 
   const handleComissionValueSave = async (clienteId: string, newValue: number) => {
@@ -580,7 +580,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           description: "Valor da comissão atualizado com sucesso",
         })
         setEditingComissionValue(null)
-        setComissionValueInput('')
+        setEditingComissionValueInput('')
       } else {
         toast({
           title: "Erro",
@@ -600,7 +600,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const handleComissionValueCancel = () => {
     setEditingComissionValue(null)
-    setComissionValueInput('')
+    setEditingComissionValueInput('')
   }
 
   const handleLinkCancel = () => {
