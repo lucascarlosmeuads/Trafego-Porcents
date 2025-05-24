@@ -65,55 +65,53 @@ export function Dashboard() {
           />
         )}
         
-        <SidebarInset className="flex-1 min-w-0">
-          {/* Header responsivo */}
-          <header className="bg-card shadow-sm border-b sticky top-0 z-40">
-            <div className="w-full px-4 sm:px-6 lg:px-8">
-              <div className="flex justify-between items-center py-4">
-                <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-                  {isAdmin && <SidebarTrigger className="flex-shrink-0" />}
-                  <div className="min-w-0 flex-1">
-                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
-                      Painel de Gestão
-                    </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-muted-foreground">
-                      <span>{getDisplaySubtitle()}</span>
-                      <span className="hidden sm:inline">•</span>
-                      <span className="text-primary font-medium truncate">
-                        {getDisplayTitle()}
-                      </span>
-                    </div>
+        <SidebarInset className="flex-1 min-w-0 flex flex-col">
+          {/* Header responsivo com posicionamento correto */}
+          <header className="bg-card shadow-sm border-b sticky top-0 z-40 w-full">
+            <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
+                {isAdmin && <SidebarTrigger className="flex-shrink-0" />}
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
+                    Painel de Gestão
+                  </h1>
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-muted-foreground">
+                    <span>{getDisplaySubtitle()}</span>
+                    <span className="hidden sm:inline">•</span>
+                    <span className="text-primary font-medium truncate">
+                      {getDisplayTitle()}
+                    </span>
                   </div>
                 </div>
-                
-                <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-                  <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
-                    <User className="w-4 h-4" />
-                    <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
-                  </div>
-                  <ThemeToggle />
-                  <Button 
-                    variant="outline" 
-                    onClick={handleSignOut}
-                    onMouseDown={handleSignOut}
-                    onTouchStart={handleSignOutTouch}
-                    size="sm"
-                    className="cursor-pointer select-none touch-manipulation"
-                    style={{ 
-                      pointerEvents: 'auto',
-                      zIndex: 9999,
-                      position: 'relative'
-                    }}
-                  >
-                    Sair
-                  </Button>
+              </div>
+              
+              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
+                  <User className="w-4 h-4" />
+                  <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
                 </div>
+                <ThemeToggle />
+                <Button 
+                  variant="outline" 
+                  onClick={handleSignOut}
+                  onMouseDown={handleSignOut}
+                  onTouchStart={handleSignOutTouch}
+                  size="sm"
+                  className="cursor-pointer select-none touch-manipulation"
+                  style={{ 
+                    pointerEvents: 'auto',
+                    zIndex: 9999,
+                    position: 'relative'
+                  }}
+                >
+                  Sair
+                </Button>
               </div>
             </div>
           </header>
 
-          {/* Content responsivo */}
-          <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-h-0">
+          {/* Content responsivo com padding adequado */}
+          <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
             {isAdmin ? (
               <AdminDashboard selectedManager={selectedManager} />
             ) : (
