@@ -53,6 +53,20 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`📊 Lista completa de IDs:`, clientes.map(c => c.id))
     
     if (clientes.length > 0) {
+      const clientesComIdTemp = clientes.filter(c => c.id.toString().startsWith('temp-'))
+      const clientesComIdValido = clientes.filter(c => !c.id.toString().startsWith('temp-'))
+      
+      console.log(`📊 Clientes com ID válido: ${clientesComIdValido.length}`)
+      console.log(`⚠️ Clientes com ID temporário: ${clientesComIdTemp.length}`)
+      
+      if (clientesComIdTemp.length > 0) {
+        console.warn('⚠️ Clientes com problema de ID:', clientesComIdTemp.map(c => ({
+          id: c.id,
+          nome: c.nome_cliente,
+          data_venda: c.data_venda
+        })))
+      }
+      
       console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
       console.log(`📊 Últimos 5 clientes:`, clientes.slice(-5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
@@ -122,6 +136,17 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`🎯 Novo Status: "${newStatus}"`)
     console.log(`👤 Manager: ${selectedManager}`)
     
+    // Verificar se é um ID temporário
+    if (clienteId.toString().startsWith('temp-')) {
+      console.error('❌ ERRO: Tentativa de alterar status de cliente com ID temporário:', clienteId)
+      toast({
+        title: "Erro",
+        description: "Não é possível alterar o status deste cliente pois ele não tem um ID válido no banco de dados. Verifique a integridade dos dados.",
+        variant: "destructive",
+      })
+      return
+    }
+    
     if (!clienteId || clienteId.trim() === '') {
       console.error('❌ ERRO CRÍTICO: ID do cliente está vazio ou inválido:', clienteId)
       toast({
@@ -169,7 +194,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       id: clienteAtual.id,
       nome: clienteAtual.nome_cliente,
       statusAtual: clienteAtual.status_campanha,
-      clienteCompleto: clienteAtual
+      isTemp: clienteAtual.id.toString().startsWith('temp-')
     })
     
     setUpdatingStatus(clienteId)
@@ -425,17 +450,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
               ) : (
                 // RENDERIZANDO TODOS OS CLIENTES FILTRADOS - SEM LIMITAÇÃO
                 filteredClientes.map((cliente, index) => {
-                  // Log de debug para IDs inválidos
-                  if (!cliente.id || cliente.id.trim() === '') {
-                    console.warn(`⚠️ Cliente ${index + 1} tem ID inválido, mas será renderizado com fallback:`, cliente)
-                    // Criando um ID temporário para clientes sem ID
-                    cliente.id = `temp-${index}-${cliente.nome_cliente || 'sem-nome'}`
-                  }
-                  
                   console.log(`🎯 Renderizando cliente ${index + 1}/${filteredClientes.length}:`, {
                     id: cliente.id,
                     nome: cliente.nome_cliente,
-                    index
+                    index,
+                    isTemp: cliente.id.toString().startsWith('temp-')
                   })
                   
                   return (
@@ -474,6 +493,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 mt-2">
           Debug: {clientes.length} total no hook, {filteredClientes.length} após filtros, {filteredClientes.length} renderizados na tabela
+          {clientes.filter(c => c.id.toString().startsWith('temp-')).length > 0 && (
+            <span className="text-orange-500 ml-2">
+              ⚠️ {clientes.filter(c => c.id.toString().startsWith('temp-')).length} registros com ID temporário
+            </span>
+          )}
         </div>
       )}
     </div>

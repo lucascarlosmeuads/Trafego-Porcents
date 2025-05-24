@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -26,12 +27,11 @@ export function useManagerData(selectedManager: string) {
       const tableName = getTableName(selectedManager)
       console.log('🔍 Buscando TODOS os dados da tabela:', tableName)
       
-      // REMOVENDO QUALQUER LIMITAÇÃO - buscando TODOS os registros
+      // BUSCANDO TODOS OS REGISTROS SEM LIMITAÇÃO E ORDENANDO POR ID
       const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact' })
-        .order('id', { ascending: true })
-        // SEM .limit() - queremos TODOS os registros
+        .order('id', { ascending: true, nullsLast: true })
 
       console.log('📊 Resposta do Supabase:', {
         data: data?.length || 0,
@@ -59,16 +59,32 @@ export function useManagerData(selectedManager: string) {
           console.warn(`⚠️ DISCREPÂNCIA CRÍTICA: Dados recebidos: ${data?.length}, Count do DB: ${count}`)
         }
         
-        // Formatando TODOS os registros sem filtros
+        // Processando TODOS os registros e verificando problemas de ID
         const clientesFormatados = (data || []).map((item: any, index: number) => {
+          // Verificar se o ID está presente e válido
+          let clienteId = item.id
+          
+          if (!clienteId || clienteId === null || clienteId === undefined) {
+            console.warn(`⚠️ Cliente ${index + 1} sem ID válido no banco:`, {
+              registro: item,
+              nome: item.nome_cliente,
+              originalId: item.id
+            })
+            // Usar created_at como fallback ou gerar um ID baseado em outros campos
+            clienteId = item.created_at ? `temp-${item.created_at}-${index}` : `temp-${index}-${item.nome_cliente || 'sem-nome'}`
+          } else {
+            clienteId = String(clienteId)
+          }
+          
           console.log(`📋 Processando cliente ${index + 1}:`, {
-            id: item.id,
+            id: clienteId,
+            originalId: item.id,
             nome: item.nome_cliente,
             status: item.status_campanha
           })
           
           const cliente = {
-            id: String(item.id || ''),
+            id: clienteId,
             data_venda: item.data_venda || '',
             nome_cliente: item.nome_cliente || '',
             telefone: item.telefone || '',
@@ -91,16 +107,27 @@ export function useManagerData(selectedManager: string) {
         })
         
         console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes formatados`)
-        console.log(`📋 IDs dos clientes:`, clientesFormatados.map(c => c.id))
+        console.log(`📋 IDs dos clientes processados:`, clientesFormatados.map(c => ({ 
+          id: c.id, 
+          nome: c.nome_cliente,
+          isTemp: c.id.toString().startsWith('temp-')
+        })))
         
         // DEFININDO TODOS OS CLIENTES SEM FILTROS
         setClientes(clientesFormatados)
         
+        // Contar quantos têm IDs temporários
+        const tempIds = clientesFormatados.filter(c => c.id.toString().startsWith('temp-')).length
+        
         if (showToast) {
           toast({
             title: "Sucesso",
-            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros carregados de ${count} no banco`
+            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros (${tempIds} com IDs temporários)`
           })
+        }
+        
+        if (tempIds > 0) {
+          console.warn(`⚠️ ATENÇÃO: ${tempIds} registros estão com IDs temporários. Verifique o banco de dados.`)
         }
       }
     } catch (err) {
@@ -125,6 +152,17 @@ export function useManagerData(selectedManager: string) {
     console.log(`🎯 Campo: ${field}`)
     console.log(`💾 Valor: ${value}`)
     console.log(`👤 Manager: ${selectedManager}`)
+
+    // Verificar se é um ID temporário
+    if (id.toString().startsWith('temp-')) {
+      console.error('❌ Tentativa de atualizar registro com ID temporário:', id)
+      toast({
+        title: "Erro",
+        description: "Não é possível atualizar este registro pois ele não tem um ID válido no banco de dados",
+        variant: "destructive"
+      })
+      return false
+    }
 
     if (!id || id.trim() === '') {
       console.error('❌ ID do cliente está vazio ou inválido:', id)
@@ -239,7 +277,7 @@ export function useManagerData(selectedManager: string) {
           if (payload.eventType === 'INSERT') {
             console.log('➕ Novo cliente inserido:', payload.new)
             const novoCliente = {
-              id: String(payload.new.id || ''),
+              id: String(payload.new.id || `temp-${Date.now()}`),
               nome_cliente: payload.new.nome_cliente || '',
               telefone: payload.new.telefone || '',
               email_cliente: payload.new.email_cliente || '',
@@ -260,7 +298,11 @@ export function useManagerData(selectedManager: string) {
             
             setClientes(prev => {
               const updated = [novoCliente, ...prev]
-              return updated.sort((a, b) => parseInt(a.id) - parseInt(b.id))
+              return updated.sort((a, b) => {
+                const aId = parseInt(a.id) || 0
+                const bId = parseInt(b.id) || 0
+                return aId - bId
+              })
             })
           } else if (payload.eventType === 'UPDATE') {
             console.log('🔄 Cliente atualizado via realtime:', payload.new)
