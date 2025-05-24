@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -28,6 +27,12 @@ interface ClienteRowProps {
   onBMSave: (clienteId: string) => void
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => void
+  onComissionValueEdit: (clienteId: string, currentValue: number) => void
+  onComissionValueSave: (clienteId: string, newValue: number) => void
+  onComissionValueCancel: () => void
+  editingComissionValue: string | null
+  comissionValueInput: string
+  setComissionValueInput: (value: string) => void
 }
 
 export function ClienteRow({
@@ -50,7 +55,13 @@ export function ClienteRow({
   onBMEdit,
   onBMSave,
   onBMCancel,
-  onComissionToggle
+  onComissionToggle,
+  onComissionValueEdit,
+  onComissionValueSave,
+  onComissionValueCancel,
+  editingComissionValue,
+  comissionValueInput,
+  setComissionValueInput
 }: ClienteRowProps) {
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -211,6 +222,78 @@ export function ClienteRow({
     )
   }
 
+  const renderComissionCell = () => {
+    const isEditingValue = editingComissionValue === cliente.id
+    const valorComissao = cliente.valor_comissao || 0
+    
+    if (isEditingValue) {
+      return (
+        <div className="flex items-center gap-1">
+          <div className="flex items-center">
+            <span className="text-green-400 text-xs mr-1">R$</span>
+            <Input
+              value={comissionValueInput}
+              onChange={(e) => setComissionValueInput(e.target.value)}
+              className="h-6 text-xs w-20"
+              placeholder="0.00"
+              type="number"
+              step="0.01"
+            />
+          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => onComissionValueSave(cliente.id, parseFloat(comissionValueInput) || 0)}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={onComissionValueCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          variant={cliente.comissao_paga ? "default" : "outline"}
+          size="sm"
+          className={`h-7 text-xs flex items-center gap-1 ${
+            cliente.comissao_paga 
+              ? 'bg-green-600 hover:bg-green-700 text-white cursor-default' 
+              : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
+          }`}
+          onClick={() => !cliente.comissao_paga && onComissionToggle(cliente.id, false)}
+          disabled={updatingComission === cliente.id}
+        >
+          {updatingComission === cliente.id ? (
+            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+          ) : cliente.comissao_paga ? (
+            <Check className="w-3 h-3 mr-1" />
+          ) : null}
+          <span>R$ {valorComissao.toFixed(2)}</span>
+          {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
+          {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0"
+          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+        >
+          <Edit2 className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      </div>
+    )
+  }
+
   const dateLimit = calculateDateLimit(cliente.data_venda)
 
   return (
@@ -305,27 +388,7 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell>
-        <Button
-          variant={cliente.comissao_paga ? "default" : "outline"}
-          size="sm"
-          className={`h-7 text-xs ${
-            cliente.comissao_paga 
-              ? 'bg-green-600 hover:bg-green-700 text-white cursor-default' 
-              : 'border-green-600 text-green-600 hover:bg-green-50'
-          }`}
-          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
-          disabled={cliente.comissao_paga || updatingComission === cliente.id}
-        >
-          {updatingComission === cliente.id ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : cliente.comissao_paga ? (
-            <Check className="w-3 h-3 mr-1" />
-          ) : null}
-          {cliente.comissao_paga 
-            ? `Pago - R$ ${(cliente.valor_comissao || 60.00).toFixed(2)}`
-            : `Marcar Pago - R$ ${(cliente.valor_comissao || 60.00).toFixed(2)}`
-          }
-        </Button>
+        {renderComissionCell()}
       </TableCell>
     </TableRow>
   )

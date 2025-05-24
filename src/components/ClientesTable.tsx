@@ -44,6 +44,8 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const [editingBM, setEditingBM] = useState<string | null>(null)
   const [bmValue, setBmValue] = useState('')
   const [updatingComission, setUpdatingComission] = useState<string | null>(null)
+  const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
+  const [comissionValueInput, setComissionValueInput] = useState('')
   const [realtimeConnected, setRealtimeConnected] = useState(false)
 
   useEffect(() => {
@@ -58,7 +60,6 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     return () => clearInterval(interval)
   }, [])
 
-  // Log para debug quando os dados mudarem
   useEffect(() => {
     console.log(`🔍 ClientesTable: Total de clientes carregados:`, clientes.length)
     console.log(`📊 Manager atual:`, currentManager)
@@ -70,7 +71,6 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     }
   }, [clientes, currentManager, emailToUse, selectedManager])
 
-  // Separar clientes ativos e inativos
   const clientesAtivos = clientes.filter(cliente => 
     cliente.status_campanha !== 'Off' && cliente.status_campanha !== 'Reembolso'
   )
@@ -275,6 +275,44 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     }
   }
 
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toFixed(2))
+  }
+
+  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
+    try {
+      const success = await updateCliente(clienteId, 'valor_comissao', newValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Valor da comissão atualizado com sucesso",
+        })
+        setEditingComissionValue(null)
+        setComissionValueInput('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar valor da comissão",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao salvar valor da comissão:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar valor da comissão",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
   const exportToCSV = () => {
     if (clientes.length === 0) {
       toast({
@@ -360,6 +398,9 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
                   bmValue={bmValue}
                   setBmValue={setBmValue}
                   updatingComission={updatingComission}
+                  editingComissionValue={editingComissionValue}
+                  comissionValueInput={comissionValueInput}
+                  setComissionValueInput={setComissionValueInput}
                   getStatusColor={getStatusColor}
                   onStatusChange={handleStatusChange}
                   onLinkEdit={handleLinkEdit}
@@ -369,6 +410,9 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
                   onBMSave={handleBMSave}
                   onBMCancel={handleBMCancel}
                   onComissionToggle={handleComissionToggle}
+                  onComissionValueEdit={handleComissionValueEdit}
+                  onComissionValueSave={handleComissionValueSave}
+                  onComissionValueCancel={handleComissionValueCancel}
                 />
               ))
             )}
