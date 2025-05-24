@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -105,11 +106,11 @@ export function AdminTable() {
 
   if (loading) {
     return (
-      <Card>
+      <Card className="bg-card border-border">
         <CardContent className="flex items-center justify-center py-12">
           <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
-            <span>Carregando dados...</span>
+            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <span className="text-foreground">Carregando dados...</span>
           </div>
         </CardContent>
       </Card>
@@ -117,10 +118,10 @@ export function AdminTable() {
   }
 
   return (
-    <Card className="w-full">
+    <Card className="w-full bg-card border-border">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg sm:text-xl">
+          <CardTitle className="text-lg sm:text-xl text-card-foreground">
             Todos os Clientes ({clientes.length})
           </CardTitle>
           <Button
@@ -139,37 +140,37 @@ export function AdminTable() {
         {viewMode === 'cards' && (
           <div className="grid gap-4 p-4 md:grid-cols-2 lg:hidden">
             {clientes.map((cliente) => (
-              <Card key={cliente.id} className="w-full">
+              <Card key={cliente.id} className="w-full bg-card border-border">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center justify-between">
+                  <CardTitle className="text-base flex items-center justify-between text-card-foreground">
                     <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
-                    <span className="text-xs font-mono text-gray-500">#{cliente.id}</span>
+                    <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
                   <div>
-                    <span className="font-medium text-gray-600">Telefone:</span>
-                    <span className="ml-2">{cliente.telefone || '-'}</span>
+                    <span className="font-medium text-muted-foreground">Telefone:</span>
+                    <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">Vendedor:</span>
-                    <span className="ml-2">{cliente.nome_vendedor || '-'}</span>
+                    <span className="font-medium text-muted-foreground">Vendedor:</span>
+                    <span className="ml-2 text-card-foreground">{cliente.nome_vendedor || '-'}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">Status:</span>
+                    <span className="font-medium text-muted-foreground">Status:</span>
                     <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                      cliente.status_campanha === 'Planejamento' ? 'bg-blue-100 text-blue-800' :
-                      cliente.status_campanha === 'Brief' ? 'bg-yellow-100 text-yellow-800' :
-                      cliente.status_campanha === 'Criativo' ? 'bg-purple-100 text-purple-800' :
-                      cliente.status_campanha === 'No Ar' ? 'bg-green-100 text-green-800' :
-                      'bg-gray-100 text-gray-800'
+                      cliente.status_campanha === 'Planejamento' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                      cliente.status_campanha === 'Brief' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                      cliente.status_campanha === 'Criativo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                      cliente.status_campanha === 'No Ar' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                      'bg-muted text-muted-foreground border border-border'
                     }`}>
                       {cliente.status_campanha || 'Sem Status'}
                     </span>
                   </div>
                   <div>
-                    <span className="font-medium text-gray-600">Comissão:</span>
-                    <span className="ml-2">{cliente.comissao || '-'}</span>
+                    <span className="font-medium text-muted-foreground">Comissão:</span>
+                    <span className="ml-2 text-card-foreground">{cliente.comissao || '-'}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -179,45 +180,45 @@ export function AdminTable() {
 
         {/* Tabela para desktop */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
-          <Table>
+          <Table className="table-dark">
             <TableHeader>
-              <TableRow>
-                <TableHead className="w-20">ID</TableHead>
-                <TableHead className="min-w-[100px]">Data Venda</TableHead>
-                <TableHead className="min-w-[200px]">Nome Cliente</TableHead>
-                <TableHead className="min-w-[120px] hidden sm:table-cell">Telefone</TableHead>
-                <TableHead className="min-w-[200px] hidden md:table-cell">Email Cliente</TableHead>
-                <TableHead className="min-w-[150px]">Vendedor</TableHead>
-                <TableHead className="min-w-[100px]">Comissão</TableHead>
-                <TableHead className="min-w-[180px] hidden lg:table-cell">Email Gestor</TableHead>
-                <TableHead className="min-w-[130px]">Status Campanha</TableHead>
-                <TableHead className="min-w-[100px] hidden xl:table-cell">Data Limite</TableHead>
-                <TableHead className="min-w-[100px] hidden xl:table-cell">Data Subida</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell">Link Grupo</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell">Link Briefing</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell">Link Criativo</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell">Link Site</TableHead>
-                <TableHead className="min-w-[120px] hidden xl:table-cell">Número BM</TableHead>
+              <TableRow className="border-border hover:bg-muted/20">
+                <TableHead className="w-20 text-muted-foreground">ID</TableHead>
+                <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
+                <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
+                <TableHead className="min-w-[120px] hidden sm:table-cell text-muted-foreground">Telefone</TableHead>
+                <TableHead className="min-w-[200px] hidden md:table-cell text-muted-foreground">Email Cliente</TableHead>
+                <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
+                <TableHead className="min-w-[100px] text-muted-foreground">Comissão</TableHead>
+                <TableHead className="min-w-[180px] hidden lg:table-cell text-muted-foreground">Email Gestor</TableHead>
+                <TableHead className="min-w-[130px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="min-w-[100px] hidden xl:table-cell text-muted-foreground">Data Limite</TableHead>
+                <TableHead className="min-w-[100px] hidden xl:table-cell text-muted-foreground">Data Subida</TableHead>
+                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Grupo</TableHead>
+                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Briefing</TableHead>
+                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Criativo</TableHead>
+                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Site</TableHead>
+                <TableHead className="min-w-[120px] hidden xl:table-cell text-muted-foreground">Número BM</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clientes.map((cliente) => (
-                <TableRow key={cliente.id}>
-                  <TableCell className="font-mono text-xs">{cliente.id}</TableCell>
-                  <TableCell className="text-xs">{formatDate(cliente.data_venda)}</TableCell>
+                <TableRow key={cliente.id} className="border-border hover:bg-muted/20 transition-colors">
+                  <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
+                  <TableCell className="text-xs text-foreground">{formatDate(cliente.data_venda)}</TableCell>
                   <TableCell className="font-medium">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.nome_cliente}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell">{cliente.telefone}</TableCell>
+                  <TableCell className="hidden sm:table-cell text-foreground">{cliente.telefone}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.email_cliente}
                     </div>
                   </TableCell>
                   <TableCell>
-                    <div className="max-w-[150px] truncate">
+                    <div className="max-w-[150px] truncate text-foreground">
                       {cliente.nome_vendedor}
                     </div>
                   </TableCell>
@@ -234,24 +235,24 @@ export function AdminTable() {
                             setEditingCell(null)
                           }
                         }}
-                        className="h-8 w-20"
+                        className="h-8 w-20 bg-background border-border text-foreground"
                         autoFocus
                       />
                     ) : (
                       <div 
-                        className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[24px] flex items-center w-20"
+                        className="editable-cell cursor-pointer p-1 rounded min-h-[24px] flex items-center w-20"
                         onClick={() => setEditingCell(`${cliente.id}-comissao`)}
                       >
                         {saving === `${cliente.id}-comissao` ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
-                          <span className="truncate">{cliente.comissao || '-'}</span>
+                          <span className="truncate text-foreground">{cliente.comissao || '-'}</span>
                         )}
                       </div>
                     )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    <div className="max-w-[180px] truncate">
+                    <div className="max-w-[180px] truncate text-foreground">
                       {cliente.email_gestor_responsavel}
                     </div>
                   </TableCell>
@@ -261,10 +262,10 @@ export function AdminTable() {
                         defaultValue={cliente.status_campanha || ''}
                         onValueChange={(value) => handleCellEdit(cliente.id, 'status_campanha', value)}
                       >
-                        <SelectTrigger className="h-8 w-32">
+                        <SelectTrigger className="h-8 w-32 bg-background border-border text-foreground">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="bg-card border-border">
                           <SelectItem value="Planejamento">Planejamento</SelectItem>
                           <SelectItem value="Brief">Brief</SelectItem>
                           <SelectItem value="Criativo">Criativo</SelectItem>
@@ -273,18 +274,18 @@ export function AdminTable() {
                       </Select>
                     ) : (
                       <div 
-                        className="cursor-pointer hover:bg-gray-100 p-1 rounded min-h-[24px] flex items-center w-32"
+                        className="editable-cell cursor-pointer p-1 rounded min-h-[24px] flex items-center w-32"
                         onClick={() => setEditingCell(`${cliente.id}-status_campanha`)}
                       >
                         {saving === `${cliente.id}-status_campanha` ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : (
                           <span className={`px-2 py-1 rounded text-xs font-medium truncate ${
-                            cliente.status_campanha === 'Planejamento' ? 'bg-blue-100 text-blue-800' :
-                            cliente.status_campanha === 'Brief' ? 'bg-yellow-100 text-yellow-800' :
-                            cliente.status_campanha === 'Criativo' ? 'bg-purple-100 text-purple-800' :
-                            cliente.status_campanha === 'No Ar' ? 'bg-green-100 text-green-800' :
-                            'bg-gray-100 text-gray-800'
+                            cliente.status_campanha === 'Planejamento' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                            cliente.status_campanha === 'Brief' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
+                            cliente.status_campanha === 'Criativo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
+                            cliente.status_campanha === 'No Ar' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                            'bg-muted text-muted-foreground border border-border'
                           }`}>
                             {cliente.status_campanha || 'Sem Status'}
                           </span>
@@ -294,31 +295,31 @@ export function AdminTable() {
                   </TableCell>
                   
                   {/* Campos ocultos em telas menores */}
-                  <TableCell className="hidden xl:table-cell">{cliente.data_limite || '-'}</TableCell>
-                  <TableCell className="hidden xl:table-cell">{formatDate(cliente.data_subida_campanha)}</TableCell>
+                  <TableCell className="hidden xl:table-cell text-foreground">{cliente.data_limite || '-'}</TableCell>
+                  <TableCell className="hidden xl:table-cell text-foreground">{formatDate(cliente.data_subida_campanha)}</TableCell>
                   
                   {/* Links ocultos em telas menores */}
                   <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.link_grupo || '-'}
                     </div>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.link_reuniao_1 || '-'}
                     </div>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.link_reuniao_2 || '-'}
                     </div>
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate">
+                    <div className="max-w-[200px] truncate text-foreground">
                       {cliente.link_reuniao_3 || '-'}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden xl:table-cell">{cliente.bm_identificacao || '-'}</TableCell>
+                  <TableCell className="hidden xl:table-cell text-foreground">{cliente.bm_identificacao || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>
@@ -326,7 +327,7 @@ export function AdminTable() {
         </div>
         
         {clientes.length === 0 && (
-          <div className="text-center py-12 text-gray-500">
+          <div className="text-center py-12 text-muted-foreground">
             Nenhum cliente encontrado
           </div>
         )}

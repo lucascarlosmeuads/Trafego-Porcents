@@ -91,7 +91,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
           <Input
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
-            className="h-8 text-xs"
+            className="h-8 text-xs bg-background border-border"
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSaveEdit()
               if (e.key === 'Escape') handleCancelEdit()
@@ -104,11 +104,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
     return (
       <div
-        className="cursor-pointer hover:bg-gray-50 p-1 rounded min-h-[20px] flex items-center gap-1 group"
+        className="editable-cell cursor-pointer p-1 rounded min-h-[20px] flex items-center gap-1 group"
         onClick={() => handleCellEdit(cliente.id, field, value)}
       >
-        <span className="truncate flex-1">{value || '-'}</span>
-        <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+        <span className="truncate flex-1 text-foreground">{value || '-'}</span>
+        <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity text-muted-foreground" />
       </div>
     )
   }
@@ -169,8 +169,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     return (
       <div className="flex items-center justify-center py-12 px-4">
         <div className="flex flex-col items-center gap-4">
-          <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
-          <span className="text-center">Carregando clientes de {selectedManager}...</span>
+          <RefreshCw className="w-8 h-8 animate-spin text-primary" />
+          <span className="text-center text-foreground">Carregando clientes de {selectedManager}...</span>
         </div>
       </div>
     )
@@ -179,7 +179,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   if (error) {
     return (
       <div className="text-center py-12 px-4">
-        <p className="text-red-600 mb-4">{error}</p>
+        <p className="text-destructive mb-4">{error}</p>
         <Button onClick={refetch} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
           Tentar Novamente
@@ -193,8 +193,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {/* Header responsivo */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
         <div>
-          <h2 className="text-xl lg:text-2xl font-semibold">Clientes - {selectedManager}</h2>
-          <p className="text-sm text-gray-600">{filteredClientes.length} clientes encontrados</p>
+          <h2 className="text-xl lg:text-2xl font-semibold text-foreground">Clientes - {selectedManager}</h2>
+          <p className="text-sm text-muted-foreground">{filteredClientes.length} clientes encontrados</p>
         </div>
         
         <div className="flex flex-col sm:flex-row gap-2">
@@ -221,21 +221,21 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {/* Filtros responsivos */}
       <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
           <Input
             placeholder="Pesquisar por nome, email, telefone ou vendedor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-10 bg-background border-border text-foreground"
           />
         </div>
         
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-full sm:w-48">
+          <SelectTrigger className="w-full sm:w-48 bg-background border-border text-foreground">
             <Filter className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Status da campanha" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="bg-card border-border">
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="Pendente">Pendente</SelectItem>
             <SelectItem value="Em andamento">Em andamento</SelectItem>
@@ -249,14 +249,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {viewMode === 'cards' && (
         <div className="grid gap-4 md:grid-cols-2 lg:hidden">
           {filteredClientes.length === 0 ? (
-            <div className="col-span-full text-center py-8 text-gray-500">
+            <div className="col-span-full text-center py-8 text-muted-foreground">
               Nenhum cliente encontrado para {selectedManager}
             </div>
           ) : (
             filteredClientes.map((cliente) => (
-              <Card key={cliente.id} className="w-full">
+              <Card key={cliente.id} className="w-full bg-card border-border">
                 <CardHeader className="pb-3">
-                  <CardTitle className="text-lg flex items-center justify-between">
+                  <CardTitle className="text-lg flex items-center justify-between text-card-foreground">
                     <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
                     <Badge variant={
                       cliente.status_campanha === 'Concluída' ? 'default' :
@@ -270,28 +270,28 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 <CardContent className="space-y-3">
                   <div className="grid grid-cols-1 gap-2 text-sm">
                     <div>
-                      <span className="font-medium text-gray-600">Telefone:</span>
-                      <span className="ml-2">{cliente.telefone || '-'}</span>
+                      <span className="font-medium text-muted-foreground">Telefone:</span>
+                      <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Email:</span>
-                      <span className="ml-2 truncate block">{cliente.email_cliente || '-'}</span>
+                      <span className="font-medium text-muted-foreground">Email:</span>
+                      <span className="ml-2 truncate block text-card-foreground">{cliente.email_cliente || '-'}</span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Vendedor:</span>
+                      <span className="font-medium text-muted-foreground">Vendedor:</span>
                       <div className="mt-1">
                         {renderEditableCell(cliente, 'nome_vendedor', cliente.nome_vendedor || '')}
                       </div>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Data Venda:</span>
-                      <span className="ml-2 flex items-center">
+                      <span className="font-medium text-muted-foreground">Data Venda:</span>
+                      <span className="ml-2 flex items-center text-card-foreground">
                         <Calendar className="w-3 h-3 mr-1" />
                         {cliente.data_venda || '-'}
                       </span>
                     </div>
                     <div>
-                      <span className="font-medium text-gray-600">Comissão:</span>
+                      <span className="font-medium text-muted-foreground">Comissão:</span>
                       <div className="mt-1">
                         {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
                       </div>
@@ -306,56 +306,56 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
       {/* Tabela para desktop */}
       <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
-        <div className="border rounded-lg overflow-hidden">
+        <div className="border rounded-lg overflow-hidden bg-card border-border">
           <div className="overflow-x-auto">
-            <Table>
+            <Table className="table-dark">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px] min-w-[100px]">Data Venda</TableHead>
-                  <TableHead className="min-w-[200px]">Nome Cliente</TableHead>
-                  <TableHead className="min-w-[120px]">Telefone</TableHead>
-                  <TableHead className="min-w-[200px] hidden sm:table-cell">Email Cliente</TableHead>
-                  <TableHead className="min-w-[150px]">Vendedor</TableHead>
-                  <TableHead className="min-w-[180px] hidden md:table-cell">Email Gestor</TableHead>
-                  <TableHead className="min-w-[130px]">Status</TableHead>
-                  <TableHead className="min-w-[100px] hidden lg:table-cell">Data Limite</TableHead>
-                  <TableHead className="min-w-[100px] hidden lg:table-cell">Data Subida</TableHead>
-                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Grupo</TableHead>
-                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Briefing</TableHead>
-                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Criativo</TableHead>
-                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Site</TableHead>
-                  <TableHead className="min-w-[120px] hidden lg:table-cell">BM ID</TableHead>
-                  <TableHead className="min-w-[100px]">Comissão</TableHead>
+                <TableRow className="border-border hover:bg-muted/20">
+                  <TableHead className="w-[100px] min-w-[100px] text-muted-foreground">Data Venda</TableHead>
+                  <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
+                  <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
+                  <TableHead className="min-w-[200px] hidden sm:table-cell text-muted-foreground">Email Cliente</TableHead>
+                  <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
+                  <TableHead className="min-w-[180px] hidden md:table-cell text-muted-foreground">Email Gestor</TableHead>
+                  <TableHead className="min-w-[130px] text-muted-foreground">Status</TableHead>
+                  <TableHead className="min-w-[100px] hidden lg:table-cell text-muted-foreground">Data Limite</TableHead>
+                  <TableHead className="min-w-[100px] hidden lg:table-cell text-muted-foreground">Data Subida</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Grupo</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Briefing</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Criativo</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Site</TableHead>
+                  <TableHead className="min-w-[120px] hidden lg:table-cell text-muted-foreground">BM ID</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Comissão</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredClientes.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={15} className="text-center py-8 text-gray-500">
+                  <TableRow className="border-border hover:bg-muted/20">
+                    <TableCell colSpan={15} className="text-center py-8 text-muted-foreground">
                       Nenhum cliente encontrado para {selectedManager}
                     </TableCell>
                   </TableRow>
                 ) : (
                   filteredClientes.map((cliente) => (
-                    <TableRow key={cliente.id} className="hover:bg-gray-50">
+                    <TableRow key={cliente.id} className="border-border hover:bg-muted/20 transition-colors">
                       <TableCell>
                         <div className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3 text-gray-400" />
-                          <span className="text-xs">{cliente.data_venda || '-'}</span>
+                          <Calendar className="w-3 h-3 text-muted-foreground" />
+                          <span className="text-xs text-foreground">{cliente.data_venda || '-'}</span>
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">
-                        <div className="max-w-[200px] truncate">
+                        <div className="max-w-[200px] truncate text-foreground">
                           {cliente.nome_cliente || '-'}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="max-w-[120px] truncate">
+                        <div className="max-w-[120px] truncate text-foreground">
                           {cliente.telefone || '-'}
                         </div>
                       </TableCell>
                       <TableCell className="hidden sm:table-cell">
-                        <div className="max-w-[200px] truncate">
+                        <div className="max-w-[200px] truncate text-foreground">
                           {cliente.email_cliente || '-'}
                         </div>
                       </TableCell>
@@ -374,10 +374,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                           {cliente.status_campanha || 'Pendente'}
                         </Badge>
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden lg:table-cell text-foreground">
                         {cliente.data_limite || '-'}
                       </TableCell>
-                      <TableCell className="hidden lg:table-cell">
+                      <TableCell className="hidden lg:table-cell text-foreground">
                         {cliente.data_subida_campanha || '-'}
                       </TableCell>
                       <TableCell className="hidden xl:table-cell">
@@ -408,7 +408,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       </div>
 
       {/* Informação sobre edição */}
-      <div className="text-xs text-gray-500 mt-4 text-center lg:text-left">
+      <div className="text-xs text-muted-foreground mt-4 text-center lg:text-left">
         💡 Clique em qualquer campo editável para modificar os dados
       </div>
     </div>

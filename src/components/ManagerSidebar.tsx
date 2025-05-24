@@ -66,10 +66,10 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
 
   if (loading) {
     return (
-      <Sidebar>
+      <Sidebar className="sidebar-dark border-sidebar-border">
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Carregando...</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando...</SidebarGroupLabel>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
@@ -77,21 +77,29 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   }
 
   return (
-    <Sidebar>
-      <SidebarContent>
+    <Sidebar className="sidebar-dark border-sidebar-border">
+      <SidebarContent className="bg-sidebar-background">
         <SidebarGroup>
-          <SidebarGroupLabel>Gerentes</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
+            Gerentes
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="space-y-1 px-2">
               {managers.map((manager) => (
                 <SidebarMenuItem key={manager}>
                   <SidebarMenuButton
                     onClick={() => onManagerSelect(manager)}
                     isActive={selectedManager === manager}
-                    className="flex items-center gap-2"
+                    className={`
+                      sidebar-item flex items-center gap-3 w-full px-3 py-3 rounded-md text-left transition-all duration-200
+                      ${selectedManager === manager 
+                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground border-l-4 border-sidebar-ring shadow-sm' 
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                      }
+                    `}
                   >
-                    <Users className="w-4 h-4" />
-                    <span>{manager}</span>
+                    <Users className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{manager}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
