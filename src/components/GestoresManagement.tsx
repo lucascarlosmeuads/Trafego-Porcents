@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -80,7 +79,7 @@ export function GestoresManagement() {
       }
 
       // Call the edge function to create the user
-      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/create-gestor`, {
+      const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/create-gestor`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${session.access_token}`,
@@ -98,6 +97,11 @@ export function GestoresManagement() {
 
       if (!response.ok) {
         throw new Error(result.error || 'Erro ao criar gestor')
+      }
+
+      // Verify the response has the expected data
+      if (!result || !result.success) {
+        throw new Error('Resposta inválida do servidor')
       }
 
       toast({
