@@ -74,42 +74,29 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         
         console.log('👥 [SIDEBAR] Gestores ativos encontrados:', managerNames)
         console.log('📝 [SIDEBAR] Total de gestores:', managerNames.length)
-        console.log('🔍 [SIDEBAR] Procurando especificamente por Carol e Andreza...')
         
+        // Verificar se Carol, Andreza e Rullian estão na lista
         const hasCarol = managerNames.some(name => name.toLowerCase().includes('carol'))
         const hasAndreza = managerNames.some(name => name.toLowerCase().includes('andreza'))
+        const hasRullian = managerNames.some(name => name.toLowerCase().includes('rullian'))
         
         console.log('👩 [SIDEBAR] Carol encontrada:', hasCarol)
         console.log('👩 [SIDEBAR] Andreza encontrada:', hasAndreza)
+        console.log('👨 [SIDEBAR] Rullian encontrado:', hasRullian)
         
-        // Adicionar Carol e Andreza manualmente se não estiverem na lista (fallback)
-        if (!hasCarol) {
-          console.log('⚠️ [SIDEBAR] Carol não encontrada, adicionando manualmente')
-          managerNames.push('Carol')
-        }
-        if (!hasAndreza) {
-          console.log('⚠️ [SIDEBAR] Andreza não encontrada, adicionando manualmente')
-          managerNames.push('Andreza')
-        }
-        
-        // Ordenar alfabeticamente
+        // Usar apenas os gestores que vieram do banco de dados
+        // Não adicionar fallbacks manuais, confiar nos dados do Supabase
         const sortedManagers = managerNames.sort()
         console.log('📋 [SIDEBAR] Lista final ordenada:', sortedManagers)
         
         setManagers(sortedManagers)
       } else {
         console.log('⚠️ [SIDEBAR] Nenhum gestor ativo encontrado na tabela gestores')
-        // Fallback com gestores padrão
-        const fallbackManagers = ['Andreza', 'Carol']
-        console.log('🔄 [SIDEBAR] Usando fallback:', fallbackManagers)
-        setManagers(fallbackManagers)
+        setManagers([])
       }
     } catch (err) {
       console.error('💥 [SIDEBAR] Erro ao buscar gestores:', err)
-      // Fallback em caso de erro
-      const fallbackManagers = ['Andreza', 'Carol']
-      console.log('🔄 [SIDEBAR] Erro - usando fallback:', fallbackManagers)
-      setManagers(fallbackManagers)
+      setManagers([])
     } finally {
       setLoading(false)
     }
