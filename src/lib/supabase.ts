@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -26,6 +25,7 @@ export type Cliente = {
   valor_comissao: number
   created_at: string
   site_status: string
+  descricao_problema: string
 }
 
 export type Gestor = {
@@ -48,6 +48,7 @@ export const STATUS_CAMPANHA = [
   'Agendamento',
   'No Ar',
   'Otimização',
+  'Problema',
   'Off',
   'Reembolso'
 ] as const

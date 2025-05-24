@@ -51,6 +51,7 @@ export type Database = {
           data_limite: string | null
           data_subida_campanha: string | null
           data_venda: string | null
+          descricao_problema: string | null
           email_cliente: string | null
           email_gestor: string | null
           id: number
@@ -75,6 +76,7 @@ export type Database = {
           data_limite?: string | null
           data_subida_campanha?: string | null
           data_venda?: string | null
+          descricao_problema?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
           id?: number
@@ -99,6 +101,7 @@ export type Database = {
           data_limite?: string | null
           data_subida_campanha?: string | null
           data_venda?: string | null
+          descricao_problema?: string | null
           email_cliente?: string | null
           email_gestor?: string | null
           id?: number

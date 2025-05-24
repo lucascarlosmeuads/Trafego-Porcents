@@ -1,18 +1,25 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+import { Users, User, AlertTriangle } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 import {
   Sidebar,
   SidebarContent,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
+  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarSeparator,
 } from '@/components/ui/sidebar'
-import { Users, Database } from 'lucide-react'
+
+interface GestorInfo {
+  nome: string
+  email: string
+  total_clientes: number
+}
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -20,26 +27,85 @@ interface ManagerSidebarProps {
 }
 
 export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSidebarProps) {
-  const [managers, setManagers] = useState<string[]>([])
+  const [gestores, setGestores] = useState<GestorInfo[]>([])
+  const [totalClientes, setTotalClientes] = useState(0)
+  const [problemasCount, setProblemasCount] = useState(0)
   const [loading, setLoading] = useState(true)
 
+  const buscarGestores = async () => {
+    try {
+      console.log('🔍 [ManagerSidebar] Buscando gestores e contagens...')
+      
+      // Buscar contagem total de clientes
+      const { count: totalCount } = await supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+
+      setTotalClientes(totalCount || 0)
+
+      // Buscar contagem de problemas
+      const { count: problemasTotal } = await supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+        .eq('status_campanha', 'Problema')
+
+      setProblemasCount(problemasTotal || 0)
+
+      // Buscar gestores ativos
+      const { data: gestoresData, error: gestoresError } = await supabase
+        .from('gestores')
+        .select('nome, email')
+        .eq('ativo', true)
+        .order('nome')
+
+      if (gestoresError) {
+        console.error('❌ [ManagerSidebar] Erro ao buscar gestores:', gestoresError)
+        return
+      }
+
+      // Para cada gestor, contar seus clientes
+      const gestoresComContagem = await Promise.all(
+        (gestoresData || []).map(async (gestor) => {
+          const { count } = await supabase
+            .from('todos_clientes')
+            .select('*', { count: 'exact', head: true })
+            .eq('email_gestor', gestor.email)
+
+          return {
+            ...gestor,
+            total_clientes: count || 0
+          }
+        })
+      )
+
+      console.log('✅ [ManagerSidebar] Gestores carregados:', gestoresComContagem.length)
+      console.log('📊 [ManagerSidebar] Total de clientes:', totalCount)
+      console.log('⚠️ [ManagerSidebar] Problemas pendentes:', problemasTotal)
+      
+      setGestores(gestoresComContagem)
+    } catch (error) {
+      console.error('💥 [ManagerSidebar] Erro na busca:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   useEffect(() => {
-    fetchManagers()
+    buscarGestores()
     
-    // Subscribe to real-time changes in gestores table
+    // Configurar listener de realtime para atualizações automáticas
     const channel = supabase
-      .channel('gestores-sidebar-changes')
+      .channel('sidebar-updates')
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'gestores'
+          table: 'todos_clientes'
         },
-        (payload) => {
-          console.log('🔄 Mudança detectada na tabela gestores (sidebar):', payload)
-          // Refresh managers list when any change occurs
-          fetchManagers()
+        () => {
+          console.log('🔄 [ManagerSidebar] Atualizando contagens...')
+          buscarGestores()
         }
       )
       .subscribe()
@@ -49,127 +115,78 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
     }
   }, [])
 
-  const fetchManagers = async () => {
-    try {
-      console.log('🔍 [SIDEBAR] Buscando gestores ativos da tabela gestores...')
-      
-      // Buscar TODOS os gestores ativos da tabela gestores
-      const { data: gestoresData, error: gestoresError } = await supabase
-        .from('gestores')
-        .select('nome, email, ativo')
-        .eq('ativo', true)
-        .order('nome')
-
-      if (gestoresError) {
-        console.error('❌ [SIDEBAR] Erro ao buscar gestores:', gestoresError)
-        setManagers([])
-        return
-      }
-
-      console.log('📊 [SIDEBAR] Dados retornados do Supabase:', gestoresData)
-
-      if (gestoresData && gestoresData.length > 0) {
-        const managerNames = gestoresData
-          .map(gestor => gestor.nome)
-          .filter(nome => nome && nome.trim() !== '')
-        
-        console.log('👥 [SIDEBAR] Gestores ativos encontrados:', managerNames)
-        console.log('📝 [SIDEBAR] Total de gestores:', managerNames.length)
-        
-        const sortedManagers = managerNames.sort()
-        console.log('📋 [SIDEBAR] Lista final ordenada:', sortedManagers)
-        
-        setManagers(sortedManagers)
-      } else {
-        console.log('⚠️ [SIDEBAR] Nenhum gestor ativo encontrado na tabela gestores')
-        setManagers([])
-      }
-    } catch (err) {
-      console.error('💥 [SIDEBAR] Erro ao buscar gestores:', err)
-      setManagers([])
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  console.log('🎯 [SIDEBAR] Estado atual - Managers:', managers, 'Loading:', loading, 'Selected:', selectedManager)
-
   if (loading) {
     return (
-      <Sidebar className="sidebar-dark border-sidebar-border">
-        <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando...</SidebarGroupLabel>
-          </SidebarGroup>
-        </SidebarContent>
+      <Sidebar variant="sidebar" className="w-80 border-r bg-card">
+        <SidebarHeader className="border-b p-4">
+          <h2 className="text-lg font-semibold text-foreground">Carregando...</h2>
+        </SidebarHeader>
       </Sidebar>
     )
   }
 
   return (
-    <Sidebar className="sidebar-dark border-sidebar-border">
-      <SidebarContent className="bg-sidebar-background">
+    <Sidebar variant="sidebar" className="w-80 border-r bg-card">
+      <SidebarHeader className="border-b p-4">
+        <h2 className="text-lg font-semibold text-foreground">Painel Administrativo</h2>
+        <p className="text-sm text-muted-foreground">Gestão de clientes por responsável</p>
+      </SidebarHeader>
+      
+      <SidebarContent className="p-4">
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-            Visualizações
-          </SidebarGroupLabel>
+          <SidebarGroupLabel>Gestores ({gestores.length})</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 px-2">
-              {/* All Clients Option */}
+            <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => onManagerSelect(null)}
                   isActive={selectedManager === null}
-                  className={`
-                    sidebar-item flex items-center gap-3 w-full px-3 py-3 rounded-md text-left transition-all duration-200
-                    ${selectedManager === null
-                      ? 'active bg-sidebar-primary text-sidebar-primary-foreground border-l-4 border-sidebar-ring shadow-sm' 
-                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                    }
-                  `}
+                  className="w-full justify-start"
                 >
-                  <Database className="w-4 h-4 flex-shrink-0" />
-                  <span className="font-medium">Todos os Clientes</span>
+                  <Users className="w-4 h-4" />
+                  <span>Todos os Clientes</span>
+                  <Badge variant="secondary" className="ml-auto">
+                    {totalClientes}
+                  </Badge>
                 </SidebarMenuButton>
               </SidebarMenuItem>
+              
+              {gestores.map((gestor) => (
+                <SidebarMenuItem key={gestor.nome}>
+                  <SidebarMenuButton
+                    onClick={() => onManagerSelect(gestor.nome)}
+                    isActive={selectedManager === gestor.nome}
+                    className="w-full justify-start"
+                  >
+                    <User className="w-4 h-4" />
+                    <span className="truncate">{gestor.nome}</span>
+                    <Badge variant="secondary" className="ml-auto">
+                      {gestor.total_clientes}
+                    </Badge>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarSeparator />
-
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-            Gestores ({managers.length})
-          </SidebarGroupLabel>
+          <SidebarGroupLabel className="text-amber-700">Gestão de Problemas</SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu className="space-y-1 px-2">
-              {managers.map((manager) => (
-                <SidebarMenuItem key={manager}>
-                  <SidebarMenuButton
-                    onClick={() => onManagerSelect(manager)}
-                    isActive={selectedManager === manager}
-                    className={`
-                      sidebar-item flex items-center gap-3 w-full px-3 py-3 rounded-md text-left transition-all duration-200
-                      ${selectedManager === manager 
-                        ? 'active bg-sidebar-primary text-sidebar-primary-foreground border-l-4 border-sidebar-ring shadow-sm' 
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
-                      }
-                    `}
-                  >
-                    <Users className="w-4 h-4 flex-shrink-0" />
-                    <span className="font-medium">{manager}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-              
-              {managers.length === 0 && (
-                <SidebarMenuItem>
-                  <div className="px-3 py-3 text-sidebar-foreground text-sm text-center">
-                    Nenhum gestor ativo encontrado
-                  </div>
-                </SidebarMenuItem>
-              )}
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => onManagerSelect('__PROBLEMAS__')}
+                  isActive={selectedManager === '__PROBLEMAS__'}
+                  className="w-full justify-start text-amber-700 hover:bg-amber-50"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>Problemas Pendentes</span>
+                  <Badge variant="destructive" className="ml-auto bg-amber-500">
+                    {problemasCount}
+                  </Badge>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

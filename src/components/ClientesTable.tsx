@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,6 +19,7 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
+import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -62,6 +62,8 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
+  const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
+  const [problemaDescricao, setProblemaDescricao] = useState('')
 
   useEffect(() => {
     const checkConnection = () => {
@@ -270,6 +272,13 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       return
     }
 
+    // Se o status é "Problema", abrir o campo de descrição
+    if (newStatus === 'Problema') {
+      setEditandoProblema(clienteId)
+      setProblemaDescricao('')
+      return
+    }
+
     // Determinar se é status de campanha ou status de site
     const isSiteStatus = ['pendente', 'aguardando_link', 'nao_precisa', 'finalizado'].includes(newStatus)
     const field = isSiteStatus ? 'site_status' : 'status_campanha'
@@ -304,6 +313,79 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       })
     } finally {
       setUpdatingStatus(null)
+    }
+  }
+
+  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
+    try {
+      // Primeiro, atualizar o status para Problema
+      const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
+      if (!statusSuccess) {
+        toast({
+          title: "Erro",
+          description: "Falha ao alterar status para Problema",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      // Depois, salvar a descrição do problema
+      const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
+      if (!descricaoSuccess) {
+        toast({
+          title: "Erro",
+          description: "Falha ao salvar descrição do problema",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Problema registrado com sucesso",
+      })
+      
+      return true
+    } catch (error) {
+      console.error('Erro ao salvar problema:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao registrar problema",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  const handleProblemaDescricaoCancel = () => {
+    setEditandoProblema(null)
+    setProblemaDescricao('')
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Preenchimento do Formulário':
+        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
+      case 'Brief':
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+      case 'Criativo':
+        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
+      case 'Site':
+        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
+      case 'Agendamento':
+        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
+      case 'No Ar':
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
+      case 'Otimização':
+        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      case 'Problema':
+        return 'bg-amber-500/20 text-amber-700 border border-amber-500/30'
+      case 'Off':
+        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Reembolso':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
+      default:
+        return 'bg-muted text-muted-foreground border border-border'
     }
   }
 
@@ -502,57 +584,69 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   }
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
-    <div className="border rounded-lg overflow-hidden bg-card border-border">
-      <div className="overflow-x-auto">
-        <Table className="table-dark">
-          <TableHeader />
-          <TableBody>
-            {clientesList.length === 0 ? (
-              <TableRow className="border-border hover:bg-muted/20">
-                <TableCell colSpan={15} className="text-center py-8 text-white">
-                  {isInactive 
-                    ? `Nenhum cliente inativo encontrado`
-                    : clientes.length === 0 
-                      ? `Nenhum cliente encontrado`
-                      : `Nenhum cliente corresponde aos filtros aplicados`
-                  }
-                </TableCell>
-              </TableRow>
-            ) : (
-              clientesList.map((cliente, index) => (
-                <ClienteRow
-                  key={`${emailToUse}-${cliente.id}-${index}`}
-                  cliente={cliente}
-                  selectedManager={currentManager || managerName}
-                  index={index}
-                  updatingStatus={updatingStatus}
-                  editingLink={editingLink}
-                  linkValue={linkValue}
-                  setLinkValue={setLinkValue}
-                  editingBM={editingBM}
-                  bmValue={bmValue}
-                  setBmValue={setBmValue}
-                  updatingComission={updatingComission}
-                  editingComissionValue={editingComissionValue}
-                  comissionValueInput={comissionValueInput}
-                  setComissionValueInput={setComissionValueInput}
-                  getStatusColor={getStatusColor}
-                  onStatusChange={handleStatusChange}
-                  onLinkEdit={handleLinkEdit}
-                  onLinkSave={handleLinkSave}
-                  onLinkCancel={handleLinkCancel}
-                  onBMEdit={handleBMEdit}
-                  onBMSave={handleBMSave}
-                  onBMCancel={handleBMCancel}
-                  onComissionToggle={handleComissionToggle}
-                  onComissionValueEdit={handleComissionValueEdit}
-                  onComissionValueSave={handleComissionValueSave}
-                  onComissionValueCancel={handleComissionValueCancel}
-                />
-              ))
-            )}
-          </TableBody>
-        </Table>
+    <div className="space-y-4">
+      {/* Campo de descrição do problema */}
+      {editandoProblema && (
+        <ProblemaDescricao
+          clienteId={editandoProblema}
+          descricaoAtual={problemaDescricao}
+          onSave={handleProblemaDescricaoSave}
+          onCancel={handleProblemaDescricaoCancel}
+        />
+      )}
+      
+      <div className="border rounded-lg overflow-hidden bg-card border-border">
+        <div className="overflow-x-auto">
+          <Table className="table-dark">
+            <TableHeader />
+            <TableBody>
+              {clientesList.length === 0 ? (
+                <TableRow className="border-border hover:bg-muted/20">
+                  <TableCell colSpan={15} className="text-center py-8 text-white">
+                    {isInactive 
+                      ? `Nenhum cliente inativo encontrado`
+                      : clientes.length === 0 
+                        ? `Nenhum cliente encontrado`
+                        : `Nenhum cliente corresponde aos filtros aplicados`
+                    }
+                  </TableCell>
+                </TableRow>
+              ) : (
+                clientesList.map((cliente, index) => (
+                  <ClienteRow
+                    key={`${emailToUse}-${cliente.id}-${index}`}
+                    cliente={cliente}
+                    selectedManager={currentManager || managerName}
+                    index={index}
+                    updatingStatus={updatingStatus}
+                    editingLink={editingLink}
+                    linkValue={linkValue}
+                    setLinkValue={setLinkValue}
+                    editingBM={editingBM}
+                    bmValue={bmValue}
+                    setBmValue={setBmValue}
+                    updatingComission={updatingComission}
+                    editingComissionValue={editingComissionValue}
+                    comissionValueInput={comissionValueInput}
+                    setComissionValueInput={setComissionValueInput}
+                    getStatusColor={getStatusColor}
+                    onStatusChange={handleStatusChange}
+                    onLinkEdit={handleLinkEdit}
+                    onLinkSave={handleLinkSave}
+                    onLinkCancel={handleLinkCancel}
+                    onBMEdit={handleBMEdit}
+                    onBMSave={handleBMSave}
+                    onBMCancel={handleBMCancel}
+                    onComissionToggle={handleComissionToggle}
+                    onComissionValueEdit={handleComissionValueEdit}
+                    onComissionValueSave={handleComissionValueSave}
+                    onComissionValueCancel={handleComissionValueCancel}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
       </div>
     </div>
   )
