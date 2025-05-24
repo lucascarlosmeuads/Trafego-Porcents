@@ -39,7 +39,7 @@ export function GestoresManagement() {
 
   const fetchGestores = async () => {
     try {
-      console.log('🔍 Buscando gestores...')
+      console.log('🔍 Buscando gestores da tabela gestores...')
       const { data, error } = await supabase
         .from('gestores')
         .select('*')
@@ -53,18 +53,16 @@ export function GestoresManagement() {
       // Garantir que sempre temos um array, mesmo se data for null/undefined
       const gestoresData = data ?? []
       console.log('✅ Gestores carregados:', gestoresData.length, 'registros')
+      console.log('📊 Dados dos gestores:', gestoresData)
       setGestores(gestoresData)
     } catch (error: any) {
       console.error('💥 Erro ao carregar gestores:', error)
       
-      // Só mostra toast de erro se for um erro real, não de permissão na inicialização
-      if (!error?.message?.includes('permission denied')) {
-        toast({
-          title: "Erro",
-          description: "Erro ao carregar gestores",
-          variant: "destructive"
-        })
-      }
+      toast({
+        title: "Erro",
+        description: `Erro ao carregar gestores: ${error.message}`,
+        variant: "destructive"
+      })
       
       // Define array vazio em caso de erro
       setGestores([])
