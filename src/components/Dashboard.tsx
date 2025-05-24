@@ -26,6 +26,20 @@ export function Dashboard() {
     return 'Gestor Individual'
   }
 
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log('🚪 [Dashboard] Botão Sair clicado')
+    
+    try {
+      await signOut()
+      console.log('✅ [Dashboard] Logout realizado com sucesso')
+    } catch (error) {
+      console.error('❌ [Dashboard] Erro ao fazer logout:', error)
+    }
+  }
+
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full bg-background">
@@ -64,7 +78,19 @@ export function Dashboard() {
                     <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
                   </div>
                   <ThemeToggle />
-                  <Button variant="outline" onClick={signOut} size="sm">
+                  <Button 
+                    variant="outline" 
+                    onClick={handleSignOut}
+                    onMouseDown={handleSignOut}
+                    onTouchStart={handleSignOut}
+                    size="sm"
+                    className="cursor-pointer select-none touch-manipulation"
+                    style={{ 
+                      pointerEvents: 'auto',
+                      zIndex: 9999,
+                      position: 'relative'
+                    }}
+                  >
                     Sair
                   </Button>
                 </div>
