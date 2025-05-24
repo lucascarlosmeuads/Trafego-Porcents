@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -182,7 +181,7 @@ export function AdminTable() {
                   <div>
                     <span className="font-medium text-muted-foreground">Status:</span>
                     <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
-                      {cliente.status_campanha || 'Sem Status'}
+                      {cliente.status_campanha || 'Sem status'}
                     </span>
                   </div>
                   <div>
@@ -242,7 +241,7 @@ export function AdminTable() {
                       <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
                         <SelectValue>
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                            {cliente.status_campanha || 'Selecionar Status'}
+                            {cliente.status_campanha || 'Sem status'}
                           </span>
                         </SelectValue>
                       </SelectTrigger>
