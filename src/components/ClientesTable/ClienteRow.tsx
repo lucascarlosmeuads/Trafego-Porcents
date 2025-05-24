@@ -367,18 +367,25 @@ export function ClienteRow({
   const handleSiteLinkSave = async () => {
     console.log('💾 Salvando link do site:', siteLinkInput)
     
+    if (!siteLinkInput.trim()) {
+      console.error('❌ Link do site está vazio')
+      return
+    }
+    
     try {
-      // Primeiro definir o valor do link para que onLinkSave possa usá-lo
-      setLinkValue(siteLinkInput)
+      // Primeiro salvar o link do site diretamente
+      const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
-      // Salvar o link
-      await onLinkSave(cliente.id, 'link_site')
-      
-      // Depois atualizar o status para finalizado
-      await onStatusChange(cliente.id, 'finalizado')
-      
-      setEditingSiteLink(false)
-      setSiteLinkInput('')
+      if (linkSuccess) {
+        // Depois atualizar o status para finalizado
+        await onStatusChange(cliente.id, 'finalizado')
+        
+        setEditingSiteLink(false)
+        setSiteLinkInput('')
+        console.log('✅ Link salvo e status atualizado com sucesso')
+      } else {
+        console.error('❌ Falha ao salvar o link')
+      }
     } catch (error) {
       console.error('❌ Erro ao salvar link do site:', error)
     }

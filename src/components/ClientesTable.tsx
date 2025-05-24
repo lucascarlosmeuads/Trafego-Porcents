@@ -163,8 +163,17 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   const handleLinkSave = async (clienteId: string, field: string) => {
     try {
-      // Usar linkValue para campos normais, mas para link_site usar o valor atual se não estiver editando
-      const valueToSave = field === 'link_site' ? linkValue : linkValue
+      // Para link_site, usar o valor do input interno da linha
+      let valueToSave = linkValue
+      
+      // Se for campo link_site e estamos editando internamente, pegar o valor do estado da linha
+      if (field === 'link_site') {
+        // O valor já será passado corretamente pelo siteLinkInput via setLinkValue
+        valueToSave = linkValue
+      }
+      
+      console.log('💾 Salvando campo:', field, 'com valor:', valueToSave)
+      
       const success = await updateCliente(clienteId, field, valueToSave)
       
       if (success) {
@@ -174,19 +183,23 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
         })
         setEditingLink(null)
         setLinkValue('')
+        return true
       } else {
         toast({
           title: "Erro",
           description: "Falha ao atualizar link",
           variant: "destructive",
         })
+        return false
       }
     } catch (error) {
       console.error('Erro ao salvar link:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao atualizar link",
+        variant: "destructive",
       })
+      return false
     }
   }
 
