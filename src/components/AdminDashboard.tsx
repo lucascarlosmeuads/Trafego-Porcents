@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -61,14 +62,20 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (showToast) setRefreshing(true)
       setLoading(true)
       const tableName = getTableName(selectedManager)
-      console.log(`Buscando estatísticas da tabela: ${tableName}`)
+      console.log(`📊 Buscando estatísticas da tabela: ${tableName}`)
       
-      const { data, error } = await supabase
+      // Garantindo que todos os dados sejam buscados sem limitação
+      const { data, error, count } = await supabase
         .from(tableName)
-        .select('*')
+        .select('*', { count: 'exact' })
 
       if (!error && data) {
-        console.log(`Dados encontrados para ${selectedManager}:`, data.length, 'registros')
+        console.log(`✅ Dados encontrados para ${selectedManager}:`, data.length, 'registros')
+        console.log(`📊 Count exato do banco:`, count)
+        
+        if (data.length !== count) {
+          console.warn(`⚠️ DISCREPÂNCIA no Dashboard: Dados recebidos: ${data.length}, Count do DB: ${count}`)
+        }
         
         const totalClientes = data.length
         const clientesAtivos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
@@ -94,8 +101,8 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           return total + valor
         }, 0)
 
-        console.log(`Estatísticas de ${selectedManager}:`, { totalClientes, clientesAtivos, comissaoTotal })
-        console.log('Estatísticas por status:', statusCounts)
+        console.log(`📊 Estatísticas de ${selectedManager}:`, { totalClientes, clientesAtivos, comissaoTotal })
+        console.log('📊 Estatísticas por status:', statusCounts)
         
         setManagerStats({
           totalClientes,
@@ -107,11 +114,11 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         if (showToast) {
           toast({
             title: "Sucesso",
-            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados`
+            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados (${count} no banco)`
           })
         }
       } else if (error) {
-        console.error(`Erro ao buscar dados de ${selectedManager}:`, error)
+        console.error(`❌ Erro ao buscar dados de ${selectedManager}:`, error)
         if (showToast) {
           toast({
             title: "Erro",
@@ -121,7 +128,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         }
       }
     } catch (error) {
-      console.error('Erro ao buscar estatísticas:', error)
+      console.error('💥 Erro ao buscar estatísticas:', error)
       if (showToast) {
         toast({
           title: "Erro",

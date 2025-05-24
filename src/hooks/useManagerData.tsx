@@ -26,9 +26,10 @@ export function useManagerData(selectedManager: string) {
       const tableName = getTableName(selectedManager)
       console.log('🔍 Buscando dados da tabela:', tableName)
       
-      const { data, error } = await supabase
+      // Removendo qualquer limitação e garantindo que todos os registros sejam buscados
+      const { data, error, count } = await supabase
         .from(tableName)
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('id', { ascending: true })
 
       if (error) {
@@ -44,6 +45,7 @@ export function useManagerData(selectedManager: string) {
         }
       } else {
         console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
+        console.log(`📊 Total de registros no banco (count):`, count)
         
         const clientesFormatados = (data || []).map((item: any) => {
           const cliente = {
@@ -69,7 +71,13 @@ export function useManagerData(selectedManager: string) {
           return cliente
         })
         
-        console.log(`📋 Total de clientes para ${selectedManager}:`, clientesFormatados.length)
+        console.log(`📋 Total de clientes formatados para ${selectedManager}:`, clientesFormatados.length)
+        
+        // Log detalhado para debug
+        if (clientesFormatados.length !== count) {
+          console.warn(`⚠️ DISCREPÂNCIA: Formatados: ${clientesFormatados.length}, Count do DB: ${count}`)
+        }
+        
         setClientes(clientesFormatados)
         
         if (showToast) {

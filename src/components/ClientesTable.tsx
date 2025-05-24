@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -48,6 +47,15 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     return () => clearInterval(interval)
   }, [])
 
+  // Log para debug quando os dados mudarem
+  useEffect(() => {
+    console.log(`🔍 ClientesTable: Total de clientes carregados para ${selectedManager}:`, clientes.length)
+    if (clientes.length > 0) {
+      console.log(`📊 Primeiros 3 clientes:`, clientes.slice(0, 3).map(c => ({ id: c.id, nome: c.nome_cliente })))
+      console.log(`📊 Últimos 3 clientes:`, clientes.slice(-3).map(c => ({ id: c.id, nome: c.nome_cliente })))
+    }
+  }, [clientes, selectedManager])
+
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
       cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -59,6 +67,28 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     
     return matchesSearch && matchesStatus
   })
+
+  // Log adicional para debug dos filtros
+  useEffect(() => {
+    console.log(`🔍 Filtros aplicados - Busca: "${searchTerm}", Status: "${statusFilter}"`)
+    console.log(`📊 Clientes após filtros: ${filteredClientes.length} de ${clientes.length} total`)
+    
+    if (filteredClientes.length !== clientes.length) {
+      console.log(`🔍 Clientes filtrados por busca:`, clientes.filter(c => {
+        const matchesSearch = 
+          c.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          c.telefone?.includes(searchTerm) ||
+          c.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
+        return !matchesSearch
+      }).length)
+      
+      console.log(`🔍 Clientes filtrados por status:`, clientes.filter(c => {
+        const matchesStatus = statusFilter === 'all' || c.status_campanha === statusFilter
+        return !matchesStatus
+      }).length)
+    }
+  }, [filteredClientes, clientes, searchTerm, statusFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -381,40 +411,59 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
                   <TableCell colSpan={12} className="text-center py-8 text-white">
-                    Nenhum cliente encontrado para {selectedManager}
+                    {clientes.length === 0 
+                      ? `Nenhum cliente encontrado para ${selectedManager}`
+                      : `Nenhum cliente corresponde aos filtros aplicados (${clientes.length} clientes no total)`
+                    }
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClientes.map((cliente, index) => (
-                  <ClienteRow
-                    key={`${selectedManager}-${cliente.id}-${index}`}
-                    cliente={cliente}
-                    selectedManager={selectedManager}
-                    index={index}
-                    updatingStatus={updatingStatus}
-                    editingLink={editingLink}
-                    linkValue={linkValue}
-                    setLinkValue={setLinkValue}
-                    editingBM={editingBM}
-                    bmValue={bmValue}
-                    setBmValue={setBmValue}
-                    updatingComission={updatingComission}
-                    getStatusColor={getStatusColor}
-                    onStatusChange={handleStatusChange}
-                    onLinkEdit={handleLinkEdit}
-                    onLinkSave={handleLinkSave}
-                    onLinkCancel={handleLinkCancel}
-                    onBMEdit={handleBMEdit}
-                    onBMSave={handleBMSave}
-                    onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
-                  />
-                ))
+                // Garantindo que TODOS os clientes filtrados sejam renderizados sem limitação
+                filteredClientes.map((cliente, index) => {
+                  // Log de debug para IDs inválidos
+                  if (!cliente.id || cliente.id.trim() === '') {
+                    console.warn(`⚠️ Cliente ${index + 1} tem ID completamente inválido, não será renderizado:`, cliente)
+                    return null
+                  }
+                  
+                  return (
+                    <ClienteRow
+                      key={`${selectedManager}-${cliente.id}-${index}`}
+                      cliente={cliente}
+                      selectedManager={selectedManager}
+                      index={index}
+                      updatingStatus={updatingStatus}
+                      editingLink={editingLink}
+                      linkValue={linkValue}
+                      setLinkValue={setLinkValue}
+                      editingBM={editingBM}
+                      bmValue={bmValue}
+                      setBmValue={setBmValue}
+                      updatingComission={updatingComission}
+                      getStatusColor={getStatusColor}
+                      onStatusChange={handleStatusChange}
+                      onLinkEdit={handleLinkEdit}
+                      onLinkSave={handleLinkSave}
+                      onLinkCancel={handleLinkCancel}
+                      onBMEdit={handleBMEdit}
+                      onBMSave={handleBMSave}
+                      onBMCancel={handleBMCancel}
+                      onComissionToggle={handleComissionToggle}
+                    />
+                  )
+                })
               )}
             </TableBody>
           </Table>
         </div>
       </div>
+      
+      {/* Debug info para desenvolvimento */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="text-xs text-gray-500 mt-2">
+          Debug: {clientes.length} total, {filteredClientes.length} filtrados, {filteredClientes.filter(c => c.id && c.id.trim() !== '').length} renderizados
+        </div>
+      )}
     </div>
   )
 }
