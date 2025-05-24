@@ -26,11 +26,15 @@ const handleSubmit = async () => {
       comissao_paga: false
     }
 
+    // 🔍 Remove id e campos vazios, se tiverem vindo por acidente
     const clienteLimpo = Object.fromEntries(
       Object.entries(clienteBruto).filter(
         ([key, value]) => key !== 'id' && value != null
       )
     )
+
+    // 👇 Verificação de debug
+    console.log("🟡 Payload para insert:", clienteLimpo)
 
     const { error } = await supabase
       .from(tableName)
