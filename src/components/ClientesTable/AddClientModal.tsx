@@ -69,8 +69,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       console.log('🚀 Modal: Adicionando cliente na tabela:', tableName)
       console.log('📥 Modal: Dados do formulário:', formData)
       
-      // Criar objeto limpo sem ID
-      const clienteData = {
+      // Criar objeto ABSOLUTAMENTE limpo - GARANTINDO que não há ID
+      const cleanClienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
         email_cliente: formData.email_cliente.trim(),
@@ -83,11 +83,25 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         site_status: 'pendente'
       }
 
-      console.log('📤 Modal: Enviando para Supabase:', clienteData)
+      // Remover qualquer campo que seja null, undefined ou string vazia
+      const finalData = Object.fromEntries(
+        Object.entries(cleanClienteData).filter(([key, value]) => {
+          // Manter apenas campos que não sejam null, undefined ou string vazia (exceto campos booleanos e numéricos)
+          if (typeof value === 'boolean' || typeof value === 'number') return true
+          return value !== null && value !== undefined && value !== ''
+        })
+      )
+
+      console.log('🧹 Modal: Objeto final LIMPO (sem id):', finalData)
+      console.log('🔍 Modal: Tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
+      console.log('🔍 Modal: Tem campo created_at?', 'created_at' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
+      console.log('🔍 Modal: Todas as chaves:', Object.keys(finalData))
+
+      console.log('📤 Modal: Enviando para Supabase...')
 
       const { data, error } = await supabase
         .from(tableName)
-        .insert([clienteData])
+        .insert([finalData])
         .select()
 
       if (error) {
