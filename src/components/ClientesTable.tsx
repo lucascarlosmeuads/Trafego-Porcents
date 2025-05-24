@@ -180,19 +180,38 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     setUpdatingStatus(clienteId)
     
     try {
-      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: `Status alterado para: ${newStatus}`,
-        })
+      // Check if it's a site status update
+      if (newStatus === 'aguardando_link' || newStatus === 'nao_precisa' || newStatus === 'finalizado') {
+        const success = await updateCliente(clienteId, 'site_status', newStatus)
+        
+        if (success) {
+          toast({
+            title: "Sucesso",
+            description: `Status do site atualizado`,
+          })
+        } else {
+          toast({
+            title: "Erro",
+            description: "Falha ao atualizar status do site",
+            variant: "destructive",
+          })
+        }
       } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar status",
-          variant: "destructive",
-        })
+        // Regular campaign status update
+        const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+        
+        if (success) {
+          toast({
+            title: "Sucesso",
+            description: `Status alterado para: ${newStatus}`,
+          })
+        } else {
+          toast({
+            title: "Erro",
+            description: "Falha ao atualizar status",
+            variant: "destructive",
+          })
+        }
       }
     } catch (error) {
       console.error('Erro na atualização:', error)

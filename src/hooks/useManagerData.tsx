@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -147,7 +146,7 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
 
     try {
       // Handle site status updates
-      if (field === 'site_status') {
+      if (field === 'site_status' || value === 'aguardando_link' || value === 'nao_precisa') {
         let updateData: any = {}
         
         if (value === 'aguardando_link') {

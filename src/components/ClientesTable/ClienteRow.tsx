@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -183,6 +184,15 @@ export function ClienteRow({
     )
   }
 
+  const handleSiteStatusUpdate = async (newStatus: string) => {
+    try {
+      // Usar onStatusChange que já existe para atualizar o site_status
+      await onStatusChange(cliente.id, newStatus)
+    } catch (error) {
+      console.error('Erro ao atualizar status do site:', error)
+    }
+  }
+
   const renderSiteCell = () => {
     // Determinar o status do site baseado nos dados existentes
     const siteStatus = (cliente as any).site_status || 'pendente'
@@ -205,10 +215,9 @@ export function ClienteRow({
             className="h-6 w-6 p-0"
             onClick={async () => {
               if (siteUrl) {
-                // Salvar o link e atualizar status para finalizado
+                // Primeiro salvar o link usando a função existente
+                setLinkValue(siteUrl)
                 await onLinkSave(cliente.id, 'link_site')
-                // Também atualizar o status do site
-                await onStatusChange(cliente.id, 'site_status')
                 setEditingSiteLink(false)
                 setSiteUrl('')
               }
@@ -291,8 +300,7 @@ export function ClienteRow({
           <DropdownMenuContent className="w-48">
             <DropdownMenuItem
               onClick={async () => {
-                // Alterar para precisa de site
-                await onStatusChange(cliente.id, 'site_status')
+                await handleSiteStatusUpdate('aguardando_link')
               }}
             >
               ✅ Sim, precisa de site
@@ -302,7 +310,7 @@ export function ClienteRow({
       )
     }
 
-    // Estado: Pendente (padrão)
+    // Estado: Pendente (padrão) - "Precisa de site?"
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -317,16 +325,14 @@ export function ClienteRow({
         <DropdownMenuContent className="w-48">
           <DropdownMenuItem
             onClick={async () => {
-              // Atualizar status para aguardando_link
-              await onStatusChange(cliente.id, 'site_status')
+              await handleSiteStatusUpdate('aguardando_link')
             }}
           >
             ✅ Sim, precisa de site
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
-              // Atualizar status para nao_precisa
-              await onStatusChange(cliente.id, 'site_status')
+              await handleSiteStatusUpdate('nao_precisa')
             }}
           >
             ❌ Não precisa de site
