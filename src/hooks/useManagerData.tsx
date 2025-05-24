@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -53,17 +54,34 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
       let tableName = ''
       let managerName = ''
 
-      if (emailToUse === 'andreza@mktfy.com.br') {
-        tableName = 'clientes_andreza'
-        managerName = 'Andreza'
-      } else if (emailToUse === 'lucas@mktfy.com.br') {
-        tableName = 'clientes_lucas_falcao'
-        managerName = 'Lucas Falcão'
+      // Para admin: usar selectedManager para determinar qual tabela buscar
+      if (isAdmin && selectedManager) {
+        if (selectedManager === 'Andreza') {
+          tableName = 'clientes_andreza'
+          managerName = 'Andreza'
+        } else if (selectedManager === 'Lucas Falcão') {
+          tableName = 'clientes_lucas_falcao'
+          managerName = 'Lucas Falcão'
+        } else {
+          console.log('❌ Manager selecionado não reconhecido:', selectedManager)
+          setError('Gestor selecionado não encontrado')
+          setLoading(false)
+          return
+        }
       } else {
-        console.log('❌ Email não reconhecido para busca na tabela')
-        setError('Gestor não encontrado')
-        setLoading(false)
-        return
+        // Para gestor: usar o email do usuário
+        if (emailToUse === 'andreza@mktfy.com.br') {
+          tableName = 'clientes_andreza'
+          managerName = 'Andreza'
+        } else if (emailToUse === 'lucas@mktfy.com.br') {
+          tableName = 'clientes_lucas_falcao'
+          managerName = 'Lucas Falcão'
+        } else {
+          console.log('❌ Email não reconhecido para busca na tabela')
+          setError('Gestor não encontrado')
+          setLoading(false)
+          return
+        }
       }
 
       console.log(`🗂️ Buscando na tabela: "${tableName}"`)
@@ -100,20 +118,31 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
     console.log(`🔧 Campo: "${field}"`)
     console.log(`💾 Valor: "${value}"`)
 
-    if (!emailToUse) {
-      console.error('❌ Email não fornecido para update')
+    if (!emailToUse && !selectedManager) {
+      console.error('❌ Email nem manager fornecido para update')
       return false
     }
 
     // Determine the table name
     let tableName = ''
-    if (emailToUse === 'andreza@mktfy.com.br') {
-      tableName = 'clientes_andreza'
-    } else if (emailToUse === 'lucas@mktfy.com.br') {
-      tableName = 'clientes_lucas_falcao'
+    if (isAdmin && selectedManager) {
+      if (selectedManager === 'Andreza') {
+        tableName = 'clientes_andreza'
+      } else if (selectedManager === 'Lucas Falcão') {
+        tableName = 'clientes_lucas_falcao'
+      } else {
+        console.error('❌ Manager selecionado não reconhecido para update:', selectedManager)
+        return false
+      }
     } else {
-      console.error('❌ Email não reconhecido para update:', emailToUse)
-      return false
+      if (emailToUse === 'andreza@mktfy.com.br') {
+        tableName = 'clientes_andreza'
+      } else if (emailToUse === 'lucas@mktfy.com.br') {
+        tableName = 'clientes_lucas_falcao'
+      } else {
+        console.error('❌ Email não reconhecido para update:', emailToUse)
+        return false
+      }
     }
 
     try {
@@ -179,10 +208,11 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
   const addCliente = async (clienteData: Partial<Cliente>): Promise<boolean> => {
     console.log(`🔄 === ADD CLIENTE ===`)
     console.log(`📧 Email gestor: "${emailToUse}"`)
+    console.log(`👤 Selected Manager: "${selectedManager}"`)
     console.log(`📊 Dados do cliente:`, clienteData)
 
-    if (!emailToUse) {
-      console.error('❌ Email não fornecido para adicionar cliente')
+    if (!emailToUse && !selectedManager) {
+      console.error('❌ Email nem manager fornecido para adicionar cliente')
       toast({
         title: "Erro",
         description: "Email do gestor não encontrado",
@@ -191,26 +221,46 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
       return false
     }
 
-    // Determine the table name
+    // Determine the table name and email for insertion
     let tableName = ''
-    if (emailToUse === 'andreza@mktfy.com.br') {
-      tableName = 'clientes_andreza'
-    } else if (emailToUse === 'lucas@mktfy.com.br') {
-      tableName = 'clientes_lucas_falcao'
+    let emailGestor = emailToUse
+    
+    if (isAdmin && selectedManager) {
+      if (selectedManager === 'Andreza') {
+        tableName = 'clientes_andreza'
+        emailGestor = 'andreza@mktfy.com.br'
+      } else if (selectedManager === 'Lucas Falcão') {
+        tableName = 'clientes_lucas_falcao'
+        emailGestor = 'lucas@mktfy.com.br'
+      } else {
+        console.error('❌ Manager selecionado não reconhecido para adicionar cliente:', selectedManager)
+        toast({
+          title: "Erro",
+          description: "Gestor selecionado não autorizado a adicionar clientes",
+          variant: "destructive",
+        })
+        return false
+      }
     } else {
-      console.error('❌ Email não reconhecido para adicionar cliente:', emailToUse)
-      toast({
-        title: "Erro",
-        description: "Gestor não autorizado a adicionar clientes",
-        variant: "destructive",
-      })
-      return false
+      if (emailToUse === 'andreza@mktfy.com.br') {
+        tableName = 'clientes_andreza'
+      } else if (emailToUse === 'lucas@mktfy.com.br') {
+        tableName = 'clientes_lucas_falcao'
+      } else {
+        console.error('❌ Email não reconhecido para adicionar cliente:', emailToUse)
+        toast({
+          title: "Erro",
+          description: "Gestor não autorizado a adicionar clientes",
+          variant: "destructive",
+        })
+        return false
+      }
     }
 
     try {
       const dataToInsert = {
         ...clienteData,
-        email_gestor: emailToUse,
+        email_gestor: emailGestor,
         created_at: new Date().toISOString(),
         site_status: 'pendente' // Default site status
       }
