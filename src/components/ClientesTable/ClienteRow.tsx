@@ -293,7 +293,10 @@ export function ClienteRow({
               size="sm"
               variant="ghost"
               className="h-6 w-6 p-0"
-              onClick={() => setShowSiteOptions(true)}
+              onClick={() => {
+                // Limpar o link existente quando voltamos para aguardando link
+                onLinkEdit(cliente.id, 'link_site', '')
+              }}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
@@ -342,7 +345,10 @@ export function ClienteRow({
                 size="sm"
                 variant="ghost"
                 className="h-6 w-6 p-0"
-                onClick={() => setShowSiteOptions(true)}
+                onClick={() => {
+                  // Limpar o link existente quando voltamos para aguardando link
+                  onLinkEdit(cliente.id, 'link_site', '')
+                }}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
               </Button>
@@ -382,6 +388,16 @@ export function ClienteRow({
       // Atualizar o site_status
       await onStatusChange(cliente.id, option)
       setShowSiteOptions(false)
+      
+      // Se mudou para "aguardando_link", limpar o link_site existente
+      if (option === 'aguardando_link') {
+        console.log('🧹 Limpando link_site existente')
+        await onStatusChange(cliente.id, 'aguardando_link')
+        // Limpar o link do site se existir
+        if (cliente.link_site) {
+          await onLinkSave(cliente.id, 'link_site')
+        }
+      }
     } catch (error) {
       console.error('❌ Erro ao atualizar opção do site:', error)
     }
