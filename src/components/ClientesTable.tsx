@@ -25,6 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { calculateDataLimite, getDataLimiteStyle } from '@/utils/dateUtils'
 
 interface ClientesTableProps {
   selectedManager: string
@@ -49,26 +50,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     
     return matchesSearch && matchesStatus
   })
-
-  const isDataLimiteVencida = (dataLimite: string) => {
-    if (!dataLimite) return false
-    const hoje = new Date()
-    const limite = new Date(dataLimite)
-    return hoje > limite
-  }
-
-  const getDataLimiteStyle = (dataLimite: string) => {
-    if (!dataLimite) return 'bg-muted'
-    
-    const hoje = new Date()
-    const limite = new Date(dataLimite)
-    
-    if (hoje > limite) {
-      return 'bg-red-100 text-red-800 border-red-300'
-    } else {
-      return 'bg-green-100 text-green-800 border-green-300'
-    }
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -195,6 +176,24 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         <ExternalLink className="w-3 h-3 mr-1" />
         Ver
       </Button>
+    )
+  }
+
+  const renderDataLimite = (cliente: any) => {
+    // Calcula a data limite baseada na data de venda
+    const dataLimiteCalculada = cliente.data_venda ? calculateDataLimite(cliente.data_venda) : cliente.data_limite
+    const dataParaExibir = dataLimiteCalculada || cliente.data_limite || '-'
+    
+    if (dataParaExibir === '-') {
+      return <span className="text-muted-foreground">-</span>
+    }
+    
+    const styleClass = getDataLimiteStyle(dataLimiteCalculada, cliente.status_campanha)
+    
+    return (
+      <span className={styleClass}>
+        {dataParaExibir}
+      </span>
     )
   }
 
@@ -465,12 +464,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                         </Select>
                       </TableCell>
                       <TableCell>
-                        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${getDataLimiteStyle(cliente.data_limite)}`}>
-                          {isDataLimiteVencida(cliente.data_limite) && (
-                            <AlertTriangle className="w-3 h-3" />
-                          )}
-                          <span>{cliente.data_limite || '-'}</span>
-                        </div>
+                        {renderDataLimite(cliente)}
                       </TableCell>
                       <TableCell className="hidden lg:table-cell">
                         {renderLinkButton(cliente.link_grupo, 'Grupo')}
