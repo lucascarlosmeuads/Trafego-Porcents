@@ -108,7 +108,7 @@ export function ClienteRow({
   }
 
   const renderWhatsAppButton = (telefone: string) => {
-    if (!telefone) return <span className="text-xs text-white">-</span>
+    if (!telefone) return <span className="text-xs text-contrast">-</span>
     
     // Limpar o número removendo caracteres especiais
     const cleanPhone = telefone.replace(/\D/g, '')
@@ -461,7 +461,7 @@ export function ClienteRow({
 
     return (
       <div className="flex items-center gap-1">
-        <span className="text-xs text-white">
+        <span className="text-xs text-contrast">
           {cliente.numero_bm || '-'}
         </span>
         <Button
@@ -552,19 +552,19 @@ export function ClienteRow({
 
   return (
     <TableRow className="border-border hover:bg-muted/20 transition-colors">
-      <TableCell className="font-mono text-xs text-white">
+      <TableCell className="font-mono text-xs text-contrast">
         {String(index + 1).padStart(3, '0')}
       </TableCell>
       
       <TableCell>
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-white">{formatDate(cliente.data_venda)}</span>
+          <span className="text-xs text-contrast">{formatDate(cliente.data_venda)}</span>
         </div>
       </TableCell>
       
       <TableCell className="font-medium">
-        <div className="max-w-[200px] truncate text-white">
+        <div className="max-w-[200px] truncate text-contrast">
           {cliente.nome_cliente}
         </div>
       </TableCell>
@@ -572,7 +572,7 @@ export function ClienteRow({
       <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
       
       <TableCell>
-        <div className="max-w-[150px] truncate text-white">
+        <div className="max-w-[150px] truncate text-contrast">
           {cliente.email_gestor}
         </div>
       </TableCell>
