@@ -17,6 +17,7 @@ export function GestoresManagement() {
   const [gestores, setGestores] = useState<Gestor[]>([])
   const [loading, setLoading] = useState(true)
   const [modalOpen, setModalOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
   const [formData, setFormData] = useState({
     nome: '',
     email: '',
@@ -69,27 +70,35 @@ export function GestoresManagement() {
       return
     }
 
+    setCreating(true)
     try {
-      // Criar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email,
-        password: formData.senha,
-        email_confirm: true
-      })
+      // Get the current session token
+      const { data: { session } } = await supabase.auth.getSession()
+      
+      if (!session?.access_token) {
+        throw new Error('Usuário não autenticado')
+      }
 
-      if (authError) throw authError
-
-      // Inserir na tabela gestores
-      const { error: insertError } = await supabase
-        .from('gestores')
-        .insert({
-          user_id: authData.user?.id,
+      // Call the edge function to create the user
+      const response = await fetch(`${supabase.supabaseUrl}/functions/v1/create-gestor`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
           nome: formData.nome,
           email: formData.email,
+          senha: formData.senha,
           pode_adicionar_cliente: formData.pode_adicionar_cliente
         })
+      })
 
-      if (insertError) throw insertError
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao criar gestor')
+      }
 
       toast({
         title: "Sucesso",
@@ -106,6 +115,8 @@ export function GestoresManagement() {
         description: error.message || "Erro ao criar gestor",
         variant: "destructive"
       })
+    } finally {
+      setCreating(false)
     }
   }
 
@@ -227,8 +238,12 @@ export function GestoresManagement() {
                     <Label htmlFor="permissao">Permitir adicionar clientes</Label>
                   </div>
                   <div className="flex gap-2 pt-4">
-                    <Button onClick={handleCreateGestor} className="flex-1">
-                      Criar Gestor
+                    <Button 
+                      onClick={handleCreateGestor} 
+                      className="flex-1"
+                      disabled={creating}
+                    >
+                      {creating ? 'Criando...' : 'Criar Gestor'}
                     </Button>
                     <Button variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
                       Cancelar
