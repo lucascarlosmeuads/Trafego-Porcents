@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -66,6 +65,7 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [editingSiteLink, setEditingSiteLink] = useState(false)
   const [siteLinkInput, setSiteLinkInput] = useState('')
+  const [showSiteOptions, setShowSiteOptions] = useState(false)
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -225,7 +225,43 @@ export function ClienteRow({
             size="sm"
             variant="ghost"
             className="h-6 w-6 p-0"
-            onClick={() => setEditingSiteLink(false)}
+            onClick={() => {
+              setEditingSiteLink(false)
+              setSiteLinkInput('')
+              setShowSiteOptions(false)
+            }}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Se está mostrando as opções Sim/Não
+    if (showSiteOptions) {
+      return (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
+            onClick={() => handleSiteOptionSelect('aguardando_link')}
+          >
+            ✅ Sim
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
+            onClick={() => handleSiteOptionSelect('nao_precisa')}
+          >
+            ❌ Não
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => setShowSiteOptions(false)}
           >
             <X className="w-3 h-3 text-red-600" />
           </Button>
@@ -237,34 +273,27 @@ export function ClienteRow({
     switch (siteStatus) {
       case 'pendente':
         return (
-          <Select value="" onValueChange={handleSiteStatusChange}>
-            <SelectTrigger className="h-7 w-auto bg-gray-100 text-gray-600 border-gray-300">
-              <SelectValue>
-                <span className="text-xs">❔ Precisa de site?</span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border z-50">
-              <SelectItem value="aguardando_link">
-                <span className="text-xs">✅ Sim, precisa de site</span>
-              </SelectItem>
-              <SelectItem value="nao_precisa">
-                <span className="text-xs">❌ Não precisa de site</span>
-              </SelectItem>
-            </SelectContent>
-          </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200"
+            onClick={() => setShowSiteOptions(true)}
+          >
+            📎 Precisa de site?
+          </Button>
         )
 
       case 'nao_precisa':
         return (
           <div className="flex items-center gap-1">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-300">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
               ❌ Não precisa
             </span>
             <Button
               size="sm"
               variant="ghost"
               className="h-6 w-6 p-0"
-              onClick={() => handleSiteStatusChange('pendente')}
+              onClick={() => setShowSiteOptions(true)}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
@@ -290,19 +319,6 @@ export function ClienteRow({
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
-            <Select value="" onValueChange={handleSiteStatusChange}>
-              <SelectTrigger className="h-6 w-6 p-0 border-none bg-transparent">
-                <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border z-50">
-                <SelectItem value="nao_precisa">
-                  <span className="text-xs">❌ Não precisa de site</span>
-                </SelectItem>
-                <SelectItem value="pendente">
-                  <span className="text-xs">❔ Voltar para pendente</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         )
 
@@ -353,10 +369,26 @@ export function ClienteRow({
 
       default:
         return (
-          <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
-            ❔ Precisa de site?
-          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-gray-100 text-gray-600 border-gray-300 hover:bg-gray-200"
+            onClick={() => setShowSiteOptions(true)}
+          >
+            📎 Precisa de site?
+          </Button>
         )
+    }
+  }
+
+  const handleSiteOptionSelect = async (option: string) => {
+    console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
+    
+    try {
+      await onStatusChange(cliente.id, option)
+      setShowSiteOptions(false)
+    } catch (error) {
+      console.error('❌ Erro ao atualizar opção do site:', error)
     }
   }
 
@@ -365,6 +397,7 @@ export function ClienteRow({
     
     try {
       await onStatusChange(cliente.id, newStatus)
+      setShowSiteOptions(false)
     } catch (error) {
       console.error('❌ Erro ao atualizar status do site:', error)
     }
@@ -374,12 +407,14 @@ export function ClienteRow({
     console.log('🔗 Abrindo input para link do site')
     setSiteLinkInput(cliente.link_site || '')
     setEditingSiteLink(true)
+    setShowSiteOptions(false)
   }
 
   const handleEditSiteLink = () => {
     console.log('✏️ Editando link do site existente')
     setSiteLinkInput(cliente.link_site || '')
     setEditingSiteLink(true)
+    setShowSiteOptions(false)
   }
 
   const handleSiteLinkSave = async () => {
@@ -402,6 +437,7 @@ export function ClienteRow({
         // Limpar os estados de edição
         setEditingSiteLink(false)
         setSiteLinkInput('')
+        setShowSiteOptions(false)
         
         console.log('✅ Link salvo e status atualizado para finalizado')
       } else {
@@ -509,7 +545,7 @@ export function ClienteRow({
               ? 'bg-green-600 hover:bg-green-700 text-white' 
               : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
           }`}
-          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
+          onClick={()={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
           disabled={updatingComission === cliente.id}
         >
           {updatingComission === cliente.id ? (
