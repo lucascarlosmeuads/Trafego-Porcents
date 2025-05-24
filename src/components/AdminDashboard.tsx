@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -26,18 +25,52 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
-  const getManagerEmail = (managerName: string): string => {
+  const getManagerEmail = async (managerName: string): Promise<string> => {
+    console.log('🔍 [AdminDashboard] Buscando email para o gestor:', managerName)
+    
+    // Primeiro, tentar buscar na tabela gestores
+    try {
+      const { data: gestorData, error: gestorError } = await supabase
+        .from('gestores')
+        .select('nome, email')
+        .eq('nome', managerName)
+        .eq('ativo', true)
+        .single()
+
+      if (!gestorError && gestorData) {
+        console.log('✅ [AdminDashboard] Email encontrado na tabela gestores:', gestorData.email)
+        return gestorData.email
+      }
+    } catch (err) {
+      console.warn('⚠️ [AdminDashboard] Gestor não encontrado na tabela gestores, usando mapeamento manual')
+    }
+
+    // Fallback para mapeamento manual expandido
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com',
+      'Andreza': 'andreza@trafegoporcents.com',
       'Carol': 'carol@trafegoporcents.com',
       'Junior': 'junior@trafegoporcents.com',
+      'Junior Gestor': 'junior@trafegoporcents.com',
       'Daniel': 'daniel@gestor.com',
-      'Kimberlly': 'kimberlly@gestor.com',
-      'Andresa': 'andresa@gestor.com'
+      'Danielmoreira': 'danielmoreira@trafegoporcents.com',
+      'Danielribeiro': 'danielribeiro@trafegoporcents.com',
+      'Kimberlly': 'kimberlly@trafegoporcents.com',
+      'Andresa': 'andresa@gestor.com',
+      'Jose': 'jose@trafegoporcents.com',
+      'Emily': 'emily@trafegoporcents.com',
+      'Falcao': 'falcao@trafegoporcents.com',
+      'Felipe Almeida': 'felipealmeida@trafegoporcents.com',
+      'Franciellen': 'franciellen@trafegoporcents.com',
+      'Guilherme': 'guilherme@trafegoporcents.com',
+      'Leandrodrumzique': 'leandrodrumzique@trafegoporcents.com',
+      'Matheuspaviani': 'matheuspaviani@trafegoporcents.com',
+      'Rullian': 'rullian@trafegoporcents.com'
     }
     
-    return emailMapping[managerName] || 'andreza@gestor.com'
+    const email = emailMapping[managerName] || 'andreza@trafegoporcents.com'
+    console.log('📧 [AdminDashboard] Email do mapeamento manual:', email, 'para gestor:', managerName)
+    return email
   }
 
   const getStatusColor = (status: string) => {
@@ -98,8 +131,8 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       } else {
         console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela unificada para gestor: ${selectedManager}`)
         
-        // CORREÇÃO: Determinar email do gestor para filtro correto
-        const gestorEmail = getManagerEmail(selectedManager)
+        // Determinar email do gestor para filtro correto
+        const gestorEmail = await getManagerEmail(selectedManager)
         console.log(`📧 Admin Dashboard: Email do gestor para filtro: ${gestorEmail}`)
         
         // Buscar dados da tabela unificada filtrados por gestor
@@ -116,6 +149,17 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           gestorEmail,
           filtro: `email_gestor = ${gestorEmail}`
         })
+
+        // Log adicional para debug
+        if (data && data.length > 0) {
+          console.log('🔍 [AdminDashboard] Primeiros 3 registros encontrados:', data.slice(0, 3).map(item => ({
+            id: item.id,
+            nome: item.nome_cliente,
+            email_gestor: item.email_gestor
+          })))
+        } else {
+          console.log('⚠️ [AdminDashboard] Nenhum registro encontrado para o gestor')
+        }
 
         if (!error && data) {
           console.log(`✅ Admin Dashboard: Dados encontrados para ${selectedManager}:`, data.length, 'registros')
@@ -191,7 +235,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       let query = supabase.from('todos_clientes').select('*')
       
       if (selectedManager !== null) {
-        const gestorEmail = getManagerEmail(selectedManager)
+        const gestorEmail = await getManagerEmail(selectedManager)
         query = query.eq('email_gestor', gestorEmail)
         console.log(`📤 Exportando dados filtrados por: ${gestorEmail}`)
       } else {

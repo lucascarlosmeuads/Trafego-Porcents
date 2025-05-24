@@ -12,18 +12,52 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string>('')
 
-  const getManagerEmailFromName = (managerName: string): string => {
+  const getManagerEmailFromName = async (managerName: string): Promise<string> => {
+    console.log('🔍 [useManagerData] Buscando email para o gestor:', managerName)
+    
+    // Primeiro, tentar buscar na tabela gestores
+    try {
+      const { data: gestorData, error: gestorError } = await supabase
+        .from('gestores')
+        .select('nome, email')
+        .eq('nome', managerName)
+        .eq('ativo', true)
+        .single()
+
+      if (!gestorError && gestorData) {
+        console.log('✅ [useManagerData] Email encontrado na tabela gestores:', gestorData.email)
+        return gestorData.email
+      }
+    } catch (err) {
+      console.warn('⚠️ [useManagerData] Gestor não encontrado na tabela gestores, usando mapeamento manual')
+    }
+
+    // Fallback para mapeamento manual expandido
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com',
+      'Andreza': 'andreza@trafegoporcents.com',
       'Carol': 'carol@trafegoporcents.com', 
       'Junior': 'junior@trafegoporcents.com',
+      'Junior Gestor': 'junior@trafegoporcents.com',
       'Daniel': 'daniel@gestor.com',
-      'Kimberlly': 'kimberlly@gestor.com',
-      'Andresa': 'andresa@gestor.com'
+      'Danielmoreira': 'danielmoreira@trafegoporcents.com',
+      'Danielribeiro': 'danielribeiro@trafegoporcents.com',
+      'Kimberlly': 'kimberlly@trafegoporcents.com',
+      'Andresa': 'andresa@gestor.com',
+      'Jose': 'jose@trafegoporcents.com',
+      'Emily': 'emily@trafegoporcents.com',
+      'Falcao': 'falcao@trafegoporcents.com',
+      'Felipe Almeida': 'felipealmeida@trafegoporcents.com',
+      'Franciellen': 'franciellen@trafegoporcents.com',
+      'Guilherme': 'guilherme@trafegoporcents.com',
+      'Leandrodrumzique': 'leandrodrumzique@trafegoporcents.com',
+      'Matheuspaviani': 'matheuspaviani@trafegoporcents.com',
+      'Rullian': 'rullian@trafegoporcents.com'
     }
     
-    return emailMapping[managerName] || 'andreza@gestor.com'
+    const email = emailMapping[managerName] || 'andreza@trafegoporcents.com'
+    console.log('📧 [useManagerData] Email do mapeamento manual:', email, 'para gestor:', managerName)
+    return email
   }
 
   const fetchClientes = async (showToast = false) => {
@@ -87,7 +121,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         setCurrentManager(selectedManager)
         
         // Obter email do gestor selecionado
-        const gestorEmail = getManagerEmailFromName(selectedManager)
+        const gestorEmail = await getManagerEmailFromName(selectedManager)
         console.log('📧 [useManagerData] Email do gestor para filtro:', gestorEmail)
         
         // Aplicar filtro por email_gestor
@@ -107,6 +141,34 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           gestorEmail,
           filtro: `email_gestor = ${gestorEmail}`
         })
+
+        // Log adicional para debug: verificar alguns registros da tabela
+        if (data && data.length > 0) {
+          console.log('🔍 [useManagerData] Primeiros 3 registros encontrados:', data.slice(0, 3).map(item => ({
+            id: item.id,
+            nome: item.nome_cliente,
+            email_gestor: item.email_gestor
+          })))
+        } else {
+          console.log('⚠️ [useManagerData] Nenhum registro encontrado. Vamos verificar se existem dados na tabela com esse email...')
+          
+          // Query de debug para verificar se existem registros com esse email
+          const { data: debugData, error: debugError } = await supabase
+            .from('todos_clientes')
+            .select('email_gestor, count(*)')
+            .eq('email_gestor', gestorEmail)
+
+          console.log('🔍 [useManagerData] Debug - Contagem de registros para', gestorEmail, ':', debugData)
+          
+          // Query adicional para ver todos os emails únicos na tabela
+          const { data: allEmails } = await supabase
+            .from('todos_clientes')
+            .select('email_gestor')
+            .limit(10)
+
+          const uniqueEmails = [...new Set(allEmails?.map(item => item.email_gestor))]
+          console.log('🔍 [useManagerData] Emails únicos encontrados na tabela (sample):', uniqueEmails)
+        }
 
         if (error) {
           console.error('❌ [useManagerData] Erro ao buscar clientes do gestor:', error)
