@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -163,12 +164,10 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}" (tipo: ${typeof clienteId})`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
     console.log(`🎯 Novo Status: "${newStatus}"`)
     
-    // Converter para string se necessário e validar
-    const clienteIdStr = String(clienteId)
-    if (!clienteIdStr || clienteIdStr.trim() === '') {
+    if (!clienteId || clienteId.trim() === '') {
       console.error('❌ ID do cliente inválido:', clienteId)
       toast({
         title: "Erro",
@@ -178,43 +177,22 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       return
     }
 
-    setUpdatingStatus(clienteIdStr)
+    setUpdatingStatus(clienteId)
     
     try {
-      // Check if it's a site status update
-      if (newStatus === 'aguardando_link' || newStatus === 'nao_precisa' || newStatus === 'finalizado') {
-        console.log(`🌐 Atualizando site_status para: ${newStatus}`)
-        const success = await updateCliente(clienteIdStr, 'site_status', newStatus)
-        
-        if (success) {
-          toast({
-            title: "Sucesso",
-            description: `Status do site atualizado`,
-          })
-        } else {
-          toast({
-            title: "Erro",
-            description: "Falha ao atualizar status do site",
-            variant: "destructive",
-          })
-        }
+      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: `Status alterado para: ${newStatus}`,
+        })
       } else {
-        // Regular campaign status update
-        console.log(`📈 Atualizando status_campanha para: ${newStatus}`)
-        const success = await updateCliente(clienteIdStr, 'status_campanha', newStatus)
-        
-        if (success) {
-          toast({
-            title: "Sucesso",
-            description: `Status alterado para: ${newStatus}`,
-          })
-        } else {
-          toast({
-            title: "Erro",
-            description: "Falha ao atualizar status",
-            variant: "destructive",
-          })
-        }
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status",
+          variant: "destructive",
+        })
       }
     } catch (error) {
       console.error('Erro na atualização:', error)
@@ -305,19 +283,12 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   }
 
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
-    const clienteIdStr = String(clienteId)
-    console.log(`💰 === TOGGLE COMISSÃO ===`)
-    console.log(`🆔 Cliente ID: "${clienteIdStr}"`)
-    console.log(`📊 Status atual: ${currentStatus}`)
-    
-    setUpdatingComission(clienteIdStr)
+    setUpdatingComission(clienteId)
     
     try {
       // Toggle the current status - if it's paid, make it unpaid, and vice versa
       const newStatus = !currentStatus
-      console.log(`🔄 Novo status: ${newStatus}`)
-      
-      const success = await updateCliente(clienteIdStr, 'comissao_paga', newStatus)
+      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
       
       if (success) {
         toast({

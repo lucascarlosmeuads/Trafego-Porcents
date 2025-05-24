@@ -1,351 +1,519 @@
-
-import { useState, useEffect, useCallback } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useState, useEffect } from 'react'
+import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
-export interface Cliente {
-  id: string
-  data_venda: string | null
-  nome_cliente: string | null
-  telefone: string | null
-  email_cliente: string | null
-  vendedor: string | null
-  email_gestor: string | null
-  status_campanha: string | null
-  data_limite: string | null
-  link_grupo: string | null
-  link_briefing: string | null
-  link_criativo: string | null
-  link_site: string | null
-  numero_bm: string | null
-  comissao_paga: boolean | null
-  valor_comissao: number | null
-  created_at: string | null
-  data_subida_campanha: string | null
-  data_agendamento: string | null
-  comissao: string | null
-  status_envio: string | null
-  site_status?: string | null
-}
-
-export function useManagerData(emailToUse: string, isAdmin: boolean, selectedManager?: string) {
+export function useManagerData(userEmail: string, isAdmin: boolean, selectedManager?: string) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentManager, setCurrentManager] = useState<string | null>(null)
+  const [currentManager, setCurrentManager] = useState<string>('')
 
-  // Função para mapear email para tabela e manager
-  const getTableAndManagerFromEmail = (email: string) => {
-    console.log(`🔍 Mapeando email: "${email}"`)
+  // Buscar qual tabela contém o email do gestor
+  const findManagerTable = async (email: string): Promise<{ tableName: string; managerName: string } | null> => {
+    console.log('🔍 Buscando tabela para email:', email)
     
-    // Mapeamento direto para emails específicos
-    const directMapping: { [key: string]: { table: string, manager: string } } = {
-      'andreza@mktfy.com.br': { table: 'clientes_andreza', manager: 'Andreza' },
-      'andreza@trafegoporcents.com': { table: 'clientes_andreza', manager: 'Andreza' },
-      'andreza@gestor.com': { table: 'clientes_andreza', manager: 'Andreza' },
-      'lucas@mktfy.com.br': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
-      'lucas.falcao@trafegoporcents.com': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
-      'lucas.falcao@gestor.com': { table: 'clientes_lucas_falcao', manager: 'Lucas Falcão' },
-      'carol@trafegoporcents.com': { table: 'clientes_andreza', manager: 'Carol' }
+    const tablesToCheck = [
+      { name: 'clientes_andreza', manager: 'Andreza' },
+      { name: 'clientes_lucas_falcao', manager: 'Lucas Falcão' }
+    ]
+
+    for (const table of tablesToCheck) {
+      try {
+        const { data, error } = await supabase
+          .from(table.name)
+          .select('email_gestor')
+          .eq('email_gestor', email)
+          .limit(1)
+
+        if (error) {
+          console.error(`❌ Erro ao verificar tabela ${table.name}:`, error)
+          continue
+        }
+
+        if (data && data.length > 0) {
+          console.log(`✅ Email encontrado na tabela: ${table.name}`)
+          return { tableName: table.name, managerName: table.manager }
+        }
+      } catch (err) {
+        console.error(`💥 Erro na busca da tabela ${table.name}:`, err)
+        continue
+      }
     }
 
-    if (directMapping[email]) {
-      console.log(`✅ Mapeamento direto encontrado:`, directMapping[email])
-      return directMapping[email]
-    }
-
-    // Mapeamento automático para domínio @trafegoporcents.com
-    if (email.endsWith('@trafegoporcents.com')) {
-      const username = email.split('@')[0]
-      console.log(`🔄 Usuário do domínio trafegoporcents: "${username}"`)
-      
-      // Para novos gestores, usar tabela da Andreza como padrão
-      return { table: 'clientes_andreza', manager: username.charAt(0).toUpperCase() + username.slice(1) }
-    }
-
-    console.log(`❌ Email não reconhecido para mapeamento`)
+    console.log('❌ Email não encontrado em nenhuma tabela')
     return null
   }
 
-  const fetchClientes = useCallback(async () => {
-    console.log(`🔄 === FETCH CLIENTES ===`)
-    console.log(`📧 Email para busca: "${emailToUse}"`)
-    console.log(`👤 Selected Manager: "${selectedManager}"`)
-    console.log(`🛡️ Is Admin: ${isAdmin}`)
-    
-    if (!emailToUse) {
-      console.log('❌ Email não fornecido, abortando busca')
-      setError('Email não fornecido')
-      setLoading(false)
-      return
+  // Determinar o gestor baseado no email logado ou gestor selecionado (para admin)
+  const determineManager = async (email: string, selectedMgr?: string): Promise<{ manager: string; tableName: string }> => {
+    // Se for admin e tiver gestor selecionado, usar o gestor selecionado
+    if (isAdmin && selectedMgr) {
+      return {
+        manager: selectedMgr,
+        tableName: getTableName(selectedMgr)
+      }
     }
+    
+    if (email === 'lucas@admin.com') {
+      return {
+        manager: 'Lucas Falcão',
+        tableName: 'clientes_lucas_falcao'
+      }
+    }
+    
+    // Mapear emails específicos para gestores (mapeamento direto)
+    const managerMapping: { [key: string]: { manager: string; table: string } } = {
+      'andreza@gestor.com': { manager: 'Andreza', table: 'clientes_andreza' },
+      'lucas.falcao@gestor.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' },
+      'andreza@trafegoporcents.com': { manager: 'Andreza', table: 'clientes_andreza' },
+      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' }
+    }
+    
+    // Se for um email específico mapeado, usar o mapeamento
+    if (managerMapping[email]) {
+      return {
+        manager: managerMapping[email].manager,
+        tableName: managerMapping[email].table
+      }
+    }
+    
+    // 🚀 NOVA LÓGICA: Buscar automaticamente em qual tabela o email existe
+    const foundTable = await findManagerTable(email)
+    if (foundTable) {
+      return {
+        manager: foundTable.managerName,
+        tableName: foundTable.tableName
+      }
+    }
+    
+    // Se não encontrou em nenhuma tabela, extrair nome do email se for @trafegoporcents.com
+    if (email.endsWith('@trafegoporcents.com')) {
+      const username = email.split('@')[0]
+      const managerName = username.charAt(0).toUpperCase() + username.slice(1)
+      return {
+        manager: managerName,
+        tableName: 'clientes_andreza' // Fallback para Andreza
+      }
+    }
+    
+    return {
+      manager: 'Gestor',
+      tableName: 'clientes_andreza' // Fallback para Andreza
+    }
+  }
+
+  // Determinar tabela baseada no nome do gestor
+  const getTableName = (managerName: string): string => {
+    const tableMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'clientes_lucas_falcao',
+      'Andreza': 'clientes_andreza'
+    }
+    
+    return tableMapping[managerName] || 'clientes_andreza'
+  }
+
+  // Determinar email do gestor baseado no nome do gestor (para filtros RLS)
+  const getManagerEmail = (managerName: string): string => {
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@gestor.com'
+    }
+    
+    return emailMapping[managerName] || 'andreza@gestor.com'
+  }
+
+  const fetchClientes = async (showToast = false) => {
+    if (!userEmail) return
 
     setLoading(true)
     setError(null)
 
     try {
-      let tableName = ''
-      let managerName = ''
+      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      
+      setCurrentManager(manager)
+      
+      console.log('🔍 Buscando dados para:', { 
+        userEmail, 
+        manager, 
+        tableName, 
+        selectedManager, 
+        isAdmin 
+      })
+      
+      // Construir query com filtro por email_gestor se não for admin
+      let query = supabase
+        .from(tableName)
+        .select('*', { count: 'exact' })
+        .order('id', { ascending: true })
 
-      // Para admin: usar selectedManager para determinar qual tabela buscar
-      if (isAdmin && selectedManager) {
-        if (selectedManager === 'Andreza') {
-          tableName = 'clientes_andreza'
-          managerName = 'Andreza'
-        } else if (selectedManager === 'Lucas Falcão') {
-          tableName = 'clientes_lucas_falcao'
-          managerName = 'Lucas Falcão'
-        } else {
-          console.log('❌ Manager selecionado não reconhecido:', selectedManager)
-          setError('Gestor selecionado não encontrado')
-          setLoading(false)
-          return
+      // Se não for admin, filtrar apenas registros com email_gestor = email logado
+      if (!isAdmin) {
+        query = query.eq('email_gestor', userEmail)
+        console.log('🔒 Aplicando filtro RLS por email_gestor:', userEmail)
+      }
+
+      const { data, error, count } = await query
+
+      console.log('📊 Resposta do Supabase:', {
+        data: data?.length || 0,
+        count,
+        error,
+        tableName,
+        manager,
+        filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)'
+      })
+
+      if (error) {
+        console.error('❌ Erro ao buscar clientes:', error)
+        setError(`Erro ao carregar dados: ${error.message}`)
+        setClientes([])
+        if (showToast) {
+          toast({
+            title: "Erro",
+            description: `Erro ao atualizar dados`,
+            variant: "destructive"
+          })
         }
       } else {
-        // Para gestor: usar o mapeamento de email
-        const mapping = getTableAndManagerFromEmail(emailToUse)
-        if (!mapping) {
-          console.log('❌ Email não reconhecido para busca na tabela')
-          setError('Gestor não autorizado ou não encontrado')
-          setLoading(false)
-          return
+        console.log(`✅ Dados recebidos para ${manager}:`, data?.length || 0)
+        
+        const clientesFormatados = (data || []).map((item: any) => {
+          if (!item.id || item.id === null || item.id === undefined) {
+            console.error('⚠️ Registro sem ID encontrado:', item)
+            return null
+          }
+          
+          const cliente = {
+            id: String(item.id),
+            data_venda: item.data_venda || '',
+            nome_cliente: item.nome_cliente || '',
+            telefone: item.telefone || '',
+            email_cliente: item.email_cliente || '',
+            vendedor: item.vendedor || '',
+            email_gestor: item.email_gestor || '',
+            status_campanha: item.status_campanha || 'Preenchimento do Formulário',
+            data_limite: item.data_limite || '',
+            link_grupo: item.link_grupo || '',
+            link_briefing: item.link_briefing || '',
+            link_criativo: item.link_criativo || '',
+            link_site: item.link_site || '',
+            numero_bm: item.numero_bm || '',
+            comissao_paga: item.comissao_paga || false,
+            valor_comissao: item.valor_comissao || 60.00,
+            created_at: item.created_at || ''
+          }
+          
+          return cliente
+        }).filter(Boolean)
+        
+        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
+        
+        if (clientesFormatados.length === 0 && !isAdmin) {
+          console.log('ℹ️ Nenhum cliente encontrado para este gestor')
+          setError('Nenhum cliente atribuído a este gestor ainda.')
         }
         
-        tableName = mapping.table
-        managerName = mapping.manager
+        setClientes(clientesFormatados)
+        
+        if (showToast) {
+          toast({
+            title: "Sucesso",
+            description: `Dados atualizados - ${clientesFormatados.length} registros`
+          })
+        }
       }
-
-      console.log(`🗂️ Buscando na tabela: "${tableName}"`)
-      setCurrentManager(managerName)
-
-      const { data, error: fetchError } = await supabase
-        .from(tableName)
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (fetchError) {
-        console.error('❌ Erro ao buscar clientes:', fetchError)
-        setError(`Erro ao carregar clientes: ${fetchError.message}`)
-        return
-      }
-
-      console.log(`✅ Clientes encontrados: ${data?.length || 0}`)
-      if (data && data.length > 0) {
-        console.log(`📊 Primeiro cliente:`, data[0])
-      }
-
-      setClientes(data || [])
     } catch (err) {
-      console.error('❌ Erro inesperado:', err)
-      setError('Erro inesperado ao carregar dados')
+      console.error('💥 Erro na busca:', err)
+      setError(`Erro ao carregar dados`)
+      setClientes([])
+      if (showToast) {
+        toast({
+          title: "Erro",
+          description: `Erro ao atualizar dados`,
+          variant: "destructive"
+        })
+      }
     } finally {
       setLoading(false)
     }
-  }, [emailToUse, selectedManager, isAdmin])
+  }
 
-  const updateCliente = async (clienteId: string, field: string, value: any): Promise<boolean> => {
-    console.log(`🔄 === UPDATE CLIENTE ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}" (tipo: ${typeof clienteId})`)
-    console.log(`🔧 Campo: "${field}"`)
-    console.log(`💾 Valor: "${value}"`)
+  const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
+    console.log(`🚀 === INICIANDO ATUALIZAÇÃO ===`)
+    console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
+    console.log(`🎯 Campo: ${field}`)
+    console.log(`💾 Valor: ${value}`)
+    console.log(`👤 User Email: ${userEmail}`)
+    console.log(`👤 Manager: ${currentManager}`)
 
-    if (!emailToUse && !selectedManager) {
-      console.error('❌ Email nem manager fornecido para update')
+    if (!id || id.trim() === '') {
+      console.error('❌ ID do cliente está vazio ou inválido:', id)
       return false
     }
 
-    // Determine the table name
-    let tableName = ''
-    if (isAdmin && selectedManager) {
-      if (selectedManager === 'Andreza') {
-        tableName = 'clientes_andreza'
-      } else if (selectedManager === 'Lucas Falcão') {
-        tableName = 'clientes_lucas_falcao'
-      } else {
-        console.error('❌ Manager selecionado não reconhecido para update:', selectedManager)
-        return false
-      }
-    } else {
-      const mapping = getTableAndManagerFromEmail(emailToUse)
-      if (!mapping) {
-        console.error('❌ Email não reconhecido para update:', emailToUse)
-        return false
-      }
-      tableName = mapping.table
+    if (!userEmail) {
+      console.error('❌ Email do usuário não fornecido')
+      return false
+    }
+
+    if (!field || field.trim() === '') {
+      console.error('❌ Campo está vazio ou inválido:', field)
+      return false
     }
 
     try {
-      // Handle site status updates
-      if (field === 'site_status' || value === 'aguardando_link' || value === 'nao_precisa') {
-        let updateData: any = {}
-        
-        if (value === 'aguardando_link') {
-          updateData.site_status = 'aguardando_link'
-        } else if (value === 'nao_precisa') {
-          updateData.site_status = 'nao_precisa'
-        } else if (value === 'finalizado') {
-          updateData.site_status = 'finalizado'
-        }
-        
-        console.log(`🔄 Update data para site_status:`, updateData)
-        
-        const { error } = await supabase
-          .from(tableName)
-          .update(updateData)
-          .eq('id', clienteId)
-
-        if (error) {
-          console.error('❌ Erro no update do site status:', error)
-          return false
-        }
-      } else if (field === 'link_site') {
-        // When updating link_site, also update site_status to finalizado
-        const updateData = { 
-          link_site: value,
-          site_status: 'finalizado'
-        }
-        
-        console.log(`🔄 Update data para link_site:`, updateData)
-        
-        const { error } = await supabase
-          .from(tableName)
-          .update(updateData)
-          .eq('id', clienteId)
-
-        if (error) {
-          console.error('❌ Erro no update do link_site:', error)
-          return false
-        }
-      } else {
-        // Regular field update
-        const updateData = { [field]: value }
-        console.log(`🔄 Update data regular:`, updateData)
-        
-        const { error } = await supabase
-          .from(tableName)
-          .update(updateData)
-          .eq('id', clienteId)
-
-        if (error) {
-          console.error('❌ Erro no update:', error)
-          return false
-        }
+      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      const numericId = parseInt(id)
+      
+      console.log(`📋 Tabela: ${tableName}`)
+      console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
+      
+      if (isNaN(numericId) || numericId <= 0) {
+        console.error('❌ ID inválido após conversão:', { original: id, converted: numericId })
+        return false
       }
 
-      console.log('✅ Update realizado com sucesso')
+      console.log('🔍 Verificando se o registro existe...')
+      let checkQuery = supabase
+        .from(tableName)
+        .select('id, status_campanha, nome_cliente')
+        .eq('id', numericId)
+
+      // Se não for admin, aplicar filtro por email_gestor
+      if (!isAdmin) {
+        checkQuery = checkQuery.eq('email_gestor', userEmail)
+      }
+
+      const { data: existingData, error: checkError } = await checkQuery.single()
+
+      if (checkError) {
+        console.error('❌ Erro ao verificar existência do registro:', checkError)
+        return false
+      }
+
+      if (!existingData) {
+        console.error('❌ Nenhum registro encontrado com ID:', numericId)
+        return false
+      }
+
+      console.log('✅ Registro encontrado:', existingData)
       
-      // Refresh the data without changing order
-      await fetchClientes()
+      console.log('🔄 Executando UPDATE...')
+      let updateQuery = supabase
+        .from(tableName)
+        .update({ [field]: value })
+        .eq('id', numericId)
+
+      // Se não for admin, aplicar filtro por email_gestor
+      if (!isAdmin) {
+        updateQuery = updateQuery.eq('email_gestor', userEmail)
+      }
+
+      const { data: updateData, error: updateError } = await updateQuery.select()
+
+      if (updateError) {
+        console.error('❌ Erro ao atualizar cliente:', updateError)
+        return false
+      }
+
+      console.log('✅ Dados atualizados no Supabase:', updateData)
+
+      setClientes(prev => 
+        prev.map(cliente => 
+          cliente.id === id 
+            ? { ...cliente, [field]: value }
+            : cliente
+        )
+      )
+
+      console.log('🎉 === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
       return true
-    } catch (error) {
-      console.error('❌ Erro inesperado no update:', error)
+    } catch (err) {
+      console.error('💥 Erro na atualização (catch):', err)
       return false
     }
   }
 
-  const addCliente = async (clienteData: Partial<Cliente>): Promise<boolean> => {
-    console.log(`🔄 === ADD CLIENTE ===`)
-    console.log(`📧 Email gestor: "${emailToUse}"`)
-    console.log(`👤 Selected Manager: "${selectedManager}"`)
-    console.log(`📊 Dados do cliente:`, clienteData)
-
-    if (!emailToUse && !selectedManager) {
-      console.error('❌ Email nem manager fornecido para adicionar cliente')
-      toast({
-        title: "Erro",
-        description: "Email do gestor não encontrado",
-        variant: "destructive",
-      })
+  const addCliente = async (clienteData: any) => {
+    if (!userEmail) {
+      console.error('❌ Email do usuário não fornecido')
       return false
     }
 
-    // Determine the table name and email for insertion
-    let tableName = ''
-    let emailGestor = emailToUse
-    
-    if (isAdmin && selectedManager) {
-      if (selectedManager === 'Andreza') {
-        tableName = 'clientes_andreza'
-        emailGestor = 'andreza@mktfy.com.br'
-      } else if (selectedManager === 'Lucas Falcão') {
-        tableName = 'clientes_lucas_falcao'
-        emailGestor = 'lucas@mktfy.com.br'
-      } else {
-        console.error('❌ Manager selecionado não reconhecido para adicionar cliente:', selectedManager)
-        toast({
-          title: "Erro",
-          description: "Gestor selecionado não autorizado a adicionar clientes",
-          variant: "destructive",
-        })
-        return false
-      }
-    } else {
-      const mapping = getTableAndManagerFromEmail(emailToUse)
-      if (!mapping) {
-        console.error('❌ Email não reconhecido para adicionar cliente:', emailToUse)
-        toast({
-          title: "Erro",
-          description: "Gestor não autorizado a adicionar clientes",
-          variant: "destructive",
-        })
-        return false
-      }
-      tableName = mapping.table
-    }
-
     try {
-      const dataToInsert = {
+      console.log('🚀 Adicionando novo cliente...')
+      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      
+      console.log(`📋 Tabela de destino: ${tableName}`)
+      console.log(`👤 Manager: ${manager}`)
+      
+      // Preparar dados do cliente com email_gestor automaticamente preenchido
+      const novoCliente = {
         ...clienteData,
-        email_gestor: emailGestor,
-        created_at: new Date().toISOString(),
-        site_status: 'pendente' // Default site status
+        email_gestor: userEmail, // Preenchimento automático com email do usuário logado
+        created_at: new Date().toISOString()
       }
 
-      console.log(`🗂️ Inserindo na tabela: "${tableName}"`)
-      console.log(`📊 Dados finais:`, dataToInsert)
+      console.log('💾 Dados do novo cliente:', novoCliente)
 
       const { data, error } = await supabase
         .from(tableName)
-        .insert([dataToInsert])
+        .insert([novoCliente])
         .select()
 
       if (error) {
-        console.error('❌ Erro ao inserir cliente:', error)
+        console.error('❌ Erro ao adicionar cliente:', error)
         toast({
           title: "Erro",
-          description: `Falha ao adicionar cliente: ${error.message}`,
-          variant: "destructive",
+          description: `Erro ao adicionar cliente: ${error.message}`,
+          variant: "destructive"
         })
         return false
       }
 
       console.log('✅ Cliente adicionado com sucesso:', data)
-      toast({
-        title: "Sucesso",
-        description: "Cliente adicionado com sucesso!",
-      })
-
-      // Refresh the data
+      
+      // Forçar atualização da tabela após inserção
       await fetchClientes()
+      
       return true
     } catch (error) {
-      console.error('❌ Erro inesperado ao adicionar cliente:', error)
+      console.error('💥 Erro na adição do cliente:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
-        variant: "destructive",
+        variant: "destructive"
       })
       return false
     }
   }
 
-  const refetch = useCallback(() => {
-    fetchClientes()
-  }, [fetchClientes])
-
+  // Configurar listener de realtime para atualizações automáticas
   useEffect(() => {
-    fetchClientes()
-  }, [fetchClientes])
+    if (!userEmail) return
+
+    const setupRealtime = async () => {
+      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      
+      console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName, selectedManager })
+
+      // Buscar dados iniciais
+      fetchClientes()
+
+      // Configurar canal de realtime
+      const channel = supabase
+        .channel(`public:${tableName}`)
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: tableName
+          },
+          (payload) => {
+            console.log('🔄 Mudança detectada na tabela:', tableName, payload)
+            
+            // Se não for admin, verificar se a mudança é relevante para este gestor
+            if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
+              console.log('🚫 Mudança não relevante para este gestor')
+              return
+            }
+            
+            if (payload.eventType === 'INSERT') {
+              console.log('➕ Novo cliente inserido:', payload.new)
+              if (payload.new && typeof payload.new === 'object') {
+                const novoCliente = {
+                  id: String(payload.new.id || ''),
+                  nome_cliente: (payload.new.nome_cliente as string) || '',
+                  telefone: (payload.new.telefone as string) || '',
+                  email_cliente: (payload.new.email_cliente as string) || '',
+                  vendedor: (payload.new.vendedor as string) || '',
+                  email_gestor: (payload.new.email_gestor as string) || '',
+                  status_campanha: (payload.new.status_campanha as string) || '',
+                  data_venda: (payload.new.data_venda as string) || '',
+                  data_limite: (payload.new.data_limite as string) || '',
+                  link_grupo: (payload.new.link_grupo as string) || '',
+                  link_briefing: (payload.new.link_briefing as string) || '',
+                  link_criativo: (payload.new.link_criativo as string) || '',
+                  link_site: (payload.new.link_site as string) || '',
+                  numero_bm: (payload.new.numero_bm as string) || '',
+                  created_at: (payload.new.created_at as string) || '',
+                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                }
+                
+                setClientes(prev => {
+                  const updated = [novoCliente, ...prev]
+                  return updated.sort((a, b) => {
+                    const aId = parseInt(a.id) || 0
+                    const bId = parseInt(b.id) || 0
+                    return aId - bId
+                  })
+                })
+              }
+            } else if (payload.eventType === 'UPDATE') {
+              console.log('🔄 Cliente atualizado via realtime:', payload.new)
+              if (payload.new && typeof payload.new === 'object') {
+                const clienteAtualizado = {
+                  id: String(payload.new.id || ''),
+                  nome_cliente: (payload.new.nome_cliente as string) || '',
+                  telefone: (payload.new.telefone as string) || '',
+                  email_cliente: (payload.new.email_cliente as string) || '',
+                  vendedor: (payload.new.vendedor as string) || '',
+                  email_gestor: (payload.new.email_gestor as string) || '',
+                  status_campanha: (payload.new.status_campanha as string) || '',
+                  data_venda: (payload.new.data_venda as string) || '',
+                  data_limite: (payload.new.data_limite as string) || '',
+                  link_grupo: (payload.new.link_grupo as string) || '',
+                  link_briefing: (payload.new.link_briefing as string) || '',
+                  link_criativo: (payload.new.link_criativo as string) || '',
+                  link_site: (payload.new.link_site as string) || '',
+                  numero_bm: (payload.new.numero_bm as string) || '',
+                  created_at: (payload.new.created_at as string) || '',
+                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                }
+                
+                setClientes(prev => 
+                  prev.map(cliente => 
+                    cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
+                  )
+                )
+              }
+            } else if (payload.eventType === 'DELETE') {
+              console.log('🗑️ Cliente removido:', payload.old)
+              if (payload.old && typeof payload.old === 'object' && 'id' in payload.old) {
+                setClientes(prev => 
+                  prev.filter(cliente => cliente.id !== String(payload.old.id))
+                )
+              }
+            }
+          }
+        )
+        .subscribe((status) => {
+          console.log(`📡 Status do realtime para ${tableName}:`, status)
+          if (status === 'SUBSCRIBED') {
+            console.log('✅ Realtime conectado com sucesso!')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.error('❌ Erro no canal de realtime')
+            setTimeout(() => {
+              console.log('🔄 Tentando reconectar realtime...')
+              fetchClientes()
+            }, 2000)
+          }
+        })
+
+      return () => {
+        console.log('🧹 Removendo canal de realtime para:', tableName)
+        supabase.removeChannel(channel)
+      }
+    }
+
+    setupRealtime()
+  }, [userEmail, selectedManager])
+
+  const refetchWithToast = () => fetchClientes(true)
 
   return {
     clientes,
@@ -353,7 +521,7 @@ export function useManagerData(emailToUse: string, isAdmin: boolean, selectedMan
     error,
     updateCliente,
     addCliente,
-    refetch,
+    refetch: refetchWithToast,
     currentManager
   }
 }

@@ -4,14 +4,8 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2 } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -70,10 +64,6 @@ export function ClienteRow({
   comissionValueInput,
   setComissionValueInput
 }: ClienteRowProps) {
-  // Estado local para controlar edição do site
-  const [editingSiteLink, setEditingSiteLink] = useState(false)
-  const [siteUrl, setSiteUrl] = useState('')
-
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
     try {
@@ -114,45 +104,6 @@ export function ClienteRow({
         style: 'bg-blue-100 text-blue-800 border-blue-300'
       }
     }
-  }
-
-  const formatWhatsAppNumber = (phone: string | null) => {
-    if (!phone) return null
-    
-    // Remove todos os caracteres não numéricos
-    const cleaned = phone.replace(/\D/g, '')
-    
-    // Se não começar com 55, adiciona o código do Brasil
-    if (!cleaned.startsWith('55')) {
-      return `55${cleaned}`
-    }
-    
-    return cleaned
-  }
-
-  const renderPhoneCell = () => {
-    if (!cliente.telefone) {
-      return <span className="text-xs text-white">-</span>
-    }
-
-    const whatsappNumber = formatWhatsAppNumber(cliente.telefone)
-    
-    return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white">{cliente.telefone}</span>
-        {whatsappNumber && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs bg-green-600 border-green-600 text-white hover:bg-green-700"
-            onClick={() => window.open(`https://wa.me/${whatsappNumber}`, '_blank')}
-          >
-            <MessageCircle className="w-3 h-3 mr-1" />
-            WhatsApp
-          </Button>
-        )}
-      </div>
-    )
   }
 
   const renderLinkCell = (url: string, field: string, label: string) => {
@@ -220,165 +171,6 @@ export function ClienteRow({
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
       </div>
-    )
-  }
-
-  const renderSiteCell = () => {
-    console.log(`🔍 Renderizando site cell para cliente ${cliente.id}:`, {
-      site_status: (cliente as any).site_status,
-      link_site: cliente.link_site
-    })
-
-    // Determinar o status do site baseado nos dados existentes
-    const siteStatus = (cliente as any).site_status || 'pendente'
-    const siteLink = cliente.link_site
-
-    // Estado: Editando o link do site
-    if (editingSiteLink) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={siteUrl}
-            onChange={(e) => setSiteUrl(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="https://..."
-            autoFocus
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={async () => {
-              if (siteUrl) {
-                console.log(`💾 Salvando URL do site: ${siteUrl}`)
-                // Primeiro salvar o link usando a função existente
-                setLinkValue(siteUrl)
-                await onLinkSave(cliente.id, 'link_site')
-                setEditingSiteLink(false)
-                setSiteUrl('')
-              }
-            }}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => {
-              setEditingSiteLink(false)
-              setSiteUrl('')
-            }}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Estado: Site finalizado com link
-    if (siteStatus === 'finalizado' && siteLink) {
-      return (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
-            onClick={() => window.open(siteLink, '_blank')}
-          >
-            🌐 Ver site
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => {
-              setSiteUrl(siteLink)
-              setEditingSiteLink(true)
-            }}
-          >
-            <Edit2 className="w-3 h-3 text-muted-foreground" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Estado: Aguardando link
-    if (siteStatus === 'aguardando_link') {
-      return (
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-6 px-2 text-xs bg-yellow-50 border-yellow-200 text-yellow-700 hover:bg-yellow-100"
-          onClick={() => {
-            console.log(`🟡 Clicou em aguardando link para cliente ${cliente.id}`)
-            setSiteUrl('')
-            setEditingSiteLink(true)
-          }}
-        >
-          🟡 Aguardando link
-        </Button>
-      )
-    }
-
-    // Estado: Não precisa de site
-    if (siteStatus === 'nao_precisa') {
-      return (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 text-xs bg-red-50 border-red-200 text-red-600 hover:bg-red-100"
-            >
-              ❌ Não precisa
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-48">
-            <DropdownMenuItem
-              onClick={async () => {
-                console.log(`✅ Mudando para "aguardando_link" para cliente ${cliente.id}`)
-                await onStatusChange(cliente.id, 'aguardando_link')
-              }}
-            >
-              ✅ Sim, precisa de site
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      )
-    }
-
-    // Estado: Pendente (padrão) - "Precisa de site?"
-    return (
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
-          >
-            ⚪️ Precisa de site?
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent className="w-48">
-          <DropdownMenuItem
-            onClick={async () => {
-              console.log(`✅ Clicou em "Sim, precisa de site" para cliente ${cliente.id}`)
-              await onStatusChange(cliente.id, 'aguardando_link')
-            }}
-          >
-            ✅ Sim, precisa de site
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={async () => {
-              console.log(`❌ Clicou em "Não precisa de site" para cliente ${cliente.id}`)
-              await onStatusChange(cliente.id, 'nao_precisa')
-            }}
-          >
-            ❌ Não precisa de site
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     )
   }
 
@@ -524,9 +316,7 @@ export function ClienteRow({
         </div>
       </TableCell>
       
-      <TableCell>
-        {renderPhoneCell()}
-      </TableCell>
+      <TableCell className="text-white">{cliente.telefone}</TableCell>
       
       <TableCell>
         <div className="max-w-[150px] truncate text-white">
@@ -591,7 +381,7 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {renderSiteCell()}
+        {renderLinkCell(cliente.link_site || '', 'link_site', 'Site')}
       </TableCell>
       
       <TableCell className="hidden xl:table-cell">

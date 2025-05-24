@@ -159,7 +159,6 @@ export type Database = {
           link_site: string | null
           nome_cliente: string | null
           numero_bm: string | null
-          site_status: string | null
           status_campanha: string | null
           status_envio: string | null
           telefone: string | null
@@ -183,7 +182,6 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
-          site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
@@ -207,7 +205,6 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
-          site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
@@ -234,7 +231,6 @@ export type Database = {
           link_site: string | null
           nome_cliente: string | null
           numero_bm: string | null
-          site_status: string | null
           status_campanha: string | null
           status_envio: string | null
           telefone: string | null
@@ -258,7 +254,6 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
-          site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
@@ -282,7 +277,6 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
-          site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
