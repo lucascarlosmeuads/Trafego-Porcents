@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -191,13 +192,19 @@ export function GestoresManagement() {
 
     setCreating(true)
     try {
-      console.log('🚀 Criando novo gestor:', formData.nome, formData.email)
+      console.log('🚀 [GESTORES] Criando novo gestor com sincronização total:', formData.nome, formData.email)
       
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.access_token) {
         throw new Error('Usuário não autenticado')
       }
+
+      // Mostrar toast de progresso
+      toast({
+        title: "Processando...",
+        description: "Criando gestor no sistema e configurando acesso..."
+      })
 
       const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/create-gestor`, {
         method: 'POST',
@@ -223,11 +230,13 @@ export function GestoresManagement() {
         throw new Error('Resposta inválida do servidor')
       }
 
-      console.log('✅ Gestor criado com sucesso!')
+      console.log('✅ [GESTORES] Sincronização completa realizada!')
+      console.log('👤 [GESTORES] Usuário criado no Auth:', result.user.id)
+      console.log('📊 [GESTORES] Gestor criado na tabela:', result.gestor.id)
       
       toast({
-        title: "Sucesso",
-        description: "Gestor criado com sucesso"
+        title: "✅ Sincronização Completa",
+        description: `${formData.nome} foi criado(a) no sistema e já pode fazer login!`
       })
 
       setModalOpen(false)
@@ -238,10 +247,10 @@ export function GestoresManagement() {
         fetchGestores()
       }, 1000)
     } catch (error: any) {
-      console.error('💥 Erro ao criar gestor:', error)
+      console.error('💥 [GESTORES] Erro na sincronização:', error)
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao criar gestor",
+        title: "❌ Erro na Sincronização",
+        description: error.message || "Erro ao criar gestor e configurar acesso",
         variant: "destructive"
       })
     } finally {
@@ -252,13 +261,19 @@ export function GestoresManagement() {
   const handleDeleteGestor = async (gestorId: string, email: string) => {
     setDeleting(gestorId)
     try {
-      console.log('🗑️ Iniciando exclusão do gestor:', email)
+      console.log('🗑️ [GESTORES] Iniciando exclusão completa do gestor:', email)
 
       const { data: { session } } = await supabase.auth.getSession()
       
       if (!session?.access_token) {
         throw new Error('Usuário não autenticado')
       }
+
+      // Mostrar toast de progresso
+      toast({
+        title: "Processando...",
+        description: "Removendo gestor do sistema e revogando acesso..."
+      })
 
       const response = await fetch(`https://rxpgqunqsegypssoqpyf.supabase.co/functions/v1/delete-gestor`, {
         method: 'POST',
@@ -282,11 +297,17 @@ export function GestoresManagement() {
         throw new Error('Falha na exclusão do gestor')
       }
 
-      console.log('✅ Gestor excluído com sucesso!')
+      console.log('✅ [GESTORES] Exclusão completa realizada!')
+      console.log('🗑️ [GESTORES] Removido da tabela gestores:', result.deletedGestor.nome)
+      console.log('🔐 [GESTORES] Removido do Auth:', result.deletedFromAuth ? 'Sim' : 'Não encontrado')
+
+      const description = result.deletedFromAuth 
+        ? "Gestor removido do sistema e acesso revogado completamente!"
+        : "Gestor removido do sistema (não tinha acesso de login)"
 
       toast({
-        title: "Sucesso",
-        description: "Gestor excluído permanentemente"
+        title: "✅ Exclusão Completa",
+        description: description
       })
 
       // Aguardar um pouco antes de buscar novamente para garantir que a mudança foi processada
@@ -295,10 +316,10 @@ export function GestoresManagement() {
       }, 1000)
 
     } catch (error: any) {
-      console.error('💥 Erro ao excluir gestor:', error)
+      console.error('💥 [GESTORES] Erro na exclusão:', error)
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao excluir gestor",
+        title: "❌ Erro na Exclusão",
+        description: error.message || "Erro ao excluir gestor e revogar acesso",
         variant: "destructive"
       })
     } finally {
@@ -382,6 +403,9 @@ export function GestoresManagement() {
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5" />
               <CardTitle>Gerenciamento de Gestores ({gestores.length})</CardTitle>
+              <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded">
+                🔄 Sincronização Total Ativa
+              </div>
             </div>
             
             <div className="flex gap-2">
@@ -459,6 +483,10 @@ export function GestoresManagement() {
                 </DialogContent>
               </Dialog>
             </div>
+          </div>
+          <div className="text-sm text-muted-foreground">
+            <p>✅ <strong>Sincronização Total:</strong> Criar/excluir gestores aqui reflete automaticamente no Supabase Auth</p>
+            <p>🔐 <strong>Acesso Imediato:</strong> Novos gestores podem fazer login assim que forem criados</p>
           </div>
         </CardHeader>
         <CardContent>
