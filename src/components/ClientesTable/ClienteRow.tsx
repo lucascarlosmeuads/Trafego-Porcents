@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -63,6 +64,9 @@ export function ClienteRow({
   comissionValueInput,
   setComissionValueInput
 }: ClienteRowProps) {
+  const [editingSiteLink, setEditingSiteLink] = useState(false)
+  const [siteLinkInput, setSiteLinkInput] = useState('')
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
     try {
@@ -193,6 +197,183 @@ export function ClienteRow({
         </Button>
       </div>
     )
+  }
+
+  const renderSiteCell = () => {
+    const siteStatus = cliente.site_status || 'pendente'
+    const siteUrl = cliente.link_site || ''
+    
+    // Se está editando o link do site
+    if (editingSiteLink) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={siteLinkInput}
+            onChange={(e) => setSiteLinkInput(e.target.value)}
+            className="h-6 text-xs"
+            placeholder="https://..."
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={handleSiteLinkSave}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => setEditingSiteLink(false)}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Estados do site
+    switch (siteStatus) {
+      case 'pendente':
+        return (
+          <Select value="" onValueChange={handleSiteStatusChange}>
+            <SelectTrigger className="h-7 w-auto bg-gray-100 text-gray-600 border-gray-300">
+              <SelectValue>
+                <span className="text-xs">⚪️ Pendente</span>
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border z-50">
+              <SelectItem value="aguardando_link">
+                <span className="text-xs">✅ Sim, precisa de site</span>
+              </SelectItem>
+              <SelectItem value="nao_precisa">
+                <span className="text-xs">❌ Não precisa de site</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        )
+
+      case 'nao_precisa':
+        return (
+          <div className="flex items-center gap-1">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-700 border border-red-300">
+              ❌ Não precisa
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => handleSiteStatusChange('pendente')}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
+          </div>
+        )
+
+      case 'aguardando_link':
+        return (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300 hover:bg-yellow-200"
+              onClick={handleAguardandoLinkClick}
+            >
+              🟡 Aguardando link
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => handleSiteStatusChange('pendente')}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
+          </div>
+        )
+
+      case 'finalizado':
+        if (siteUrl) {
+          return (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
+                onClick={() => window.open(siteUrl, '_blank')}
+              >
+                🌐 Ver site
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0"
+                onClick={handleEditSiteLink}
+              >
+                <Edit2 className="w-3 h-3 text-muted-foreground" />
+              </Button>
+            </div>
+          )
+        } else {
+          // Fallback se não tiver link mas status é finalizado
+          return (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300"
+              onClick={handleAguardandoLinkClick}
+            >
+              🟡 Aguardando link
+            </Button>
+          )
+        }
+
+      default:
+        return (
+          <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
+            ⚪️ Pendente
+          </span>
+        )
+    }
+  }
+
+  const handleSiteStatusChange = async (newStatus: string) => {
+    console.log('🎯 Mudando status do site:', { clienteId: cliente.id, newStatus })
+    
+    try {
+      // Atualizar o site_status via onStatusChange (que deve ser modificado para aceitar site_status)
+      await onStatusChange(cliente.id, newStatus)
+    } catch (error) {
+      console.error('❌ Erro ao atualizar status do site:', error)
+    }
+  }
+
+  const handleAguardandoLinkClick = () => {
+    console.log('🔗 Abrindo input para link do site')
+    setSiteLinkInput(cliente.link_site || '')
+    setEditingSiteLink(true)
+  }
+
+  const handleEditSiteLink = () => {
+    console.log('✏️ Editando link do site existente')
+    setSiteLinkInput(cliente.link_site || '')
+    setEditingSiteLink(true)
+  }
+
+  const handleSiteLinkSave = async () => {
+    console.log('💾 Salvando link do site:', siteLinkInput)
+    
+    try {
+      // Salvar o link e atualizar status para finalizado
+      await onLinkSave(cliente.id, 'link_site')
+      await onStatusChange(cliente.id, 'finalizado')
+      
+      setEditingSiteLink(false)
+      setSiteLinkInput('')
+    } catch (error) {
+      console.error('❌ Erro ao salvar link do site:', error)
+    }
   }
 
   const renderBMCell = () => {
@@ -402,7 +583,7 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_site || '', 'link_site', 'Site')}
+        {renderSiteCell()}
       </TableCell>
       
       <TableCell className="hidden xl:table-cell">

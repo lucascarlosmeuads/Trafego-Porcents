@@ -177,15 +177,23 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       return
     }
 
+    // Determinar se é status de campanha ou status de site
+    const isSiteStatus = ['pendente', 'aguardando_link', 'nao_precisa', 'finalizado'].includes(newStatus)
+    const field = isSiteStatus ? 'site_status' : 'status_campanha'
+    
+    console.log(`📋 Campo a ser atualizado: ${field}`)
+
     setUpdatingStatus(clienteId)
     
     try {
-      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+      const success = await updateCliente(clienteId, field, newStatus)
       
       if (success) {
         toast({
           title: "Sucesso",
-          description: `Status alterado para: ${newStatus}`,
+          description: isSiteStatus 
+            ? `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`
+            : `Status da campanha alterado para: ${newStatus}`,
         })
       } else {
         toast({
@@ -203,6 +211,16 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       })
     } finally {
       setUpdatingStatus(null)
+    }
+  }
+
+  const getDisplaySiteStatus = (status: string) => {
+    switch (status) {
+      case 'pendente': return 'Pendente'
+      case 'aguardando_link': return 'Aguardando link'
+      case 'nao_precisa': return 'Não precisa'
+      case 'finalizado': return 'Finalizado'
+      default: return status
     }
   }
 
