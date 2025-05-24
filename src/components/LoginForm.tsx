@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -71,7 +72,7 @@ export function LoginForm() {
             <img 
               src={getLogoSrc()}
               alt="Tráfego Porcents Logo" 
-              className="h-20 w-auto object-contain"
+              className="h-32 w-auto object-contain"
               style={{ transition: 'opacity 0.2s ease-in-out' }}
             />
           </div>
