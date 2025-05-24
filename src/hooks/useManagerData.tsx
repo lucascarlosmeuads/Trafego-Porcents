@@ -201,7 +201,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
             numero_bm: item.numero_bm || '',
             comissao_paga: item.comissao_paga || false,
             valor_comissao: item.valor_comissao || 60.00,
-            created_at: item.created_at || ''
+            created_at: item.created_at || '',
+            site_status: item.site_status || 'pendente'
           }
           
           return cliente
@@ -440,7 +441,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
                   numero_bm: (payload.new.numero_bm as string) || '',
                   created_at: (payload.new.created_at as string) || '',
                   comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
+                  site_status: (payload.new.site_status as string) || 'pendente'
                 }
                 
                 setClientes(prev => {
@@ -472,7 +474,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
                   numero_bm: (payload.new.numero_bm as string) || '',
                   created_at: (payload.new.created_at as string) || '',
                   comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00
+                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
+                  site_status: (payload.new.site_status as string) || 'pendente'
                 }
                 
                 setClientes(prev => 

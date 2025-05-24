@@ -25,6 +25,7 @@ export type Cliente = {
   comissao_paga: boolean
   valor_comissao: number
   created_at: string
+  site_status: string
 }
 
 export type Gestor = {
