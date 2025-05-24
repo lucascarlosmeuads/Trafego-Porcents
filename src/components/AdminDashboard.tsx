@@ -17,6 +17,7 @@ export function AdminDashboard() {
     clientesAtivos: 0,
     comissaoTotal: 0
   })
+  const [statusStats, setStatusStats] = useState<{[key: string]: number}>({})
   const [loading, setLoading] = useState(true)
   const { toast } = useToast()
 
@@ -28,16 +29,33 @@ export function AdminDashboard() {
     return tableMapping[managerName] || 'clientes_andreza'
   }
 
+  // Os 7 status do processo
+  const statusList = [
+    { key: 'Formulário', label: 'Formulário', description: 'Aguardando preenchimento' },
+    { key: 'Brief', label: 'Brief', description: 'Briefing preenchido' },
+    { key: 'Criativo', label: 'Criativo', description: 'Criativos em produção' },
+    { key: 'Site', label: 'Site', description: 'Landing page sendo criada' },
+    { key: 'Agendamento', label: 'Agendamento', description: 'Campanha sendo agendada' },
+    { key: 'No Ar', label: 'No Ar', description: 'Campanha rodando' },
+    { key: 'Otimização', label: 'Otimização', description: 'Analisando e otimizando' }
+  ]
+
   useEffect(() => {
-    fetchTotalStats()
+    fetchAllStats()
   }, [])
 
-  const fetchTotalStats = async () => {
+  const fetchAllStats = async () => {
     try {
       setLoading(true)
       let totalClientes = 0
       let clientesAtivos = 0
       let comissaoTotal = 0
+      const statusCounts: {[key: string]: number} = {}
+
+      // Inicializar contadores de status
+      statusList.forEach(status => {
+        statusCounts[status.key] = 0
+      })
 
       // Buscar dados de todas as tabelas dos gerentes
       for (const manager of managers) {
@@ -51,7 +69,18 @@ export function AdminDashboard() {
         if (!error && data) {
           console.log(`Dados encontrados para ${manager}:`, data.length, 'registros')
           totalClientes += data.length
-          clientesAtivos += data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Concluída').length
+          clientesAtivos += data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
+          
+          // Contar status
+          data.forEach(cliente => {
+            const status = cliente.status_campanha || 'Formulário'
+            if (statusCounts.hasOwnProperty(status)) {
+              statusCounts[status]++
+            } else {
+              // Se o status não está na lista, adicionar ao Formulário como fallback
+              statusCounts['Formulário']++
+            }
+          })
           
           // Calcular comissão total
           const comissaoTabela = data.reduce((total, cliente) => {
@@ -65,11 +94,14 @@ export function AdminDashboard() {
       }
 
       console.log('Estatísticas totais:', { totalClientes, clientesAtivos, comissaoTotal })
+      console.log('Estatísticas por status:', statusCounts)
+      
       setTotalStats({
         totalClientes,
         clientesAtivos,
         comissaoTotal
       })
+      setStatusStats(statusCounts)
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error)
       toast({
@@ -193,7 +225,7 @@ export function AdminDashboard() {
                   <h2 className="text-lg font-semibold">Resumo Geral - Todos os Gerentes</h2>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={fetchTotalStats} variant="outline" size="sm">
+                  <Button onClick={fetchAllStats} variant="outline" size="sm">
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Atualizar
                   </Button>
@@ -248,6 +280,40 @@ export function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+
+          {/* Nova seção: Resumo por Status */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Resumo por Status - Todas as Etapas</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {statusList.map(status => (
+                  <div key={status.key} className="p-4 border rounded-lg bg-gray-50 dark:bg-gray-800">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-sm">{status.label}</h3>
+                      <span className="text-2xl font-bold text-blue-600">
+                        {statusStats[status.key] || 0}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
+                      {status.description}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Resumo total na parte inferior */}
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
+                  <span>Total de clientes em todas as etapas:</span>
+                  <span className="font-bold text-lg">
+                    {Object.values(statusStats).reduce((sum, count) => sum + count, 0)}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Resumo por Gerente */}
           <Card>
