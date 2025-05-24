@@ -361,7 +361,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={13} className="text-center py-8 text-white">
+                  <TableCell colSpan={15} className="text-center py-8 text-white">
                     {clientes.length === 0 
                       ? `Nenhum cliente encontrado`
                       : `Nenhum cliente corresponde aos filtros aplicados (${clientes.length} clientes no total)`

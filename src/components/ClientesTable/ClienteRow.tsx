@@ -299,36 +299,56 @@ export function ClienteRow({
       key={`${selectedManager}-${clienteId}-${index}`}
       className="border-border hover:bg-muted/10 transition-colors"
     >
+      {/* ID */}
       <TableCell className="font-mono text-xs">
         <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/30 rounded px-2 py-1 shadow-sm">
           <span className="text-slate-400 mr-1">#</span>
           <span className="text-white font-medium">{clienteId}</span>
         </div>
       </TableCell>
+      
+      {/* Data Venda */}
       <TableCell>
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3 text-muted-foreground" />
           <span className="text-xs text-white">{cliente.data_venda || '-'}</span>
         </div>
       </TableCell>
+      
+      {/* Nome Cliente */}
       <TableCell className="font-medium">
         <div className="max-w-[200px] truncate text-white">
           {cliente.nome_cliente || '-'}
         </div>
       </TableCell>
+      
+      {/* Telefone */}
       <TableCell>
         {renderWhatsAppButton(cliente.telefone)}
       </TableCell>
+      
+      {/* Email Cliente */}
+      <TableCell>
+        <div className="max-w-[150px] truncate text-white text-xs">
+          {cliente.email_cliente || '-'}
+        </div>
+      </TableCell>
+      
+      {/* Vendedor */}
       <TableCell>
         <div className="max-w-[150px] truncate text-white text-xs">
           {cliente.vendedor || '-'}
         </div>
       </TableCell>
+      
+      {/* Email Gestor */}
       <TableCell>
         <div className="max-w-[150px] truncate text-white text-xs">
           {cliente.email_gestor || '-'}
         </div>
       </TableCell>
+      
+      {/* Status Campanha */}
       <TableCell>
         <Select 
           value={cliente.status_campanha || ''}
@@ -358,24 +378,38 @@ export function ClienteRow({
           </SelectContent>
         </Select>
       </TableCell>
+      
+      {/* Data Limite */}
       <TableCell>
         {renderDataLimite()}
       </TableCell>
+      
+      {/* Grupo */}
       <TableCell className="hidden lg:table-cell">
         {renderLinkField('link_grupo')}
       </TableCell>
+      
+      {/* Briefing */}
       <TableCell className="hidden lg:table-cell">
         {renderLinkField('link_briefing')}
       </TableCell>
+      
+      {/* Criativo */}
       <TableCell className="hidden lg:table-cell">
         {renderLinkField('link_criativo')}
       </TableCell>
+      
+      {/* Site */}
       <TableCell className="hidden lg:table-cell">
         {renderLinkField('link_site')}
       </TableCell>
+      
+      {/* Número BM */}
       <TableCell className="hidden xl:table-cell">
         {renderBMField()}
       </TableCell>
+      
+      {/* Comissão */}
       <TableCell>
         {renderComissionField()}
       </TableCell>

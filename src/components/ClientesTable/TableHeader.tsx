@@ -32,6 +32,24 @@ export function TableHeader() {
             <span>Telefone</span>
           </div>
         </TableHead>
+        <TableHead className="min-w-[150px] text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-400">@</span>
+            <span>Email Cliente</span>
+          </div>
+        </TableHead>
+        <TableHead className="min-w-[150px] text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+            <span>Vendedor</span>
+          </div>
+        </TableHead>
+        <TableHead className="min-w-[150px] text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
+          <div className="flex items-center gap-2">
+            <span className="text-cyan-400">@</span>
+            <span>Email Gestor</span>
+          </div>
+        </TableHead>
         <TableHead className="min-w-[180px] text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
           <div className="flex items-center gap-2">
             <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
