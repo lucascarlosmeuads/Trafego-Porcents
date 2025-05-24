@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/lib/supabase'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
