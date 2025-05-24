@@ -43,6 +43,14 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 13% 25%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Tokens personalizados para melhor contraste */
+    --text-primary: 222.2 84% 4.9%;
+    --text-secondary: 215.4 16.3% 46.9%;
+    --text-accent: 222.2 47.4% 11.2%;
+    --bg-primary: 0 0% 100%;
+    --bg-secondary: 210 40% 96.1%;
+    --bg-accent: 210 40% 96.1%;
   }
 
   .dark {
@@ -82,6 +90,14 @@
     --sidebar-accent-foreground: 210 40% 98%;
     --sidebar-border: 220 13% 15%;
     --sidebar-ring: 217.2 91.2% 59.8%;
+
+    /* Tokens personalizados para modo escuro */
+    --text-primary: 210 40% 98%;
+    --text-secondary: 215 20.2% 65.1%;
+    --text-accent: 210 40% 98%;
+    --bg-primary: 220 13% 9%;
+    --bg-secondary: 220 13% 16%;
+    --bg-accent: 220 13% 16%;
   }
 }
 
@@ -95,122 +111,299 @@
   }
 }
 
-/* Estilos customizados para tabelas */
-.table-dark {
-  @apply bg-card border-border;
+/* Componentes com melhor contraste */
+@layer components {
+  .text-contrast {
+    color: hsl(var(--text-primary));
+  }
+  
+  .text-contrast-secondary {
+    color: hsl(var(--text-secondary));
+  }
+  
+  .bg-contrast {
+    background-color: hsl(var(--bg-primary));
+  }
+  
+  .bg-contrast-secondary {
+    background-color: hsl(var(--bg-secondary));
+  }
+
+  /* Headers e títulos com contraste garantido */
+  .header-title {
+    color: hsl(var(--text-primary)) !important;
+    font-weight: 600;
+  }
+  
+  .header-subtitle {
+    color: hsl(var(--text-secondary)) !important;
+    font-weight: 500;
+  }
+
+  /* Botões com contraste melhorado */
+  .btn-contrast {
+    background-color: hsl(var(--primary));
+    color: hsl(var(--primary-foreground));
+    border: 1px solid hsl(var(--border));
+  }
+  
+  .btn-contrast:hover {
+    background-color: hsl(var(--primary) / 0.9);
+  }
+
+  /* Dropdown com fundo sólido */
+  .dropdown-content {
+    background-color: hsl(var(--popover)) !important;
+    border: 1px solid hsl(var(--border));
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    z-index: 50;
+  }
+  
+  .dropdown-item {
+    color: hsl(var(--popover-foreground)) !important;
+    padding: 8px 12px;
+  }
+  
+  .dropdown-item:hover {
+    background-color: hsl(var(--accent));
+    color: hsl(var(--accent-foreground)) !important;
+  }
+
+  /* Cards de status com contraste melhorado */
+  .status-card {
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--card));
+  }
+  
+  .status-card h3 {
+    color: hsl(var(--card-foreground)) !important;
+    font-weight: 600;
+  }
+  
+  .status-card .status-number {
+    color: hsl(var(--card-foreground)) !important;
+    font-weight: 700;
+  }
+  
+  .status-card .status-description {
+    color: hsl(var(--muted-foreground)) !important;
+  }
+
+  /* Ícones com contraste adequado */
+  .icon-contrast {
+    color: hsl(var(--foreground));
+  }
+  
+  .icon-muted {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Menu lateral com melhor contraste */
+  .sidebar-item {
+    color: hsl(var(--sidebar-foreground)) !important;
+    padding: 8px 16px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+  
+  .sidebar-item:hover {
+    background-color: hsl(var(--sidebar-accent)) !important;
+    color: hsl(var(--sidebar-accent-foreground)) !important;
+  }
+  
+  .sidebar-item.active {
+    background-color: hsl(var(--sidebar-primary)) !important;
+    color: hsl(var(--sidebar-primary-foreground)) !important;
+    border-left: 3px solid hsl(var(--sidebar-ring));
+  }
+
+  /* Badges e tags com contraste */
+  .badge-contrast {
+    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--secondary));
+    color: hsl(var(--secondary-foreground)) !important;
+  }
+
+  /* Tabelas com melhor legibilidade */
+  .table-header {
+    background-color: hsl(var(--muted)) !important;
+    color: hsl(var(--foreground)) !important;
+    font-weight: 600;
+    border-bottom: 1px solid hsl(var(--border));
+  }
+  
+  .table-cell {
+    color: hsl(var(--foreground)) !important;
+    border-bottom: 1px solid hsl(var(--border));
+    padding: 12px 8px;
+  }
+  
+  .table-row:hover {
+    background-color: hsl(var(--muted) / 0.5) !important;
+  }
+  
+  .table-row:hover .table-cell {
+    color: hsl(var(--foreground)) !important;
+  }
+
+  /* Inputs com contraste melhorado */
+  .input-contrast {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+    border: 1px solid hsl(var(--border));
+  }
+  
+  .input-contrast:focus {
+    border-color: hsl(var(--ring));
+    outline: 2px solid hsl(var(--ring) / 0.2);
+  }
+  
+  .input-contrast::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+
+  /* Mobile specific improvements */
+  @media (max-width: 768px) {
+    .mobile-text {
+      font-size: 16px;
+      line-height: 1.5;
+      color: hsl(var(--foreground)) !important;
+    }
+    
+    .mobile-header {
+      font-size: 18px;
+      font-weight: 600;
+      color: hsl(var(--foreground)) !important;
+      margin-bottom: 8px;
+    }
+    
+    .mobile-button {
+      min-height: 44px;
+      font-size: 16px;
+      color: hsl(var(--primary-foreground)) !important;
+      background-color: hsl(var(--primary));
+      border: 1px solid hsl(var(--border));
+    }
+  }
 }
 
-.table-dark th {
-  @apply bg-muted/30 text-muted-foreground border-border;
+/* Status específicos com cores melhoradas e contraste garantido */
+.status-formulario {
+  background-color: hsl(220 13% 91% / 0.3);
+  color: hsl(220 13% 20%) !important;
+  border: 1px solid hsl(220 13% 70%);
 }
 
-.table-dark tr {
-  @apply border-border;
+.dark .status-formulario {
+  background-color: hsl(220 13% 20% / 0.3);
+  color: hsl(220 13% 90%) !important;
+  border: 1px solid hsl(220 13% 40%);
 }
 
-.table-dark tr:hover {
-  @apply bg-muted/20;
+.status-brief {
+  background-color: hsl(217 91% 91% / 0.3);
+  color: hsl(217 91% 20%) !important;
+  border: 1px solid hsl(217 91% 70%);
 }
 
-.table-dark tr:hover td {
-  @apply text-foreground;
+.dark .status-brief {
+  background-color: hsl(217 91% 20% / 0.3);
+  color: hsl(217 91% 90%) !important;
+  border: 1px solid hsl(217 91% 40%);
 }
 
-/* Efeito hover suave para células editáveis */
-.editable-cell:hover {
-  @apply bg-muted/30 transition-colors duration-200;
+.status-criativo {
+  background-color: hsl(271 81% 91% / 0.3);
+  color: hsl(271 81% 20%) !important;
+  border: 1px solid hsl(271 81% 70%);
 }
 
-/* Estilo para sidebar mais escura */
-.sidebar-dark {
-  background: hsl(var(--sidebar-background));
-  border-color: hsl(var(--sidebar-border));
+.dark .status-criativo {
+  background-color: hsl(271 81% 20% / 0.3);
+  color: hsl(271 81% 90%) !important;
+  border: 1px solid hsl(271 81% 40%);
 }
 
-.sidebar-dark .sidebar-item {
-  color: hsl(var(--sidebar-foreground));
+.status-site {
+  background-color: hsl(25 95% 91% / 0.3);
+  color: hsl(25 95% 20%) !important;
+  border: 1px solid hsl(25 95% 70%);
 }
 
-.sidebar-dark .sidebar-item:hover {
-  background: hsl(var(--sidebar-accent));
-  color: hsl(var(--sidebar-accent-foreground));
+.dark .status-site {
+  background-color: hsl(25 95% 20% / 0.3);
+  color: hsl(25 95% 90%) !important;
+  border: 1px solid hsl(25 95% 40%);
 }
 
-.sidebar-dark .sidebar-item.active {
-  background: hsl(var(--sidebar-primary));
-  color: hsl(var(--sidebar-primary-foreground));
-  border-left: 3px solid hsl(var(--sidebar-ring));
+.status-agendamento {
+  background-color: hsl(45 93% 91% / 0.3);
+  color: hsl(45 93% 20%) !important;
+  border: 1px solid hsl(45 93% 70%);
 }
 
-/* Melhor contraste para modo escuro no dashboard */
-.dark .dashboard-status-card {
-  color: #FFFFFF !important;
+.dark .status-agendamento {
+  background-color: hsl(45 93% 20% / 0.3);
+  color: hsl(45 93% 90%) !important;
+  border: 1px solid hsl(45 93% 40%);
 }
 
-.dark .dashboard-status-card h3 {
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+.status-no-ar {
+  background-color: hsl(142 71% 91% / 0.3);
+  color: hsl(142 71% 20%) !important;
+  border: 1px solid hsl(142 71% 70%);
 }
 
-.dark .dashboard-status-card .text-2xl {
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+.dark .status-no-ar {
+  background-color: hsl(142 71% 20% / 0.3);
+  color: hsl(142 71% 90%) !important;
+  border: 1px solid hsl(142 71% 40%);
 }
 
-.dark .dashboard-status-card .text-xs {
-  color: #E5E5E5 !important;
+.status-otimizacao {
+  background-color: hsl(160 84% 91% / 0.3);
+  color: hsl(160 84% 20%) !important;
+  border: 1px solid hsl(160 84% 70%);
 }
 
-/* Melhorar contraste nos cards de status específicos */
-.dark .bg-gray-500\/20 {
-  color: #FFFFFF !important;
+.dark .status-otimizacao {
+  background-color: hsl(160 84% 20% / 0.3);
+  color: hsl(160 84% 90%) !important;
+  border: 1px solid hsl(160 84% 40%);
 }
 
-.dark .bg-blue-500\/20 {
-  color: #FFFFFF !important;
+.status-problema {
+  background-color: hsl(0 84% 91% / 0.3);
+  color: hsl(0 84% 20%) !important;
+  border: 1px solid hsl(0 84% 70%);
 }
 
-.dark .bg-purple-500\/20 {
-  color: #FFFFFF !important;
+.dark .status-problema {
+  background-color: hsl(0 84% 20% / 0.3);
+  color: hsl(0 84% 90%) !important;
+  border: 1px solid hsl(0 84% 40%);
 }
 
-.dark .bg-orange-500\/20 {
-  color: #FFFFFF !important;
+.status-off {
+  background-color: hsl(210 40% 91% / 0.3);
+  color: hsl(210 40% 20%) !important;
+  border: 1px solid hsl(210 40% 70%);
 }
 
-.dark .bg-yellow-500\/20 {
-  color: #FFFFFF !important;
+.dark .status-off {
+  background-color: hsl(210 40% 20% / 0.3);
+  color: hsl(210 40% 90%) !important;
+  border: 1px solid hsl(210 40% 40%);
 }
 
-.dark .bg-green-500\/20 {
-  color: #FFFFFF !important;
+.status-reembolso {
+  background-color: hsl(0 84% 91% / 0.3);
+  color: hsl(0 84% 20%) !important;
+  border: 1px solid hsl(0 84% 70%);
 }
 
-.dark .bg-emerald-500\/20 {
-  color: #FFFFFF !important;
-}
-
-/* Melhorar contraste nos números dos status */
-.dark .bg-gray-500\/20 .text-2xl,
-.dark .bg-blue-500\/20 .text-2xl,
-.dark .bg-purple-500\/20 .text-2xl,
-.dark .bg-orange-500\/20 .text-2xl,
-.dark .bg-yellow-500\/20 .text-2xl,
-.dark .bg-green-500\/20 .text-2xl,
-.dark .bg-emerald-500\/20 .text-2xl {
-  color: #FFFFFF !important;
-  font-weight: 700 !important;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-}
-
-/* Melhorar contraste nos títulos dos status */
-.dark .bg-gray-500\/20 .font-semibold,
-.dark .bg-blue-500\/20 .font-semibold,
-.dark .bg-purple-500\/20 .font-semibold,
-.dark .bg-orange-500\/20 .font-semibold,
-.dark .bg-yellow-500\/20 .font-semibold,
-.dark .bg-green-500\/20 .font-semibold,
-.dark .bg-emerald-500\/20 .font-semibold {
-  color: #FFFFFF !important;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+.dark .status-reembolso {
+  background-color: hsl(0 84% 20% / 0.3);
+  color: hsl(0 84% 90%) !important;
+  border: 1px solid hsl(0 84% 40%);
 }

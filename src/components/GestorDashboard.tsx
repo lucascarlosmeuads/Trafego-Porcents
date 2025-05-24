@@ -53,18 +53,18 @@ export function GestorDashboard() {
   }, [clientes, user?.email, isAdmin])
 
   if (loading || permissionsLoading) {
-    return <div className="flex items-center justify-center py-8">Carregando...</div>
+    return <div className="flex items-center justify-center py-8 text-contrast">Carregando...</div>
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Dashboard - {currentManagerName}</h1>
+          <h1 className="text-3xl font-bold header-title">Dashboard - {currentManagerName}</h1>
           {!isAdmin && (
             <div className="flex items-center gap-2 text-sm text-green-600 mt-2">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              <span>🔒 Filtro de Segurança Ativo - Dados filtrados por: {user?.email}</span>
+              <span className="header-subtitle">🔒 Filtro de Segurança Ativo - Dados filtrados por: {user?.email}</span>
             </div>
           )}
         </div>
@@ -75,7 +75,7 @@ export function GestorDashboard() {
               selectedManager={currentManagerName} 
               onClienteAdicionado={refetch}
             />
-            <span className="text-xs text-green-600 bg-green-50 px-2 py-1 rounded">
+            <span className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded badge-contrast">
               ✅ Pode adicionar clientes
             </span>
           </div>
@@ -83,11 +83,11 @@ export function GestorDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4">
-          <TabsTrigger value="dashboard">📊 Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="problemas">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
-          <TabsTrigger value="inativos">📋 Inativos ({clientesInativos.length})</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-4 bg-muted">
+          <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
+          <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
+          <TabsTrigger value="problemas" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
+          <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
         </TabsList>
         
         <TabsContent value="dashboard" className="space-y-6">
