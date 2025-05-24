@@ -120,8 +120,101 @@ export function useManagerData(selectedManager: string) {
     }
   }
 
+  // Configurar listener de realtime para atualizações automáticas
   useEffect(() => {
+    if (!selectedManager) return
+
+    const tableName = getTableName(selectedManager)
+    console.log('Configurando realtime para tabela:', tableName)
+
+    // Buscar dados iniciais
     fetchClientes()
+
+    // Configurar canal de realtime
+    const channel = supabase
+      .channel(`realtime-${tableName}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // Escutar todos os eventos (INSERT, UPDATE, DELETE)
+          schema: 'public',
+          table: tableName
+        },
+        (payload) => {
+          console.log('Mudança detectada na tabela:', payload)
+          
+          if (payload.eventType === 'INSERT') {
+            console.log('Novo cliente inserido:', payload.new)
+            // Adicionar novo cliente ao estado
+            const novoCliente = {
+              id: payload.new.id?.toString() || '',
+              data_venda: payload.new.data_venda || '',
+              nome_cliente: payload.new.nome_cliente || '',
+              telefone: payload.new.telefone || '',
+              email_cliente: payload.new.email_cliente || '',
+              nome_vendedor: payload.new.vendedor || '',
+              email_gestor_responsavel: payload.new.email_gestor || '',
+              email_gestor: payload.new.email_gestor || '',
+              status_campanha: payload.new.status_campanha || '',
+              data_limite: payload.new.data_limite || '',
+              data_subida_campanha: payload.new.data_subida_campanha || '',
+              link_grupo: payload.new.link_grupo || '',
+              link_reuniao_1: payload.new.link_briefing || '',
+              link_reuniao_2: payload.new.link_criativo || '',
+              link_reuniao_3: payload.new.link_site || '',
+              bm_identificacao: payload.new.numero_bm || '',
+              created_at: payload.new.created_at || '',
+              comissao: payload.new.comissao || ''
+            }
+            
+            setClientes(prev => [novoCliente, ...prev])
+          } else if (payload.eventType === 'UPDATE') {
+            console.log('Cliente atualizado:', payload.new)
+            // Atualizar cliente existente
+            const clienteAtualizado = {
+              id: payload.new.id?.toString() || '',
+              data_venda: payload.new.data_venda || '',
+              nome_cliente: payload.new.nome_cliente || '',
+              telefone: payload.new.telefone || '',
+              email_cliente: payload.new.email_cliente || '',
+              nome_vendedor: payload.new.vendedor || '',
+              email_gestor_responsavel: payload.new.email_gestor || '',
+              email_gestor: payload.new.email_gestor || '',
+              status_campanha: payload.new.status_campanha || '',
+              data_limite: payload.new.data_limite || '',
+              data_subida_campanha: payload.new.data_subida_campanha || '',
+              link_grupo: payload.new.link_grupo || '',
+              link_reuniao_1: payload.new.link_briefing || '',
+              link_reuniao_2: payload.new.link_criativo || '',
+              link_reuniao_3: payload.new.link_site || '',
+              bm_identificacao: payload.new.numero_bm || '',
+              created_at: payload.new.created_at || '',
+              comissao: payload.new.comissao || ''
+            }
+            
+            setClientes(prev => 
+              prev.map(cliente => 
+                cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
+              )
+            )
+          } else if (payload.eventType === 'DELETE') {
+            console.log('Cliente removido:', payload.old)
+            // Remover cliente do estado
+            setClientes(prev => 
+              prev.filter(cliente => cliente.id !== payload.old.id?.toString())
+            )
+          }
+        }
+      )
+      .subscribe((status) => {
+        console.log(`Status do realtime para ${tableName}:`, status)
+      })
+
+    // Cleanup do canal quando o componente desmontar ou gerente mudar
+    return () => {
+      console.log('Removendo canal de realtime para:', tableName)
+      supabase.removeChannel(channel)
+    }
   }, [selectedManager])
 
   return {
