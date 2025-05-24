@@ -88,17 +88,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       return
     }
 
-    // Verificar se é um ID temporário
     const numericId = parseInt(clienteId)
-    if (numericId > 1000000000000) { // ID temporário muito alto
-      toast({
-        title: "Aviso",
-        description: "Este cliente precisa ser salvo no banco de dados antes de ser editado.",
-        variant: "default",
-      })
-      return
-    }
-
     if (isNaN(numericId) || numericId <= 0) {
       console.error('❌ ERRO CRÍTICO: ID não é um número válido:', { clienteId, numericId })
       toast({
@@ -366,38 +356,21 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 </TableRow>
               ) : (
                 filteredClientes.map((cliente, index) => {
-                  // CORREÇÃO: Aceitar qualquer ID válido, incluindo temporários
                   const clienteId = String(cliente.id || '')
                   
-                  // Log para debugging
-                  console.log(`🔍 Renderizando cliente ${index + 1}:`, {
-                    idOriginal: cliente.id,
-                    idProcessado: clienteId,
-                    nome: cliente.nome_cliente,
-                    status: cliente.status_campanha,
-                    dadosCompletos: cliente
-                  })
-
-                  // Só não renderizar se realmente não tiver ID
+                  // Não renderizar se não tiver ID válido
                   if (!clienteId || clienteId.trim() === '' || clienteId === 'undefined') {
                     console.warn(`⚠️ Cliente ${index + 1} tem ID completamente inválido, não será renderizado:`, cliente)
                     return null
                   }
 
-                  // Verificar se é um ID temporário
-                  const isTemporaryId = parseInt(clienteId) > 1000000000000
-                  
                   return (
                     <TableRow 
                       key={`${selectedManager}-${clienteId}-${index}`}
                       className="border-border hover:bg-muted/10 transition-colors"
                     >
                       <TableCell className="font-mono text-xs text-foreground">
-                        {isTemporaryId ? (
-                          <span className="text-orange-600 font-bold">TEMP</span>
-                        ) : (
-                          String(index + 1).padStart(3, '0')
-                        )}
+                        {clienteId}
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">
@@ -433,12 +406,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                             console.log(`🎯 Select onChange disparado:`, {
                               clienteId: clienteId,
                               novoStatus: value,
-                              clienteOriginal: cliente,
-                              isTemporary: isTemporaryId,
-                              validacao: {
-                                idValido: !!(clienteId && clienteId.trim() !== ''),
-                                statusValido: !!(value && value.trim() !== '')
-                              }
+                              clienteOriginal: cliente
                             })
                             
                             if (!clienteId || clienteId.trim() === '') {
@@ -453,16 +421,13 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                             
                             handleStatusChange(clienteId, value)
                           }}
-                          disabled={updatingStatus === clienteId || isTemporaryId}
+                          disabled={updatingStatus === clienteId}
                         >
                           <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground z-[400]">
                             <SelectValue>
                               <div className="flex items-center gap-2">
                                 {updatingStatus === clienteId && (
                                   <RefreshCw className="w-3 h-3 animate-spin" />
-                                )}
-                                {isTemporaryId && (
-                                  <AlertTriangle className="w-3 h-3 text-orange-600" />
                                 )}
                                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
                                   {cliente.status_campanha || 'Selecionar Status'}

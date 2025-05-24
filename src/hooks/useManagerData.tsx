@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -37,29 +36,10 @@ export function useManagerData(selectedManager: string) {
         setClientes([])
       } else {
         console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
-        console.log('🔍 Dados brutos do Supabase:', data?.[0])
         
-        const clientesFormatados = (data || []).map((item: any, index: number) => {
-          // CORREÇÃO: Permitir IDs válidos mesmo que sejam null ou zero
-          let clienteId = item.id
-          
-          // Se o ID vier como string, converter para número
-          if (typeof clienteId === 'string') {
-            const parsed = parseInt(clienteId)
-            if (!isNaN(parsed)) {
-              clienteId = parsed
-            }
-          }
-          
-          // Gerar um ID temporário único se não houver ID válido
-          // Usar timestamp + index para garantir unicidade
-          if (!clienteId || isNaN(clienteId)) {
-            console.warn(`⚠️ ID inválido encontrado no registro ${index}:`, item.id, 'Gerando ID temporário')
-            clienteId = Date.now() + index // ID temporário único
-          }
-          
+        const clientesFormatados = (data || []).map((item: any) => {
           const cliente = {
-            id: String(clienteId), // Sempre converter para string
+            id: String(item.id || ''), // Usar o ID real do banco
             data_venda: item.data_venda || '',
             nome_cliente: item.nome_cliente || '',
             telefone: item.telefone || '',
@@ -78,19 +58,9 @@ export function useManagerData(selectedManager: string) {
             created_at: item.created_at || ''
           }
           
-          console.log(`📝 Cliente ${index + 1} formatado:`, {
-            idOriginal: item.id,
-            idProcessado: cliente.id,
-            nome: cliente.nome_cliente,
-            status: cliente.status_campanha,
-            tipoIdOriginal: typeof item.id,
-            tipoIdProcessado: typeof cliente.id
-          })
-          
           return cliente
         })
         
-        // CORREÇÃO: Não filtrar clientes - exibir todos
         console.log(`📋 Total de clientes para ${selectedManager}:`, clientesFormatados.length)
         setClientes(clientesFormatados)
       }
@@ -129,17 +99,8 @@ export function useManagerData(selectedManager: string) {
     try {
       const tableName = getTableName(selectedManager)
       
-      // Verificar se é um ID temporário (baseado em timestamp)
+      // Converter ID para número
       const numericId = parseInt(id)
-      if (numericId > 1000000000000) { // ID temporário muito alto
-        console.warn('⚠️ Tentativa de atualizar cliente com ID temporário:', id)
-        toast?.({
-          title: "Aviso",
-          description: "Este cliente precisa ser salvo no banco de dados antes de ser editado.",
-          variant: "default",
-        })
-        return false
-      }
       
       console.log(`📋 Tabela: ${tableName}`)
       console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
