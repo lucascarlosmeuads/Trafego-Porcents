@@ -1,5 +1,4 @@
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -22,10 +21,11 @@ import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle, Check, X } from 'lucide-react'
+import { Download, Search, Filter, RefreshCw, Calendar, Edit2, ExternalLink, AlertTriangle, Check, X, Wifi, WifiOff } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { calculateDataLimite, getDataLimiteMensagem } from '@/utils/dateUtils'
+import { checkRealtimeConnection } from '@/utils/realtimeUtils'
 
 interface ClientesTableProps {
   selectedManager: string
@@ -43,6 +43,19 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [editingBM, setEditingBM] = useState<string | null>(null)
   const [bmValue, setBmValue] = useState('')
   const [updatingComission, setUpdatingComission] = useState<string | null>(null)
+  const [realtimeConnected, setRealtimeConnected] = useState(false)
+
+  useEffect(() => {
+    const checkConnection = () => {
+      const connected = checkRealtimeConnection()
+      setRealtimeConnected(connected)
+    }
+
+    checkConnection()
+    const interval = setInterval(checkConnection, 5000)
+
+    return () => clearInterval(interval)
+  }, [])
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -77,14 +90,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     }
   }
 
-  // Função para formatar telefone para WhatsApp
   const formatPhoneForWhatsApp = (phone: string) => {
     if (!phone) return ''
     
-    // Remove todos os caracteres não numéricos
     const numbersOnly = phone.replace(/\D/g, '')
     
-    // Se não começar com 55 (código do Brasil), adiciona
     if (!numbersOnly.startsWith('55') && numbersOnly.length >= 10) {
       return `55${numbersOnly}`
     }
@@ -99,13 +109,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     }
   }
 
-  // Função para abrir links com protocolo correto
   const openLink = (url: string) => {
     if (!url) return
     
     let formattedUrl = url.trim()
     
-    // Se não começar com http:// ou https://, adiciona https://
     if (!formattedUrl.startsWith('http://') && !formattedUrl.startsWith('https://')) {
       formattedUrl = `https://${formattedUrl}`
     }
@@ -120,7 +128,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     console.log(`🎯 Novo Status: "${newStatus}"`)
     console.log(`👤 Manager: ${selectedManager}`)
     
-    // VALIDAÇÃO DO ID
     if (!clienteId || clienteId.trim() === '') {
       console.error('❌ ERRO CRÍTICO: ID do cliente está vazio ou inválido:', clienteId)
       toast({
@@ -152,7 +159,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       return
     }
 
-    // Verificar se o cliente existe na lista local
     const clienteAtual = clientes.find(c => c.id === clienteId)
     if (!clienteAtual) {
       console.error('❌ Cliente não encontrado na lista local:', clienteId)
@@ -282,7 +288,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
     if (currentStatus) {
-      // Já está pago, não fazer nada
       return
     }
 
@@ -498,7 +503,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   }
 
   const renderDataLimite = (cliente: any) => {
-    // Calcula a data limite baseada na data de venda
     const dataLimiteCalculada = cliente.data_venda ? calculateDataLimite(cliente.data_venda) : cliente.data_limite
     
     if (!dataLimiteCalculada) {
@@ -592,10 +596,21 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   return (
     <div className="space-y-4 p-4 lg:p-0">
-      {/* Header responsivo */}
       <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
         <div>
-          <h2 className="text-xl lg:text-2xl font-semibold text-white">Clientes - {selectedManager}</h2>
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl lg:text-2xl font-semibold text-white">Clientes - {selectedManager}</h2>
+            <div className="flex items-center gap-1">
+              {realtimeConnected ? (
+                <Wifi className="w-4 h-4 text-green-500" title="Conexão realtime ativa" />
+              ) : (
+                <WifiOff className="w-4 h-4 text-red-500" title="Conexão realtime inativa" />
+              )}
+              <span className="text-xs text-gray-400">
+                {realtimeConnected ? 'Online' : 'Offline'}
+              </span>
+            </div>
+          </div>
           <p className="text-sm text-gray-300">{filteredClientes.length} clientes encontrados</p>
         </div>
         
@@ -611,7 +626,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         </div>
       </div>
 
-      {/* Filtros responsivos */}
       <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
@@ -641,7 +655,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         </Select>
       </div>
 
-      {/* Tabela */}
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
           <Table className="table-dark">
@@ -734,7 +747,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 filteredClientes.map((cliente, index) => {
                   const clienteId = String(cliente.id || '')
                   
-                  // Não renderizar se não tiver ID válido
                   if (!clienteId || clienteId.trim() === '' || clienteId === 'undefined') {
                     console.warn(`⚠️ Cliente ${index + 1} tem ID completamente inválido, não será renderizado:`, cliente)
                     return null
@@ -745,8 +757,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       key={`${selectedManager}-${clienteId}-${index}`}
                       className="border-border hover:bg-muted/10 transition-colors"
                     >
-                      <TableCell className="font-mono text-xs text-white">
-                        {clienteId}
+                      <TableCell className="font-mono text-xs">
+                        <div className="bg-gradient-to-br from-slate-700/50 to-slate-800/50 border border-slate-600/30 rounded px-2 py-1 shadow-sm">
+                          <span className="text-slate-400 mr-1">#</span>
+                          <span className="text-white font-medium">{clienteId}</span>
+                        </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-1">

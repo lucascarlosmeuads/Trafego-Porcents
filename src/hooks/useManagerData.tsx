@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -28,8 +29,7 @@ export function useManagerData(selectedManager: string) {
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
-        .order('id', { ascending: true }) // Ordenar por ID em ordem crescente
-        .order('created_at', { ascending: false }) // Segundo critério: mais recentes primeiro
+        .order('id', { ascending: true })
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)
@@ -40,7 +40,7 @@ export function useManagerData(selectedManager: string) {
         
         const clientesFormatados = (data || []).map((item: any) => {
           const cliente = {
-            id: String(item.id || ''), // Usar o ID real do banco
+            id: String(item.id || ''),
             data_venda: item.data_venda || '',
             nome_cliente: item.nome_cliente || '',
             telefone: item.telefone || '',
@@ -81,7 +81,6 @@ export function useManagerData(selectedManager: string) {
     console.log(`💾 Valor: ${value}`)
     console.log(`👤 Manager: ${selectedManager}`)
 
-    // VALIDAÇÕES DO ID
     if (!id || id.trim() === '') {
       console.error('❌ ID do cliente está vazio ou inválido:', id)
       return false
@@ -99,8 +98,6 @@ export function useManagerData(selectedManager: string) {
 
     try {
       const tableName = getTableName(selectedManager)
-      
-      // Converter ID para número
       const numericId = parseInt(id)
       
       console.log(`📋 Tabela: ${tableName}`)
@@ -111,7 +108,6 @@ export function useManagerData(selectedManager: string) {
         return false
       }
 
-      // Verificar se o registro existe antes de tentar atualizar
       console.log('🔍 Verificando se o registro existe...')
       const { data: existingData, error: checkError } = await supabase
         .from(tableName)
@@ -135,7 +131,6 @@ export function useManagerData(selectedManager: string) {
       console.log('✅ Registro encontrado:', existingData)
       console.log(`🔄 Status atual: "${existingData.status_campanha}" -> Novo status: "${value}"`)
       
-      // Fazer a atualização
       console.log('🔄 Executando UPDATE...')
       const { data: updateData, error: updateError } = await supabase
         .from(tableName)
@@ -183,9 +178,9 @@ export function useManagerData(selectedManager: string) {
     // Buscar dados iniciais
     fetchClientes()
 
-    // Configurar canal de realtime
+    // Configurar canal de realtime com um nome único
     const channel = supabase
-      .channel(`realtime-${tableName}`)
+      .channel(`public:${tableName}`)
       .on(
         'postgres_changes',
         {
@@ -194,7 +189,7 @@ export function useManagerData(selectedManager: string) {
           table: tableName
         },
         (payload) => {
-          console.log('🔄 Mudança detectada na tabela:', payload)
+          console.log('🔄 Mudança detectada na tabela:', tableName, payload)
           
           if (payload.eventType === 'INSERT') {
             console.log('➕ Novo cliente inserido:', payload.new)
@@ -218,7 +213,6 @@ export function useManagerData(selectedManager: string) {
               valor_comissao: payload.new.valor_comissao || 60.00
             }
             
-            // Reordenar a lista após inserção
             setClientes(prev => {
               const updated = [novoCliente, ...prev]
               return updated.sort((a, b) => parseInt(a.id) - parseInt(b.id))
@@ -260,6 +254,16 @@ export function useManagerData(selectedManager: string) {
       )
       .subscribe((status) => {
         console.log(`📡 Status do realtime para ${tableName}:`, status)
+        if (status === 'SUBSCRIBED') {
+          console.log('✅ Realtime conectado com sucesso!')
+        } else if (status === 'CHANNEL_ERROR') {
+          console.error('❌ Erro no canal de realtime')
+          // Tentar reconectar após um delay
+          setTimeout(() => {
+            console.log('🔄 Tentando reconectar realtime...')
+            fetchClientes()
+          }, 2000)
+        }
       })
 
     // Cleanup do canal quando o componente desmontar ou gerente mudar
