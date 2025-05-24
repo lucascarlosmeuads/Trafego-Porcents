@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
+import { ComissaoButton } from './ComissaoButton'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -86,8 +87,16 @@ export function ClienteRow({
     const diffTime = limite.getTime() - hoje.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    // Se o status é "No Ar" ou "Otimização", mostrar como cumprido
-    if (cliente.status_campanha === 'No Ar' || cliente.status_campanha === 'Otimização') {
+    // NOVA LÓGICA: Se o status é "No Ar", mostrar como cumprido
+    if (cliente.status_campanha === 'No Ar') {
+      return {
+        text: 'Cumprido',
+        style: 'bg-green-100 text-green-800 border-green-300'
+      }
+    }
+    
+    // Se o status é "Otimização", mostrar como cumprido
+    if (cliente.status_campanha === 'Otimização') {
       return {
         text: 'Cumprido',
         style: 'bg-green-100 text-green-800 border-green-300'
@@ -476,77 +485,8 @@ export function ClienteRow({
     )
   }
 
-  const renderComissionCell = () => {
-    const isEditingValue = editingComissionValue === cliente.id
-    const valorComissao = cliente.valor_comissao || 0
-    
-    if (isEditingValue) {
-      return (
-        <div className="flex items-center gap-1">
-          <div className="flex items-center">
-            <span className="text-green-400 text-xs mr-1">R$</span>
-            <Input
-              value={comissionValueInput}
-              onChange={(e) => setComissionValueInput(e.target.value)}
-              className="h-6 text-xs w-20"
-              placeholder="0.00"
-              type="number"
-              step="0.01"
-            />
-          </div>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onComissionValueSave(cliente.id, parseFloat(comissionValueInput) || 0)}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onComissionValueCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant={cliente.comissao_paga ? "default" : "outline"}
-          size="sm"
-          className={`h-7 text-xs flex items-center gap-1 ${
-            cliente.comissao_paga 
-              ? 'bg-green-600 hover:bg-green-700 text-white' 
-              : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
-          }`}
-          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
-          disabled={updatingComission === cliente.id}
-        >
-          {updatingComission === cliente.id ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : cliente.comissao_paga ? (
-            <Check className="w-3 h-3 mr-1" />
-          ) : null}
-          <span>R$ {valorComissao.toFixed(2)}</span>
-          {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
-          {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      </div>
-    )
-  }
+  // Detectar se estamos no painel do gestor
+  const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
 
   const dateLimit = calculateDateLimit(cliente.data_venda)
 
@@ -642,7 +582,18 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell>
-        {renderComissionCell()}
+        <ComissaoButton
+          cliente={cliente}
+          isGestorDashboard={isGestorDashboard}
+          updatingComission={updatingComission}
+          editingComissionValue={editingComissionValue}
+          comissionValueInput={comissionValueInput}
+          setComissionValueInput={setComissionValueInput}
+          onComissionToggle={onComissionToggle}
+          onComissionValueEdit={onComissionValueEdit}
+          onComissionValueSave={onComissionValueSave}
+          onComissionValueCancel={onComissionValueCancel}
+        />
       </TableCell>
     </TableRow>
   )

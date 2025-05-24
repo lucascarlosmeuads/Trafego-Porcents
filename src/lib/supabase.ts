@@ -27,6 +27,7 @@ export type Cliente = {
   created_at: string
   site_status: string
   descricao_problema: string
+  saque_solicitado: boolean
 }
 
 export type Gestor = {
@@ -36,6 +37,19 @@ export type Gestor = {
   email: string
   pode_adicionar_cliente: boolean
   ativo: boolean
+  created_at: string
+  updated_at: string
+}
+
+export type SolicitacaoSaque = {
+  id: string
+  email_gestor: string
+  nome_gestor: string
+  cliente_id: number
+  valor_comissao: number
+  data_solicitacao: string
+  status_saque: string
+  processado_em: string | null
   created_at: string
   updated_at: string
 }

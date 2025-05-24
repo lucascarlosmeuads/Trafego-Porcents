@@ -42,6 +42,53 @@ export type Database = {
         }
         Relationships: []
       }
+      solicitacoes_saque: {
+        Row: {
+          cliente_id: number
+          created_at: string
+          data_solicitacao: string
+          email_gestor: string
+          id: string
+          nome_gestor: string
+          processado_em: string | null
+          status_saque: string
+          updated_at: string
+          valor_comissao: number
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string
+          data_solicitacao?: string
+          email_gestor: string
+          id?: string
+          nome_gestor: string
+          processado_em?: string | null
+          status_saque?: string
+          updated_at?: string
+          valor_comissao: number
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string
+          data_solicitacao?: string
+          email_gestor?: string
+          id?: string
+          nome_gestor?: string
+          processado_em?: string | null
+          status_saque?: string
+          updated_at?: string
+          valor_comissao?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "solicitacoes_saque_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "todos_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       todos_clientes: {
         Row: {
           comissao: string | null
@@ -61,6 +108,7 @@ export type Database = {
           link_site: string | null
           nome_cliente: string | null
           numero_bm: string | null
+          saque_solicitado: boolean | null
           site_status: string | null
           status_campanha: string | null
           status_envio: string | null
@@ -86,6 +134,7 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
+          saque_solicitado?: boolean | null
           site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
@@ -111,6 +160,7 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
+          saque_solicitado?: boolean | null
           site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
