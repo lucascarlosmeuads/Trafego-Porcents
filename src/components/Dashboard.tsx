@@ -2,7 +2,6 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { ClientesTable } from './ClientesTable'
 import { AdminDashboard } from './AdminDashboard'
@@ -12,7 +11,6 @@ import { User } from 'lucide-react'
 
 export function Dashboard() {
   const { user, signOut, isAdmin } = useAuth()
-  const [activeTab, setActiveTab] = useState(isAdmin ? "dashboard" : "clientes")
   const [selectedManager, setSelectedManager] = useState("Andreza")
 
   return (
@@ -61,22 +59,7 @@ export function Dashboard() {
           {/* Content responsivo */}
           <main className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 lg:py-8 min-h-0">
             {isAdmin ? (
-              <Tabs defaultValue={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-2 max-w-md mx-auto sm:mx-0">
-                  <TabsTrigger value="dashboard" className="text-xs sm:text-sm">
-                    Dashboard
-                  </TabsTrigger>
-                  <TabsTrigger value="clientes" className="text-xs sm:text-sm">
-                    Clientes
-                  </TabsTrigger>
-                </TabsList>
-                <TabsContent value="dashboard" className="mt-4 sm:mt-6">
-                  <AdminDashboard />
-                </TabsContent>
-                <TabsContent value="clientes" className="mt-4 sm:mt-6">
-                  <ClientesTable selectedManager={selectedManager} />
-                </TabsContent>
-              </Tabs>
+              <AdminDashboard selectedManager={selectedManager} />
             ) : (
               <ClientesTable selectedManager={selectedManager} />
             )}
