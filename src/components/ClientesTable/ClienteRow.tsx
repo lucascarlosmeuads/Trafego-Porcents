@@ -264,7 +264,7 @@ export function ClienteRow({
       )
     }
 
-    // Estados simplificados do site
+    // Estados do site com ícone de edição sempre presente
     switch (siteStatus) {
       case 'nao_precisa':
         return (
@@ -308,7 +308,17 @@ export function ClienteRow({
                 variant="outline"
                 size="sm"
                 className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
-                onClick={() => window.open(siteUrl, '_blank')}
+                onClick={() => {
+                  // Corrigir a abertura do link: usar exatamente o valor salvo
+                  let urlToOpen = siteUrl.trim()
+                  
+                  // Se não começar com http:// ou https://, adicionar https://
+                  if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+                    urlToOpen = `https://${urlToOpen}`
+                  }
+                  
+                  window.open(urlToOpen, '_blank')
+                }}
               >
                 🌐 Ver site
               </Button>
@@ -341,7 +351,7 @@ export function ClienteRow({
         }
 
       default:
-        // Estado inicial - traço cinza
+        // Estado inicial - traço cinza com opção de editar
         return (
           <div className="flex items-center gap-1">
             <Button
@@ -351,6 +361,14 @@ export function ClienteRow({
               onClick={() => setShowSiteOptions(true)}
             >
               —
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowSiteOptions(true)}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
             </Button>
           </div>
         )
