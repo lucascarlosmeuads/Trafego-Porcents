@@ -242,19 +242,17 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   }
 
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
-    if (currentStatus) {
-      return
-    }
-
     setUpdatingComission(clienteId)
     
     try {
-      const success = await updateCliente(clienteId, 'comissao_paga', true)
+      // Toggle the current status - if it's paid, make it unpaid, and vice versa
+      const newStatus = !currentStatus
+      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
       
       if (success) {
         toast({
           title: "Sucesso",
-          description: "Comissão marcada como paga",
+          description: newStatus ? "Comissão marcada como paga" : "Comissão marcada como não paga",
         })
       } else {
         toast({

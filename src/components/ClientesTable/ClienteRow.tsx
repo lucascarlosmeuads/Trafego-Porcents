@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -267,10 +268,10 @@ export function ClienteRow({
           size="sm"
           className={`h-7 text-xs flex items-center gap-1 ${
             cliente.comissao_paga 
-              ? 'bg-green-600 hover:bg-green-700 text-white cursor-default' 
+              ? 'bg-green-600 hover:bg-green-700 text-white' 
               : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
           }`}
-          onClick={() => !cliente.comissao_paga && onComissionToggle(cliente.id, false)}
+          onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
           disabled={updatingComission === cliente.id}
         >
           {updatingComission === cliente.id ? (
