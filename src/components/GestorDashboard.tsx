@@ -7,8 +7,31 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function GestorDashboard() {
-  const { user, currentManagerName } = useAuth()
+  const { user, currentManagerName, isAdmin } = useAuth()
   const { clientes, loading } = useManagerData(user?.email || '', false)
+
+  // Log de segurança para verificar se o filtro está funcionando
+  useEffect(() => {
+    if (clientes.length > 0 && user?.email && !isAdmin) {
+      console.log('🔍 [GestorDashboard] Verificação de segurança:')
+      console.log('👤 Email do usuário logado:', user.email)
+      console.log('📊 Total de clientes carregados:', clientes.length)
+      
+      const clientesComEmailIncorreto = clientes.filter(c => c.email_gestor !== user.email)
+      if (clientesComEmailIncorreto.length > 0) {
+        console.error('🚨 [GestorDashboard] ERRO DE SEGURANÇA: Clientes com email_gestor incorreto!', clientesComEmailIncorreto)
+      } else {
+        console.log('✅ [GestorDashboard] Todos os clientes pertencem ao gestor correto')
+      }
+      
+      // Verificar distribuição de emails
+      const emailDistribution = clientes.reduce((acc, cliente) => {
+        acc[cliente.email_gestor] = (acc[cliente.email_gestor] || 0) + 1
+        return acc
+      }, {} as Record<string, number>)
+      console.log('📈 [GestorDashboard] Distribuição por email_gestor:', emailDistribution)
+    }
+  }, [clientes, user?.email, isAdmin])
 
   if (loading) {
     return <div className="flex items-center justify-center py-8">Carregando...</div>
@@ -17,7 +40,15 @@ export function GestorDashboard() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">Dashboard - {currentManagerName}</h1>
+        <div>
+          <h1 className="text-3xl font-bold">Dashboard - {currentManagerName}</h1>
+          {!isAdmin && (
+            <div className="flex items-center gap-2 text-sm text-green-600 mt-2">
+              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+              <span>🔒 Filtro de Segurança Ativo - Dados filtrados por: {user?.email}</span>
+            </div>
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">

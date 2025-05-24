@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -50,7 +51,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       'lucas.falcao@gestor.com': { manager: 'Lucas Falcão' },
       'andreza@trafegoporcents.com': { manager: 'Andreza' },
       'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão' },
-      'carol@trafegoporcents.com': { manager: 'Carol' }
+      'carol@trafegoporcents.com': { manager: 'Carol' },
+      'junior@trafegoporcents.com': { manager: 'Junior' }
     }
     
     // Se for um email específico mapeado, usar o mapeamento
@@ -98,10 +100,12 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         .select('*', { count: 'exact' })
         .order('id', { ascending: true })
 
-      // Se não for admin, filtrar apenas registros com email_gestor = email logado
+      // FILTRO CRÍTICO: Se não for admin, filtrar SEMPRE por email_gestor = email logado
       if (!isAdmin) {
         query = query.eq('email_gestor', userEmail)
-        console.log('🔒 [useManagerData] Aplicando filtro RLS por email_gestor:', userEmail)
+        console.log('🔒 [useManagerData] APLICANDO FILTRO RLS OBRIGATÓRIO por email_gestor:', userEmail)
+      } else {
+        console.log('👑 [useManagerData] Admin - sem filtro de email_gestor')
       }
 
       const { data, error, count } = await query
@@ -111,7 +115,8 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         count,
         error,
         manager,
-        filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)'
+        filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)',
+        isAdmin
       })
 
       if (error) {
@@ -127,6 +132,17 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         }
       } else {
         console.log(`✅ [useManagerData] Dados recebidos para ${manager}:`, data?.length || 0)
+        
+        // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se todos os registros têm o email correto
+        if (!isAdmin && data && data.length > 0) {
+          const registrosInvalidos = data.filter(item => item.email_gestor !== userEmail)
+          if (registrosInvalidos.length > 0) {
+            console.error('🚨 [useManagerData] ERRO DE SEGURANÇA: Registros com email_gestor incorreto detectados!', registrosInvalidos)
+            setError('Erro de segurança: dados inconsistentes detectados')
+            setClientes([])
+            return
+          }
+        }
         
         const clientesFormatados = (data || []).map((item: any) => {
           if (!item.id || item.id === null || item.id === undefined) {
@@ -197,6 +213,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     console.log(`💾 Valor: ${value}`)
     console.log(`👤 User Email: ${userEmail}`)
     console.log(`👤 Manager: ${currentManager}`)
+    console.log(`🔒 IsAdmin: ${isAdmin}`)
 
     if (!id || id.trim() === '') {
       console.error('❌ [useManagerData] ID do cliente está vazio ou inválido:', id)
@@ -227,12 +244,13 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log('🔍 [useManagerData] Verificando se o registro existe...')
       let checkQuery = supabase
         .from('todos_clientes')
-        .select('id, status_campanha, nome_cliente')
+        .select('id, status_campanha, nome_cliente, email_gestor')
         .eq('id', numericId)
 
-      // Se não for admin, aplicar filtro por email_gestor
+      // FILTRO CRÍTICO: Se não for admin, aplicar filtro por email_gestor SEMPRE
       if (!isAdmin) {
         checkQuery = checkQuery.eq('email_gestor', userEmail)
+        console.log('🔒 [useManagerData] APLICANDO FILTRO DE SEGURANÇA na verificação:', userEmail)
       }
 
       const { data: existingData, error: checkError } = await checkQuery.single()
@@ -247,7 +265,17 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         return false
       }
 
-      console.log('✅ [useManagerData] Registro encontrado:', existingData)
+      // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se o email_gestor confere
+      if (!isAdmin && existingData.email_gestor !== userEmail) {
+        console.error('🚨 [useManagerData] TENTATIVA DE ACESSO NÃO AUTORIZADO:', {
+          registroEmailGestor: existingData.email_gestor,
+          userEmail,
+          registroId: numericId
+        })
+        return false
+      }
+
+      console.log('✅ [useManagerData] Registro encontrado e autorizado:', existingData)
       
       console.log('🔄 [useManagerData] Executando UPDATE...')
       let updateQuery = supabase
@@ -255,9 +283,10 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         .update({ [field]: value })
         .eq('id', numericId)
 
-      // Se não for admin, aplicar filtro por email_gestor
+      // FILTRO CRÍTICO: Se não for admin, aplicar filtro por email_gestor SEMPRE
       if (!isAdmin) {
         updateQuery = updateQuery.eq('email_gestor', userEmail)
+        console.log('🔒 [useManagerData] APLICANDO FILTRO DE SEGURANÇA na atualização:', userEmail)
       }
 
       const { data: updateData, error: updateError } = await updateQuery.select()
@@ -295,6 +324,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       console.log('🚀 [useManagerData] === INICIANDO ADIÇÃO DE CLIENTE ===')
       console.log('📥 Dados recebidos:', clienteData)
       console.log('👤 User Email:', userEmail)
+      console.log('🔒 IsAdmin:', isAdmin)
       
       console.log(`📋 Tabela de destino: todos_clientes`)
 
@@ -314,6 +344,9 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       }
 
       // Criar objeto limpo para inserção
+      // FILTRO CRÍTICO: Para não-admins, SEMPRE usar o email do usuário logado como email_gestor
+      const emailGestorFinal = isAdmin ? (clienteData.email_gestor || userEmail) : userEmail
+      
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
@@ -321,7 +354,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
         data_venda: clienteData.data_venda || null,
         vendedor: String(clienteData.vendedor || ''),
         status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
-        email_gestor: String(userEmail),
+        email_gestor: String(emailGestorFinal),
         comissao_paga: false,
         valor_comissao: 60.00,
         site_status: 'pendente',
@@ -335,6 +368,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       console.log('🧹 [useManagerData] === DADOS FINAIS PARA INSERÇÃO ===')
       console.log('📊 Objeto completo:', JSON.stringify(novoCliente, null, 2))
+      console.log('🔒 Email gestor final:', emailGestorFinal)
 
       console.log('📤 [useManagerData] Enviando para Supabase...')
       const { data, error } = await supabase
@@ -376,7 +410,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
-        variant: "destructive"
+        variant: "destructiva"
       })
       return false
     }
@@ -389,7 +423,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     const setupRealtime = async () => {
       const { manager } = await determineManager(userEmail, selectedManager)
       
-      console.log('🔴 [useManagerData] Configurando realtime para tabela todos_clientes:', { userEmail, manager, selectedManager })
+      console.log('🔴 [useManagerData] Configurando realtime para tabela todos_clientes:', { userEmail, manager, selectedManager, isAdmin })
 
       // Buscar dados iniciais
       fetchClientes()
@@ -407,9 +441,9 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
           (payload) => {
             console.log('🔄 [useManagerData] Mudança detectada na tabela todos_clientes:', payload)
             
-            // Se não for admin, verificar se a mudança é relevante para este gestor
+            // FILTRO CRÍTICO: Se não for admin, verificar se a mudança é relevante para este gestor
             if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
-              console.log('🚫 [useManagerData] Mudança não relevante para este gestor')
+              console.log('🚫 [useManagerData] Mudança não relevante para este gestor - filtro de segurança aplicado')
               return
             }
             
@@ -437,7 +471,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
 
     setupRealtime()
-  }, [userEmail, selectedManager])
+  }, [userEmail, selectedManager, isAdmin])
 
   const refetchWithToast = () => fetchClientes(true)
 
