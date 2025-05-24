@@ -59,8 +59,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
   const [comissionValueInput, setComissionValueInput] = useState('')
   const [realtimeConnected, setRealtimeConnected] = useState(false)
-
-  // Estado para controlar permissão de adicionar cliente
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
@@ -172,37 +170,73 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // Filtrar clientes baseado no filterType
-  let clientesFiltrados = clientes
-  if (filterType === 'ativos') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Off' && 
-      cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema'
-    )
-  } else if (filterType === 'inativos') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
-    )
-  } else if (filterType === 'problemas') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Problema'
-    )
-  } else {
-    // Comportamento padrão (manter as abas existentes)
-    const clientesAtivos = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Off' && 
-      cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema'
-    )
-    
-    const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
-    )
-
-    // Retornar o componente com abas se não há filterType específico
-    return renderWithTabs(clientesAtivos, clientesInativos)
-  }
+  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
+    <div className="space-y-4">
+      {/* Campo de descrição do problema */}
+      {editandoProblema && (
+        <ProblemaDescricao
+          clienteId={editandoProblema}
+          descricaoAtual={problemaDescricao}
+          onSave={handleProblemaDescricaoSave}
+          onCancel={handleProblemaDescricaoCancel}
+        />
+      )}
+      
+      <div className="border rounded-lg overflow-hidden bg-card border-border">
+        <div className="overflow-x-auto">
+          <Table className="table-dark">
+            <TableHeader />
+            <TableBody>
+              {clientesList.length === 0 ? (
+                <TableRow className="border-border hover:bg-muted/20">
+                  <TableCell colSpan={15} className="text-center py-8 text-white">
+                    {isInactive 
+                      ? `Nenhum cliente inativo encontrado`
+                      : clientes.length === 0 
+                        ? `Nenhum cliente encontrado`
+                        : `Nenhum cliente corresponde aos filtros aplicados`
+                    }
+                  </TableCell>
+                </TableRow>
+              ) : (
+                clientesList.map((cliente, index) => (
+                  <ClienteRow
+                    key={`${emailToUse}-${cliente.id}-${index}`}
+                    cliente={cliente}
+                    selectedManager={currentManager || managerName}
+                    index={index}
+                    updatingStatus={updatingStatus}
+                    editingLink={editingLink}
+                    linkValue={linkValue}
+                    setLinkValue={setLinkValue}
+                    editingBM={editingBM}
+                    bmValue={bmValue}
+                    setBmValue={setBmValue}
+                    updatingComission={updatingComission}
+                    editingComissionValue={editingComissionValue}
+                    comissionValueInput={comissionValueInput}
+                    setComissionValueInput={setComissionValueInput}
+                    getStatusColor={getStatusColor}
+                    onStatusChange={handleStatusChange}
+                    onLinkEdit={handleLinkEdit}
+                    onLinkSave={handleLinkSave}
+                    onLinkCancel={handleLinkCancel}
+                    onBMEdit={handleBMEdit}
+                    onBMSave={handleBMSave}
+                    onBMCancel={handleBMCancel}
+                    onComissionToggle={handleComissionToggle}
+                    onComissionValueEdit={handleComissionValueEdit}
+                    onComissionValueSave={handleComissionValueSave}
+                    onComissionValueCancel={handleComissionValueCancel}
+                  />
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
+    </div>
+  )
 
   useEffect(() => {
     const checkConnection = () => {
@@ -301,8 +335,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     verificarPermissoes()
   }, [user?.email, isAdmin])
-
-  const filteredClientes = getFilteredClientes(clientesFiltrados)
 
   const handleLinkSave = async (clienteId: string, field: string) => {
     try {
@@ -584,74 +616,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
-    <div className="space-y-4">
-      {/* Campo de descrição do problema */}
-      {editandoProblema && (
-        <ProblemaDescricao
-          clienteId={editandoProblema}
-          descricaoAtual={problemaDescricao}
-          onSave={handleProblemaDescricaoSave}
-          onCancel={handleProblemaDescricaoCancel}
-        />
-      )}
-      
-      <div className="border rounded-lg overflow-hidden bg-card border-border">
-        <div className="overflow-x-auto">
-          <Table className="table-dark">
-            <TableHeader />
-            <TableBody>
-              {clientesList.length === 0 ? (
-                <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={15} className="text-center py-8 text-white">
-                    {isInactive 
-                      ? `Nenhum cliente inativo encontrado`
-                      : clientes.length === 0 
-                        ? `Nenhum cliente encontrado`
-                        : `Nenhum cliente corresponde aos filtros aplicados`
-                    }
-                  </TableCell>
-                </TableRow>
-              ) : (
-                clientesList.map((cliente, index) => (
-                  <ClienteRow
-                    key={`${emailToUse}-${cliente.id}-${index}`}
-                    cliente={cliente}
-                    selectedManager={currentManager || managerName}
-                    index={index}
-                    updatingStatus={updatingStatus}
-                    editingLink={editingLink}
-                    linkValue={linkValue}
-                    setLinkValue={setLinkValue}
-                    editingBM={editingBM}
-                    bmValue={bmValue}
-                    setBmValue={setBmValue}
-                    updatingComission={updatingComission}
-                    editingComissionValue={editingComissionValue}
-                    comissionValueInput={comissionValueInput}
-                    setComissionValueInput={setComissionValueInput}
-                    getStatusColor={getStatusColor}
-                    onStatusChange={handleStatusChange}
-                    onLinkEdit={handleLinkEdit}
-                    onLinkSave={handleLinkSave}
-                    onLinkCancel={handleLinkCancel}
-                    onBMEdit={handleBMEdit}
-                    onBMSave={handleBMSave}
-                    onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
-                    onComissionValueEdit={handleComissionValueEdit}
-                    onComissionValueSave={handleComissionValueSave}
-                    onComissionValueCancel={handleComissionValueCancel}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
-    </div>
-  )
-
   function renderWithTabs(clientesAtivos: typeof clientes, clientesInativos: typeof clientes) {
     const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
     const filteredClientesInativos = getFilteredClientes(clientesInativos)
@@ -726,6 +690,39 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       </div>
     )
   }
+
+  // Filtrar clientes baseado no filterType
+  let clientesFiltrados = clientes
+  if (filterType === 'ativos') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Reembolso' && 
+      cliente.status_campanha !== 'Problema'
+    )
+  } else if (filterType === 'inativos') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    )
+  } else if (filterType === 'problemas') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha === 'Problema'
+    )
+  } else {
+    // Comportamento padrão (manter as abas existentes)
+    const clientesAtivos = clientes.filter(cliente => 
+      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Reembolso' && 
+      cliente.status_campanha !== 'Problema'
+    )
+    
+    const clientesInativos = clientes.filter(cliente => 
+      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    )
+
+    return renderWithTabs(clientesAtivos, clientesInativos)
+  }
+
+  const filteredClientes = getFilteredClientes(clientesFiltrados)
 
   if (loading) {
     return (
