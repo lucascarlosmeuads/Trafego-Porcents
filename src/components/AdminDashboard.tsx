@@ -20,6 +20,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   })
   const [statusStats, setStatusStats] = useState<{[key: string]: number}>({})
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const { toast } = useToast()
 
   const getTableName = (managerName: string) => {
@@ -30,7 +31,6 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     return tableMapping[managerName] || 'clientes_andreza'
   }
 
-  // Função para obter as mesmas cores usadas na tabela
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Preenchimento do Formulário':
@@ -56,8 +56,9 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     fetchManagerStats()
   }, [selectedManager])
 
-  const fetchManagerStats = async () => {
+  const fetchManagerStats = async (showToast = false) => {
     try {
+      if (showToast) setRefreshing(true)
       setLoading(true)
       const tableName = getTableName(selectedManager)
       console.log(`Buscando estatísticas da tabela: ${tableName}`)
@@ -102,20 +103,39 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           comissaoTotal
         })
         setStatusStats(statusCounts)
+
+        if (showToast) {
+          toast({
+            title: "Sucesso",
+            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados`
+          })
+        }
       } else if (error) {
         console.error(`Erro ao buscar dados de ${selectedManager}:`, error)
+        if (showToast) {
+          toast({
+            title: "Erro",
+            description: `Erro ao atualizar dashboard de ${selectedManager}`,
+            variant: "destructive"
+          })
+        }
       }
     } catch (error) {
       console.error('Erro ao buscar estatísticas:', error)
-      toast({
-        title: "Erro",
-        description: "Não foi possível carregar as estatísticas",
-        variant: "destructive"
-      })
+      if (showToast) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar as estatísticas",
+          variant: "destructive"
+        })
+      }
     } finally {
       setLoading(false)
+      if (showToast) setRefreshing(false)
     }
   }
+
+  const handleRefresh = () => fetchManagerStats(true)
 
   const exportManagerData = async () => {
     try {
@@ -215,9 +235,14 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
                   <h2 className="text-lg font-semibold">Dashboard - {selectedManager}</h2>
                 </div>
                 <div className="flex gap-2">
-                  <Button onClick={fetchManagerStats} variant="outline" size="sm">
-                    <RefreshCw className="w-4 h-4 mr-2" />
-                    Atualizar
+                  <Button 
+                    onClick={handleRefresh} 
+                    variant="outline" 
+                    size="sm"
+                    disabled={refreshing}
+                  >
+                    <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                    {refreshing ? 'Atualizando...' : 'Atualizar'}
                   </Button>
                   <Button onClick={exportManagerData} variant="outline" size="sm">
                     <Download className="w-4 h-4 mr-2" />
@@ -228,7 +253,6 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
             </CardContent>
           </Card>
 
-          {/* Cards de Resumo */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <Card>
               <CardHeader className="pb-3">
@@ -271,7 +295,6 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
             </Card>
           </div>
 
-          {/* Resumo por Status */}
           <Card>
             <CardHeader>
               <CardTitle>Resumo por Status - {selectedManager}</CardTitle>
@@ -299,7 +322,6 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
                 ))}
               </div>
               
-              {/* Resumo total na parte inferior */}
               <div className="mt-4 pt-4 border-t">
                 <div className="flex justify-between items-center text-sm text-gray-600 dark:text-gray-400">
                   <span>Total de clientes em todas as etapas:</span>

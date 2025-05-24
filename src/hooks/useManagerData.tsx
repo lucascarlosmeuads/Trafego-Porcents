@@ -1,6 +1,6 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
+import { toast } from '@/hooks/use-toast'
 
 export function useManagerData(selectedManager: string) {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -16,7 +16,7 @@ export function useManagerData(selectedManager: string) {
     return tableMapping[managerName] || 'clientes_andreza'
   }
 
-  const fetchClientes = async () => {
+  const fetchClientes = async (showToast = false) => {
     if (!selectedManager) return
 
     setLoading(true)
@@ -35,6 +35,13 @@ export function useManagerData(selectedManager: string) {
         console.error('❌ Erro ao buscar clientes:', error)
         setError(`Erro ao carregar dados de ${selectedManager}: ${error.message}`)
         setClientes([])
+        if (showToast) {
+          toast({
+            title: "Erro",
+            description: `Erro ao atualizar dados de ${selectedManager}`,
+            variant: "destructive"
+          })
+        }
       } else {
         console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
         
@@ -64,11 +71,25 @@ export function useManagerData(selectedManager: string) {
         
         console.log(`📋 Total de clientes para ${selectedManager}:`, clientesFormatados.length)
         setClientes(clientesFormatados)
+        
+        if (showToast) {
+          toast({
+            title: "Sucesso",
+            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros encontrados`
+          })
+        }
       }
     } catch (err) {
       console.error('💥 Erro:', err)
       setError(`Erro ao carregar dados de ${selectedManager}`)
       setClientes([])
+      if (showToast) {
+        toast({
+          title: "Erro",
+          description: `Erro ao atualizar dados de ${selectedManager}`,
+          variant: "destructive"
+        })
+      }
     } finally {
       setLoading(false)
     }
@@ -273,11 +294,13 @@ export function useManagerData(selectedManager: string) {
     }
   }, [selectedManager])
 
+  const refetchWithToast = () => fetchClientes(true)
+
   return {
     clientes,
     loading,
     error,
     updateCliente,
-    refetch: fetchClientes
+    refetch: refetchWithToast
   }
 }
