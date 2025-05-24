@@ -3,29 +3,51 @@ import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
-export function useManagerData(selectedManager: string) {
+export function useManagerData(userEmail: string, isAdmin: boolean) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [currentManager, setCurrentManager] = useState<string>('')
 
-  const getTableName = (managerName: string) => {
+  // Determinar o gestor baseado no email logado
+  const determineManager = (email: string): string => {
+    if (email === 'lucas@admin.com') {
+      return 'Lucas Falcão' // Admin pode ver Lucas por padrão
+    }
+    
+    // Mapear outros emails para gestores
+    const managerMapping: { [key: string]: string } = {
+      'andreza@gestor.com': 'Andreza',
+      'lucas.falcao@gestor.com': 'Lucas Falcão'
+    }
+    
+    return managerMapping[email] || 'Andreza' // Fallback para Andreza
+  }
+
+  // Determinar tabela baseada no email do gestor
+  const getTableName = (email: string): string => {
+    const manager = determineManager(email)
     const tableMapping: { [key: string]: string } = {
       'Lucas Falcão': 'clientes_lucas_falcao',
       'Andreza': 'clientes_andreza'
     }
     
-    return tableMapping[managerName] || 'clientes_andreza'
+    return tableMapping[manager] || 'clientes_andreza'
   }
 
   const fetchClientes = async (showToast = false) => {
-    if (!selectedManager) return
+    if (!userEmail) return
 
     setLoading(true)
     setError(null)
 
     try {
-      const tableName = getTableName(selectedManager)
-      console.log('🔍 Buscando dados da tabela:', tableName)
+      const manager = determineManager(userEmail)
+      const tableName = getTableName(userEmail)
+      
+      setCurrentManager(manager)
+      
+      console.log('🔍 Buscando dados para:', { userEmail, manager, tableName })
       
       const { data, error, count } = await supabase
         .from(tableName)
@@ -36,35 +58,29 @@ export function useManagerData(selectedManager: string) {
         data: data?.length || 0,
         count,
         error,
-        tableName
+        tableName,
+        userEmail
       })
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)
-        setError(`Erro ao carregar dados de ${selectedManager}: ${error.message}`)
+        setError(`Erro ao carregar dados: ${error.message}`)
         setClientes([])
         if (showToast) {
           toast({
             title: "Erro",
-            description: `Erro ao atualizar dados de ${selectedManager}`,
+            description: `Erro ao atualizar dados`,
             variant: "destructive"
           })
         }
       } else {
-        console.log(`✅ Dados recebidos para ${selectedManager}:`, data?.length || 0)
+        console.log(`✅ Dados recebidos para ${manager}:`, data?.length || 0)
         
         const clientesFormatados = (data || []).map((item: any) => {
-          // Verificar se o ID está presente e é válido
           if (!item.id || item.id === null || item.id === undefined) {
             console.error('⚠️ Registro sem ID encontrado:', item)
-            return null // Ignorar registros sem ID
+            return null
           }
-          
-          console.log(`📋 Processando cliente ID ${item.id}:`, {
-            id: item.id,
-            nome: item.nome_cliente,
-            status: item.status_campanha
-          })
           
           const cliente = {
             id: String(item.id),
@@ -87,26 +103,26 @@ export function useManagerData(selectedManager: string) {
           }
           
           return cliente
-        }).filter(Boolean) // Remove registros nulos
+        }).filter(Boolean)
         
-        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes válidos`)
+        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
         setClientes(clientesFormatados)
         
         if (showToast) {
           toast({
             title: "Sucesso",
-            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros`
+            description: `Dados atualizados - ${clientesFormatados.length} registros`
           })
         }
       }
     } catch (err) {
       console.error('💥 Erro na busca:', err)
-      setError(`Erro ao carregar dados de ${selectedManager}`)
+      setError(`Erro ao carregar dados`)
       setClientes([])
       if (showToast) {
         toast({
           title: "Erro",
-          description: `Erro ao atualizar dados de ${selectedManager}`,
+          description: `Erro ao atualizar dados`,
           variant: "destructive"
         })
       }
@@ -120,15 +136,16 @@ export function useManagerData(selectedManager: string) {
     console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
     console.log(`🎯 Campo: ${field}`)
     console.log(`💾 Valor: ${value}`)
-    console.log(`👤 Manager: ${selectedManager}`)
+    console.log(`👤 User Email: ${userEmail}`)
+    console.log(`👤 Manager: ${currentManager}`)
 
     if (!id || id.trim() === '') {
       console.error('❌ ID do cliente está vazio ou inválido:', id)
       return false
     }
 
-    if (!selectedManager) {
-      console.error('❌ Manager não selecionado')
+    if (!userEmail) {
+      console.error('❌ Email do usuário não fornecido')
       return false
     }
 
@@ -138,7 +155,7 @@ export function useManagerData(selectedManager: string) {
     }
 
     try {
-      const tableName = getTableName(selectedManager)
+      const tableName = getTableName(userEmail)
       const numericId = parseInt(id)
       
       console.log(`📋 Tabela: ${tableName}`)
@@ -182,7 +199,6 @@ export function useManagerData(selectedManager: string) {
 
       console.log('✅ Dados atualizados no Supabase:', updateData)
 
-      // Atualizar o estado local imediatamente
       setClientes(prev => 
         prev.map(cliente => 
           cliente.id === id 
@@ -201,10 +217,12 @@ export function useManagerData(selectedManager: string) {
 
   // Configurar listener de realtime para atualizações automáticas
   useEffect(() => {
-    if (!selectedManager) return
+    if (!userEmail) return
 
-    const tableName = getTableName(selectedManager)
-    console.log('🔴 Configurando realtime para tabela:', tableName)
+    const tableName = getTableName(userEmail)
+    const manager = determineManager(userEmail)
+    
+    console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName })
 
     // Buscar dados iniciais
     fetchClientes()
@@ -300,12 +318,11 @@ export function useManagerData(selectedManager: string) {
         }
       })
 
-    // Cleanup do canal quando o componente desmontar ou gerente mudar
     return () => {
       console.log('🧹 Removendo canal de realtime para:', tableName)
       supabase.removeChannel(channel)
     }
-  }, [selectedManager])
+  }, [userEmail])
 
   const refetchWithToast = () => fetchClientes(true)
 
@@ -314,6 +331,7 @@ export function useManagerData(selectedManager: string) {
     loading,
     error,
     updateCliente,
-    refetch: refetchWithToast
+    refetch: refetchWithToast,
+    currentManager
   }
 }

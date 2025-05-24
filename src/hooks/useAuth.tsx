@@ -11,6 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   isAdmin: boolean
   isGestor: boolean
+  currentManagerName: string
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -21,6 +22,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.email === 'lucas@admin.com'
   const isGestor = !isAdmin && user?.email !== null
+
+  // Determinar nome do gestor baseado no email
+  const getCurrentManagerName = (email: string | undefined): string => {
+    if (!email) return ''
+    
+    if (email === 'lucas@admin.com') {
+      return 'Administrador'
+    }
+    
+    const managerMapping: { [key: string]: string } = {
+      'andreza@gestor.com': 'Andreza',
+      'lucas.falcao@gestor.com': 'Lucas Falcão'
+    }
+    
+    return managerMapping[email] || 'Gestor'
+  }
+
+  const currentManagerName = getCurrentManagerName(user?.email)
 
   useEffect(() => {
     // Configuração inicial - verificar sessão existente
@@ -53,7 +72,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, signIn, signUp, signOut, isAdmin, isGestor }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      signIn, 
+      signUp, 
+      signOut, 
+      isAdmin, 
+      isGestor,
+      currentManagerName
+    }}>
       {children}
     </AuthContext.Provider>
   )

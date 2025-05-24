@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -19,12 +18,18 @@ import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 
 interface ClientesTableProps {
-  selectedManager: string
+  selectedManager?: string
+  userEmail?: string
 }
 
-export function ClientesTable({ selectedManager }: ClientesTableProps) {
-  const { isAdmin } = useAuth()
-  const { clientes, loading, error, updateCliente, refetch } = useManagerData(selectedManager)
+export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps) {
+  const { isAdmin, user } = useAuth()
+  
+  // Para admin: usa selectedManager; para gestor: usa email do usuário
+  const emailToUse = userEmail || user?.email || ''
+  const managerName = selectedManager || 'Próprios dados'
+  
+  const { clientes, loading, error, updateCliente, refetch, currentManager } = useManagerData(emailToUse, isAdmin)
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -50,14 +55,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   // Log para debug quando os dados mudarem
   useEffect(() => {
-    console.log(`🔍 ClientesTable: Total de clientes carregados para ${selectedManager}:`, clientes.length)
-    console.log(`📊 Lista completa de IDs:`, clientes.map(c => c.id))
+    console.log(`🔍 ClientesTable: Total de clientes carregados:`, clientes.length)
+    console.log(`📊 Manager atual:`, currentManager)
+    console.log(`📊 Email usado:`, emailToUse)
     
     if (clientes.length > 0) {
       console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
-      console.log(`📊 Últimos 5 clientes:`, clientes.slice(-5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
-  }, [clientes, selectedManager])
+  }, [clientes, currentManager, emailToUse])
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -70,12 +75,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     
     return matchesSearch && matchesStatus
   })
-
-  // Log adicional para debug dos filtros
-  useEffect(() => {
-    console.log(`🔍 FILTROS aplicados - Busca: "${searchTerm}", Status: "${statusFilter}"`)
-    console.log(`📊 RESULTADO: ${filteredClientes.length} clientes exibidos de ${clientes.length} total`)
-  }, [filteredClientes, clientes, searchTerm, statusFilter])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -100,81 +99,38 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID recebido: "${clienteId}" (tipo: ${typeof clienteId})`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
     console.log(`🎯 Novo Status: "${newStatus}"`)
-    console.log(`👤 Manager: ${selectedManager}`)
     
     if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ERRO CRÍTICO: ID do cliente está vazio ou inválido:', clienteId)
-      toast({
-        title: "Erro Crítico",
-        description: "ID do cliente não encontrado. Verifique os dados do registro.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    const numericId = parseInt(clienteId)
-    if (isNaN(numericId) || numericId <= 0) {
-      console.error('❌ ERRO CRÍTICO: ID não é um número válido:', { clienteId, numericId })
-      toast({
-        title: "Erro Crítico",
-        description: "ID do cliente tem formato inválido.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (!newStatus || newStatus.trim() === '') {
-      console.error('❌ Novo status está vazio ou inválido:', newStatus)
+      console.error('❌ ID do cliente inválido:', clienteId)
       toast({
         title: "Erro",
-        description: "Status inválido",
+        description: "ID do cliente não encontrado",
         variant: "destructive",
       })
       return
     }
 
-    const clienteAtual = clientes.find(c => c.id === clienteId)
-    if (!clienteAtual) {
-      console.error('❌ Cliente não encontrado na lista local:', clienteId)
-      console.log('📋 Clientes disponíveis:', clientes.map(c => ({ id: c.id, nome: c.nome_cliente })))
-      toast({
-        title: "Erro",
-        description: "Cliente não encontrado na lista local",
-        variant: "destructive",
-      })
-      return
-    }
-
-    console.log(`📋 Cliente encontrado na lista local:`, {
-      id: clienteAtual.id,
-      nome: clienteAtual.nome_cliente,
-      statusAtual: clienteAtual.status_campanha
-    })
-    
     setUpdatingStatus(clienteId)
     
     try {
-      console.log('🔄 Iniciando atualização via updateCliente...')
       const success = await updateCliente(clienteId, 'status_campanha', newStatus)
       
       if (success) {
-        console.log('✅ Status atualizado com sucesso!')
         toast({
           title: "Sucesso",
           description: `Status alterado para: ${newStatus}`,
         })
       } else {
-        console.error('❌ Falha ao atualizar status - função retornou false')
         toast({
           title: "Erro",
-          description: "Falha ao atualizar status. Verifique os logs do console para mais detalhes.",
+          description: "Falha ao atualizar status",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error('💥 Erro na atualização (catch):', error)
+      console.error('Erro na atualização:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao atualizar status",
@@ -336,7 +292,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     const link = document.createElement('a')
     const url = URL.createObjectURL(blob)
     link.setAttribute('href', url)
-    link.setAttribute('download', `clientes_${selectedManager.toLowerCase().replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.csv`)
+    link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
     link.style.visibility = 'hidden'
     document.body.appendChild(link)
     link.click()
@@ -353,7 +309,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       <div className="flex items-center justify-center py-12 px-4">
         <div className="flex flex-col items-center gap-4">
           <RefreshCw className="w-8 h-8 animate-spin text-primary" />
-          <span className="text-center text-white">Carregando clientes de {selectedManager}...</span>
+          <span className="text-center text-white">Carregando clientes...</span>
         </div>
       </div>
     )
@@ -374,7 +330,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   return (
     <div className="space-y-4 p-4 lg:p-0">
       <TableActions
-        selectedManager={selectedManager}
+        selectedManager={currentManager || managerName}
         filteredClientesCount={filteredClientes.length}
         realtimeConnected={realtimeConnected}
         onRefresh={refetch}
@@ -398,57 +354,42 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 <TableRow className="border-border hover:bg-muted/20">
                   <TableCell colSpan={12} className="text-center py-8 text-white">
                     {clientes.length === 0 
-                      ? `Nenhum cliente encontrado para ${selectedManager}`
+                      ? `Nenhum cliente encontrado`
                       : `Nenhum cliente corresponde aos filtros aplicados (${clientes.length} clientes no total)`
                     }
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClientes.map((cliente, index) => {
-                  console.log(`🎯 Renderizando cliente ${index + 1}/${filteredClientes.length}:`, {
-                    id: cliente.id,
-                    nome: cliente.nome_cliente,
-                    index
-                  })
-                  
-                  return (
-                    <ClienteRow
-                      key={`${selectedManager}-${cliente.id}-${index}`}
-                      cliente={cliente}
-                      selectedManager={selectedManager}
-                      index={index}
-                      updatingStatus={updatingStatus}
-                      editingLink={editingLink}
-                      linkValue={linkValue}
-                      setLinkValue={setLinkValue}
-                      editingBM={editingBM}
-                      bmValue={bmValue}
-                      setBmValue={setBmValue}
-                      updatingComission={updatingComission}
-                      getStatusColor={getStatusColor}
-                      onStatusChange={handleStatusChange}
-                      onLinkEdit={handleLinkEdit}
-                      onLinkSave={handleLinkSave}
-                      onLinkCancel={handleLinkCancel}
-                      onBMEdit={handleBMEdit}
-                      onBMSave={handleBMSave}
-                      onBMCancel={handleBMCancel}
-                      onComissionToggle={handleComissionToggle}
-                    />
-                  )
-                })
+                filteredClientes.map((cliente, index) => (
+                  <ClienteRow
+                    key={`${emailToUse}-${cliente.id}-${index}`}
+                    cliente={cliente}
+                    selectedManager={currentManager || managerName}
+                    index={index}
+                    updatingStatus={updatingStatus}
+                    editingLink={editingLink}
+                    linkValue={linkValue}
+                    setLinkValue={setLinkValue}
+                    editingBM={editingBM}
+                    bmValue={bmValue}
+                    setBmValue={setBmValue}
+                    updatingComission={updatingComission}
+                    getStatusColor={getStatusColor}
+                    onStatusChange={handleStatusChange}
+                    onLinkEdit={handleLinkEdit}
+                    onLinkSave={handleLinkSave}
+                    onLinkCancel={handleLinkCancel}
+                    onBMEdit={handleBMEdit}
+                    onBMSave={handleBMSave}
+                    onBMCancel={handleBMCancel}
+                    onComissionToggle={handleComissionToggle}
+                  />
+                ))
               )}
             </TableBody>
           </Table>
         </div>
       </div>
-      
-      {/* Debug info para desenvolvimento */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="text-xs text-gray-500 mt-2">
-          Debug: {clientes.length} total no hook, {filteredClientes.length} após filtros, {filteredClientes.length} renderizados na tabela
-        </div>
-      )}
     </div>
   )
 }
