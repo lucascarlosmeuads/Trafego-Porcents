@@ -469,7 +469,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
       'Email Gestor', 'Status Campanha', 'Data Limite',
       'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 
-      'Número BM', 'Comissão Paga', 'Valor Comissão'
+      'Número BM', 'Comissão Paga'
     ]
     
     const csvContent = [
@@ -489,8 +489,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         cliente.link_criativo || '', 
         cliente.link_site || '', 
         cliente.numero_bm || '',
-        cliente.comissao_paga ? 'Pago' : 'Não Pago',
-        `R$ ${cliente.valor_comissao?.toFixed(2) || '60,00'}`
+        cliente.comissao_paga ? 'Pago - R$ 60,00' : 'Não Pago'
       ].map(field => `"${field}"`).join(','))
     ].join('\n')
 
@@ -602,13 +601,12 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                 <TableHead className="min-w-[80px] hidden lg:table-cell text-muted-foreground">Site</TableHead>
                 <TableHead className="min-w-[120px] hidden xl:table-cell text-muted-foreground">Número BM</TableHead>
                 <TableHead className="min-w-[100px] text-muted-foreground">Comissão</TableHead>
-                <TableHead className="min-w-[100px] text-muted-foreground">Valor</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredClientes.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={13} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={12} className="text-center py-8 text-muted-foreground">
                     Nenhum cliente encontrado para {selectedManager}
                   </TableCell>
                 </TableRow>
@@ -709,11 +707,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                       </TableCell>
                       <TableCell>
                         {renderComissionField(cliente)}
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-medium text-foreground">
-                          R$ {cliente.valor_comissao?.toFixed(2) || '60,00'}
-                        </span>
                       </TableCell>
                     </TableRow>
                   )
