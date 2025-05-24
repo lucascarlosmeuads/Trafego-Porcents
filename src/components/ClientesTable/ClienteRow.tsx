@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -116,18 +115,15 @@ export function ClienteRow({
     const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
     
     return (
-      <div className="flex items-center gap-2">
-        <span className="text-xs text-white">{telefone}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
-          onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
-        >
-          <MessageCircle className="w-3 h-3 mr-1" />
-          WhatsApp
-        </Button>
-      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+        onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
+      >
+        <MessageCircle className="w-3 h-3 mr-1" />
+        WhatsApp
+      </Button>
     )
   }
 
