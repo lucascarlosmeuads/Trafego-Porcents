@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -330,7 +331,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         <Button
           variant="outline"
           size="sm"
-          className="h-6 px-2 text-xs"
+          className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 border-blue-200 text-blue-700 hover:text-blue-800 dark:bg-blue-950/50 dark:hover:bg-blue-900/50 dark:border-blue-800 dark:text-blue-300 dark:hover:text-blue-200 transition-all duration-200 shadow-sm hover:shadow-md"
           onClick={() => window.open(currentValue, '_blank')}
         >
           <ExternalLink className="w-3 h-3 mr-1" />
