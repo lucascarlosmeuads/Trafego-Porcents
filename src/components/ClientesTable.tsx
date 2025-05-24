@@ -163,7 +163,9 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   const handleLinkSave = async (clienteId: string, field: string) => {
     try {
-      const success = await updateCliente(clienteId, field, linkValue)
+      // Usar linkValue para campos normais, mas para link_site usar o valor atual se não estiver editando
+      const valueToSave = field === 'link_site' ? linkValue : linkValue
+      const success = await updateCliente(clienteId, field, valueToSave)
       
       if (success) {
         toast({

@@ -368,7 +368,10 @@ export function ClienteRow({
     console.log('💾 Salvando link do site:', siteLinkInput)
     
     try {
-      // Primeiro salvar o link
+      // Primeiro definir o valor do link para que onLinkSave possa usá-lo
+      setLinkValue(siteLinkInput)
+      
+      // Salvar o link
       await onLinkSave(cliente.id, 'link_site')
       
       // Depois atualizar o status para finalizado
