@@ -7,6 +7,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { ClientesTable } from './ClientesTable'
 import { AdminDashboard } from './AdminDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
+import { ThemeToggle } from './ThemeToggle'
 import { User } from 'lucide-react'
 
 export function Dashboard() {
@@ -16,7 +17,7 @@ export function Dashboard() {
 
   return (
     <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-gray-50">
+      <div className="min-h-screen flex w-full bg-background">
         <ManagerSidebar 
           selectedManager={selectedManager} 
           onManagerSelect={setSelectedManager} 
@@ -24,19 +25,19 @@ export function Dashboard() {
         
         <SidebarInset className="flex-1 min-w-0">
           {/* Header responsivo */}
-          <header className="bg-white shadow-sm border-b sticky top-0 z-40">
+          <header className="bg-card shadow-sm border-b sticky top-0 z-40">
             <div className="w-full px-4 sm:px-6 lg:px-8">
               <div className="flex justify-between items-center py-4">
                 <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
                   <SidebarTrigger className="flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 truncate">
+                    <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
                       Painel de Gestão
                     </h1>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-gray-500">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-muted-foreground">
                       <span>{isAdmin ? 'Administrador' : 'Gestor'}</span>
                       <span className="hidden sm:inline">•</span>
-                      <span className="text-blue-600 font-medium truncate">
+                      <span className="text-primary font-medium truncate">
                         {selectedManager}
                       </span>
                     </div>
@@ -44,10 +45,11 @@ export function Dashboard() {
                 </div>
                 
                 <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-                  <div className="hidden md:flex items-center space-x-2 text-sm text-gray-600">
+                  <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
                     <User className="w-4 h-4" />
                     <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
                   </div>
+                  <ThemeToggle />
                   <Button variant="outline" onClick={signOut} size="sm">
                     Sair
                   </Button>
