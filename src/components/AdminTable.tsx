@@ -3,11 +3,11 @@ import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Save, Smartphone, Monitor } from 'lucide-react'
+import { Loader2, Smartphone, Monitor } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -90,8 +90,8 @@ export function AdminTable() {
     }
   }
 
-  const handleCellEdit = (id: string, field: keyof Cliente, value: string) => {
-    updateField(id, field, value)
+  const handleStatusChange = (id: string, newStatus: string) => {
+    updateField(id, 'status_campanha', newStatus)
   }
 
   const formatDate = (dateString: string | null) => {
@@ -101,6 +101,34 @@ export function AdminTable() {
       return date.toLocaleDateString('pt-BR')
     } catch {
       return dateString
+    }
+  }
+
+  const isDataLimiteVencida = (dataLimite: string) => {
+    if (!dataLimite) return false
+    const hoje = new Date()
+    const limite = new Date(dataLimite)
+    return hoje > limite
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Preenchimento do Formulário':
+        return 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+      case 'Brief':
+        return 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+      case 'Criativo':
+        return 'bg-purple-500/20 text-purple-400 border border-purple-500/30'
+      case 'Site':
+        return 'bg-orange-500/20 text-orange-400 border border-orange-500/30'
+      case 'Agendamento':
+        return 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+      case 'No Ar':
+        return 'bg-green-500/20 text-green-400 border border-green-500/30'
+      case 'Otimização':
+        return 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
+      default:
+        return 'bg-muted text-muted-foreground border border-border'
     }
   }
 
@@ -154,23 +182,17 @@ export function AdminTable() {
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Vendedor:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.nome_vendedor || '-'}</span>
+                    <span className="ml-2 text-card-foreground">{cliente.vendedor || '-'}</span>
                   </div>
                   <div>
                     <span className="font-medium text-muted-foreground">Status:</span>
-                    <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${
-                      cliente.status_campanha === 'Planejamento' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                      cliente.status_campanha === 'Brief' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                      cliente.status_campanha === 'Criativo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                      cliente.status_campanha === 'No Ar' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                      'bg-muted text-muted-foreground border border-border'
-                    }`}>
+                    <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
                       {cliente.status_campanha || 'Sem Status'}
                     </span>
                   </div>
                   <div>
-                    <span className="font-medium text-muted-foreground">Comissão:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.comissao || '-'}</span>
+                    <span className="font-medium text-muted-foreground">Data Venda:</span>
+                    <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
                   </div>
                 </CardContent>
               </Card>
@@ -186,24 +208,21 @@ export function AdminTable() {
                 <TableHead className="w-20 text-muted-foreground">ID</TableHead>
                 <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                 <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
-                <TableHead className="min-w-[120px] hidden sm:table-cell text-muted-foreground">Telefone</TableHead>
-                <TableHead className="min-w-[200px] hidden md:table-cell text-muted-foreground">Email Cliente</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
+                <TableHead className="min-w-[200px] text-muted-foreground">Email Cliente</TableHead>
                 <TableHead className="min-w-[150px] text-muted-foreground">Vendedor</TableHead>
-                <TableHead className="min-w-[100px] text-muted-foreground">Comissão</TableHead>
-                <TableHead className="min-w-[180px] hidden lg:table-cell text-muted-foreground">Email Gestor</TableHead>
-                <TableHead className="min-w-[130px] text-muted-foreground">Status Campanha</TableHead>
-                <TableHead className="min-w-[100px] hidden xl:table-cell text-muted-foreground">Data Limite</TableHead>
-                <TableHead className="min-w-[100px] hidden xl:table-cell text-muted-foreground">Data Subida</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Grupo</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Briefing</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Criativo</TableHead>
-                <TableHead className="min-w-[200px] hidden xl:table-cell text-muted-foreground">Link Site</TableHead>
-                <TableHead className="min-w-[120px] hidden xl:table-cell text-muted-foreground">Número BM</TableHead>
+                <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
+                <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {clientes.map((cliente) => (
-                <TableRow key={cliente.id} className="border-border hover:bg-muted/20 transition-colors">
+                <TableRow 
+                  key={cliente.id} 
+                  className={`border-border hover:bg-muted/20 transition-colors ${
+                    isDataLimiteVencida(cliente.data_limite) ? 'bg-red-500/10' : ''
+                  }`}
+                >
                   <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
                   <TableCell className="text-xs text-foreground">{formatDate(cliente.data_venda)}</TableCell>
                   <TableCell className="font-medium">
@@ -211,115 +230,48 @@ export function AdminTable() {
                       {cliente.nome_cliente}
                     </div>
                   </TableCell>
-                  <TableCell className="hidden sm:table-cell text-foreground">{cliente.telefone}</TableCell>
-                  <TableCell className="hidden md:table-cell">
+                  <TableCell className="text-foreground">{cliente.telefone}</TableCell>
+                  <TableCell>
                     <div className="max-w-[200px] truncate text-foreground">
                       {cliente.email_cliente}
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="max-w-[150px] truncate text-foreground">
-                      {cliente.nome_vendedor}
+                      {cliente.vendedor}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {editingCell === `${cliente.id}-comissao` ? (
-                      <Input
-                        defaultValue={cliente.comissao || ''}
-                        onBlur={(e) => handleCellEdit(cliente.id, 'comissao', e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter') {
-                            handleCellEdit(cliente.id, 'comissao', e.currentTarget.value)
-                          }
-                          if (e.key === 'Escape') {
-                            setEditingCell(null)
-                          }
-                        }}
-                        className="h-8 w-20 bg-background border-border text-foreground"
-                        autoFocus
-                      />
-                    ) : (
-                      <div 
-                        className="editable-cell cursor-pointer p-1 rounded min-h-[24px] flex items-center w-20"
-                        onClick={() => setEditingCell(`${cliente.id}-comissao`)}
-                      >
-                        {saving === `${cliente.id}-comissao` ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <span className="truncate text-foreground">{cliente.comissao || '-'}</span>
-                        )}
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
                     <div className="max-w-[180px] truncate text-foreground">
-                      {cliente.email_gestor_responsavel}
+                      {cliente.email_gestor}
                     </div>
                   </TableCell>
                   <TableCell>
-                    {editingCell === `${cliente.id}-status_campanha` ? (
-                      <Select 
-                        defaultValue={cliente.status_campanha || ''}
-                        onValueChange={(value) => handleCellEdit(cliente.id, 'status_campanha', value)}
-                      >
-                        <SelectTrigger className="h-8 w-32 bg-background border-border text-foreground">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="bg-card border-border">
-                          <SelectItem value="Planejamento">Planejamento</SelectItem>
-                          <SelectItem value="Brief">Brief</SelectItem>
-                          <SelectItem value="Criativo">Criativo</SelectItem>
-                          <SelectItem value="No Ar">No Ar</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    ) : (
-                      <div 
-                        className="editable-cell cursor-pointer p-1 rounded min-h-[24px] flex items-center w-32"
-                        onClick={() => setEditingCell(`${cliente.id}-status_campanha`)}
-                      >
-                        {saving === `${cliente.id}-status_campanha` ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <span className={`px-2 py-1 rounded text-xs font-medium truncate ${
-                            cliente.status_campanha === 'Planejamento' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
-                            cliente.status_campanha === 'Brief' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
-                            cliente.status_campanha === 'Criativo' ? 'bg-purple-500/20 text-purple-400 border border-purple-500/30' :
-                            cliente.status_campanha === 'No Ar' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
-                            'bg-muted text-muted-foreground border border-border'
-                          }`}>
-                            {cliente.status_campanha || 'Sem Status'}
+                    <Select 
+                      value={cliente.status_campanha || ''}
+                      onValueChange={(value) => handleStatusChange(cliente.id, value)}
+                    >
+                      <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                        <SelectValue>
+                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
+                            {cliente.status_campanha || 'Selecionar Status'}
                           </span>
-                        )}
-                      </div>
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent className="bg-card border-border">
+                        {STATUS_CAMPANHA.map(status => (
+                          <SelectItem key={status} value={status}>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                              {status}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {saving === `${cliente.id}-status_campanha` && (
+                      <Loader2 className="w-4 h-4 animate-spin ml-2" />
                     )}
                   </TableCell>
-                  
-                  {/* Campos ocultos em telas menores */}
-                  <TableCell className="hidden xl:table-cell text-foreground">{cliente.data_limite || '-'}</TableCell>
-                  <TableCell className="hidden xl:table-cell text-foreground">{formatDate(cliente.data_subida_campanha)}</TableCell>
-                  
-                  {/* Links ocultos em telas menores */}
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.link_grupo || '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.link_reuniao_1 || '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.link_reuniao_2 || '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.link_reuniao_3 || '-'}
-                    </div>
-                  </TableCell>
-                  <TableCell className="hidden xl:table-cell text-foreground">{cliente.bm_identificacao || '-'}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

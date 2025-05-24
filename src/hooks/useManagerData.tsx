@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -41,13 +42,13 @@ export function useManagerData(selectedManager: string) {
         // Mapear os dados para o formato esperado
         const clientesFormatados = (data || []).map((item: any) => ({
           id: item.id?.toString() || '',
+          data_venda: item.data_venda || '',
           nome_cliente: item.nome_cliente || '',
           telefone: item.telefone || '',
           email_cliente: item.email_cliente || '',
           vendedor: item.vendedor || '',
           email_gestor: item.email_gestor || '',
           status_campanha: item.status_campanha || 'Preenchimento do Formulário',
-          data_venda: item.data_venda || '',
           data_limite: item.data_limite || '',
           link_grupo: item.link_grupo || '',
           link_briefing: item.link_briefing || '',

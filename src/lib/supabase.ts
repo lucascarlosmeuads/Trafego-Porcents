@@ -9,13 +9,13 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
 export type Cliente = {
   id: string
+  data_venda: string
   nome_cliente: string
   telefone: string
   email_cliente: string
   vendedor: string
   email_gestor: string
   status_campanha: string
-  data_venda: string
   data_limite: string
   link_grupo: string
   link_briefing: string
