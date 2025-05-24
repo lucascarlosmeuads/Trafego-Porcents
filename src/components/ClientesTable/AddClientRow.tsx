@@ -5,20 +5,30 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Plus, X } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface AddClientRowProps {
   onAddClient: (clientData: any) => Promise<boolean>
   isLoading: boolean
+  getStatusColor: (status: string) => string
 }
 
-export function AddClientRow({ onAddClient, isLoading }: AddClientRowProps) {
+export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClientRowProps) {
   const [isEditing, setIsEditing] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
     email_cliente: '',
     data_venda: '',
-    vendedor: ''
+    vendedor: '',
+    status_campanha: ''
   })
 
   const handleSave = async () => {
@@ -50,9 +60,17 @@ export function AddClientRow({ onAddClient, isLoading }: AddClientRowProps) {
       return
     }
 
+    if (!formData.status_campanha) {
+      toast({
+        title: "Erro",
+        description: "Selecione um status válido",
+        variant: "destructive"
+      })
+      return
+    }
+
     const success = await onAddClient({
       ...formData,
-      status_campanha: 'Preenchimento do Formulário', // Status padrão
       comissao_paga: false,
       valor_comissao: 60.00
     })
@@ -64,7 +82,8 @@ export function AddClientRow({ onAddClient, isLoading }: AddClientRowProps) {
         telefone: '',
         email_cliente: '',
         data_venda: '',
-        vendedor: ''
+        vendedor: '',
+        status_campanha: ''
       })
       setIsEditing(false)
       
@@ -81,7 +100,8 @@ export function AddClientRow({ onAddClient, isLoading }: AddClientRowProps) {
       telefone: '',
       email_cliente: '',
       data_venda: '',
-      vendedor: ''
+      vendedor: '',
+      status_campanha: ''
     })
     setIsEditing(false)
   }
@@ -153,9 +173,29 @@ export function AddClientRow({ onAddClient, isLoading }: AddClientRowProps) {
         <span className="text-xs text-muted-foreground">Auto</span>
       </TableCell>
       <TableCell>
-        <span className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-500/20 text-gray-700 border border-gray-500/30">
-          Preenchimento do Formulário
-        </span>
+        <Select 
+          value={formData.status_campanha}
+          onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
+        >
+          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+            <SelectValue placeholder="Selecione o status *">
+              {formData.status_campanha && (
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(formData.status_campanha)}`}>
+                  {formData.status_campanha}
+                </span>
+              )}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border z-50">
+            {STATUS_CAMPANHA.map(status => (
+              <SelectItem key={status} value={status}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                  {status}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </TableCell>
       <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>
       <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>

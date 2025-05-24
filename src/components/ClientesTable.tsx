@@ -474,6 +474,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
               <AddClientRow
                 onAddClient={handleAddClient}
                 isLoading={addingClient}
+                getStatusColor={getStatusColor}
               />
             )}
           </TableBody>
