@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -62,16 +61,24 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (showToast) setRefreshing(true)
       setLoading(true)
       const tableName = getTableName(selectedManager)
-      console.log(`📊 Buscando estatísticas da tabela: ${tableName}`)
+      console.log(`📊 Dashboard: Buscando TODAS as estatísticas da tabela: ${tableName}`)
       
-      // Garantindo que todos os dados sejam buscados sem limitação
+      // GARANTINDO QUE TODOS OS DADOS SEJAM BUSCADOS SEM LIMITAÇÃO
       const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact' })
+        // SEM .limit() - queremos TODOS os registros para as estatísticas
+
+      console.log(`📊 Dashboard: Resposta do Supabase:`, {
+        data: data?.length || 0,
+        count,
+        error,
+        tableName
+      })
 
       if (!error && data) {
-        console.log(`✅ Dados encontrados para ${selectedManager}:`, data.length, 'registros')
-        console.log(`📊 Count exato do banco:`, count)
+        console.log(`✅ Dashboard: TOTAL de dados encontrados para ${selectedManager}:`, data.length, 'registros')
+        console.log(`📊 Dashboard: Count exato do banco:`, count)
         
         if (data.length !== count) {
           console.warn(`⚠️ DISCREPÂNCIA no Dashboard: Dados recebidos: ${data.length}, Count do DB: ${count}`)
@@ -101,8 +108,8 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           return total + valor
         }, 0)
 
-        console.log(`📊 Estatísticas de ${selectedManager}:`, { totalClientes, clientesAtivos, comissaoTotal })
-        console.log('📊 Estatísticas por status:', statusCounts)
+        console.log(`📊 Dashboard: Estatísticas de ${selectedManager}:`, { totalClientes, clientesAtivos, comissaoTotal })
+        console.log('📊 Dashboard: Estatísticas por status:', statusCounts)
         
         setManagerStats({
           totalClientes,
@@ -148,9 +155,11 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     try {
       const tableName = getTableName(selectedManager)
       
+      // GARANTINDO QUE TODOS OS DADOS SEJAM EXPORTADOS
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
+        // SEM .limit() - queremos TODOS os registros para exportação
 
       if (!error && data) {
         if (data.length === 0) {
@@ -160,6 +169,8 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           })
           return
         }
+
+        console.log(`📊 Exportando ${data.length} registros de ${selectedManager}`)
 
         const headers = [
           'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor', 'Email Gestor', 
@@ -201,7 +212,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
         toast({
           title: "Sucesso",
-          description: `Relatório de ${selectedManager} exportado com sucesso`
+          description: `Relatório de ${selectedManager} exportado com sucesso - ${data.length} registros`
         })
       }
     } catch (error) {

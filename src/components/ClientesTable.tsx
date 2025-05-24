@@ -49,10 +49,12 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   // Log para debug quando os dados mudarem
   useEffect(() => {
-    console.log(`🔍 ClientesTable: Total de clientes carregados para ${selectedManager}:`, clientes.length)
+    console.log(`🔍 ClientesTable: TOTAL de clientes carregados para ${selectedManager}:`, clientes.length)
+    console.log(`📊 Lista completa de IDs:`, clientes.map(c => c.id))
+    
     if (clientes.length > 0) {
-      console.log(`📊 Primeiros 3 clientes:`, clientes.slice(0, 3).map(c => ({ id: c.id, nome: c.nome_cliente })))
-      console.log(`📊 Últimos 3 clientes:`, clientes.slice(-3).map(c => ({ id: c.id, nome: c.nome_cliente })))
+      console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
+      console.log(`📊 Últimos 5 clientes:`, clientes.slice(-5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
   }, [clientes, selectedManager])
 
@@ -70,23 +72,26 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   // Log adicional para debug dos filtros
   useEffect(() => {
-    console.log(`🔍 Filtros aplicados - Busca: "${searchTerm}", Status: "${statusFilter}"`)
-    console.log(`📊 Clientes após filtros: ${filteredClientes.length} de ${clientes.length} total`)
+    console.log(`🔍 FILTROS aplicados - Busca: "${searchTerm}", Status: "${statusFilter}"`)
+    console.log(`📊 RESULTADO: ${filteredClientes.length} clientes exibidos de ${clientes.length} total`)
     
     if (filteredClientes.length !== clientes.length) {
-      console.log(`🔍 Clientes filtrados por busca:`, clientes.filter(c => {
+      const filtradosPorBusca = clientes.filter(c => {
         const matchesSearch = 
           c.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           c.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           c.telefone?.includes(searchTerm) ||
           c.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
         return !matchesSearch
-      }).length)
+      })
       
-      console.log(`🔍 Clientes filtrados por status:`, clientes.filter(c => {
+      const filtradosPorStatus = clientes.filter(c => {
         const matchesStatus = statusFilter === 'all' || c.status_campanha === statusFilter
         return !matchesStatus
-      }).length)
+      })
+      
+      console.log(`🔍 ${filtradosPorBusca.length} clientes filtrados pela busca`)
+      console.log(`🔍 ${filtradosPorStatus.length} clientes filtrados pelo status`)
     }
   }, [filteredClientes, clientes, searchTerm, statusFilter])
 
@@ -418,13 +423,20 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                // Garantindo que TODOS os clientes filtrados sejam renderizados sem limitação
+                // RENDERIZANDO TODOS OS CLIENTES FILTRADOS - SEM LIMITAÇÃO
                 filteredClientes.map((cliente, index) => {
                   // Log de debug para IDs inválidos
                   if (!cliente.id || cliente.id.trim() === '') {
-                    console.warn(`⚠️ Cliente ${index + 1} tem ID completamente inválido, não será renderizado:`, cliente)
-                    return null
+                    console.warn(`⚠️ Cliente ${index + 1} tem ID inválido, mas será renderizado com fallback:`, cliente)
+                    // Criando um ID temporário para clientes sem ID
+                    cliente.id = `temp-${index}-${cliente.nome_cliente || 'sem-nome'}`
                   }
+                  
+                  console.log(`🎯 Renderizando cliente ${index + 1}/${filteredClientes.length}:`, {
+                    id: cliente.id,
+                    nome: cliente.nome_cliente,
+                    index
+                  })
                   
                   return (
                     <ClienteRow
@@ -461,7 +473,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
       {/* Debug info para desenvolvimento */}
       {process.env.NODE_ENV === 'development' && (
         <div className="text-xs text-gray-500 mt-2">
-          Debug: {clientes.length} total, {filteredClientes.length} filtrados, {filteredClientes.filter(c => c.id && c.id.trim() !== '').length} renderizados
+          Debug: {clientes.length} total no hook, {filteredClientes.length} após filtros, {filteredClientes.length} renderizados na tabela
         </div>
       )}
     </div>

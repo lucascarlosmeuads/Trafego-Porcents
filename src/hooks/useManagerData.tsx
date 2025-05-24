@@ -24,13 +24,21 @@ export function useManagerData(selectedManager: string) {
 
     try {
       const tableName = getTableName(selectedManager)
-      console.log('🔍 Buscando dados da tabela:', tableName)
+      console.log('🔍 Buscando TODOS os dados da tabela:', tableName)
       
-      // Removendo qualquer limitação e garantindo que todos os registros sejam buscados
+      // REMOVENDO QUALQUER LIMITAÇÃO - buscando TODOS os registros
       const { data, error, count } = await supabase
         .from(tableName)
         .select('*', { count: 'exact' })
         .order('id', { ascending: true })
+        // SEM .limit() - queremos TODOS os registros
+
+      console.log('📊 Resposta do Supabase:', {
+        data: data?.length || 0,
+        count,
+        error,
+        tableName
+      })
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)
@@ -44,10 +52,21 @@ export function useManagerData(selectedManager: string) {
           })
         }
       } else {
-        console.log(`✅ Dados encontrados para ${selectedManager}:`, data?.length || 0, 'registros')
-        console.log(`📊 Total de registros no banco (count):`, count)
+        console.log(`✅ TOTAL de dados recebidos do Supabase para ${selectedManager}:`, data?.length || 0)
+        console.log(`📊 Count exato do banco:`, count)
         
-        const clientesFormatados = (data || []).map((item: any) => {
+        if (data?.length !== count) {
+          console.warn(`⚠️ DISCREPÂNCIA CRÍTICA: Dados recebidos: ${data?.length}, Count do DB: ${count}`)
+        }
+        
+        // Formatando TODOS os registros sem filtros
+        const clientesFormatados = (data || []).map((item: any, index: number) => {
+          console.log(`📋 Processando cliente ${index + 1}:`, {
+            id: item.id,
+            nome: item.nome_cliente,
+            status: item.status_campanha
+          })
+          
           const cliente = {
             id: String(item.id || ''),
             data_venda: item.data_venda || '',
@@ -71,24 +90,21 @@ export function useManagerData(selectedManager: string) {
           return cliente
         })
         
-        console.log(`📋 Total de clientes formatados para ${selectedManager}:`, clientesFormatados.length)
+        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes formatados`)
+        console.log(`📋 IDs dos clientes:`, clientesFormatados.map(c => c.id))
         
-        // Log detalhado para debug
-        if (clientesFormatados.length !== count) {
-          console.warn(`⚠️ DISCREPÂNCIA: Formatados: ${clientesFormatados.length}, Count do DB: ${count}`)
-        }
-        
+        // DEFININDO TODOS OS CLIENTES SEM FILTROS
         setClientes(clientesFormatados)
         
         if (showToast) {
           toast({
             title: "Sucesso",
-            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros encontrados`
+            description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros carregados de ${count} no banco`
           })
         }
       }
     } catch (err) {
-      console.error('💥 Erro:', err)
+      console.error('💥 Erro na busca:', err)
       setError(`Erro ao carregar dados de ${selectedManager}`)
       setClientes([])
       if (showToast) {
