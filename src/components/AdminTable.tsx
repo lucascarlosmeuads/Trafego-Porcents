@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -240,12 +239,14 @@ export function AdminTable() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientes.map((cliente) => (
+              {clientes.map((cliente, index) => (
                 <TableRow 
                   key={cliente.id} 
                   className="border-border hover:bg-muted/20 transition-colors"
                 >
-                  <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
+                  <TableCell className="font-mono text-xs text-foreground">
+                    {String(index + 1).padStart(3, '0')}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3 text-muted-foreground" />

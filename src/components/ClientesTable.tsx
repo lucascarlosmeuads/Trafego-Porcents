@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -283,12 +282,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filteredClientes.map((cliente) => (
+                filteredClientes.map((cliente, index) => (
                   <TableRow 
                     key={cliente.id} 
                     className="border-border hover:bg-muted/10 transition-colors"
                   >
-                    <TableCell className="font-mono text-xs text-foreground">{cliente.id}</TableCell>
+                    <TableCell className="font-mono text-xs text-foreground">
+                      {String(index + 1).padStart(3, '0')}
+                    </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-1">
                         <Calendar className="w-3 h-3 text-muted-foreground" />
