@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -239,7 +240,7 @@ export function ClienteRow({
           <Select value="" onValueChange={handleSiteStatusChange}>
             <SelectTrigger className="h-7 w-auto bg-gray-100 text-gray-600 border-gray-300">
               <SelectValue>
-                <span className="text-xs">⚪️ Pendente</span>
+                <span className="text-xs">❔ Precisa de site?</span>
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-card border-border z-50">
@@ -281,6 +282,14 @@ export function ClienteRow({
             >
               🟡 Aguardando link
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={handleAguardandoLinkClick}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
             <Select value="" onValueChange={handleSiteStatusChange}>
               <SelectTrigger className="h-6 w-6 p-0 border-none bg-transparent">
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
@@ -290,7 +299,7 @@ export function ClienteRow({
                   <span className="text-xs">❌ Não precisa de site</span>
                 </SelectItem>
                 <SelectItem value="pendente">
-                  <span className="text-xs">⚪️ Voltar para pendente</span>
+                  <span className="text-xs">❔ Voltar para pendente</span>
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -321,21 +330,31 @@ export function ClienteRow({
           )
         } else {
           return (
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300"
-              onClick={handleAguardandoLinkClick}
-            >
-              🟡 Aguardando link
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs bg-yellow-100 text-yellow-700 border-yellow-300"
+                onClick={handleAguardandoLinkClick}
+              >
+                🟡 Aguardando link
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0"
+                onClick={handleAguardandoLinkClick}
+              >
+                <Edit2 className="w-3 h-3 text-muted-foreground" />
+              </Button>
+            </div>
           )
         }
 
       default:
         return (
           <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600">
-            ⚪️ Pendente
+            ❔ Precisa de site?
           </span>
         )
     }
@@ -372,14 +391,12 @@ export function ClienteRow({
     }
     
     try {
-      // Primeiro salvar o link do site usando o sistema existente de linkValue
+      // Salvar o link do site
       setLinkValue(siteLinkInput)
-      
-      // Salvar o link
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
-        // Depois atualizar o status para finalizado para que apareça o botão "Ver site"
+        // Atualizar o status para finalizado
         await onStatusChange(cliente.id, 'finalizado')
         
         // Limpar os estados de edição
