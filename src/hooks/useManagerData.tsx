@@ -28,7 +28,8 @@ export function useManagerData(selectedManager: string) {
       const { data, error } = await supabase
         .from(tableName)
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('id', { ascending: true }) // Ordenar por ID em ordem crescente
+        .order('created_at', { ascending: false }) // Segundo critério: mais recentes primeiro
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)
@@ -217,7 +218,11 @@ export function useManagerData(selectedManager: string) {
               valor_comissao: payload.new.valor_comissao || 60.00
             }
             
-            setClientes(prev => [novoCliente, ...prev])
+            // Reordenar a lista após inserção
+            setClientes(prev => {
+              const updated = [novoCliente, ...prev]
+              return updated.sort((a, b) => parseInt(a.id) - parseInt(b.id))
+            })
           } else if (payload.eventType === 'UPDATE') {
             console.log('🔄 Cliente atualizado via realtime:', payload.new)
             const clienteAtualizado = {
