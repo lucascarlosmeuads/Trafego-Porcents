@@ -17,6 +17,7 @@ import { TableHeader } from './ClientesTable/TableHeader'
 import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
+import { AddClientRow } from './ClientesTable/AddClientRow'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -30,7 +31,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const emailToUse = userEmail || user?.email || ''
   const managerName = selectedManager || 'Próprios dados'
   
-  const { clientes, loading, error, updateCliente, refetch, currentManager } = useManagerData(
+  const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
     emailToUse, 
     isAdmin, 
     selectedManager
@@ -47,6 +48,11 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
   const [comissionValueInput, setComissionValueInput] = useState('')
   const [realtimeConnected, setRealtimeConnected] = useState(false)
+
+  // Estado para controlar permissão de adicionar cliente
+  const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
+  const [loadingPermissoes, setLoadingPermissoes] = useState(false)
+  const [addingClient, setAddingClient] = useState(false)
 
   useEffect(() => {
     const checkConnection = () => {
@@ -70,6 +76,39 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
       console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ id: c.id, nome: c.nome_cliente })))
     }
   }, [clientes, currentManager, emailToUse, selectedManager])
+
+  // Verificar permissões do gestor
+  useEffect(() => {
+    const verificarPermissoes = async () => {
+      if (!user?.email || isAdmin) {
+        setPodeAdicionarCliente(isAdmin) // Admin sempre pode
+        return
+      }
+
+      setLoadingPermissoes(true)
+      try {
+        const { data, error } = await supabase
+          .from('gestores')
+          .select('pode_adicionar_cliente, ativo')
+          .eq('email', user.email)
+          .single()
+
+        if (error) {
+          console.log('Gestor não encontrado na tabela gestores')
+          setPodeAdicionarCliente(false)
+        } else {
+          setPodeAdicionarCliente(data.pode_adicionar_cliente && data.ativo)
+        }
+      } catch (error) {
+        console.error('Erro ao verificar permissões:', error)
+        setPodeAdicionarCliente(false)
+      } finally {
+        setLoadingPermissoes(false)
+      }
+    }
+
+    verificarPermissoes()
+  }, [user?.email, isAdmin])
 
   const clientesAtivos = clientes.filter(cliente => 
     cliente.status_campanha !== 'Off' && cliente.status_campanha !== 'Reembolso'
@@ -311,6 +350,19 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     setComissionValueInput('')
   }
 
+  const handleAddClient = async (clienteData: any) => {
+    setAddingClient(true)
+    try {
+      const success = await addCliente(clienteData)
+      return success
+    } catch (error) {
+      console.error('Erro ao adicionar cliente:', error)
+      return false
+    } finally {
+      setAddingClient(false)
+    }
+  }
+
   const exportToCSV = () => {
     if (clientes.length === 0) {
       toast({
@@ -413,6 +465,14 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
                   onComissionValueCancel={handleComissionValueCancel}
                 />
               ))
+            )}
+            
+            {/* Linha de adição de cliente - só para clientes ativos e se tiver permissão */}
+            {!isInactive && podeAdicionarCliente && !loadingPermissoes && (
+              <AddClientRow
+                onAddClient={handleAddClient}
+                isLoading={addingClient}
+              />
             )}
           </TableBody>
         </Table>

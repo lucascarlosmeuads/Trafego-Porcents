@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -336,6 +335,48 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
   }
 
+  const addCliente = async (clienteData: any) => {
+    if (!userEmail) {
+      console.error('❌ Email do usuário não fornecido')
+      return false
+    }
+
+    try {
+      console.log('🚀 Adicionando novo cliente...')
+      const { manager, tableName } = await determineManager(userEmail, selectedManager)
+      
+      console.log(`📋 Tabela de destino: ${tableName}`)
+      console.log(`👤 Manager: ${manager}`)
+      
+      // Preparar dados do cliente com email_gestor automaticamente preenchido
+      const novoCliente = {
+        ...clienteData,
+        email_gestor: userEmail, // Preenchimento automático
+        created_at: new Date().toISOString()
+      }
+
+      console.log('💾 Dados do novo cliente:', novoCliente)
+
+      const { data, error } = await supabase
+        .from(tableName)
+        .insert([novoCliente])
+        .select()
+
+      if (error) {
+        console.error('❌ Erro ao adicionar cliente:', error)
+        return false
+      }
+
+      console.log('✅ Cliente adicionado com sucesso:', data)
+      
+      // Não precisa atualizar manualmente o estado, o realtime fará isso
+      return true
+    } catch (error) {
+      console.error('💥 Erro na adição do cliente:', error)
+      return false
+    }
+  }
+
   // Configurar listener de realtime para atualizações automáticas
   useEffect(() => {
     if (!userEmail) return
@@ -467,6 +508,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     loading,
     error,
     updateCliente,
+    addCliente,
     refetch: refetchWithToast,
     currentManager
   }
