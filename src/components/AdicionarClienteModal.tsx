@@ -14,8 +14,7 @@ const handleSubmit = async () => {
     const tableName = getTableName(currentManagerName)
     const vendedor = formData.vendedor || currentManagerName
 
-    // Monta o objeto sem 'id'
-    const { id, ...dadosCliente } = {
+    const clienteBruto = {
       nome_cliente: formData.nome_cliente,
       telefone: formData.telefone,
       email_cliente: formData.email_cliente,
@@ -27,9 +26,15 @@ const handleSubmit = async () => {
       comissao_paga: false
     }
 
+    const clienteLimpo = Object.fromEntries(
+      Object.entries(clienteBruto).filter(
+        ([key, value]) => key !== 'id' && value != null
+      )
+    )
+
     const { error } = await supabase
       .from(tableName)
-      .insert([dadosCliente])
+      .insert([clienteLimpo])
 
     if (error) throw error
 
