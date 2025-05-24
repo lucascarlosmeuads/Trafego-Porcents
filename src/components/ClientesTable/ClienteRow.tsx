@@ -592,7 +592,7 @@ export function ClienteRow({
                 </div>
               ) : (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                  {cliente.status_campanha || 'Selecionar Status'}
+                  {cliente.status_campanha || 'Sem status'}
                 </span>
               )}
             </SelectValue>
