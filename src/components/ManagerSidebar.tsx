@@ -52,7 +52,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
     try {
       console.log('🔍 [SIDEBAR] Buscando gestores ativos da tabela gestores...')
       
-      // Buscar APENAS gestores ativos da tabela gestores
+      // Buscar TODOS os gestores ativos da tabela gestores
       const { data: gestoresData, error: gestoresError } = await supabase
         .from('gestores')
         .select('nome, email, ativo')
@@ -65,9 +65,16 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         return
       }
 
+      console.log('📊 [SIDEBAR] Dados retornados do Supabase:', gestoresData)
+
       if (gestoresData && gestoresData.length > 0) {
-        const managerNames = gestoresData.map(gestor => gestor.nome).filter(Boolean)
+        const managerNames = gestoresData
+          .map(gestor => gestor.nome)
+          .filter(nome => nome && nome.trim() !== '')
+        
         console.log('👥 [SIDEBAR] Gestores ativos encontrados:', managerNames)
+        console.log('📝 [SIDEBAR] Total de gestores:', managerNames.length)
+        
         setManagers(managerNames)
       } else {
         console.log('⚠️ [SIDEBAR] Nenhum gestor ativo encontrado na tabela gestores')
@@ -81,12 +88,14 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
     }
   }
 
+  console.log('🎯 [SIDEBAR] Estado atual - Managers:', managers, 'Loading:', loading)
+
   if (loading) {
     return (
       <Sidebar className="sidebar-dark border-sidebar-border">
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando...</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando gestores...</SidebarGroupLabel>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
@@ -98,7 +107,7 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
       <SidebarContent className="bg-sidebar-background">
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
-            Gestores
+            Gestores ({managers.length})
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1 px-2">

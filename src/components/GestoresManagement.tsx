@@ -1,11 +1,10 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Users, Check, X, UserPlus, UserMinus, Trash2 } from 'lucide-react'
+import { Plus, Users, Check, X, UserPlus, UserMinus, Trash2, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog'
@@ -18,6 +17,7 @@ import { type Gestor } from '@/types/gestor'
 export function GestoresManagement() {
   const [gestores, setGestores] = useState<Gestor[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
   const [modalOpen, setModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
   const [deleting, setDeleting] = useState<string | null>(null)
@@ -59,25 +59,38 @@ export function GestoresManagement() {
     }
   }, [authLoading, user])
 
-  const fetchGestores = async () => {
+  const fetchGestores = async (showRefreshing = false) => {
+    if (showRefreshing) {
+      setRefreshing(true)
+    }
+    
     try {
-      console.log('🔍 Buscando gestores da tabela gestores...')
+      console.log('🔍 [GESTORES] Buscando TODOS os gestores da tabela gestores...')
       const { data, error } = await supabase
         .from('gestores')
         .select('*')
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('❌ Erro ao buscar gestores:', error)
+        console.error('❌ [GESTORES] Erro ao buscar gestores:', error)
         throw error
       }
 
       const gestoresData = data ?? []
-      console.log('✅ Gestores carregados:', gestoresData.length, 'registros')
-      console.log('📊 Dados dos gestores:', gestoresData)
+      console.log('✅ [GESTORES] Gestores carregados:', gestoresData.length, 'registros')
+      console.log('📊 [GESTORES] Dados dos gestores:', gestoresData)
+      console.log('👥 [GESTORES] Nomes encontrados:', gestoresData.map(g => g.nome))
+      
       setGestores(gestoresData)
+      
+      if (showRefreshing) {
+        toast({
+          title: "Sucesso",
+          description: `Lista atualizada - ${gestoresData.length} gestores encontrados`
+        })
+      }
     } catch (error: any) {
-      console.error('💥 Erro ao carregar gestores:', error)
+      console.error('💥 [GESTORES] Erro ao carregar gestores:', error)
       
       toast({
         title: "Erro",
@@ -88,7 +101,12 @@ export function GestoresManagement() {
       setGestores([])
     } finally {
       setLoading(false)
+      setRefreshing(false)
     }
+  }
+
+  const handleRefresh = () => {
+    fetchGestores(true)
   }
 
   const handleCreateGestor = async () => {
@@ -293,6 +311,8 @@ export function GestoresManagement() {
     return <div className="flex items-center justify-center py-8">Acesso não autorizado</div>
   }
 
+  console.log('🎯 [GESTORES] Renderizando com:', gestores.length, 'gestores')
+
   return (
     <div className="space-y-6">
       <Card>
@@ -300,73 +320,84 @@ export function GestoresManagement() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              <CardTitle>Gerenciamento de Gestores</CardTitle>
+              <CardTitle>Gerenciamento de Gestores ({gestores.length})</CardTitle>
             </div>
             
-            <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Cadastrar Novo Gestor
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Cadastrar Novo Gestor</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label htmlFor="nome">Nome</Label>
-                    <Input
-                      id="nome"
-                      value={formData.nome}
-                      onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                      placeholder="Nome do gestor"
-                    />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={handleRefresh}
+                disabled={refreshing}
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+                {refreshing ? 'Atualizando...' : 'Atualizar'}
+              </Button>
+              
+              <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+                <DialogTrigger asChild>
+                  <Button>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Cadastrar Novo Gestor
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Cadastrar Novo Gestor</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="nome">Nome</Label>
+                      <Input
+                        id="nome"
+                        value={formData.nome}
+                        onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                        placeholder="Nome do gestor"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="email">Email</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
+                        placeholder="gestor@trafegoporcents.com"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="senha">Senha</Label>
+                      <Input
+                        id="senha"
+                        type="password"
+                        value={formData.senha}
+                        onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
+                        placeholder="Senha do gestor"
+                      />
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Switch
+                        id="permissao"
+                        checked={formData.pode_adicionar_cliente}
+                        onCheckedChange={(checked) => setFormData(prev => ({ ...prev, pode_adicionar_cliente: checked }))}
+                      />
+                      <Label htmlFor="permissao">Permitir adicionar clientes</Label>
+                    </div>
+                    <div className="flex gap-2 pt-4">
+                      <Button 
+                        onClick={handleCreateGestor} 
+                        className="flex-1"
+                        disabled={creating}
+                      >
+                        {creating ? 'Criando...' : 'Criar Gestor'}
+                      </Button>
+                      <Button variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
+                        Cancelar
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <Label htmlFor="email">Email</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-                      placeholder="gestor@trafegoporcents.com"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="senha">Senha</Label>
-                    <Input
-                      id="senha"
-                      type="password"
-                      value={formData.senha}
-                      onChange={(e) => setFormData(prev => ({ ...prev, senha: e.target.value }))}
-                      placeholder="Senha do gestor"
-                    />
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Switch
-                      id="permissao"
-                      checked={formData.pode_adicionar_cliente}
-                      onCheckedChange={(checked) => setFormData(prev => ({ ...prev, pode_adicionar_cliente: checked }))}
-                    />
-                    <Label htmlFor="permissao">Permitir adicionar clientes</Label>
-                  </div>
-                  <div className="flex gap-2 pt-4">
-                    <Button 
-                      onClick={handleCreateGestor} 
-                      className="flex-1"
-                      disabled={creating}
-                    >
-                      {creating ? 'Criando...' : 'Criar Gestor'}
-                    </Button>
-                    <Button variant="outline" onClick={() => setModalOpen(false)} className="flex-1">
-                      Cancelar
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -481,7 +512,11 @@ export function GestoresManagement() {
           
           {gestores.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">
-              Nenhum gestor encontrado
+              <div className="mb-4">Nenhum gestor encontrado</div>
+              <Button onClick={handleRefresh} variant="outline">
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Tentar novamente
+              </Button>
             </div>
           )}
         </CardContent>
