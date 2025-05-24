@@ -311,7 +311,7 @@ export function ClienteRow({
             size="sm"
             className="h-6 px-2 text-xs bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
           >
-            ⚪️ Pendente
+            ⚪️ Precisa de site?
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-48">

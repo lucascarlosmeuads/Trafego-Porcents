@@ -1,527 +1,265 @@
-import { useState, useEffect } from 'react'
-import { supabase, type Cliente } from '@/lib/supabase'
+import { useState, useEffect, useCallback } from 'react'
+import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
-export function useManagerData(userEmail: string, isAdmin: boolean, selectedManager?: string) {
+export interface Cliente {
+  id: string
+  data_venda: string | null
+  nome_cliente: string | null
+  telefone: string | null
+  email_cliente: string | null
+  vendedor: string | null
+  email_gestor: string | null
+  status_campanha: string | null
+  data_limite: string | null
+  link_grupo: string | null
+  link_briefing: string | null
+  link_criativo: string | null
+  link_site: string | null
+  numero_bm: string | null
+  comissao_paga: boolean | null
+  valor_comissao: number | null
+  created_at: string | null
+  data_subida_campanha: string | null
+  data_agendamento: string | null
+  comissao: string | null
+  status_envio: string | null
+  site_status?: string | null
+}
+
+export function useManagerData(emailToUse: string, isAdmin: boolean, selectedManager?: string) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [currentManager, setCurrentManager] = useState<string>('')
+  const [currentManager, setCurrentManager] = useState<string | null>(null)
 
-  const findManagerTable = async (email: string): Promise<{ tableName: string; managerName: string } | null> => {
-    console.log('🔍 Buscando tabela para email:', email)
+  const fetchClientes = useCallback(async () => {
+    console.log(`🔄 === FETCH CLIENTES ===`)
+    console.log(`📧 Email para busca: "${emailToUse}"`)
+    console.log(`👤 Selected Manager: "${selectedManager}"`)
+    console.log(`🛡️ Is Admin: ${isAdmin}`)
     
-    const tablesToCheck = [
-      { name: 'clientes_andreza', manager: 'Andreza' },
-      { name: 'clientes_lucas_falcao', manager: 'Lucas Falcão' }
-    ]
-
-    for (const table of tablesToCheck) {
-      try {
-        const { data, error } = await supabase
-          .from(table.name)
-          .select('email_gestor')
-          .eq('email_gestor', email)
-          .limit(1)
-
-        if (error) {
-          console.error(`❌ Erro ao verificar tabela ${table.name}:`, error)
-          continue
-        }
-
-        if (data && data.length > 0) {
-          console.log(`✅ Email encontrado na tabela: ${table.name}`)
-          return { tableName: table.name, managerName: table.manager }
-        }
-      } catch (err) {
-        console.error(`💥 Erro na busca da tabela ${table.name}:`, err)
-        continue
-      }
+    if (!emailToUse) {
+      console.log('❌ Email não fornecido, abortando busca')
+      setError('Email não fornecido')
+      setLoading(false)
+      return
     }
-
-    console.log('❌ Email não encontrado em nenhuma tabela')
-    return null
-  }
-
-  const determineManager = async (email: string, selectedMgr?: string): Promise<{ manager: string; tableName: string }> => {
-    if (isAdmin && selectedMgr) {
-      return {
-        manager: selectedMgr,
-        tableName: getTableName(selectedMgr)
-      }
-    }
-    
-    if (email === 'lucas@admin.com') {
-      return {
-        manager: 'Lucas Falcão',
-        tableName: 'clientes_lucas_falcao'
-      }
-    }
-    
-    const managerMapping: { [key: string]: { manager: string; table: string } } = {
-      'andreza@gestor.com': { manager: 'Andreza', table: 'clientes_andreza' },
-      'lucas.falcao@gestor.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' },
-      'andreza@trafegoporcents.com': { manager: 'Andreza', table: 'clientes_andreza' },
-      'lucas.falcao@trafegoporcents.com': { manager: 'Lucas Falcão', table: 'clientes_lucas_falcao' }
-    }
-    
-    if (managerMapping[email]) {
-      return {
-        manager: managerMapping[email].manager,
-        tableName: managerMapping[email].table
-      }
-    }
-    
-    const foundTable = await findManagerTable(email)
-    if (foundTable) {
-      return {
-        manager: foundTable.managerName,
-        tableName: foundTable.tableName
-      }
-    }
-    
-    if (email.endsWith('@trafegoporcents.com')) {
-      const username = email.split('@')[0]
-      const managerName = username.charAt(0).toUpperCase() + username.slice(1)
-      return {
-        manager: managerName,
-        tableName: 'clientes_andreza'
-      }
-    }
-    
-    return {
-      manager: 'Gestor',
-      tableName: 'clientes_andreza'
-    }
-  }
-
-  const getTableName = (managerName: string): string => {
-    const tableMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'clientes_lucas_falcao',
-      'Andreza': 'clientes_andreza'
-    }
-    
-    return tableMapping[managerName] || 'clientes_andreza'
-  }
-
-  const getManagerEmail = (managerName: string): string => {
-    const emailMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com'
-    }
-    
-    return emailMapping[managerName] || 'andreza@gestor.com'
-  }
-
-  const fetchClientes = async (showToast = false) => {
-    if (!userEmail) return
 
     setLoading(true)
     setError(null)
 
     try {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
-      
-      setCurrentManager(manager)
-      
-      console.log('🔍 Buscando dados para:', { 
-        userEmail, 
-        manager, 
-        tableName, 
-        selectedManager, 
-        isAdmin 
-      })
-      
-      let query = supabase
-        .from(tableName)
-        .select('*', { count: 'exact' })
-        .order('id', { ascending: true })
+      let tableName = ''
+      let managerName = ''
 
-      if (!isAdmin) {
-        query = query.eq('email_gestor', userEmail)
-        console.log('🔒 Aplicando filtro RLS por email_gestor:', userEmail)
-      }
-
-      const { data, error, count } = await query
-
-      console.log('📊 Resposta do Supabase:', {
-        data: data?.length || 0,
-        count,
-        error,
-        tableName,
-        manager,
-        filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)'
-      })
-
-      if (error) {
-        console.error('❌ Erro ao buscar clientes:', error)
-        setError(`Erro ao carregar dados: ${error.message}`)
-        setClientes([])
-        if (showToast) {
-          toast({
-            title: "Erro",
-            description: `Erro ao atualizar dados`,
-            variant: "destructive"
-          })
-        }
+      if (emailToUse === 'andreza@mktfy.com.br') {
+        tableName = 'clientes_andreza'
+        managerName = 'Andreza'
+      } else if (emailToUse === 'lucas@mktfy.com.br') {
+        tableName = 'clientes_lucas_falcao'
+        managerName = 'Lucas Falcão'
       } else {
-        console.log(`✅ Dados recebidos para ${manager}:`, data?.length || 0)
-        
-        const clientesFormatados = (data || []).map((item: any) => {
-          if (!item.id || item.id === null || item.id === undefined) {
-            console.error('⚠️ Registro sem ID encontrado:', item)
-            return null
-          }
-          
-          const cliente = {
-            id: String(item.id),
-            data_venda: item.data_venda || '',
-            nome_cliente: item.nome_cliente || '',
-            telefone: item.telefone || '',
-            email_cliente: item.email_cliente || '',
-            vendedor: item.vendedor || '',
-            email_gestor: item.email_gestor || '',
-            status_campanha: item.status_campanha || 'Preenchimento do Formulário',
-            data_limite: item.data_limite || '',
-            link_grupo: item.link_grupo || '',
-            link_briefing: item.link_briefing || '',
-            link_criativo: item.link_criativo || '',
-            link_site: item.link_site || '',
-            numero_bm: item.numero_bm || '',
-            comissao_paga: item.comissao_paga || false,
-            valor_comissao: item.valor_comissao || 60.00,
-            site_status: item.site_status || 'pendente', // Novo campo
-            created_at: item.created_at || ''
-          }
-          
-          return cliente
-        }).filter(Boolean)
-        
-        console.log(`🎯 RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
-        
-        if (clientesFormatados.length === 0 && !isAdmin) {
-          console.log('ℹ️ Nenhum cliente encontrado para este gestor')
-          setError('Nenhum cliente atribuído a este gestor ainda.')
-        }
-        
-        setClientes(clientesFormatados)
-        
-        if (showToast) {
-          toast({
-            title: "Sucesso",
-            description: `Dados atualizados - ${clientesFormatados.length} registros`
-          })
-        }
+        console.log('❌ Email não reconhecido para busca na tabela')
+        setError('Gestor não encontrado')
+        setLoading(false)
+        return
       }
+
+      console.log(`🗂️ Buscando na tabela: "${tableName}"`)
+      setCurrentManager(managerName)
+
+      const { data, error: fetchError } = await supabase
+        .from(tableName)
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (fetchError) {
+        console.error('❌ Erro ao buscar clientes:', fetchError)
+        setError(`Erro ao carregar clientes: ${fetchError.message}`)
+        return
+      }
+
+      console.log(`✅ Clientes encontrados: ${data?.length || 0}`)
+      if (data && data.length > 0) {
+        console.log(`📊 Primeiro cliente:`, data[0])
+      }
+
+      setClientes(data || [])
     } catch (err) {
-      console.error('💥 Erro na busca:', err)
-      setError(`Erro ao carregar dados`)
-      setClientes([])
-      if (showToast) {
-        toast({
-          title: "Erro",
-          description: `Erro ao atualizar dados`,
-          variant: "destructive"
-        })
-      }
+      console.error('❌ Erro inesperado:', err)
+      setError('Erro inesperado ao carregar dados')
     } finally {
       setLoading(false)
     }
-  }
+  }, [emailToUse, selectedManager, isAdmin])
 
-  const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
-    console.log(`🚀 === INICIANDO ATUALIZAÇÃO ===`)
-    console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
-    console.log(`🎯 Campo: ${field}`)
-    console.log(`💾 Valor: ${value}`)
-    console.log(`👤 User Email: ${userEmail}`)
-    console.log(`👤 Manager: ${currentManager}`)
+  const updateCliente = async (clienteId: string, field: string, value: any): Promise<boolean> => {
+    console.log(`🔄 === UPDATE CLIENTE ===`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🔧 Campo: "${field}"`)
+    console.log(`💾 Valor: "${value}"`)
 
-    if (!id || id.trim() === '') {
-      console.error('❌ ID do cliente está vazio ou inválido:', id)
+    if (!emailToUse) {
+      console.error('❌ Email não fornecido para update')
       return false
     }
 
-    if (!userEmail) {
-      console.error('❌ Email do usuário não fornecido')
-      return false
-    }
-
-    if (!field || field.trim() === '') {
-      console.error('❌ Campo está vazio ou inválido:', field)
+    // Determine the table name
+    let tableName = ''
+    if (emailToUse === 'andreza@mktfy.com.br') {
+      tableName = 'clientes_andreza'
+    } else if (emailToUse === 'lucas@mktfy.com.br') {
+      tableName = 'clientes_lucas_falcao'
+    } else {
+      console.error('❌ Email não reconhecido para update:', emailToUse)
       return false
     }
 
     try {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
-      const numericId = parseInt(id)
-      
-      console.log(`📋 Tabela: ${tableName}`)
-      console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
-      
-      if (isNaN(numericId) || numericId <= 0) {
-        console.error('❌ ID inválido após conversão:', { original: id, converted: numericId })
-        return false
-      }
-
-      console.log('🔍 Verificando se o registro existe...')
-      let checkQuery = supabase
-        .from(tableName)
-        .select('id, status_campanha, nome_cliente, site_status')
-        .eq('id', numericId)
-
-      if (!isAdmin) {
-        checkQuery = checkQuery.eq('email_gestor', userEmail)
-      }
-
-      const { data: existingData, error: checkError } = await checkQuery.single()
-
-      if (checkError) {
-        console.error('❌ Erro ao verificar existência do registro:', checkError)
-        return false
-      }
-
-      if (!existingData) {
-        console.error('❌ Nenhum registro encontrado com ID:', numericId)
-        return false
-      }
-
-      console.log('✅ Registro encontrado:', existingData)
-      
-      // Lógica especial para atualização do site_status
-      let updateData: any = { [field]: value }
-      
+      // Handle site status updates
       if (field === 'site_status') {
-        const currentSiteStatus = existingData.site_status || 'pendente'
+        let updateData: any = {}
         
-        if (currentSiteStatus === 'pendente') {
-          // Se for pendente, o próximo estado depende da escolha do usuário
-          updateData.site_status = value === 'sim' ? 'aguardando_link' : 'nao_precisa'
-        } else if (currentSiteStatus === 'nao_precisa') {
-          // Se não precisava, agora precisa
+        if (value === 'aguardando_link') {
           updateData.site_status = 'aguardando_link'
-        } else if (currentSiteStatus === 'aguardando_link' && field === 'link_site' && value) {
-          // Se estava aguardando link e recebeu um link, marcar como finalizado
+        } else if (value === 'nao_precisa') {
+          updateData.site_status = 'nao_precisa'
+        } else if (value === 'finalizado') {
           updateData.site_status = 'finalizado'
         }
+        
+        const { error } = await supabase
+          .from(tableName)
+          .update(updateData)
+          .eq('id', clienteId)
+
+        if (error) {
+          console.error('❌ Erro no update do site status:', error)
+          return false
+        }
+      } else if (field === 'link_site') {
+        // When updating link_site, also update site_status to finalizado
+        const { error } = await supabase
+          .from(tableName)
+          .update({ 
+            link_site: value,
+            site_status: 'finalizado'
+          })
+          .eq('id', clienteId)
+
+        if (error) {
+          console.error('❌ Erro no update do link_site:', error)
+          return false
+        }
+      } else {
+        // Regular field update
+        const { error } = await supabase
+          .from(tableName)
+          .update({ [field]: value })
+          .eq('id', clienteId)
+
+        if (error) {
+          console.error('❌ Erro no update:', error)
+          return false
+        }
       }
+
+      console.log('✅ Update realizado com sucesso')
       
-      console.log('🔄 Executando UPDATE...')
-      let updateQuery = supabase
-        .from(tableName)
-        .update(updateData)
-        .eq('id', numericId)
-
-      if (!isAdmin) {
-        updateQuery = updateQuery.eq('email_gestor', userEmail)
-      }
-
-      const { data: updateData_result, error: updateError } = await updateQuery.select()
-
-      if (updateError) {
-        console.error('❌ Erro ao atualizar cliente:', updateError)
-        return false
-      }
-
-      console.log('✅ Dados atualizados no Supabase:', updateData_result)
-
-      setClientes(prev => 
-        prev.map(cliente => 
-          cliente.id === id 
-            ? { ...cliente, ...updateData }
-            : cliente
-        )
-      )
-
-      console.log('🎉 === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
+      // Refresh the data
+      await fetchClientes()
       return true
-    } catch (err) {
-      console.error('💥 Erro na atualização (catch):', err)
+    } catch (error) {
+      console.error('❌ Erro inesperado no update:', error)
       return false
     }
   }
 
-  const addCliente = async (clienteData: any) => {
-    if (!userEmail) {
-      console.error('❌ Email do usuário não fornecido')
+  const addCliente = async (clienteData: Partial<Cliente>): Promise<boolean> => {
+    console.log(`🔄 === ADD CLIENTE ===`)
+    console.log(`📧 Email gestor: "${emailToUse}"`)
+    console.log(`📊 Dados do cliente:`, clienteData)
+
+    if (!emailToUse) {
+      console.error('❌ Email não fornecido para adicionar cliente')
+      toast({
+        title: "Erro",
+        description: "Email do gestor não encontrado",
+        variant: "destructive",
+      })
+      return false
+    }
+
+    // Determine the table name
+    let tableName = ''
+    if (emailToUse === 'andreza@mktfy.com.br') {
+      tableName = 'clientes_andreza'
+    } else if (emailToUse === 'lucas@mktfy.com.br') {
+      tableName = 'clientes_lucas_falcao'
+    } else {
+      console.error('❌ Email não reconhecido para adicionar cliente:', emailToUse)
+      toast({
+        title: "Erro",
+        description: "Gestor não autorizado a adicionar clientes",
+        variant: "destructive",
+      })
       return false
     }
 
     try {
-      console.log('🚀 Adicionando novo cliente...')
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
-      
-      console.log(`📋 Tabela de destino: ${tableName}`)
-      console.log(`👤 Manager: ${manager}`)
-      
-      const novoCliente = {
+      const dataToInsert = {
         ...clienteData,
-        email_gestor: userEmail,
-        site_status: 'pendente', // Inicializar como pendente
-        created_at: new Date().toISOString()
+        email_gestor: emailToUse,
+        created_at: new Date().toISOString(),
+        site_status: 'pendente' // Default site status
       }
 
-      console.log('💾 Dados do novo cliente:', novoCliente)
+      console.log(`🗂️ Inserindo na tabela: "${tableName}"`)
+      console.log(`📊 Dados finais:`, dataToInsert)
 
       const { data, error } = await supabase
         .from(tableName)
-        .insert([novoCliente])
+        .insert([dataToInsert])
         .select()
 
       if (error) {
-        console.error('❌ Erro ao adicionar cliente:', error)
+        console.error('❌ Erro ao inserir cliente:', error)
         toast({
           title: "Erro",
-          description: `Erro ao adicionar cliente: ${error.message}`,
-          variant: "destructive"
+          description: `Falha ao adicionar cliente: ${error.message}`,
+          variant: "destructive",
         })
         return false
       }
 
       console.log('✅ Cliente adicionado com sucesso:', data)
-      
-      await fetchClientes()
-      
       toast({
         title: "Sucesso",
         description: "Cliente adicionado com sucesso!",
       })
-      
+
+      // Refresh the data
+      await fetchClientes()
       return true
     } catch (error) {
-      console.error('💥 Erro na adição do cliente:', error)
+      console.error('❌ Erro inesperado ao adicionar cliente:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
-        variant: "destructive"
+        variant: "destructive",
       })
       return false
     }
   }
 
+  const refetch = useCallback(() => {
+    fetchClientes()
+  }, [fetchClientes])
+
   useEffect(() => {
-    if (!userEmail) return
-
-    const setupRealtime = async () => {
-      const { manager, tableName } = await determineManager(userEmail, selectedManager)
-      
-      console.log('🔴 Configurando realtime para:', { userEmail, manager, tableName, selectedManager })
-
-      fetchClientes()
-
-      const channel = supabase
-        .channel(`public:${tableName}`)
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: tableName
-          },
-          (payload) => {
-            console.log('🔄 Mudança detectada na tabela:', tableName, payload)
-            
-            if (!isAdmin && payload.new && typeof payload.new === 'object' && 'email_gestor' in payload.new && payload.new.email_gestor !== userEmail) {
-              console.log('🚫 Mudança não relevante para este gestor')
-              return
-            }
-            
-            if (payload.eventType === 'INSERT') {
-              console.log('➕ Novo cliente inserido:', payload.new)
-              if (payload.new && typeof payload.new === 'object') {
-                const novoCliente = {
-                  id: String(payload.new.id || ''),
-                  nome_cliente: (payload.new.nome_cliente as string) || '',
-                  telefone: (payload.new.telefone as string) || '',
-                  email_cliente: (payload.new.email_cliente as string) || '',
-                  vendedor: (payload.new.vendedor as string) || '',
-                  email_gestor: (payload.new.email_gestor as string) || '',
-                  status_campanha: (payload.new.status_campanha as string) || '',
-                  data_venda: (payload.new.data_venda as string) || '',
-                  data_limite: (payload.new.data_limite as string) || '',
-                  link_grupo: (payload.new.link_grupo as string) || '',
-                  link_briefing: (payload.new.link_briefing as string) || '',
-                  link_criativo: (payload.new.link_criativo as string) || '',
-                  link_site: (payload.new.link_site as string) || '',
-                  numero_bm: (payload.new.numero_bm as string) || '',
-                  created_at: (payload.new.created_at as string) || '',
-                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
-                  site_status: (payload.new.site_status as string) || 'pendente'
-                }
-                
-                setClientes(prev => {
-                  const updated = [novoCliente, ...prev]
-                  return updated.sort((a, b) => {
-                    const aId = parseInt(a.id) || 0
-                    const bId = parseInt(b.id) || 0
-                    return aId - bId
-                  })
-                })
-              }
-            } else if (payload.eventType === 'UPDATE') {
-              console.log('🔄 Cliente atualizado via realtime:', payload.new)
-              if (payload.new && typeof payload.new === 'object') {
-                const clienteAtualizado = {
-                  id: String(payload.new.id || ''),
-                  nome_cliente: (payload.new.nome_cliente as string) || '',
-                  telefone: (payload.new.telefone as string) || '',
-                  email_cliente: (payload.new.email_cliente as string) || '',
-                  vendedor: (payload.new.vendedor as string) || '',
-                  email_gestor: (payload.new.email_gestor as string) || '',
-                  status_campanha: (payload.new.status_campanha as string) || '',
-                  data_venda: (payload.new.data_venda as string) || '',
-                  data_limite: (payload.new.data_limite as string) || '',
-                  link_grupo: (payload.new.link_grupo as string) || '',
-                  link_briefing: (payload.new.link_briefing as string) || '',
-                  link_criativo: (payload.new.link_criativo as string) || '',
-                  link_site: (payload.new.link_site as string) || '',
-                  numero_bm: (payload.new.numero_bm as string) || '',
-                  created_at: (payload.new.created_at as string) || '',
-                  comissao_paga: (payload.new.comissao_paga as boolean) || false,
-                  valor_comissao: (payload.new.valor_comissao as number) || 60.00,
-                  site_status: (payload.new.site_status as string) || 'pendente'
-                }
-                
-                setClientes(prev => 
-                  prev.map(cliente => 
-                    cliente.id === clienteAtualizado.id ? clienteAtualizado : cliente
-                  )
-                )
-              }
-            } else if (payload.eventType === 'DELETE') {
-              console.log('🗑️ Cliente removido:', payload.old)
-              if (payload.old && typeof payload.old === 'object' && 'id' in payload.old) {
-                setClientes(prev => 
-                  prev.filter(cliente => cliente.id !== String(payload.old.id))
-                )
-              }
-            }
-          }
-        )
-        .subscribe((status) => {
-          console.log(`📡 Status do realtime para ${tableName}:`, status)
-          if (status === 'SUBSCRIBED') {
-            console.log('✅ Realtime conectado com sucesso!')
-          } else if (status === 'CHANNEL_ERROR') {
-            console.error('❌ Erro no canal de realtime')
-            setTimeout(() => {
-              console.log('🔄 Tentando reconectar realtime...')
-              fetchClientes()
-            }, 2000)
-          }
-        })
-
-      return () => {
-        console.log('🧹 Removendo canal de realtime para:', tableName)
-        supabase.removeChannel(channel)
-      }
-    }
-
-    setupRealtime()
-  }, [userEmail, selectedManager])
-
-  const refetchWithToast = () => fetchClientes(true)
+    fetchClientes()
+  }, [fetchClientes])
 
   return {
     clientes,
@@ -529,7 +267,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     error,
     updateCliente,
     addCliente,
-    refetch: refetchWithToast,
+    refetch,
     currentManager
   }
 }
