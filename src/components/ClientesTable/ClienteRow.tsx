@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -403,12 +401,12 @@ export function ClienteRow({
     }
     
     try {
-      // Salvar o link do site
+      // Primeiro salvar o link do site
       setLinkValue(siteLinkInput)
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
-        // Atualizar o status para finalizado
+        // Depois atualizar o status para finalizado
         await onStatusChange(cliente.id, 'finalizado')
         
         // Limpar os estados de edição
@@ -645,4 +643,3 @@ export function ClienteRow({
     </TableRow>
   )
 }
-
