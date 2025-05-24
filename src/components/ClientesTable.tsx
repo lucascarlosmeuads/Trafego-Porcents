@@ -9,6 +9,7 @@ import {
   TableCell,
   TableRow,
 } from '@/components/ui/table'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { checkRealtimeConnection } from '@/utils/realtimeUtils'
@@ -69,17 +70,31 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     }
   }, [clientes, currentManager, emailToUse, selectedManager])
 
-  const filteredClientes = clientes.filter(cliente => {
-    const matchesSearch = 
-      cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      cliente.telefone?.includes(searchTerm) ||
-      cliente.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
-    
-    return matchesSearch && matchesStatus
-  })
+  // Separar clientes ativos e inativos
+  const clientesAtivos = clientes.filter(cliente => 
+    cliente.status_campanha !== 'Off' && cliente.status_campanha !== 'Reembolso'
+  )
+  
+  const clientesInativos = clientes.filter(cliente => 
+    cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+  )
+
+  const getFilteredClientes = (clientesList: typeof clientes) => {
+    return clientesList.filter(cliente => {
+      const matchesSearch = 
+        cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        cliente.telefone?.includes(searchTerm) ||
+        cliente.vendedor?.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
+      
+      return matchesSearch && matchesStatus
+    })
+  }
+
+  const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
+  const filteredClientesInativos = getFilteredClientes(clientesInativos)
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -261,7 +276,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
   }
 
   const exportToCSV = () => {
-    if (filteredClientes.length === 0) {
+    if (clientes.length === 0) {
       toast({
         title: "Aviso",
         description: "Nenhum cliente para exportar",
@@ -278,7 +293,7 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     
     const csvContent = [
       headers.join(','),
-      ...filteredClientes.map(cliente => [
+      ...clientes.map(cliente => [
         cliente.id || '',
         cliente.data_venda || '',
         cliente.nome_cliente || '',
@@ -313,6 +328,56 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
     })
   }
 
+  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
+    <div className="border rounded-lg overflow-hidden bg-card border-border">
+      <div className="overflow-x-auto">
+        <Table className="table-dark">
+          <TableHeader />
+          <TableBody>
+            {clientesList.length === 0 ? (
+              <TableRow className="border-border hover:bg-muted/20">
+                <TableCell colSpan={15} className="text-center py-8 text-white">
+                  {isInactive 
+                    ? `Nenhum cliente inativo encontrado`
+                    : clientes.length === 0 
+                      ? `Nenhum cliente encontrado`
+                      : `Nenhum cliente corresponde aos filtros aplicados`
+                  }
+                </TableCell>
+              </TableRow>
+            ) : (
+              clientesList.map((cliente, index) => (
+                <ClienteRow
+                  key={`${emailToUse}-${cliente.id}-${index}`}
+                  cliente={cliente}
+                  selectedManager={currentManager || managerName}
+                  index={index}
+                  updatingStatus={updatingStatus}
+                  editingLink={editingLink}
+                  linkValue={linkValue}
+                  setLinkValue={setLinkValue}
+                  editingBM={editingBM}
+                  bmValue={bmValue}
+                  setBmValue={setBmValue}
+                  updatingComission={updatingComission}
+                  getStatusColor={getStatusColor}
+                  onStatusChange={handleStatusChange}
+                  onLinkEdit={handleLinkEdit}
+                  onLinkSave={handleLinkSave}
+                  onLinkCancel={handleLinkCancel}
+                  onBMEdit={handleBMEdit}
+                  onBMSave={handleBMSave}
+                  onBMCancel={handleBMCancel}
+                  onComissionToggle={handleComissionToggle}
+                />
+              ))
+            )}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  )
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12 px-4">
@@ -338,67 +403,52 @@ export function ClientesTable({ selectedManager, userEmail }: ClientesTableProps
 
   return (
     <div className="space-y-4 p-4 lg:p-0">
-      <TableActions
-        selectedManager={currentManager || managerName}
-        filteredClientesCount={filteredClientes.length}
-        realtimeConnected={realtimeConnected}
-        onRefresh={refetch}
-        onExport={exportToCSV}
-      />
+      <Tabs defaultValue="ativos" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="ativos">Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
+          <TabsTrigger value="inativos">Clientes Inativos ({clientesInativos.length})</TabsTrigger>
+        </TabsList>
 
-      <TableFilters
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        statusFilter={statusFilter}
-        setStatusFilter={setStatusFilter}
-        getStatusColor={getStatusColor}
-      />
+        <TabsContent value="ativos" className="space-y-4">
+          <TableActions
+            selectedManager={currentManager || managerName}
+            filteredClientesCount={filteredClientesAtivos.length}
+            realtimeConnected={realtimeConnected}
+            onRefresh={refetch}
+            onExport={exportToCSV}
+          />
 
-      <div className="border rounded-lg overflow-hidden bg-card border-border">
-        <div className="overflow-x-auto">
-          <Table className="table-dark">
-            <TableHeader />
-            <TableBody>
-              {filteredClientes.length === 0 ? (
-                <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={15} className="text-center py-8 text-white">
-                    {clientes.length === 0 
-                      ? `Nenhum cliente encontrado`
-                      : `Nenhum cliente corresponde aos filtros aplicados (${clientes.length} clientes no total)`
-                    }
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredClientes.map((cliente, index) => (
-                  <ClienteRow
-                    key={`${emailToUse}-${cliente.id}-${index}`}
-                    cliente={cliente}
-                    selectedManager={currentManager || managerName}
-                    index={index}
-                    updatingStatus={updatingStatus}
-                    editingLink={editingLink}
-                    linkValue={linkValue}
-                    setLinkValue={setLinkValue}
-                    editingBM={editingBM}
-                    bmValue={bmValue}
-                    setBmValue={setBmValue}
-                    updatingComission={updatingComission}
-                    getStatusColor={getStatusColor}
-                    onStatusChange={handleStatusChange}
-                    onLinkEdit={handleLinkEdit}
-                    onLinkSave={handleLinkSave}
-                    onLinkCancel={handleLinkCancel}
-                    onBMEdit={handleBMEdit}
-                    onBMSave={handleBMSave}
-                    onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      </div>
+          <TableFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            getStatusColor={getStatusColor}
+          />
+
+          {renderClientesTable(filteredClientesAtivos)}
+        </TabsContent>
+
+        <TabsContent value="inativos" className="space-y-4">
+          <TableActions
+            selectedManager={currentManager || managerName}
+            filteredClientesCount={filteredClientesInativos.length}
+            realtimeConnected={realtimeConnected}
+            onRefresh={refetch}
+            onExport={exportToCSV}
+          />
+
+          <TableFilters
+            searchTerm={searchTerm}
+            setSearchTerm={setSearchTerm}
+            statusFilter={statusFilter}
+            setStatusFilter={setStatusFilter}
+            getStatusColor={getStatusColor}
+          />
+
+          {renderClientesTable(filteredClientesInativos, true)}
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }

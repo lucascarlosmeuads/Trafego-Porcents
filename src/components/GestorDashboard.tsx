@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -15,6 +16,7 @@ export function GestorDashboard() {
   const [managerStats, setManagerStats] = useState({
     totalClientes: 0,
     clientesAtivos: 0,
+    clientesInativos: 0,
     comissaoTotal: 0
   })
   const [statusStats, setStatusStats] = useState<{[key: string]: number}>({})
@@ -51,7 +53,10 @@ export function GestorDashboard() {
     if (clientes && clientes.length >= 0) {
       const totalClientes = clientes.length
       const clientesAtivos = clientes.filter(item => 
-        item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização'
+        item.status_campanha !== 'Off' && item.status_campanha !== 'Reembolso'
+      ).length
+      const clientesInativos = clientes.filter(item => 
+        item.status_campanha === 'Off' || item.status_campanha === 'Reembolso'
       ).length
       
       // Contar status
@@ -78,6 +83,7 @@ export function GestorDashboard() {
       setManagerStats({
         totalClientes,
         clientesAtivos,
+        clientesInativos,
         comissaoTotal
       })
       setStatusStats(statusCounts)
@@ -203,10 +209,10 @@ export function GestorDashboard() {
             </CardContent>
           </Card>
 
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">Meus Clientes</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Total de Clientes</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{managerStats.totalClientes}</div>
@@ -215,10 +221,19 @@ export function GestorDashboard() {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle className="text-sm font-medium text-gray-600">Campanhas Ativas</CardTitle>
+                <CardTitle className="text-sm font-medium text-gray-600">Clientes Ativos</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-green-600">{managerStats.clientesAtivos}</div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm font-medium text-gray-600">Clientes Inativos</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-red-600">{managerStats.clientesInativos}</div>
               </CardContent>
             </Card>
 
@@ -239,7 +254,8 @@ export function GestorDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-purple-600">
-                  {managerStats.totalClientes > 0 ? Math.round((managerStats.clientesAtivos / managerStats.totalClientes) * 100) : 0}%
+                  {managerStats.clientesAtivos > 0 && managerStats.totalClientes > 0 ? 
+                    Math.round((managerStats.clientesAtivos / managerStats.totalClientes) * 100) : 0}%
                 </div>
               </CardContent>
             </Card>
