@@ -12,6 +12,20 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
   const [error, setError] = useState<string | null>(null)
   const [currentManager, setCurrentManager] = useState<string>('')
 
+  const getManagerEmailFromName = (managerName: string): string => {
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@gestor.com',
+      'Carol': 'carol@trafegoporcents.com', 
+      'Junior': 'junior@trafegoporcents.com',
+      'Daniel': 'daniel@gestor.com',
+      'Kimberlly': 'kimberlly@gestor.com',
+      'Andresa': 'andresa@gestor.com'
+    }
+    
+    return emailMapping[managerName] || 'andreza@gestor.com'
+  }
+
   const fetchClientes = async (showToast = false) => {
     if (!userEmail) return
 
@@ -66,47 +80,86 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
             })
           }
         }
+      } else if (isAdmin && selectedManager) {
+        // CORREÇÃO: Admin com gestor específico selecionado
+        console.log('🎯 [useManagerData] Admin filtrado por gestor específico:', selectedManager)
+        
+        setCurrentManager(selectedManager)
+        
+        // Obter email do gestor selecionado
+        const gestorEmail = getManagerEmailFromName(selectedManager)
+        console.log('📧 [useManagerData] Email do gestor para filtro:', gestorEmail)
+        
+        // Aplicar filtro por email_gestor
+        let query = supabase
+          .from('todos_clientes')
+          .select('*', { count: 'exact' })
+          .eq('email_gestor', gestorEmail)
+          .order('id', { ascending: true })
+
+        const { data, error, count } = await query
+
+        console.log('📊 [useManagerData] Resposta do Supabase (gestor específico):', {
+          data: data?.length || 0,
+          count,
+          error,
+          selectedManager,
+          gestorEmail,
+          filtro: `email_gestor = ${gestorEmail}`
+        })
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar clientes do gestor:', error)
+          setError(`Erro ao carregar dados: ${error.message}`)
+          setClientes([])
+          if (showToast) {
+            toast({
+              title: "Erro",
+              description: `Erro ao atualizar dados do gestor ${selectedManager}`,
+              variant: "destructive"
+            })
+          }
+        } else {
+          console.log(`✅ [useManagerData] Dados encontrados para ${selectedManager}:`, data?.length || 0)
+          
+          const clientesFormatados = (data || []).map(formatCliente).filter(Boolean) as Cliente[]
+          
+          console.log(`🎯 [useManagerData] RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${selectedManager}`)
+          
+          setClientes(clientesFormatados)
+          
+          if (showToast) {
+            toast({
+              title: "Sucesso",
+              description: `Dados de ${selectedManager} atualizados - ${clientesFormatados.length} registros`
+            })
+          }
+        }
       } else {
-        // Comportamento original para gestores individuais
+        // Comportamento original para gestores não-admin (filtro obrigatório por email do usuário)
         const { manager } = await determineManager(userEmail, selectedManager, isAdmin)
         
         setCurrentManager(manager)
         
-        console.log('🔍 [useManagerData] Buscando dados da tabela todos_clientes:', { 
-          userEmail, 
-          manager, 
-          selectedManager, 
-          isAdmin 
-        })
+        console.log('🔍 [useManagerData] Gestor não-admin, filtrando por email do usuário:', userEmail)
         
         // Construir query da tabela unificada todos_clientes
         let query = supabase
           .from('todos_clientes')
           .select('*', { count: 'exact' })
+          .eq('email_gestor', userEmail)
           .order('id', { ascending: true })
 
-        // FILTRO CRÍTICO: Se não for admin, filtrar SEMPRE por email_gestor = email logado
-        if (!isAdmin) {
-          query = query.eq('email_gestor', userEmail)
-          console.log('🔒 [useManagerData] APLICANDO FILTRO RLS OBRIGATÓRIO por email_gestor:', userEmail)
-        } else if (selectedManager) {
-          // Admin com gestor específico selecionado
-          const { manager: managerName } = await determineManager(userEmail, selectedManager, isAdmin)
-          const managerEmail = getManagerEmailFromName(managerName)
-          query = query.eq('email_gestor', managerEmail)
-          console.log('🎯 [useManagerData] Admin filtrado por gestor específico:', managerName, managerEmail)
-        } else {
-          console.log('👑 [useManagerData] Admin - sem filtro de email_gestor')
-        }
+        console.log('🔒 [useManagerData] APLICANDO FILTRO RLS OBRIGATÓRIO por email_gestor:', userEmail)
 
         const { data, error, count } = await query
 
-        console.log('📊 [useManagerData] Resposta do Supabase (tabela todos_clientes):', {
+        console.log('📊 [useManagerData] Resposta do Supabase (gestor não-admin):', {
           data: data?.length || 0,
           count,
           error,
           manager,
-          filteredBy: !isAdmin ? userEmail : selectedManager ? 'gestor específico' : 'sem filtro (admin)',
+          filteredBy: userEmail,
           isAdmin
         })
 
@@ -166,17 +219,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     }
   }
 
-  const getManagerEmailFromName = (managerName: string): string => {
-    const emailMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com',
-      'Carol': 'carol@trafegoporcents.com', 
-      'Junior': 'junior@trafegoporcents.com'
-    }
-    
-    return emailMapping[managerName] || 'andreza@gestor.com'
-  }
-
   const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdmin, () => fetchClientes())
 
   // Update local state after successful update
@@ -204,7 +246,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
       // Configurar canal de realtime para a tabela unificada
       const channel = supabase
-        .channel(`public:todos_clientes-${userEmail}`)
+        .channel(`public:todos_clientes-${userEmail}-${selectedManager || 'all'}`)
         .on(
           'postgres_changes',
           {

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,7 +31,10 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
       'Andreza': 'andreza@gestor.com',
       'Carol': 'carol@trafegoporcents.com',
-      'Junior': 'junior@trafegoporcents.com'
+      'Junior': 'junior@trafegoporcents.com',
+      'Daniel': 'daniel@gestor.com',
+      'Kimberlly': 'kimberlly@gestor.com',
+      'Andresa': 'andresa@gestor.com'
     }
     
     return emailMapping[managerName] || 'andreza@gestor.com'
@@ -94,8 +98,9 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       } else {
         console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela unificada para gestor: ${selectedManager}`)
         
-        // Determinar email do gestor para filtro
+        // CORREÇÃO: Determinar email do gestor para filtro correto
         const gestorEmail = getManagerEmail(selectedManager)
+        console.log(`📧 Admin Dashboard: Email do gestor para filtro: ${gestorEmail}`)
         
         // Buscar dados da tabela unificada filtrados por gestor
         const { data, error, count } = await supabase
@@ -103,12 +108,13 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
           .select('*', { count: 'exact' })
           .eq('email_gestor', gestorEmail)
 
-        console.log('📊 Resposta do Supabase (tabela unificada):', {
+        console.log('📊 Resposta do Supabase (tabela unificada filtrada):', {
           data: data?.length || 0,
           count,
           error,
           selectedManager,
-          gestorEmail
+          gestorEmail,
+          filtro: `email_gestor = ${gestorEmail}`
         })
 
         if (!error && data) {
@@ -187,6 +193,9 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (selectedManager !== null) {
         const gestorEmail = getManagerEmail(selectedManager)
         query = query.eq('email_gestor', gestorEmail)
+        console.log(`📤 Exportando dados filtrados por: ${gestorEmail}`)
+      } else {
+        console.log(`📤 Exportando TODOS os dados`)
       }
       
       const { data, error } = await query
