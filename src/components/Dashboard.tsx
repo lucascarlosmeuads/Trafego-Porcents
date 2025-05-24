@@ -12,7 +12,19 @@ import { useState } from 'react'
 
 export function Dashboard() {
   const { user, signOut, isAdmin, currentManagerName } = useAuth()
-  const [selectedManager, setSelectedManager] = useState("Andreza")
+  const [selectedManager, setSelectedManager] = useState<string | null>(null)
+
+  const getDisplayTitle = () => {
+    if (!isAdmin) return currentManagerName
+    if (selectedManager === null) return 'Todos os Clientes'
+    return selectedManager
+  }
+
+  const getDisplaySubtitle = () => {
+    if (!isAdmin) return 'Gestor'
+    if (selectedManager === null) return 'Visualização Completa'
+    return 'Gestor Individual'
+  }
 
   return (
     <SidebarProvider>
@@ -37,10 +49,10 @@ export function Dashboard() {
                       Painel de Gestão
                     </h1>
                     <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-muted-foreground">
-                      <span>{isAdmin ? 'Administrador' : 'Gestor'}</span>
+                      <span>{getDisplaySubtitle()}</span>
                       <span className="hidden sm:inline">•</span>
                       <span className="text-primary font-medium truncate">
-                        {isAdmin ? selectedManager : currentManagerName}
+                        {getDisplayTitle()}
                       </span>
                     </div>
                   </div>

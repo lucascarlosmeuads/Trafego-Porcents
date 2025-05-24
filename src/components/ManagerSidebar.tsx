@@ -10,12 +10,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarSeparator,
 } from '@/components/ui/sidebar'
-import { Users } from 'lucide-react'
+import { Users, Database } from 'lucide-react'
 
 interface ManagerSidebarProps {
-  selectedManager: string
-  onManagerSelect: (manager: string) => void
+  selectedManager: string | null
+  onManagerSelect: (manager: string | null) => void
 }
 
 export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSidebarProps) {
@@ -75,17 +76,6 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
         console.log('👥 [SIDEBAR] Gestores ativos encontrados:', managerNames)
         console.log('📝 [SIDEBAR] Total de gestores:', managerNames.length)
         
-        // Verificar se Carol, Andreza e Rullian estão na lista
-        const hasCarol = managerNames.some(name => name.toLowerCase().includes('carol'))
-        const hasAndreza = managerNames.some(name => name.toLowerCase().includes('andreza'))
-        const hasRullian = managerNames.some(name => name.toLowerCase().includes('rullian'))
-        
-        console.log('👩 [SIDEBAR] Carol encontrada:', hasCarol)
-        console.log('👩 [SIDEBAR] Andreza encontrada:', hasAndreza)
-        console.log('👨 [SIDEBAR] Rullian encontrado:', hasRullian)
-        
-        // Usar apenas os gestores que vieram do banco de dados
-        // Não adicionar fallbacks manuais, confiar nos dados do Supabase
         const sortedManagers = managerNames.sort()
         console.log('📋 [SIDEBAR] Lista final ordenada:', sortedManagers)
         
@@ -102,14 +92,14 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
     }
   }
 
-  console.log('🎯 [SIDEBAR] Estado atual - Managers:', managers, 'Loading:', loading)
+  console.log('🎯 [SIDEBAR] Estado atual - Managers:', managers, 'Loading:', loading, 'Selected:', selectedManager)
 
   if (loading) {
     return (
       <Sidebar className="sidebar-dark border-sidebar-border">
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando gestores...</SidebarGroupLabel>
+            <SidebarGroupLabel className="text-sidebar-foreground px-4 py-2">Carregando...</SidebarGroupLabel>
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>
@@ -119,6 +109,35 @@ export function ManagerSidebar({ selectedManager, onManagerSelect }: ManagerSide
   return (
     <Sidebar className="sidebar-dark border-sidebar-border">
       <SidebarContent className="bg-sidebar-background">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
+            Visualizações
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1 px-2">
+              {/* All Clients Option */}
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={() => onManagerSelect(null)}
+                  isActive={selectedManager === null}
+                  className={`
+                    sidebar-item flex items-center gap-3 w-full px-3 py-3 rounded-md text-left transition-all duration-200
+                    ${selectedManager === null
+                      ? 'active bg-sidebar-primary text-sidebar-primary-foreground border-l-4 border-sidebar-ring shadow-sm' 
+                      : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                    }
+                  `}
+                >
+                  <Database className="w-4 h-4 flex-shrink-0" />
+                  <span className="font-medium">Todos os Clientes</span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarSeparator />
+
         <SidebarGroup>
           <SidebarGroupLabel className="text-sidebar-foreground px-4 py-3 text-sm font-semibold uppercase tracking-wider">
             Gestores ({managers.length})

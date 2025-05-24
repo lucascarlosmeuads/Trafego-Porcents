@@ -6,7 +6,7 @@ import { determineManager } from '@/utils/managerUtils'
 import { formatCliente, validateSecurityForNonAdmin } from '@/utils/clienteFormatter'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 
-export function useManagerData(userEmail: string, isAdmin: boolean, selectedManager?: string) {
+export function useManagerData(userEmail: string, isAdmin: boolean, selectedManager?: string | null) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -19,79 +19,135 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     setError(null)
 
     try {
-      const { manager } = await determineManager(userEmail, selectedManager, isAdmin)
-      
-      setCurrentManager(manager)
-      
-      console.log('🔍 [useManagerData] Buscando dados da tabela todos_clientes:', { 
-        userEmail, 
-        manager, 
-        selectedManager, 
-        isAdmin 
-      })
-      
-      // Construir query da tabela unificada todos_clientes
-      let query = supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact' })
-        .order('id', { ascending: true })
-
-      // FILTRO CRÍTICO: Se não for admin, filtrar SEMPRE por email_gestor = email logado
-      if (!isAdmin) {
-        query = query.eq('email_gestor', userEmail)
-        console.log('🔒 [useManagerData] APLICANDO FILTRO RLS OBRIGATÓRIO por email_gestor:', userEmail)
-      } else {
-        console.log('👑 [useManagerData] Admin - sem filtro de email_gestor')
-      }
-
-      const { data, error, count } = await query
-
-      console.log('📊 [useManagerData] Resposta do Supabase (tabela todos_clientes):', {
-        data: data?.length || 0,
-        count,
-        error,
-        manager,
-        filteredBy: !isAdmin ? userEmail : 'sem filtro (admin)',
-        isAdmin
-      })
-
-      if (error) {
-        console.error('❌ [useManagerData] Erro ao buscar clientes:', error)
-        setError(`Erro ao carregar dados: ${error.message}`)
-        setClientes([])
-        if (showToast) {
-          toast({
-            title: "Erro",
-            description: `Erro ao atualizar dados`,
-            variant: "destructive"
-          })
-        }
-      } else {
-        console.log(`✅ [useManagerData] Dados recebidos para ${manager}:`, data?.length || 0)
+      // Para admin: se selectedManager for null, buscar TODOS os clientes
+      if (isAdmin && selectedManager === null) {
+        console.log('🔍 [useManagerData] Admin visualizando TODOS os clientes da tabela todos_clientes')
         
-        // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se todos os registros têm o email correto
-        if (!validateSecurityForNonAdmin(data, userEmail, isAdmin)) {
-          setError('Erro de segurança: dados inconsistentes detectados')
+        setCurrentManager('Todos os Clientes')
+        
+        // Buscar TODOS os dados da tabela unificada (sem filtro)
+        let query = supabase
+          .from('todos_clientes')
+          .select('*', { count: 'exact' })
+          .order('id', { ascending: true })
+
+        const { data, error, count } = await query
+
+        console.log('📊 [useManagerData] Resposta do Supabase (TODOS os clientes):', {
+          data: data?.length || 0,
+          count,
+          error
+        })
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar TODOS os clientes:', error)
+          setError(`Erro ao carregar dados: ${error.message}`)
           setClientes([])
-          return
+          if (showToast) {
+            toast({
+              title: "Erro",
+              description: `Erro ao atualizar dados`,
+              variant: "destructive"
+            })
+          }
+        } else {
+          console.log(`✅ [useManagerData] TODOS os dados recebidos:`, data?.length || 0)
+          
+          const clientesFormatados = (data || []).map(formatCliente).filter(Boolean) as Cliente[]
+          
+          console.log(`🎯 [useManagerData] RESULTADO FINAL: ${clientesFormatados.length} clientes formatados`)
+          
+          setClientes(clientesFormatados)
+          
+          if (showToast) {
+            toast({
+              title: "Sucesso",
+              description: `Dados atualizados - ${clientesFormatados.length} registros`
+            })
+          }
         }
+      } else {
+        // Comportamento original para gestores individuais
+        const { manager } = await determineManager(userEmail, selectedManager, isAdmin)
         
-        const clientesFormatados = (data || []).map(formatCliente).filter(Boolean) as Cliente[]
+        setCurrentManager(manager)
         
-        console.log(`🎯 [useManagerData] RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
+        console.log('🔍 [useManagerData] Buscando dados da tabela todos_clientes:', { 
+          userEmail, 
+          manager, 
+          selectedManager, 
+          isAdmin 
+        })
         
-        if (clientesFormatados.length === 0 && !isAdmin) {
-          console.log('ℹ️ [useManagerData] Nenhum cliente encontrado para este gestor')
-          setError('Nenhum cliente atribuído a este gestor ainda.')
+        // Construir query da tabela unificada todos_clientes
+        let query = supabase
+          .from('todos_clientes')
+          .select('*', { count: 'exact' })
+          .order('id', { ascending: true })
+
+        // FILTRO CRÍTICO: Se não for admin, filtrar SEMPRE por email_gestor = email logado
+        if (!isAdmin) {
+          query = query.eq('email_gestor', userEmail)
+          console.log('🔒 [useManagerData] APLICANDO FILTRO RLS OBRIGATÓRIO por email_gestor:', userEmail)
+        } else if (selectedManager) {
+          // Admin com gestor específico selecionado
+          const { manager: managerName } = await determineManager(userEmail, selectedManager, isAdmin)
+          const managerEmail = getManagerEmailFromName(managerName)
+          query = query.eq('email_gestor', managerEmail)
+          console.log('🎯 [useManagerData] Admin filtrado por gestor específico:', managerName, managerEmail)
+        } else {
+          console.log('👑 [useManagerData] Admin - sem filtro de email_gestor')
         }
-        
-        setClientes(clientesFormatados)
-        
-        if (showToast) {
-          toast({
-            title: "Sucesso",
-            description: `Dados atualizados - ${clientesFormatados.length} registros`
-          })
+
+        const { data, error, count } = await query
+
+        console.log('📊 [useManagerData] Resposta do Supabase (tabela todos_clientes):', {
+          data: data?.length || 0,
+          count,
+          error,
+          manager,
+          filteredBy: !isAdmin ? userEmail : selectedManager ? 'gestor específico' : 'sem filtro (admin)',
+          isAdmin
+        })
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar clientes:', error)
+          setError(`Erro ao carregar dados: ${error.message}`)
+          setClientes([])
+          if (showToast) {
+            toast({
+              title: "Erro",
+              description: `Erro ao atualizar dados`,
+              variant: "destructive"
+            })
+          }
+        } else {
+          console.log(`✅ [useManagerData] Dados recebidos para ${manager}:`, data?.length || 0)
+          
+          // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se todos os registros têm o email correto
+          if (!validateSecurityForNonAdmin(data, userEmail, isAdmin)) {
+            setError('Erro de segurança: dados inconsistentes detectados')
+            setClientes([])
+            return
+          }
+          
+          const clientesFormatados = (data || []).map(formatCliente).filter(Boolean) as Cliente[]
+          
+          console.log(`🎯 [useManagerData] RESULTADO FINAL: ${clientesFormatados.length} clientes válidos para ${manager}`)
+          
+          if (clientesFormatados.length === 0 && !isAdmin) {
+            console.log('ℹ️ [useManagerData] Nenhum cliente encontrado para este gestor')
+            setError('Nenhum cliente atribuído a este gestor ainda.')
+          }
+          
+          setClientes(clientesFormatados)
+          
+          if (showToast) {
+            toast({
+              title: "Sucesso",
+              description: `Dados atualizados - ${clientesFormatados.length} registros`
+            })
+          }
         }
       }
     } catch (err) {
@@ -108,6 +164,17 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     } finally {
       setLoading(false)
     }
+  }
+
+  const getManagerEmailFromName = (managerName: string): string => {
+    const emailMapping: { [key: string]: string } = {
+      'Lucas Falcão': 'lucas.falcao@gestor.com',
+      'Andreza': 'andreza@gestor.com',
+      'Carol': 'carol@trafegoporcents.com', 
+      'Junior': 'junior@trafegoporcents.com'
+    }
+    
+    return emailMapping[managerName] || 'andreza@gestor.com'
   }
 
   const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdmin, () => fetchClientes())
@@ -132,10 +199,6 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
     if (!userEmail) return
 
     const setupRealtime = async () => {
-      const { manager } = await determineManager(userEmail, selectedManager, isAdmin)
-      
-      console.log('🔴 [useManagerData] Configurando realtime para tabela todos_clientes:', { userEmail, manager, selectedManager, isAdmin })
-
       // Buscar dados iniciais
       fetchClientes()
 
@@ -158,7 +221,7 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
               return
             }
             
-            // Refresh data when changes occur
+            // Para admin visualizando todos os clientes ou gestor específico, sempre atualizar
             fetchClientes()
           }
         )

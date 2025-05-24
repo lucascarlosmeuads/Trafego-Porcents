@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Download, RefreshCw } from 'lucide-react'
+import { Download, RefreshCw, Database, User } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
@@ -12,7 +11,7 @@ import { AdminTable } from './AdminTable'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface AdminDashboardProps {
-  selectedManager: string
+  selectedManager: string | null
 }
 
 export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
@@ -29,7 +28,9 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
   const getManagerEmail = (managerName: string): string => {
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@gestor.com'
+      'Andreza': 'andreza@gestor.com',
+      'Carol': 'carol@trafegoporcents.com',
+      'Junior': 'junior@trafegoporcents.com'
     }
     
     return emailMapping[managerName] || 'andreza@gestor.com'
@@ -69,87 +70,111 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
       if (showToast) setRefreshing(true)
       setLoading(true)
       
-      console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela unificada para gestor: ${selectedManager}`)
-      
-      // Determinar email do gestor para filtro
-      const gestorEmail = getManagerEmail(selectedManager)
-      
-      // Buscar dados da tabela unificada filtrados por gestor
-      const { data, error, count } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact' })
-        .eq('email_gestor', gestorEmail)
-
-      console.log('📊 Resposta do Supabase (tabela unificada):', {
-        data: data?.length || 0,
-        count,
-        error,
-        selectedManager,
-        gestorEmail
-      })
-
-      if (!error && data) {
-        console.log(`✅ Admin Dashboard: Dados encontrados para ${selectedManager}:`, data.length, 'registros')
+      if (selectedManager === null) {
+        console.log(`📊 Admin Dashboard: Buscando TODOS os clientes da tabela unificada`)
         
-        const totalClientes = data.length
-        const clientesAtivos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
-        
-        // Contar status
-        const statusCounts: {[key: string]: number} = {}
-        STATUS_CAMPANHA.forEach(status => {
-          statusCounts[status] = 0
+        // Buscar TODOS os dados da tabela unificada (sem filtro)
+        const { data, error, count } = await supabase
+          .from('todos_clientes')
+          .select('*', { count: 'exact' })
+
+        console.log('📊 Resposta do Supabase (TODOS os clientes):', {
+          data: data?.length || 0,
+          count,
+          error
         })
 
-        data.forEach(cliente => {
-          const status = cliente.status_campanha || 'Preenchimento do Formulário'
-          if (statusCounts.hasOwnProperty(status)) {
-            statusCounts[status]++
-          } else {
-            statusCounts['Preenchimento do Formulário']++
-          }
-        })
-        
-        // Calcular comissão total
-        const comissaoTotal = data.reduce((total, cliente) => {
-          const valor = cliente.valor_comissao ? parseFloat(cliente.valor_comissao) : 60.00
-          return total + valor
-        }, 0)
-
-        setManagerStats({
-          totalClientes,
-          clientesAtivos,
-          comissaoTotal
-        })
-        setStatusStats(statusCounts)
-
-        if (showToast) {
-          toast({
-            title: "Sucesso",
-            description: `Dashboard de ${selectedManager} atualizado - ${totalClientes} registros encontrados`
-          })
+        if (!error && data) {
+          console.log(`✅ Admin Dashboard: TODOS os dados encontrados:`, data.length, 'registros')
+          processStatsData(data, 'Todos os Clientes', showToast)
+        } else if (error) {
+          console.error(`❌ Erro ao buscar TODOS os dados:`, error)
+          handleStatsError(showToast, 'Todos os Clientes')
         }
-      } else if (error) {
-        console.error(`❌ Erro ao buscar dados de ${selectedManager}:`, error)
-        if (showToast) {
-          toast({
-            title: "Erro",
-            description: `Erro ao atualizar dashboard de ${selectedManager}`,
-            variant: "destructive"
-          })
+      } else {
+        console.log(`📊 Admin Dashboard: Buscando estatísticas da tabela unificada para gestor: ${selectedManager}`)
+        
+        // Determinar email do gestor para filtro
+        const gestorEmail = getManagerEmail(selectedManager)
+        
+        // Buscar dados da tabela unificada filtrados por gestor
+        const { data, error, count } = await supabase
+          .from('todos_clientes')
+          .select('*', { count: 'exact' })
+          .eq('email_gestor', gestorEmail)
+
+        console.log('📊 Resposta do Supabase (tabela unificada):', {
+          data: data?.length || 0,
+          count,
+          error,
+          selectedManager,
+          gestorEmail
+        })
+
+        if (!error && data) {
+          console.log(`✅ Admin Dashboard: Dados encontrados para ${selectedManager}:`, data.length, 'registros')
+          processStatsData(data, selectedManager, showToast)
+        } else if (error) {
+          console.error(`❌ Erro ao buscar dados de ${selectedManager}:`, error)
+          handleStatsError(showToast, selectedManager)
         }
       }
     } catch (error) {
       console.error('💥 Erro ao buscar estatísticas:', error)
-      if (showToast) {
-        toast({
-          title: "Erro",
-          description: "Não foi possível carregar as estatísticas",
-          variant: "destructive"
-        })
-      }
+      handleStatsError(showToast, selectedManager || 'Todos os Clientes')
     } finally {
       setLoading(false)
       if (showToast) setRefreshing(false)
+    }
+  }
+
+  const processStatsData = (data: any[], context: string, showToast: boolean) => {
+    const totalClientes = data.length
+    const clientesAtivos = data.filter(item => item.status_campanha === 'No Ar' || item.status_campanha === 'Otimização').length
+    
+    // Contar status
+    const statusCounts: {[key: string]: number} = {}
+    STATUS_CAMPANHA.forEach(status => {
+      statusCounts[status] = 0
+    })
+
+    data.forEach(cliente => {
+      const status = cliente.status_campanha || 'Preenchimento do Formulário'
+      if (statusCounts.hasOwnProperty(status)) {
+        statusCounts[status]++
+      } else {
+        statusCounts['Preenchimento do Formulário']++
+      }
+    })
+    
+    // Calcular comissão total
+    const comissaoTotal = data.reduce((total, cliente) => {
+      const valor = cliente.valor_comissao ? parseFloat(cliente.valor_comissao) : 60.00
+      return total + valor
+    }, 0)
+
+    setManagerStats({
+      totalClientes,
+      clientesAtivos,
+      comissaoTotal
+    })
+    setStatusStats(statusCounts)
+
+    if (showToast) {
+      toast({
+        title: "Sucesso",
+        description: `Dashboard de ${context} atualizado - ${totalClientes} registros encontrados`
+      })
+    }
+  }
+
+  const handleStatsError = (showToast: boolean, context: string) => {
+    if (showToast) {
+      toast({
+        title: "Erro",
+        description: `Erro ao atualizar dashboard de ${context}`,
+        variant: "destructive"
+      })
     }
   }
 
@@ -157,12 +182,14 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
   const exportManagerData = async () => {
     try {
-      const gestorEmail = getManagerEmail(selectedManager)
+      let query = supabase.from('todos_clientes').select('*')
       
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .select('*')
-        .eq('email_gestor', gestorEmail)
+      if (selectedManager !== null) {
+        const gestorEmail = getManagerEmail(selectedManager)
+        query = query.eq('email_gestor', gestorEmail)
+      }
+      
+      const { data, error } = await query
 
       if (!error && data) {
         if (data.length === 0) {
@@ -205,15 +232,21 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
         const link = document.createElement('a')
         const url = URL.createObjectURL(blob)
         link.setAttribute('href', url)
-        link.setAttribute('download', `relatorio_${selectedManager.toLowerCase().replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.csv`)
+        
+        const filename = selectedManager 
+          ? `relatorio_${selectedManager.toLowerCase().replace(' ', '_')}_${new Date().toISOString().split('T')[0]}.csv`
+          : `relatorio_todos_clientes_${new Date().toISOString().split('T')[0]}.csv`
+        
+        link.setAttribute('download', filename)
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
 
+        const context = selectedManager || 'Todos os Clientes'
         toast({
           title: "Sucesso",
-          description: `Relatório de ${selectedManager} exportado com sucesso - ${data.length} registros`
+          description: `Relatório de ${context} exportado com sucesso - ${data.length} registros`
         })
       }
     } catch (error) {
@@ -226,12 +259,20 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
     }
   }
 
+  const getDisplayTitle = () => {
+    return selectedManager || 'Todos os Clientes'
+  }
+
+  const getDisplayIcon = () => {
+    return selectedManager ? <User className="w-5 h-5" /> : <Database className="w-5 h-5" />
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>Carregando dados de {selectedManager}...</span>
+          <span>Carregando dados de {getDisplayTitle()}...</span>
         </div>
       </div>
     )
@@ -253,7 +294,20 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-4">
-                  <h2 className="text-lg font-semibold">Dashboard - {selectedManager}</h2>
+                  <div className="flex items-center gap-2">
+                    {getDisplayIcon()}
+                    <h2 className="text-lg font-semibold">Dashboard - {getDisplayTitle()}</h2>
+                  </div>
+                  {selectedManager === null && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                      Visualização Completa
+                    </span>
+                  )}
+                  {selectedManager && (
+                    <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                      Gestor Individual
+                    </span>
+                  )}
                 </div>
                 <div className="flex gap-2">
                   <Button 
@@ -318,7 +372,7 @@ export function AdminDashboard({ selectedManager }: AdminDashboardProps) {
 
           <Card>
             <CardHeader>
-              <CardTitle>Resumo por Status - {selectedManager}</CardTitle>
+              <CardTitle>Resumo por Status - {getDisplayTitle()}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
