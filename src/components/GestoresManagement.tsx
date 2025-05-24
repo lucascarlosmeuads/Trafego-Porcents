@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
+import { useAuth } from '@/hooks/useAuth'
 import { type Gestor } from '@/types/gestor'
 
 export function GestoresManagement() {
@@ -25,27 +25,49 @@ export function GestoresManagement() {
     pode_adicionar_cliente: false
   })
   const { toast } = useToast()
+  const { user, loading: authLoading } = useAuth()
 
   useEffect(() => {
-    fetchGestores()
-  }, [])
+    // Só busca gestores se a autenticação já carregou e há um usuário logado
+    if (!authLoading && user) {
+      fetchGestores()
+    } else if (!authLoading && !user) {
+      // Se não há usuário, para o loading
+      setLoading(false)
+    }
+  }, [authLoading, user])
 
   const fetchGestores = async () => {
     try {
+      console.log('🔍 Buscando gestores...')
       const { data, error } = await supabase
         .from('gestores')
         .select('*')
         .order('created_at', { ascending: false })
 
-      if (error) throw error
-      setGestores(data || [])
-    } catch (error) {
-      console.error('Erro ao carregar gestores:', error)
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar gestores",
-        variant: "destructive"
-      })
+      if (error) {
+        console.error('❌ Erro ao buscar gestores:', error)
+        throw error
+      }
+
+      // Garantir que sempre temos um array, mesmo se data for null/undefined
+      const gestoresData = data ?? []
+      console.log('✅ Gestores carregados:', gestoresData.length, 'registros')
+      setGestores(gestoresData)
+    } catch (error: any) {
+      console.error('💥 Erro ao carregar gestores:', error)
+      
+      // Só mostra toast de erro se for um erro real, não de permissão na inicialização
+      if (!error?.message?.includes('permission denied')) {
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar gestores",
+          variant: "destructive"
+        })
+      }
+      
+      // Define array vazio em caso de erro
+      setGestores([])
     } finally {
       setLoading(false)
     }
@@ -179,8 +201,14 @@ export function GestoresManagement() {
     return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
-  if (loading) {
+  // Mostra loading se ainda está carregando autenticação ou gestores
+  if (authLoading || loading) {
     return <div className="flex items-center justify-center py-8">Carregando gestores...</div>
+  }
+
+  // Se não há usuário autenticado, não mostra nada
+  if (!user) {
+    return <div className="flex items-center justify-center py-8">Acesso não autorizado</div>
   }
 
   return (
