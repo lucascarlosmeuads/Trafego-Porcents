@@ -345,21 +345,31 @@ export function useManagerData(userEmail: string, isAdmin: boolean, selectedMana
 
     try {
       console.log('🚀 Adicionando novo cliente...')
+      console.log('📥 Dados recebidos:', clienteData)
+      
       const { manager, tableName } = await determineManager(userEmail, selectedManager)
       
       console.log(`📋 Tabela de destino: ${tableName}`)
       console.log(`👤 Manager: ${manager}`)
       
-      // Preparar dados do cliente com email_gestor automaticamente preenchido
-      // e remover o campo id se existir
-      const { id, ...clienteDataSemId } = clienteData
+      // Garantir que NÃO há campo id nos dados
+      const {
+        id,           // Remover id
+        created_at,   // Remover created_at se existir
+        ...dadosLimpos
+      } = clienteData
+      
+      // Preparar dados finais sem campos que podem causar conflito
       const novoCliente = {
-        ...clienteDataSemId,
-        email_gestor: userEmail, // Preenchimento automático com email do usuário logado
-        created_at: new Date().toISOString()
+        ...dadosLimpos,
+        email_gestor: userEmail,
+        comissao_paga: false,
+        valor_comissao: 60.00,
+        site_status: 'pendente'
       }
 
-      console.log('💾 Dados do novo cliente (sem ID):', novoCliente)
+      console.log('🧹 Dados limpos (sem ID):', novoCliente)
+      console.log('🔍 Verificando se existe campo id:', 'id' in novoCliente ? 'SIM - ERRO!' : 'NÃO - OK!')
 
       const { data, error } = await supabase
         .from(tableName)
