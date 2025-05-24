@@ -11,6 +11,8 @@ export function useGestorPermissions() {
   useEffect(() => {
     const checkPermissions = async () => {
       if (!user?.email) {
+        console.log('🔍 [useGestorPermissions] Sem email do usuário, definindo permissões como false')
+        setCanAddClients(false)
         setLoading(false)
         return
       }
@@ -20,16 +22,22 @@ export function useGestorPermissions() {
         
         const { data, error } = await supabase
           .from('gestores')
-          .select('pode_adicionar_cliente, ativo')
+          .select('pode_adicionar_cliente, ativo, nome')
           .eq('email', user.email)
           .eq('ativo', true)
           .single()
 
         if (error) {
           console.warn('⚠️ [useGestorPermissions] Gestor não encontrado na tabela gestores:', error)
+          console.log('🔍 [useGestorPermissions] Definindo permissões como false para email:', user.email)
           setCanAddClients(false)
         } else {
-          console.log('✅ [useGestorPermissions] Permissões encontradas:', data)
+          console.log('✅ [useGestorPermissions] Permissões encontradas:', {
+            nome: data.nome,
+            email: user.email,
+            pode_adicionar_cliente: data.pode_adicionar_cliente,
+            ativo: data.ativo
+          })
           setCanAddClients(data.pode_adicionar_cliente || false)
         }
       } catch (err) {
@@ -42,6 +50,12 @@ export function useGestorPermissions() {
 
     checkPermissions()
   }, [user?.email])
+
+  console.log('🎯 [useGestorPermissions] Estado atual:', {
+    userEmail: user?.email,
+    canAddClients,
+    loading
+  })
 
   return { canAddClients, loading }
 }

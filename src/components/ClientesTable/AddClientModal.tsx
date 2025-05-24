@@ -58,15 +58,18 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       console.log('🔒 [AddClientModal] É admin?', isAdmin)
       console.log('🏷️ [AddClientModal] Manager selecionado:', selectedManager)
       
-      // Para gestores não-admin, SEMPRE usar o email do usuário logado como email_gestor
-      // Para admin, usar o email do gestor selecionado ou o próprio email se não houver seleção
-      const emailGestorFinal = isAdmin ? 
-        (selectedManager ? await getManagerEmailFromName(selectedManager) : user?.email) : 
-        user?.email
+      // REGRA CRÍTICA: Para gestores não-admin, SEMPRE usar o email do usuário logado
+      // Para admin, usar o email do gestor selecionado se houver seleção
+      const emailGestorFinal = !isAdmin ? user?.email : 
+        (selectedManager ? await getManagerEmailFromName(selectedManager) : user?.email)
 
-      console.log('📧 [AddClientModal] Email gestor final:', emailGestorFinal)
+      console.log('📧 [AddClientModal] Email gestor final determinado:', emailGestorFinal)
       
-      // Criar objeto ABSOLUTAMENTE limpo - GARANTINDO que não há ID
+      if (!emailGestorFinal) {
+        throw new Error('Não foi possível determinar o email do gestor')
+      }
+      
+      // Criar objeto limpo para inserção
       const cleanClienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
@@ -74,7 +77,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         vendedor: formData.vendedor.trim() || selectedManager || 'Gestor',
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
-        email_gestor: emailGestorFinal,
+        email_gestor: emailGestorFinal, // CAMPO CRÍTICO PARA FILTRO
         comissao_paga: false,
         valor_comissao: 60.00,
         site_status: 'pendente',
@@ -86,23 +89,21 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         numero_bm: ''
       }
 
-      // Remover qualquer campo que seja null, undefined ou string vazia (exceto campos específicos)
+      // Remover campos null/undefined/empty (exceto alguns específicos)
       const finalData = Object.fromEntries(
         Object.entries(cleanClienteData).filter(([key, value]) => {
           // Manter campos booleanos e numéricos sempre
           if (typeof value === 'boolean' || typeof value === 'number') return true
-          // Manter campos de string mesmo se vazios para alguns campos específicos
+          // Manter campos específicos mesmo se vazios
           if (['data_limite', 'link_grupo', 'link_briefing', 'link_criativo', 'link_site', 'numero_bm'].includes(key)) return true
-          // Filtrar campos null, undefined ou string vazia para o resto
+          // Filtrar resto se null/undefined/empty
           return value !== null && value !== undefined && value !== ''
         })
       )
 
-      console.log('🧹 [AddClientModal] Objeto final LIMPO (sem id):', finalData)
-      console.log('🔍 [AddClientModal] Tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
-      console.log('🔍 [AddClientModal] Todas as chaves:', Object.keys(finalData))
-
-      console.log('📤 [AddClientModal] Enviando para tabela todos_clientes...')
+      console.log('🧹 [AddClientModal] Objeto final para inserção:', finalData)
+      console.log('🔑 [AddClientModal] Email gestor que será salvo:', finalData.email_gestor)
+      console.log('🔍 [AddClientModal] Verificação - tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
 
       const { data, error } = await supabase
         .from('todos_clientes')
@@ -146,11 +147,11 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
     }
   }
 
-  // Função auxiliar para obter email do gestor (igual a do useManagerData)
+  // Função auxiliar para obter email do gestor
   const getManagerEmailFromName = async (managerName: string): Promise<string> => {
     console.log('🔍 [AddClientModal] Buscando email para o gestor:', managerName)
     
-    // Primeiro, tentar buscar na tabela gestores
+    // Tentar buscar na tabela gestores primeiro
     try {
       const { data: gestorData, error: gestorError } = await supabase
         .from('gestores')
@@ -167,7 +168,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       console.warn('⚠️ [AddClientModal] Gestor não encontrado na tabela gestores, usando mapeamento manual')
     }
 
-    // Fallback para mapeamento manual expandido
+    // Fallback para mapeamento manual
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
       'Andreza': 'andreza@trafegoporcents.com',
