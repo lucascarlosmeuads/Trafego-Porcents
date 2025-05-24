@@ -20,7 +20,8 @@ import {
 } from '@/components/ui/select'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Download, Search, Filter, RefreshCw, Calendar } from 'lucide-react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Download, Search, Filter, RefreshCw, Calendar, Edit2, Eye, EyeOff } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
 interface ClientesTableProps {
@@ -35,6 +36,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [statusFilter, setStatusFilter] = useState('all')
   const [editingCell, setEditingCell] = useState<{id: string, field: string} | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
 
   const filteredClientes = clientes.filter(cliente => {
     const matchesSearch = 
@@ -85,7 +87,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
     if (isEditing) {
       return (
-        <div className="flex gap-1">
+        <div className="flex gap-1 min-w-[120px]">
           <Input
             value={editValue}
             onChange={(e) => setEditValue(e.target.value)}
@@ -102,10 +104,11 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
     return (
       <div
-        className="cursor-pointer hover:bg-gray-50 p-1 rounded min-h-[20px]"
+        className="cursor-pointer hover:bg-gray-50 p-1 rounded min-h-[20px] flex items-center gap-1 group"
         onClick={() => handleCellEdit(cliente.id, field, value)}
       >
-        {value || '-'}
+        <span className="truncate flex-1">{value || '-'}</span>
+        <Edit2 className="w-3 h-3 opacity-0 group-hover:opacity-50 transition-opacity" />
       </div>
     )
   }
@@ -164,10 +167,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-8">
-        <div className="flex items-center gap-2">
-          <RefreshCw className="w-4 h-4 animate-spin" />
-          <span>Carregando clientes de {selectedManager}...</span>
+      <div className="flex items-center justify-center py-12 px-4">
+        <div className="flex flex-col items-center gap-4">
+          <RefreshCw className="w-8 h-8 animate-spin text-blue-500" />
+          <span className="text-center">Carregando clientes de {selectedManager}...</span>
         </div>
       </div>
     )
@@ -175,7 +178,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   if (error) {
     return (
-      <div className="text-center py-8">
+      <div className="text-center py-12 px-4">
         <p className="text-red-600 mb-4">{error}</p>
         <Button onClick={refetch} variant="outline">
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -186,28 +189,37 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header com título e ações */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 p-4 lg:p-0">
+      {/* Header responsivo */}
+      <div className="flex flex-col space-y-4 lg:flex-row lg:justify-between lg:items-center lg:space-y-0">
         <div>
-          <h2 className="text-xl font-semibold">Clientes - {selectedManager}</h2>
+          <h2 className="text-xl lg:text-2xl font-semibold">Clientes - {selectedManager}</h2>
           <p className="text-sm text-gray-600">{filteredClientes.length} clientes encontrados</p>
         </div>
         
-        <div className="flex gap-2">
-          <Button onClick={refetch} variant="outline" size="sm">
+        <div className="flex flex-col sm:flex-row gap-2">
+          <Button onClick={refetch} variant="outline" size="sm" className="flex-1 sm:flex-none">
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar
           </Button>
-          <Button onClick={exportToCSV} variant="outline" size="sm">
+          <Button onClick={exportToCSV} variant="outline" size="sm" className="flex-1 sm:flex-none">
             <Download className="w-4 h-4 mr-2" />
             Exportar CSV
+          </Button>
+          <Button 
+            onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')} 
+            variant="outline" 
+            size="sm"
+            className="flex-1 sm:flex-none lg:hidden"
+          >
+            {viewMode === 'table' ? <Eye className="w-4 h-4 mr-2" /> : <EyeOff className="w-4 h-4 mr-2" />}
+            {viewMode === 'table' ? 'Cartões' : 'Tabela'}
           </Button>
         </div>
       </div>
 
-      {/* Filtros */}
-      <div className="flex flex-col sm:flex-row gap-4">
+      {/* Filtros responsivos */}
+      <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
           <Input
@@ -233,99 +245,170 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         </Select>
       </div>
 
-      {/* Tabela */}
-      <div className="border rounded-lg overflow-hidden">
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-[100px]">Data Venda</TableHead>
-                <TableHead className="min-w-[200px]">Nome Cliente</TableHead>
-                <TableHead className="min-w-[120px]">Telefone</TableHead>
-                <TableHead className="min-w-[200px]">Email Cliente</TableHead>
-                <TableHead className="min-w-[150px]">Vendedor</TableHead>
-                <TableHead className="min-w-[180px]">Email Gestor</TableHead>
-                <TableHead className="min-w-[130px]">Status Campanha</TableHead>
-                <TableHead className="min-w-[100px]">Data Limite</TableHead>
-                <TableHead className="min-w-[100px]">Data Subida</TableHead>
-                <TableHead className="min-w-[200px]">Link Grupo</TableHead>
-                <TableHead className="min-w-[200px]">Link Briefing</TableHead>
-                <TableHead className="min-w-[200px]">Link Criativo</TableHead>
-                <TableHead className="min-w-[200px]">Link Site</TableHead>
-                <TableHead className="min-w-[120px]">BM ID</TableHead>
-                <TableHead className="min-w-[100px]">Comissão</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredClientes.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={15} className="text-center py-8 text-gray-500">
-                    Nenhum cliente encontrado para {selectedManager}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredClientes.map((cliente) => (
-                  <TableRow key={cliente.id} className="hover:bg-gray-50">
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3 text-gray-400" />
-                        {cliente.data_venda || '-'}
+      {/* Visualização em cartões para mobile */}
+      {viewMode === 'cards' && (
+        <div className="grid gap-4 md:grid-cols-2 lg:hidden">
+          {filteredClientes.length === 0 ? (
+            <div className="col-span-full text-center py-8 text-gray-500">
+              Nenhum cliente encontrado para {selectedManager}
+            </div>
+          ) : (
+            filteredClientes.map((cliente) => (
+              <Card key={cliente.id} className="w-full">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-lg flex items-center justify-between">
+                    <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
+                    <Badge variant={
+                      cliente.status_campanha === 'Concluída' ? 'default' :
+                      cliente.status_campanha === 'Em andamento' ? 'secondary' :
+                      cliente.status_campanha === 'Cancelada' ? 'destructive' : 'outline'
+                    }>
+                      {cliente.status_campanha || 'Pendente'}
+                    </Badge>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div className="grid grid-cols-1 gap-2 text-sm">
+                    <div>
+                      <span className="font-medium text-gray-600">Telefone:</span>
+                      <span className="ml-2">{cliente.telefone || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Email:</span>
+                      <span className="ml-2 truncate block">{cliente.email_cliente || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Vendedor:</span>
+                      <div className="mt-1">
+                        {renderEditableCell(cliente, 'nome_vendedor', cliente.nome_vendedor || '')}
                       </div>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {cliente.nome_cliente || '-'}
-                    </TableCell>
-                    <TableCell>{cliente.telefone || '-'}</TableCell>
-                    <TableCell>{cliente.email_cliente || '-'}</TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'nome_vendedor', cliente.nome_vendedor || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'email_gestor_responsavel', cliente.email_gestor_responsavel || '')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={
-                        cliente.status_campanha === 'Concluída' ? 'default' :
-                        cliente.status_campanha === 'Em andamento' ? 'secondary' :
-                        cliente.status_campanha === 'Cancelada' ? 'destructive' : 'outline'
-                      }>
-                        {cliente.status_campanha || 'Pendente'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      {cliente.data_limite || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {cliente.data_subida_campanha || '-'}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
-                    </TableCell>
-                    <TableCell>
-                      {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Data Venda:</span>
+                      <span className="ml-2 flex items-center">
+                        <Calendar className="w-3 h-3 mr-1" />
+                        {cliente.data_venda || '-'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-600">Comissão:</span>
+                      <div className="mt-1">
+                        {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))
+          )}
+        </div>
+      )}
+
+      {/* Tabela para desktop */}
+      <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
+        <div className="border rounded-lg overflow-hidden">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px] min-w-[100px]">Data Venda</TableHead>
+                  <TableHead className="min-w-[200px]">Nome Cliente</TableHead>
+                  <TableHead className="min-w-[120px]">Telefone</TableHead>
+                  <TableHead className="min-w-[200px] hidden sm:table-cell">Email Cliente</TableHead>
+                  <TableHead className="min-w-[150px]">Vendedor</TableHead>
+                  <TableHead className="min-w-[180px] hidden md:table-cell">Email Gestor</TableHead>
+                  <TableHead className="min-w-[130px]">Status</TableHead>
+                  <TableHead className="min-w-[100px] hidden lg:table-cell">Data Limite</TableHead>
+                  <TableHead className="min-w-[100px] hidden lg:table-cell">Data Subida</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Grupo</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Briefing</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Criativo</TableHead>
+                  <TableHead className="min-w-[200px] hidden xl:table-cell">Link Site</TableHead>
+                  <TableHead className="min-w-[120px] hidden lg:table-cell">BM ID</TableHead>
+                  <TableHead className="min-w-[100px]">Comissão</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredClientes.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={15} className="text-center py-8 text-gray-500">
+                      Nenhum cliente encontrado para {selectedManager}
                     </TableCell>
                   </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                ) : (
+                  filteredClientes.map((cliente) => (
+                    <TableRow key={cliente.id} className="hover:bg-gray-50">
+                      <TableCell>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-gray-400" />
+                          <span className="text-xs">{cliente.data_venda || '-'}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <div className="max-w-[200px] truncate">
+                          {cliente.nome_cliente || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="max-w-[120px] truncate">
+                          {cliente.telefone || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell className="hidden sm:table-cell">
+                        <div className="max-w-[200px] truncate">
+                          {cliente.email_cliente || '-'}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'nome_vendedor', cliente.nome_vendedor || '')}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        {renderEditableCell(cliente, 'email_gestor_responsavel', cliente.email_gestor_responsavel || '')}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={
+                          cliente.status_campanha === 'Concluída' ? 'default' :
+                          cliente.status_campanha === 'Em andamento' ? 'secondary' :
+                          cliente.status_campanha === 'Cancelada' ? 'destructive' : 'outline'
+                        } className="text-xs">
+                          {cliente.status_campanha || 'Pendente'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {cliente.data_limite || '-'}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {cliente.data_subida_campanha || '-'}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        {renderEditableCell(cliente, 'link_grupo', cliente.link_grupo || '')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        {renderEditableCell(cliente, 'link_reuniao_1', cliente.link_reuniao_1 || '')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        {renderEditableCell(cliente, 'link_reuniao_2', cliente.link_reuniao_2 || '')}
+                      </TableCell>
+                      <TableCell className="hidden xl:table-cell">
+                        {renderEditableCell(cliente, 'link_reuniao_3', cliente.link_reuniao_3 || '')}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell">
+                        {renderEditableCell(cliente, 'bm_identificacao', cliente.bm_identificacao || '')}
+                      </TableCell>
+                      <TableCell>
+                        {renderEditableCell(cliente, 'comissao', cliente.comissao || '')}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
 
       {/* Informação sobre edição */}
-      <div className="text-xs text-gray-500 mt-4">
+      <div className="text-xs text-gray-500 mt-4 text-center lg:text-left">
         💡 Clique em qualquer campo editável para modificar os dados
       </div>
     </div>
