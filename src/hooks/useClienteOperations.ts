@@ -115,25 +115,57 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       
       console.log(`📋 Tabela de destino: todos_clientes`)
 
-      // Verificar o próximo ID disponível na tabela
-      console.log('🔍 [useClienteOperations] Verificando próximo ID disponível...')
-      const { data: maxIdData, error: maxIdError } = await supabase
-        .from('todos_clientes')
-        .select('id')
-        .order('id', { ascending: false })
-        .limit(1)
-
-      if (maxIdError) {
-        console.error('❌ [useClienteOperations] Erro ao verificar próximo ID:', maxIdError)
-      } else {
-        const nextId = maxIdData && maxIdData.length > 0 ? maxIdData[0].id + 1 : 1
-        console.log('🔢 [useClienteOperations] Próximo ID será:', nextId)
-      }
-
-      // Criar objeto limpo para inserção
       // FILTRO CRÍTICO: Para não-admins, SEMPRE usar o email do usuário logado como email_gestor
       const emailGestorFinal = isAdmin ? (clienteData.email_gestor || userEmail) : userEmail
       
+      // Verificar se já existe um cliente com o mesmo email
+      console.log('🔍 [useClienteOperations] Verificando se cliente já existe...')
+      const { data: existingCliente, error: checkError } = await supabase
+        .from('todos_clientes')
+        .select('id, nome_cliente')
+        .eq('email_cliente', clienteData.email_cliente)
+        .single()
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ [useClienteOperations] Erro ao verificar cliente existente:', checkError)
+        throw new Error(`Erro ao verificar cliente: ${checkError.message}`)
+      }
+
+      if (existingCliente) {
+        console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
+        
+        // Fazer update dos dados existentes
+        const { error: updateError } = await supabase
+          .from('todos_clientes')
+          .update({
+            nome_cliente: String(clienteData.nome_cliente || ''),
+            telefone: String(clienteData.telefone || ''),
+            data_venda: clienteData.data_venda || null,
+            vendedor: String(clienteData.vendedor || ''),
+            status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
+            email_gestor: String(emailGestorFinal)
+          })
+          .eq('id', existingCliente.id)
+
+        if (updateError) {
+          console.error('❌ [useClienteOperations] Erro ao atualizar cliente existente:', updateError)
+          throw new Error(`Erro ao atualizar cliente: ${updateError.message}`)
+        }
+
+        console.log('✅ [useClienteOperations] Cliente existente atualizado com sucesso')
+        
+        // Forçar atualização da tabela após update
+        refetchData()
+        
+        toast({
+          title: "Sucesso",
+          description: "Dados do cliente atualizados com sucesso!"
+        })
+        
+        return true
+      }
+
+      // Cliente não existe, criar novo
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
@@ -171,12 +203,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         console.error('🔥 Hint:', error.hint)
         console.error('🔥 Objeto completo do erro:', error)
         
-        toast({
-          title: "Erro",
-          description: `Erro ao adicionar cliente: ${error.message}`,
-          variant: "destructive"
-        })
-        return false
+        throw new Error(`Erro ao adicionar cliente: ${error.message}`)
       }
 
       console.log('✅ [useClienteOperations] === SUCESSO ===')
@@ -194,9 +221,10 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
     } catch (error) {
       console.error('💥 [useClienteOperations] === ERRO GERAL ===')
       console.error('💥 Erro capturado no catch:', error)
+      
       toast({
         title: "Erro",
-        description: "Erro inesperado ao adicionar cliente",
+        description: error instanceof Error ? error.message : "Erro inesperado ao adicionar cliente",
         variant: "destructive"
       })
       return false

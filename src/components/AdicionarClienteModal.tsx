@@ -1,7 +1,6 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -10,13 +9,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
+import { ensureClienteExists } from '@/utils/clienteDataHelpers'
 
 interface AdicionarClienteModalProps {
   onClienteAdicionado: () => void
 }
 
 export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteModalProps) {
-  const { user, currentManagerName } = useAuth()
+  const { user, currentManagerName, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
@@ -26,14 +27,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
     vendedor: '',
     status_campanha: 'Brief'
   })
-
-  const getTableName = (managerName: string): string => {
-    const tableMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'clientes_lucas_falcao',
-      'Andreza': 'clientes_andreza'
-    }
-    return tableMapping[managerName] || 'clientes_andreza'
-  }
+  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
   const handleSubmit = async () => {
     if (!formData.nome_cliente || !formData.telefone) {
@@ -45,13 +39,31 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
       return
     }
 
+    if (!formData.email_cliente) {
+      toast({
+        title: "Erro",
+        description: "Email do cliente é obrigatório",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
-      const tableName = getTableName(currentManagerName)
+      console.log("🟡 [AdicionarClienteModal] Iniciando adição de cliente")
+      
+      // Primeiro garantir que o cliente existe na tabela todos_clientes
+      console.log('🔐 [AdicionarClienteModal] Garantindo que cliente existe na tabela todos_clientes...')
+      const clienteExists = await ensureClienteExists(formData.email_cliente, formData.nome_cliente)
+      
+      if (!clienteExists) {
+        throw new Error('Falha ao garantir que o cliente existe na tabela')
+      }
+
       const vendedor = formData.vendedor || currentManagerName
 
-      const clienteBruto = {
+      const clienteData = {
         nome_cliente: formData.nome_cliente,
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
@@ -63,36 +75,21 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         comissao_paga: false
       }
 
-      // 🔍 Remove id e campos vazios, se tiverem vindo por acidente
-      const clienteLimpo = Object.fromEntries(
-        Object.entries(clienteBruto).filter(
-          ([key, value]) => key !== 'id' && value != null
-        )
-      )
+      console.log("🟡 [AdicionarClienteModal] Dados para adicionar:", clienteData)
 
-      // 👇 Verificação de debug
-      console.log("🟡 Payload para insert:", clienteLimpo)
-
-      const { error } = await supabase
-        .from(tableName)
-        .insert([clienteLimpo])
-
-      if (error) throw error
-
-      toast({
-        title: "Sucesso",
-        description: "Cliente adicionado com sucesso"
-      })
-
-      setFormData({
-        nome_cliente: '',
-        telefone: '',
-        email_cliente: '',
-        vendedor: '',
-        status_campanha: 'Brief'
-      })
-      setOpen(false)
-      onClienteAdicionado()
+      const success = await addCliente(clienteData)
+      
+      if (success) {
+        setFormData({
+          nome_cliente: '',
+          telefone: '',
+          email_cliente: '',
+          vendedor: '',
+          status_campanha: 'Brief'
+        })
+        setOpen(false)
+        onClienteAdicionado()
+      }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
       toast({
@@ -137,7 +134,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
             />
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="email">Email do Cliente</Label>
+            <Label htmlFor="email">Email do Cliente *</Label>
             <Input
               id="email"
               type="email"

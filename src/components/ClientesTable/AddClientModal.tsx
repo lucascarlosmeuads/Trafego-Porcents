@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { supabase } from '@/lib/supabase'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useAuth } from '@/hooks/useAuth'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { ensureClienteExists } from '@/utils/clienteDataHelpers'
 
 interface AddClientModalProps {
   selectedManager?: string
@@ -28,6 +29,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
     data_venda: new Date().toISOString().split('T')[0]
   })
   const { user, isAdmin } = useAuth()
+  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
   const handleSubmit = async () => {
     // Validações
@@ -78,89 +80,43 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         throw new Error('Não foi possível determinar o email do gestor')
       }
 
-      // Step 1: Create Supabase Auth account for the client
-      console.log('🔐 [AddClientModal] Criando conta de autenticação para o cliente...')
-      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-        email: formData.email_cliente,
-        password: 'TempPassword123!', // Temporary password, user will need to reset
-        email_confirm: true
-      })
-
-      if (authError && !authError.message.includes('User already registered')) {
-        console.error('❌ [AddClientModal] Erro ao criar conta de autenticação:', authError)
-        throw new Error(`Erro ao criar conta: ${authError.message}`)
-      }
-
-      if (authData.user) {
-        console.log('✅ [AddClientModal] Conta de autenticação criada:', authData.user.email)
-      } else {
-        console.log('ℹ️ [AddClientModal] Usuário já possui conta de autenticação')
-      }
+      // Step 1: Garantir que o cliente existe na tabela todos_clientes (criar se necessário)
+      console.log('🔐 [AddClientModal] Garantindo que cliente existe na tabela todos_clientes...')
+      const clienteExists = await ensureClienteExists(formData.email_cliente, formData.nome_cliente)
       
-      // Step 2: Insert into todos_clientes table
-      const cleanClienteData = {
+      if (!clienteExists) {
+        throw new Error('Falha ao garantir que o cliente existe na tabela')
+      }
+
+      // Step 2: Usar o hook useClienteOperations para adicionar
+      const clienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
         email_cliente: formData.email_cliente.trim(),
         vendedor: formData.vendedor.trim() || selectedManager || 'Gestor',
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
-        email_gestor: emailGestorFinal, // CAMPO CRÍTICO PARA FILTRO
-        comissao_paga: false,
-        valor_comissao: 60.00,
-        site_status: 'pendente',
-        data_limite: '',
-        link_grupo: '',
-        link_briefing: '',
-        link_criativo: '',
-        link_site: '',
-        numero_bm: ''
+        email_gestor: emailGestorFinal
       }
 
-      // Remover campos null/undefined/empty (exceto alguns específicos)
-      const finalData = Object.fromEntries(
-        Object.entries(cleanClienteData).filter(([key, value]) => {
-          // Manter campos booleanos e numéricos sempre
-          if (typeof value === 'boolean' || typeof value === 'number') return true
-          // Manter campos específicos mesmo se vazios
-          if (['data_limite', 'link_grupo', 'link_briefing', 'link_criativo', 'link_site', 'numero_bm'].includes(key)) return true
-          // Filtrar resto se null/undefined/empty
-          return value !== null && value !== undefined && value !== ''
+      console.log('🧹 [AddClientModal] Objeto final para inserção:', clienteData)
+
+      const success = await addCliente(clienteData)
+
+      if (success) {
+        // Limpar formulário
+        setFormData({
+          nome_cliente: '',
+          telefone: '',
+          email_cliente: '',
+          vendedor: '',
+          status_campanha: 'Preenchimento do Formulário',
+          data_venda: new Date().toISOString().split('T')[0]
         })
-      )
-
-      console.log('🧹 [AddClientModal] Objeto final para inserção:', finalData)
-      console.log('🔑 [AddClientModal] Email gestor que será salvo:', finalData.email_gestor)
-
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .insert([finalData])
-        .select()
-
-      if (error) {
-        console.error('❌ [AddClientModal] Erro do Supabase:', error)
-        throw error
+        
+        setOpen(false)
+        onClienteAdicionado()
       }
-
-      console.log('✅ [AddClientModal] Cliente adicionado com sucesso:', data)
-
-      toast({
-        title: "Sucesso",
-        description: "Cliente e conta de acesso criados com sucesso!"
-      })
-
-      // Limpar formulário
-      setFormData({
-        nome_cliente: '',
-        telefone: '',
-        email_cliente: '',
-        vendedor: '',
-        status_campanha: 'Preenchimento do Formulário',
-        data_venda: new Date().toISOString().split('T')[0]
-      })
-      
-      setOpen(false)
-      onClienteAdicionado()
 
     } catch (error: any) {
       console.error('💥 [AddClientModal] Erro geral:', error)
@@ -178,23 +134,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
   const getManagerEmailFromName = async (managerName: string): Promise<string> => {
     console.log('🔍 [AddClientModal] Buscando email para o gestor:', managerName)
     
-    // Tentar buscar na tabela gestores primeiro
-    try {
-      const { data: gestorData, error: gestorError } = await supabase
-        .from('gestores')
-        .select('nome, email')
-        .eq('nome', managerName)
-        .eq('ativo', true)
-        .single()
-
-      if (!gestorError && gestorData) {
-        console.log('✅ [AddClientModal] Email encontrado na tabela gestores:', gestorData.email)
-        return gestorData.email
-      }
-    } catch (err) {
-      console.warn('⚠️ [AddClientModal] Gestor não encontrado na tabela gestores, usando mapeamento manual')
-    }
-
     // Fallback para mapeamento manual
     const emailMapping: { [key: string]: string } = {
       'Lucas Falcão': 'lucas.falcao@gestor.com',
