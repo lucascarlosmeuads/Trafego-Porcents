@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -227,17 +228,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       if (!clienteJaExistia && clientePassword) {
         toast({
           title: "Cliente adicionado com sucesso!",
-          description: (
-            <div className="space-y-2">
-              <p>Cliente criado e usuário Supabase Auth gerado.</p>
-              <div className="bg-gray-100 p-2 rounded text-sm">
-                <strong>Credenciais para o cliente:</strong><br/>
-                <strong>Email:</strong> {clienteData.email_cliente}<br/>
-                <strong>Senha:</strong> <span className="font-mono bg-yellow-200 px-1">{clientePassword}</span>
-              </div>
-              <p className="text-xs text-gray-600">⚠️ Copie e envie essas credenciais para o cliente</p>
-            </div>
-          ),
+          description: `Cliente criado e usuário Supabase Auth gerado.\n\nCredenciais para o cliente:\nEmail: ${clienteData.email_cliente}\nSenha: ${clientePassword}\n\n⚠️ Copie e envie essas credenciais para o cliente`,
           duration: 10000 // 10 seconds to give time to copy
         })
       } else if (clienteJaExistia) {
