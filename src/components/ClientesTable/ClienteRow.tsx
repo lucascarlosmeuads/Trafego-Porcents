@@ -90,7 +90,7 @@ export function ClienteRow({
     // NOVA LÓGICA: Se o status é "No Ar", mostrar como cumprido
     if (cliente.status_campanha === 'No Ar') {
       return {
-        text: 'Cumprido',
+        text: '✅ Cumprido',
         style: 'bg-green-100 text-green-800 border-green-300'
       }
     }
@@ -98,7 +98,7 @@ export function ClienteRow({
     // Se o status é "Otimização", mostrar como cumprido
     if (cliente.status_campanha === 'Otimização') {
       return {
-        text: 'Cumprido',
+        text: '✅ Cumprido',
         style: 'bg-green-100 text-green-800 border-green-300'
       }
     }
