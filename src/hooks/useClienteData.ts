@@ -1,7 +1,33 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import type { Cliente } from '@/lib/supabase'
+
+export interface Cliente {
+  id: number
+  email_cliente: string
+  nome_cliente: string
+  status_campanha: string
+  data_venda: string
+  data_subida_campanha: string
+  vendedor: string
+  comissao: string
+  comissao_paga: boolean
+  status_envio: string
+  email_gestor: string
+  data_limite: string
+  link_grupo: string
+  link_briefing: string
+  link_criativo: string
+  link_site: string
+  data_agendamento: string
+  numero_bm: string
+  telefone: string
+  site_status: string
+  descricao_problema: string
+  valor_comissao: number
+  saque_solicitado: boolean
+  created_at: string
+}
 
 export interface BriefingCliente {
   id: string

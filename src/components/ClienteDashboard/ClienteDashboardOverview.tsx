@@ -3,11 +3,11 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { TrendingUp, DollarSign, FileText, Calendar } from 'lucide-react'
-import type { Cliente, Briefing, VendaCliente, ArquivoCliente } from '@/hooks/useClienteData'
+import type { Cliente, BriefingCliente, VendaCliente, ArquivoCliente } from '@/hooks/useClienteData'
 
 interface ClienteDashboardOverviewProps {
   cliente: Cliente | null
-  briefing: Briefing | null
+  briefing: BriefingCliente | null
   vendas: VendaCliente[]
   arquivos: ArquivoCliente[]
 }
