@@ -79,13 +79,13 @@ export function CriarContasClientes() {
     setLoading(true)
     
     for (let i = 0; i < emails.length; i++) {
-      const email = emails[i]
+      const emailItem = emails[i]
       
       try {
         // Verificar se o usuário já existe
         const { data: existingUsers } = await supabase.auth.admin.listUsers()
         const userExists = existingUsers.users.some(user => 
-          user.email?.toLowerCase() === email.email.toLowerCase()
+          user.email?.toLowerCase() === emailItem.email.toLowerCase()
         )
 
         if (userExists) {
@@ -97,7 +97,7 @@ export function CriarContasClientes() {
           const senhaTemporaria = `Cliente${Math.random().toString(36).slice(-8)}`
           
           const { data, error } = await supabase.auth.admin.createUser({
-            email: email.email,
+            email: emailItem.email,
             password: senhaTemporaria,
             email_confirm: true // Confirmar email automaticamente
           })
@@ -114,11 +114,11 @@ export function CriarContasClientes() {
             } : e
           ))
 
-          console.log(`Conta criada para ${email.email} com senha: ${senhaTemporaria}`)
+          console.log(`Conta criada para ${emailItem.email} com senha: ${senhaTemporaria}`)
         }
         
       } catch (error: any) {
-        console.error(`Erro ao criar conta para ${email.email}:`, error)
+        console.error(`Erro ao criar conta para ${emailItem.email}:`, error)
         setEmails(prev => prev.map((e, idx) => 
           idx === i ? { 
             ...e, 

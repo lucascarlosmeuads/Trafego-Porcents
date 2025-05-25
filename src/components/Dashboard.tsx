@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
@@ -124,11 +123,7 @@ export function Dashboard() {
           {/* Content responsivo com padding adequado */}
           <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
             {isAdmin ? (
-              <AdminDashboard 
-                selectedManager={selectedManager}
-                onManagerSelect={setSelectedManager}
-                activeTab={activeTab}
-              />
+              <AdminDashboard />
             ) : isGestor ? (
               <GestorDashboard />
             ) : (
