@@ -6,6 +6,7 @@ import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { ProblemasPanel } from './ProblemasPanel'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorPermissions } from '@/hooks/useGestorPermissions'
+import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AddClientModal } from './ClientesTable/AddClientModal'
 
@@ -13,6 +14,7 @@ export function GestorDashboard() {
   const { user, currentManagerName, isAdmin } = useAuth()
   const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
+  const { inicializarClientesTravados } = useGestorStatusRestrictions()
 
   // Separar clientes por status
   const clientesAtivos = clientes.filter(cliente => 
@@ -28,6 +30,13 @@ export function GestorDashboard() {
   const clientesProblemas = clientes.filter(cliente => 
     cliente.status_campanha === 'Problema'
   )
+
+  // Inicializar controle de status travados
+  useEffect(() => {
+    if (clientes.length > 0) {
+      inicializarClientesTravados(clientes)
+    }
+  }, [clientes, inicializarClientesTravados])
 
   // Log de segurança para verificar se o filtro está funcionando
   useEffect(() => {
@@ -67,6 +76,10 @@ export function GestorDashboard() {
               <span className="header-subtitle">🔒 Filtro de Segurança Ativo - Dados filtrados por: {user?.email}</span>
             </div>
           )}
+          <div className="flex items-center gap-2 text-xs text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
+            <span>⚠️</span>
+            <span>Comissões travadas para edição. Status travado após "No Ar".</span>
+          </div>
         </div>
         
         {canAddClients && (

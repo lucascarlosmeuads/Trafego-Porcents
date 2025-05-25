@@ -32,7 +32,7 @@ export function ComissaoButton({
   onComissionValueSave,
   onComissionValueCancel
 }: ComissaoButtonProps) {
-  const { currentManagerName } = useAuth()
+  const { currentManagerName, isAdmin } = useAuth()
   const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
   const [saqueEnviado, setSaqueEnviado] = useState(false)
 
@@ -41,8 +41,15 @@ export function ComissaoButton({
   const isNoAr = cliente.status_campanha === 'No Ar'
   const jaFoiSolicitado = cliente.saque_solicitado || false
 
-  // Se está editando o valor da comissão
-  if (isEditingValue) {
+  // NOVA REGRA: Gestores não podem editar comissão em nenhuma situação
+  if (isGestorDashboard && isEditingValue) {
+    // Se for painel do gestor e estiver tentando editar, cancelar automaticamente
+    onComissionValueCancel()
+    return null
+  }
+
+  // Para admin: manter comportamento de edição normal
+  if (!isGestorDashboard && isEditingValue) {
     return (
       <div className="flex items-center gap-1">
         <div className="flex items-center">
@@ -76,7 +83,7 @@ export function ComissaoButton({
     )
   }
 
-  // NOVA LÓGICA: Painel do Gestor + Status "No Ar"
+  // PAINEL DO GESTOR - Status "No Ar" + Saque disponível
   if (isGestorDashboard && isNoAr && !jaFoiSolicitado && !saqueEnviado) {
     return (
       <div className="flex items-center gap-1">
@@ -109,7 +116,7 @@ export function ComissaoButton({
     )
   }
 
-  // Se o saque já foi solicitado ou enviado
+  // PAINEL DO GESTOR - Saque já solicitado ou enviado
   if (isGestorDashboard && (jaFoiSolicitado || saqueEnviado)) {
     return (
       <div className="flex items-center gap-1">
@@ -120,18 +127,18 @@ export function ComissaoButton({
     )
   }
 
-  // NOVA LÓGICA: Se é painel do gestor e status é "No Ar" mas comissão não pode ser editada
-  if (isGestorDashboard && isNoAr) {
+  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "No Ar" ou comissão paga)
+  if (isGestorDashboard) {
     return (
       <div className="flex items-center gap-1">
-        <div className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-300">
+        <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
           R$ {valorComissao.toFixed(2)} - Travado
         </div>
       </div>
     )
   }
 
-  // Comportamento padrão (admin ou gestor com status diferente de "No Ar")
+  // PAINEL DO ADMIN - Comportamento completo
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -154,17 +161,15 @@ export function ComissaoButton({
         {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
         {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
       </Button>
-      {/* Só mostra o botão de editar se não for "No Ar" no painel do gestor */}
-      {!(isGestorDashboard && isNoAr) && (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      )}
+      
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 w-6 p-0"
+        onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+      >
+        <Edit2 className="w-3 h-3 text-muted-foreground" />
+      </Button>
     </div>
   )
 }
