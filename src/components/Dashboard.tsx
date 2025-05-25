@@ -14,6 +14,7 @@ export function Dashboard() {
   const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName, loading } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   console.log('🎮 [Dashboard] === ESTADO ATUAL ===')
   console.log('   - user:', user?.email || 'null')
@@ -75,17 +76,21 @@ export function Dashboard() {
     return 'Gestor Individual'
   }
 
-  const handleSignOut = async (e: React.MouseEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
+  const handleSignOut = async () => {
+    if (isLoggingOut) return // Prevenir cliques múltiplos
     
     console.log('🚪 [Dashboard] Logout iniciado')
+    setIsLoggingOut(true)
     
     try {
+      // Forçar logout imediatamente
       await signOut()
     } catch (error) {
       console.error('❌ [Dashboard] Erro no logout:', error)
+      // Em caso de erro, forçar redirecionamento
       window.location.href = '/'
+    } finally {
+      setIsLoggingOut(false)
     }
   }
 
@@ -115,8 +120,9 @@ export function Dashboard() {
               onClick={handleSignOut}
               variant="outline"
               className="w-full"
+              disabled={isLoggingOut}
             >
-              Tentar Novamente
+              {isLoggingOut ? 'Saindo...' : 'Tentar Novamente'}
             </Button>
           </CardContent>
         </Card>
@@ -169,9 +175,10 @@ export function Dashboard() {
                   variant="outline" 
                   onClick={handleSignOut}
                   size="sm"
+                  disabled={isLoggingOut}
                   className="cursor-pointer"
                 >
-                  Sair
+                  {isLoggingOut ? 'Saindo...' : 'Sair'}
                 </Button>
               </div>
             </div>
