@@ -77,51 +77,104 @@ export function useClienteData(emailCliente: string) {
 
     try {
       setLoading(true)
+      console.log('🔍 [useClienteData] Buscando dados para email:', emailCliente)
 
       // Buscar dados do cliente na tabela principal
-      const { data: clienteData } = await supabase
+      const { data: clienteData, error: clienteError } = await supabase
         .from('todos_clientes')
         .select('*')
         .eq('email_cliente', emailCliente)
         .single()
 
-      setCliente(clienteData)
+      if (clienteError && clienteError.code !== 'PGRST116') {
+        console.error('❌ [useClienteData] Erro ao buscar cliente:', clienteError)
+      }
+
+      if (!clienteData) {
+        console.warn('⚠️ [useClienteData] Cliente não encontrado na tabela todos_clientes:', emailCliente)
+        console.warn('⚠️ [useClienteData] Isso pode indicar que o registro foi deletado ou nunca existiu')
+        
+        // Create a default cliente object for users not in todos_clientes
+        const defaultCliente: Cliente = {
+          id: 0,
+          email_cliente: emailCliente,
+          nome_cliente: 'Cliente',
+          status_campanha: 'Preenchimento do Formulário',
+          data_venda: '',
+          data_subida_campanha: '',
+          vendedor: '',
+          comissao: '',
+          comissao_paga: false,
+          status_envio: '',
+          email_gestor: '',
+          data_limite: '',
+          link_grupo: '',
+          link_briefing: '',
+          link_criativo: '',
+          link_site: '',
+          data_agendamento: '',
+          numero_bm: '',
+          telefone: '',
+          site_status: 'pendente',
+          descricao_problema: '',
+          valor_comissao: 60,
+          saque_solicitado: false,
+          created_at: new Date().toISOString()
+        }
+        setCliente(defaultCliente)
+      } else {
+        console.log('✅ [useClienteData] Cliente encontrado:', clienteData.nome_cliente)
+        setCliente(clienteData)
+      }
 
       // Buscar briefing do cliente
-      const { data: briefingData } = await supabase
+      const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
         .eq('email_cliente', emailCliente)
         .single()
 
-      setBriefing(briefingData)
+      if (briefingError && briefingError.code !== 'PGRST116') {
+        console.error('❌ [useClienteData] Erro ao buscar briefing:', briefingError)
+      }
+
+      setBriefing(briefingData || null)
 
       // Buscar vendas do cliente
-      const { data: vendasData } = await supabase
+      const { data: vendasData, error: vendasError } = await supabase
         .from('vendas_cliente')
         .select('*')
         .eq('email_cliente', emailCliente)
         .order('data_venda', { ascending: false })
 
+      if (vendasError) {
+        console.error('❌ [useClienteData] Erro ao buscar vendas:', vendasError)
+      }
+
       setVendas(vendasData || [])
 
       // Buscar arquivos do cliente
-      const { data: arquivosData } = await supabase
+      const { data: arquivosData, error: arquivosError } = await supabase
         .from('arquivos_cliente')
         .select('*')
         .eq('email_cliente', emailCliente)
         .order('created_at', { ascending: false })
 
+      if (arquivosError) {
+        console.error('❌ [useClienteData] Erro ao buscar arquivos:', arquivosError)
+      }
+
       setArquivos(arquivosData || [])
 
     } catch (error) {
-      console.error('Erro ao carregar dados do cliente:', error)
+      console.error('💥 [useClienteData] Erro crítico ao carregar dados do cliente:', error)
     } finally {
       setLoading(false)
     }
   }
 
   const refetch = () => {
+    console.log('🔄 [useClienteData] Refazendo busca de dados para:', emailCliente)
     fetchClienteData()
   }
 

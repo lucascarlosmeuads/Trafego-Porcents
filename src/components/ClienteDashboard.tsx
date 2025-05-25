@@ -1,5 +1,5 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,13 +11,42 @@ import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { useClienteData } from '@/hooks/useClienteData'
+import { ensureClienteExists, restoreClienteData } from '@/utils/clienteDataHelpers'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const [activeTab, setActiveTab] = useState('dashboard')
+  const [dataIntegrityChecked, setDataIntegrityChecked] = useState(false)
 
-  if (loading) {
+  // Check and ensure data integrity on mount
+  useEffect(() => {
+    const checkDataIntegrity = async () => {
+      if (!user?.email || dataIntegrityChecked) return
+
+      console.log('🔧 [ClienteDashboard] Verificando integridade dos dados para:', user.email)
+
+      // Try to restore data for known missing clients
+      if (user.email === 'lojaofertascertas@gmail.com') {
+        console.log('🔧 [ClienteDashboard] Tentando restaurar dados para lojaofertascertas@gmail.com')
+        await restoreClienteData(user.email)
+      }
+
+      // Ensure client exists in database
+      await ensureClienteExists(user.email)
+      
+      setDataIntegrityChecked(true)
+      
+      // Refetch data after integrity check
+      setTimeout(() => {
+        refetch()
+      }, 1000)
+    }
+
+    checkDataIntegrity()
+  }, [user?.email, dataIntegrityChecked, refetch])
+
+  if (loading && !dataIntegrityChecked) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="text-lg">Carregando seus dados...</div>
