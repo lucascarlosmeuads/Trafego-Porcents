@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/lib/supabase'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -55,6 +56,36 @@ export function LoginForm() {
         } else {
           console.log('✅ [LoginForm] Cadastro realizado com sucesso no Supabase Auth!')
           console.log('🎯 [LoginForm] Conta criada para:', email)
+
+          // Auto-insert into todos_clientes table for new signups
+          try {
+            console.log('📋 [LoginForm] Inserindo cliente na tabela todos_clientes...')
+            const { error: insertError } = await supabase
+              .from('todos_clientes')
+              .insert([{
+                nome_cliente: email.split('@')[0], // Use part before @ as default name
+                telefone: '', // Will be filled later
+                email_cliente: email,
+                vendedor: 'Sistema',
+                email_gestor: '', // Will be assigned later by a manager
+                status_campanha: 'Preenchimento do Formulário',
+                data_venda: new Date().toISOString().split('T')[0],
+                valor_comissao: 60.00,
+                comissao_paga: false,
+                site_status: 'pendente'
+              }])
+
+            if (insertError) {
+              console.warn('⚠️ [LoginForm] Erro ao inserir na tabela todos_clientes:', insertError)
+              // Don't block signup if this fails
+            } else {
+              console.log('✅ [LoginForm] Cliente inserido na tabela todos_clientes com sucesso!')
+            }
+          } catch (insertError) {
+            console.warn('⚠️ [LoginForm] Erro inesperado ao inserir cliente:', insertError)
+            // Don't block signup if this fails
+          }
+
           toast({
             title: "Sucesso",
             description: "Conta criada com sucesso! Você pode fazer login agora."

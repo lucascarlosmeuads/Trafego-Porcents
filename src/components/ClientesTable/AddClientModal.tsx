@@ -49,6 +49,15 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       return
     }
 
+    if (!formData.email_cliente.trim()) {
+      toast({
+        title: "Erro",
+        description: "Email do cliente é obrigatório",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
     
     try {
@@ -68,12 +77,31 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       if (!emailGestorFinal) {
         throw new Error('Não foi possível determinar o email do gestor')
       }
+
+      // Step 1: Create Supabase Auth account for the client
+      console.log('🔐 [AddClientModal] Criando conta de autenticação para o cliente...')
+      const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+        email: formData.email_cliente,
+        password: 'TempPassword123!', // Temporary password, user will need to reset
+        email_confirm: true
+      })
+
+      if (authError && !authError.message.includes('User already registered')) {
+        console.error('❌ [AddClientModal] Erro ao criar conta de autenticação:', authError)
+        throw new Error(`Erro ao criar conta: ${authError.message}`)
+      }
+
+      if (authData.user) {
+        console.log('✅ [AddClientModal] Conta de autenticação criada:', authData.user.email)
+      } else {
+        console.log('ℹ️ [AddClientModal] Usuário já possui conta de autenticação')
+      }
       
-      // Criar objeto limpo para inserção
+      // Step 2: Insert into todos_clientes table
       const cleanClienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
-        email_cliente: formData.email_cliente.trim() || null,
+        email_cliente: formData.email_cliente.trim(),
         vendedor: formData.vendedor.trim() || selectedManager || 'Gestor',
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
@@ -103,7 +131,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
 
       console.log('🧹 [AddClientModal] Objeto final para inserção:', finalData)
       console.log('🔑 [AddClientModal] Email gestor que será salvo:', finalData.email_gestor)
-      console.log('🔍 [AddClientModal] Verificação - tem campo ID?', 'id' in finalData ? '❌ SIM - ERRO!' : '✅ NÃO - OK!')
 
       const { data, error } = await supabase
         .from('todos_clientes')
@@ -119,7 +146,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
 
       toast({
         title: "Sucesso",
-        description: "Cliente adicionado com sucesso!"
+        description: "Cliente e conta de acesso criados com sucesso!"
       })
 
       // Limpar formulário
@@ -230,7 +257,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
           </div>
           
           <div>
-            <Label htmlFor="email">Email do Cliente</Label>
+            <Label htmlFor="email">Email do Cliente *</Label>
             <Input
               id="email"
               type="email"
