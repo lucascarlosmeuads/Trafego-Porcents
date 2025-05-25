@@ -40,6 +40,8 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
   // Function to ensure storage bucket exists
   const ensureStorageBucket = async () => {
     try {
+      console.log('📁 [ArquivosUpload] Verificando se bucket existe...')
+      
       // Try to list files in the bucket to check if it exists
       const { error: listError } = await supabase.storage
         .from('cliente-arquivos')
@@ -61,17 +63,17 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
         if (createError) {
           console.error('❌ [ArquivosUpload] Erro ao criar bucket:', createError)
-          return false
+          throw new Error(`Falha ao criar bucket: ${createError.message}`)
         }
 
         console.log('✅ [ArquivosUpload] Bucket criado com sucesso')
-        return true
       }
 
+      console.log('✅ [ArquivosUpload] Bucket disponível para upload')
       return true
     } catch (error) {
-      console.error('❌ [ArquivosUpload] Erro ao verificar bucket:', error)
-      return false
+      console.error('❌ [ArquivosUpload] Erro ao verificar/criar bucket:', error)
+      throw error
     }
   }
 
@@ -80,114 +82,139 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     if (!files || files.length === 0) return
 
     setUploading(true)
+    console.log('🚀 [ArquivosUpload] Iniciando upload de', files.length, 'arquivo(s)')
 
     try {
       // Ensure storage bucket exists
-      const bucketReady = await ensureStorageBucket()
-      if (!bucketReady) {
-        toast({
-          title: "Erro de configuração",
-          description: "Não foi possível configurar o armazenamento. Tente novamente.",
-          variant: "destructive"
-        })
-        return
-      }
+      await ensureStorageBucket()
+
+      let successCount = 0
+      let errorCount = 0
 
       for (const file of files) {
-        // Validar tipo de arquivo
-        const allowedTypes = [
-          'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-          'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
-        ]
-        
-        if (!allowedTypes.includes(file.type)) {
-          toast({
-            title: "Tipo de arquivo não permitido",
-            description: `O arquivo ${file.name} não é suportado.`,
-            variant: "destructive"
-          })
-          continue
-        }
+        try {
+          console.log('📤 [ArquivosUpload] Processando arquivo:', file.name)
 
-        // Validar tamanho (máximo 50MB)
-        if (file.size > 50 * 1024 * 1024) {
-          toast({
-            title: "Arquivo muito grande",
-            description: `O arquivo ${file.name} deve ter no máximo 50MB.`,
-            variant: "destructive"
-          })
-          continue
-        }
-
-        // Sanitize email for storage path
-        const sanitizedEmail = sanitizeEmailForPath(emailCliente)
-        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-        const filePath = `${sanitizedEmail}/${fileName}`
-
-        console.log('📤 [ArquivosUpload] Enviando arquivo:', { 
-          originalEmail: emailCliente, 
-          sanitizedEmail, 
-          fileName, 
-          filePath 
-        })
-
-        // Upload para o Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('cliente-arquivos')
-          .upload(filePath, file)
-
-        if (uploadError) {
-          console.error('❌ [ArquivosUpload] Erro no upload:', uploadError)
-          toast({
-            title: "Erro no upload",
-            description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
-            variant: "destructive"
-          })
-          continue
-        }
-
-        // Salvar informações do arquivo no banco
-        const { error: dbError } = await supabase
-          .from('arquivos_cliente')
-          .insert({
-            email_cliente: emailCliente,
-            nome_arquivo: file.name,
-            caminho_arquivo: filePath,
-            tipo_arquivo: file.type,
-            tamanho_arquivo: file.size,
-            author_type: 'cliente'
-          })
-
-        if (dbError) {
-          console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', dbError)
-          // Tentar remover o arquivo do storage se falhou no banco
-          await supabase.storage
-            .from('cliente-arquivos')
-            .remove([filePath])
+          // Validar tipo de arquivo
+          const allowedTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+            'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+          ]
           
-          toast({
-            title: "Erro ao salvar arquivo",
-            description: `Falha ao registrar ${file.name} no banco de dados.`,
-            variant: "destructive"
-          })
-          continue
-        }
+          if (!allowedTypes.includes(file.type)) {
+            console.warn('⚠️ [ArquivosUpload] Tipo não permitido:', file.type)
+            toast({
+              title: "Tipo de arquivo não permitido",
+              description: `O arquivo ${file.name} não é suportado.`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
 
-        console.log('✅ [ArquivosUpload] Arquivo enviado com sucesso:', fileName)
+          // Validar tamanho (máximo 50MB)
+          if (file.size > 50 * 1024 * 1024) {
+            console.warn('⚠️ [ArquivosUpload] Arquivo muito grande:', file.size)
+            toast({
+              title: "Arquivo muito grande",
+              description: `O arquivo ${file.name} deve ter no máximo 50MB.`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          // Sanitize email for storage path
+          const sanitizedEmail = sanitizeEmailForPath(emailCliente)
+          const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+          const filePath = `${sanitizedEmail}/${fileName}`
+
+          console.log('📤 [ArquivosUpload] Enviando para storage:', filePath)
+
+          // Upload para o Supabase Storage
+          const { error: uploadError } = await supabase.storage
+            .from('cliente-arquivos')
+            .upload(filePath, file)
+
+          if (uploadError) {
+            console.error('❌ [ArquivosUpload] Erro no upload para storage:', uploadError)
+            toast({
+              title: "Erro no upload",
+              description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          console.log('✅ [ArquivosUpload] Upload para storage concluído')
+          console.log('💾 [ArquivosUpload] Salvando no banco de dados...')
+
+          // Salvar informações do arquivo no banco
+          const { error: dbError } = await supabase
+            .from('arquivos_cliente')
+            .insert({
+              email_cliente: emailCliente,
+              nome_arquivo: file.name,
+              caminho_arquivo: filePath,
+              tipo_arquivo: file.type,
+              tamanho_arquivo: file.size,
+              author_type: 'cliente'
+            })
+
+          if (dbError) {
+            console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', dbError)
+            console.error('❌ [ArquivosUpload] Detalhes do erro:', JSON.stringify(dbError, null, 2))
+            
+            // Tentar remover o arquivo do storage se falhou no banco
+            try {
+              await supabase.storage
+                .from('cliente-arquivos')
+                .remove([filePath])
+              console.log('🧹 [ArquivosUpload] Arquivo removido do storage após erro no banco')
+            } catch (cleanupError) {
+              console.error('❌ [ArquivosUpload] Erro ao limpar storage:', cleanupError)
+            }
+            
+            toast({
+              title: "Erro ao salvar arquivo",
+              description: `Falha ao registrar ${file.name}: ${dbError.message}`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          console.log('✅ [ArquivosUpload] Arquivo salvo com sucesso no banco')
+          successCount++
+
+        } catch (fileError) {
+          console.error('❌ [ArquivosUpload] Erro ao processar arquivo:', file.name, fileError)
+          errorCount++
+        }
       }
 
-      toast({
-        title: "Upload concluído!",
-        description: "Seus arquivos foram enviados com sucesso.",
-      })
-
-      onArquivosUpdated()
+      // Mostrar resultado final
+      if (successCount > 0) {
+        toast({
+          title: "Upload concluído!",
+          description: `${successCount} arquivo(s) enviado(s) com sucesso.`,
+        })
+        console.log('🎉 [ArquivosUpload] Upload concluído:', successCount, 'sucessos,', errorCount, 'erros')
+        onArquivosUpdated()
+      } else if (errorCount > 0) {
+        toast({
+          title: "Falha no upload",
+          description: "Nenhum arquivo foi enviado com sucesso. Verifique os erros acima.",
+          variant: "destructive"
+        })
+      }
 
     } catch (error) {
-      console.error('💥 [ArquivosUpload] Erro no upload:', error)
+      console.error('💥 [ArquivosUpload] Erro crítico no upload:', error)
       toast({
         title: "Erro no upload",
-        description: "Tente novamente em alguns instantes.",
+        description: error instanceof Error ? error.message : "Erro desconhecido. Tente novamente.",
         variant: "destructive"
       })
     } finally {
@@ -199,18 +226,27 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
   const handleDeleteFile = async (arquivo: ArquivoCliente) => {
     try {
-      // Remover do storage
-      await supabase.storage
-        .from('cliente-arquivos')
-        .remove([arquivo.caminho_arquivo])
+      console.log('🗑️ [ArquivosUpload] Removendo arquivo:', arquivo.nome_arquivo)
 
-      // Remover do banco
-      const { error } = await supabase
+      // Remover do banco primeiro
+      const { error: dbError } = await supabase
         .from('arquivos_cliente')
         .delete()
         .eq('id', arquivo.id)
 
-      if (error) throw error
+      if (dbError) {
+        console.error('❌ [ArquivosUpload] Erro ao remover do banco:', dbError)
+        throw dbError
+      }
+
+      // Remover do storage
+      const { error: storageError } = await supabase.storage
+        .from('cliente-arquivos')
+        .remove([arquivo.caminho_arquivo])
+
+      if (storageError) {
+        console.warn('⚠️ [ArquivosUpload] Erro ao remover do storage (mas removido do banco):', storageError)
+      }
 
       toast({
         title: "Arquivo removido",
@@ -231,11 +267,16 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
   const handleDownloadFile = async (arquivo: ArquivoCliente) => {
     try {
+      console.log('⬇️ [ArquivosUpload] Baixando arquivo:', arquivo.nome_arquivo)
+
       const { data, error } = await supabase.storage
         .from('cliente-arquivos')
         .download(arquivo.caminho_arquivo)
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [ArquivosUpload] Erro ao baixar:', error)
+        throw error
+      }
 
       // Criar URL para download
       const url = URL.createObjectURL(data)
@@ -246,6 +287,8 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
       a.click()
       document.body.removeChild(a)
       URL.revokeObjectURL(url)
+
+      console.log('✅ [ArquivosUpload] Download concluído')
 
     } catch (error) {
       console.error('❌ [ArquivosUpload] Erro ao baixar arquivo:', error)
