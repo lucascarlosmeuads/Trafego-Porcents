@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileText, Image, Video, Download, Eye, Calendar, User, Upload } from 'lucide-react'
+import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
@@ -47,7 +47,7 @@ export function BriefingMaterialsModal({
 }: BriefingMaterialsModalProps) {
   const [briefing, setBriefing] = useState<BriefingData | null>(null)
   const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
@@ -56,6 +56,8 @@ export function BriefingMaterialsModal({
     if (!emailCliente || !open) return
 
     setLoading(true)
+    console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente)
+    
     try {
       // Buscar briefing apenas se for tipo 'briefing' ou 'all'
       if (filterType === 'briefing' || filterType === 'all') {
@@ -66,8 +68,9 @@ export function BriefingMaterialsModal({
           .single()
 
         if (briefingError && briefingError.code !== 'PGRST116') {
-          console.error('Erro ao buscar briefing:', briefingError)
+          console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
         } else {
+          console.log('📋 [BriefingMaterialsModal] Briefing encontrado:', briefingData ? 'Sim' : 'Não')
           setBriefing(briefingData)
         }
       }
@@ -81,8 +84,10 @@ export function BriefingMaterialsModal({
           .order('created_at', { ascending: false })
 
         if (arquivosError) {
-          console.error('Erro ao buscar arquivos:', arquivosError)
+          console.error('❌ [BriefingMaterialsModal] Erro ao buscar arquivos:', arquivosError)
         } else {
+          console.log('📁 [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
+          
           // Para tipo 'creative', filtrar apenas imagens e vídeos
           if (filterType === 'creative') {
             const mediaFiles = arquivosData?.filter(arquivo => 
@@ -96,7 +101,7 @@ export function BriefingMaterialsModal({
       }
 
     } catch (error) {
-      console.error('Erro ao carregar dados:', error)
+      console.error('💥 [BriefingMaterialsModal] Erro crítico:', error)
       toast({
         title: "Erro",
         description: "Falha ao carregar materiais do cliente",
@@ -108,7 +113,12 @@ export function BriefingMaterialsModal({
   }
 
   useEffect(() => {
-    fetchClientData()
+    if (open) {
+      // Reset states when opening modal
+      setBriefing(null)
+      setArquivos([])
+      fetchClientData()
+    }
   }, [open, emailCliente, filterType])
 
   const formatFileSize = (bytes: number) => {
@@ -167,6 +177,8 @@ export function BriefingMaterialsModal({
         const fileName = `gestor_${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
         const filePath = `${sanitizedEmail}/${fileName}`
 
+        console.log('📤 [Manager Upload] Enviando arquivo:', fileName)
+
         // Upload para o Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('cliente-arquivos')
@@ -208,6 +220,8 @@ export function BriefingMaterialsModal({
           })
           continue
         }
+
+        console.log('✅ [Manager Upload] Arquivo enviado com sucesso:', fileName)
       }
 
       toast({
@@ -250,7 +264,7 @@ export function BriefingMaterialsModal({
       URL.revokeObjectURL(url)
 
     } catch (error) {
-      console.error('Erro ao baixar arquivo:', error)
+      console.error('❌ [BriefingMaterialsModal] Erro ao baixar arquivo:', error)
       toast({
         title: "Erro ao baixar",
         description: "Não foi possível baixar o arquivo",
@@ -270,7 +284,7 @@ export function BriefingMaterialsModal({
       window.open(data.signedUrl, '_blank')
 
     } catch (error) {
-      console.error('Erro ao visualizar arquivo:', error)
+      console.error('❌ [BriefingMaterialsModal] Erro ao visualizar arquivo:', error)
       toast({
         title: "Erro ao visualizar",
         description: "Não foi possível abrir o arquivo",
@@ -291,6 +305,8 @@ export function BriefingMaterialsModal({
   }
 
   const hasContent = () => {
+    if (loading) return true // Show loading state
+    
     switch (filterType) {
       case 'briefing':
         return briefing !== null
@@ -305,7 +321,7 @@ export function BriefingMaterialsModal({
     switch (filterType) {
       case 'briefing':
         return {
-          title: "Briefing não enviado",
+          title: "Briefing ainda não enviado",
           description: "O cliente ainda não enviou o briefing do produto."
         }
       case 'creative':
@@ -342,6 +358,7 @@ export function BriefingMaterialsModal({
         <ScrollArea className="max-h-[70vh] pr-4">
           {loading ? (
             <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin mr-2" />
               <p className="text-sm text-muted-foreground">Carregando materiais...</p>
             </div>
           ) : !hasContent() ? (
@@ -372,12 +389,12 @@ export function BriefingMaterialsModal({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
                         <h4 className="font-medium text-sm mb-2">Nome do Produto</h4>
-                        <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{briefing.nome_produto}</p>
+                        <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{briefing.nome_produto || 'Não informado'}</p>
                       </div>
                       <div>
                         <h4 className="font-medium text-sm mb-2">Investimento Diário</h4>
                         <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
-                          R$ {briefing.investimento_diario?.toFixed(2) || 'Não informado'}
+                          R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
                         </p>
                       </div>
                     </div>
@@ -451,7 +468,10 @@ export function BriefingMaterialsModal({
                           Envie materiais para o cliente (máx. 50MB por arquivo)
                         </p>
                         {uploading && (
-                          <p className="text-sm text-purple-600 mt-2">Enviando arquivos...</p>
+                          <div className="flex items-center gap-2 mt-2">
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                            <p className="text-sm text-purple-600">Enviando arquivos...</p>
+                          </div>
                         )}
                       </div>
                     )}
@@ -547,10 +567,13 @@ export function BriefingMaterialsModal({
                       </div>
                     )}
 
-                    {arquivos.length === 0 && (
-                      <p className="text-center text-gray-500 py-4">
-                        Nenhum material criativo encontrado.
-                      </p>
+                    {/* Show message when no creative materials exist */}
+                    {filterType === 'creative' && arquivos.length === 0 && !loading && (
+                      <div className="text-center py-6">
+                        <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                        <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
+                        <p className="text-sm text-gray-500">O cliente ainda não enviou imagens ou vídeos.</p>
+                      </div>
                     )}
                   </CardContent>
                 </Card>

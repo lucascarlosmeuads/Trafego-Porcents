@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
-import { Upload, FileText, Image, Video, Trash2 } from 'lucide-react'
+import { Upload, FileText, Image, Video, Trash2, Loader2 } from 'lucide-react'
 import type { ArquivoCliente } from '@/hooks/useClienteData'
 
 interface ArquivosUploadProps {
@@ -37,6 +37,44 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     return email.replace(/[@.]/g, '_')
   }
 
+  // Function to ensure storage bucket exists
+  const ensureStorageBucket = async () => {
+    try {
+      // Try to list files in the bucket to check if it exists
+      const { error: listError } = await supabase.storage
+        .from('cliente-arquivos')
+        .list('', { limit: 1 })
+
+      if (listError && listError.message.includes('Bucket not found')) {
+        console.log('📁 [ArquivosUpload] Bucket não existe, tentando criar...')
+        
+        // Create the bucket
+        const { error: createError } = await supabase.storage
+          .createBucket('cliente-arquivos', {
+            public: true,
+            allowedMimeTypes: [
+              'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+              'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+            ],
+            fileSizeLimit: 52428800 // 50MB
+          })
+
+        if (createError) {
+          console.error('❌ [ArquivosUpload] Erro ao criar bucket:', createError)
+          return false
+        }
+
+        console.log('✅ [ArquivosUpload] Bucket criado com sucesso')
+        return true
+      }
+
+      return true
+    } catch (error) {
+      console.error('❌ [ArquivosUpload] Erro ao verificar bucket:', error)
+      return false
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -44,6 +82,17 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     setUploading(true)
 
     try {
+      // Ensure storage bucket exists
+      const bucketReady = await ensureStorageBucket()
+      if (!bucketReady) {
+        toast({
+          title: "Erro de configuração",
+          description: "Não foi possível configurar o armazenamento. Tente novamente.",
+          variant: "destructive"
+        })
+        return
+      }
+
       for (const file of files) {
         // Validar tipo de arquivo
         const allowedTypes = [
@@ -75,7 +124,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
         const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
         const filePath = `${sanitizedEmail}/${fileName}`
 
-        console.log('📁 [ArquivosUpload] Uploading file:', { 
+        console.log('📤 [ArquivosUpload] Enviando arquivo:', { 
           originalEmail: emailCliente, 
           sanitizedEmail, 
           fileName, 
@@ -238,7 +287,10 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
         {uploading && (
           <div className="text-center py-4">
-            <p className="text-sm text-blue-600">Enviando arquivos...</p>
+            <div className="flex items-center justify-center gap-2">
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <p className="text-sm text-blue-600">Enviando arquivos...</p>
+            </div>
           </div>
         )}
 
