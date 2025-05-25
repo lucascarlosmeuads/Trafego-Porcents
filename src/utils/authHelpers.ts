@@ -19,28 +19,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // SEGUNDO: Verificar gestores
-    console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
-    const gestorStartTime = Date.now()
-    
-    const { data: gestorData, error: gestorError } = await supabase
-      .from('gestores')
-      .select('nome, email, ativo')
-      .eq('email', normalizedEmail)
-      .eq('ativo', true)
-      .maybeSingle()
-
-    const gestorEndTime = Date.now()
-    console.log(`🔍 [authHelpers] Consulta gestores levou: ${gestorEndTime - gestorStartTime}ms`)
-    console.log('🔍 [authHelpers] Resultado gestor - data:', gestorData)
-    console.log('🔍 [authHelpers] Resultado gestor - error:', gestorError)
-
-    if (!gestorError && gestorData) {
-      console.log('✅ [authHelpers] Usuário é GESTOR:', gestorData.nome)
-      return 'gestor'
-    }
-
-    // TERCEIRO: Verificar clientes
+    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade)
     console.log('🔍 [authHelpers] Verificando tabela TODOS_CLIENTES...')
     const clienteStartTime = Date.now()
     
@@ -61,14 +40,35 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'cliente'
     }
 
+    // TERCEIRO: Verificar gestores (apenas se não for cliente)
+    console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
+    const gestorStartTime = Date.now()
+    
+    const { data: gestorData, error: gestorError } = await supabase
+      .from('gestores')
+      .select('nome, email, ativo')
+      .eq('email', normalizedEmail)
+      .eq('ativo', true)
+      .maybeSingle()
+
+    const gestorEndTime = Date.now()
+    console.log(`🔍 [authHelpers] Consulta gestores levou: ${gestorEndTime - gestorStartTime}ms`)
+    console.log('🔍 [authHelpers] Resultado gestor - data:', gestorData)
+    console.log('🔍 [authHelpers] Resultado gestor - error:', gestorError)
+
+    if (!gestorError && gestorData) {
+      console.log('✅ [authHelpers] Usuário é GESTOR:', gestorData.nome)
+      return 'gestor'
+    }
+
     // QUARTO: Se não encontrou em nenhuma tabela
     console.log('❌ [authHelpers] === DIAGNÓSTICO DE FALHA ===')
-    console.log('❌ [authHelpers] Email não encontrado em GESTORES nem TODOS_CLIENTES')
+    console.log('❌ [authHelpers] Email não encontrado em TODOS_CLIENTES nem GESTORES')
     console.log('❌ [authHelpers] Detalhes da busca:')
-    console.log('   - Gestor Error:', gestorError)
-    console.log('   - Gestor Data:', gestorData)
     console.log('   - Cliente Error:', clienteError)
     console.log('   - Cliente Data:', clienteData)
+    console.log('   - Gestor Error:', gestorError)
+    console.log('   - Gestor Data:', gestorData)
     console.log('❌ [authHelpers] Email procurado:', normalizedEmail)
     
     return 'unauthorized'
