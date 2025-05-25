@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -9,7 +8,6 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
-import { ensureClienteArquivosBucket } from '@/utils/storageHelpers'
 
 interface BriefingData {
   nome_produto: string
@@ -149,7 +147,7 @@ export function BriefingMaterialsModal({
 
     try {
       // Ensure storage bucket exists
-      await ensureClienteArquivosBucket()
+      // await ensureClienteArquivosBucket()
 
       let successCount = 0
       let errorCount = 0
