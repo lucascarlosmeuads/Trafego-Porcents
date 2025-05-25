@@ -47,18 +47,20 @@ export function useAuthState() {
           
         case 'cliente':
           console.log('✅ [useAuthState] Configurando como CLIENTE')
+          console.log('🎯 [useAuthState] REDIRECIONANDO PARA PAINEL DE CLIENTE')
           setIsGestor(false)
           setIsCliente(true)
           setCurrentManagerName('')
-          console.log('✅ [useAuthState] Estado cliente configurado')
+          console.log('✅ [useAuthState] Estado cliente configurado com sucesso')
           break
           
         case 'unauthorized':
           console.log('❌ [useAuthState] Usuário SEM PERMISSÃO')
+          console.log('❌ [useAuthState] Email:', email, 'não encontrado nas tabelas permitidas')
+          console.log('❌ [useAuthState] Redirecionando para tela de ACESSO NEGADO')
           setIsGestor(false)
           setIsCliente(false)
           setCurrentManagerName('')
-          console.log('❌ [useAuthState] Email:', email, 'não encontrado nas tabelas permitidas')
           break
           
         case 'error':
@@ -80,6 +82,12 @@ export function useAuthState() {
       console.log('🔍 [useAuthState] isAdmin:', user?.email === 'lucas@admin.com')
       console.log('🔍 [useAuthState] isGestor:', userType === 'gestor')
       console.log('🔍 [useAuthState] isCliente:', userType === 'cliente')
+      console.log('🔍 [useAuthState] Qual painel será exibido:', 
+        userType === 'cliente' ? 'PAINEL DE CLIENTE' :
+        userType === 'gestor' ? 'PAINEL DE GESTOR' :
+        user?.email === 'lucas@admin.com' ? 'PAINEL DE ADMIN' :
+        'TELA DE ACESSO NEGADO'
+      )
       
     } catch (error) {
       console.error('❌ [useAuthState] === ERRO CRÍTICO ===')
