@@ -91,7 +91,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     const headers = [
       'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
       'Email Gestor', 'Status Campanha', 'Data Limite',
-      'Link Grupo', 'Link Briefing', 'Link Criativo', 'Link Site', 
+      'Link Briefing', 'Link Criativo', 'Link Site', 
       'Número BM', 'Comissão Paga'
     ]
     
@@ -107,7 +107,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         cliente.email_gestor || '',
         cliente.status_campanha || '',
         cliente.data_limite || '',
-        cliente.link_grupo || '',
         cliente.link_briefing || '', 
         cliente.link_criativo || '', 
         cliente.link_site || '', 
@@ -193,7 +192,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={15} className="text-center py-8 text-white">
+                  {/* UPDATED: Changed colSpan from 15 to 14 since we removed the "Grupo" column */}
+                  <TableCell colSpan={14} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
                       : clientes.length === 0 
