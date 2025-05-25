@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -62,6 +61,7 @@ export interface ArquivoCliente {
   caminho_arquivo: string
   tipo_arquivo: string
   tamanho_arquivo: number | null
+  author_type: string
   created_at: string
 }
 
