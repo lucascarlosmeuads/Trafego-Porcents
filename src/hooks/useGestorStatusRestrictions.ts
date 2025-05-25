@@ -22,6 +22,22 @@ export function useGestorStatusRestrictions() {
            clienteEstaTravado(cliente.id)
   }
 
+  // Função para verificar se pode editar status
+  const podeEditarStatus = (clienteId: string, currentStatus: string) => {
+    // Se o cliente está travado (já foi "No Ar" ou tem saque solicitado), não pode editar
+    if (clienteEstaTravado(clienteId)) {
+      return false
+    }
+    
+    // Se o status atual é "No Ar", trava o cliente para futuras edições
+    if (currentStatus === 'No Ar') {
+      marcarClienteComoTravado(clienteId)
+      return false
+    }
+    
+    return true
+  }
+
   // Marcar automaticamente clientes que já estão "No Ar"
   const inicializarClientesTravados = (clientes: Cliente[]) => {
     const clientesNoAr = clientes
@@ -37,6 +53,7 @@ export function useGestorStatusRestrictions() {
     marcarClienteComoTravado,
     clienteEstaTravado,
     verificarStatusTravado,
-    inicializarClientesTravados
+    inicializarClientesTravados,
+    podeEditarStatus
   }
 }

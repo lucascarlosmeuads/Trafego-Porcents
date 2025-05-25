@@ -177,8 +177,8 @@ export function ClienteRow({
       {/* Materiais (formerly Criativos) - Using filterType='all' to show everything */}
       <TableCell className="hidden lg:table-cell">
         <BriefingMaterialsModal
-          clienteEmail={cliente.email_cliente || ''}
-          clienteNome={cliente.nome_cliente || ''}
+          emailCliente={cliente.email_cliente || ''}
+          nomeCliente={cliente.nome_cliente || ''}
           filterType="all"
           trigger={
             <Button 
