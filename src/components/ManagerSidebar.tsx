@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
@@ -176,7 +175,7 @@ export function ManagerSidebar({
             {/* Separador */}
             <div className="border-t border-border my-4"></div>
 
-            {/* Filtros de Gestores - Seção Recolhível */}
+            {/* Filtros de Gestores - Seção Recolhível - Apenas "Todos os Gestores" */}
             <Collapsible open={isFilterOpen} onOpenChange={setIsFilterOpen}>
               <CollapsibleTrigger className="w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between text-card-foreground hover:bg-muted">
                 <span className="font-medium">Filtrar por Gestor</span>
@@ -196,32 +195,12 @@ export function ManagerSidebar({
                 >
                   Todos os Gestores
                 </button>
-                <button
-                  onClick={() => handleManagerSelect('andreza@gestor.com')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    selectedManager === 'andreza@gestor.com'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-card-foreground hover:bg-muted'
-                  }`}
-                >
-                  Andreza
-                </button>
-                <button
-                  onClick={() => handleManagerSelect('lucas.falcao@gestor.com')}
-                  className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                    selectedManager === 'lucas.falcao@gestor.com'
-                      ? 'bg-primary text-primary-foreground'
-                      : 'text-card-foreground hover:bg-muted'
-                  }`}
-                >
-                  Lucas Falcão
-                </button>
               </CollapsibleContent>
             </Collapsible>
           </>
         )}
 
-        {/* Menu simplificado para Gestores */}
+        {/* Menu simplificado para Gestores - removido para limpar */}
         {!isAdmin && (
           <div className="space-y-2">
             <button
@@ -233,26 +212,6 @@ export function ManagerSidebar({
               }`}
             >
               Todos os Gestores
-            </button>
-            <button
-              onClick={() => handleManagerSelect('andreza@gestor.com')}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                selectedManager === 'andreza@gestor.com'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-card-foreground hover:bg-muted'
-              }`}
-            >
-              Andreza
-            </button>
-            <button
-              onClick={() => handleManagerSelect('lucas.falcao@gestor.com')}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                selectedManager === 'lucas.falcao@gestor.com'
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-card-foreground hover:bg-muted'
-              }`}
-            >
-              Lucas Falcão
             </button>
           </div>
         )}
