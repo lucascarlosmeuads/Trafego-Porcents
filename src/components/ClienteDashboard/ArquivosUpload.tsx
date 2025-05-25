@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
-import { Upload, FileText, Image, Video, Trash2, Download } from 'lucide-react'
+import { Upload, FileText, Image, Video, Trash2, Download, User, Users } from 'lucide-react'
 import type { ArquivoCliente } from '@/hooks/useClienteData'
 
 interface ArquivosUploadProps {
@@ -162,7 +162,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
           console.log('✅ [ArquivosUpload] Upload concluído:', uploadData)
 
-          // Salvar informações do arquivo no banco
+          // Salvar informações do arquivo no banco com author_type = 'cliente'
           const { error: dbError } = await supabase
             .from('arquivos_cliente')
             .insert({
@@ -170,7 +170,8 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
               nome_arquivo: file.name,
               caminho_arquivo: filePath,
               tipo_arquivo: file.type,
-              tamanho_arquivo: file.size
+              tamanho_arquivo: file.size,
+              author_type: 'cliente'
             })
 
           if (dbError) {
@@ -298,12 +299,69 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     }
   }
 
+  // Separate files by author type
+  const clienteFiles = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
+  const gestorFiles = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
+
+  const renderFileList = (files: ArquivoCliente[], title: string, icon: React.ReactNode, emptyMessage: string) => {
+    if (files.length === 0) {
+      return (
+        <div className="text-center py-4 text-sm text-muted-foreground">
+          {emptyMessage}
+        </div>
+      )
+    }
+
+    return (
+      <div className="space-y-3">
+        <h4 className="font-medium flex items-center gap-2">
+          {icon}
+          {title} ({files.length})
+        </h4>
+        {files.map((arquivo) => (
+          <div key={arquivo.id} className="flex items-center justify-between p-3 border rounded-lg">
+            <div className="flex items-center gap-3">
+              {getFileIcon(arquivo.tipo_arquivo)}
+              <div>
+                <p className="text-sm font-medium">{arquivo.nome_arquivo}</p>
+                <p className="text-xs text-gray-500">
+                  {arquivo.tamanho_arquivo && formatFileSize(arquivo.tamanho_arquivo)} • 
+                  {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDownloadFile(arquivo)}
+                className="text-blue-600 hover:text-blue-700"
+              >
+                <Download className="w-4 h-4" />
+              </Button>
+              {arquivo.author_type === 'cliente' && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDeleteFile(arquivo)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Envio de Materiais</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
           <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <p className="text-sm text-gray-600 mb-4">
@@ -328,42 +386,25 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           </div>
         )}
 
-        {arquivos.length > 0 && (
-          <div className="space-y-3">
-            <h4 className="font-medium">Arquivos Enviados ({arquivos.length})</h4>
-            {arquivos.map((arquivo) => (
-              <div key={arquivo.id} className="flex items-center justify-between p-3 border rounded-lg">
-                <div className="flex items-center gap-3">
-                  {getFileIcon(arquivo.tipo_arquivo)}
-                  <div>
-                    <p className="text-sm font-medium">{arquivo.nome_arquivo}</p>
-                    <p className="text-xs text-gray-500">
-                      {arquivo.tamanho_arquivo && formatFileSize(arquivo.tamanho_arquivo)} • 
-                      {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDownloadFile(arquivo)}
-                    className="text-blue-600 hover:text-blue-700"
-                  >
-                    <Download className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDeleteFile(arquivo)}
-                    className="text-red-600 hover:text-red-700"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
+        {/* Client files */}
+        {renderFileList(
+          clienteFiles,
+          "Materiais enviados por você",
+          <User className="w-4 h-4 text-blue-600" />,
+          "Você ainda não enviou nenhum material."
+        )}
+
+        {/* Manager files */}
+        {gestorFiles.length > 0 && (
+          <>
+            <div className="border-t pt-6" />
+            {renderFileList(
+              gestorFiles,
+              "Materiais adicionados pela equipe",
+              <Users className="w-4 h-4 text-green-600" />,
+              "A equipe ainda não adicionou materiais."
+            )}
+          </>
         )}
       </CardContent>
     </Card>
