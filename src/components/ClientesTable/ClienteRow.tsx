@@ -207,7 +207,7 @@ export function ClienteRow({
     )
   }
 
-  // NEW: Render briefing materials cell with modal
+  // UPDATED: Render briefing materials cell with consistent "Ver" button
   const renderBriefingCell = () => {
     return (
       <div className="flex items-center gap-1">
@@ -219,7 +219,7 @@ export function ClienteRow({
             onClick={() => window.open(cliente.link_briefing, '_blank')}
           >
             <ExternalLink className="w-3 h-3 mr-1" />
-            Ver
+            Link
           </Button>
         ) : (
           <Button
@@ -232,7 +232,7 @@ export function ClienteRow({
           </Button>
         )}
         
-        {/* BRIEFING MATERIALS BUTTON */}
+        {/* BRIEFING MATERIALS BUTTON - Changed from "Materiais" to "Ver" */}
         <BriefingMaterialsModal
           emailCliente={cliente.email_cliente}
           nomeCliente={cliente.nome_cliente}
@@ -242,8 +242,8 @@ export function ClienteRow({
               size="sm"
               className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
             >
-              <FileText className="w-3 h-3 mr-1" />
-              Materiais
+              <Eye className="w-3 h-3 mr-1" />
+              Ver
             </Button>
           }
         />
@@ -618,7 +618,7 @@ export function ClienteRow({
         <div className="flex items-center gap-1">
           {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
           
-          {/* CREATIVE MATERIALS BUTTON */}
+          {/* CREATIVE MATERIALS BUTTON - Consistent with briefing */}
           <BriefingMaterialsModal
             emailCliente={cliente.email_cliente}
             nomeCliente={cliente.nome_cliente}
