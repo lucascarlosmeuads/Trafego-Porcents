@@ -31,23 +31,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔍 [useAuth] Verificando tipo de usuário para usuário AUTENTICADO:', email)
     
     try {
-      // PRIMEIRO: Verificar se é cliente na tabela todos_clientes
-      console.log('🔍 [useAuth] Verificando se é cliente...')
-      const { data: clienteData, error: clienteError } = await supabase
-        .from('todos_clientes')
-        .select('email_cliente, nome_cliente')
-        .eq('email_cliente', email)
-        .single()
-
-      if (!clienteError && clienteData) {
-        console.log('✅ [useAuth] Usuário autenticado é CLIENTE:', clienteData.nome_cliente)
-        setIsGestor(false)
-        setIsCliente(true)
-        setCurrentManagerName('')
-        return 'cliente'
-      }
-
-      // SEGUNDO: Verificar se é gestor na tabela gestores (só se não for cliente)
+      // PRIMEIRO: Verificar se é gestor na tabela gestores
       console.log('🔍 [useAuth] Verificando se é gestor...')
       const { data: gestorData, error: gestorError } = await supabase
         .from('gestores')
@@ -62,6 +46,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsCliente(false)
         setCurrentManagerName(gestorData.nome)
         return 'gestor'
+      } else {
+        console.log('ℹ️ [useAuth] Não é gestor, erro:', gestorError?.message || 'não encontrado')
+      }
+
+      // SEGUNDO: Verificar se é cliente na tabela todos_clientes (só se não for gestor)
+      console.log('🔍 [useAuth] Verificando se é cliente...')
+      const { data: clienteData, error: clienteError } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente')
+        .eq('email_cliente', email)
+        .single()
+
+      if (!clienteError && clienteData) {
+        console.log('✅ [useAuth] Usuário autenticado é CLIENTE:', clienteData.nome_cliente)
+        setIsGestor(false)
+        setIsCliente(true)
+        setCurrentManagerName('')
+        return 'cliente'
+      } else {
+        console.log('ℹ️ [useAuth] Não é cliente, erro:', clienteError?.message || 'não encontrado')
       }
 
       // Se não está em nenhuma tabela, é um usuário sem permissão
