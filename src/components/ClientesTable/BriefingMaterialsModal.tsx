@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { ensureClienteArquivosBucket } from '@/utils/storageHelpers'
 
 interface BriefingData {
   nome_produto: string
@@ -144,99 +145,141 @@ export function BriefingMaterialsModal({
     if (!files || files.length === 0) return
 
     setUploading(true)
+    console.log('🚀 [Manager Upload] Iniciando upload de', files.length, 'arquivo(s)')
 
     try {
+      // Ensure storage bucket exists
+      await ensureClienteArquivosBucket()
+
+      let successCount = 0
+      let errorCount = 0
+
       for (const file of files) {
-        // Validar tipo de arquivo
-        const allowedTypes = [
-          'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-          'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
-        ]
-        
-        if (!allowedTypes.includes(file.type)) {
-          toast({
-            title: "Tipo de arquivo não permitido",
-            description: `O arquivo ${file.name} não é suportado.`,
-            variant: "destructive"
-          })
-          continue
-        }
+        try {
+          console.log('📤 [Manager Upload] Processando arquivo:', file.name)
 
-        // Validar tamanho (máximo 50MB)
-        if (file.size > 50 * 1024 * 1024) {
-          toast({
-            title: "Arquivo muito grande",
-            description: `O arquivo ${file.name} deve ter no máximo 50MB.`,
-            variant: "destructive"
-          })
-          continue
-        }
-
-        // Sanitize email for storage path
-        const sanitizedEmail = sanitizeEmailForPath(emailCliente)
-        const fileName = `gestor_${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
-        const filePath = `${sanitizedEmail}/${fileName}`
-
-        console.log('📤 [Manager Upload] Enviando arquivo:', fileName)
-
-        // Upload para o Supabase Storage
-        const { error: uploadError } = await supabase.storage
-          .from('cliente-arquivos')
-          .upload(filePath, file)
-
-        if (uploadError) {
-          console.error('❌ [Manager Upload] Erro no upload:', uploadError)
-          toast({
-            title: "Erro no upload",
-            description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
-            variant: "destructive"
-          })
-          continue
-        }
-
-        // Salvar informações do arquivo no banco
-        const { error: dbError } = await supabase
-          .from('arquivos_cliente')
-          .insert({
-            email_cliente: emailCliente,
-            nome_arquivo: file.name,
-            caminho_arquivo: filePath,
-            tipo_arquivo: file.type,
-            tamanho_arquivo: file.size,
-            author_type: 'gestor'
-          })
-
-        if (dbError) {
-          console.error('❌ [Manager Upload] Erro ao salvar no banco:', dbError)
-          // Tentar remover o arquivo do storage se falhou no banco
-          await supabase.storage
-            .from('cliente-arquivos')
-            .remove([filePath])
+          // Validar tipo de arquivo
+          const allowedTypes = [
+            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+            'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+          ]
           
-          toast({
-            title: "Erro ao salvar arquivo",
-            description: `Falha ao registrar ${file.name} no banco de dados.`,
-            variant: "destructive"
-          })
-          continue
-        }
+          if (!allowedTypes.includes(file.type)) {
+            console.warn('⚠️ [Manager Upload] Tipo não permitido:', file.type)
+            toast({
+              title: "Tipo de arquivo não permitido",
+              description: `O arquivo ${file.name} não é suportado.`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
 
-        console.log('✅ [Manager Upload] Arquivo enviado com sucesso:', fileName)
+          // Validar tamanho (máximo 50MB)
+          if (file.size > 50 * 1024 * 1024) {
+            console.warn('⚠️ [Manager Upload] Arquivo muito grande:', file.size)
+            toast({
+              title: "Arquivo muito grande",
+              description: `O arquivo ${file.name} deve ter no máximo 50MB.`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          // Sanitize email for storage path
+          const sanitizedEmail = sanitizeEmailForPath(emailCliente)
+          const fileName = `gestor_${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+          const filePath = `${sanitizedEmail}/${fileName}`
+
+          console.log('📤 [Manager Upload] Enviando para storage:', filePath)
+
+          // Upload para o Supabase Storage
+          const { error: uploadError } = await supabase.storage
+            .from('cliente-arquivos')
+            .upload(filePath, file)
+
+          if (uploadError) {
+            console.error('❌ [Manager Upload] Erro no upload para storage:', uploadError)
+            toast({
+              title: "Erro no upload",
+              description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          console.log('✅ [Manager Upload] Upload para storage concluído')
+          console.log('💾 [Manager Upload] Salvando no banco de dados...')
+
+          // Salvar informações do arquivo no banco
+          const { error: dbError } = await supabase
+            .from('arquivos_cliente')
+            .insert({
+              email_cliente: emailCliente,
+              nome_arquivo: file.name,
+              caminho_arquivo: filePath,
+              tipo_arquivo: file.type,
+              tamanho_arquivo: file.size,
+              author_type: 'gestor'
+            })
+
+          if (dbError) {
+            console.error('❌ [Manager Upload] Erro ao salvar no banco:', dbError)
+            console.error('❌ [Manager Upload] Detalhes do erro:', JSON.stringify(dbError, null, 2))
+            
+            // Tentar remover o arquivo do storage se falhou no banco
+            try {
+              await supabase.storage
+                .from('cliente-arquivos')
+                .remove([filePath])
+              console.log('🧹 [Manager Upload] Arquivo removido do storage após erro no banco')
+            } catch (cleanupError) {
+              console.error('❌ [Manager Upload] Erro ao limpar storage:', cleanupError)
+            }
+            
+            toast({
+              title: "Erro ao salvar arquivo",
+              description: `Falha ao registrar ${file.name}: ${dbError.message}`,
+              variant: "destructive"
+            })
+            errorCount++
+            continue
+          }
+
+          console.log('✅ [Manager Upload] Arquivo salvo com sucesso no banco')
+          successCount++
+
+        } catch (fileError) {
+          console.error('❌ [Manager Upload] Erro ao processar arquivo:', file.name, fileError)
+          errorCount++
+        }
       }
 
-      toast({
-        title: "Upload concluído!",
-        description: "Arquivos enviados com sucesso para o cliente.",
-      })
-
-      // Refresh data
-      fetchClientData()
+      // Mostrar resultado final
+      if (successCount > 0) {
+        toast({
+          title: "Upload concluído!",
+          description: `${successCount} arquivo(s) enviado(s) com sucesso.`,
+        })
+        console.log('🎉 [Manager Upload] Upload concluído:', successCount, 'sucessos,', errorCount, 'erros')
+        
+        // Refresh data
+        fetchClientData()
+      } else if (errorCount > 0) {
+        toast({
+          title: "Falha no upload",
+          description: "Nenhum arquivo foi enviado com sucesso. Verifique os erros acima.",
+          variant: "destructive"
+        })
+      }
 
     } catch (error) {
-      console.error('💥 [Manager Upload] Erro no upload:', error)
+      console.error('💥 [Manager Upload] Erro crítico no upload:', error)
       toast({
         title: "Erro no upload",
-        description: "Tente novamente em alguns instantes.",
+        description: error instanceof Error ? error.message : "Erro desconhecido. Tente novamente.",
         variant: "destructive"
       })
     } finally {
