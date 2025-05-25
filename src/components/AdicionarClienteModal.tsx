@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -104,7 +105,8 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
 
       const result = await addCliente(clienteData)
       
-      if (result.success) {
+      // Type guard to check if result is not false
+      if (result && typeof result === 'object' && result.success) {
         setFormData({
           nome_cliente: '',
           telefone: '',

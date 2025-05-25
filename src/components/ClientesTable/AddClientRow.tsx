@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
@@ -77,7 +78,8 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       valor_comissao: 60.00
     })
 
-    if (result && result.success) {
+    // Type guard to check if result is not false
+    if (result && typeof result === 'object' && result.success) {
       // Clear form and exit edit mode
       setFormData({
         nome_cliente: '',

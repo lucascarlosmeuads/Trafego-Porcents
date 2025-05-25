@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -124,7 +125,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
 
       const result = await addCliente(clienteData)
 
-      if (result.success) {
+      // Type guard to check if result is not false
+      if (result && typeof result === 'object' && result.success) {
         // Clear form
         setFormData({
           nome_cliente: '',
