@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -105,7 +104,7 @@ export function ClienteRow({
       }
     }
     
-    if (diffDays < 0) {
+    if (diffDays <0) {
       return {
         text: `Atrasado ${Math.abs(diffDays)} dias`,
         style: 'bg-red-100 text-red-800 border-red-300'
@@ -204,50 +203,6 @@ export function ClienteRow({
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
-      </div>
-    )
-  }
-
-  // Render briefing materials cell with only "Ver" button (no edit icon)
-  const renderBriefingCell = () => {
-    return (
-      <div className="flex items-center gap-1">
-        {cliente.link_briefing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => window.open(cliente.link_briefing, '_blank')}
-          >
-            <ExternalLink className="w-3 h-3 mr-1" />
-            Link
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onLinkEdit(cliente.id, 'link_briefing', cliente.link_briefing || '')}
-          >
-            <Edit2 className="w-3 h-3 text-muted-foreground" />
-          </Button>
-        )}
-        
-        {/* BRIEFING MATERIALS BUTTON - Only "Ver" button without edit icon */}
-        <BriefingMaterialsModal
-          emailCliente={cliente.email_cliente}
-          nomeCliente={cliente.nome_cliente}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              Ver
-            </Button>
-          }
-        />
       </div>
     )
   }
@@ -605,10 +560,6 @@ export function ClienteRow({
           )}
           <span>{dateLimit.text}</span>
         </div>
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderBriefingCell()}
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">

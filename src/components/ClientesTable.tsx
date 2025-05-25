@@ -192,8 +192,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  {/* UPDATED: Changed colSpan from 15 to 14 since we removed the "Grupo" column */}
-                  <TableCell colSpan={14} className="text-center py-8 text-white">
+                  {/* UPDATED: Changed colSpan from 14 to 13 since we removed the "Briefing" column */}
+                  <TableCell colSpan={13} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
                       : clientes.length === 0 
