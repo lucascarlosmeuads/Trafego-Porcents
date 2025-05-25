@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -10,7 +9,7 @@ import { toast } from '@/hooks/use-toast'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useAuth } from '@/hooks/useAuth'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
-import { ensureClienteExists } from '@/utils/clienteDataHelpers'
+import { ClientInstructionsModal } from '../ClientInstructionsModal'
 
 interface AddClientModalProps {
   selectedManager?: string
@@ -21,6 +20,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedGestor, setSelectedGestor] = useState<string>('')
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [newClientData, setNewClientData] = useState<any>(null)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -121,9 +122,9 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
 
       console.log('🧹 [AddClientModal] Objeto final para inserção:', clienteData)
 
-      const success = await addCliente(clienteData)
+      const result = await addCliente(clienteData)
 
-      if (success) {
+      if (result.success) {
         // Clear form
         setFormData({
           nome_cliente: '',
@@ -137,6 +138,12 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         
         setOpen(false)
         onClienteAdicionado()
+
+        // Show instructions modal for new clients only
+        if (result.isNewClient) {
+          setNewClientData(result.clientData)
+          setShowInstructions(true)
+        }
       }
 
     } catch (error: any) {
@@ -152,117 +159,127 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="w-4 h-4 mr-2" />
-          Adicionar Cliente
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div>
-            <Label htmlFor="nome">Nome do Cliente *</Label>
-            <Input
-              id="nome"
-              value={formData.nome_cliente}
-              onChange={(e) => setFormData(prev => ({ ...prev, nome_cliente: e.target.value }))}
-              placeholder="Nome completo"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="telefone">Telefone *</Label>
-            <Input
-              id="telefone"
-              value={formData.telefone}
-              onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
-              placeholder="(11) 99999-9999"
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="email">Email do Cliente *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email_cliente}
-              onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
-              placeholder="cliente@email.com"
-            />
-          </div>
-
-          {/* Admin-only: Gestor Selection */}
-          {isAdmin && (
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button className="bg-primary hover:bg-primary/90">
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Cliente
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
             <div>
-              <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
-              <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+              <Label htmlFor="nome">Nome do Cliente *</Label>
+              <Input
+                id="nome"
+                value={formData.nome_cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_cliente: e.target.value }))}
+                placeholder="Nome completo"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="telefone">Telefone *</Label>
+              <Input
+                id="telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="email">Email do Cliente *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email_cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
+                placeholder="cliente@email.com"
+              />
+            </div>
+
+            {/* Admin-only: Gestor Selection */}
+            {isAdmin && (
+              <div>
+                <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
+                <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um gestor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managerOptions.map((manager) => (
+                      <SelectItem key={manager.email} value={manager.email}>
+                        {manager.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            
+            <div>
+              <Label htmlFor="vendedor">Vendedor</Label>
+              <Input
+                id="vendedor"
+                value={formData.vendedor}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
+                placeholder={`Padrão: ${selectedManager || 'Gestor'}`}
+              />
+            </div>
+
+            <div>
+              <Label htmlFor="data_venda">Data da Venda</Label>
+              <Input
+                id="data_venda"
+                type="date"
+                value={formData.data_venda}
+                onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
+              />
+            </div>
+            
+            <div>
+              <Label htmlFor="status">Status da Campanha</Label>
+              <Select 
+                value={formData.status_campanha} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um gestor" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {managerOptions.map((manager) => (
-                    <SelectItem key={manager.email} value={manager.email}>
-                      {manager.name}
+                  {STATUS_CAMPANHA.map(status => (
+                    <SelectItem key={status} value={status}>
+                      {status}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
-          
-          <div>
-            <Label htmlFor="vendedor">Vendedor</Label>
-            <Input
-              id="vendedor"
-              value={formData.vendedor}
-              onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-              placeholder={`Padrão: ${selectedManager || 'Gestor'}`}
-            />
+            
+            <div className="flex gap-2 pt-4">
+              <Button onClick={handleSubmit} disabled={loading} className="flex-1">
+                {loading ? 'Adicionando...' : 'Adicionar Cliente'}
+              </Button>
+              <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
+                Cancelar
+              </Button>
+            </div>
           </div>
+        </DialogContent>
+      </Dialog>
 
-          <div>
-            <Label htmlFor="data_venda">Data da Venda</Label>
-            <Input
-              id="data_venda"
-              type="date"
-              value={formData.data_venda}
-              onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
-            />
-          </div>
-          
-          <div>
-            <Label htmlFor="status">Status da Campanha</Label>
-            <Select 
-              value={formData.status_campanha} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_CAMPANHA.map(status => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          
-          <div className="flex gap-2 pt-4">
-            <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-              {loading ? 'Adicionando...' : 'Adicionar Cliente'}
-            </Button>
-            <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
-              Cancelar
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Instructions Modal */}
+      <ClientInstructionsModal
+        isOpen={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        clientEmail={newClientData?.email_cliente || ''}
+        clientName={newClientData?.nome_cliente || ''}
+      />
+    </>
   )
 }

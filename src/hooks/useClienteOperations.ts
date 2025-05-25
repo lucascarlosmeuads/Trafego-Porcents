@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -199,8 +200,8 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       // Show success message
       if (!clienteJaExistia) {
         toast({
-          title: "Cliente adicionado com sucesso!",
-          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista. O cliente poderá fazer login usando o email ${clienteData.email_cliente} quando criar sua conta.`,
+          title: "Cliente cadastrado com sucesso!",
+          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista. Verifique as instruções para enviar ao cliente.`,
           duration: 5000
         })
       } else {
@@ -213,7 +214,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       // Refresh data
       refetchData()
       
-      return true
+      return { success: true, isNewClient: !clienteJaExistia, clientData: clienteData }
     } catch (error) {
       console.error('💥 [useClienteOperations] === ERRO GERAL ===')
       console.error('💥 Erro capturado no catch:', error)
@@ -223,7 +224,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         description: error instanceof Error ? error.message : "Erro inesperado ao adicionar cliente",
         variant: "destructive"
       })
-      return false
+      return { success: false, isNewClient: false, clientData: null }
     }
   }
 

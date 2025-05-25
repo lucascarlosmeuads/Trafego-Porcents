@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -10,6 +9,7 @@ import { Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
+import { ClientInstructionsModal } from './ClientInstructionsModal'
 
 interface AdicionarClienteModalProps {
   onClienteAdicionado: () => void
@@ -20,6 +20,8 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedGestor, setSelectedGestor] = useState<string>('')
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [newClientData, setNewClientData] = useState<any>(null)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -100,9 +102,9 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
 
       console.log("🟡 [AdicionarClienteModal] Dados para adicionar:", clienteData)
 
-      const success = await addCliente(clienteData)
+      const result = await addCliente(clienteData)
       
-      if (success) {
+      if (result.success) {
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -113,6 +115,12 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         setSelectedGestor('')
         setOpen(false)
         onClienteAdicionado()
+
+        // Show instructions modal for new clients only
+        if (result.isNewClient) {
+          setNewClientData(result.clientData)
+          setShowInstructions(true)
+        }
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
@@ -127,103 +135,113 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
-          <Plus className="h-4 w-4 mr-2" />
-          Adicionar Cliente
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Adicionar Novo Cliente</DialogTitle>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-          <div className="grid gap-2">
-            <Label htmlFor="nome">Nome do Cliente *</Label>
-            <Input
-              id="nome"
-              value={formData.nome_cliente}
-              onChange={(e) => setFormData(prev => ({ ...prev, nome_cliente: e.target.value }))}
-              placeholder="Nome completo"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="telefone">Telefone *</Label>
-            <Input
-              id="telefone"
-              value={formData.telefone}
-              onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
-              placeholder="(11) 99999-9999"
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="email">Email do Cliente *</Label>
-            <Input
-              id="email"
-              type="email"
-              value={formData.email_cliente}
-              onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
-              placeholder="cliente@email.com"
-            />
-          </div>
-
-          {/* Admin-only: Gestor Selection */}
-          {isAdmin && (
+    <>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogTrigger asChild>
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Adicionar Cliente
+          </Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Cliente</DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
             <div className="grid gap-2">
-              <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
-              <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+              <Label htmlFor="nome">Nome do Cliente *</Label>
+              <Input
+                id="nome"
+                value={formData.nome_cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, nome_cliente: e.target.value }))}
+                placeholder="Nome completo"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="telefone">Telefone *</Label>
+              <Input
+                id="telefone"
+                value={formData.telefone}
+                onChange={(e) => setFormData(prev => ({ ...prev, telefone: e.target.value }))}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="email">Email do Cliente *</Label>
+              <Input
+                id="email"
+                type="email"
+                value={formData.email_cliente}
+                onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
+                placeholder="cliente@email.com"
+              />
+            </div>
+
+            {/* Admin-only: Gestor Selection */}
+            {isAdmin && (
+              <div className="grid gap-2">
+                <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
+                <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um gestor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managerOptions.map((manager) => (
+                      <SelectItem key={manager.email} value={manager.email}>
+                        {manager.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="grid gap-2">
+              <Label htmlFor="vendedor">Vendedor</Label>
+              <Input
+                id="vendedor"
+                value={formData.vendedor}
+                onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
+                placeholder={`Padrão: ${currentManagerName}`}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status da Campanha</Label>
+              <Select
+                value={formData.status_campanha}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um gestor" />
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {managerOptions.map((manager) => (
-                    <SelectItem key={manager.email} value={manager.email}>
-                      {manager.name}
+                  {STATUS_CAMPANHA.map((status) => (
+                    <SelectItem key={status} value={status}>
+                      {status}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-          )}
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? "Adicionando..." : "Adicionar Cliente"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
 
-          <div className="grid gap-2">
-            <Label htmlFor="vendedor">Vendedor</Label>
-            <Input
-              id="vendedor"
-              value={formData.vendedor}
-              onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-              placeholder={`Padrão: ${currentManagerName}`}
-            />
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="status">Status da Campanha</Label>
-            <Select
-              value={formData.status_campanha}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {STATUS_CAMPANHA.map((status) => (
-                  <SelectItem key={status} value={status}>
-                    {status}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-        <div className="flex justify-end gap-2">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? "Adicionando..." : "Adicionar Cliente"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      {/* Instructions Modal */}
+      <ClientInstructionsModal
+        isOpen={showInstructions}
+        onClose={() => setShowInstructions(false)}
+        clientEmail={newClientData?.email_cliente || ''}
+        clientName={newClientData?.nome_cliente || ''}
+      />
+    </>
   )
 }
