@@ -70,7 +70,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           continue
         }
 
-        // FIXED: Sanitize email for storage path
+        // Sanitize email for storage path
         const sanitizedEmail = sanitizeEmailForPath(emailCliente)
         const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
         const filePath = `${sanitizedEmail}/${fileName}`
@@ -105,7 +105,8 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             nome_arquivo: file.name,
             caminho_arquivo: filePath,
             tipo_arquivo: file.type,
-            tamanho_arquivo: file.size
+            tamanho_arquivo: file.size,
+            author_type: 'cliente'
           })
 
         if (dbError) {
@@ -207,12 +208,16 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     }
   }
 
+  // Separar arquivos por autor
+  const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
+  const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Envio de Materiais</CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-6">
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
           <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <p className="text-sm text-gray-600 mb-4">
@@ -237,10 +242,11 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           </div>
         )}
 
-        {arquivos.length > 0 && (
+        {/* Seção: Seus Arquivos Enviados */}
+        {arquivosCliente.length > 0 && (
           <div className="space-y-3">
-            <h4 className="font-medium">Arquivos Enviados ({arquivos.length})</h4>
-            {arquivos.map((arquivo) => (
+            <h4 className="font-medium">Seus Arquivos Enviados ({arquivosCliente.length})</h4>
+            {arquivosCliente.map((arquivo) => (
               <div key={arquivo.id} className="flex items-center justify-between p-3 border rounded-lg">
                 <div className="flex items-center gap-3">
                   {getFileIcon(arquivo.tipo_arquivo)}
@@ -273,6 +279,45 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
               </div>
             ))}
           </div>
+        )}
+
+        {/* Seção: Criativos da Equipe */}
+        {arquivosGestor.length > 0 && (
+          <div className="space-y-3">
+            <h4 className="font-medium text-purple-700">Criativos da Equipe ({arquivosGestor.length})</h4>
+            <p className="text-xs text-gray-600">Materiais enviados pela nossa equipe para sua campanha.</p>
+            {arquivosGestor.map((arquivo) => (
+              <div key={arquivo.id} className="flex items-center justify-between p-3 border-2 border-purple-200 rounded-lg bg-purple-50">
+                <div className="flex items-center gap-3">
+                  {getFileIcon(arquivo.tipo_arquivo)}
+                  <div>
+                    <p className="text-sm font-medium">{arquivo.nome_arquivo}</p>
+                    <p className="text-xs text-gray-500">
+                      {arquivo.tamanho_arquivo && formatFileSize(arquivo.tamanho_arquivo)} • 
+                      {new Date(arquivo.created_at).toLocaleDateString('pt-BR')} • 
+                      <span className="text-purple-600">Equipe</span>
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownloadFile(arquivo)}
+                    className="text-purple-600 hover:text-purple-700"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {arquivos.length === 0 && (
+          <p className="text-center text-gray-500 py-4">
+            Nenhum arquivo enviado ainda.
+          </p>
         )}
       </CardContent>
     </Card>
