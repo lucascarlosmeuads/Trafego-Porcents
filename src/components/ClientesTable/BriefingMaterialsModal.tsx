@@ -91,10 +91,12 @@ export function BriefingMaterialsModal({
         } else {
           console.log('📁 [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
           
-          // Para tipo 'creative', filtrar apenas imagens e vídeos
+          // Para tipo 'creative', filtrar apenas imagens, vídeos e PDFs
           if (filterType === 'creative') {
             const mediaFiles = arquivosData?.filter(arquivo => 
-              arquivo.tipo_arquivo.startsWith('image/') || arquivo.tipo_arquivo.startsWith('video/')
+              arquivo.tipo_arquivo.startsWith('image/') || 
+              arquivo.tipo_arquivo.startsWith('video/') ||
+              arquivo.tipo_arquivo === 'application/pdf'
             ) || []
             setArquivos(mediaFiles)
           } else {
@@ -135,6 +137,7 @@ export function BriefingMaterialsModal({
   const getFileIcon = (tipo: string) => {
     if (tipo.startsWith('image/')) return <Image className="w-4 h-4 text-blue-600" />
     if (tipo.startsWith('video/')) return <Video className="w-4 h-4 text-purple-600" />
+    if (tipo === 'application/pdf') return <FileText className="w-4 h-4 text-red-600" />
     return <FileText className="w-4 h-4 text-gray-600" />
   }
 
@@ -157,10 +160,11 @@ export function BriefingMaterialsModal({
         try {
           console.log('📤 [Manager Upload] Processando arquivo:', file.name)
 
-          // Validar tipo de arquivo
+          // Validar tipo de arquivo (incluindo PDF)
           const allowedTypes = [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+            'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
+            'application/pdf'
           ]
           
           if (!allowedTypes.includes(file.type)) {
@@ -368,7 +372,7 @@ export function BriefingMaterialsModal({
       case 'creative':
         return {
           title: "Materiais criativos não enviados",
-          description: "O cliente ainda não enviou imagens ou vídeos."
+          description: "O cliente ainda não enviou imagens, vídeos ou PDFs."
         }
       default:
         return {
@@ -500,13 +504,13 @@ export function BriefingMaterialsModal({
                         <Input
                           type="file"
                           multiple
-                          accept="image/*,video/*"
+                          accept="image/*,video/*,.pdf"
                           onChange={handleManagerFileUpload}
                           disabled={uploading}
                           className="mb-2"
                         />
                         <p className="text-xs text-purple-600">
-                          Envie materiais para o cliente (máx. 50MB por arquivo)
+                          Envie materiais para o cliente: imagens, vídeos ou PDFs (máx. 50MB por arquivo)
                         </p>
                         {uploading && (
                           <div className="flex items-center gap-2 mt-2">
@@ -622,7 +626,7 @@ export function BriefingMaterialsModal({
                       <div className="text-center py-6">
                         <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                         <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
-                        <p className="text-sm text-gray-500">O cliente ainda não enviou imagens ou vídeos.</p>
+                        <p className="text-sm text-gray-500">O cliente ainda não enviou imagens, vídeos ou PDFs.</p>
                       </div>
                     )}
                   </CardContent>

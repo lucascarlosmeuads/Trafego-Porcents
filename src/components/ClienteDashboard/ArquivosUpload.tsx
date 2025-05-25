@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,6 +28,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
   const getFileIcon = (tipo: string) => {
     if (tipo.startsWith('image/')) return <Image className="w-4 h-4" />
     if (tipo.startsWith('video/')) return <Video className="w-4 h-4" />
+    if (tipo === 'application/pdf') return <FileText className="w-4 h-4 text-red-600" />
     return <FileText className="w-4 h-4" />
   }
 
@@ -66,10 +66,11 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
         try {
           console.log('📤 [ArquivosUpload] Processando arquivo:', file.name, 'Tamanho:', file.size)
 
-          // Validar tipo de arquivo
+          // Validar tipo de arquivo (incluindo PDF)
           const allowedTypes = [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+            'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
+            'application/pdf'
           ]
           
           if (!allowedTypes.includes(file.type)) {
@@ -295,18 +296,18 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
         <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
           <Upload className="w-12 h-12 mx-auto text-gray-400 mb-4" />
           <p className="text-sm text-gray-600 mb-4">
-            Envie imagens e vídeos do seu produto para criação dos materiais publicitários
+            Envie imagens, vídeos e PDFs do seu produto para criação dos materiais publicitários
           </p>
           <Input
             type="file"
             multiple
-            accept="image/*,video/*"
+            accept="image/*,video/*,.pdf"
             onChange={handleFileUpload}
             disabled={uploading}
             className="max-w-xs mx-auto"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV (máx. 50MB)
+            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF (máx. 50MB)
           </p>
         </div>
 
