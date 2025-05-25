@@ -30,35 +30,40 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }
 
   const renderContent = () => {
-    // Se estiver gerenciando gestores
+    // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
       return <GestoresManagement />
     }
     
-    // Verificar qual aba está ativa
-    if (activeTab === 'dashboard') {
-      return <StatusFunnelDashboard />
-    } else if (activeTab === 'problemas') {
-      return <ProblemasPanel />
-    } else if (activeTab === 'solicitacoes') {
-      return <SolicitacoesSaque />
-    } else {
-      return (
-        <div className="space-y-4">
-          {/* Seletor de gestores - apenas quando estiver na aba de clientes e não gerenciando gestores */}
-          {selectedManager !== '__GESTORES__' && selectedManager !== '__PROBLEMAS__' && selectedManager !== '__SOLICITACOES__' && (
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-              />
-            </div>
-          )}
-          
-          {/* Tabela de clientes */}
-          <ClientesTable selectedManager={selectedManager} />
-        </div>
-      )
+    // Navegação por abas
+    switch (activeTab) {
+      case 'dashboard':
+        return <StatusFunnelDashboard />
+      
+      case 'problemas':
+        return <ProblemasPanel />
+      
+      case 'solicitacoes':
+        return <SolicitacoesSaque />
+      
+      case 'clientes':
+      default:
+        return (
+          <div className="space-y-4">
+            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
+            {selectedManager !== '__GESTORES__' && (
+              <div className="bg-card border rounded-lg p-4">
+                <ManagerSelector 
+                  selectedManager={selectedManager}
+                  onManagerSelect={onManagerSelect}
+                />
+              </div>
+            )}
+            
+            {/* Tabela de clientes */}
+            <ClientesTable selectedManager={selectedManager} />
+          </div>
+        )
     }
   }
 

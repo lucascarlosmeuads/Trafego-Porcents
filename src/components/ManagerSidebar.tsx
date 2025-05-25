@@ -1,7 +1,16 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase'
+import { 
+  LayoutDashboard, 
+  Users, 
+  Settings, 
+  DollarSign, 
+  AlertTriangle,
+  ChevronRight 
+} from 'lucide-react'
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -18,10 +27,12 @@ export function ManagerSidebar({
 }: ManagerSidebarProps) {
   const { isAdmin } = useAuth()
   const [solicitacoesPendentes, setSolicitacoesPendentes] = useState(0)
+  const [problemasPendentes, setProblemasPendentes] = useState(0)
 
   useEffect(() => {
     if (isAdmin) {
       fetchSolicitacoesPendentes()
+      fetchProblemasPendentes()
     }
   }, [isAdmin])
 
@@ -40,8 +51,38 @@ export function ManagerSidebar({
     }
   }
 
+  const fetchProblemasPendentes = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id')
+        .not('descricao_problema', 'is', null)
+        .neq('descricao_problema', '')
+
+      if (!error && data) {
+        setProblemasPendentes(data.length)
+      }
+    } catch (error) {
+      console.error('Erro ao buscar problemas pendentes:', error)
+    }
+  }
+
+  const handleTabChange = (tab: string) => {
+    // Limpar seleção de gestor ao mudar de aba
+    onManagerSelect(null)
+    onTabChange(tab)
+  }
+
   const handleManagerSelect = (email: string | null) => {
+    // Ir para aba de clientes ao selecionar gestor
+    onTabChange('clientes')
     onManagerSelect(email)
+  }
+
+  const handleGestoresManagement = () => {
+    // Ir para gestão de gestores
+    onManagerSelect('__GESTORES__')
+    onTabChange('clientes')
   }
 
   return (
@@ -51,87 +92,95 @@ export function ManagerSidebar({
           {isAdmin ? 'Painel Admin' : 'Gestores'}
         </h2>
         
-        {/* Abas para Admin */}
+        {/* Menu Principal para Admin */}
         {isAdmin && (
           <div className="space-y-2 mb-6">
             <button
-              onClick={() => onTabChange('dashboard')}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+              onClick={() => handleTabChange('dashboard')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
                 activeTab === 'dashboard'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-card-foreground hover:bg-muted'
               }`}
             >
-              📊 Dashboard
+              <LayoutDashboard size={16} />
+              <span>Dashboard</span>
             </button>
             
             <button
-              onClick={() => onTabChange('clientes')}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+              onClick={() => handleTabChange('clientes')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
                 activeTab === 'clientes'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-card-foreground hover:bg-muted'
               }`}
             >
-              👥 Clientes
+              <Users size={16} />
+              <span>Todos os Clientes</span>
             </button>
             
             <button
-              onClick={() => onTabChange('problemas')}
-              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                activeTab === 'problemas'
+              onClick={handleGestoresManagement}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+                selectedManager === '__GESTORES__'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-card-foreground hover:bg-muted'
               }`}
             >
-              ⚠️ Problemas
+              <Settings size={16} />
+              <span>Gestores</span>
             </button>
 
             <button
-              onClick={() => onTabChange('solicitacoes')}
+              onClick={() => handleTabChange('solicitacoes')}
               className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between ${
                 activeTab === 'solicitacoes'
                   ? 'bg-primary text-primary-foreground'
                   : 'text-card-foreground hover:bg-muted'
               }`}
             >
-              <span>💸 Solicitações de Saque</span>
+              <div className="flex items-center gap-2">
+                <DollarSign size={16} />
+                <span>Solicitações de Saque</span>
+              </div>
               {solicitacoesPendentes > 0 && (
                 <Badge variant="destructive" className="text-xs">
                   {solicitacoesPendentes}
                 </Badge>
               )}
             </button>
+
+            <button
+              onClick={() => handleTabChange('problemas')}
+              className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between ${
+                activeTab === 'problemas'
+                  ? 'bg-primary text-primary-foreground'
+                  : 'text-card-foreground hover:bg-muted'
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle size={16} />
+                <span>Problemas</span>
+              </div>
+              {problemasPendentes > 0 && (
+                <Badge variant="destructive" className="text-xs">
+                  {problemasPendentes}
+                </Badge>
+              )}
+            </button>
           </div>
         )}
 
-        {/* Lista de Gestores */}
+        {/* Filtros de Gestores */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase">
-            Gerenciar Gestores
-          </h3>
-          <button
-            onClick={() => {
-              onManagerSelect('__GESTORES__')
-            }}
-            className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-              selectedManager === '__GESTORES__'
-                ? 'bg-primary text-primary-foreground'
-                : 'text-card-foreground hover:bg-muted'
-            }`}
-          >
-            ⚙️ Gestores
-          </button>
-        </div>
-
-        <div className="space-y-2 mt-4">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase">
-            Filtros de Gestores
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
+            <ChevronRight size={12} />
+            Filtros por Gestor
           </h3>
           <button
             onClick={() => handleManagerSelect(null)}
             className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-              selectedManager === null
+              selectedManager === null && activeTab === 'clientes'
                 ? 'bg-primary text-primary-foreground'
                 : 'text-card-foreground hover:bg-muted'
             }`}
