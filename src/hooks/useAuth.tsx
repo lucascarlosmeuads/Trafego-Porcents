@@ -1,3 +1,4 @@
+
 import { useState, useEffect, createContext, useContext } from 'react'
 import { supabase } from '@/lib/supabase'
 import type { User } from '@supabase/supabase-js'
@@ -27,8 +28,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Verificar tipo de usuário no banco de dados - APENAS para usuários autenticados
   const checkUserType = async (email: string) => {
-    console.log('🔍 [useAuth] Verificando tipo de usuário para usuário AUTENTICADO:', email)
-    console.log('🔍 [useAuth] Email original recebido:', `"${email}"`)
+    console.log('🔍 [useAuth] === INICIANDO VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
+    console.log('🔍 [useAuth] Email recebido:', `"${email}"`)
     
     // Normalizar o email para evitar problemas de comparação
     const normalizedEmail = email.toLowerCase().trim()
@@ -36,29 +37,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       // PRIMEIRO: Verificar se é gestor na tabela gestores
-      console.log('🔍 [useAuth] Verificando se é gestor...')
+      console.log('🔍 [useAuth] === ETAPA 1: Verificando se é gestor ===')
       const { data: gestorData, error: gestorError } = await supabase
         .from('gestores')
         .select('nome, email, ativo')
         .eq('email', normalizedEmail)
         .eq('ativo', true)
-        .single()
+        .maybeSingle()
 
-      console.log('🔍 [useAuth] Resultado da busca de gestor:', { gestorData, gestorError })
+      console.log('🔍 [useAuth] Query gestores - Data:', gestorData)
+      console.log('🔍 [useAuth] Query gestores - Error:', gestorError)
 
       if (!gestorError && gestorData) {
-        console.log('✅ [useAuth] Usuário autenticado é GESTOR:', gestorData.nome)
+        console.log('✅ [useAuth] RESULTADO: Usuário é GESTOR:', gestorData.nome)
         setIsGestor(true)
         setIsCliente(false)
         setCurrentManagerName(gestorData.nome)
         return 'gestor'
-      } else {
-        console.log('ℹ️ [useAuth] Não é gestor, erro:', gestorError?.message || 'não encontrado')
       }
 
-      // SEGUNDO: Verificar se é cliente na tabela todos_clientes (só se não for gestor)
-      console.log('🔍 [useAuth] Verificando se é cliente...')
-      console.log('🔍 [useAuth] Fazendo query para todos_clientes com email:', `"${normalizedEmail}"`)
+      // SEGUNDO: Verificar se é cliente na tabela todos_clientes
+      console.log('🔍 [useAuth] === ETAPA 2: Verificando se é cliente ===')
+      console.log('🔍 [useAuth] Fazendo query na tabela todos_clientes...')
       
       const { data: clienteData, error: clienteError } = await supabase
         .from('todos_clientes')
@@ -66,38 +66,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('email_cliente', normalizedEmail)
         .maybeSingle()
 
-      console.log('🔍 [useAuth] Resultado da busca de cliente:', { clienteData, clienteError })
-      console.log('🔍 [useAuth] Dados retornados:', clienteData)
+      console.log('🔍 [useAuth] Query clientes - Data:', clienteData)
+      console.log('🔍 [useAuth] Query clientes - Error:', clienteError)
 
       if (!clienteError && clienteData) {
-        console.log('✅ [useAuth] Usuário autenticado é CLIENTE:', clienteData.nome_cliente)
+        console.log('✅ [useAuth] RESULTADO: Usuário é CLIENTE:', clienteData.nome_cliente || 'Nome não informado')
         setIsGestor(false)
         setIsCliente(true)
         setCurrentManagerName('')
         return 'cliente'
-      } else {
-        console.log('ℹ️ [useAuth] Não é cliente, erro:', clienteError?.message || 'não encontrado')
-        
-        // Verificação adicional: listar alguns emails da tabela para debug
-        console.log('🔍 [useAuth] DEBUGGING: Vamos verificar alguns emails na tabela todos_clientes')
-        const { data: allEmails, error: debugError } = await supabase
-          .from('todos_clientes')
-          .select('email_cliente')
-          .limit(5)
-        
-        console.log('🔍 [useAuth] DEBUG - Primeiros 5 emails na tabela:', allEmails)
-        console.log('🔍 [useAuth] DEBUG - Erro na consulta de debug:', debugError)
+      }
+
+      // Debug adicional: verificar se o email existe na tabela
+      console.log('🔍 [useAuth] === DEBUG: Verificando emails na tabela todos_clientes ===')
+      const { data: debugEmails, error: debugError } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente')
+        .limit(10)
+      
+      console.log('🔍 [useAuth] DEBUG - Primeiros 10 emails encontrados:', debugEmails)
+      console.log('🔍 [useAuth] DEBUG - Error na consulta:', debugError)
+
+      // Verificar se há emails similares
+      if (debugEmails) {
+        const similarEmails = debugEmails.filter(item => 
+          item.email_cliente && item.email_cliente.toLowerCase().includes(normalizedEmail.split('@')[0])
+        )
+        console.log('🔍 [useAuth] DEBUG - Emails similares encontrados:', similarEmails)
       }
 
       // Se não está em nenhuma tabela, é um usuário sem permissão
-      console.log('⚠️ [useAuth] Usuário autenticado não encontrado nas tabelas de permissão')
+      console.log('❌ [useAuth] RESULTADO: Usuário não encontrado em nenhuma tabela de permissão')
       setIsGestor(false)
       setIsCliente(false)
       setCurrentManagerName('')
       return 'unauthorized'
 
     } catch (error) {
-      console.error('❌ [useAuth] Erro ao verificar tipo de usuário:', error)
+      console.error('❌ [useAuth] Erro crítico ao verificar tipo de usuário:', error)
       setIsGestor(false)
       setIsCliente(false)
       setCurrentManagerName('')
@@ -112,10 +118,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null)
       if (session?.user?.email) {
         if (session.user.email === 'lucas@admin.com') {
+          console.log('🔍 [useAuth] Usuário é ADMIN')
           setIsGestor(false)
           setIsCliente(false)
           setCurrentManagerName('Administrador')
         } else {
+          console.log('🔍 [useAuth] Iniciando verificação de tipo para:', session.user.email)
           checkUserType(session.user.email)
         }
       }
@@ -131,10 +139,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user?.email) {
         console.log('✅ [useAuth] Usuário AUTENTICADO pelo Supabase:', session.user.email)
         if (session.user.email === 'lucas@admin.com') {
+          console.log('🔍 [useAuth] Usuário é ADMIN')
           setIsGestor(false)
           setIsCliente(false)
           setCurrentManagerName('Administrador')
         } else {
+          console.log('🔍 [useAuth] Iniciando verificação de tipo para:', session.user.email)
           await checkUserType(session.user.email)
         }
       } else {
