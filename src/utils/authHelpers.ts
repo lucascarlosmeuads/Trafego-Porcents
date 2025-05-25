@@ -19,14 +19,14 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade)
+    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade) - USANDO ilike para case-insensitive
     console.log('🔍 [authHelpers] Verificando tabela TODOS_CLIENTES...')
     const clienteStartTime = Date.now()
     
     const { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('email_cliente, nome_cliente, id')
-      .eq('email_cliente', normalizedEmail)
+      .ilike('email_cliente', normalizedEmail)
       .maybeSingle()
 
     const clienteEndTime = Date.now()
@@ -40,14 +40,14 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'cliente'
     }
 
-    // TERCEIRO: Verificar gestores (apenas se não for cliente)
+    // TERCEIRO: Verificar gestores (apenas se não for cliente) - USANDO ilike para case-insensitive
     console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
     const gestorStartTime = Date.now()
     
     const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
       .select('nome, email, ativo')
-      .eq('email', normalizedEmail)
+      .ilike('email', normalizedEmail)
       .eq('ativo', true)
       .maybeSingle()
 
@@ -92,7 +92,7 @@ export const getManagerName = async (email: string): Promise<string> => {
     const gestorPromise = supabase
       .from('gestores')
       .select('nome')
-      .eq('email', normalizedEmail)
+      .ilike('email', normalizedEmail)
       .eq('ativo', true)
       .single()
 
