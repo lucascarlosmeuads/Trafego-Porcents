@@ -411,7 +411,7 @@ export function BriefingMaterialsModal({
           ) : (
             <div className="space-y-6">
               {/* SEÇÃO DE BRIEFING - APENAS quando filterType é 'briefing' ou 'all' */}
-              {filterType === 'briefing' && briefing && (
+              {(filterType === 'briefing' || filterType === 'all') && briefing && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -481,7 +481,7 @@ export function BriefingMaterialsModal({
               )}
 
               {/* SEÇÃO DE MATERIAIS CRIATIVOS - APENAS quando filterType é 'creative' ou 'all' */}
-              {filterType === 'creative' && (
+              {(filterType === 'creative' || filterType === 'all') && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
