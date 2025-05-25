@@ -20,60 +20,100 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isGestor, setIsGestor] = useState(false)
+  const [isCliente, setIsCliente] = useState(false)
+  const [currentManagerName, setCurrentManagerName] = useState('')
 
   const isAdmin = user?.email === 'lucas@admin.com'
-  
-  // Verificar se é gestor (emails específicos ou domínio @gestor.com/@trafegoporcents.com)
-  const isGestor = !isAdmin && user?.email !== null && (
-    user?.email?.includes('@gestor.com') || 
-    user?.email?.includes('@trafegoporcents.com') ||
-    ['andreza@gestor.com', 'lucas.falcao@gestor.com'].includes(user?.email || '')
-  )
-  
-  // Cliente é qualquer email que não seja admin nem gestor
-  const isCliente = !isAdmin && !isGestor && user?.email !== null
 
-  // Determinar nome do gestor baseado no email
-  const getCurrentManagerName = (email: string | undefined): string => {
-    if (!email) return ''
+  // Verificar tipo de usuário no banco de dados
+  const checkUserType = async (email: string) => {
+    console.log('🔍 [useAuth] Verificando tipo de usuário para:', email)
     
-    if (email === 'lucas@admin.com') {
-      return 'Administrador'
+    try {
+      // Verificar se é gestor na tabela gestores
+      const { data: gestorData, error: gestorError } = await supabase
+        .from('gestores')
+        .select('nome, email, ativo')
+        .eq('email', email)
+        .eq('ativo', true)
+        .single()
+
+      if (!gestorError && gestorData) {
+        console.log('✅ [useAuth] Usuário é GESTOR:', gestorData.nome)
+        setIsGestor(true)
+        setIsCliente(false)
+        setCurrentManagerName(gestorData.nome)
+        return 'gestor'
+      }
+
+      // Verificar se é cliente na tabela todos_clientes
+      const { data: clienteData, error: clienteError } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente')
+        .eq('email_cliente', email)
+        .single()
+
+      if (!clienteError && clienteData) {
+        console.log('✅ [useAuth] Usuário é CLIENTE:', clienteData.nome_cliente)
+        setIsGestor(false)
+        setIsCliente(true)
+        setCurrentManagerName('')
+        return 'cliente'
+      }
+
+      // Se não está em nenhuma tabela, é um usuário sem permissão
+      console.log('⚠️ [useAuth] Usuário não encontrado nas tabelas de permissão')
+      setIsGestor(false)
+      setIsCliente(false)
+      setCurrentManagerName('')
+      return 'unauthorized'
+
+    } catch (error) {
+      console.error('❌ [useAuth] Erro ao verificar tipo de usuário:', error)
+      setIsGestor(false)
+      setIsCliente(false)
+      setCurrentManagerName('')
+      return 'error'
     }
-    
-    const managerMapping: { [key: string]: string } = {
-      'andreza@gestor.com': 'Andreza',
-      'lucas.falcao@gestor.com': 'Lucas Falcão',
-      'andreza@trafegoporcents.com': 'Andreza',
-      'lucas.falcao@trafegoporcents.com': 'Lucas Falcão'
-    }
-    
-    // Se for um email específico mapeado, usar o mapeamento
-    if (managerMapping[email]) {
-      return managerMapping[email]
-    }
-    
-    // Se for um email @trafegoporcents.com, extrair o nome do usuário
-    if (email.endsWith('@trafegoporcents.com')) {
-      const username = email.split('@')[0]
-      return username.charAt(0).toUpperCase() + username.slice(1)
-    }
-    
-    return 'Gestor'
   }
-
-  const currentManagerName = getCurrentManagerName(user?.email)
 
   useEffect(() => {
     // Configuração inicial - verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null)
+      if (session?.user?.email) {
+        if (session.user.email === 'lucas@admin.com') {
+          setIsGestor(false)
+          setIsCliente(false)
+          setCurrentManagerName('Administrador')
+        } else {
+          checkUserType(session.user.email)
+        }
+      }
       setLoading(false)
     })
 
     // Configuração do listener para mudanças de estado de autenticação
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email)
+      
       setUser(session?.user ?? null)
+      
+      if (session?.user?.email) {
+        if (session.user.email === 'lucas@admin.com') {
+          setIsGestor(false)
+          setIsCliente(false)
+          setCurrentManagerName('Administrador')
+        } else {
+          await checkUserType(session.user.email)
+        }
+      } else {
+        setIsGestor(false)
+        setIsCliente(false)
+        setCurrentManagerName('')
+      }
+      
       setLoading(false)
     })
 
@@ -81,6 +121,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   const signIn = async (email: string, password: string) => {
+    console.log('🔐 [useAuth] Tentativa de login para:', email)
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
   }
@@ -91,6 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
+    console.log('🚪 [useAuth] Fazendo logout')
+    setIsGestor(false)
+    setIsCliente(false)
+    setCurrentManagerName('')
     await supabase.auth.signOut()
   }
 

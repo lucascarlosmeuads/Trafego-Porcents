@@ -6,13 +6,17 @@ import { AdminDashboard } from './AdminDashboard'
 import { GestorDashboard } from './GestorDashboard'
 import { ClienteDashboard } from './ClienteDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
-import { User } from 'lucide-react'
-import { useState } from 'react'
+import { User, AlertCircle } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function Dashboard() {
-  const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName } = useAuth()
+  const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName, loading } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
+
+  // Verificar se o usuário tem permissão após o carregamento
+  const isUnauthorized = !loading && user && !isAdmin && !isGestor && !isCliente
 
   const getDisplayTitle = () => {
     if (isCliente) return 'Minha Campanha'
@@ -62,6 +66,40 @@ export function Dashboard() {
     } catch (error) {
       console.error('❌ [Dashboard] Erro ao fazer logout:', error)
     }
+  }
+
+  // Mostrar tela de acesso negado para usuários não autorizados
+  if (isUnauthorized) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <AlertCircle className="h-16 w-16 text-red-500" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-red-600">Acesso Negado</CardTitle>
+            <CardDescription>
+              Seu usuário não possui permissão para acessar este sistema.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Email: <span className="font-medium">{user?.email}</span>
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Para solicitar acesso, entre em contato com o administrador do sistema.
+            </p>
+            <Button 
+              onClick={handleSignOut}
+              variant="outline"
+              className="w-full"
+            >
+              Fazer Logout
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (
@@ -131,8 +169,12 @@ export function Dashboard() {
               />
             ) : isGestor ? (
               <GestorDashboard />
-            ) : (
+            ) : isCliente ? (
               <ClienteDashboard />
+            ) : (
+              <div className="flex items-center justify-center py-8">
+                <div className="text-lg">Carregando...</div>
+              </div>
             )}
           </main>
         </SidebarInset>

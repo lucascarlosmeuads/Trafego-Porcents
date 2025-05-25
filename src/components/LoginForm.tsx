@@ -18,22 +18,33 @@ export function LoginForm() {
     e.preventDefault()
     setLoading(true)
 
+    console.log('🔐 [LoginForm] Tentativa de', isSignUp ? 'cadastro' : 'login', 'para:', email)
+
     try {
       const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password)
       
       if (error) {
+        console.error('❌ [LoginForm] Erro de autenticação:', error)
         toast({
           title: "Erro",
           description: error.message,
           variant: "destructive"
         })
       } else if (isSignUp) {
+        console.log('✅ [LoginForm] Cadastro realizado com sucesso')
         toast({
           title: "Sucesso",
           description: "Verifique seu email para confirmar a conta"
         })
+      } else {
+        console.log('✅ [LoginForm] Login realizado com sucesso')
+        toast({
+          title: "Sucesso",
+          description: "Login realizado com sucesso!"
+        })
       }
     } catch (error) {
+      console.error('❌ [LoginForm] Erro inesperado:', error)
       toast({
         title: "Erro",
         description: "Algo deu errado. Tente novamente.",
