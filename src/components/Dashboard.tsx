@@ -15,17 +15,16 @@ export function Dashboard() {
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
 
-  console.log('🔍 [Dashboard] Estado atual:')
-  console.log('   - user:', user?.email)
+  console.log('🎮 [Dashboard] === ESTADO ATUAL ===')
+  console.log('   - user:', user?.email || 'null')
   console.log('   - loading:', loading)
   console.log('   - isAdmin:', isAdmin)
   console.log('   - isGestor:', isGestor)
   console.log('   - isCliente:', isCliente)
   console.log('   - currentManagerName:', currentManagerName)
 
-  // Loading otimizado com timeout máximo
   if (loading) {
-    console.log('🔄 [Dashboard] Ainda carregando...')
+    console.log('⏳ [Dashboard] Carregando...')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -38,19 +37,20 @@ export function Dashboard() {
     )
   }
 
-  // CORREÇÃO CRÍTICA: Verificar se tem usuário E se pelo menos um dos tipos é true
-  const hasValidUserType = isAdmin || isGestor || isCliente
-  const isUnauthorized = user && !hasValidUserType
+  if (!user) {
+    console.log('❌ [Dashboard] Sem usuário autenticado')
+    return <div>Redirecionando...</div>
+  }
 
-  console.log('🎯 [Dashboard] Verificação de acesso:')
-  console.log('   - user exists:', !!user)
-  console.log('   - hasValidUserType:', hasValidUserType)
-  console.log('   - isUnauthorized:', isUnauthorized)
-  console.log('   - Qual painel será mostrado:', 
-    isCliente ? 'CLIENTE DASHBOARD' :
-    isGestor ? 'GESTOR DASHBOARD' :
-    isAdmin ? 'ADMIN DASHBOARD' :
-    'ACESSO NEGADO'
+  // CORREÇÃO PRINCIPAL: Verificação mais clara de acesso autorizado
+  const isAuthorized = isAdmin || isGestor || isCliente
+  console.log('🔐 [Dashboard] Verificação de autorização:')
+  console.log('   - isAuthorized:', isAuthorized)
+  console.log('   - Painel que será exibido:', 
+    isCliente ? '👤 CLIENTE' :
+    isGestor ? '👨‍💼 GESTOR' :
+    isAdmin ? '👑 ADMIN' :
+    '🚫 ACESSO NEGADO'
   )
 
   const getDisplayTitle = () => {
@@ -79,20 +79,19 @@ export function Dashboard() {
     e.preventDefault()
     e.stopPropagation()
     
-    console.log('🚪 [Dashboard] Logout solicitado')
+    console.log('🚪 [Dashboard] Logout iniciado')
     
     try {
       await signOut()
     } catch (error) {
       console.error('❌ [Dashboard] Erro no logout:', error)
-      // Fallback: forçar reload mesmo com erro
       window.location.href = '/'
     }
   }
 
-  // Mostrar tela de acesso negado APENAS se não tiver nenhum tipo válido
-  if (isUnauthorized) {
-    console.log('❌ [Dashboard] Mostrando tela de acesso negado')
+  // Mostrar acesso negado apenas se NÃO for autorizado
+  if (!isAuthorized) {
+    console.log('🚫 [Dashboard] === ACESSO NEGADO ===')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -126,7 +125,7 @@ export function Dashboard() {
   }
 
   // Se chegou até aqui, mostrar o painel correto
-  console.log('✅ [Dashboard] Mostrando painel para usuário autorizado')
+  console.log('✅ [Dashboard] Exibindo painel autorizado')
 
   return (
     <SidebarProvider>
@@ -142,7 +141,7 @@ export function Dashboard() {
         )}
         
         <SidebarInset className="flex-1 min-w-0 flex flex-col">
-          {/* Header responsivo */}
+          {/* Header */}
           <header className="bg-card shadow-sm border-b sticky top-0 z-40 w-full">
             <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
@@ -178,7 +177,7 @@ export function Dashboard() {
             </div>
           </header>
 
-          {/* Content responsivo */}
+          {/* Content */}
           <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
             {isAdmin ? (
               <AdminDashboard 

@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 
 export const normalizeEmail = (email: string): string => {
@@ -5,8 +6,8 @@ export const normalizeEmail = (email: string): string => {
 }
 
 export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'> => {
-  console.log('🔍 [authHelpers] === VERIFICAÇÃO DETALHADA DE TIPO DE USUÁRIO ===')
-  console.log('🔍 [authHelpers] Email original:', `"${email}"`)
+  console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
+  console.log('🔍 [authHelpers] Email recebido:', `"${email}"`)
   
   const normalizedEmail = normalizeEmail(email)
   console.log('🔍 [authHelpers] Email normalizado:', `"${normalizedEmail}"`)
@@ -14,74 +15,75 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
   try {
     // PRIMEIRO: Verificar se é admin
     if (normalizedEmail === 'lucas@admin.com') {
-      console.log('✅ [authHelpers] Usuário é ADMIN (hardcoded)')
+      console.log('✅ [authHelpers] Usuário é ADMIN')
       return 'admin'
     }
 
-    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade) - DIAGNÓSTICO COMPLETO
-    console.log('🔍 [authHelpers] === DIAGNÓSTICO COMPLETO TODOS_CLIENTES ===')
+    // SEGUNDO: Verificar clientes com estratégia MÚLTIPLA
+    console.log('🔍 [authHelpers] === VERIFICANDO CLIENTES ===')
     
-    // Buscar TODOS os emails para comparação byte a byte
-    const { data: todosClientes, error: todosError } = await supabase
+    // Buscar TODOS os clientes primeiro
+    const { data: todosClientes, error: clientesError } = await supabase
       .from('todos_clientes')
       .select('email_cliente, nome_cliente, id')
     
-    console.log('🔥 [authHelpers] TODOS OS EMAILS DISPONÍVEIS:')
-    console.log('🔥 [authHelpers] Total de registros encontrados:', todosClientes?.length || 0)
+    console.log('🔍 [authHelpers] Total de clientes na tabela:', todosClientes?.length || 0)
+    console.log('🔍 [authHelpers] Erro na consulta:', clientesError)
+    
+    if (clientesError) {
+      console.error('❌ [authHelpers] Erro ao buscar clientes:', clientesError)
+      return 'error'
+    }
     
     if (todosClientes && todosClientes.length > 0) {
+      console.log('🔥 [authHelpers] LISTANDO TODOS OS EMAILS:')
       todosClientes.forEach((cliente, index) => {
-        const emailTabela = cliente.email_cliente || 'NULL'
-        console.log(`🔥 [authHelpers] Cliente ${index + 1}:`)
-        console.log(`   - Email na tabela: "${emailTabela}"`)
-        console.log(`   - Length: ${emailTabela.length}`)
-        console.log(`   - Bytes: [${emailTabela.split('').map(c => c.charCodeAt(0)).join(', ')}]`)
-        console.log(`   - Nome: ${cliente.nome_cliente || 'NULL'}`)
-        console.log(`   - ID: ${cliente.id}`)
-        
-        // Comparação detalhada com o email procurado
-        if (emailTabela.toLowerCase().trim() === normalizedEmail) {
-          console.log('✅ [authHelpers] *** MATCH ENCONTRADO! ***')
-          console.log('✅ [authHelpers] Email da tabela após normalização:', `"${emailTabela.toLowerCase().trim()}"`)
-          console.log('✅ [authHelpers] Email procurado:', `"${normalizedEmail}"`)
-        }
+        const emailTabela = cliente.email_cliente || ''
+        console.log(`Cliente ${index + 1}: "${emailTabela}" (${emailTabela.length} chars)`)
       })
-    } else {
-      console.log('❌ [authHelpers] Nenhum cliente encontrado na tabela!')
-      console.log('❌ [authHelpers] Erro na consulta:', todosError)
-    }
-    
-    console.log('🟡 [authHelpers] Email buscado:')
-    console.log(`   - Valor: "${normalizedEmail}"`)
-    console.log(`   - Length: ${normalizedEmail.length}`)
-    console.log(`   - Bytes: [${normalizedEmail.split('').map(c => c.charCodeAt(0)).join(', ')}]`)
-    
-    // Busca manual com comparação rigorosa
-    const clienteEncontrado = todosClientes?.find(cliente => {
-      const emailTabela = (cliente.email_cliente || '').toLowerCase().trim()
-      const match = emailTabela === normalizedEmail
       
-      if (match) {
-        console.log('🎯 [authHelpers] CLIENTE ENCONTRADO NA BUSCA MANUAL!')
-        console.log('🎯 [authHelpers] Nome:', cliente.nome_cliente)
-        console.log('🎯 [authHelpers] Email original da tabela:', cliente.email_cliente)
-        console.log('🎯 [authHelpers] Email normalizado da tabela:', emailTabela)
-        console.log('🎯 [authHelpers] Email procurado:', normalizedEmail)
-        console.log('🎯 [authHelpers] ID:', cliente.id)
+      // ESTRATÉGIA 1: Busca exata (case insensitive)
+      let clienteEncontrado = todosClientes.find(cliente => {
+        if (!cliente.email_cliente) return false
+        const emailTabela = cliente.email_cliente.toLowerCase().trim()
+        return emailTabela === normalizedEmail
+      })
+      
+      if (clienteEncontrado) {
+        console.log('✅ [authHelpers] CLIENTE ENCONTRADO (busca exata):', clienteEncontrado.nome_cliente)
+        return 'cliente'
       }
       
-      return match
-    })
-
-    if (clienteEncontrado) {
-      console.log('✅ [authHelpers] === RETORNANDO TIPO: CLIENTE ===')
-      return 'cliente'
+      // ESTRATÉGIA 2: Busca por inclusão (para casos com caracteres extras)
+      clienteEncontrado = todosClientes.find(cliente => {
+        if (!cliente.email_cliente) return false
+        const emailTabela = cliente.email_cliente.toLowerCase().trim()
+        return emailTabela.includes(normalizedEmail) || normalizedEmail.includes(emailTabela)
+      })
+      
+      if (clienteEncontrado) {
+        console.log('✅ [authHelpers] CLIENTE ENCONTRADO (busca por inclusão):', clienteEncontrado.nome_cliente)
+        return 'cliente'
+      }
+      
+      // ESTRATÉGIA 3: Busca ignorando caracteres especiais
+      const emailLimpo = normalizedEmail.replace(/[^a-z0-9@.]/g, '')
+      clienteEncontrado = todosClientes.find(cliente => {
+        if (!cliente.email_cliente) return false
+        const emailTabelaLimpo = cliente.email_cliente.toLowerCase().replace(/[^a-z0-9@.]/g, '')
+        return emailTabelaLimpo === emailLimpo
+      })
+      
+      if (clienteEncontrado) {
+        console.log('✅ [authHelpers] CLIENTE ENCONTRADO (busca limpa):', clienteEncontrado.nome_cliente)
+        return 'cliente'
+      }
+      
+      console.log('❌ [authHelpers] Cliente NÃO encontrado após todas as estratégias')
     }
 
-    // TERCEIRO: Verificar gestores (apenas se não for cliente)
-    console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
-    console.log('🔍 [authHelpers] Buscando por email ILIKE:', `"${normalizedEmail}"`)
-    const gestorStartTime = Date.now()
+    // TERCEIRO: Verificar gestores
+    console.log('🔍 [authHelpers] Verificando GESTORES...')
     
     const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
@@ -90,36 +92,19 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       .eq('ativo', true)
       .maybeSingle()
 
-    const gestorEndTime = Date.now()
-    console.log(`🔍 [authHelpers] Consulta gestores levou: ${gestorEndTime - gestorStartTime}ms`)
-    console.log('🔍 [authHelpers] Resultado gestor - data:', gestorData)
-    console.log('🔍 [authHelpers] Resultado gestor - error:', gestorError)
+    console.log('🔍 [authHelpers] Resultado gestor:', gestorData)
+    console.log('🔍 [authHelpers] Erro gestor:', gestorError)
 
     if (!gestorError && gestorData) {
-      console.log('✅ [authHelpers] GESTOR ENCONTRADO!')
-      console.log('✅ [authHelpers] Nome:', gestorData.nome)
-      console.log('✅ [authHelpers] Email encontrado na tabela:', gestorData.email)
-      console.log('✅ [authHelpers] === RETORNANDO TIPO: GESTOR ===')
+      console.log('✅ [authHelpers] GESTOR ENCONTRADO:', gestorData.nome)
       return 'gestor'
     }
 
-    // QUARTO: Se não encontrou em nenhuma tabela
-    console.log('❌ [authHelpers] === DIAGNÓSTICO DE FALHA ===')
-    console.log('❌ [authHelpers] Email não encontrado em TODOS_CLIENTES nem GESTORES')
-    console.log('❌ [authHelpers] Detalhes da busca:')
-    console.log('   - Email procurado (normalizado):', normalizedEmail)
-    console.log('   - Total de clientes na tabela:', todosClientes?.length || 0)
-    console.log('   - Gestor Error:', gestorError)
-    console.log('   - Gestor Data:', gestorData)
-    console.log('✅ [authHelpers] === RETORNANDO TIPO: UNAUTHORIZED ===')
-    
+    console.log('❌ [authHelpers] Usuário não encontrado em nenhuma tabela')
     return 'unauthorized'
 
   } catch (error) {
-    console.error('❌ [authHelpers] === ERRO CRÍTICO ===')
-    console.error('❌ [authHelpers] Erro na verificação:', error)
-    console.error('❌ [authHelpers] Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
-    console.log('✅ [authHelpers] === RETORNANDO TIPO: ERROR ===')
+    console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
     return 'error'
   }
 }
@@ -128,21 +113,12 @@ export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
   
   try {
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout ao buscar nome do gestor')), 5000)
-    )
-    
-    const gestorPromise = supabase
+    const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
       .select('nome')
       .ilike('email', normalizedEmail)
       .eq('ativo', true)
       .single()
-
-    const { data: gestorData, error: gestorError } = await Promise.race([
-      gestorPromise,
-      timeoutPromise
-    ]) as any
 
     if (!gestorError && gestorData) {
       return gestorData.nome
