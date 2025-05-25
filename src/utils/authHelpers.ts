@@ -6,60 +6,77 @@ export const normalizeEmail = (email: string): string => {
 }
 
 export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'> => {
-  console.log('🔍 [authHelpers] === VERIFICAÇÃO OTIMIZADA DE TIPO DE USUÁRIO ===')
-  console.log('🔍 [authHelpers] Email:', `"${email}"`)
+  console.log('🔍 [authHelpers] === VERIFICAÇÃO DETALHADA DE TIPO DE USUÁRIO ===')
+  console.log('🔍 [authHelpers] Email original:', `"${email}"`)
   
   const normalizedEmail = normalizeEmail(email)
+  console.log('🔍 [authHelpers] Email normalizado:', `"${normalizedEmail}"`)
   
   try {
-    // ESTRATÉGIA OTIMIZADA: Fazer as duas consultas em paralelo
-    const [gestorPromise, clientePromise] = [
-      supabase
-        .from('gestores')
-        .select('nome, email, ativo')
-        .eq('email', normalizedEmail)
-        .eq('ativo', true)
-        .maybeSingle(),
-      supabase
-        .from('todos_clientes')
-        .select('email_cliente, nome_cliente')
-        .eq('email_cliente', normalizedEmail)
-        .maybeSingle()
-    ]
+    // PRIMEIRO: Verificar se é admin
+    if (normalizedEmail === 'lucas@admin.com') {
+      console.log('✅ [authHelpers] Usuário é ADMIN (hardcoded)')
+      return 'admin'
+    }
 
-    // Executar ambas consultas simultaneamente com timeout
-    const timeoutPromise = new Promise((_, reject) => 
-      setTimeout(() => reject(new Error('Timeout nas consultas')), 8000)
-    )
+    // SEGUNDO: Verificar gestores
+    console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
+    const gestorStartTime = Date.now()
+    
+    const { data: gestorData, error: gestorError } = await supabase
+      .from('gestores')
+      .select('nome, email, ativo')
+      .eq('email', normalizedEmail)
+      .eq('ativo', true)
+      .maybeSingle()
 
-    const [gestorResult, clienteResult] = await Promise.race([
-      Promise.all([gestorPromise, clientePromise]),
-      timeoutPromise
-    ]) as [any, any]
+    const gestorEndTime = Date.now()
+    console.log(`🔍 [authHelpers] Consulta gestores levou: ${gestorEndTime - gestorStartTime}ms`)
+    console.log('🔍 [authHelpers] Resultado gestor - data:', gestorData)
+    console.log('🔍 [authHelpers] Resultado gestor - error:', gestorError)
 
-    const { data: gestorData, error: gestorError } = gestorResult
-    const { data: clienteData, error: clienteError } = clienteResult
-
-    console.log('🔍 [authHelpers] Resultado gestor:', gestorData)
-    console.log('🔍 [authHelpers] Resultado cliente:', clienteData)
-
-    // Verificar gestor primeiro
     if (!gestorError && gestorData) {
       console.log('✅ [authHelpers] Usuário é GESTOR:', gestorData.nome)
       return 'gestor'
     }
 
-    // Verificar cliente
+    // TERCEIRO: Verificar clientes
+    console.log('🔍 [authHelpers] Verificando tabela TODOS_CLIENTES...')
+    const clienteStartTime = Date.now()
+    
+    const { data: clienteData, error: clienteError } = await supabase
+      .from('todos_clientes')
+      .select('email_cliente, nome_cliente, id')
+      .eq('email_cliente', normalizedEmail)
+      .maybeSingle()
+
+    const clienteEndTime = Date.now()
+    console.log(`🔍 [authHelpers] Consulta clientes levou: ${clienteEndTime - clienteStartTime}ms`)
+    console.log('🔍 [authHelpers] Resultado cliente - data:', clienteData)
+    console.log('🔍 [authHelpers] Resultado cliente - error:', clienteError)
+
     if (!clienteError && clienteData) {
       console.log('✅ [authHelpers] Usuário é CLIENTE:', clienteData.nome_cliente || 'Nome não informado')
+      console.log('✅ [authHelpers] ID do cliente:', clienteData.id)
       return 'cliente'
     }
 
-    console.log('❌ [authHelpers] Usuário não encontrado em nenhuma tabela')
+    // QUARTO: Se não encontrou em nenhuma tabela
+    console.log('❌ [authHelpers] === DIAGNÓSTICO DE FALHA ===')
+    console.log('❌ [authHelpers] Email não encontrado em GESTORES nem TODOS_CLIENTES')
+    console.log('❌ [authHelpers] Detalhes da busca:')
+    console.log('   - Gestor Error:', gestorError)
+    console.log('   - Gestor Data:', gestorData)
+    console.log('   - Cliente Error:', clienteError)
+    console.log('   - Cliente Data:', clienteData)
+    console.log('❌ [authHelpers] Email procurado:', normalizedEmail)
+    
     return 'unauthorized'
 
   } catch (error) {
-    console.error('❌ [authHelpers] Erro crítico na verificação:', error)
+    console.error('❌ [authHelpers] === ERRO CRÍTICO ===')
+    console.error('❌ [authHelpers] Erro na verificação:', error)
+    console.error('❌ [authHelpers] Stack trace:', error instanceof Error ? error.stack : 'No stack trace')
     return 'error'
   }
 }

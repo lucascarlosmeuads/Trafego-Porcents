@@ -12,12 +12,12 @@ export function useAuthState() {
 
   const isAdmin = user?.email === 'lucas@admin.com'
 
-  // Otimizar updateUserType com useCallback e timeout de segurança
   const updateUserType = useCallback(async (email: string) => {
-    console.log('🔍 [useAuthState] Atualizando tipo de usuário para:', email)
+    console.log('🔍 [useAuthState] === INICIANDO VERIFICAÇÃO DE TIPO ===')
+    console.log('🔍 [useAuthState] Email recebido:', `"${email}"`)
     
     if (email === 'lucas@admin.com') {
-      console.log('🔍 [useAuthState] Usuário é ADMIN')
+      console.log('🔍 [useAuthState] Usuário é ADMIN (hardcoded)')
       setIsGestor(false)
       setIsCliente(false)
       setCurrentManagerName('Administrador')
@@ -25,46 +25,70 @@ export function useAuthState() {
     }
 
     try {
-      // Timeout de segurança para evitar travamento
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('Timeout na verificação de usuário')), 10000)
-      )
+      const startTime = Date.now()
+      console.log('🔍 [useAuthState] Chamando checkUserType...')
       
-      const userTypePromise = checkUserType(email)
+      const userType = await checkUserType(email)
       
-      const userType = await Promise.race([userTypePromise, timeoutPromise]) as string
-      
-      console.log('🎯 [useAuthState] Tipo de usuário determinado:', userType)
+      const endTime = Date.now()
+      console.log(`🔍 [useAuthState] checkUserType completou em ${endTime - startTime}ms`)
+      console.log('🎯 [useAuthState] === RESULTADO FINAL ===')
+      console.log('🎯 [useAuthState] Tipo determinado:', userType)
       
       switch (userType) {
         case 'gestor':
+          console.log('✅ [useAuthState] Configurando como GESTOR')
           setIsGestor(true)
           setIsCliente(false)
           const managerName = await getManagerName(email)
           setCurrentManagerName(managerName)
-          console.log('✅ [useAuthState] Definido como GESTOR:', managerName)
+          console.log('✅ [useAuthState] Nome do gestor:', managerName)
           break
+          
         case 'cliente':
+          console.log('✅ [useAuthState] Configurando como CLIENTE')
           setIsGestor(false)
           setIsCliente(true)
           setCurrentManagerName('')
-          console.log('✅ [useAuthState] Definido como CLIENTE')
+          console.log('✅ [useAuthState] Estado cliente configurado')
           break
-        default:
+          
+        case 'unauthorized':
+          console.log('❌ [useAuthState] Usuário SEM PERMISSÃO')
           setIsGestor(false)
           setIsCliente(false)
           setCurrentManagerName('')
-          console.log('❌ [useAuthState] Usuário sem permissão:', userType)
+          console.log('❌ [useAuthState] Email:', email, 'não encontrado nas tabelas permitidas')
+          break
+          
+        case 'error':
+          console.log('❌ [useAuthState] ERRO na verificação')
+          setIsGestor(false)
+          setIsCliente(false)
+          setCurrentManagerName('')
+          break
+          
+        default:
+          console.log('❌ [useAuthState] Tipo desconhecido:', userType)
+          setIsGestor(false)
+          setIsCliente(false)
+          setCurrentManagerName('')
           break
       }
+      
+      console.log('🔍 [useAuthState] === ESTADO FINAL ===')
+      console.log('🔍 [useAuthState] isAdmin:', user?.email === 'lucas@admin.com')
+      console.log('🔍 [useAuthState] isGestor:', userType === 'gestor')
+      console.log('🔍 [useAuthState] isCliente:', userType === 'cliente')
+      
     } catch (error) {
+      console.error('❌ [useAuthState] === ERRO CRÍTICO ===')
       console.error('❌ [useAuthState] Erro ao determinar tipo de usuário:', error)
-      // Em caso de erro, não deixar o usuário travado
       setIsGestor(false)
       setIsCliente(false)
       setCurrentManagerName('')
     }
-  }, [])
+  }, [user?.email])
 
   const resetUserState = useCallback(() => {
     console.log('🧹 [useAuthState] Resetando estado do usuário')
