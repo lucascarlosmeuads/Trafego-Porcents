@@ -207,7 +207,7 @@ export function ClienteRow({
     )
   }
 
-  // UPDATED: Render briefing materials cell with only "Ver" button (no edit icon)
+  // Render briefing materials cell with only "Ver" button (no edit icon)
   const renderBriefingCell = () => {
     return (
       <div className="flex items-center gap-1">
