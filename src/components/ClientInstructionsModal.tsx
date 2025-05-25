@@ -1,5 +1,4 @@
 
-
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -88,13 +87,6 @@ Qualquer dúvida, entre em contato conosco!`
             </Button>
           </div>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <p className="text-blue-800 text-sm">
-              <strong>💡 Dica:</strong> O cliente poderá criar sua conta usando o mesmo e-mail cadastrado aqui. 
-              Depois de fazer login, ele terá acesso apenas aos seus próprios dados e campanhas.
-            </p>
-          </div>
-
           <div className="flex justify-end gap-2 pt-4">
             <Button onClick={onClose} className="w-full">
               Entendi, fechar
@@ -105,4 +97,3 @@ Qualquer dúvida, entre em contato conosco!`
     </Dialog>
   )
 }
-
