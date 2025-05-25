@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/useAuth'
 
 interface BriefingData {
   nome_produto: string
@@ -44,6 +45,7 @@ export function BriefingMaterialsModal({
   trigger, 
   filterType = 'all' 
 }: BriefingMaterialsModalProps) {
+  const { isAdmin, user } = useAuth()
   const [briefing, setBriefing] = useState<BriefingData | null>(null)
   const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
   const [loading, setLoading] = useState(false)
@@ -146,9 +148,6 @@ export function BriefingMaterialsModal({
     console.log('🚀 [Manager Upload] Iniciando upload de', files.length, 'arquivo(s)')
 
     try {
-      // Ensure storage bucket exists
-      // await ensureClienteArquivosBucket()
-
       let successCount = 0
       let errorCount = 0
 
@@ -225,7 +224,6 @@ export function BriefingMaterialsModal({
 
           if (dbError) {
             console.error('❌ [Manager Upload] Erro ao salvar no banco:', dbError)
-            console.error('❌ [Manager Upload] Detalhes do erro:', JSON.stringify(dbError, null, 2))
             
             // Tentar remover o arquivo do storage se falhou no banco
             try {
@@ -490,8 +488,8 @@ export function BriefingMaterialsModal({
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                    {/* Upload de novos arquivos pelo gestor */}
-                    {filterType === 'creative' && (
+                    {/* Upload de novos arquivos pelo gestor - apenas para admins e gestores */}
+                    {(isAdmin || user?.email) && (
                       <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
                         <div className="flex items-center gap-2 mb-2">
                           <Upload className="w-5 h-5 text-purple-600" />
@@ -520,7 +518,10 @@ export function BriefingMaterialsModal({
                     {/* Materiais enviados pelo cliente */}
                     {arquivosCliente.length > 0 && (
                       <div>
-                        <h4 className="font-medium text-blue-700 mb-3">Materiais enviados pelo cliente ({arquivosCliente.length})</h4>
+                        <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
+                          <User className="w-4 h-4" />
+                          Materiais enviados pelo cliente ({arquivosCliente.length})
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {arquivosCliente.map((arquivo) => (
                             <div key={arquivo.id} className="border rounded-lg p-3 bg-blue-50">
@@ -565,7 +566,10 @@ export function BriefingMaterialsModal({
                     {/* Criativos adicionados pela equipe */}
                     {arquivosGestor.length > 0 && (
                       <div>
-                        <h4 className="font-medium text-purple-700 mb-3">Criativos adicionados pela equipe ({arquivosGestor.length})</h4>
+                        <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
+                          <Upload className="w-4 h-4" />
+                          Criativos da Tráfego Porcents ({arquivosGestor.length})
+                        </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                           {arquivosGestor.map((arquivo) => (
                             <div key={arquivo.id} className="border-2 border-purple-300 rounded-lg p-3 bg-purple-100">
@@ -574,11 +578,15 @@ export function BriefingMaterialsModal({
                                   {getFileIcon(arquivo.tipo_arquivo)}
                                   <div className="min-w-0 flex-1">
                                     <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
-                                    <p className="text-xs text-purple-600">
-                                      {formatFileSize(arquivo.tamanho_arquivo)} • 
-                                      {new Date(arquivo.created_at).toLocaleDateString('pt-BR')} • 
-                                      Equipe
-                                    </p>
+                                    <div className="flex items-center gap-1">
+                                      <Badge variant="secondary" className="text-xs px-1 py-0">
+                                        Equipe
+                                      </Badge>
+                                      <p className="text-xs text-purple-600">
+                                        {formatFileSize(arquivo.tamanho_arquivo)} • 
+                                        {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
+                                      </p>
+                                    </div>
                                   </div>
                                 </div>
                               </div>
