@@ -19,7 +19,6 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
-import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -175,16 +174,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
-      {/* Campo de descrição do problema */}
-      {editandoProblema && (
-        <ProblemaDescricao
-          clienteId={editandoProblema}
-          descricaoAtual={problemaDescricao}
-          onSave={handleProblemaDescricaoSave}
-          onCancel={handleProblemaDescricaoCancel}
-        />
-      )}
-      
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
           <Table className="table-dark">
@@ -380,13 +369,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       return
     }
 
-    // Se o status é "Problema", abrir o campo de descrição
-    if (newStatus === 'Problema') {
-      setEditandoProblema(clienteId)
-      setProblemaDescricao('')
-      return
-    }
-
     // Determinar se é status de campanha ou status de site
     const isSiteStatus = ['pendente', 'aguardando_link', 'nao_precisa', 'finalizado'].includes(newStatus)
     const field = isSiteStatus ? 'site_status' : 'status_campanha'
@@ -422,52 +404,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     } finally {
       setUpdatingStatus(null)
     }
-  }
-
-  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
-    try {
-      // Primeiro, atualizar o status para Problema
-      const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
-      if (!statusSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao alterar status para Problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      // Depois, salvar a descrição do problema
-      const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
-      if (!descricaoSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao salvar descrição do problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Problema registrado com sucesso",
-      })
-      
-      return true
-    } catch (error) {
-      console.error('Erro ao salvar problema:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao registrar problema",
-        variant: "destructive",
-      })
-      return false
-    }
-  }
-
-  const handleProblemaDescricaoCancel = () => {
-    setEditandoProblema(null)
-    setProblemaDescricao('')
   }
 
   const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {

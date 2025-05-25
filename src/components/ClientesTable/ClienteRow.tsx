@@ -6,7 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Input } from '@/components/ui/input'
-import { Calendar, Eye, EyeOff, Smartphone, Monitor, ExternalLink, Edit, Save, X } from 'lucide-react'
+import { Calendar, Eye, ExternalLink, Edit, Save, X, AlertTriangle } from 'lucide-react'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { ComissaoButton } from './ComissaoButton'
 import { ProblemaDescricao } from './ProblemaDescricao'
@@ -35,6 +35,7 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
+  const [showProblemaDescricao, setShowProblemaDescricao] = useState(false)
 
   // Simple permission check - admins can always change, managers can change their own clients
   const canChangeStatus = isAdmin || cliente.email_gestor === userEmail
@@ -67,6 +68,8 @@ export function ClienteRow({
         return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
       case 'Off':
         return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Problema':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
       case 'Reembolso':
         return 'bg-red-500/20 text-red-700 border border-red-500/30'
       default:
@@ -75,8 +78,36 @@ export function ClienteRow({
   }
 
   const handleStatusChange = (newStatus: string) => {
+    // If changing to "Problema", show the description field
+    if (newStatus === 'Problema') {
+      setShowProblemaDescricao(true)
+      return
+    }
+    
     console.log(`Alterando status do cliente ${cliente.id} para: ${newStatus}`)
     onUpdateCliente(cliente.id, 'status_campanha', newStatus)
+  }
+
+  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
+    try {
+      // First update status to Problema
+      const statusSuccess = await onUpdateCliente(clienteId, 'status_campanha', 'Problema')
+      if (!statusSuccess) return false
+      
+      // Then save the description
+      const descricaoSuccess = await onUpdateCliente(clienteId, 'descricao_problema', descricao)
+      if (descricaoSuccess) {
+        setShowProblemaDescricao(false)
+      }
+      return descricaoSuccess
+    } catch (error) {
+      console.error('Error saving problema description:', error)
+      return false
+    }
+  }
+
+  const handleProblemaDescricaoCancel = () => {
+    setShowProblemaDescricao(false)
   }
 
   const startEdit = (field: string, currentValue: string) => {
@@ -290,6 +321,29 @@ export function ClienteRow({
           </div>
         </div>
 
+        {/* Show problema description field when needed */}
+        {showProblemaDescricao && (
+          <div className="mt-4">
+            <ProblemaDescricao
+              clienteId={cliente.id}
+              descricaoAtual={cliente.descricao_problema}
+              onSave={handleProblemaDescricaoSave}
+              onCancel={handleProblemaDescricaoCancel}
+            />
+          </div>
+        )}
+
+        {/* Show existing problem description if status is Problema */}
+        {cliente.status_campanha === 'Problema' && cliente.descricao_problema && !showProblemaDescricao && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+            <div className="flex items-center gap-2 text-red-700 mb-2">
+              <AlertTriangle className="w-4 h-4" />
+              <span className="font-medium">Problema Registrado</span>
+            </div>
+            <p className="text-sm text-red-600">{cliente.descricao_problema}</p>
+          </div>
+        )}
+
         <div className="flex items-center justify-between pt-2 border-t">
           <div className="flex gap-2">
             <TooltipProvider>
@@ -365,148 +419,165 @@ export function ClienteRow({
   }
 
   return (
-    <TableRow className="border-border hover:bg-muted/20 transition-colors group">
-      <TableCell className="font-mono text-xs text-foreground">
-        {String(index + 1).padStart(3, '0')}
-      </TableCell>
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
-        </div>
-      </TableCell>
-      <TableCell className="min-w-[200px]">
-        {renderEditableCell('nome_cliente', cliente.nome_cliente, 'Nome do cliente')}
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderEditableCell('telefone', cliente.telefone, 'Telefone')}
-      </TableCell>
-      <TableCell className="min-w-[180px]">
-        {renderEditableCell('email_gestor', cliente.email_gestor, 'Email do gestor')}
-      </TableCell>
-      <TableCell className="min-w-[180px]">
-        <Select 
-          value={cliente.status_campanha || ''}
-          onValueChange={handleStatusChange}
-          disabled={!canChangeStatus}
-        >
-          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-            <SelectValue>
-              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                {cliente.status_campanha || 'Sem status'}
-              </span>
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border z-50">
-            {STATUS_CAMPANHA.map(status => (
-              <SelectItem key={status} value={status}>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                  {status}
+    <>
+      <TableRow className="border-border hover:bg-muted/20 transition-colors group">
+        <TableCell className="font-mono text-xs text-foreground">
+          {String(index + 1).padStart(3, '0')}
+        </TableCell>
+        <TableCell>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
+          </div>
+        </TableCell>
+        <TableCell className="min-w-[200px]">
+          {renderEditableCell('nome_cliente', cliente.nome_cliente, 'Nome do cliente')}
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderEditableCell('telefone', cliente.telefone, 'Telefone')}
+        </TableCell>
+        <TableCell className="min-w-[180px]">
+          {renderEditableCell('email_gestor', cliente.email_gestor, 'Email do gestor')}
+        </TableCell>
+        <TableCell className="min-w-[180px]">
+          <Select 
+            value={cliente.status_campanha || ''}
+            onValueChange={handleStatusChange}
+            disabled={!canChangeStatus}
+          >
+            <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+              <SelectValue>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
+                  {cliente.status_campanha || 'Sem status'}
                 </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      <TableCell className="min-w-[100px]">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <BriefingMaterialsModal
-                  emailCliente={cliente.email_cliente || ''}
-                  nomeCliente={cliente.nome_cliente || 'Cliente'}
-                  filterType="briefing"
-                  trigger={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!hasBriefing}
-                      className={hasBriefing ? '' : 'opacity-50'}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver
-                    </Button>
-                  }
-                />
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border z-50">
+              {STATUS_CAMPANHA.map(status => (
+                <SelectItem key={status} value={status}>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                    {status}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </TableCell>
+        <TableCell className="min-w-[100px]">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <BriefingMaterialsModal
+                    emailCliente={cliente.email_cliente || ''}
+                    nomeCliente={cliente.nome_cliente || 'Cliente'}
+                    filterType="briefing"
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!hasBriefing}
+                        className={hasBriefing ? '' : 'opacity-50'}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver
+                      </Button>
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              {!hasBriefing && (
+                <TooltipContent>
+                  <p>Aguardando envio do cliente</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </TableCell>
+        <TableCell className="min-w-[100px]">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div>
+                  <BriefingMaterialsModal
+                    emailCliente={cliente.email_cliente || ''}
+                    nomeCliente={cliente.nome_cliente || 'Cliente'}
+                    filterType="creative"
+                    allowManagerUpload={isAdmin}
+                    trigger={
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={!hasCreative && !isAdmin}
+                        className={hasCreative || isAdmin ? '' : 'opacity-50'}
+                      >
+                        <Eye className="w-4 h-4 mr-1" />
+                        Ver
+                      </Button>
+                    }
+                  />
+                </div>
+              </TooltipTrigger>
+              {!hasCreative && !isAdmin && (
+                <TooltipContent>
+                  <p>Aguardando envio do cliente</p>
+                </TooltipContent>
+              )}
+            </Tooltip>
+          </TooltipProvider>
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderLinkCell('link_grupo', cliente.link_grupo, 'grupo')}
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderLinkCell('link_briefing', cliente.link_briefing, 'briefing')}
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderLinkCell('link_criativo', cliente.link_criativo, 'criativo')}
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderLinkCell('link_site', cliente.link_site, 'site')}
+        </TableCell>
+        <TableCell className="min-w-[120px]">
+          {renderEditableCell('numero_bm', cliente.numero_bm, 'Número BM')}
+        </TableCell>
+        <TableCell className="min-w-[100px]">
+          <ComissaoButton 
+            cliente={cliente} 
+            onUpdateCliente={onUpdateCliente}
+            isAdmin={isAdmin}
+          />
+        </TableCell>
+      </TableRow>
+      
+      {/* Show problema description field when needed */}
+      {showProblemaDescricao && (
+        <TableRow>
+          <TableCell colSpan={14} className="p-4">
+            <ProblemaDescricao
+              clienteId={cliente.id}
+              descricaoAtual={cliente.descricao_problema}
+              onSave={handleProblemaDescricaoSave}
+              onCancel={handleProblemaDescricaoCancel}
+            />
+          </TableCell>
+        </TableRow>
+      )}
+      
+      {/* Show existing problem description if status is Problema */}
+      {cliente.status_campanha === 'Problema' && cliente.descricao_problema && !showProblemaDescricao && (
+        <TableRow>
+          <TableCell colSpan={14} className="p-4">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
+              <div className="flex items-center gap-2 text-red-700 mb-2">
+                <AlertTriangle className="w-4 h-4" />
+                <span className="font-medium">Problema Registrado</span>
               </div>
-            </TooltipTrigger>
-            {!hasBriefing && (
-              <TooltipContent>
-                <p>Aguardando envio do cliente</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </TableCell>
-      <TableCell className="min-w-[100px]">
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div>
-                <BriefingMaterialsModal
-                  emailCliente={cliente.email_cliente || ''}
-                  nomeCliente={cliente.nome_cliente || 'Cliente'}
-                  filterType="creative"
-                  allowManagerUpload={isAdmin}
-                  trigger={
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={!hasCreative && !isAdmin}
-                      className={hasCreative || isAdmin ? '' : 'opacity-50'}
-                    >
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver
-                    </Button>
-                  }
-                />
-              </div>
-            </TooltipTrigger>
-            {!hasCreative && !isAdmin && (
-              <TooltipContent>
-                <p>Aguardando envio do cliente</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderLinkCell('link_grupo', cliente.link_grupo, 'grupo')}
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderLinkCell('link_briefing', cliente.link_briefing, 'briefing')}
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderLinkCell('link_criativo', cliente.link_criativo, 'criativo')}
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderLinkCell('link_site', cliente.link_site, 'site')}
-      </TableCell>
-      <TableCell className="min-w-[120px]">
-        {renderEditableCell('numero_bm', cliente.numero_bm, 'Número BM')}
-      </TableCell>
-      <TableCell className="min-w-[100px]">
-        <ComissaoButton 
-          cliente={cliente} 
-          onUpdateCliente={onUpdateCliente}
-          isAdmin={isAdmin}
-        />
-      </TableCell>
-      <TableCell className="min-w-[200px]">
-        <ProblemaDescricao 
-          clienteId={cliente.id} 
-          descricaoAtual={cliente.descricao_problema}
-          onSave={async (clienteId: string, descricao: string) => {
-            const statusSuccess = await onUpdateCliente(clienteId, 'status_campanha', 'Problema')
-            if (!statusSuccess) return false
-            
-            const descricaoSuccess = await onUpdateCliente(clienteId, 'descricao_problema', descricao)
-            return descricaoSuccess
-          }}
-          onCancel={() => {}}
-        />
-      </TableCell>
-    </TableRow>
+              <p className="text-sm text-red-600">{cliente.descricao_problema}</p>
+            </div>
+          </TableCell>
+        </TableRow>
+      )}
+    </>
   )
 }
