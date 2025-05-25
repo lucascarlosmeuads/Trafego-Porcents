@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
@@ -84,7 +83,7 @@ export function CriarContasClientes() {
       try {
         // Verificar se o usuário já existe
         const { data: existingUsers } = await supabase.auth.admin.listUsers()
-        const userExists = existingUsers.users.some(user => 
+        const userExists = existingUsers.users.some((user: any) => 
           user.email?.toLowerCase() === emailItem.email.toLowerCase()
         )
 
