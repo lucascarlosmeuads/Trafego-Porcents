@@ -4,6 +4,8 @@ import type { Cliente } from '@/lib/supabase'
 
 export function useComissaoMetrics(clientes: Cliente[]) {
   const metrics = useMemo(() => {
+    // 💰 Total Pendente: comissões em vermelho que ainda podem ser editadas
+    // (todos os status exceto "No Ar", "Off", "Reembolso" e que não estão pagas)
     const comissoesPendentes = clientes.filter(cliente => 
       cliente.status_campanha !== 'No Ar' && 
       cliente.status_campanha !== 'Off' && 
@@ -11,6 +13,7 @@ export function useComissaoMetrics(clientes: Cliente[]) {
       !cliente.comissao_paga
     )
 
+    // 🟢 Disponível para Saque: comissões com status "No Ar" que ainda não foram solicitadas
     const comissoesDisponiveis = clientes.filter(cliente => 
       cliente.status_campanha === 'No Ar' && 
       !cliente.saque_solicitado &&

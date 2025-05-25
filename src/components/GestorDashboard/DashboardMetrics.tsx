@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp, AlertTriangle, CheckCircle, DollarSign, Clock } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
@@ -64,11 +65,11 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
 
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">Comissões Pendentes</CardTitle>
-          <Clock className="h-4 w-4 text-yellow-600" />
+          <CardTitle className="text-sm font-medium text-contrast">💰 Total Pendente</CardTitle>
+          <Clock className="h-4 w-4 text-amber-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-yellow-600">{comissaoMetrics.comissoesPendentes}</div>
+          <div className="text-2xl font-bold text-amber-600">{comissaoMetrics.comissoesPendentes}</div>
           <p className="text-xs text-contrast-secondary">
             R$ {comissaoMetrics.totalPendente.toFixed(2)}
           </p>
@@ -77,7 +78,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
 
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">Disponível para Saque</CardTitle>
+          <CardTitle className="text-sm font-medium text-contrast">🟢 Disponível para Saque</CardTitle>
           <DollarSign className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
