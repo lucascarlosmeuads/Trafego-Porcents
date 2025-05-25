@@ -29,6 +29,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (session?.user?.email) {
       console.log('✅ [useAuth] Usuário AUTENTICADO:', session.user.email)
+      console.log('🔍 [useAuth] Determinando tipo de usuário baseado apenas em autenticação válida')
       
       // Usar setTimeout para evitar deadlock no onAuthStateChange
       setTimeout(async () => {
@@ -96,7 +97,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []) // Dependências vazias para evitar loops
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 [useAuth] Tentativa de login para:', email)
+    console.log('🔐 [useAuth] === PROCESSO DE LOGIN ===')
+    console.log('📧 [useAuth] Email:', email)
+    console.log('🔍 [useAuth] Validação baseada APENAS no Supabase Auth')
     setLoading(true)
     
     try {
@@ -106,13 +109,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       
       if (error) {
-        console.error('❌ [useAuth] Falha na autenticação:', error.message)
+        console.error('❌ [useAuth] Falha na autenticação Supabase:', error.message)
+        console.error('🔥 [useAuth] Código do erro:', error.code)
         setLoading(false)
         return { error }
       }
       
       if (data.user) {
-        console.log('✅ [useAuth] Autenticação bem-sucedida para:', data.user.email)
+        console.log('✅ [useAuth] Login bem-sucedido para:', data.user.email)
+        console.log('🎯 [useAuth] Usuário autenticado via Supabase Auth')
       }
       
       return { error: null }
@@ -124,12 +129,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signUp = async (email: string, password: string) => {
+    console.log('🔐 [useAuth] === PROCESSO DE CADASTRO ===')
+    console.log('📧 [useAuth] Email:', email)
+    console.log('🔍 [useAuth] Validação baseada APENAS no Supabase Auth')
+    console.log('❌ [useAuth] NÃO verificando todos_clientes ou outras tabelas')
+    
     setLoading(true)
+    
     try {
-      const { error } = await supabase.auth.signUp({ email, password })
+      const { data, error } = await supabase.auth.signUp({ 
+        email, 
+        password 
+      })
+      
+      if (error) {
+        console.error('❌ [useAuth] Erro no cadastro Supabase:', error.message)
+        console.error('🔥 [useAuth] Código do erro:', error.code)
+        setLoading(false)
+        return { error }
+      }
+      
+      if (data.user) {
+        console.log('✅ [useAuth] Cadastro bem-sucedido para:', data.user.email)
+        console.log('🎯 [useAuth] Conta criada no Supabase Auth')
+      }
+      
       setLoading(false)
-      return { error }
+      return { error: null }
     } catch (error) {
+      console.error('❌ [useAuth] Erro inesperado no cadastro:', error)
       setLoading(false)
       return { error }
     }

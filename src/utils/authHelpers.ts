@@ -7,7 +7,8 @@ export const normalizeEmail = (email: string): string => {
 
 export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
-  console.log('🔍 [authHelpers] Email recebido:', `"${email}"`)
+  console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
+  console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
   
   const normalizedEmail = normalizeEmail(email)
   console.log('🔍 [authHelpers] Email normalizado:', `"${normalizedEmail}"`)
@@ -15,17 +16,18 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
   try {
     // LÓGICA BASEADA NO DOMÍNIO
     if (normalizedEmail.includes('@admin')) {
-      console.log('✅ [authHelpers] Usuário é ADMIN (domínio @admin)')
+      console.log('👑 [authHelpers] Usuário é ADMIN (domínio @admin)')
       return 'admin'
     }
 
     if (normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('✅ [authHelpers] Usuário é GESTOR (domínio @trafegoporcents.com)')
+      console.log('👨‍💼 [authHelpers] Usuário é GESTOR (domínio @trafegoporcents.com)')
       return 'gestor'
     }
 
     // TODOS OS OUTROS EMAILS SÃO CLIENTES
-    console.log('✅ [authHelpers] Usuário é CLIENTE (qualquer outro domínio)')
+    console.log('👤 [authHelpers] Usuário é CLIENTE (qualquer outro domínio)')
+    console.log('📋 [authHelpers] Verificando se existe em todos_clientes (apenas para logging)')
     
     // Check if client exists in todos_clientes (for logging purposes only)
     try {
@@ -40,20 +42,24 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       }
 
       if (clienteData) {
-        console.log('📋 [authHelpers] Cliente encontrado na tabela todos_clientes:', clienteData.nome_cliente)
+        console.log('✅ [authHelpers] Cliente encontrado na tabela todos_clientes:', clienteData.nome_cliente)
+        console.log('🆔 [authHelpers] ID do cliente:', clienteData.id)
       } else {
         console.log('📋 [authHelpers] Cliente NÃO encontrado na tabela todos_clientes')
         console.log('💡 [authHelpers] Isso é normal para novos usuários ou clientes sem registro na tabela')
+        console.log('🔧 [authHelpers] O sistema permitirá acesso como cliente mesmo sem registro na tabela')
       }
     } catch (error) {
       console.warn('⚠️ [authHelpers] Erro ao verificar cliente:', error)
+      console.log('🔧 [authHelpers] Permitindo acesso como cliente mesmo com erro na verificação')
     }
 
     return 'cliente'
 
   } catch (error) {
     console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
-    return 'error'
+    console.log('🔧 [authHelpers] Fallback: permitindo acesso como cliente')
+    return 'cliente' // Fallback to cliente instead of error
   }
 }
 
