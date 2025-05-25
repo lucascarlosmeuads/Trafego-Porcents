@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -194,7 +195,7 @@ export function AdminTable() {
           </div>
         )}
 
-        {/* Tabela para desktop - REMOVED "Grupo" column */}
+        {/* Tabela para desktop - Updated to match new header structure without Briefing column */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
