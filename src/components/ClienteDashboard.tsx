@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -73,20 +72,20 @@ export function ClienteDashboard() {
             onVendasUpdated={refetch}
           />
         )
-      case 'materiais':
-        return (
-          <ArquivosUpload 
-            emailCliente={user?.email || ''} 
-            arquivos={arquivos}
-            onArquivosUpdated={refetch}
-          />
-        )
       case 'briefing':
         return (
           <BriefingForm 
             briefing={briefing} 
             emailCliente={user?.email || ''} 
             onBriefingUpdated={refetch}
+          />
+        )
+      case 'materiais':
+        return (
+          <ArquivosUpload 
+            emailCliente={user?.email || ''} 
+            arquivos={arquivos}
+            onArquivosUpdated={refetch}
           />
         )
       case 'tutorial':

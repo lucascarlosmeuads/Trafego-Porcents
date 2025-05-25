@@ -9,9 +9,6 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubItem,
-  SidebarMenuSubButton,
   SidebarHeader,
 } from '@/components/ui/sidebar'
 
@@ -33,16 +30,14 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
       icon: DollarSign,
     },
     {
+      id: 'briefing',
+      title: 'Briefing',
+      icon: FileText,
+    },
+    {
       id: 'materiais',
-      title: 'Materiais',
+      title: 'Criativos',
       icon: Folder,
-      subItems: [
-        {
-          id: 'briefing',
-          title: 'Briefing',
-          icon: FileText,
-        }
-      ]
     },
     {
       id: 'tutorial',
@@ -52,10 +47,10 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
   ]
 
   return (
-    <Sidebar>
+    <Sidebar className="w-64">
       <SidebarHeader>
-        <div className="px-4 py-2">
-          <h2 className="text-lg font-semibold">Painel do Cliente</h2>
+        <div className="px-4 py-3">
+          <h2 className="text-lg font-semibold text-sidebar-foreground">Painel do Cliente</h2>
         </div>
       </SidebarHeader>
       
@@ -69,26 +64,11 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
                   <SidebarMenuButton
                     isActive={activeTab === item.id}
                     onClick={() => onTabChange(item.id)}
+                    className="w-full justify-start gap-3 px-4 py-2.5 text-sm font-medium"
                   >
-                    <item.icon className="w-4 h-4" />
-                    <span>{item.title}</span>
+                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    <span className="truncate">{item.title}</span>
                   </SidebarMenuButton>
-                  
-                  {item.subItems && (
-                    <SidebarMenuSub>
-                      {item.subItems.map((subItem) => (
-                        <SidebarMenuSubItem key={subItem.id}>
-                          <SidebarMenuSubButton
-                            isActive={activeTab === subItem.id}
-                            onClick={() => onTabChange(subItem.id)}
-                          >
-                            <subItem.icon className="w-4 h-4" />
-                            <span>{subItem.title}</span>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
-                      ))}
-                    </SidebarMenuSub>
-                  )}
                 </SidebarMenuItem>
               ))}
             </SidebarMenu>
