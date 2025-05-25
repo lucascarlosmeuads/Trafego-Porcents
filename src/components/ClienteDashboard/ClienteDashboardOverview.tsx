@@ -2,14 +2,34 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { TrendingUp, DollarSign, FileText, Calendar } from 'lucide-react'
+import { TrendingUp, DollarSign, FileText, Calendar, CheckCircle, Circle, Clock } from 'lucide-react'
 import type { Cliente, BriefingCliente, VendaCliente, ArquivoCliente } from '@/hooks/useClienteData'
+import { useEffect } from 'react'
+import { supabase } from '@/lib/supabase'
 
 interface ClienteDashboardOverviewProps {
   cliente: Cliente | null
   briefing: BriefingCliente | null
   vendas: VendaCliente[]
   arquivos: ArquivoCliente[]
+}
+
+const STATUS_STAGES = [
+  'Preenchimento do Formulário',
+  'Brief',
+  'Criativo',
+  'Agendamento',
+  'No Ar',
+  'Otimização'
+]
+
+const STATUS_MAPPING = {
+  'Preenchimento do Formulário': 1,
+  'Brief': 2,
+  'Criativo': 3,
+  'Agendamento': 4,
+  'No Ar': 5,
+  'Otimização': 6
 }
 
 export function ClienteDashboardOverview({ 
@@ -22,43 +42,69 @@ export function ClienteDashboardOverview({
   const totalVendas = vendas.reduce((sum, venda) => sum + Number(venda.valor_venda || 0), 0)
   const totalComissoes = vendas.length * 60 // Assumindo R$ 60 por venda
   
-  const getStatusProgress = () => {
-    if (!cliente) return 0
-    
-    const status = cliente.status_campanha?.toLowerCase()
-    const statusMap: { [key: string]: number } = {
-      'briefing_pendente': 20,
-      'briefing_enviado': 40,
-      'criativo_pronto': 60,
-      'campanha_no_ar': 80,
-      'finalizada': 100
-    }
-    
-    return statusMap[status || ''] || 0
+  const getCurrentStage = () => {
+    if (!cliente?.status_campanha) return 1
+    return STATUS_MAPPING[cliente.status_campanha as keyof typeof STATUS_MAPPING] || 1
   }
 
-  const getStatusLabel = () => {
-    if (!cliente) return 'Status não disponível'
-    
-    const status = cliente.status_campanha?.toLowerCase()
-    const statusMap: { [key: string]: string } = {
-      'briefing_pendente': 'Aguardando Briefing',
-      'briefing_enviado': 'Briefing Enviado',
-      'criativo_pronto': 'Criativo Pronto',
-      'campanha_no_ar': 'Campanha no Ar',
-      'finalizada': 'Campanha Finalizada'
-    }
-    
-    return statusMap[status || ''] || 'Status Indefinido'
+  const getProgressPercentage = () => {
+    const currentStage = getCurrentStage()
+    return Math.round((currentStage / STATUS_STAGES.length) * 100)
   }
 
-  const getStatusColor = () => {
-    const progress = getStatusProgress()
-    if (progress >= 80) return 'bg-green-500'
-    if (progress >= 60) return 'bg-blue-500'
-    if (progress >= 40) return 'bg-yellow-500'
-    return 'bg-gray-500'
+  const getStageIcon = (stageIndex: number) => {
+    const currentStage = getCurrentStage()
+    
+    if (stageIndex < currentStage) {
+      return <CheckCircle className="w-5 h-5 text-green-500" />
+    } else if (stageIndex === currentStage) {
+      return <Clock className="w-5 h-5 text-blue-500" />
+    } else {
+      return <Circle className="w-5 h-5 text-gray-400" />
+    }
   }
+
+  const getStageStyle = (stageIndex: number) => {
+    const currentStage = getCurrentStage()
+    
+    if (stageIndex < currentStage) {
+      return 'bg-green-50 border-green-200 text-green-700'
+    } else if (stageIndex === currentStage) {
+      return 'bg-blue-50 border-blue-200 text-blue-700'
+    } else {
+      return 'bg-gray-50 border-gray-200 text-gray-500'
+    }
+  }
+
+  // Set up real-time subscription for status updates
+  useEffect(() => {
+    if (!cliente?.email_cliente) return
+
+    console.log('🔄 [ClienteDashboard] Configurando realtime para:', cliente.email_cliente)
+
+    const channel = supabase
+      .channel('cliente-status-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'todos_clientes',
+          filter: `email_cliente=eq.${cliente.email_cliente}`
+        },
+        (payload) => {
+          console.log('📡 [ClienteDashboard] Status atualizado:', payload)
+          // Force a re-render by updating the window
+          window.location.reload()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      console.log('🔄 [ClienteDashboard] Removendo realtime subscription')
+      supabase.removeChannel(channel)
+    }
+  }, [cliente?.email_cliente])
 
   return (
     <div className="space-y-6">
@@ -67,7 +113,7 @@ export function ClienteDashboardOverview({
         <p className="text-muted-foreground">Visão geral da sua campanha de tráfego</p>
       </div>
 
-      {/* Status da Campanha */}
+      {/* Status da Campanha com Progress Bar */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -75,17 +121,35 @@ export function ClienteDashboardOverview({
             Status da Campanha
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium">{getStatusLabel()}</span>
-            <Badge variant="outline" className={`${getStatusColor()} text-white`}>
-              {getStatusProgress()}%
+            <span className="text-sm font-medium">
+              {cliente?.status_campanha || 'Preenchimento do Formulário'}
+            </span>
+            <Badge variant="outline" className="bg-blue-500 text-white">
+              {getProgressPercentage()}% concluído
             </Badge>
           </div>
-          <Progress value={getStatusProgress()} className="w-full" />
+          
+          <Progress value={getProgressPercentage()} className="w-full h-3" />
+          
+          {/* Detailed Progress Steps */}
+          <div className="space-y-3">
+            {STATUS_STAGES.map((stage, index) => (
+              <div 
+                key={stage} 
+                className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${getStageStyle(index)}`}
+              >
+                {getStageIcon(index)}
+                <span className="font-medium text-sm">
+                  {index + 1}. {stage}
+                </span>
+              </div>
+            ))}
+          </div>
           
           {cliente && (
-            <div className="text-sm text-muted-foreground space-y-1">
+            <div className="text-sm text-muted-foreground space-y-1 pt-4 border-t">
               <p><strong>Cliente:</strong> {cliente.nome_cliente}</p>
               {cliente.data_venda && (
                 <p><strong>Data da Venda:</strong> {new Date(cliente.data_venda).toLocaleDateString('pt-BR')}</p>
@@ -180,7 +244,7 @@ export function ClienteDashboardOverview({
         </CardContent>
       </Card>
 
-      {/* Ações Rápidas */}
+      {/* Próximos Passos */}
       <Card>
         <CardHeader>
           <CardTitle>Próximos Passos</CardTitle>
