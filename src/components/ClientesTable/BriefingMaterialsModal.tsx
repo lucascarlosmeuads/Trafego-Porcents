@@ -57,7 +57,7 @@ export function BriefingMaterialsModal({
     if (!emailCliente || !open) return
 
     setLoading(true)
-    console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente)
+    console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
       // Buscar briefing apenas se for tipo 'briefing' ou 'all'
@@ -408,7 +408,7 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Briefing - apenas para tipo 'briefing' ou 'all' */}
+              {/* SEÇÃO DE BRIEFING - APENAS para filterType 'briefing' */}
               {(filterType === 'briefing' || filterType === 'all') && briefing && (
                 <Card>
                   <CardHeader>
@@ -478,7 +478,7 @@ export function BriefingMaterialsModal({
                 </Card>
               )}
 
-              {/* Arquivos Criativos - para tipo 'creative' ou 'all' */}
+              {/* SEÇÃO DE MATERIAIS CRIATIVOS - APENAS para filterType 'creative' */}
               {(filterType === 'creative' || filterType === 'all') && (
                 <Card>
                   <CardHeader>
