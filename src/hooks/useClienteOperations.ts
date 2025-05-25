@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -139,7 +138,6 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       }
 
       let clienteJaExistia = false
-      let clientePassword = ''
 
       if (existingCliente) {
         console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
@@ -164,24 +162,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
         console.log('✅ [useClienteOperations] Cliente existente atualizado com sucesso')
       } else {
-        // Step 2: Create Supabase Auth user for new client
-        console.log('🔐 [useClienteOperations] Criando usuário no Supabase Auth...')
-        clientePassword = generateRandomPassword()
-        
-        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-          email: clienteData.email_cliente,
-          password: clientePassword,
-          email_confirm: true // Auto-confirm email to avoid verification step
-        })
-
-        if (authError) {
-          console.error('❌ [useClienteOperations] Erro ao criar usuário no Auth:', authError)
-          throw new Error(`Erro ao criar usuário: ${authError.message}`)
-        }
-
-        console.log('✅ [useClienteOperations] Usuário criado no Supabase Auth:', authData.user?.id)
-
-        // Step 3: Create new client record
+        // Step 2: Create new client record (without Auth user creation)
         const novoCliente = {
           nome_cliente: String(clienteData.nome_cliente || ''),
           telefone: String(clienteData.telefone || ''),
@@ -209,29 +190,20 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
         if (error) {
           console.error('❌ [useClienteOperations] Erro ao inserir cliente:', error)
-          
-          // Rollback: Delete the auth user if client creation failed
-          try {
-            await supabase.auth.admin.deleteUser(authData.user!.id)
-            console.log('🔄 [useClienteOperations] Usuário Auth removido devido ao erro')
-          } catch (rollbackError) {
-            console.error('💥 [useClienteOperations] Erro no rollback:', rollbackError)
-          }
-          
           throw new Error(`Erro ao adicionar cliente: ${error.message}`)
         }
 
         console.log('✅ [useClienteOperations] Cliente adicionado com sucesso:', data)
       }
       
-      // Show success message with password (only for new clients)
-      if (!clienteJaExistia && clientePassword) {
+      // Show success message
+      if (!clienteJaExistia) {
         toast({
           title: "Cliente adicionado com sucesso!",
-          description: `Cliente criado e usuário Supabase Auth gerado.\n\nCredenciais para o cliente:\nEmail: ${clienteData.email_cliente}\nSenha: ${clientePassword}\n\n⚠️ Copie e envie essas credenciais para o cliente`,
-          duration: 10000 // 10 seconds to give time to copy
+          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista. O cliente poderá fazer login usando o email ${clienteData.email_cliente} quando criar sua conta.`,
+          duration: 5000
         })
-      } else if (clienteJaExistia) {
+      } else {
         toast({
           title: "Sucesso",
           description: "Dados do cliente atualizados com sucesso!"
