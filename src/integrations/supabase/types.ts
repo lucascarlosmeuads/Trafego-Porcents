@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       arquivos_cliente: {
         Row: {
-          author_type: string
           caminho_arquivo: string
           created_at: string
           email_cliente: string
@@ -21,7 +20,6 @@ export type Database = {
           tipo_arquivo: string
         }
         Insert: {
-          author_type?: string
           caminho_arquivo: string
           created_at?: string
           email_cliente: string
@@ -31,7 +29,6 @@ export type Database = {
           tipo_arquivo: string
         }
         Update: {
-          author_type?: string
           caminho_arquivo?: string
           created_at?: string
           email_cliente?: string

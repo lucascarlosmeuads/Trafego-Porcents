@@ -1,44 +1,72 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Calendar, Eye, ExternalLink, Edit, Save, X, AlertTriangle } from 'lucide-react'
-import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, FileText, Eye } from 'lucide-react'
+import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
-import { ProblemaDescricao } from './ProblemaDescricao'
-import { STATUS_CAMPANHA, type Cliente, type StatusCampanha } from '@/lib/supabase'
+import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 
 interface ClienteRowProps {
   cliente: Cliente
-  onUpdateCliente: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
-  briefings: { [key: string]: boolean }
-  arquivos: { [key: string]: number }
-  isAdmin?: boolean
-  userEmail?: string
+  selectedManager: string
   index: number
-  viewMode: 'table' | 'cards'
+  updatingStatus: string | null
+  editingLink: { clienteId: string, field: string } | null
+  linkValue: string
+  setLinkValue: (value: string) => void
+  editingBM: string | null
+  bmValue: string
+  setBmValue: (value: string) => void
+  updatingComission: string | null
+  getStatusColor: (status: string) => string
+  onStatusChange: (clienteId: string, newStatus: string) => void
+  onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
+  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
+  onLinkCancel: () => void
+  onBMEdit: (clienteId: string, currentValue: string) => void
+  onBMSave: (clienteId: string) => void
+  onBMCancel: () => void
+  onComissionToggle: (clienteId: string, currentStatus: boolean) => void
+  onComissionValueEdit: (clienteId: string, currentValue: number) => void
+  onComissionValueSave: (clienteId: string, newValue: number) => void
+  onComissionValueCancel: () => void
+  editingComissionValue: string | null
+  comissionValueInput: string
+  setComissionValueInput: (value: string) => void
 }
 
-export function ClienteRow({ 
-  cliente, 
-  onUpdateCliente, 
-  briefings, 
-  arquivos, 
-  isAdmin = false,
-  userEmail = '',
-  index, 
-  viewMode 
+export function ClienteRow({
+  cliente,
+  selectedManager,
+  index,
+  updatingStatus,
+  editingLink,
+  linkValue,
+  setLinkValue,
+  editingBM,
+  bmValue,
+  setBmValue,
+  updatingComission,
+  getStatusColor,
+  onStatusChange,
+  onLinkEdit,
+  onLinkSave,
+  onLinkCancel,
+  onBMEdit,
+  onBMSave,
+  onBMCancel,
+  onComissionToggle,
+  onComissionValueEdit,
+  onComissionValueSave,
+  onComissionValueCancel,
+  editingComissionValue,
+  comissionValueInput,
+  setComissionValueInput
 }: ClienteRowProps) {
-  const [editingField, setEditingField] = useState<string | null>(null)
-  const [editValue, setEditValue] = useState('')
-  const [showProblemaDescricao, setShowProblemaDescricao] = useState(false)
-
-  // Simple permission check - admins can always change, managers can change their own clients
-  const canChangeStatus = isAdmin || cliente.email_gestor === userEmail
+  const [showSiteOptions, setShowSiteOptions] = useState(false)
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -50,534 +78,583 @@ export function ClienteRow({
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Preenchimento do Formulário':
-        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
-      case 'Brief':
-        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
-      case 'Criativo':
-        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
-      case 'Site':
-        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
-      case 'Agendamento':
-        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
-      case 'No Ar':
-        return 'bg-green-500/20 text-green-700 border border-green-500/30'
-      case 'Otimização':
-        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
-      case 'Off':
-        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
-      case 'Problema':
-        return 'bg-red-500/20 text-red-700 border border-red-500/30'
-      case 'Reembolso':
-        return 'bg-red-500/20 text-red-700 border border-red-500/30'
-      default:
-        return 'bg-muted text-muted-foreground border border-border'
+  const calculateDateLimit = (dataVenda: string | null) => {
+    if (!dataVenda) return { text: '-', style: '' }
+    
+    const venda = new Date(dataVenda)
+    const limite = new Date(venda)
+    limite.setDate(limite.getDate() + 15)
+    
+    const hoje = new Date()
+    const diffTime = limite.getTime() - hoje.getTime()
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    
+    // NOVA LÓGICA: Se o status é "No Ar", mostrar como cumprido
+    if (cliente.status_campanha === 'No Ar') {
+      return {
+        text: '✅ Cumprido',
+        style: 'bg-green-100 text-green-800 border-green-300'
+      }
+    }
+    
+    // Se o status é "Otimização", mostrar como cumprido
+    if (cliente.status_campanha === 'Otimização') {
+      return {
+        text: '✅ Cumprido',
+        style: 'bg-green-100 text-green-800 border-green-300'
+      }
+    }
+    
+    if (diffDays < 0) {
+      return {
+        text: `Atrasado ${Math.abs(diffDays)} dias`,
+        style: 'bg-red-100 text-red-800 border-red-300'
+      }
+    } else {
+      return {
+        text: `Faltam ${diffDays} dias`,
+        style: 'bg-blue-100 text-blue-800 border-blue-300'
+      }
     }
   }
 
-  const handleStatusChange = (newStatus: string) => {
-    // If changing to "Problema", show the description field
-    if (newStatus === 'Problema') {
-      setShowProblemaDescricao(true)
+  const renderWhatsAppButton = (telefone: string) => {
+    if (!telefone) return <span className="text-xs text-contrast">-</span>
+    
+    // Limpar o número removendo caracteres especiais
+    const cleanPhone = telefone.replace(/\D/g, '')
+    
+    // Se não tiver DDD, assumir 55 (Brasil)
+    const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
+    
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+        onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
+      >
+        <MessageCircle className="w-3 h-3 mr-1" />
+        WhatsApp
+      </Button>
+    )
+  }
+
+  const renderLinkCell = (url: string, field: string, label: string) => {
+    const isEditing = editingLink?.clienteId === cliente.id && editingLink?.field === field
+    
+    if (isEditing) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
+            className="h-6 text-xs"
+            placeholder="https://..."
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => onLinkSave(cliente.id, field)}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={onLinkCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    if (!url) {
+      return (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0"
+          onClick={() => onLinkEdit(cliente.id, field, url)}
+        >
+          <Edit2 className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      )
+    }
+
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs"
+          onClick={() => window.open(url, '_blank')}
+        >
+          <ExternalLink className="w-3 h-3 mr-1" />
+          Ver
+        </Button>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0"
+          onClick={() => onLinkEdit(cliente.id, field, url)}
+        >
+          <Edit2 className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      </div>
+    )
+  }
+
+  // Render briefing materials cell with only "Ver" button (no edit icon)
+  const renderBriefingCell = () => {
+    return (
+      <div className="flex items-center gap-1">
+        {cliente.link_briefing ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => window.open(cliente.link_briefing, '_blank')}
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Link
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => onLinkEdit(cliente.id, 'link_briefing', cliente.link_briefing || '')}
+          >
+            <Edit2 className="w-3 h-3 text-muted-foreground" />
+          </Button>
+        )}
+        
+        {/* BRIEFING MATERIALS BUTTON - Only "Ver" button without edit icon */}
+        <BriefingMaterialsModal
+          emailCliente={cliente.email_cliente}
+          nomeCliente={cliente.nome_cliente}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              Ver
+            </Button>
+          }
+        />
+      </div>
+    )
+  }
+
+  const renderSiteCell = () => {
+    const siteStatus = cliente.site_status || 'pendente'
+    const siteUrl = cliente.link_site || ''
+    
+    // Se está editando o link do site
+    const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
+    if (isEditingLink) {
+      return (
+        <div className="flex items-center gap-1">
+          <Input
+            value={linkValue}
+            onChange={(e) => setLinkValue(e.target.value)}
+            className="h-6 text-xs"
+            placeholder="https://..."
+          />
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={handleSiteLinkSave}
+          >
+            <Check className="w-3 h-3 text-green-600" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={onLinkCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Se está mostrando as opções Sim/Não
+    if (showSiteOptions) {
+      return (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
+            onClick={() => handleSiteOptionSelect('aguardando_link')}
+          >
+            ✅ Precisa de site
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-7 px-2 text-xs bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
+            onClick={() => handleSiteOptionSelect('nao_precisa')}
+          >
+            ❌ Não precisa
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => setShowSiteOptions(false)}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
+        </div>
+      )
+    }
+
+    // Estados do site com ícone de edição sempre presente
+    switch (siteStatus) {
+      case 'nao_precisa':
+        return (
+          <div className="flex items-center gap-1">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
+              ❌ Não precisa
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowSiteOptions(true)}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
+          </div>
+        )
+
+      case 'aguardando_link':
+        return (
+          <div className="flex items-center gap-1">
+            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
+              🟡 Aguardando link
+            </span>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => {
+                // Limpar o link existente quando voltamos para aguardando link
+                onLinkEdit(cliente.id, 'link_site', '')
+              }}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
+          </div>
+        )
+
+      case 'finalizado':
+        if (siteUrl) {
+          return (
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
+                onClick={() => {
+                  // Corrigir a abertura do link: usar exatamente o valor salvo
+                  let urlToOpen = siteUrl.trim()
+                  
+                  // Se não começar com http:// ou https://, adicionar https://
+                  if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+                    urlToOpen = `https://${urlToOpen}`
+                  }
+                  
+                  window.open(urlToOpen, '_blank')
+                }}
+              >
+                🌐 Ver site
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0"
+                onClick={() => setShowSiteOptions(true)}
+              >
+                <Edit2 className="w-3 h-3 text-muted-foreground" />
+              </Button>
+            </div>
+          )
+        } else {
+          return (
+            <div className="flex items-center gap-1">
+              <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
+                🟡 Aguardando link
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-6 w-6 p-0"
+                onClick={() => {
+                  // Limpar o link existente quando voltamos para aguardando link
+                  onLinkEdit(cliente.id, 'link_site', '')
+                }}
+              >
+                <Edit2 className="w-3 h-3 text-muted-foreground" />
+              </Button>
+            </div>
+          )
+        }
+
+      default:
+        // Estado inicial - traço cinza com opção de editar
+        return (
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs text-gray-400 hover:text-gray-600"
+              onClick={() => setShowSiteOptions(true)}
+            >
+              —
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0"
+              onClick={() => setShowSiteOptions(true)}
+            >
+              <Edit2 className="w-3 h-3 text-muted-foreground" />
+            </Button>
+          </div>
+        )
+    }
+  }
+
+  const handleSiteOptionSelect = async (option: string) => {
+    console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
+    
+    try {
+      // Atualizar o site_status
+      await onStatusChange(cliente.id, option)
+      setShowSiteOptions(false)
+      
+      // Se mudou para "aguardando_link", limpar o link_site existente
+      if (option === 'aguardando_link') {
+        console.log('🧹 Limpando link_site existente')
+        await onStatusChange(cliente.id, 'aguardando_link')
+        // Limpar o link do site se existir
+        if (cliente.link_site) {
+          await onLinkSave(cliente.id, 'link_site')
+        }
+      }
+    } catch (error) {
+      console.error('❌ Erro ao atualizar opção do site:', error)
+    }
+  }
+
+  const handleSiteLinkSave = async () => {
+    console.log('💾 Salvando link do site:', linkValue)
+    
+    if (!linkValue.trim()) {
+      console.error('❌ Link do site está vazio')
       return
     }
     
-    console.log(`Alterando status do cliente ${cliente.id} para: ${newStatus}`)
-    onUpdateCliente(cliente.id, 'status_campanha', newStatus)
-  }
-
-  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
     try {
-      // First update status to Problema
-      const statusSuccess = await onUpdateCliente(clienteId, 'status_campanha', 'Problema')
-      if (!statusSuccess) return false
+      // Salvar o link do site
+      const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
-      // Then save the description
-      const descricaoSuccess = await onUpdateCliente(clienteId, 'descricao_problema', descricao)
-      if (descricaoSuccess) {
-        setShowProblemaDescricao(false)
+      if (linkSuccess) {
+        // Atualizar o status para finalizado
+        await onStatusChange(cliente.id, 'finalizado')
+        console.log('✅ Link salvo e status atualizado para finalizado')
+      } else {
+        console.error('❌ Falha ao salvar o link')
       }
-      return descricaoSuccess
     } catch (error) {
-      console.error('Error saving problema description:', error)
-      return false
+      console.error('❌ Erro ao salvar link do site:', error)
     }
   }
 
-  const handleProblemaDescricaoCancel = () => {
-    setShowProblemaDescricao(false)
-  }
-
-  const startEdit = (field: string, currentValue: string) => {
-    setEditingField(field)
-    setEditValue(currentValue || '')
-  }
-
-  const saveEdit = async () => {
-    if (editingField && editValue !== (cliente as any)[editingField]) {
-      const success = await onUpdateCliente(cliente.id, editingField, editValue)
-      if (success) {
-        setEditingField(null)
-        setEditValue('')
-      }
-    } else {
-      setEditingField(null)
-      setEditValue('')
-    }
-  }
-
-  const cancelEdit = () => {
-    setEditingField(null)
-    setEditValue('')
-  }
-
-  const hasOnClick = (url: string | null) => {
-    return url && url.trim() !== '' && url !== '-'
-  }
-
-  const handleLinkClick = (url: string | null, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (hasOnClick(url)) {
-      let finalUrl = url!.trim()
-      if (!finalUrl.startsWith('http://') && !finalUrl.startsWith('https://')) {
-        finalUrl = 'https://' + finalUrl
-      }
-      window.open(finalUrl, '_blank', 'noopener,noreferrer')
-    }
-  }
-
-  const renderEditableCell = (field: string, value: string | null, placeholder: string = '') => {
-    const displayValue = value || '-'
+  const renderBMCell = () => {
+    const isEditing = editingBM === cliente.id
     
-    if (editingField === field) {
+    if (isEditing) {
       return (
-        <div className="flex items-center gap-1 min-w-0">
+        <div className="flex items-center gap-1">
           <Input
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="h-8 text-xs min-w-0 flex-1"
-            placeholder={placeholder}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') saveEdit()
-              if (e.key === 'Escape') cancelEdit()
-            }}
+            value={bmValue}
+            onChange={(e) => setBmValue(e.target.value)}
+            className="h-6 text-xs"
+            placeholder="Número BM"
           />
-          <div className="flex gap-1 flex-shrink-0">
-            <Button onClick={saveEdit} size="sm" variant="ghost" className="h-6 w-6 p-0">
-              <Save className="w-3 h-3" />
-            </Button>
-            <Button onClick={cancelEdit} size="sm" variant="ghost" className="h-6 w-6 p-0">
-              <X className="w-3 h-3" />
-            </Button>
-          </div>
-        </div>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1 min-w-0">
-        <span className="text-xs text-foreground truncate flex-1">{displayValue}</span>
-        {isAdmin && (
           <Button
-            onClick={() => startEdit(field, value || '')}
             size="sm"
             variant="ghost"
-            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 flex-shrink-0"
+            className="h-6 w-6 p-0"
+            onClick={() => onBMSave(cliente.id)}
           >
-            <Edit className="w-3 h-3" />
+            <Check className="w-3 h-3 text-green-600" />
           </Button>
-        )}
-      </div>
-    )
-  }
-
-  const renderLinkCell = (field: string, value: string | null, label: string) => {
-    const displayValue = value || '-'
-    const hasValidLink = hasOnClick(value)
-    
-    if (editingField === field) {
-      return (
-        <div className="flex items-center gap-1 min-w-0">
-          <Input
-            value={editValue}
-            onChange={(e) => setEditValue(e.target.value)}
-            className="h-8 text-xs min-w-0 flex-1"
-            placeholder={`URL do ${label}`}
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') saveEdit()
-              if (e.key === 'Escape') cancelEdit()
-            }}
-          />
-          <div className="flex gap-1 flex-shrink-0">
-            <Button onClick={saveEdit} size="sm" variant="ghost" className="h-6 w-6 p-0">
-              <Save className="w-3 h-3" />
-            </Button>
-            <Button onClick={cancelEdit} size="sm" variant="ghost" className="h-6 w-6 p-0">
-              <X className="w-3 h-3" />
-            </Button>
-          </div>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={onBMCancel}
+          >
+            <X className="w-3 h-3 text-red-600" />
+          </Button>
         </div>
       )
     }
 
     return (
-      <div className="flex items-center gap-1 min-w-0">
+      <div className="flex items-center gap-1">
+        <span className="text-xs text-contrast">
+          {cliente.numero_bm || '-'}
+        </span>
         <Button
-          onClick={(e) => handleLinkClick(value, e)}
-          variant="ghost"
           size="sm"
-          className={`h-6 px-2 text-xs justify-start min-w-0 flex-1 ${
-            hasValidLink 
-              ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50' 
-              : 'text-muted-foreground cursor-default hover:bg-transparent'
-          }`}
-          disabled={!hasValidLink}
+          variant="ghost"
+          className="h-6 w-6 p-0"
+          onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
         >
-          <span className="truncate">{displayValue}</span>
-          {hasValidLink && <ExternalLink className="w-3 h-3 ml-1 flex-shrink-0" />}
+          <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
-        {isAdmin && (
-          <Button
-            onClick={() => startEdit(field, value || '')}
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 flex-shrink-0"
-          >
-            <Edit className="w-3 h-3" />
-          </Button>
-        )}
       </div>
     )
   }
 
-  // Check if client has briefing or creative materials
-  const hasBriefing = briefings[cliente.email_cliente || ''] || false
-  const hasCreative = (arquivos[cliente.email_cliente || ''] || 0) > 0
+  // Detectar se estamos no painel do gestor
+  const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
 
-  if (viewMode === 'cards') {
-    return (
-      <div className="bg-card border rounded-lg p-4 space-y-3 group">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="font-mono text-xs text-muted-foreground">
-              #{String(index + 1).padStart(3, '0')}
-            </span>
-            <span className="font-medium text-sm truncate">
-              {cliente.nome_cliente || 'Cliente sem nome'}
-            </span>
-          </div>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs text-muted-foreground">
-              {formatDate(cliente.data_venda)}
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div>
-            <span className="text-muted-foreground">Telefone:</span>
-            <div className="mt-1">
-              {renderEditableCell('telefone', cliente.telefone, 'Telefone')}
-            </div>
-          </div>
-          <div>
-            <span className="text-muted-foreground">Email Gestor:</span>
-            <div className="mt-1">
-              {renderEditableCell('email_gestor', cliente.email_gestor, 'Email do gestor')}
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <span className="text-muted-foreground text-sm">Status:</span>
-          <div className="mt-2">
-            <Select 
-              value={cliente.status_campanha || ''}
-              onValueChange={handleStatusChange}
-              disabled={!canChangeStatus}
-            >
-              <SelectTrigger className="h-8 w-full bg-background border-border text-foreground">
-                <SelectValue>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                    {cliente.status_campanha || 'Sem status'}
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border z-50">
-                {STATUS_CAMPANHA.map(status => (
-                  <SelectItem key={status} value={status}>
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                      {status}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
-
-        {/* Show problema description field when needed */}
-        {showProblemaDescricao && (
-          <div className="mt-4">
-            <ProblemaDescricao
-              clienteId={cliente.id}
-              descricaoAtual={cliente.descricao_problema}
-              onSave={handleProblemaDescricaoSave}
-              onCancel={handleProblemaDescricaoCancel}
-            />
-          </div>
-        )}
-
-        {/* Show existing problem description if status is Problema */}
-        {cliente.status_campanha === 'Problema' && cliente.descricao_problema && !showProblemaDescricao && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-            <div className="flex items-center gap-2 text-red-700 mb-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span className="font-medium">Problema Registrado</span>
-            </div>
-            <p className="text-sm text-red-600">{cliente.descricao_problema}</p>
-          </div>
-        )}
-
-        <div className="flex items-center justify-between pt-2 border-t">
-          <div className="flex gap-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <BriefingMaterialsModal
-                      emailCliente={cliente.email_cliente || ''}
-                      nomeCliente={cliente.nome_cliente || 'Cliente'}
-                      filterType="briefing"
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!hasBriefing}
-                          className={hasBriefing ? '' : 'opacity-50'}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Briefing
-                        </Button>
-                      }
-                    />
-                  </div>
-                </TooltipTrigger>
-                {!hasBriefing && (
-                  <TooltipContent>
-                    <p>Aguardando envio do cliente</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <BriefingMaterialsModal
-                      emailCliente={cliente.email_cliente || ''}
-                      nomeCliente={cliente.nome_cliente || 'Cliente'}
-                      filterType="creative"
-                      allowManagerUpload={isAdmin}
-                      trigger={
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={!hasCreative && !isAdmin}
-                          className={hasCreative || isAdmin ? '' : 'opacity-50'}
-                        >
-                          <Eye className="w-3 h-3 mr-1" />
-                          Criativo
-                        </Button>
-                      }
-                    />
-                  </div>
-                </TooltipTrigger>
-                {!hasCreative && !isAdmin && (
-                  <TooltipContent>
-                    <p>Aguardando envio do cliente</p>
-                  </TooltipContent>
-                )}
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-
-          <ComissaoButton 
-            cliente={cliente} 
-            onUpdateCliente={onUpdateCliente}
-            isAdmin={isAdmin}
-          />
-        </div>
-      </div>
-    )
-  }
+  const dateLimit = calculateDateLimit(cliente.data_venda)
 
   return (
-    <>
-      <TableRow className="border-border hover:bg-muted/20 transition-colors group">
-        <TableCell className="font-mono text-xs text-foreground">
-          {String(index + 1).padStart(3, '0')}
-        </TableCell>
-        <TableCell>
-          <div className="flex items-center gap-1">
-            <Calendar className="w-3 h-3 text-muted-foreground" />
-            <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
-          </div>
-        </TableCell>
-        <TableCell className="min-w-[200px]">
-          {renderEditableCell('nome_cliente', cliente.nome_cliente, 'Nome do cliente')}
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderEditableCell('telefone', cliente.telefone, 'Telefone')}
-        </TableCell>
-        <TableCell className="min-w-[180px]">
-          {renderEditableCell('email_gestor', cliente.email_gestor, 'Email do gestor')}
-        </TableCell>
-        <TableCell className="min-w-[180px]">
-          <Select 
-            value={cliente.status_campanha || ''}
-            onValueChange={handleStatusChange}
-            disabled={!canChangeStatus}
-          >
-            <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-              <SelectValue>
+    <TableRow className="border-border hover:bg-muted/20 transition-colors">
+      <TableCell className="font-mono text-xs text-contrast">
+        {String(index + 1).padStart(3, '0')}
+      </TableCell>
+      
+      <TableCell>
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3 h-3 text-muted-foreground" />
+          <span className="text-xs text-contrast">{formatDate(cliente.data_venda)}</span>
+        </div>
+      </TableCell>
+      
+      <TableCell className="font-medium">
+        <div className="max-w-[200px] truncate text-contrast">
+          {cliente.nome_cliente}
+        </div>
+      </TableCell>
+      
+      <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
+      
+      <TableCell>
+        <div className="max-w-[150px] truncate text-contrast">
+          {cliente.email_gestor}
+        </div>
+      </TableCell>
+      
+      <TableCell>
+        <Select 
+          value={cliente.status_campanha || ''}
+          onValueChange={(value) => onStatusChange(cliente.id, value)}
+          disabled={updatingStatus === cliente.id}
+        >
+          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+            <SelectValue>
+              {updatingStatus === cliente.id ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="w-3 h-3 animate-spin" />
+                  <span>Atualizando...</span>
+                </div>
+              ) : (
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
                   {cliente.status_campanha || 'Sem status'}
                 </span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border z-50">
-              {STATUS_CAMPANHA.map(status => (
-                <SelectItem key={status} value={status}>
-                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                    {status}
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </TableCell>
-        <TableCell className="min-w-[100px]">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <BriefingMaterialsModal
-                    emailCliente={cliente.email_cliente || ''}
-                    nomeCliente={cliente.nome_cliente || 'Cliente'}
-                    filterType="briefing"
-                    trigger={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasBriefing}
-                        className={hasBriefing ? '' : 'opacity-50'}
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Ver
-                      </Button>
-                    }
-                  />
-                </div>
-              </TooltipTrigger>
-              {!hasBriefing && (
-                <TooltipContent>
-                  <p>Aguardando envio do cliente</p>
-                </TooltipContent>
               )}
-            </Tooltip>
-          </TooltipProvider>
-        </TableCell>
-        <TableCell className="min-w-[100px]">
-          <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <div>
-                  <BriefingMaterialsModal
-                    emailCliente={cliente.email_cliente || ''}
-                    nomeCliente={cliente.nome_cliente || 'Cliente'}
-                    filterType="creative"
-                    allowManagerUpload={isAdmin}
-                    trigger={
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={!hasCreative && !isAdmin}
-                        className={hasCreative || isAdmin ? '' : 'opacity-50'}
-                      >
-                        <Eye className="w-4 h-4 mr-1" />
-                        Ver
-                      </Button>
-                    }
-                  />
-                </div>
-              </TooltipTrigger>
-              {!hasCreative && !isAdmin && (
-                <TooltipContent>
-                  <p>Aguardando envio do cliente</p>
-                </TooltipContent>
-              )}
-            </Tooltip>
-          </TooltipProvider>
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderLinkCell('link_grupo', cliente.link_grupo, 'grupo')}
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderLinkCell('link_briefing', cliente.link_briefing, 'briefing')}
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderLinkCell('link_criativo', cliente.link_criativo, 'criativo')}
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderLinkCell('link_site', cliente.link_site, 'site')}
-        </TableCell>
-        <TableCell className="min-w-[120px]">
-          {renderEditableCell('numero_bm', cliente.numero_bm, 'Número BM')}
-        </TableCell>
-        <TableCell className="min-w-[100px]">
-          <ComissaoButton 
-            cliente={cliente} 
-            onUpdateCliente={onUpdateCliente}
-            isAdmin={isAdmin}
+            </SelectValue>
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border z-50">
+            {STATUS_CAMPANHA.map(status => (
+              <SelectItem key={status} value={status}>
+                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                  {status}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </TableCell>
+      
+      <TableCell>
+        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${dateLimit.style}`}>
+          {dateLimit.text.includes('Faltam') && (
+            <Calendar className="w-3 h-3" />
+          )}
+          {dateLimit.text.includes('Atrasado') && (
+            <AlertTriangle className="w-3 h-3" />
+          )}
+          <span>{dateLimit.text}</span>
+        </div>
+      </TableCell>
+      
+      <TableCell className="hidden lg:table-cell">
+        {renderBriefingCell()}
+      </TableCell>
+      
+      <TableCell className="hidden lg:table-cell">
+        <div className="flex items-center gap-1">
+          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
+          
+          {/* CREATIVE MATERIALS BUTTON - Only "Ver" button without edit icon */}
+          <BriefingMaterialsModal
+            emailCliente={cliente.email_cliente}
+            nomeCliente={cliente.nome_cliente}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Ver
+              </Button>
+            }
           />
-        </TableCell>
-      </TableRow>
+        </div>
+      </TableCell>
       
-      {/* Show problema description field when needed */}
-      {showProblemaDescricao && (
-        <TableRow>
-          <TableCell colSpan={14} className="p-4">
-            <ProblemaDescricao
-              clienteId={cliente.id}
-              descricaoAtual={cliente.descricao_problema}
-              onSave={handleProblemaDescricaoSave}
-              onCancel={handleProblemaDescricaoCancel}
-            />
-          </TableCell>
-        </TableRow>
-      )}
+      <TableCell className="hidden lg:table-cell">
+        {renderSiteCell()}
+      </TableCell>
       
-      {/* Show existing problem description if status is Problema */}
-      {cliente.status_campanha === 'Problema' && cliente.descricao_problema && !showProblemaDescricao && (
-        <TableRow>
-          <TableCell colSpan={14} className="p-4">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <div className="flex items-center gap-2 text-red-700 mb-2">
-                <AlertTriangle className="w-4 h-4" />
-                <span className="font-medium">Problema Registrado</span>
-              </div>
-              <p className="text-sm text-red-600">{cliente.descricao_problema}</p>
-            </div>
-          </TableCell>
-        </TableRow>
-      )}
-    </>
+      <TableCell className="hidden xl:table-cell">
+        {renderBMCell()}
+      </TableCell>
+      
+      <TableCell>
+        <ComissaoButton
+          cliente={cliente}
+          isGestorDashboard={isGestorDashboard}
+          updatingComission={updatingComission}
+          editingComissionValue={editingComissionValue}
+          comissionValueInput={comissionValueInput}
+          setComissionValueInput={setComissionValueInput}
+          onComissionToggle={onComissionToggle}
+          onComissionValueEdit={onComissionValueEdit}
+          onComissionValueSave={onComissionValueSave}
+          onComissionValueCancel={onComissionValueCancel}
+        />
+      </TableCell>
+    </TableRow>
   )
 }
