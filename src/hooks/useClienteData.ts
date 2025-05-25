@@ -24,6 +24,34 @@ export interface BriefingData {
   updated_at: string
 }
 
+// Add the missing type exports
+export interface BriefingCliente extends BriefingData {
+  liberar_edicao?: boolean
+}
+
+export interface Cliente {
+  id: string
+  nome_cliente: string
+  email_cliente: string
+  telefone?: string
+  data_venda?: string
+  vendedor?: string
+  email_gestor?: string
+  status_campanha?: string
+  data_limite?: string
+  link_grupo?: string
+  link_briefing?: string
+  link_criativo?: string
+  link_site?: string
+  numero_bm?: string
+  comissao_paga?: boolean
+  valor_comissao?: number
+  site_status?: string
+  saque_solicitado?: boolean
+  descricao_problema?: string
+  data_subida_campanha?: string
+}
+
 export interface VendaCliente {
   id: string
   produto_vendido: string
@@ -34,8 +62,8 @@ export interface VendaCliente {
 }
 
 export function useClienteData(emailCliente: string) {
-  const [cliente, setCliente] = useState<any>(null)
-  const [briefing, setBriefing] = useState<BriefingData | null>(null)
+  const [cliente, setCliente] = useState<Cliente | null>(null)
+  const [briefing, setBriefing] = useState<BriefingCliente | null>(null)
   const [vendas, setVendas] = useState<VendaCliente[]>([])
   const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
   const [loading, setLoading] = useState(true)

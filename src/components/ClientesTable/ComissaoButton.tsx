@@ -5,58 +5,119 @@ import { Input } from '@/components/ui/input'
 import { Check, X, Edit2, Loader2 } from 'lucide-react'
 import { useSaqueOperations } from '@/hooks/useSaqueOperations'
 import { useAuth } from '@/hooks/useAuth'
-import type { Cliente } from '@/lib/supabase'
+import type { Cliente } from '@/hooks/useClienteData'
 
 interface ComissaoButtonProps {
   cliente: Cliente
-  isGestorDashboard?: boolean
-  updatingComission: string | null
-  editingComissionValue: string | null
-  comissionValueInput: string
-  setComissionValueInput: (value: string) => void
-  onComissionToggle: (clienteId: string, currentStatus: boolean) => void
-  onComissionValueEdit: (clienteId: string, currentValue: number) => void
-  onComissionValueSave: (clienteId: string, newValue: number) => void
-  onComissionValueCancel: () => void
+  onUpdateCliente: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
+  isAdmin?: boolean
 }
 
 export function ComissaoButton({
   cliente,
-  isGestorDashboard = false,
-  updatingComission,
-  editingComissionValue,
-  comissionValueInput,
-  setComissionValueInput,
-  onComissionToggle,
-  onComissionValueEdit,
-  onComissionValueSave,
-  onComissionValueCancel
+  onUpdateCliente,
+  isAdmin = false
 }: ComissaoButtonProps) {
-  const { currentManagerName, isAdmin } = useAuth()
+  const { currentManagerName } = useAuth()
   const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
   const [saqueEnviado, setSaqueEnviado] = useState(false)
+  const [editingValue, setEditingValue] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+  const [updating, setUpdating] = useState(false)
 
-  const isEditingValue = editingComissionValue === cliente.id
-  const valorComissao = cliente.valor_comissao || 0
+  const valorComissao = cliente.valor_comissao || 60
   const isNoAr = cliente.status_campanha === 'No Ar'
   const jaFoiSolicitado = cliente.saque_solicitado || false
 
-  // NOVA REGRA: Gestores não podem editar comissão em nenhuma situação
-  if (isGestorDashboard && isEditingValue) {
-    // Se for painel do gestor e estiver tentando editar, cancelar automaticamente
-    onComissionValueCancel()
-    return null
+  const handleToggleComissao = async () => {
+    setUpdating(true)
+    try {
+      const newStatus = !cliente.comissao_paga
+      await onUpdateCliente(cliente.id, 'comissao_paga', newStatus)
+    } finally {
+      setUpdating(false)
+    }
   }
 
-  // Para admin: manter comportamento de edição normal
-  if (!isGestorDashboard && isEditingValue) {
+  const handleEditValue = () => {
+    setEditingValue(true)
+    setInputValue(valorComissao.toString())
+  }
+
+  const handleSaveValue = async () => {
+    const newValue = parseFloat(inputValue) || 0
+    const success = await onUpdateCliente(cliente.id, 'valor_comissao', newValue)
+    if (success) {
+      setEditingValue(false)
+      setInputValue('')
+    }
+  }
+
+  const handleCancelEdit = () => {
+    setEditingValue(false)
+    setInputValue('')
+  }
+
+  const handleSaqueRequest = async () => {
+    const success = await criarSolicitacaoSaque(
+      cliente.id,
+      cliente.email_gestor || '',
+      currentManagerName || '',
+      valorComissao
+    )
+    if (success) {
+      setSaqueEnviado(true)
+    }
+  }
+
+  // For gestor dashboard - saque functionality
+  if (!isAdmin && isNoAr && !jaFoiSolicitado && !saqueEnviado) {
+    return (
+      <Button
+        variant="default"
+        size="sm"
+        className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
+        onClick={handleSaqueRequest}
+        disabled={loadingSaque}
+      >
+        {loadingSaque ? (
+          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+        ) : (
+          <span>💸</span>
+        )}
+        <span>Sacar Agora!</span>
+        <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
+      </Button>
+    )
+  }
+
+  // For gestor dashboard - saque já solicitado
+  if (!isAdmin && (jaFoiSolicitado || saqueEnviado)) {
+    return (
+      <div className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-300">
+        Você enviou a solicitação de saque. Em até 1 dia útil o valor estará na conta.
+      </div>
+    )
+  }
+
+  // For gestor dashboard - other cases
+  if (!isAdmin) {
+    return (
+      <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
+        R$ {valorComissao.toFixed(2)} - Travado
+      </div>
+    )
+  }
+
+  // For admin - editing value
+  if (editingValue) {
     return (
       <div className="flex items-center gap-1">
         <div className="flex items-center">
           <span className="text-green-400 text-xs mr-1">R$</span>
           <Input
-            value={comissionValueInput}
-            onChange={(e) => setComissionValueInput(e.target.value)}
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
             className="h-6 text-xs w-20"
             placeholder="0.00"
             type="number"
@@ -67,7 +128,7 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onComissionValueSave(cliente.id, parseFloat(comissionValueInput) || 0)}
+          onClick={handleSaveValue}
         >
           <Check className="w-3 h-3 text-green-600" />
         </Button>
@@ -75,7 +136,7 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={onComissionValueCancel}
+          onClick={handleCancelEdit}
         >
           <X className="w-3 h-3 text-red-600" />
         </Button>
@@ -83,62 +144,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Status "No Ar" + Saque disponível
-  if (isGestorDashboard && isNoAr && !jaFoiSolicitado && !saqueEnviado) {
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="default"
-          size="sm"
-          className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
-          onClick={async () => {
-            const success = await criarSolicitacaoSaque(
-              cliente.id,
-              cliente.email_gestor || '',
-              currentManagerName || '',
-              valorComissao
-            )
-            if (success) {
-              setSaqueEnviado(true)
-            }
-          }}
-          disabled={loadingSaque}
-        >
-          {loadingSaque ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : (
-            <span>💸</span>
-          )}
-          <span>Sacar Agora!</span>
-          <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
-        </Button>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Saque já solicitado ou enviado
-  if (isGestorDashboard && (jaFoiSolicitado || saqueEnviado)) {
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded border border-green-300">
-          Você enviou a solicitação de saque. Em até 1 dia útil o valor estará na conta.
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "No Ar" ou comissão paga)
-  if (isGestorDashboard) {
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
-          R$ {valorComissao.toFixed(2)} - Travado
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO ADMIN - Comportamento completo
+  // For admin - normal display
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -149,10 +155,10 @@ export function ComissaoButton({
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
         }`}
-        onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
-        disabled={updatingComission === cliente.id}
+        onClick={handleToggleComissao}
+        disabled={updating}
       >
-        {updatingComission === cliente.id ? (
+        {updating ? (
           <Loader2 className="w-3 h-3 animate-spin mr-1" />
         ) : cliente.comissao_paga ? (
           <Check className="w-3 h-3 mr-1" />
@@ -166,7 +172,7 @@ export function ComissaoButton({
         size="sm"
         variant="ghost"
         className="h-6 w-6 p-0"
-        onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+        onClick={handleEditValue}
       >
         <Edit2 className="w-3 h-3 text-muted-foreground" />
       </Button>

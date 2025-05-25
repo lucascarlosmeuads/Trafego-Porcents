@@ -11,7 +11,6 @@ import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { ComissaoButton } from './ComissaoButton'
 import { ProblemaDescricao } from './ProblemaDescricao'
 import { STATUS_CAMPANHA, type Cliente, type StatusCampanha } from '@/lib/supabase'
-import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -36,7 +35,9 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [editValue, setEditValue] = useState('')
-  const { canChangeStatus } = useGestorStatusRestrictions(userEmail, cliente)
+
+  // Simple permission check - admins can always change, managers can change their own clients
+  const canChangeStatus = isAdmin || cliente.email_gestor === userEmail
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -494,9 +495,16 @@ export function ClienteRow({
       </TableCell>
       <TableCell className="min-w-[200px]">
         <ProblemaDescricao 
-          cliente={cliente} 
-          onUpdateCliente={onUpdateCliente}
-          isAdmin={isAdmin}
+          clienteId={cliente.id} 
+          descricaoAtual={cliente.descricao_problema}
+          onSave={async (clienteId: string, descricao: string) => {
+            const statusSuccess = await onUpdateCliente(clienteId, 'status_campanha', 'Problema')
+            if (!statusSuccess) return false
+            
+            const descricaoSuccess = await onUpdateCliente(clienteId, 'descricao_problema', descricao)
+            return descricaoSuccess
+          }}
+          onCancel={() => {}}
         />
       </TableCell>
     </TableRow>

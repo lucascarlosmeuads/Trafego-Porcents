@@ -192,7 +192,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  {/* UPDATED: Changed colSpan from 15 to 14 since we removed the "Grupo" column */}
                   <TableCell colSpan={14} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
@@ -207,31 +206,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                   <ClienteRow
                     key={`${emailToUse}-${cliente.id}-${index}`}
                     cliente={cliente}
-                    selectedManager={currentManager || managerName}
+                    onUpdateCliente={updateCliente}
+                    briefings={{}}
+                    arquivos={{}}
+                    isAdmin={isAdmin}
+                    userEmail={emailToUse}
                     index={index}
-                    updatingStatus={updatingStatus}
-                    editingLink={editingLink}
-                    linkValue={linkValue}
-                    setLinkValue={setLinkValue}
-                    editingBM={editingBM}
-                    bmValue={bmValue}
-                    setBmValue={setBmValue}
-                    updatingComission={updatingComission}
-                    editingComissionValue={editingComissionValue}
-                    comissionValueInput={comissionValueInput}
-                    setComissionValueInput={setComissionValueInput}
-                    getStatusColor={getStatusColor}
-                    onStatusChange={handleStatusChange}
-                    onLinkEdit={handleLinkEdit}
-                    onLinkSave={handleLinkSave}
-                    onLinkCancel={handleLinkCancel}
-                    onBMEdit={handleBMEdit}
-                    onBMSave={handleBMSave}
-                    onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
-                    onComissionValueEdit={handleComissionValueEdit}
-                    onComissionValueSave={handleComissionValueSave}
-                    onComissionValueCancel={handleComissionValueCancel}
+                    viewMode="table"
                   />
                 ))
               )}
