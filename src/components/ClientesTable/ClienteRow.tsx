@@ -3,9 +3,10 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle } from 'lucide-react'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, FileText, Eye } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
+import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -202,6 +203,50 @@ export function ClienteRow({
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
+      </div>
+    )
+  }
+
+  // NEW: Render briefing materials cell with modal
+  const renderBriefingCell = () => {
+    return (
+      <div className="flex items-center gap-1">
+        {cliente.link_briefing ? (
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-6 px-2 text-xs"
+            onClick={() => window.open(cliente.link_briefing, '_blank')}
+          >
+            <ExternalLink className="w-3 h-3 mr-1" />
+            Ver
+          </Button>
+        ) : (
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={() => onLinkEdit(cliente.id, 'link_briefing', cliente.link_briefing || '')}
+          >
+            <Edit2 className="w-3 h-3 text-muted-foreground" />
+          </Button>
+        )}
+        
+        {/* BRIEFING MATERIALS BUTTON */}
+        <BriefingMaterialsModal
+          emailCliente={cliente.email_cliente}
+          nomeCliente={cliente.nome_cliente}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+            >
+              <FileText className="w-3 h-3 mr-1" />
+              Materiais
+            </Button>
+          }
+        />
       </div>
     )
   }
@@ -566,11 +611,29 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_briefing || '', 'link_briefing', 'Briefing')}
+        {renderBriefingCell()}
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
+        <div className="flex items-center gap-1">
+          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
+          
+          {/* CREATIVE MATERIALS BUTTON */}
+          <BriefingMaterialsModal
+            emailCliente={cliente.email_cliente}
+            nomeCliente={cliente.nome_cliente}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Ver
+              </Button>
+            }
+          />
+        </div>
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">

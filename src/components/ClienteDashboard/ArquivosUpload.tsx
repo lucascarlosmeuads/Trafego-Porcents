@@ -32,6 +32,11 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     return <FileText className="w-4 h-4" />
   }
 
+  // Function to sanitize email for use in file paths
+  const sanitizeEmailForPath = (email: string) => {
+    return email.replace(/[@.]/g, '_')
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -65,19 +70,28 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           continue
         }
 
-        // Upload para o Supabase Storage
-        const fileName = `${Date.now()}-${file.name}`
-        const filePath = `${emailCliente}/${fileName}`
+        // FIXED: Sanitize email for storage path
+        const sanitizedEmail = sanitizeEmailForPath(emailCliente)
+        const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
+        const filePath = `${sanitizedEmail}/${fileName}`
 
+        console.log('📁 [ArquivosUpload] Uploading file:', { 
+          originalEmail: emailCliente, 
+          sanitizedEmail, 
+          fileName, 
+          filePath 
+        })
+
+        // Upload para o Supabase Storage
         const { error: uploadError } = await supabase.storage
           .from('cliente-arquivos')
           .upload(filePath, file)
 
         if (uploadError) {
-          console.error('Erro no upload:', uploadError)
+          console.error('❌ [ArquivosUpload] Erro no upload:', uploadError)
           toast({
             title: "Erro no upload",
-            description: `Falha ao enviar ${file.name}`,
+            description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
             variant: "destructive"
           })
           continue
@@ -95,12 +109,21 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           })
 
         if (dbError) {
-          console.error('Erro ao salvar no banco:', dbError)
+          console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', dbError)
           // Tentar remover o arquivo do storage se falhou no banco
           await supabase.storage
             .from('cliente-arquivos')
             .remove([filePath])
+          
+          toast({
+            title: "Erro ao salvar arquivo",
+            description: `Falha ao registrar ${file.name} no banco de dados.`,
+            variant: "destructive"
+          })
+          continue
         }
+
+        console.log('✅ [ArquivosUpload] Arquivo enviado com sucesso:', fileName)
       }
 
       toast({
@@ -111,7 +134,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
       onArquivosUpdated()
 
     } catch (error) {
-      console.error('Erro no upload:', error)
+      console.error('💥 [ArquivosUpload] Erro no upload:', error)
       toast({
         title: "Erro no upload",
         description: "Tente novamente em alguns instantes.",
@@ -147,9 +170,37 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
       onArquivosUpdated()
 
     } catch (error) {
-      console.error('Erro ao remover arquivo:', error)
+      console.error('❌ [ArquivosUpload] Erro ao remover arquivo:', error)
       toast({
         title: "Erro ao remover arquivo",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleDownloadFile = async (arquivo: ArquivoCliente) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('cliente-arquivos')
+        .download(arquivo.caminho_arquivo)
+
+      if (error) throw error
+
+      // Criar URL para download
+      const url = URL.createObjectURL(data)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = arquivo.nome_arquivo
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+
+    } catch (error) {
+      console.error('❌ [ArquivosUpload] Erro ao baixar arquivo:', error)
+      toast({
+        title: "Erro ao baixar arquivo",
         description: "Tente novamente em alguns instantes.",
         variant: "destructive"
       })
@@ -201,14 +252,24 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
                     </p>
                   </div>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleDeleteFile(arquivo)}
-                  className="text-red-600 hover:text-red-700"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDownloadFile(arquivo)}
+                    className="text-blue-600 hover:text-blue-700"
+                  >
+                    <FileText className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDeleteFile(arquivo)}
+                    className="text-red-600 hover:text-red-700"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
