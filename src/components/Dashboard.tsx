@@ -15,8 +15,17 @@ export function Dashboard() {
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
 
+  console.log('🔍 [Dashboard] Estado atual:')
+  console.log('   - user:', user?.email)
+  console.log('   - loading:', loading)
+  console.log('   - isAdmin:', isAdmin)
+  console.log('   - isGestor:', isGestor)
+  console.log('   - isCliente:', isCliente)
+  console.log('   - currentManagerName:', currentManagerName)
+
   // Loading otimizado com timeout máximo
   if (loading) {
+    console.log('🔄 [Dashboard] Ainda carregando...')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
@@ -24,17 +33,25 @@ export function Dashboard() {
           <div className="text-sm text-muted-foreground">
             Verificando permissões...
           </div>
-          {/* Fallback se carregar por mais de 10 segundos */}
-          <div className="text-xs text-muted-foreground">
-            Se essa tela não sair em alguns segundos, recarregue a página
-          </div>
         </div>
       </div>
     )
   }
 
-  // Verificar se o usuário tem permissão após o carregamento
-  const isUnauthorized = !loading && user && !isAdmin && !isGestor && !isCliente
+  // CORREÇÃO CRÍTICA: Verificar se tem usuário E se pelo menos um dos tipos é true
+  const hasValidUserType = isAdmin || isGestor || isCliente
+  const isUnauthorized = user && !hasValidUserType
+
+  console.log('🎯 [Dashboard] Verificação de acesso:')
+  console.log('   - user exists:', !!user)
+  console.log('   - hasValidUserType:', hasValidUserType)
+  console.log('   - isUnauthorized:', isUnauthorized)
+  console.log('   - Qual painel será mostrado:', 
+    isCliente ? 'CLIENTE DASHBOARD' :
+    isGestor ? 'GESTOR DASHBOARD' :
+    isAdmin ? 'ADMIN DASHBOARD' :
+    'ACESSO NEGADO'
+  )
 
   const getDisplayTitle = () => {
     if (isCliente) return 'Minha Campanha'
@@ -73,8 +90,9 @@ export function Dashboard() {
     }
   }
 
-  // Mostrar tela de acesso negado para usuários não autorizados
+  // Mostrar tela de acesso negado APENAS se não tiver nenhum tipo válido
   if (isUnauthorized) {
+    console.log('❌ [Dashboard] Mostrando tela de acesso negado')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -106,6 +124,9 @@ export function Dashboard() {
       </div>
     )
   }
+
+  // Se chegou até aqui, mostrar o painel correto
+  console.log('✅ [Dashboard] Mostrando painel para usuário autorizado')
 
   return (
     <SidebarProvider>
