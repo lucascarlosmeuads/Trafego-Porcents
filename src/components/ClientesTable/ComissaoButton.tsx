@@ -83,7 +83,7 @@ export function ComissaoButton({
         <Button
           variant="default"
           size="sm"
-          className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-4"
+          className="h-8 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 px-3"
           onClick={async () => {
             const success = await criarSolicitacaoSaque(
               cliente.id,
@@ -98,14 +98,14 @@ export function ComissaoButton({
           disabled={loadingSaque}
         >
           {loadingSaque ? (
-            <Loader2 className="w-3 h-3 animate-spin" />
+            <Loader2 className="w-3 h-3 animate-spin mr-1" />
           ) : (
             <span>💸</span>
           )}
           <span>Sacar Agora!</span>
-          <span className="font-bold">R$ {valorComissao.toFixed(2)}</span>
+          <span className="ml-1 font-semibold">R$ {valorComissao.toFixed(2)}</span>
         </Button>
-        {/* Não mostrar botão de editar para status "No Ar" no painel do gestor */}
+        {/* Não mostrar botão de editar quando é No Ar */}
       </div>
     )
   }
@@ -144,8 +144,7 @@ export function ComissaoButton({
         {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
         {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
       </Button>
-      
-      {/* Só mostra botão de editar se NÃO for painel do gestor com status "No Ar" */}
+      {/* Só permite editar se não for No Ar no painel do gestor */}
       {!(isGestorDashboard && isNoAr) && (
         <Button
           size="sm"
