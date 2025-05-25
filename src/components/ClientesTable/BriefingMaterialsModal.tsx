@@ -44,9 +44,15 @@ interface BriefingMaterialsModalProps {
   emailCliente: string
   nomeCliente: string
   trigger: React.ReactNode
+  filterType?: 'briefing' | 'creative' | 'all'
 }
 
-export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: BriefingMaterialsModalProps) {
+export function BriefingMaterialsModal({ 
+  emailCliente, 
+  nomeCliente, 
+  trigger, 
+  filterType = 'all' 
+}: BriefingMaterialsModalProps) {
   const [briefing, setBriefing] = useState<BriefingData | null>(null)
   const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
   const [vendas, setVendas] = useState<VendaCliente[]>([])
@@ -59,43 +65,57 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
 
     setLoading(true)
     try {
-      // Buscar briefing
-      const { data: briefingData, error: briefingError } = await supabase
-        .from('briefings_cliente')
-        .select('*')
-        .eq('email_cliente', emailCliente)
-        .single()
+      // Buscar briefing apenas se for tipo 'briefing' ou 'all'
+      if (filterType === 'briefing' || filterType === 'all') {
+        const { data: briefingData, error: briefingError } = await supabase
+          .from('briefings_cliente')
+          .select('*')
+          .eq('email_cliente', emailCliente)
+          .single()
 
-      if (briefingError && briefingError.code !== 'PGRST116') {
-        console.error('Erro ao buscar briefing:', briefingError)
-      } else {
-        setBriefing(briefingData)
+        if (briefingError && briefingError.code !== 'PGRST116') {
+          console.error('Erro ao buscar briefing:', briefingError)
+        } else {
+          setBriefing(briefingData)
+        }
       }
 
-      // Buscar arquivos
-      const { data: arquivosData, error: arquivosError } = await supabase
-        .from('arquivos_cliente')
-        .select('*')
-        .eq('email_cliente', emailCliente)
-        .order('created_at', { ascending: false })
+      // Buscar arquivos apenas se for tipo 'creative' ou 'all'
+      if (filterType === 'creative' || filterType === 'all') {
+        const { data: arquivosData, error: arquivosError } = await supabase
+          .from('arquivos_cliente')
+          .select('*')
+          .eq('email_cliente', emailCliente)
+          .order('created_at', { ascending: false })
 
-      if (arquivosError) {
-        console.error('Erro ao buscar arquivos:', arquivosError)
-      } else {
-        setArquivos(arquivosData || [])
+        if (arquivosError) {
+          console.error('Erro ao buscar arquivos:', arquivosError)
+        } else {
+          // Filtrar apenas imagens e vídeos para o tipo 'creative'
+          if (filterType === 'creative') {
+            const mediaFiles = arquivosData?.filter(arquivo => 
+              arquivo.tipo_arquivo.startsWith('image/') || arquivo.tipo_arquivo.startsWith('video/')
+            ) || []
+            setArquivos(mediaFiles)
+          } else {
+            setArquivos(arquivosData || [])
+          }
+        }
       }
 
-      // Buscar vendas
-      const { data: vendasData, error: vendasError } = await supabase
-        .from('vendas_cliente')
-        .select('*')
-        .eq('email_cliente', emailCliente)
-        .order('data_venda', { ascending: false })
+      // Buscar vendas apenas se for tipo 'all'
+      if (filterType === 'all') {
+        const { data: vendasData, error: vendasError } = await supabase
+          .from('vendas_cliente')
+          .select('*')
+          .eq('email_cliente', emailCliente)
+          .order('data_venda', { ascending: false })
 
-      if (vendasError) {
-        console.error('Erro ao buscar vendas:', vendasError)
-      } else {
-        setVendas(vendasData || [])
+        if (vendasError) {
+          console.error('Erro ao buscar vendas:', vendasError)
+        } else {
+          setVendas(vendasData || [])
+        }
       }
 
     } catch (error) {
@@ -112,7 +132,7 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
 
   useEffect(() => {
     fetchClientData()
-  }, [open, emailCliente])
+  }, [open, emailCliente, filterType])
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -159,7 +179,7 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
     try {
       const { data, error } = await supabase.storage
         .from('cliente-arquivos')
-        .createSignedUrl(arquivo.caminho_arquivo, 60) // URL válida por 1 hora
+        .createSignedUrl(arquivo.caminho_arquivo, 60)
 
       if (error) throw error
 
@@ -175,7 +195,47 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
     }
   }
 
-  const hasMaterials = briefing || arquivos.length > 0 || vendas.length > 0
+  const getModalTitle = () => {
+    switch (filterType) {
+      case 'briefing':
+        return `Briefing de ${nomeCliente}`
+      case 'creative':
+        return `Materiais Criativos de ${nomeCliente}`
+      default:
+        return `Materiais de ${nomeCliente}`
+    }
+  }
+
+  const hasContent = () => {
+    switch (filterType) {
+      case 'briefing':
+        return briefing !== null
+      case 'creative':
+        return arquivos.length > 0
+      default:
+        return briefing || arquivos.length > 0 || vendas.length > 0
+    }
+  }
+
+  const getEmptyMessage = () => {
+    switch (filterType) {
+      case 'briefing':
+        return {
+          title: "Briefing não enviado",
+          description: "O cliente ainda não enviou o briefing do produto."
+        }
+      case 'creative':
+        return {
+          title: "Materiais criativos não enviados",
+          description: "O cliente ainda não enviou imagens ou vídeos."
+        }
+      default:
+        return {
+          title: "Nenhum material encontrado",
+          description: "Este cliente ainda não enviou briefing ou materiais."
+        }
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -186,7 +246,7 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
-            Materiais de {nomeCliente}
+            {getModalTitle()}
           </DialogTitle>
           <p className="text-sm text-muted-foreground">{emailCliente}</p>
         </DialogHeader>
@@ -196,16 +256,16 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
             <div className="flex items-center justify-center py-8">
               <p className="text-sm text-muted-foreground">Carregando materiais...</p>
             </div>
-          ) : !hasMaterials ? (
+          ) : !hasContent() ? (
             <div className="text-center py-8">
               <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-600">Nenhum material encontrado</p>
-              <p className="text-sm text-gray-500">Este cliente ainda não enviou briefing ou materiais.</p>
+              <p className="text-lg font-medium text-gray-600">{getEmptyMessage().title}</p>
+              <p className="text-sm text-gray-500">{getEmptyMessage().description}</p>
             </div>
           ) : (
             <div className="space-y-6">
-              {/* Briefing */}
-              {briefing && (
+              {/* Briefing - apenas para tipo 'briefing' ou 'all' */}
+              {(filterType === 'briefing' || filterType === 'all') && briefing && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -274,8 +334,8 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
                 </Card>
               )}
 
-              {/* Vendas */}
-              {vendas.length > 0 && (
+              {/* Vendas - apenas para tipo 'all' */}
+              {filterType === 'all' && vendas.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -306,13 +366,13 @@ export function BriefingMaterialsModal({ emailCliente, nomeCliente, trigger }: B
                 </Card>
               )}
 
-              {/* Arquivos */}
-              {arquivos.length > 0 && (
+              {/* Arquivos - para tipo 'creative' (apenas mídia) ou 'all' (todos os arquivos) */}
+              {(filterType === 'creative' || filterType === 'all') && arquivos.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                       <Image className="w-5 h-5 text-purple-600" />
-                      Materiais Enviados ({arquivos.length})
+                      {filterType === 'creative' ? 'Materiais Criativos' : 'Materiais Enviados'} ({arquivos.length})
                     </CardTitle>
                   </CardHeader>
                   <CardContent>

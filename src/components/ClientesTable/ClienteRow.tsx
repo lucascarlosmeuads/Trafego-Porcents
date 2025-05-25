@@ -1,10 +1,11 @@
-import { useState } from 'react'
+
+import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, FileText, Eye } from 'lucide-react'
-import { STATUS_CAMPANHA, type Cliente } from '@/lib/supabase'
+import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 
