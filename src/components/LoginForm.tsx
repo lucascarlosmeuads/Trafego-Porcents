@@ -24,10 +24,19 @@ export function LoginForm() {
       const { error } = isSignUp ? await signUp(email, password) : await signIn(email, password)
       
       if (error) {
-        console.error('❌ [LoginForm] Erro de autenticação:', error)
+        console.error('❌ [LoginForm] Erro de autenticação do Supabase:', error)
+        
+        // Mensagens de erro mais específicas
+        let errorMessage = error.message
+        if (error.message.includes('Invalid login credentials')) {
+          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.'
+        } else if (error.message.includes('Email not confirmed')) {
+          errorMessage = 'Email não confirmado. Verifique seu email para confirmar a conta.'
+        }
+        
         toast({
-          title: "Erro",
-          description: error.message,
+          title: "Erro de Autenticação",
+          description: errorMessage,
           variant: "destructive"
         })
       } else if (isSignUp) {

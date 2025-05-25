@@ -26,9 +26,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const isAdmin = user?.email === 'lucas@admin.com'
 
-  // Verificar tipo de usuário no banco de dados
+  // Verificar tipo de usuário no banco de dados - APENAS para usuários autenticados
   const checkUserType = async (email: string) => {
-    console.log('🔍 [useAuth] Verificando tipo de usuário para:', email)
+    console.log('🔍 [useAuth] Verificando tipo de usuário para usuário AUTENTICADO:', email)
     
     try {
       // PRIMEIRO: Verificar se é cliente na tabela todos_clientes
@@ -40,7 +40,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (!clienteError && clienteData) {
-        console.log('✅ [useAuth] Usuário é CLIENTE:', clienteData.nome_cliente)
+        console.log('✅ [useAuth] Usuário autenticado é CLIENTE:', clienteData.nome_cliente)
         setIsGestor(false)
         setIsCliente(true)
         setCurrentManagerName('')
@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single()
 
       if (!gestorError && gestorData) {
-        console.log('✅ [useAuth] Usuário é GESTOR:', gestorData.nome)
+        console.log('✅ [useAuth] Usuário autenticado é GESTOR:', gestorData.nome)
         setIsGestor(true)
         setIsCliente(false)
         setCurrentManagerName(gestorData.nome)
@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Se não está em nenhuma tabela, é um usuário sem permissão
-      console.log('⚠️ [useAuth] Usuário não encontrado nas tabelas de permissão')
+      console.log('⚠️ [useAuth] Usuário autenticado não encontrado nas tabelas de permissão')
       setIsGestor(false)
       setIsCliente(false)
       setCurrentManagerName('')
@@ -83,6 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Configuração inicial - verificar sessão existente
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
       setUser(session?.user ?? null)
       if (session?.user?.email) {
         if (session.user.email === 'lucas@admin.com') {
@@ -98,11 +99,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Configuração do listener para mudanças de estado de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-      console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email)
+      console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
       
       setUser(session?.user ?? null)
       
       if (session?.user?.email) {
+        console.log('✅ [useAuth] Usuário AUTENTICADO pelo Supabase:', session.user.email)
         if (session.user.email === 'lucas@admin.com') {
           setIsGestor(false)
           setIsCliente(false)
@@ -111,6 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await checkUserType(session.user.email)
         }
       } else {
+        console.log('❌ [useAuth] Nenhum usuário autenticado')
         setIsGestor(false)
         setIsCliente(false)
         setCurrentManagerName('')
@@ -124,7 +127,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     console.log('🔐 [useAuth] Tentativa de login para:', email)
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    
+    // CRÍTICO: Usar signInWithPassword que valida email/senha no Supabase Auth
+    const { data, error } = await supabase.auth.signInWithPassword({ 
+      email, 
+      password 
+    })
+    
+    if (error) {
+      console.error('❌ [useAuth] Falha na autenticação do Supabase:', error.message)
+    } else if (data.user) {
+      console.log('✅ [useAuth] Autenticação do Supabase bem-sucedida para:', data.user.email)
+    }
+    
     return { error }
   }
 
