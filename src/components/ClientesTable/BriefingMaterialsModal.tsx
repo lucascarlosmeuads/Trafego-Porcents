@@ -60,8 +60,9 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // Buscar briefing apenas se for tipo 'briefing' ou 'all'
+      // Buscar briefing APENAS se for tipo 'briefing' ou 'all'
       if (filterType === 'briefing' || filterType === 'all') {
+        console.log('📋 [BriefingMaterialsModal] Carregando briefing...')
         const { data: briefingData, error: briefingError } = await supabase
           .from('briefings_cliente')
           .select('*')
@@ -76,8 +77,9 @@ export function BriefingMaterialsModal({
         }
       }
 
-      // Buscar arquivos apenas se for tipo 'creative' ou 'all'
+      // Buscar arquivos APENAS se for tipo 'creative' ou 'all'
       if (filterType === 'creative' || filterType === 'all') {
+        console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
         const { data: arquivosData, error: arquivosError } = await supabase
           .from('arquivos_cliente')
           .select('*')
@@ -376,7 +378,7 @@ export function BriefingMaterialsModal({
     }
   }
 
-  // Separar arquivos por autor
+  // Separar arquivos por autor apenas se filterType for 'creative' ou 'all'
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -408,8 +410,8 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* SEÇÃO DE BRIEFING - APENAS para filterType 'briefing' */}
-              {(filterType === 'briefing' || filterType === 'all') && briefing && (
+              {/* SEÇÃO DE BRIEFING - APENAS quando filterType é 'briefing' ou 'all' */}
+              {filterType === 'briefing' && briefing && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -478,8 +480,8 @@ export function BriefingMaterialsModal({
                 </Card>
               )}
 
-              {/* SEÇÃO DE MATERIAIS CRIATIVOS - APENAS para filterType 'creative' */}
-              {(filterType === 'creative' || filterType === 'all') && (
+              {/* SEÇÃO DE MATERIAIS CRIATIVOS - APENAS quando filterType é 'creative' ou 'all' */}
+              {filterType === 'creative' && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -616,8 +618,7 @@ export function BriefingMaterialsModal({
                       </div>
                     )}
 
-                    {/* Show message when no creative materials exist */}
-                    {filterType === 'creative' && arquivos.length === 0 && !loading && (
+                    {arquivos.length === 0 && !loading && (
                       <div className="text-center py-6">
                         <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                         <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
