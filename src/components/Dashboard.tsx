@@ -7,13 +7,31 @@ import { GestorDashboard } from './GestorDashboard'
 import { ClienteDashboard } from './ClienteDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
 import { User, AlertCircle } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export function Dashboard() {
   const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName, loading } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
+
+  // Loading otimizado com timeout máximo
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center space-y-4">
+          <div className="text-lg">Carregando...</div>
+          <div className="text-sm text-muted-foreground">
+            Verificando permissões...
+          </div>
+          {/* Fallback se carregar por mais de 10 segundos */}
+          <div className="text-xs text-muted-foreground">
+            Se essa tela não sair em alguns segundos, recarregue a página
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Verificar se o usuário tem permissão após o carregamento
   const isUnauthorized = !loading && user && !isAdmin && !isGestor && !isCliente
@@ -44,27 +62,14 @@ export function Dashboard() {
     e.preventDefault()
     e.stopPropagation()
     
-    console.log('🚪 [Dashboard] Botão Sair clicado')
+    console.log('🚪 [Dashboard] Logout solicitado')
     
     try {
       await signOut()
-      console.log('✅ [Dashboard] Logout realizado com sucesso')
     } catch (error) {
-      console.error('❌ [Dashboard] Erro ao fazer logout:', error)
-    }
-  }
-
-  const handleSignOutTouch = async (e: React.TouchEvent) => {
-    e.preventDefault()
-    e.stopPropagation()
-    
-    console.log('🚪 [Dashboard] Botão Sair clicado (touch)')
-    
-    try {
-      await signOut()
-      console.log('✅ [Dashboard] Logout realizado com sucesso')
-    } catch (error) {
-      console.error('❌ [Dashboard] Erro ao fazer logout:', error)
+      console.error('❌ [Dashboard] Erro no logout:', error)
+      // Fallback: forçar reload mesmo com erro
+      window.location.href = '/'
     }
   }
 
@@ -94,7 +99,7 @@ export function Dashboard() {
               variant="outline"
               className="w-full"
             >
-              Fazer Logout
+              Tentar Novamente
             </Button>
           </CardContent>
         </Card>
@@ -116,7 +121,7 @@ export function Dashboard() {
         )}
         
         <SidebarInset className="flex-1 min-w-0 flex flex-col">
-          {/* Header responsivo com posicionamento correto */}
+          {/* Header responsivo */}
           <header className="bg-card shadow-sm border-b sticky top-0 z-40 w-full">
             <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
@@ -143,15 +148,8 @@ export function Dashboard() {
                 <Button 
                   variant="outline" 
                   onClick={handleSignOut}
-                  onMouseDown={handleSignOut}
-                  onTouchStart={handleSignOutTouch}
                   size="sm"
-                  className="cursor-pointer select-none touch-manipulation"
-                  style={{ 
-                    pointerEvents: 'auto',
-                    zIndex: 9999,
-                    position: 'relative'
-                  }}
+                  className="cursor-pointer"
                 >
                   Sair
                 </Button>
@@ -159,7 +157,7 @@ export function Dashboard() {
             </div>
           </header>
 
-          {/* Content responsivo com padding adequado */}
+          {/* Content responsivo */}
           <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
             {isAdmin ? (
               <AdminDashboard 
@@ -173,7 +171,7 @@ export function Dashboard() {
               <ClienteDashboard />
             ) : (
               <div className="flex items-center justify-center py-8">
-                <div className="text-lg">Carregando...</div>
+                <div className="text-lg">Verificando acesso...</div>
               </div>
             )}
           </main>
