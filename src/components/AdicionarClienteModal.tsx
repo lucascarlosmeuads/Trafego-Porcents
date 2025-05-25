@@ -10,7 +10,6 @@ import { Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
-import { ensureClienteExists } from '@/utils/clienteDataHelpers'
 
 interface AdicionarClienteModalProps {
   onClienteAdicionado: () => void
@@ -20,6 +19,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
   const { user, currentManagerName, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [selectedGestor, setSelectedGestor] = useState<string>('')
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -28,6 +28,25 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
     status_campanha: 'Brief'
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
+
+  // Predefined manager emails for admin selection
+  const managerOptions = [
+    { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
+    { name: 'Carol', email: 'carol@trafegoporcents.com' },
+    { name: 'Junior', email: 'junior@trafegoporcents.com' },
+    { name: 'Daniel Moreira', email: 'danielmoreira@trafegoporcents.com' },
+    { name: 'Daniel Ribeiro', email: 'danielribeiro@trafegoporcents.com' },
+    { name: 'Kimberlly', email: 'kimberlly@trafegoporcents.com' },
+    { name: 'Jose', email: 'jose@trafegoporcents.com' },
+    { name: 'Emily', email: 'emily@trafegoporcents.com' },
+    { name: 'Falcao', email: 'falcao@trafegoporcents.com' },
+    { name: 'Felipe Almeida', email: 'felipealmeida@trafegoporcents.com' },
+    { name: 'Franciellen', email: 'franciellen@trafegoporcents.com' },
+    { name: 'Guilherme', email: 'guilherme@trafegoporcents.com' },
+    { name: 'Leandro Drumzique', email: 'leandrodrumzique@trafegoporcents.com' },
+    { name: 'Matheus Paviani', email: 'matheuspaviani@trafegoporcents.com' },
+    { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
+  ]
 
   const handleSubmit = async () => {
     if (!formData.nome_cliente || !formData.telefone) {
@@ -48,19 +67,23 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
       return
     }
 
+    // For admin: require gestor selection
+    if (isAdmin && !selectedGestor) {
+      toast({
+        title: "Erro",
+        description: "Selecione um gestor para atribuir o cliente",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
 
     try {
       console.log("🟡 [AdicionarClienteModal] Iniciando adição de cliente")
       
-      // Primeiro garantir que o cliente existe na tabela todos_clientes
-      console.log('🔐 [AdicionarClienteModal] Garantindo que cliente existe na tabela todos_clientes...')
-      const clienteExists = await ensureClienteExists(formData.email_cliente, formData.nome_cliente)
-      
-      if (!clienteExists) {
-        throw new Error('Falha ao garantir que o cliente existe na tabela')
-      }
-
+      // Determine final email_gestor based on role
+      const emailGestorFinal = isAdmin ? selectedGestor : user?.email
       const vendedor = formData.vendedor || currentManagerName
 
       const clienteData = {
@@ -68,7 +91,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
         vendedor,
-        email_gestor: user?.email,
+        email_gestor: emailGestorFinal,
         status_campanha: formData.status_campanha,
         data_venda: new Date().toISOString().split('T')[0],
         valor_comissao: 60.00,
@@ -87,6 +110,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
           vendedor: '',
           status_campanha: 'Brief'
         })
+        setSelectedGestor('')
         setOpen(false)
         onClienteAdicionado()
       }
@@ -143,6 +167,26 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
               placeholder="cliente@email.com"
             />
           </div>
+
+          {/* Admin-only: Gestor Selection */}
+          {isAdmin && (
+            <div className="grid gap-2">
+              <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
+              <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um gestor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {managerOptions.map((manager) => (
+                    <SelectItem key={manager.email} value={manager.email}>
+                      {manager.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           <div className="grid gap-2">
             <Label htmlFor="vendedor">Vendedor</Label>
             <Input

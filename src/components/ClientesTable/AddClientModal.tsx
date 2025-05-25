@@ -20,6 +20,7 @@ interface AddClientModalProps {
 export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClientModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [selectedGestor, setSelectedGestor] = useState<string>('')
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -31,8 +32,27 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
   const { user, isAdmin } = useAuth()
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
+  // Predefined manager emails for admin selection
+  const managerOptions = [
+    { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
+    { name: 'Carol', email: 'carol@trafegoporcents.com' },
+    { name: 'Junior', email: 'junior@trafegoporcents.com' },
+    { name: 'Daniel Moreira', email: 'danielmoreira@trafegoporcents.com' },
+    { name: 'Daniel Ribeiro', email: 'danielribeiro@trafegoporcents.com' },
+    { name: 'Kimberlly', email: 'kimberlly@trafegoporcents.com' },
+    { name: 'Jose', email: 'jose@trafegoporcents.com' },
+    { name: 'Emily', email: 'emily@trafegoporcents.com' },
+    { name: 'Falcao', email: 'falcao@trafegoporcents.com' },
+    { name: 'Felipe Almeida', email: 'felipealmeida@trafegoporcents.com' },
+    { name: 'Franciellen', email: 'franciellen@trafegoporcents.com' },
+    { name: 'Guilherme', email: 'guilherme@trafegoporcents.com' },
+    { name: 'Leandro Drumzique', email: 'leandrodrumzique@trafegoporcents.com' },
+    { name: 'Matheus Paviani', email: 'matheuspaviani@trafegoporcents.com' },
+    { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
+  ]
+
   const handleSubmit = async () => {
-    // Validações
+    // Validations
     if (!formData.nome_cliente.trim()) {
       toast({
         title: "Erro",
@@ -60,19 +80,27 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       return
     }
 
+    // For admin: require gestor selection
+    if (isAdmin && !selectedGestor) {
+      toast({
+        title: "Erro",
+        description: "Selecione um gestor para atribuir o cliente",
+        variant: "destructive"
+      })
+      return
+    }
+
     setLoading(true)
     
     try {
-      console.log('🚀 [AddClientModal] Adicionando cliente na tabela todos_clientes')
+      console.log('🚀 [AddClientModal] Adicionando cliente')
       console.log('📥 [AddClientModal] Dados do formulário:', formData)
       console.log('👤 [AddClientModal] Usuário logado:', user?.email)
       console.log('🔒 [AddClientModal] É admin?', isAdmin)
-      console.log('🏷️ [AddClientModal] Manager selecionado:', selectedManager)
+      console.log('🏷️ [AddClientModal] Gestor selecionado:', selectedGestor)
       
-      // REGRA CRÍTICA: Para gestores não-admin, SEMPRE usar o email do usuário logado
-      // Para admin, usar o email do gestor selecionado se houver seleção
-      const emailGestorFinal = !isAdmin ? user?.email : 
-        (selectedManager ? await getManagerEmailFromName(selectedManager) : user?.email)
+      // Determine final email_gestor based on role
+      const emailGestorFinal = isAdmin ? selectedGestor : user?.email
 
       console.log('📧 [AddClientModal] Email gestor final determinado:', emailGestorFinal)
       
@@ -80,15 +108,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
         throw new Error('Não foi possível determinar o email do gestor')
       }
 
-      // Step 1: Garantir que o cliente existe na tabela todos_clientes (criar se necessário)
-      console.log('🔐 [AddClientModal] Garantindo que cliente existe na tabela todos_clientes...')
-      const clienteExists = await ensureClienteExists(formData.email_cliente, formData.nome_cliente)
-      
-      if (!clienteExists) {
-        throw new Error('Falha ao garantir que o cliente existe na tabela')
-      }
-
-      // Step 2: Usar o hook useClienteOperations para adicionar
+      // Prepare client data
       const clienteData = {
         nome_cliente: formData.nome_cliente.trim(),
         telefone: formData.telefone.trim(),
@@ -104,7 +124,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       const success = await addCliente(clienteData)
 
       if (success) {
-        // Limpar formulário
+        // Clear form
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -113,6 +133,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
           status_campanha: 'Preenchimento do Formulário',
           data_venda: new Date().toISOString().split('T')[0]
         })
+        setSelectedGestor('')
         
         setOpen(false)
         onClienteAdicionado()
@@ -128,38 +149,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
     } finally {
       setLoading(false)
     }
-  }
-
-  // Função auxiliar para obter email do gestor
-  const getManagerEmailFromName = async (managerName: string): Promise<string> => {
-    console.log('🔍 [AddClientModal] Buscando email para o gestor:', managerName)
-    
-    // Fallback para mapeamento manual
-    const emailMapping: { [key: string]: string } = {
-      'Lucas Falcão': 'lucas.falcao@gestor.com',
-      'Andreza': 'andreza@trafegoporcents.com',
-      'Carol': 'carol@trafegoporcents.com',
-      'Junior': 'junior@trafegoporcents.com',
-      'Junior Gestor': 'junior@trafegoporcents.com',
-      'Daniel': 'daniel@gestor.com',
-      'Danielmoreira': 'danielmoreira@trafegoporcents.com',
-      'Danielribeiro': 'danielribeiro@trafegoporcents.com',
-      'Kimberlly': 'kimberlly@trafegoporcents.com',
-      'Andresa': 'andresa@gestor.com',
-      'Jose': 'jose@trafegoporcents.com',
-      'Emily': 'emily@trafegoporcents.com',
-      'Falcao': 'falcao@trafegoporcents.com',
-      'Felipe Almeida': 'felipealmeida@trafegoporcents.com',
-      'Franciellen': 'franciellen@trafegoporcents.com',
-      'Guilherme': 'guilherme@trafegoporcents.com',
-      'Leandrodrumzique': 'leandrodrumzique@trafegoporcents.com',
-      'Matheuspaviani': 'matheuspaviani@trafegoporcents.com',
-      'Rullian': 'rullian@trafegoporcents.com'
-    }
-    
-    const email = emailMapping[managerName] || user?.email || 'andreza@trafegoporcents.com'
-    console.log('📧 [AddClientModal] Email do mapeamento manual:', email, 'para gestor:', managerName)
-    return email
   }
 
   return (
@@ -205,6 +194,25 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
               placeholder="cliente@email.com"
             />
           </div>
+
+          {/* Admin-only: Gestor Selection */}
+          {isAdmin && (
+            <div>
+              <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
+              <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um gestor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {managerOptions.map((manager) => (
+                    <SelectItem key={manager.email} value={manager.email}>
+                      {manager.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           
           <div>
             <Label htmlFor="vendedor">Vendedor</Label>

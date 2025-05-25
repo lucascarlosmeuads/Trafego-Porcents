@@ -1,6 +1,15 @@
-
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+
+// Generate random password for new clients
+const generateRandomPassword = (): string => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
+  let password = ''
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length))
+  }
+  return password
+}
 
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
@@ -113,12 +122,9 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       console.log('👤 User Email:', userEmail)
       console.log('🔒 IsAdmin:', isAdmin)
       
-      console.log(`📋 Tabela de destino: todos_clientes`)
-
-      // FILTRO CRÍTICO: Para não-admins, SEMPRE usar o email do usuário logado como email_gestor
       const emailGestorFinal = isAdmin ? (clienteData.email_gestor || userEmail) : userEmail
       
-      // Verificar se já existe um cliente com o mesmo email
+      // Step 1: Check if client already exists in todos_clientes
       console.log('🔍 [useClienteOperations] Verificando se cliente já existe...')
       const { data: existingCliente, error: checkError } = await supabase
         .from('todos_clientes')
@@ -131,10 +137,13 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         throw new Error(`Erro ao verificar cliente: ${checkError.message}`)
       }
 
+      let clienteJaExistia = false
+      let clientePassword = ''
+
       if (existingCliente) {
         console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
+        clienteJaExistia = true
         
-        // Fazer update dos dados existentes
         const { error: updateError } = await supabase
           .from('todos_clientes')
           .update({
@@ -153,69 +162,93 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         }
 
         console.log('✅ [useClienteOperations] Cliente existente atualizado com sucesso')
+      } else {
+        // Step 2: Create Supabase Auth user for new client
+        console.log('🔐 [useClienteOperations] Criando usuário no Supabase Auth...')
+        clientePassword = generateRandomPassword()
         
-        // Forçar atualização da tabela após update
-        refetchData()
-        
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: clienteData.email_cliente,
+          password: clientePassword,
+          email_confirm: true // Auto-confirm email to avoid verification step
+        })
+
+        if (authError) {
+          console.error('❌ [useClienteOperations] Erro ao criar usuário no Auth:', authError)
+          throw new Error(`Erro ao criar usuário: ${authError.message}`)
+        }
+
+        console.log('✅ [useClienteOperations] Usuário criado no Supabase Auth:', authData.user?.id)
+
+        // Step 3: Create new client record
+        const novoCliente = {
+          nome_cliente: String(clienteData.nome_cliente || ''),
+          telefone: String(clienteData.telefone || ''),
+          email_cliente: String(clienteData.email_cliente || ''),
+          data_venda: clienteData.data_venda || null,
+          vendedor: String(clienteData.vendedor || ''),
+          status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
+          email_gestor: String(emailGestorFinal),
+          comissao_paga: false,
+          valor_comissao: 60.00,
+          site_status: 'pendente',
+          data_limite: '',
+          link_grupo: '',
+          link_briefing: '',
+          link_criativo: '',
+          link_site: '',
+          numero_bm: ''
+        }
+
+        console.log('📤 [useClienteOperations] Enviando para Supabase...')
+        const { data, error } = await supabase
+          .from('todos_clientes')
+          .insert([novoCliente])
+          .select()
+
+        if (error) {
+          console.error('❌ [useClienteOperations] Erro ao inserir cliente:', error)
+          
+          // Rollback: Delete the auth user if client creation failed
+          try {
+            await supabase.auth.admin.deleteUser(authData.user!.id)
+            console.log('🔄 [useClienteOperations] Usuário Auth removido devido ao erro')
+          } catch (rollbackError) {
+            console.error('💥 [useClienteOperations] Erro no rollback:', rollbackError)
+          }
+          
+          throw new Error(`Erro ao adicionar cliente: ${error.message}`)
+        }
+
+        console.log('✅ [useClienteOperations] Cliente adicionado com sucesso:', data)
+      }
+      
+      // Show success message with password (only for new clients)
+      if (!clienteJaExistia && clientePassword) {
+        toast({
+          title: "Cliente adicionado com sucesso!",
+          description: (
+            <div className="space-y-2">
+              <p>Cliente criado e usuário Supabase Auth gerado.</p>
+              <div className="bg-gray-100 p-2 rounded text-sm">
+                <strong>Credenciais para o cliente:</strong><br/>
+                <strong>Email:</strong> {clienteData.email_cliente}<br/>
+                <strong>Senha:</strong> <span className="font-mono bg-yellow-200 px-1">{clientePassword}</span>
+              </div>
+              <p className="text-xs text-gray-600">⚠️ Copie e envie essas credenciais para o cliente</p>
+            </div>
+          ),
+          duration: 10000 // 10 seconds to give time to copy
+        })
+      } else if (clienteJaExistia) {
         toast({
           title: "Sucesso",
           description: "Dados do cliente atualizados com sucesso!"
         })
-        
-        return true
       }
-
-      // Cliente não existe, criar novo
-      const novoCliente = {
-        nome_cliente: String(clienteData.nome_cliente || ''),
-        telefone: String(clienteData.telefone || ''),
-        email_cliente: String(clienteData.email_cliente || ''),
-        data_venda: clienteData.data_venda || null,
-        vendedor: String(clienteData.vendedor || ''),
-        status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
-        email_gestor: String(emailGestorFinal),
-        comissao_paga: false,
-        valor_comissao: 60.00,
-        site_status: 'pendente',
-        data_limite: '',
-        link_grupo: '',
-        link_briefing: '',
-        link_criativo: '',
-        link_site: '',
-        numero_bm: ''
-      }
-
-      console.log('🧹 [useClienteOperations] === DADOS FINAIS PARA INSERÇÃO ===')
-      console.log('📊 Objeto completo:', JSON.stringify(novoCliente, null, 2))
-      console.log('🔒 Email gestor final:', emailGestorFinal)
-
-      console.log('📤 [useClienteOperations] Enviando para Supabase...')
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .insert([novoCliente])
-        .select()
-
-      if (error) {
-        console.error('❌ [useClienteOperations] === ERRO DETALHADO DO SUPABASE ===')
-        console.error('🔥 Código do erro:', error.code)
-        console.error('🔥 Mensagem:', error.message)
-        console.error('🔥 Detalhes:', error.details)
-        console.error('🔥 Hint:', error.hint)
-        console.error('🔥 Objeto completo do erro:', error)
-        
-        throw new Error(`Erro ao adicionar cliente: ${error.message}`)
-      }
-
-      console.log('✅ [useClienteOperations] === SUCESSO ===')
-      console.log('🎉 Cliente adicionado com sucesso:', data)
       
-      // Forçar atualização da tabela após inserção
+      // Refresh data
       refetchData()
-      
-      toast({
-        title: "Sucesso",
-        description: "Cliente adicionado com sucesso!"
-      })
       
       return true
     } catch (error) {
