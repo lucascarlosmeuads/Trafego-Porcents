@@ -46,16 +46,20 @@ export function useAuthState() {
           break
           
         case 'cliente':
-          console.log('✅ [useAuthState] Configurando como CLIENTE')
-          console.log('🎯 [useAuthState] REDIRECIONANDO PARA PAINEL DE CLIENTE')
+          console.log('✅ [useAuthState] === CONFIGURANDO COMO CLIENTE ===')
+          console.log('🎯 [useAuthState] *** REDIRECIONANDO PARA PAINEL DE CLIENTE ***')
           setIsGestor(false)
           setIsCliente(true)
           setCurrentManagerName('')
+          console.log('✅ [useAuthState] Estado do cliente configurado:')
+          console.log('   - isGestor:', false)
+          console.log('   - isCliente:', true)
+          console.log('   - currentManagerName:', '')
           console.log('✅ [useAuthState] Estado cliente configurado com sucesso')
           break
           
         case 'unauthorized':
-          console.log('❌ [useAuthState] Usuário SEM PERMISSÃO')
+          console.log('❌ [useAuthState] === USUÁRIO SEM PERMISSÃO ===')
           console.log('❌ [useAuthState] Email:', email, 'não encontrado nas tabelas permitidas')
           console.log('❌ [useAuthState] Redirecionando para tela de ACESSO NEGADO')
           setIsGestor(false)
