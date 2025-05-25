@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
+import { SolicitacoesSaque } from './SolicitacoesSaque'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { ManagerSelector } from './ManagerSelector'
 import { supabase } from '@/lib/supabase'
@@ -39,11 +40,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       return <StatusFunnelDashboard />
     } else if (activeTab === 'problemas') {
       return <ProblemasPanel />
+    } else if (activeTab === 'solicitacoes') {
+      return <SolicitacoesSaque />
     } else {
       return (
         <div className="space-y-4">
           {/* Seletor de gestores - apenas quando estiver na aba de clientes e não gerenciando gestores */}
-          {selectedManager !== '__GESTORES__' && selectedManager !== '__PROBLEMAS__' && (
+          {selectedManager !== '__GESTORES__' && selectedManager !== '__PROBLEMAS__' && selectedManager !== '__SOLICITACOES__' && (
             <div className="bg-card border rounded-lg p-4">
               <ManagerSelector 
                 selectedManager={selectedManager}
