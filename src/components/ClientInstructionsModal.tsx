@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -21,7 +22,7 @@ export function ClientInstructionsModal({ isOpen, onClose, clientEmail, clientNa
 
 Olá ${clientName},
 
-1. Acesse o link: ${window.location.origin}/login
+1. Acesse o link: https://login.trafegoporcents.com
 2. Clique em "Criar Conta"
 3. Use este mesmo e-mail: ${clientEmail}
 4. Escolha uma senha segura (ex: cliente123)
@@ -104,3 +105,4 @@ Qualquer dúvida, entre em contato conosco!`
     </Dialog>
   )
 }
+
