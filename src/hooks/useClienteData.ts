@@ -24,8 +24,9 @@ export interface BriefingData {
   updated_at: string
 }
 
-// Add the missing type exports
+// Add the missing type exports with id property
 export interface BriefingCliente extends BriefingData {
+  id: string
   liberar_edicao?: boolean
 }
 
