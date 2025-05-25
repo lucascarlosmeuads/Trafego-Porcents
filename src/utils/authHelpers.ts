@@ -19,32 +19,70 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade) - USANDO ilike para case-insensitive
+    // SEGUNDO: Verificar clientes PRIMEIRO (prioridade) - Busca mais robusta
     console.log('🔍 [authHelpers] Verificando tabela TODOS_CLIENTES...')
-    console.log('🔍 [authHelpers] Buscando por email_cliente ILIKE:', `"${normalizedEmail}"`)
+    console.log('🔍 [authHelpers] Buscando por email_cliente com múltiplas estratégias...')
     const clienteStartTime = Date.now()
     
-    // Usando ilike com % para garantir busca case-insensitive
-    const { data: clienteData, error: clienteError } = await supabase
+    // Primeira tentativa: busca exata case-insensitive
+    let { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('email_cliente, nome_cliente, id')
       .ilike('email_cliente', normalizedEmail)
-      .maybeSingle()
+      .limit(1)
+
+    // Se não encontrou, tenta busca com LIKE pattern matching
+    if (!clienteData || clienteData.length === 0) {
+      console.log('🔍 [authHelpers] Primeira busca não retornou resultados, tentando pattern matching...')
+      const { data: patternData, error: patternError } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente, id')
+        .ilike('email_cliente', `%${normalizedEmail}%`)
+        .limit(1)
+      
+      clienteData = patternData
+      clienteError = patternError
+    }
+
+    // Se ainda não encontrou, faz busca geral para debug
+    if (!clienteData || clienteData.length === 0) {
+      console.log('🔍 [authHelpers] === BUSCA DE DEBUG DETALHADA ===')
+      const { data: allEmails } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente, id')
+        .limit(20)
+      
+      console.log('🔍 [authHelpers] Todos os emails encontrados na tabela:', allEmails)
+      
+      // Busca manual case-insensitive nos resultados
+      const manualMatch = allEmails?.find(cliente => 
+        cliente.email_cliente?.toLowerCase().trim() === normalizedEmail
+      )
+      
+      if (manualMatch) {
+        console.log('✅ [authHelpers] ENCONTRADO NA BUSCA MANUAL!')
+        console.log('✅ [authHelpers] Email da tabela:', manualMatch.email_cliente)
+        console.log('✅ [authHelpers] Email procurado:', normalizedEmail)
+        clienteData = [manualMatch]
+        clienteError = null
+      }
+    }
 
     const clienteEndTime = Date.now()
     console.log(`🔍 [authHelpers] Consulta clientes levou: ${clienteEndTime - clienteStartTime}ms`)
     console.log('🔍 [authHelpers] Resultado cliente - data:', clienteData)
     console.log('🔍 [authHelpers] Resultado cliente - error:', clienteError)
 
-    if (!clienteError && clienteData) {
+    if (!clienteError && clienteData && clienteData.length > 0) {
+      const cliente = clienteData[0]
       console.log('✅ [authHelpers] CLIENTE ENCONTRADO!')
-      console.log('✅ [authHelpers] Nome:', clienteData.nome_cliente || 'Nome não informado')
-      console.log('✅ [authHelpers] Email encontrado na tabela:', clienteData.email_cliente)
-      console.log('✅ [authHelpers] ID do cliente:', clienteData.id)
+      console.log('✅ [authHelpers] Nome:', cliente.nome_cliente || 'Nome não informado')
+      console.log('✅ [authHelpers] Email encontrado na tabela:', cliente.email_cliente)
+      console.log('✅ [authHelpers] ID do cliente:', cliente.id)
       return 'cliente'
     }
 
-    // TERCEIRO: Verificar gestores (apenas se não for cliente) - USANDO ilike para case-insensitive
+    // TERCEIRO: Verificar gestores (apenas se não for cliente)
     console.log('🔍 [authHelpers] Verificando tabela GESTORES...')
     console.log('🔍 [authHelpers] Buscando por email ILIKE:', `"${normalizedEmail}"`)
     const gestorStartTime = Date.now()
@@ -77,15 +115,6 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     console.log('   - Cliente Data:', clienteData)
     console.log('   - Gestor Error:', gestorError)
     console.log('   - Gestor Data:', gestorData)
-    
-    // Vamos fazer uma busca adicional para ver TODOS os emails da tabela clientes para debug
-    console.log('🔍 [authHelpers] === BUSCA DE DEBUG ===')
-    const { data: allClientes } = await supabase
-      .from('todos_clientes')
-      .select('email_cliente, nome_cliente')
-      .limit(10)
-    
-    console.log('🔍 [authHelpers] Primeiros 10 emails na tabela todos_clientes:', allClientes)
     
     return 'unauthorized'
 
