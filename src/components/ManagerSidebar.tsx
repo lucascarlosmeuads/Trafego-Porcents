@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
@@ -200,7 +201,7 @@ export function ManagerSidebar({
           </>
         )}
 
-        {/* Menu simplificado para Gestores - removido para limpar */}
+        {/* Menu simplificado para Gestores não-admin */}
         {!isAdmin && (
           <div className="space-y-2">
             <button
