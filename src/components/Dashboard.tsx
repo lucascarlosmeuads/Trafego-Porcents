@@ -4,16 +4,18 @@ import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { AdminDashboard } from './AdminDashboard'
 import { GestorDashboard } from './GestorDashboard'
+import { ClienteDashboard } from './ClienteDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
 import { User } from 'lucide-react'
 import { useState } from 'react'
 
 export function Dashboard() {
-  const { user, signOut, isAdmin, currentManagerName } = useAuth()
+  const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
 
   const getDisplayTitle = () => {
+    if (isCliente) return 'Minha Campanha'
     if (!isAdmin) return currentManagerName
     
     if (activeTab === 'dashboard') return 'Dashboard Geral'
@@ -24,6 +26,7 @@ export function Dashboard() {
   }
 
   const getDisplaySubtitle = () => {
+    if (isCliente) return 'Painel do Cliente'
     if (!isAdmin) return 'Gestor'
     
     if (activeTab === 'dashboard') return 'Análise Completa'
@@ -126,8 +129,10 @@ export function Dashboard() {
                 onManagerSelect={setSelectedManager}
                 activeTab={activeTab}
               />
-            ) : (
+            ) : isGestor ? (
               <GestorDashboard />
+            ) : (
+              <ClienteDashboard />
             )}
           </main>
         </SidebarInset>

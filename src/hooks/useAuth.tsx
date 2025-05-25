@@ -11,6 +11,7 @@ interface AuthContextType {
   signOut: () => Promise<void>
   isAdmin: boolean
   isGestor: boolean
+  isCliente: boolean
   currentManagerName: string
 }
 
@@ -21,7 +22,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   const isAdmin = user?.email === 'lucas@admin.com'
-  const isGestor = !isAdmin && user?.email !== null
+  
+  // Verificar se é gestor (emails específicos ou domínio @gestor.com/@trafegoporcents.com)
+  const isGestor = !isAdmin && user?.email !== null && (
+    user?.email?.includes('@gestor.com') || 
+    user?.email?.includes('@trafegoporcents.com') ||
+    ['andreza@gestor.com', 'lucas.falcao@gestor.com'].includes(user?.email || '')
+  )
+  
+  // Cliente é qualquer email que não seja admin nem gestor
+  const isCliente = !isAdmin && !isGestor && user?.email !== null
 
   // Determinar nome do gestor baseado no email
   const getCurrentManagerName = (email: string | undefined): string => {
@@ -93,6 +103,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signOut, 
       isAdmin, 
       isGestor,
+      isCliente,
       currentManagerName
     }}>
       {children}

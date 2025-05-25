@@ -9,6 +9,81 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      arquivos_cliente: {
+        Row: {
+          caminho_arquivo: string
+          created_at: string
+          email_cliente: string
+          id: string
+          nome_arquivo: string
+          tamanho_arquivo: number | null
+          tipo_arquivo: string
+        }
+        Insert: {
+          caminho_arquivo: string
+          created_at?: string
+          email_cliente: string
+          id?: string
+          nome_arquivo: string
+          tamanho_arquivo?: number | null
+          tipo_arquivo: string
+        }
+        Update: {
+          caminho_arquivo?: string
+          created_at?: string
+          email_cliente?: string
+          id?: string
+          nome_arquivo?: string
+          tamanho_arquivo?: number | null
+          tipo_arquivo?: string
+        }
+        Relationships: []
+      }
+      briefings_cliente: {
+        Row: {
+          comissao_aceita: string | null
+          created_at: string
+          descricao_resumida: string | null
+          diferencial: string | null
+          email_cliente: string
+          id: string
+          investimento_diario: number | null
+          liberar_edicao: boolean | null
+          nome_produto: string
+          observacoes_finais: string | null
+          publico_alvo: string | null
+          updated_at: string
+        }
+        Insert: {
+          comissao_aceita?: string | null
+          created_at?: string
+          descricao_resumida?: string | null
+          diferencial?: string | null
+          email_cliente: string
+          id?: string
+          investimento_diario?: number | null
+          liberar_edicao?: boolean | null
+          nome_produto: string
+          observacoes_finais?: string | null
+          publico_alvo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          comissao_aceita?: string | null
+          created_at?: string
+          descricao_resumida?: string | null
+          diferencial?: string | null
+          email_cliente?: string
+          id?: string
+          investimento_diario?: number | null
+          liberar_edicao?: boolean | null
+          nome_produto?: string
+          observacoes_finais?: string | null
+          publico_alvo?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gestores: {
         Row: {
           ativo: boolean | null
@@ -167,6 +242,39 @@ export type Database = {
           telefone?: string | null
           valor_comissao?: number | null
           vendedor?: string | null
+        }
+        Relationships: []
+      }
+      vendas_cliente: {
+        Row: {
+          created_at: string
+          data_venda: string
+          email_cliente: string
+          id: string
+          observacoes: string | null
+          produto_vendido: string
+          updated_at: string
+          valor_venda: number
+        }
+        Insert: {
+          created_at?: string
+          data_venda: string
+          email_cliente: string
+          id?: string
+          observacoes?: string | null
+          produto_vendido: string
+          updated_at?: string
+          valor_venda: number
+        }
+        Update: {
+          created_at?: string
+          data_venda?: string
+          email_cliente?: string
+          id?: string
+          observacoes?: string | null
+          produto_vendido?: string
+          updated_at?: string
+          valor_venda?: number
         }
         Relationships: []
       }
