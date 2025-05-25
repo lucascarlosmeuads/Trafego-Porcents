@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -564,9 +565,9 @@ export function ClienteRow({
       
       <TableCell className="hidden lg:table-cell">
         <div className="flex items-center gap-1">
-          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
+          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Materiais')}
           
-          {/* CREATIVE MATERIALS BUTTON - Only "Ver" button without edit icon */}
+          {/* MATERIALS BUTTON - Only "Ver" button without edit icon */}
           <BriefingMaterialsModal
             emailCliente={cliente.email_cliente}
             nomeCliente={cliente.nome_cliente}

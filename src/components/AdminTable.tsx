@@ -11,7 +11,7 @@ import { STATUS_CAMPANHA } from '@/lib/supabase'
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [viewMode, setViewMode<'table' | 'cards'>('table')
   const { toast } = useToast()
 
   useEffect(() => {
