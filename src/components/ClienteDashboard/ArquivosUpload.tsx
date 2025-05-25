@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -38,14 +37,73 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     return email.replace(/[@.]/g, '_')
   }
 
+  // Enhanced bucket creation with proper policies
+  const ensureClienteArquivosBucket = async () => {
+    console.log('🔧 [ArquivosUpload] Verificando/criando bucket cliente-arquivos...')
+    
+    try {
+      // Try to list files in the bucket to check if it exists
+      const { error: listError } = await supabase.storage
+        .from('cliente-arquivos')
+        .list('', { limit: 1 })
+
+      if (listError && listError.message.includes('Bucket not found')) {
+        console.log('📁 [ArquivosUpload] Bucket não existe, criando...')
+        
+        // Create the bucket as public
+        const { error: createError } = await supabase.storage
+          .createBucket('cliente-arquivos', {
+            public: true,
+            allowedMimeTypes: [
+              'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+              'video/mp4', 'video/avi', 'video/mov', 'video/wmv'
+            ],
+            fileSizeLimit: 52428800 // 50MB
+          })
+
+        if (createError) {
+          console.error('❌ [ArquivosUpload] Erro ao criar bucket:', createError)
+          throw new Error(`Falha ao criar bucket: ${createError.message}`)
+        }
+
+        console.log('✅ [ArquivosUpload] Bucket cliente-arquivos criado com sucesso')
+      } else if (listError) {
+        console.error('❌ [ArquivosUpload] Erro inesperado ao verificar bucket:', listError)
+        throw listError
+      } else {
+        console.log('✅ [ArquivosUpload] Bucket cliente-arquivos já existe')
+      }
+
+      return true
+    } catch (error) {
+      console.error('💥 [ArquivosUpload] Erro crítico na verificação do bucket:', error)
+      throw error
+    }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
     setUploading(true)
-    console.log('🚀 [ArquivosUpload] Iniciando upload de', files.length, 'arquivo(s)')
+    console.log('🚀 [ArquivosUpload] Iniciando upload de', files.length, 'arquivo(s) para cliente:', emailCliente)
 
     try {
+      // First ensure we have a valid user session
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('❌ [ArquivosUpload] Erro ao verificar sessão:', sessionError)
+        throw new Error('Erro de autenticação. Faça login novamente.')
+      }
+
+      if (!session) {
+        console.error('❌ [ArquivosUpload] Usuário não autenticado')
+        throw new Error('Você precisa estar logado para enviar arquivos.')
+      }
+
+      console.log('✅ [ArquivosUpload] Usuário autenticado:', session.user.email)
+
       // Ensure storage bucket exists
       await ensureClienteArquivosBucket()
 
@@ -54,7 +112,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
       for (const file of files) {
         try {
-          console.log('📤 [ArquivosUpload] Processando arquivo:', file.name)
+          console.log('📤 [ArquivosUpload] Processando arquivo:', file.name, 'Tamanho:', file.size)
 
           // Validar tipo de arquivo
           const allowedTypes = [
@@ -93,9 +151,12 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           console.log('📤 [ArquivosUpload] Enviando para storage:', filePath)
 
           // Upload para o Supabase Storage
-          const { error: uploadError } = await supabase.storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
             .from('cliente-arquivos')
-            .upload(filePath, file)
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            })
 
           if (uploadError) {
             console.error('❌ [ArquivosUpload] Erro no upload para storage:', uploadError)
@@ -108,49 +169,66 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             continue
           }
 
-          console.log('✅ [ArquivosUpload] Upload para storage concluído')
+          console.log('✅ [ArquivosUpload] Upload para storage concluído:', uploadData.path)
           console.log('💾 [ArquivosUpload] Salvando no banco de dados...')
 
-          // Salvar informações do arquivo no banco
-          const { error: dbError } = await supabase
-            .from('arquivos_cliente')
-            .insert({
-              email_cliente: emailCliente,
-              nome_arquivo: file.name,
-              caminho_arquivo: filePath,
-              tipo_arquivo: file.type,
-              tamanho_arquivo: file.size,
-              author_type: 'cliente'
-            })
+          // Salvar informações do arquivo no banco com retry
+          let dbInsertSuccess = false
+          let dbRetries = 3
 
-          if (dbError) {
-            console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', dbError)
-            console.error('❌ [ArquivosUpload] Detalhes do erro:', JSON.stringify(dbError, null, 2))
-            
-            // Tentar remover o arquivo do storage se falhou no banco
-            try {
-              await supabase.storage
-                .from('cliente-arquivos')
-                .remove([filePath])
-              console.log('🧹 [ArquivosUpload] Arquivo removido do storage após erro no banco')
-            } catch (cleanupError) {
-              console.error('❌ [ArquivosUpload] Erro ao limpar storage:', cleanupError)
+          while (!dbInsertSuccess && dbRetries > 0) {
+            const { data: dbData, error: dbError } = await supabase
+              .from('arquivos_cliente')
+              .insert({
+                email_cliente: emailCliente,
+                nome_arquivo: file.name,
+                caminho_arquivo: filePath,
+                tipo_arquivo: file.type,
+                tamanho_arquivo: file.size,
+                author_type: 'cliente'
+              })
+              .select()
+
+            if (dbError) {
+              console.error('❌ [ArquivosUpload] Erro ao salvar no banco (tentativa restante:', dbRetries - 1, '):', dbError)
+              dbRetries--
+              
+              if (dbRetries === 0) {
+                // Tentar remover o arquivo do storage se falhou no banco
+                try {
+                  await supabase.storage
+                    .from('cliente-arquivos')
+                    .remove([filePath])
+                  console.log('🧹 [ArquivosUpload] Arquivo removido do storage após erro no banco')
+                } catch (cleanupError) {
+                  console.error('❌ [ArquivosUpload] Erro ao limpar storage:', cleanupError)
+                }
+                
+                toast({
+                  title: "Erro ao salvar arquivo",
+                  description: `Falha ao registrar ${file.name}: ${dbError.message}`,
+                  variant: "destructive"
+                })
+                errorCount++
+                break
+              } else {
+                // Wait a bit before retry
+                await new Promise(resolve => setTimeout(resolve, 1000))
+              }
+            } else {
+              console.log('✅ [ArquivosUpload] Arquivo salvo com sucesso no banco:', dbData)
+              dbInsertSuccess = true
+              successCount++
             }
-            
-            toast({
-              title: "Erro ao salvar arquivo",
-              description: `Falha ao registrar ${file.name}: ${dbError.message}`,
-              variant: "destructive"
-            })
-            errorCount++
-            continue
           }
-
-          console.log('✅ [ArquivosUpload] Arquivo salvo com sucesso no banco')
-          successCount++
 
         } catch (fileError) {
           console.error('❌ [ArquivosUpload] Erro ao processar arquivo:', file.name, fileError)
+          toast({
+            title: "Erro no processamento",
+            description: `Falha ao processar ${file.name}`,
+            variant: "destructive"
+          })
           errorCount++
         }
       }
@@ -162,7 +240,11 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           description: `${successCount} arquivo(s) enviado(s) com sucesso.`,
         })
         console.log('🎉 [ArquivosUpload] Upload concluído:', successCount, 'sucessos,', errorCount, 'erros')
-        onArquivosUpdated()
+        
+        // Trigger callback to refresh data
+        setTimeout(() => {
+          onArquivosUpdated()
+        }, 500)
       } else if (errorCount > 0) {
         toast({
           title: "Falha no upload",
