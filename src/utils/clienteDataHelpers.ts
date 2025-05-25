@@ -2,13 +2,15 @@
 import { supabase } from '@/lib/supabase'
 
 export const ensureClienteExists = async (emailCliente: string, nomeCliente?: string) => {
-  console.log('🔍 [ensureClienteExists] Verificando existência do cliente:', emailCliente)
+  console.log('🔍 [ensureClienteExists] === VERIFICANDO EXISTÊNCIA DO CLIENTE ===')
+  console.log('📧 [ensureClienteExists] Email:', emailCliente)
+  console.log('👤 [ensureClienteExists] Nome fornecido:', nomeCliente || 'N/A')
   
   try {
     // Check if client exists
     const { data: existingCliente, error: checkError } = await supabase
       .from('todos_clientes')
-      .select('id, nome_cliente')
+      .select('id, nome_cliente, email_cliente')
       .eq('email_cliente', emailCliente)
       .single()
 
@@ -18,12 +20,14 @@ export const ensureClienteExists = async (emailCliente: string, nomeCliente?: st
     }
 
     if (existingCliente) {
-      console.log('✅ [ensureClienteExists] Cliente já existe:', existingCliente.nome_cliente)
+      console.log('✅ [ensureClienteExists] Cliente já existe na tabela:', existingCliente.nome_cliente)
+      console.log('🆔 [ensureClienteExists] ID do cliente:', existingCliente.id)
       return true
     }
 
     // Client doesn't exist, create a basic record
-    console.log('📝 [ensureClienteExists] Criando registro básico para cliente:', emailCliente)
+    console.log('📝 [ensureClienteExists] Cliente não encontrado na tabela todos_clientes')
+    console.log('➕ [ensureClienteExists] Criando registro básico para:', emailCliente)
     
     const { data: newCliente, error: insertError } = await supabase
       .from('todos_clientes')
@@ -50,10 +54,12 @@ export const ensureClienteExists = async (emailCliente: string, nomeCliente?: st
 
     if (insertError) {
       console.error('❌ [ensureClienteExists] Erro ao criar cliente:', insertError)
+      console.error('🔥 [ensureClienteExists] Detalhes do erro:', insertError.message)
       return false
     }
 
-    console.log('✅ [ensureClienteExists] Cliente criado com sucesso:', newCliente)
+    console.log('✅ [ensureClienteExists] Cliente criado com sucesso na tabela todos_clientes!')
+    console.log('📊 [ensureClienteExists] Dados do novo cliente:', newCliente)
     return true
 
   } catch (error) {
@@ -63,10 +69,13 @@ export const ensureClienteExists = async (emailCliente: string, nomeCliente?: st
 }
 
 export const restoreClienteData = async (emailCliente: string) => {
-  console.log('🔧 [restoreClienteData] Tentando restaurar dados para:', emailCliente)
+  console.log('🔧 [restoreClienteData] === TENTANDO RESTAURAR DADOS ===')
+  console.log('📧 [restoreClienteData] Email:', emailCliente)
   
   // For the specific case of lojaofertascertas@gmail.com, restore with known data
   if (emailCliente === 'lojaofertascertas@gmail.com') {
+    console.log('🎯 [restoreClienteData] Restaurando dados específicos para lojaofertascertas@gmail.com')
+    
     try {
       const { data: restoredCliente, error: restoreError } = await supabase
         .from('todos_clientes')
@@ -93,10 +102,12 @@ export const restoreClienteData = async (emailCliente: string) => {
 
       if (restoreError) {
         console.error('❌ [restoreClienteData] Erro ao restaurar:', restoreError)
+        console.error('🔥 [restoreClienteData] Detalhes:', restoreError.message)
         return false
       }
 
-      console.log('✅ [restoreClienteData] Dados restaurados com sucesso:', restoredCliente)
+      console.log('✅ [restoreClienteData] Dados restaurados com sucesso!')
+      console.log('📊 [restoreClienteData] Cliente restaurado:', restoredCliente)
       return true
 
     } catch (error) {
@@ -105,5 +116,6 @@ export const restoreClienteData = async (emailCliente: string) => {
     }
   }
 
+  console.log('❌ [restoreClienteData] Nenhuma restauração específica configurada para este email')
   return false
 }
