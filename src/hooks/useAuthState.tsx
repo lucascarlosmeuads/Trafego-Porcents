@@ -10,10 +10,10 @@ export function useAuthState() {
   const [isCliente, setIsCliente] = useState(false)
   const [currentManagerName, setCurrentManagerName] = useState('')
 
-  const isAdmin = user?.email === 'lucas@admin.com'
+  const isAdmin = user?.email?.includes('@admin') || false
 
   const updateUserType = useCallback(async (email: string) => {
-    console.log('🚀 [useAuthState] === INICIANDO VERIFICAÇÃO ===')
+    console.log('🚀 [useAuthState] === INICIANDO VERIFICAÇÃO SIMPLIFICADA ===')
     console.log('🚀 [useAuthState] Email:', email)
     
     // Reset inicial
@@ -21,7 +21,7 @@ export function useAuthState() {
     setIsCliente(false)
     setCurrentManagerName('')
     
-    if (email === 'lucas@admin.com') {
+    if (email.includes('@admin')) {
       console.log('👑 [useAuthState] ADMIN detectado')
       setCurrentManagerName('Administrador')
       return
@@ -49,31 +49,25 @@ export function useAuthState() {
           console.log('✅ [useAuthState] Cliente configurado com sucesso!')
           break
           
-        case 'unauthorized':
-          console.log('🚫 [useAuthState] Acesso negado')
-          setIsGestor(false)
-          setIsCliente(false)
-          setCurrentManagerName('')
-          break
-          
         default:
-          console.log('❓ [useAuthState] Tipo desconhecido')
+          console.log('❓ [useAuthState] Tipo desconhecido, configurando como cliente')
           setIsGestor(false)
-          setIsCliente(false)
+          setIsCliente(true)
           setCurrentManagerName('')
           break
       }
       
       console.log('📊 [useAuthState] === ESTADO FINAL ===')
       console.log('   - userType:', userType)
-      console.log('   - isAdmin:', email === 'lucas@admin.com')
+      console.log('   - isAdmin:', email.includes('@admin'))
       console.log('   - isGestor:', userType === 'gestor')
       console.log('   - isCliente:', userType === 'cliente')
       
     } catch (error) {
       console.error('💥 [useAuthState] ERRO:', error)
+      // Em caso de erro, considerar como cliente
       setIsGestor(false)
-      setIsCliente(false)
+      setIsCliente(true)
       setCurrentManagerName('')
     }
   }, [])
