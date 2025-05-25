@@ -52,14 +52,8 @@ export function TableHeader() {
         </TableHead>
         <TableHead className="min-w-[80px] hidden lg:table-cell text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
           <div className="flex items-center gap-2">
-            <ExternalLink className="w-4 h-4 text-blue-400" />
-            <span>Briefing</span>
-          </div>
-        </TableHead>
-        <TableHead className="min-w-[80px] hidden lg:table-cell text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
-          <div className="flex items-center gap-2">
             <ExternalLink className="w-4 h-4 text-purple-400" />
-            <span>Criativo</span>
+            <span>Materiais</span>
           </div>
         </TableHead>
         <TableHead className="min-w-[80px] hidden lg:table-cell text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">

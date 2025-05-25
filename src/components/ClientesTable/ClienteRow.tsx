@@ -1,13 +1,16 @@
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, FileText, Eye } from 'lucide-react'
-import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
-import { ComissaoButton } from './ComissaoButton'
+import { Calendar, ExternalLink, Loader2, Edit, Check, X, MapPin } from 'lucide-react'
+import type { Cliente } from '@/lib/supabase'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { ComissaoButton } from './ComissaoButton'
+import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -21,21 +24,21 @@ interface ClienteRowProps {
   bmValue: string
   setBmValue: (value: string) => void
   updatingComission: string | null
+  editingComissionValue: string | null
+  comissionValueInput: string
+  setComissionValueInput: (value: string) => void
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string, field: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
-  onBMSave: (clienteId: string) => void
+  onBMSave: (clienteId: string) => Promise<void>
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => void
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
-  onComissionValueSave: (clienteId: string, newValue: number) => void
+  onComissionValueSave: (clienteId: string, newValue: number) => Promise<void>
   onComissionValueCancel: () => void
-  editingComissionValue: string | null
-  comissionValueInput: string
-  setComissionValueInput: (value: string) => void
 }
 
 export function ClienteRow({
@@ -50,6 +53,9 @@ export function ClienteRow({
   bmValue,
   setBmValue,
   updatingComission,
+  editingComissionValue,
+  comissionValueInput,
+  setComissionValueInput,
   getStatusColor,
   onStatusChange,
   onLinkEdit,
@@ -62,11 +68,9 @@ export function ClienteRow({
   onComissionValueEdit,
   onComissionValueSave,
   onComissionValueCancel,
-  editingComissionValue,
-  comissionValueInput,
-  setComissionValueInput
 }: ClienteRowProps) {
-  const [showSiteOptions, setShowSiteOptions] = useState(false)
+  const [siteLinkInput, setSiteLinkInput] = useState('')
+  const { podeEditarStatus } = useGestorStatusRestrictions()
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -78,498 +82,65 @@ export function ClienteRow({
     }
   }
 
-  const calculateDateLimit = (dataVenda: string | null) => {
-    if (!dataVenda) return { text: '-', style: '' }
-    
-    const venda = new Date(dataVenda)
-    const limite = new Date(venda)
-    limite.setDate(limite.getDate() + 15)
-    
-    const hoje = new Date()
-    const diffTime = limite.getTime() - hoje.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
-    // NOVA LÓGICA: Se o status é "No Ar", mostrar como cumprido
-    if (cliente.status_campanha === 'No Ar') {
-      return {
-        text: '✅ Cumprido',
-        style: 'bg-green-100 text-green-800 border-green-300'
-      }
-    }
-    
-    // Se o status é "Otimização", mostrar como cumprido
-    if (cliente.status_campanha === 'Otimização') {
-      return {
-        text: '✅ Cumprido',
-        style: 'bg-green-100 text-green-800 border-green-300'
-      }
-    }
-    
-    if (diffDays < 0) {
-      return {
-        text: `Atrasado ${Math.abs(diffDays)} dias`,
-        style: 'bg-red-100 text-red-800 border-red-300'
-      }
-    } else {
-      return {
-        text: `Faltam ${diffDays} dias`,
-        style: 'bg-blue-100 text-blue-800 border-blue-300'
-      }
-    }
-  }
-
-  const renderWhatsAppButton = (telefone: string) => {
-    if (!telefone) return <span className="text-xs text-contrast">-</span>
-    
-    // Limpar o número removendo caracteres especiais
-    const cleanPhone = telefone.replace(/\D/g, '')
-    
-    // Se não tiver DDD, assumir 55 (Brasil)
-    const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
-        onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
-      >
-        <MessageCircle className="w-3 h-3 mr-1" />
-        WhatsApp
-      </Button>
-    )
-  }
-
-  const renderLinkCell = (url: string, field: string, label: string) => {
-    const isEditing = editingLink?.clienteId === cliente.id && editingLink?.field === field
-    
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={linkValue}
-            onChange={(e) => setLinkValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="https://..."
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onLinkSave(cliente.id, field)}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onLinkCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    if (!url) {
-      return (
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="outline"
-          size="sm"
-          className="h-6 px-2 text-xs"
-          onClick={() => window.open(url, '_blank')}
-        >
-          <ExternalLink className="w-3 h-3 mr-1" />
-          Ver
-        </Button>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      </div>
-    )
-  }
-
-  // Render briefing materials cell with only "Ver" button (no edit icon)
-  const renderBriefingCell = () => {
-    return (
-      <div className="flex items-center gap-1">
-        {cliente.link_briefing ? (
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-6 px-2 text-xs"
-            onClick={() => window.open(cliente.link_briefing, '_blank')}
-          >
-            <ExternalLink className="w-3 h-3 mr-1" />
-            Link
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onLinkEdit(cliente.id, 'link_briefing', cliente.link_briefing || '')}
-          >
-            <Edit2 className="w-3 h-3 text-muted-foreground" />
-          </Button>
-        )}
-        
-        {/* BRIEFING MATERIALS BUTTON - Only "Ver" button without edit icon */}
-        <BriefingMaterialsModal
-          emailCliente={cliente.email_cliente}
-          nomeCliente={cliente.nome_cliente}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 text-xs bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              Ver
-            </Button>
-          }
-        />
-      </div>
-    )
-  }
-
-  const renderSiteCell = () => {
-    const siteStatus = cliente.site_status || 'pendente'
-    const siteUrl = cliente.link_site || ''
-    
-    // Se está editando o link do site
-    const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
-    if (isEditingLink) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={linkValue}
-            onChange={(e) => setLinkValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="https://..."
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={handleSiteLinkSave}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onLinkCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Se está mostrando as opções Sim/Não
-    if (showSiteOptions) {
-      return (
-        <div className="flex items-center gap-1">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-green-100 text-green-700 border-green-300 hover:bg-green-200"
-            onClick={() => handleSiteOptionSelect('aguardando_link')}
-          >
-            ✅ Precisa de site
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-7 px-2 text-xs bg-red-100 text-red-700 border-red-300 hover:bg-red-200"
-            onClick={() => handleSiteOptionSelect('nao_precisa')}
-          >
-            ❌ Não precisa
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => setShowSiteOptions(false)}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    // Estados do site com ícone de edição sempre presente
-    switch (siteStatus) {
-      case 'nao_precisa':
-        return (
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-300">
-              ❌ Não precisa
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-
-      case 'aguardando_link':
-        return (
-          <div className="flex items-center gap-1">
-            <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-              🟡 Aguardando link
-            </span>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => {
-                // Limpar o link existente quando voltamos para aguardando link
-                onLinkEdit(cliente.id, 'link_site', '')
-              }}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-
-      case 'finalizado':
-        if (siteUrl) {
-          return (
-            <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
-                onClick={() => {
-                  // Corrigir a abertura do link: usar exatamente o valor salvo
-                  let urlToOpen = siteUrl.trim()
-                  
-                  // Se não começar com http:// ou https://, adicionar https://
-                  if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
-                    urlToOpen = `https://${urlToOpen}`
-                  }
-                  
-                  window.open(urlToOpen, '_blank')
-                }}
-              >
-                🌐 Ver site
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => setShowSiteOptions(true)}
-              >
-                <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </Button>
-            </div>
-          )
-        } else {
-          return (
-            <div className="flex items-center gap-1">
-              <span className="px-2 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700 border border-yellow-300">
-                🟡 Aguardando link
-              </span>
-              <Button
-                size="sm"
-                variant="ghost"
-                className="h-6 w-6 p-0"
-                onClick={() => {
-                  // Limpar o link existente quando voltamos para aguardando link
-                  onLinkEdit(cliente.id, 'link_site', '')
-                }}
-              >
-                <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </Button>
-            </div>
-          )
-        }
-
-      default:
-        // Estado inicial - traço cinza com opção de editar
-        return (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs text-gray-400 hover:text-gray-600"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              —
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-6 w-6 p-0"
-              onClick={() => setShowSiteOptions(true)}
-            >
-              <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-    }
-  }
-
-  const handleSiteOptionSelect = async (option: string) => {
-    console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
-    
-    try {
-      // Atualizar o site_status
-      await onStatusChange(cliente.id, option)
-      setShowSiteOptions(false)
-      
-      // Se mudou para "aguardando_link", limpar o link_site existente
-      if (option === 'aguardando_link') {
-        console.log('🧹 Limpando link_site existente')
-        await onStatusChange(cliente.id, 'aguardando_link')
-        // Limpar o link do site se existir
-        if (cliente.link_site) {
-          await onLinkSave(cliente.id, 'link_site')
-        }
-      }
-    } catch (error) {
-      console.error('❌ Erro ao atualizar opção do site:', error)
-    }
-  }
-
   const handleSiteLinkSave = async () => {
-    console.log('💾 Salvando link do site:', linkValue)
-    
-    if (!linkValue.trim()) {
-      console.error('❌ Link do site está vazio')
-      return
-    }
-    
-    try {
-      // Salvar o link do site
-      const linkSuccess = await onLinkSave(cliente.id, 'link_site')
-      
-      if (linkSuccess) {
-        // Atualizar o status para finalizado
-        await onStatusChange(cliente.id, 'finalizado')
-        console.log('✅ Link salvo e status atualizado para finalizado')
-      } else {
-        console.error('❌ Falha ao salvar o link')
-      }
-    } catch (error) {
-      console.error('❌ Erro ao salvar link do site:', error)
+    const success = await onLinkSave(cliente.id, 'link_site')
+    if (success) {
+      setSiteLinkInput('')
     }
   }
 
-  const renderBMCell = () => {
-    const isEditing = editingBM === cliente.id
-    
-    if (isEditing) {
-      return (
-        <div className="flex items-center gap-1">
-          <Input
-            value={bmValue}
-            onChange={(e) => setBmValue(e.target.value)}
-            className="h-6 text-xs"
-            placeholder="Número BM"
-          />
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={() => onBMSave(cliente.id)}
-          >
-            <Check className="w-3 h-3 text-green-600" />
-          </Button>
-          <Button
-            size="sm"
-            variant="ghost"
-            className="h-6 w-6 p-0"
-            onClick={onBMCancel}
-          >
-            <X className="w-3 h-3 text-red-600" />
-          </Button>
-        </div>
-      )
-    }
-
-    return (
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-contrast">
-          {cliente.numero_bm || '-'}
-        </span>
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
-      </div>
-    )
+  const handleSiteLinkCancel = () => {
+    setSiteLinkInput('')
+    onLinkCancel()
   }
 
-  // Detectar se estamos no painel do gestor
-  const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
+  const handleSiteLinkEdit = (currentValue: string) => {
+    setSiteLinkInput(currentValue || '')
+    onLinkEdit(cliente.id, 'link_site', currentValue)
+  }
 
-  const dateLimit = calculateDateLimit(cliente.data_venda)
+  const canEditStatus = podeEditarStatus(cliente.id, cliente.status_campanha || '')
 
   return (
-    <TableRow className="border-border hover:bg-muted/20 transition-colors">
-      <TableCell className="font-mono text-xs text-contrast">
+    <TableRow className="border-border hover:bg-muted/20 transition-colors group">
+      {/* ID */}
+      <TableCell className="font-mono text-xs text-white">
         {String(index + 1).padStart(3, '0')}
       </TableCell>
-      
+
+      {/* Data Venda */}
       <TableCell>
         <div className="flex items-center gap-1">
           <Calendar className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-contrast">{formatDate(cliente.data_venda)}</span>
+          <span className="text-xs text-white">{formatDate(cliente.data_venda)}</span>
         </div>
       </TableCell>
-      
+
+      {/* Nome Cliente */}
       <TableCell className="font-medium">
-        <div className="max-w-[200px] truncate text-contrast">
-          {cliente.nome_cliente}
+        <div className="max-w-[200px] truncate text-white">
+          {cliente.nome_cliente || 'Cliente sem nome'}
         </div>
       </TableCell>
-      
-      <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
-      
+
+      {/* Telefone */}
+      <TableCell className="text-white">{cliente.telefone || '-'}</TableCell>
+
+      {/* Email Gestor */}
       <TableCell>
-        <div className="max-w-[150px] truncate text-contrast">
-          {cliente.email_gestor}
+        <div className="max-w-[180px] truncate text-white">
+          {cliente.email_gestor || '-'}
         </div>
       </TableCell>
-      
+
+      {/* Status Campanha */}
       <TableCell>
         <Select 
           value={cliente.status_campanha || ''}
           onValueChange={(value) => onStatusChange(cliente.id, value)}
-          disabled={updatingStatus === cliente.id}
+          disabled={updatingStatus === cliente.id || !canEditStatus}
         >
-          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+          <SelectTrigger className="h-8 w-48 bg-slate-700 border-slate-600 text-white">
             <SelectValue>
               {updatingStatus === cliente.id ? (
                 <div className="flex items-center gap-2">
@@ -583,7 +154,7 @@ export function ClienteRow({
               )}
             </SelectValue>
           </SelectTrigger>
-          <SelectContent className="bg-card border-border z-50">
+          <SelectContent className="bg-slate-800 border-slate-600 z-50">
             {STATUS_CAMPANHA.map(status => (
               <SelectItem key={status} value={status}>
                 <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
@@ -594,57 +165,124 @@ export function ClienteRow({
           </SelectContent>
         </Select>
       </TableCell>
-      
+
+      {/* Data Limite */}
       <TableCell>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${dateLimit.style}`}>
-          {dateLimit.text.includes('Faltam') && (
-            <Calendar className="w-3 h-3" />
-          )}
-          {dateLimit.text.includes('Atrasado') && (
-            <AlertTriangle className="w-3 h-3" />
-          )}
-          <span>{dateLimit.text}</span>
+        <div className="flex items-center gap-1">
+          <Calendar className="w-3 h-3 text-orange-400" />
+          <span className="text-xs text-white">{formatDate(cliente.data_limite)}</span>
         </div>
       </TableCell>
-      
+
+      {/* Materiais (formerly Criativos) - Using filterType='all' to show everything */}
       <TableCell className="hidden lg:table-cell">
-        {renderBriefingCell()}
+        <BriefingMaterialsModal
+          clienteEmail={cliente.email_cliente || ''}
+          clienteNome={cliente.nome_cliente || ''}
+          filterType="all"
+          trigger={
+            <Button 
+              variant="outline" 
+              size="sm"
+              className="h-7 px-2 bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+            >
+              <ExternalLink className="w-3 h-3 mr-1 text-purple-400" />
+              Ver
+            </Button>
+          }
+        />
       </TableCell>
-      
+
+      {/* Site */}
       <TableCell className="hidden lg:table-cell">
         <div className="flex items-center gap-1">
-          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Criativo')}
-          
-          {/* CREATIVE MATERIALS BUTTON - Only "Ver" button without edit icon */}
-          <BriefingMaterialsModal
-            emailCliente={cliente.email_cliente}
-            nomeCliente={cliente.nome_cliente}
-            trigger={
+          {editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site' ? (
+            <div className="flex items-center gap-1 w-full">
+              <Input
+                value={linkValue}
+                onChange={(e) => setLinkValue(e.target.value)}
+                placeholder="Cole o link do site aqui..."
+                className="h-7 text-xs bg-slate-700 border-slate-600 text-white flex-1"
+                autoFocus
+              />
               <Button
-                variant="outline"
+                onClick={handleSiteLinkSave}
                 size="sm"
-                className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+                variant="outline"
+                className="h-7 w-7 p-0 bg-green-600 border-green-500 hover:bg-green-500"
               >
-                <Eye className="w-3 h-3 mr-1" />
-                Ver
+                <Check className="w-3 h-3 text-white" />
               </Button>
-            }
-          />
+              <Button
+                onClick={handleSiteLinkCancel}
+                size="sm"
+                variant="outline"
+                className="h-7 w-7 p-0 bg-red-600 border-red-500 hover:bg-red-500"
+              >
+                <X className="w-3 h-3 text-white" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => handleSiteLinkEdit(cliente.link_site || '')}
+              variant="outline" 
+              size="sm"
+              className="h-7 px-2 bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+            >
+              <ExternalLink className="w-3 h-3 mr-1 text-orange-400" />
+              {cliente.link_site ? 'Ver' : 'Add'}
+            </Button>
+          )}
         </div>
       </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderSiteCell()}
-      </TableCell>
-      
+
+      {/* Número BM */}
       <TableCell className="hidden xl:table-cell">
-        {renderBMCell()}
+        <div className="flex items-center gap-1">
+          {editingBM === cliente.id ? (
+            <div className="flex items-center gap-1 w-full">
+              <Input
+                value={bmValue}
+                onChange={(e) => setBmValue(e.target.value)}
+                placeholder="Número BM"
+                className="h-7 text-xs bg-slate-700 border-slate-600 text-white flex-1"
+                autoFocus
+              />
+              <Button
+                onClick={() => onBMSave(cliente.id)}
+                size="sm"
+                variant="outline"
+                className="h-7 w-7 p-0 bg-green-600 border-green-500 hover:bg-green-500"
+              >
+                <Check className="w-3 h-3 text-white" />
+              </Button>
+              <Button
+                onClick={onBMCancel}
+                size="sm"
+                variant="outline"
+                className="h-7 w-7 p-0 bg-red-600 border-red-500 hover:bg-red-500"
+              >
+                <X className="w-3 h-3 text-white" />
+              </Button>
+            </div>
+          ) : (
+            <Button
+              onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
+              variant="outline"
+              size="sm"
+              className="h-7 px-2 bg-slate-700 border-slate-600 text-white hover:bg-slate-600"
+            >
+              <Edit className="w-3 h-3 mr-1 text-yellow-400" />
+              <span className="text-xs">{cliente.numero_bm || 'Add'}</span>
+            </Button>
+          )}
+        </div>
       </TableCell>
-      
+
+      {/* Comissão */}
       <TableCell>
         <ComissaoButton
           cliente={cliente}
-          isGestorDashboard={isGestorDashboard}
           updatingComission={updatingComission}
           editingComissionValue={editingComissionValue}
           comissionValueInput={comissionValueInput}
