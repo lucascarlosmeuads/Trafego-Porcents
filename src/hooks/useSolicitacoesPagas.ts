@@ -13,6 +13,8 @@ export function useSolicitacoesPagas() {
 
     const fetchSolicitacoesPagas = async () => {
       try {
+        console.log('🔍 [useSolicitacoesPagas] Buscando solicitações pagas para:', user.email)
+        
         const { data, error } = await supabase
           .from('solicitacoes_saque')
           .select('cliente_id')
@@ -20,10 +22,14 @@ export function useSolicitacoesPagas() {
           .eq('status_saque', 'pago')
 
         if (!error && data) {
-          setSolicitacoesPagas(data.map(item => item.cliente_id.toString()))
+          const clienteIds = data.map(item => item.cliente_id.toString())
+          setSolicitacoesPagas(clienteIds)
+          console.log('✅ [useSolicitacoesPagas] Clientes com saque pago:', clienteIds)
+        } else {
+          console.error('❌ [useSolicitacoesPagas] Erro:', error)
         }
       } catch (error) {
-        console.error('Erro ao buscar solicitações pagas:', error)
+        console.error('💥 [useSolicitacoesPagas] Erro ao buscar solicitações pagas:', error)
       } finally {
         setLoading(false)
       }
@@ -31,7 +37,7 @@ export function useSolicitacoesPagas() {
 
     fetchSolicitacoesPagas()
 
-    // Configurar listener de realtime para atualizações
+    // Configurar listener de realtime para atualizações automáticas
     const channel = supabase
       .channel(`solicitacoes-pagas-${user.email}`)
       .on(
@@ -39,9 +45,11 @@ export function useSolicitacoesPagas() {
         {
           event: '*',
           schema: 'public',
-          table: 'solicitacoes_saque'
+          table: 'solicitacoes_saque',
+          filter: `email_gestor=eq.${user.email}`
         },
-        () => {
+        (payload) => {
+          console.log('🔄 [useSolicitacoesPagas] Mudança detectada:', payload)
           fetchSolicitacoesPagas()
         }
       )
