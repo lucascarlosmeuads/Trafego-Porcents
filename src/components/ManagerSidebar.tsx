@@ -8,8 +8,7 @@ import {
   Users, 
   Settings, 
   DollarSign, 
-  AlertTriangle,
-  ChevronRight 
+  AlertTriangle 
 } from 'lucide-react'
 
 interface ManagerSidebarProps {
@@ -171,12 +170,8 @@ export function ManagerSidebar({
           </div>
         )}
 
-        {/* Filtros de Gestores */}
+        {/* Lista de Gestores simplificada */}
         <div className="space-y-2">
-          <h3 className="text-xs font-semibold text-muted-foreground uppercase flex items-center gap-1">
-            <ChevronRight size={12} />
-            Filtros por Gestor
-          </h3>
           <button
             onClick={() => handleManagerSelect(null)}
             className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
