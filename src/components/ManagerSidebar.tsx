@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
-import { ManagerFilter } from './ManagerSidebar/ManagerFilter'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
 
 interface ManagerSidebarProps {
@@ -69,25 +68,14 @@ export function ManagerSidebar({
         </h2>
         
         {isAdmin ? (
-          <>
-            <AdminMainMenu
-              activeTab={activeTab}
-              selectedManager={selectedManager}
-              solicitacoesPendentes={solicitacoesPendentes}
-              problemasPendentes={problemasPendentes}
-              onTabChange={onTabChange}
-              onManagerSelect={onManagerSelect}
-            />
-
-            <div className="border-t border-border my-4"></div>
-
-            <ManagerFilter
-              selectedManager={selectedManager}
-              activeTab={activeTab}
-              onManagerSelect={onManagerSelect}
-              onTabChange={onTabChange}
-            />
-          </>
+          <AdminMainMenu
+            activeTab={activeTab}
+            selectedManager={selectedManager}
+            solicitacoesPendentes={solicitacoesPendentes}
+            problemasPendentes={problemasPendentes}
+            onTabChange={onTabChange}
+            onManagerSelect={onManagerSelect}
+          />
         ) : (
           <GestorMenu
             selectedManager={selectedManager}
