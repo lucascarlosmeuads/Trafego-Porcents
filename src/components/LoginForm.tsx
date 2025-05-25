@@ -37,7 +37,7 @@ export function LoginForm() {
           description: "Verifique seu email para confirmar a conta"
         })
       } else {
-        console.log('✅ [LoginForm] Login realizado com sucesso')
+        console.log('✅ [LoginForm] Login realizado com sucesso para:', email)
         toast({
           title: "Sucesso",
           description: "Login realizado com sucesso!"

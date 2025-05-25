@@ -31,7 +31,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     console.log('🔍 [useAuth] Verificando tipo de usuário para:', email)
     
     try {
-      // Verificar se é gestor na tabela gestores
+      // PRIMEIRO: Verificar se é cliente na tabela todos_clientes
+      console.log('🔍 [useAuth] Verificando se é cliente...')
+      const { data: clienteData, error: clienteError } = await supabase
+        .from('todos_clientes')
+        .select('email_cliente, nome_cliente')
+        .eq('email_cliente', email)
+        .single()
+
+      if (!clienteError && clienteData) {
+        console.log('✅ [useAuth] Usuário é CLIENTE:', clienteData.nome_cliente)
+        setIsGestor(false)
+        setIsCliente(true)
+        setCurrentManagerName('')
+        return 'cliente'
+      }
+
+      // SEGUNDO: Verificar se é gestor na tabela gestores (só se não for cliente)
+      console.log('🔍 [useAuth] Verificando se é gestor...')
       const { data: gestorData, error: gestorError } = await supabase
         .from('gestores')
         .select('nome, email, ativo')
@@ -45,21 +62,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsCliente(false)
         setCurrentManagerName(gestorData.nome)
         return 'gestor'
-      }
-
-      // Verificar se é cliente na tabela todos_clientes
-      const { data: clienteData, error: clienteError } = await supabase
-        .from('todos_clientes')
-        .select('email_cliente, nome_cliente')
-        .eq('email_cliente', email)
-        .single()
-
-      if (!clienteError && clienteData) {
-        console.log('✅ [useAuth] Usuário é CLIENTE:', clienteData.nome_cliente)
-        setIsGestor(false)
-        setIsCliente(true)
-        setCurrentManagerName('')
-        return 'cliente'
       }
 
       // Se não está em nenhuma tabela, é um usuário sem permissão
