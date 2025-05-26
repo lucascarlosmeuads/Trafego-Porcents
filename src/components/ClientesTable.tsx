@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -81,6 +80,16 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [comissaoFilter, setComissaoFilter] = useState('')
+  
+  // States for ClienteRow editing functionality
+  const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
+  const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
+  const [linkValue, setLinkValue] = useState('')
+  const [editingBM, setEditingBM] = useState<string | null>(null)
+  const [bmValue, setBmValue] = useState('')
+  const [updatingComission, setUpdatingComission] = useState<string | null>(null)
+  const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
+  const [comissionValueInput, setComissionValueInput] = useState('')
 
   const fetchData = async () => {
     setLoading(true)
@@ -195,6 +204,134 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
     return colorMap[status] || 'bg-gray-100 text-gray-800'
   }
 
+  // Handler functions for ClienteRow
+  const handleStatusChange = async (clienteId: string, newStatus: string) => {
+    setUpdatingStatus(clienteId)
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ 
+          status_campanha: newStatus,
+          site_status: newStatus === 'aguardando_link' ? 'aguardando_link' : 
+                      newStatus === 'nao_precisa' ? 'nao_precisa' :
+                      newStatus === 'finalizado' ? 'finalizado' : undefined
+        })
+        .eq('id', clienteId)
+
+      if (error) throw error
+      refetch()
+    } catch (error) {
+      console.error('Erro ao atualizar status:', error)
+      toast({
+        title: "Erro",
+        description: "Falha ao atualizar status",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue || '')
+  }
+
+  const handleLinkSave = async (clienteId: string, field: string): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ [field]: linkValue })
+        .eq('id', clienteId)
+
+      if (error) throw error
+      
+      setEditingLink(null)
+      setLinkValue('')
+      refetch()
+      return true
+    } catch (error) {
+      console.error('Erro ao salvar link:', error)
+      return false
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue)
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ numero_bm: bmValue })
+        .eq('id', clienteId)
+
+      if (error) throw error
+      
+      setEditingBM(null)
+      setBmValue('')
+      refetch()
+    } catch (error) {
+      console.error('Erro ao salvar BM:', error)
+    }
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
+    setUpdatingComission(clienteId)
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ comissao_paga: !currentStatus })
+        .eq('id', clienteId)
+
+      if (error) throw error
+      refetch()
+    } catch (error) {
+      console.error('Erro ao atualizar comissão:', error)
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toString())
+  }
+
+  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ valor_comissao: newValue })
+        .eq('id', clienteId)
+
+      if (error) throw error
+      
+      setEditingComissionValue(null)
+      setComissionValueInput('')
+      refetch()
+    } catch (error) {
+      console.error('Erro ao salvar valor da comissão:', error)
+    }
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
   return (
     <div className="space-y-4">
       <TableActions
@@ -246,11 +383,35 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
                 </td>
               </tr>
             ) : (
-              filteredClientes.map((cliente) => (
+              filteredClientes.map((cliente, index) => (
                 <ClienteRow
                   key={cliente.id}
                   cliente={cliente}
-                  onUpdate={refetch}
+                  selectedManager={selectedManager || 'Todos'}
+                  index={index}
+                  updatingStatus={updatingStatus}
+                  editingLink={editingLink}
+                  linkValue={linkValue}
+                  setLinkValue={setLinkValue}
+                  editingBM={editingBM}
+                  bmValue={bmValue}
+                  setBmValue={setBmValue}
+                  updatingComission={updatingComission}
+                  getStatusColor={getStatusColor}
+                  onStatusChange={handleStatusChange}
+                  onLinkEdit={handleLinkEdit}
+                  onLinkSave={handleLinkSave}
+                  onLinkCancel={handleLinkCancel}
+                  onBMEdit={handleBMEdit}
+                  onBMSave={handleBMSave}
+                  onBMCancel={handleBMCancel}
+                  onComissionToggle={handleComissionToggle}
+                  onComissionValueEdit={handleComissionValueEdit}
+                  onComissionValueSave={handleComissionValueSave}
+                  onComissionValueCancel={handleComissionValueCancel}
+                  editingComissionValue={editingComissionValue}
+                  comissionValueInput={comissionValueInput}
+                  setComissionValueInput={setComissionValueInput}
                 />
               ))
             )}
