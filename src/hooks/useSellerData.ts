@@ -35,7 +35,21 @@ export function useSellerData(sellerEmail: string) {
       setLoading(true)
       console.log('🔍 [useSellerData] Buscando clientes para vendedor:', sellerEmail)
 
-      // Fetch clients where vendedor = seller's email
+      // Buscar todos os clientes para debug
+      const { data: allClients, error: allError } = await supabase
+        .from('todos_clientes')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (allError) {
+        console.error('❌ [useSellerData] Erro ao buscar todos os clientes:', allError)
+      } else {
+        console.log('📊 [useSellerData] Total de clientes na base:', allClients?.length || 0)
+        console.log('🔍 [useSellerData] Alguns emails de vendedores encontrados:', 
+          [...new Set(allClients?.map(c => c.vendedor).filter(Boolean))])
+      }
+
+      // Buscar clientes específicos do vendedor
       const { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select('*')
@@ -43,45 +57,48 @@ export function useSellerData(sellerEmail: string) {
         .order('created_at', { ascending: false })
 
       if (clientesError) {
-        console.error('❌ [useSellerData] Erro ao buscar clientes:', clientesError)
+        console.error('❌ [useSellerData] Erro ao buscar clientes do vendedor:', clientesError)
         toast({
           title: "Erro",
-          description: "Erro ao carregar clientes",
+          description: "Erro ao carregar clientes: " + clientesError.message,
           variant: "destructive"
         })
         return
       }
 
-      console.log('✅ [useSellerData] Clientes encontrados:', clientesData?.length || 0)
-      console.log('📋 [useSellerData] Lista de clientes:', clientesData?.map(c => ({ 
-        nome: c.nome_cliente, 
-        email: c.email_cliente, 
-        created_at: c.created_at,
-        vendedor: c.vendedor
-      })))
-
-      // Log específico para clientes de hoje
-      const today = new Date().toISOString().split('T')[0]
-      const clientesToday = clientesData?.filter(c => {
-        if (!c.created_at) return false
-        const clientDate = new Date(c.created_at).toISOString().split('T')[0]
-        return clientDate === today
-      }) || []
+      console.log('✅ [useSellerData] Clientes encontrados para', sellerEmail, ':', clientesData?.length || 0)
       
-      console.log('📅 [useSellerData] Clientes cadastrados hoje:', clientesToday.length)
-      console.log('📝 [useSellerData] Detalhes dos clientes de hoje:', clientesToday.map(c => ({
-        nome: c.nome_cliente,
-        email: c.email_cliente,
-        hora_cadastro: c.created_at
-      })))
+      if (clientesData && clientesData.length > 0) {
+        console.log('📋 [useSellerData] Lista de clientes do vendedor:', clientesData.map(c => ({ 
+          nome: c.nome_cliente, 
+          email: c.email_cliente, 
+          created_at: c.created_at,
+          vendedor: c.vendedor
+        })))
+      } else {
+        console.log('⚠️ [useSellerData] Nenhum cliente encontrado para o vendedor:', sellerEmail)
+        
+        // Verificar se existem clientes com emails similares
+        const similarEmails = allClients?.filter(c => 
+          c.vendedor && c.vendedor.toLowerCase().includes(sellerEmail.toLowerCase().split('@')[0])
+        )
+        
+        if (similarEmails && similarEmails.length > 0) {
+          console.log('🔍 [useSellerData] Encontrados clientes com emails similares:', 
+            similarEmails.map(c => c.vendedor))
+        }
+      }
 
       setClientes(clientesData || [])
-
-      // Calculate metrics
       await calculateMetrics(clientesData || [])
 
     } catch (error) {
       console.error('💥 [useSellerData] Erro crítico:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar dados",
+        variant: "destructive"
+      })
     } finally {
       setLoading(false)
     }
@@ -95,7 +112,7 @@ export function useSellerData(sellerEmail: string) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const yearStart = new Date(now.getFullYear(), 0, 1)
 
-    // Client registration metrics
+    // Métricas de cadastro de clientes
     const clientsToday = clientesData.filter(c => 
       c.created_at && new Date(c.created_at) >= today
     ).length
@@ -112,7 +129,7 @@ export function useSellerData(sellerEmail: string) {
       c.created_at && new Date(c.created_at) >= yearStart
     ).length
 
-    // Sales metrics based on comissao_paga and data_venda
+    // Métricas de vendas baseadas em comissao_paga e data_venda
     const paidClients = clientesData.filter(c => c.comissao_paga)
 
     const salesToday = paidClients.filter(c => 
@@ -158,28 +175,25 @@ export function useSellerData(sellerEmail: string) {
     try {
       console.log('🔍 [useSellerData] Verificando se cliente existe:', emailCliente)
       
-      // Buscar em toda a tabela, não apenas do vendedor atual
-      const { data: allClients, error } = await supabase
+      const { data: existingClients, error } = await supabase
         .from('todos_clientes')
         .select('*')
         .eq('email_cliente', emailCliente)
+        .maybeSingle()
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('❌ [useSellerData] Erro ao verificar cliente existente:', error)
         return { exists: false }
       }
 
-      console.log('🔍 [useSellerData] Resultado da busca:', allClients)
-
-      if (allClients && allClients.length > 0) {
-        const foundClient = allClients[0]
+      if (existingClients) {
         console.log('⚠️ [useSellerData] Cliente JÁ EXISTE:', {
-          nome: foundClient.nome_cliente,
-          email: foundClient.email_cliente,
-          vendedor: foundClient.vendedor,
-          created_at: foundClient.created_at
+          nome: existingClients.nome_cliente,
+          email: existingClients.email_cliente,
+          vendedor: existingClients.vendedor,
+          created_at: existingClients.created_at
         })
-        return { exists: true, foundClient }
+        return { exists: true, foundClient: existingClients }
       }
 
       console.log('✅ [useSellerData] Cliente NÃO existe, pode prosseguir')
@@ -193,9 +207,9 @@ export function useSellerData(sellerEmail: string) {
 
   const addCliente = async (clienteData: any) => {
     try {
-      console.log('🚀 [useSellerData] Verificando duplicata para:', clienteData.email_cliente)
+      console.log('🚀 [useSellerData] Iniciando adição de cliente:', clienteData.email_cliente)
       
-      // Check for duplicates first
+      // Verificar duplicatas primeiro
       const { exists, foundClient } = await checkClientExists(clienteData.email_cliente)
       
       if (exists) {
@@ -208,13 +222,13 @@ export function useSellerData(sellerEmail: string) {
         return { success: false, duplicate: true }
       }
 
-      // Insert new client with seller's email as vendedor
+      // Inserir novo cliente
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
         email_cliente: String(clienteData.email_cliente || ''),
         data_venda: clienteData.data_venda || null,
-        vendedor: sellerEmail, // Auto-fill with seller's email
+        vendedor: sellerEmail, // Auto-preencher com email do vendedor
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
@@ -255,7 +269,7 @@ export function useSellerData(sellerEmail: string) {
         duration: 3000
       })
 
-      // Refresh data immediately
+      // Atualizar dados imediatamente
       await fetchSellerClientes()
 
       return { success: true, duplicate: false, clientData: data }
@@ -271,59 +285,11 @@ export function useSellerData(sellerEmail: string) {
     }
   }
 
-  // Debug function to list all clients from database
-  const debugListAllClients = async () => {
-    try {
-      console.log('🕵️ [DEBUG] Listando TODOS os clientes da base de dados...')
-      
-      const { data: allClients, error } = await supabase
-        .from('todos_clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (error) {
-        console.error('❌ [DEBUG] Erro ao buscar todos os clientes:', error)
-        return
-      }
-
-      console.log('📊 [DEBUG] Total de clientes na base:', allClients?.length || 0)
-      
-      // Filtrar por vendedores específicos
-      const targetSellers = ['vendedoritamar@trafegoporcents.com', 'vendedoredu@trafegoporcents.com']
-      const clientsByTargetSellers = allClients?.filter(c => 
-        targetSellers.includes(c.vendedor)
-      ) || []
-
-      console.log('🎯 [DEBUG] Clientes dos vendedores alvo:', clientsByTargetSellers.length)
-      
-      // Clientes de hoje
-      const today = new Date().toISOString().split('T')[0]
-      const clientsToday = allClients?.filter(c => {
-        if (!c.created_at) return false
-        const clientDate = new Date(c.created_at).toISOString().split('T')[0]
-        return clientDate === today
-      }) || []
-
-      console.log('📅 [DEBUG] Clientes cadastrados hoje (26/05):', clientsToday.length)
-      console.log('📝 [DEBUG] Lista detalhada:', clientsToday.map(c => ({
-        nome: c.nome_cliente,
-        email: c.email_cliente,
-        vendedor: c.vendedor,
-        created_at: c.created_at
-      })))
-
-    } catch (error) {
-      console.error('💥 [DEBUG] Erro ao listar clientes:', error)
-    }
-  }
-
   useEffect(() => {
     fetchSellerClientes()
-    // Executar debug na primeira carga
-    debugListAllClients()
   }, [sellerEmail])
 
-  // Setup realtime updates for seller's clients
+  // Setup realtime updates
   useEffect(() => {
     if (!sellerEmail) return
 
@@ -354,7 +320,6 @@ export function useSellerData(sellerEmail: string) {
     metrics,
     loading,
     addCliente,
-    refetch: fetchSellerClientes,
-    debugListAllClients
+    refetch: fetchSellerClientes
   }
 }
