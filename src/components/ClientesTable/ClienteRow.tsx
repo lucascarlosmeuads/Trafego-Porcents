@@ -7,6 +7,7 @@ import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, Messag
 import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { BriefingStatusCell } from './BriefingStatusCell'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -23,7 +24,7 @@ interface ClienteRowProps {
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
+  onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
@@ -562,11 +563,20 @@ export function ClienteRow({
         </div>
       </TableCell>
       
+      {/* NOVA COLUNA DE BRIEFING */}
+      <TableCell className="hidden lg:table-cell">
+        <BriefingStatusCell
+          emailCliente={cliente.email_cliente}
+          nomeCliente={cliente.nome_cliente}
+        />
+      </TableCell>
+      
       <TableCell className="hidden lg:table-cell">
         {/* MATERIALS CELL - Only "Ver" button without edit icon */}
         <BriefingMaterialsModal
           emailCliente={cliente.email_cliente}
           nomeCliente={cliente.nome_cliente}
+          filterType="creative"
           trigger={
             <Button
               variant="outline"
