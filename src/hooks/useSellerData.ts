@@ -76,25 +76,15 @@ export function useSellerData(sellerEmail: string) {
         .from('todos_clientes')
         .select(`
           id,
-          data_venda,
           nome_cliente,
           telefone,
           email_cliente,
           vendedor,
           email_gestor,
           status_campanha,
-          data_limite,
-          link_grupo,
-          link_briefing,
-          link_criativo,
-          link_site,
-          numero_bm,
-          comissao_paga,
-          valor_comissao,
           created_at,
-          site_status,
-          descricao_problema,
-          saque_solicitado
+          comissao_paga,
+          valor_comissao
         `)
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false, nullsFirst: false })
@@ -109,25 +99,15 @@ export function useSellerData(sellerEmail: string) {
           .from('todos_clientes')
           .select(`
             id,
-            data_venda,
             nome_cliente,
             telefone,
             email_cliente,
             vendedor,
             email_gestor,
             status_campanha,
-            data_limite,
-            link_grupo,
-            link_briefing,
-            link_criativo,
-            link_site,
-            numero_bm,
-            comissao_paga,
-            valor_comissao,
             created_at,
-            site_status,
-            descricao_problema,
-            saque_solicitado
+            comissao_paga,
+            valor_comissao
           `)
           .ilike('vendedor', `%${sellerName}%`)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -147,25 +127,15 @@ export function useSellerData(sellerEmail: string) {
           .from('todos_clientes')
           .select(`
             id,
-            data_venda,
             nome_cliente,
             telefone,
             email_cliente,
             vendedor,
             email_gestor,
             status_campanha,
-            data_limite,
-            link_grupo,
-            link_briefing,
-            link_criativo,
-            link_site,
-            numero_bm,
-            comissao_paga,
-            valor_comissao,
             created_at,
-            site_status,
-            descricao_problema,
-            saque_solicitado
+            comissao_paga,
+            valor_comissao
           `)
           .eq('vendedor', capitalizedName)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -188,39 +158,38 @@ export function useSellerData(sellerEmail: string) {
 
       if (clientesData && clientesData.length > 0) {
         console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
-        console.log('📋 [useSellerData] Client details with dates:')
+        console.log('📋 [useSellerData] Client details with created_at:')
         clientesData.forEach((cliente, index) => {
-          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data Cadastro: ${cliente.created_at} - Data Venda: ${cliente.data_venda}`)
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Created At: ${cliente.created_at}`)
         })
 
         // Format data to match Cliente type
         const formattedClientes: Cliente[] = clientesData.map(item => ({
           id: String(item.id || ''),
-          data_venda: item.data_venda || '',
+          data_venda: '', // Not using data_venda anymore
           nome_cliente: item.nome_cliente || '',
           telefone: item.telefone || '',
           email_cliente: item.email_cliente || '',
           vendedor: item.vendedor || '',
           email_gestor: item.email_gestor || '',
           status_campanha: item.status_campanha || 'Brief',
-          data_limite: item.data_limite || '',
-          link_grupo: item.link_grupo || '',
-          link_briefing: item.link_briefing || '',
-          link_criativo: item.link_criativo || '',
-          link_site: item.link_site || '',
-          numero_bm: item.numero_bm || '',
+          data_limite: '',
+          link_grupo: '',
+          link_briefing: '',
+          link_criativo: '',
+          link_site: '',
+          numero_bm: '',
           comissao_paga: Boolean(item.comissao_paga),
-          valor_comissao: Number(item.valor_comissao || 60),
+          valor_comissao: Number(item.valor_comissao || 20),
           created_at: item.created_at || '',
-          site_status: item.site_status || 'pendente',
-          descricao_problema: item.descricao_problema || '',
-          saque_solicitado: Boolean(item.saque_solicitado || false)
+          site_status: 'pendente',
+          descricao_problema: '',
+          saque_solicitado: false
         }))
 
         console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
           nome: c.nome_cliente, 
-          created_at: c.created_at,
-          data_venda: c.data_venda 
+          created_at: c.created_at
         })))
 
         setClientes(formattedClientes)
@@ -380,7 +349,7 @@ export function useSellerData(sellerEmail: string) {
           nome: existingClient.nome_cliente,
           email: existingClient.email_cliente,
           vendedor: existingClient.vendedor,
-          data_venda: existingClient.data_venda
+          created_at: existingClient.created_at
         })
 
         const formattedClient: Cliente = {
@@ -399,7 +368,7 @@ export function useSellerData(sellerEmail: string) {
           link_site: existingClient.link_site || '',
           numero_bm: existingClient.numero_bm || '',
           comissao_paga: Boolean(existingClient.comissao_paga),
-          valor_comissao: Number(existingClient.valor_comissao || 60),
+          valor_comissao: Number(existingClient.valor_comissao || 20),
           created_at: existingClient.created_at || '',
           site_status: existingClient.site_status || 'pendente',
           descricao_problema: existingClient.descricao_problema || '',
@@ -453,7 +422,7 @@ export function useSellerData(sellerEmail: string) {
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
-        valor_comissao: 60.00,
+        valor_comissao: 20.00,
         site_status: 'pendente',
         data_limite: '',
         link_grupo: '',
