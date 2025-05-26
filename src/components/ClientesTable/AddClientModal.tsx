@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -93,16 +94,21 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     setLoading(true)
 
     try {
-      console.log("🟡 [AddClientModal] Iniciando adição de cliente")
+      console.log("🟡 [AddClientModal] === INICIANDO PROCESSO DE ADIÇÃO ===")
+      console.log("🟡 [AddClientModal] Modo Gestor:", gestorMode)
+      console.log("🟡 [AddClientModal] É Admin:", isAdmin)
+      console.log("🟡 [AddClientModal] Email do usuário:", user?.email)
       
       // Determine final email_gestor based on role and mode
       let emailGestorFinal
       if (gestorMode) {
         // Em modo gestor, sempre usar o email do usuário logado
         emailGestorFinal = user?.email
+        console.log("🟡 [AddClientModal] Usando email do gestor logado:", emailGestorFinal)
       } else {
         // Em modo admin, usar o gestor selecionado ou o email do usuário
         emailGestorFinal = isAdmin ? selectedGestor : user?.email
+        console.log("🟡 [AddClientModal] Usando email selecionado/admin:", emailGestorFinal)
       }
       
       const vendedor = formData.vendedor || currentManagerName
@@ -119,15 +125,15 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         comissao_paga: false
       }
 
-      console.log("🟡 [AddClientModal] Dados para adicionar:", clienteData)
+      console.log("🟡 [AddClientModal] Dados completos para adicionar:", clienteData)
 
       const result = await addCliente(clienteData)
       
-      console.log("🟡 [AddClientModal] Resultado completo da adição:", result)
+      console.log("🟡 [AddClientModal] Resultado da operação:", result)
       
       // Verificar se a operação foi bem-sucedida
       if (result && result.success) {
-        console.log("🟢 [AddClientModal] Cliente criado com sucesso!")
+        console.log("🟢 [AddClientModal] === CLIENTE CRIADO COM SUCESSO ===")
         
         // Limpar formulário
         setFormData({
@@ -144,20 +150,19 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         // Atualizar dados
         onClienteAdicionado()
 
-        // SEMPRE mostrar o modal de instruções - sem condições
-        console.log("🟡 [AddClientModal] Preparando modal de instruções com dados:", result.clientData)
+        // SEMPRE mostrar o modal de instruções - SEM CONDIÇÕES
+        console.log("🟡 [AddClientModal] Preparando modal de instruções...")
+        console.log("🟡 [AddClientModal] Dados do cliente:", result.clientData)
         setNewClientData(result.clientData)
         
-        // Delay menor para garantir que funcione
-        setTimeout(() => {
-          console.log("🟢 [AddClientModal] Abrindo modal de instruções AGORA!")
-          setShowInstructions(true)
-        }, 100)
+        // Mostrar modal imediatamente
+        console.log("🟢 [AddClientModal] === ABRINDO MODAL DE INSTRUÇÕES ===")
+        setShowInstructions(true)
       } else {
         console.error("🔴 [AddClientModal] Falha na criação do cliente:", result)
       }
     } catch (error: any) {
-      console.error('Erro ao adicionar cliente:', error)
+      console.error('💥 [AddClientModal] Erro ao adicionar cliente:', error)
       toast({
         title: "Erro",
         description: error.message || "Erro ao adicionar cliente",
@@ -284,7 +289,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => {
-          console.log("🟡 [AddClientModal] Fechando modal de instruções")
+          console.log("🟡 [AddClientModal] === FECHANDO MODAL DE INSTRUÇÕES ===")
           setShowInstructions(false)
           setNewClientData(null)
         }}
