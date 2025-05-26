@@ -1,17 +1,15 @@
 
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Smartphone, Monitor, Calendar } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { Loader2 } from 'lucide-react'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useAuth } from '@/hooks/useAuth'
-import { DeleteClientButton } from './ClientesTable/DeleteClientButton'
-import { AdicionarClienteAdminModal } from './AdminTable/AdicionarClienteAdminModal'
+import { AdminTableHeader } from './AdminTable/AdminTableHeader'
+import { AdminMobileCards } from './AdminTable/AdminMobileCards'
+import { AdminDesktopTable } from './AdminTable/AdminDesktopTable'
+import { formatDate, getStatusColor } from './AdminTable/AdminTableUtils'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -88,7 +86,6 @@ export function AdminTable() {
           variant: "destructive"
         })
       } else {
-        // Atualizar o estado local
         setClientes(prev => prev.map(cliente => 
           cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
@@ -113,41 +110,6 @@ export function AdminTable() {
     updateField(id, 'status_campanha', newStatus)
   }
 
-  const formatDate = (dateString: string | null) => {
-    if (!dateString) return '-'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
-    } catch {
-      return dateString
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Preenchimento do Formulário':
-        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
-      case 'Brief':
-        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
-      case 'Criativo':
-        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
-      case 'Site':
-        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
-      case 'Agendamento':
-        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
-      case 'No Ar':
-        return 'bg-green-500/20 text-green-700 border border-green-500/30'
-      case 'Otimização':
-        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
-      case 'Off':
-        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
-      case 'Reembolso':
-        return 'bg-red-500/20 text-red-700 border border-red-500/30'
-      default:
-        return 'bg-muted text-muted-foreground border border-border'
-    }
-  }
-
   if (loading) {
     return (
       <Card className="bg-card border-border">
@@ -163,143 +125,33 @@ export function AdminTable() {
 
   return (
     <Card className="w-full bg-card border-border">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg sm:text-xl text-card-foreground">
-            Todos os Clientes ({clientes.length})
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            <AdicionarClienteAdminModal onClienteAdicionado={fetchAllClientes} />
-            <Button
-              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-              variant="outline"
-              size="sm"
-              className="lg:hidden"
-            >
-              {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
-              {viewMode === 'table' ? 'Cartões' : 'Tabela'}
-            </Button>
-          </div>
-        </div>
-      </CardHeader>
+      <AdminTableHeader 
+        clientesCount={clientes.length}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onClienteAdicionado={fetchAllClientes}
+      />
       <CardContent className="p-0 sm:p-6">
         {/* Visualização em cartões para mobile */}
         {viewMode === 'cards' && (
-          <div className="grid gap-4 p-4 md:grid-cols-2 lg:hidden">
-            {clientes.map((cliente) => (
-              <Card key={cliente.id} className="w-full bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center justify-between text-card-foreground">
-                    <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
-                      <DeleteClientButton
-                        cliente={cliente}
-                        onDelete={handleDeleteCliente}
-                        isDeleting={deletingCliente === cliente.id}
-                      />
-                    </div>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div>
-                    <span className="font-medium text-muted-foreground">Telefone:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Email Gestor:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.email_gestor || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Status:</span>
-                    <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
-                      {cliente.status_campanha || 'Sem status'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Data Venda:</span>
-                    <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          <AdminMobileCards
+            clientes={clientes}
+            onDeleteCliente={handleDeleteCliente}
+            deletingCliente={deletingCliente}
+            formatDate={formatDate}
+            getStatusColor={getStatusColor}
+          />
         )}
 
         {/* Tabela para desktop */}
-        <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
-          <Table className="table-dark">
-            <TableHeader>
-              <TableRow className="border-border hover:bg-muted/20">
-                <TableHead className="w-16 text-muted-foreground">ID</TableHead>
-                <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
-                <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
-                <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
-                <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
-                <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
-                <TableHead className="w-20 text-muted-foreground">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {clientes.map((cliente, index) => (
-                <TableRow 
-                  key={cliente.id} 
-                  className="border-border hover:bg-muted/20 transition-colors"
-                >
-                  <TableCell className="font-mono text-xs text-foreground">
-                    {String(index + 1).padStart(3, '0')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.nome_cliente}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground">{cliente.telefone}</TableCell>
-                  <TableCell>
-                    <div className="max-w-[180px] truncate text-foreground">
-                      {cliente.email_gestor}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={cliente.status_campanha || ''}
-                      onValueChange={(value) => handleStatusChange(cliente.id, value)}
-                    >
-                      <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-                        <SelectValue>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                            {cliente.status_campanha || 'Sem status'}
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border z-50">
-                        {STATUS_CAMPANHA.map(status => (
-                          <SelectItem key={status} value={status}>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                              {status}
-                            </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <DeleteClientButton
-                      cliente={cliente}
-                      onDelete={handleDeleteCliente}
-                      isDeleting={deletingCliente === cliente.id}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+        <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
+          <AdminDesktopTable
+            clientes={clientes}
+            onDeleteCliente={handleDeleteCliente}
+            deletingCliente={deletingCliente}
+            onStatusChange={handleStatusChange}
+            formatDate={formatDate}
+          />
         </div>
         
         {clientes.length === 0 && (
