@@ -1,17 +1,18 @@
 
-import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AddClientModal } from './ClientesTable/AddClientModal'
 import { Plus, Users, TrendingUp } from 'lucide-react'
+import { useSellerData } from '@/hooks/useSellerData'
+import { SellerMetrics } from './VendedorDashboard/SellerMetrics'
+import { SellerClientsList } from './VendedorDashboard/SellerClientsList'
+import { SellerAddClientModal } from './VendedorDashboard/SellerAddClientModal'
 
 export function VendedorDashboard() {
   const { user, currentManagerName } = useAuth()
-  const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const { clientes, metrics, loading, addCliente, refetch } = useSellerData(user?.email || '')
 
-  const handleClienteAdicionado = () => {
-    console.log('✅ [VendedorDashboard] Cliente adicionado com sucesso')
-    setRefreshTrigger(prev => prev + 1)
+  const handleClienteAdicionado = async (clienteData: any) => {
+    return await addCliente(clienteData)
   }
 
   return (
@@ -32,6 +33,9 @@ export function VendedorDashboard() {
           </div>
         </div>
       </div>
+
+      {/* Sales Metrics */}
+      <SellerMetrics metrics={metrics} loading={loading} />
 
       {/* Quick Stats */}
       <div className="grid gap-4 md:grid-cols-2">
@@ -75,12 +79,12 @@ export function VendedorDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <AddClientModal 
-            onClienteAdicionado={handleClienteAdicionado} 
-            gestorMode={false}
-          />
+          <SellerAddClientModal onClienteAdicionado={handleClienteAdicionado} />
         </CardContent>
       </Card>
+
+      {/* Client List */}
+      <SellerClientsList clientes={clientes} loading={loading} />
 
       {/* Instructions Card */}
       <Card>
