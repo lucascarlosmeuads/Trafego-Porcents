@@ -1,8 +1,10 @@
 
-import { Download, RefreshCw } from 'lucide-react'
+import { Download, RefreshCw, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { RealtimeStatus } from './RealtimeStatus'
+import { AddClientModal } from './AddClientModal'
 import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 
 interface TableActionsProps {
   selectedManager: string
@@ -10,6 +12,8 @@ interface TableActionsProps {
   realtimeConnected: boolean
   onRefresh: () => void
   onExport: () => void
+  onClienteAdicionado?: () => void
+  hideAddButton?: boolean
 }
 
 export function TableActions({
@@ -17,9 +21,12 @@ export function TableActions({
   filteredClientesCount,
   realtimeConnected,
   onRefresh,
-  onExport
+  onExport,
+  onClienteAdicionado,
+  hideAddButton = false
 }: TableActionsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const { isAdmin } = useAuth()
 
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -41,6 +48,15 @@ export function TableActions({
       </div>
       
       <div className="flex flex-col sm:flex-row gap-2">
+        {/* Mostrar botão de adicionar cliente apenas para admin ou quando não for explicitamente escondido */}
+        {!hideAddButton && isAdmin && onClienteAdicionado && (
+          <AddClientModal
+            selectedManager={selectedManager}
+            onClienteAdicionado={onClienteAdicionado}
+            gestorMode={false}
+          />
+        )}
+        
         <Button 
           onClick={handleRefresh} 
           variant="outline" 

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -111,7 +110,7 @@ export function GestorDashboard() {
               gestorMode={true}
             />
           </div>
-          <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
+          <ClientesTable selectedManager={currentManagerName} filterType="ativos" hideAddButton={true} />
         </TabsContent>
 
         <TabsContent value="problemas" className="space-y-6">
@@ -119,11 +118,11 @@ export function GestorDashboard() {
         </TabsContent>
 
         <TabsContent value="saques-solicitados" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="saques-pendentes" />
+          <ClientesTable selectedManager={currentManagerName} filterType="saques-pendentes" hideAddButton={true} />
         </TabsContent>
 
         <TabsContent value="inativos" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="inativos" />
+          <ClientesTable selectedManager={currentManagerName} filterType="inativos" hideAddButton={true} />
         </TabsContent>
       </Tabs>
     </div>
