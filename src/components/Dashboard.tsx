@@ -9,6 +9,7 @@ import { ManagerSidebar } from './ManagerSidebar'
 import { User, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { supabase } from '@/lib/supabase'
 
 export function Dashboard() {
   const { user, signOut, isAdmin, isGestor, isCliente, currentManagerName, loading } = useAuth()
@@ -77,19 +78,40 @@ export function Dashboard() {
   }
 
   const handleSignOut = async () => {
-    if (isLoggingOut) return // Prevenir cliques múltiplos
+    console.log('🚪 [Dashboard] LOGOUT INICIADO')
+    console.log('🚪 [Dashboard] isLoggingOut atual:', isLoggingOut)
     
-    console.log('🚪 [Dashboard] Logout iniciado')
+    if (isLoggingOut) {
+      console.log('⚠️ [Dashboard] Logout já em progresso, ignorando clique')
+      return
+    }
+    
+    console.log('🚪 [Dashboard] Definindo isLoggingOut como true')
     setIsLoggingOut(true)
     
     try {
-      // Forçar logout imediatamente
+      console.log('🚪 [Dashboard] Limpando localStorage...')
+      // Limpar todo o estado de autenticação
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          console.log('🗑️ [Dashboard] Removendo chave:', key)
+          localStorage.removeItem(key)
+        }
+      })
+      
+      console.log('🚪 [Dashboard] Fazendo logout no Supabase...')
+      await supabase.auth.signOut({ scope: 'global' })
+      
+      console.log('🚪 [Dashboard] Chamando signOut do useAuth...')
       await signOut()
+      
     } catch (error) {
       console.error('❌ [Dashboard] Erro no logout:', error)
       // Em caso de erro, forçar redirecionamento
+      console.log('🚪 [Dashboard] Forçando redirecionamento por erro')
       window.location.href = '/'
     } finally {
+      console.log('🚪 [Dashboard] Finalizando logout')
       setIsLoggingOut(false)
     }
   }
@@ -176,7 +198,7 @@ export function Dashboard() {
                   onClick={handleSignOut}
                   size="sm"
                   disabled={isLoggingOut}
-                  className="cursor-pointer"
+                  className="cursor-pointer hover:bg-destructive hover:text-destructive-foreground"
                 >
                   {isLoggingOut ? 'Saindo...' : 'Sair'}
                 </Button>

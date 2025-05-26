@@ -164,20 +164,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const signOut = async () => {
-    console.log('🚪 [useAuth] Fazendo logout')
+    console.log('🚪 [useAuth] === PROCESSO DE LOGOUT ===')
     setLoading(true)
     
     try {
+      console.log('🧹 [useAuth] Limpando estado local primeiro')
       resetUserState()
-      await supabase.auth.signOut()
+      
+      console.log('🗑️ [useAuth] Limpando localStorage')
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          console.log('🗑️ [useAuth] Removendo:', key)
+          localStorage.removeItem(key)
+        }
+      })
+      
+      console.log('🚪 [useAuth] Fazendo logout no Supabase')
+      await supabase.auth.signOut({ scope: 'global' })
+      
+      console.log('✅ [useAuth] Logout concluído, redirecionando...')
       
       // Forçar reload da página para limpar completamente o estado
       setTimeout(() => {
         window.location.href = '/'
       }, 100)
+      
     } catch (error) {
       console.error('❌ [useAuth] Erro no logout:', error)
-      setLoading(false)
+      // Em caso de erro, forçar redirecionamento mesmo assim
+      console.log('🚪 [useAuth] Forçando redirecionamento por erro')
+      window.location.href = '/'
     }
   }
 
