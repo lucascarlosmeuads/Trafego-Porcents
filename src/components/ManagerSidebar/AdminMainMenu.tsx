@@ -6,7 +6,8 @@ import {
   Settings, 
   AlertTriangle,
   Wallet,
-  Shield
+  Shield,
+  FileText
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -60,6 +61,18 @@ export function AdminMainMenu({
       >
         <Users size={16} />
         <span>Todos os Clientes</span>
+      </button>
+
+      <button
+        onClick={() => handleTabChange('briefings')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'briefings'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <FileText size={16} />
+        <span>Formulários Briefing</span>
       </button>
       
       <button
