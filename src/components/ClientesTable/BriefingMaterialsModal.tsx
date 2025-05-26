@@ -60,9 +60,9 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // CORRIGIDO: Buscar briefing SEMPRE, exceto quando filterType for especificamente 'creative'
+      // SEMPRE buscar briefing (exceto quando filterType for especificamente 'creative')
       if (filterType !== 'creative') {
-        console.log('📋 [BriefingMaterialsModal] Carregando briefing...')
+        console.log('📋 [BriefingMaterialsModal] Buscando briefing na tabela briefings_cliente...')
         const { data: briefingData, error: briefingError } = await supabase
           .from('briefings_cliente')
           .select('*')
@@ -76,12 +76,27 @@ export function BriefingMaterialsModal({
           console.log('✅ [BriefingMaterialsModal] Briefing encontrado:', briefingData)
           setBriefing(briefingData)
         } else {
-          console.log('📋 [BriefingMaterialsModal] Briefing não encontrado para:', emailCliente)
+          console.log('📋 [BriefingMaterialsModal] Briefing não encontrado. Verificando na tabela todos_clientes...')
+          
+          // Fallback: tentar buscar na tabela todos_clientes se não encontrar na briefings_cliente
+          const { data: clienteData, error: clienteError } = await supabase
+            .from('todos_clientes')
+            .select('*')
+            .eq('email_cliente', emailCliente)
+            .maybeSingle()
+
+          if (!clienteError && clienteData) {
+            console.log('📊 [BriefingMaterialsModal] Dados do cliente encontrados na todos_clientes:', clienteData)
+            // Se houver dados relevantes de briefing na tabela todos_clientes, mapear para a estrutura esperada
+            if (clienteData.nome_cliente) {
+              console.log('ℹ️ [BriefingMaterialsModal] Cliente existe mas briefing ainda não foi preenchido')
+            }
+          }
           setBriefing(null)
         }
       }
 
-      // CORRIGIDO: Buscar arquivos SEMPRE, exceto quando filterType for especificamente 'briefing'
+      // SEMPRE buscar arquivos (exceto quando filterType for especificamente 'briefing')
       if (filterType !== 'briefing') {
         console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
         const { data: arquivosData, error: arquivosError } = await supabase
@@ -420,15 +435,15 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* SEÇÃO DE BRIEFING - CORRIGIDO: Mostrar quando briefing existe e filterType não é 'creative' */}
+              {/* SEÇÃO DE BRIEFING - SEMPRE mostrar quando briefing existe e filterType não é 'creative' */}
               {filterType !== 'creative' && briefing && (
-                <Card>
+                <Card className="border-2 border-blue-200 bg-blue-50">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-blue-600" />
-                      Briefing do Produto
+                    <CardTitle className="flex items-center gap-2 text-blue-700">
+                      <FileText className="w-5 h-5" />
+                      📋 Briefing do Produto (Preenchido pelo Cliente)
                     </CardTitle>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 text-xs text-blue-600">
                       <Calendar className="w-3 h-3" />
                       Enviado em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
                       {briefing.updated_at !== briefing.created_at && (
@@ -439,51 +454,53 @@ export function BriefingMaterialsModal({
                   <CardContent className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <h4 className="font-medium text-sm mb-2">Nome do Produto</h4>
-                        <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">{briefing.nome_produto || 'Não informado'}</p>
+                        <h4 className="font-semibold text-sm mb-2 text-blue-700">📦 Nome do Produto</h4>
+                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200">
+                          {briefing.nome_produto || 'Não informado'}
+                        </p>
                       </div>
                       <div>
-                        <h4 className="font-medium text-sm mb-2">Investimento Diário</h4>
-                        <p className="text-sm text-gray-700 bg-gray-50 p-2 rounded">
+                        <h4 className="font-semibold text-sm mb-2 text-blue-700">💰 Investimento Diário</h4>
+                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200">
                           R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
                         </p>
                       </div>
                     </div>
                     
                     <div>
-                      <h4 className="font-medium text-sm mb-2">Descrição Resumida</h4>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                      <h4 className="font-semibold text-sm mb-2 text-blue-700">📝 Descrição Resumida</h4>
+                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
                         {briefing.descricao_resumida || 'Não informado'}
                       </p>
                     </div>
                     
                     <div>
-                      <h4 className="font-medium text-sm mb-2">Público-Alvo</h4>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                      <h4 className="font-semibold text-sm mb-2 text-blue-700">🎯 Público-Alvo</h4>
+                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
                         {briefing.publico_alvo || 'Não informado'}
                       </p>
                     </div>
                     
                     <div>
-                      <h4 className="font-medium text-sm mb-2">Diferencial do Produto</h4>
-                      <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                      <h4 className="font-semibold text-sm mb-2 text-blue-700">⭐ Diferencial do Produto</h4>
+                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
                         {briefing.diferencial || 'Não informado'}
                       </p>
                     </div>
                     
                     {briefing.observacoes_finais && (
                       <div>
-                        <h4 className="font-medium text-sm mb-2">Observações Finais</h4>
-                        <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded whitespace-pre-wrap">
+                        <h4 className="font-semibold text-sm mb-2 text-blue-700">💬 Observações Finais</h4>
+                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
                           {briefing.observacoes_finais}
                         </p>
                       </div>
                     )}
 
                     <div className="flex items-center gap-2">
-                      <h4 className="font-medium text-sm">Comissão Aceita:</h4>
-                      <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'}>
-                        {briefing.comissao_aceita === 'sim' ? 'Sim' : briefing.comissao_aceita === 'nao' ? 'Não' : 'Não informado'}
+                      <h4 className="font-semibold text-sm text-blue-700">💼 Comissão Aceita:</h4>
+                      <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-blue-100 text-blue-800">
+                        {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : '❓ Não informado'}
                       </Badge>
                     </div>
                   </CardContent>
