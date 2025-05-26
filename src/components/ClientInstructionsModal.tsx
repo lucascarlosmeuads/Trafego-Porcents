@@ -15,11 +15,7 @@ interface ClientInstructionsModalProps {
 export function ClientInstructionsModal({ isOpen, onClose, clientEmail, clientName }: ClientInstructionsModalProps) {
   const [copied, setCopied] = useState(false)
 
-  const instructions = `✅ Cliente cadastrado com sucesso!
-
-⚠️ Agora, envie para o cliente as seguintes instruções:
-
-Olá ${clientName},
+  const instructions = `Olá ${clientName},
 
 1. Acesse o link: https://login.trafegoporcents.com
 2. Clique em "Criar Conta"
@@ -51,14 +47,14 @@ Qualquer dúvida, entre em contato conosco!`
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="text-green-600">Cliente Cadastrado com Sucesso!</DialogTitle>
+          <DialogTitle className="text-green-600">✅ Cliente cadastrado com sucesso!</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-4">
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Próximos Passos</h3>
             <p className="text-yellow-700 text-sm">
-              Copie as instruções abaixo e envie para o cliente via WhatsApp, e-mail ou outro meio de comunicação.
+              Agora, envie para o cliente as seguintes instruções via WhatsApp, e-mail ou outro meio de comunicação.
             </p>
           </div>
 
