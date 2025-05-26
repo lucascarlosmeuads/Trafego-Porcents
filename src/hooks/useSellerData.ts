@@ -73,12 +73,25 @@ export function useSellerData(sellerEmail: string) {
       if (!vendorError && uniqueVendors) {
         const vendors = [...new Set(uniqueVendors.map(v => v.vendedor))]
         console.log('👥 [useSellerData] Unique vendors in database:', vendors)
-        console.log('🔍 [useSellerData] Looking for exact match:', sellerEmail)
+        console.log('🔍 [useSellerData] Looking for matches with:', sellerEmail)
+        
+        // Extract seller name from email for matching
+        const sellerName = sellerEmail.split('@')[0].replace('vendedor', '').toLowerCase()
+        const possibleMatches = vendors.filter(vendor => 
+          vendor && (
+            vendor.toLowerCase().includes(sellerName) ||
+            sellerName.includes(vendor.toLowerCase()) ||
+            vendor === sellerEmail
+          )
+        )
+        console.log('🎯 [useSellerData] Possible vendor matches:', possibleMatches)
       }
 
-      // Main query - fetch ALL required fields for this specific seller
-      console.log('🔎 [useSellerData] Executing main query...')
-      const { data: clientesData, error: clientesError } = await supabase
+      // Try multiple query strategies
+      console.log('🔎 [useSellerData] Trying exact email match first...')
+      
+      // Strategy 1: Exact email match
+      let { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select(`
           id,
@@ -105,6 +118,55 @@ export function useSellerData(sellerEmail: string) {
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false })
 
+      console.log('📊 [useSellerData] Exact email match result:', clientesData?.length || 0)
+
+      // Strategy 2: If no exact match, try partial name matching
+      if (!clientesData || clientesData.length === 0) {
+        console.log('🔍 [useSellerData] Trying name-based matching...')
+        
+        // Extract name from email (e.g., "vendedoredu" -> "edu")
+        const emailPrefix = sellerEmail.split('@')[0]
+        let sellerName = emailPrefix.replace('vendedor', '').toLowerCase()
+        
+        // Handle specific cases
+        if (emailPrefix.includes('itamar')) sellerName = 'itamar'
+        if (emailPrefix.includes('edu')) sellerName = 'edu'
+        
+        console.log('🏷️ [useSellerData] Extracted seller name:', sellerName)
+        
+        const { data: nameMatchData, error: nameMatchError } = await supabase
+          .from('todos_clientes')
+          .select(`
+            id,
+            data_venda,
+            nome_cliente,
+            telefone,
+            email_cliente,
+            vendedor,
+            email_gestor,
+            status_campanha,
+            data_limite,
+            link_grupo,
+            link_briefing,
+            link_criativo,
+            link_site,
+            numero_bm,
+            comissao_paga,
+            valor_comissao,
+            created_at,
+            site_status,
+            descricao_problema,
+            saque_solicitado
+          `)
+          .ilike('vendedor', `%${sellerName}%`)
+          .order('created_at', { ascending: false })
+
+        if (!nameMatchError && nameMatchData) {
+          clientesData = nameMatchData
+          console.log('📊 [useSellerData] Name-based match result:', clientesData.length)
+        }
+      }
+
       if (clientesError) {
         console.error('❌ [useSellerData] Query error:', clientesError)
         toast({
@@ -115,16 +177,11 @@ export function useSellerData(sellerEmail: string) {
         return
       }
 
-      console.log('📊 [useSellerData] Query result:', {
-        found: clientesData?.length || 0,
-        data: clientesData
-      })
-
       if (clientesData && clientesData.length > 0) {
         console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
         console.log('📋 [useSellerData] Client details:')
         clientesData.forEach((cliente, index) => {
-          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Created: ${cliente.created_at}`)
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor}`)
         })
 
         // Format data to match Cliente type
@@ -155,17 +212,6 @@ export function useSellerData(sellerEmail: string) {
         await calculateMetrics(formattedClientes)
       } else {
         console.log('⚠️ [useSellerData] No clients found for seller:', sellerEmail)
-        
-        // Additional debugging - check for similar emails
-        const { data: similarClients } = await supabase
-          .from('todos_clientes')
-          .select('vendedor, nome_cliente, email_cliente, created_at')
-          .ilike('vendedor', `%${sellerEmail.split('@')[0]}%`)
-
-        if (similarClients && similarClients.length > 0) {
-          console.log('🔍 [useSellerData] Found clients with similar vendor emails:', similarClients)
-        }
-
         setClientes([])
         await calculateMetrics([])
       }
@@ -325,13 +371,21 @@ export function useSellerData(sellerEmail: string) {
         return { success: false, duplicate: true }
       }
 
+      // For new clients, use the seller's name derived from email for vendedor field
+      const emailPrefix = sellerEmail.split('@')[0]
+      let vendorName = emailPrefix.replace('vendedor', '')
+      
+      // Handle specific cases to match existing data
+      if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
+      if (emailPrefix.includes('edu')) vendorName = 'Edu'
+      
       // Insert new client
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
         email_cliente: String(clienteData.email_cliente || ''),
         data_venda: clienteData.data_venda || null,
-        vendedor: sellerEmail, // Auto-fill with seller's email
+        vendedor: vendorName, // Use extracted name instead of full email
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
@@ -346,7 +400,7 @@ export function useSellerData(sellerEmail: string) {
         created_at: new Date().toISOString()
       }
 
-      console.log('📤 [useSellerData] Inserting new client:', novoCliente)
+      console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)
 
       const { data, error } = await supabase
         .from('todos_clientes')
@@ -408,8 +462,7 @@ export function useSellerData(sellerEmail: string) {
         {
           event: '*',
           schema: 'public',
-          table: 'todos_clientes',
-          filter: `vendedor=eq.${sellerEmail}`
+          table: 'todos_clientes'
         },
         (payload) => {
           console.log('🔄 [useSellerData] Realtime update detected:', payload)
