@@ -14,59 +14,101 @@ export function useClientFilters(clientes: Cliente[]) {
   const [dateFilter, setDateFilter] = useState<string>('all')
 
   const organizedClientes = useMemo(() => {
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
+    // Usar timezone do Brasil (UTC-3) para garantir comparação correta
+    const now = new Date()
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
     
-    const ontem = new Date(hoje)
-    ontem.setDate(hoje.getDate() - 1)
+    const yesterday = new Date(today)
+    yesterday.setDate(today.getDate() - 1)
     
-    const ultimos7DiasInicio = new Date(hoje)
-    ultimos7DiasInicio.setDate(hoje.getDate() - 7)
+    const ultimos7DiasInicio = new Date(today)
+    ultimos7DiasInicio.setDate(today.getDate() - 7)
 
-    console.log('📅 [useClientFilters] Filtering clients by created_at')
-    console.log('📅 [useClientFilters] Today:', hoje.toDateString())
-    console.log('📅 [useClientFilters] Total clients to filter:', clientes.length)
+    console.log('📅 [useClientFilters] Data atual (Brasil):', now.toLocaleString('pt-BR'))
+    console.log('📅 [useClientFilters] Hoje (00:00):', today.toLocaleDateString('pt-BR'))
+    console.log('📅 [useClientFilters] Ontem (00:00):', yesterday.toLocaleDateString('pt-BR'))
+    console.log('📅 [useClientFilters] Total de clientes para filtrar:', clientes.length)
 
-    // Função para verificar se uma data está em um período específico
-    const isDateInRange = (dateString: string, startDate: Date, endDate?: Date) => {
+    // Função melhorada para verificar se uma data está em um período específico
+    const isDateEqual = (dateString: string, targetDate: Date) => {
+      if (!dateString || dateString.trim() === '') {
+        console.log('❌ [useClientFilters] Data vazia ou inválida:', dateString)
+        return false
+      }
+      
+      try {
+        // Parse da data do cliente
+        const clientDate = new Date(dateString)
+        
+        // Verificar se a data é válida
+        if (isNaN(clientDate.getTime())) {
+          console.log('❌ [useClientFilters] Data inválida:', dateString)
+          return false
+        }
+
+        // Normalizar para 00:00:00 para comparação apenas de data
+        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        const normalizedTargetDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
+        
+        const isEqual = normalizedClientDate.getTime() === normalizedTargetDate.getTime()
+        
+        if (isEqual) {
+          console.log(`✅ [useClientFilters] Data match: ${dateString} = ${targetDate.toLocaleDateString('pt-BR')}`)
+        }
+        
+        return isEqual
+      } catch (error) {
+        console.error('❌ [useClientFilters] Erro ao processar data:', dateString, error)
+        return false
+      }
+    }
+
+    const isDateInRange = (dateString: string, startDate: Date, endDate: Date) => {
       if (!dateString || dateString.trim() === '') return false
       
       try {
         const clientDate = new Date(dateString)
-        clientDate.setHours(0, 0, 0, 0)
+        if (isNaN(clientDate.getTime())) return false
+
+        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
+        const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
         
-        if (endDate) {
-          return clientDate >= startDate && clientDate <= endDate
-        } else {
-          return clientDate.getTime() === startDate.getTime()
-        }
+        return normalizedClientDate >= normalizedStartDate && normalizedClientDate <= normalizedEndDate
       } catch (error) {
-        console.error('❌ [useClientFilters] Error parsing date:', dateString, error)
+        console.error('❌ [useClientFilters] Erro ao verificar range de data:', dateString, error)
         return false
       }
     }
 
     // Organizar clientes por período baseado em created_at
     const clientesHoje = clientes.filter(cliente => {
-      const isToday = isDateInRange(cliente.created_at, hoje)
+      const isToday = isDateEqual(cliente.created_at, today)
       if (isToday) {
-        console.log(`✅ [useClientFilters] Client ${cliente.nome_cliente} - created_at: ${cliente.created_at} matches TODAY`)
+        console.log(`✅ [useClientFilters] Cliente HOJE: ${cliente.nome_cliente} - ${cliente.created_at}`)
       }
       return isToday
     })
 
-    const clientesOntem = clientes.filter(cliente => 
-      isDateInRange(cliente.created_at, ontem)
-    )
+    const clientesOntem = clientes.filter(cliente => {
+      const isYesterday = isDateEqual(cliente.created_at, yesterday)
+      if (isYesterday) {
+        console.log(`✅ [useClientFilters] Cliente ONTEM: ${cliente.nome_cliente} - ${cliente.created_at}`)
+      }
+      return isYesterday
+    })
 
     const clientesUltimos7Dias = clientes.filter(cliente => {
       if (!cliente.created_at || cliente.created_at.trim() === '') return false
       
       try {
         const clientDate = new Date(cliente.created_at)
-        clientDate.setHours(0, 0, 0, 0)
+        if (isNaN(clientDate.getTime())) return false
+
+        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
         
-        return clientDate >= ultimos7DiasInicio && clientDate < hoje
+        // Últimos 7 dias: entre 7 dias atrás e hoje (exclusive), não incluindo hoje nem ontem
+        return normalizedClientDate >= ultimos7DiasInicio && normalizedClientDate < yesterday
       } catch (error) {
         return false
       }
@@ -77,9 +119,11 @@ export function useClientFilters(clientes: Cliente[]) {
       
       try {
         const clientDate = new Date(cliente.created_at)
-        clientDate.setHours(0, 0, 0, 0)
+        if (isNaN(clientDate.getTime())) return false
+
+        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
         
-        return clientDate < ultimos7DiasInicio
+        return normalizedClientDate < ultimos7DiasInicio
       } catch (error) {
         return false
       }
@@ -99,36 +143,26 @@ export function useClientFilters(clientes: Cliente[]) {
         filteredClientes = [...clientesHoje, ...clientesOntem, ...clientesUltimos7Dias]
         break
       case 'thisMonth':
-        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
-        filteredClientes = clientes.filter(cliente => {
-          if (!cliente.created_at) return false
-          try {
-            const clientDate = new Date(cliente.created_at)
-            return clientDate >= inicioMes && clientDate <= hoje
-          } catch (error) {
-            return false
-          }
-        })
+        const inicioMes = new Date(today.getFullYear(), today.getMonth(), 1)
+        const fimMes = new Date(today.getFullYear(), today.getMonth() + 1, 0)
+        filteredClientes = clientes.filter(cliente => 
+          isDateInRange(cliente.created_at, inicioMes, fimMes)
+        )
         break
       case 'thisYear':
-        const inicioAno = new Date(hoje.getFullYear(), 0, 1)
-        filteredClientes = clientes.filter(cliente => {
-          if (!cliente.created_at) return false
-          try {
-            const clientDate = new Date(cliente.created_at)
-            return clientDate >= inicioAno && clientDate <= hoje
-          } catch (error) {
-            return false
-          }
-        })
+        const inicioAno = new Date(today.getFullYear(), 0, 1)
+        const fimAno = new Date(today.getFullYear(), 11, 31)
+        filteredClientes = clientes.filter(cliente => 
+          isDateInRange(cliente.created_at, inicioAno, fimAno)
+        )
         break
       default:
         filteredClientes = clientes
     }
 
-    console.log('📊 [useClientFilters] Results:')
-    console.log(`   - Hoje: ${clientesHoje.length}`)
-    console.log(`   - Ontem: ${clientesOntem.length}`)
+    console.log('📊 [useClientFilters] Resultados finais:')
+    console.log(`   - Hoje (${today.toLocaleDateString('pt-BR')}): ${clientesHoje.length}`)
+    console.log(`   - Ontem (${yesterday.toLocaleDateString('pt-BR')}): ${clientesOntem.length}`)
     console.log(`   - Últimos 7 dias: ${clientesUltimos7Dias.length}`)
     console.log(`   - Anteriores: ${clientesAnteriores.length}`)
     console.log(`   - Filtro aplicado (${dateFilter}): ${filteredClientes.length}`)
