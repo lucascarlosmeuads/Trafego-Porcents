@@ -4,7 +4,6 @@ import {
   LayoutDashboard, 
   Users, 
   Settings, 
-  DollarSign, 
   AlertTriangle,
   Wallet
 } from 'lucide-react'
@@ -12,7 +11,6 @@ import {
 interface AdminMainMenuProps {
   activeTab: string
   selectedManager: string | null
-  solicitacoesPendentes: number
   problemasPendentes: number
   saquesPendentes: number
   onTabChange: (tab: string) => void
@@ -22,7 +20,6 @@ interface AdminMainMenuProps {
 export function AdminMainMenu({ 
   activeTab, 
   selectedManager, 
-  solicitacoesPendentes, 
   problemasPendentes, 
   saquesPendentes,
   onTabChange, 
@@ -74,25 +71,6 @@ export function AdminMainMenu({
       >
         <Settings size={16} />
         <span>Gestores</span>
-      </button>
-
-      <button
-        onClick={() => handleTabChange('solicitacoes')}
-        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between ${
-          activeTab === 'solicitacoes'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-card-foreground hover:bg-muted'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <DollarSign size={16} />
-          <span>Solicitações de Saque</span>
-        </div>
-        {solicitacoesPendentes > 0 && (
-          <Badge variant="destructive" className="text-xs">
-            {solicitacoesPendentes}
-          </Badge>
-        )}
       </button>
 
       <button

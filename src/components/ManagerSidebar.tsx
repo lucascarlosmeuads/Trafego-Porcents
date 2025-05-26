@@ -19,32 +19,15 @@ export function ManagerSidebar({
   onTabChange 
 }: ManagerSidebarProps) {
   const { isAdmin } = useAuth()
-  const [solicitacoesPendentes, setSolicitacoesPendentes] = useState(0)
   const [problemasPendentes, setProblemasPendentes] = useState(0)
   const [saquesPendentes, setSaquesPendentes] = useState(0)
 
   useEffect(() => {
     if (isAdmin) {
-      fetchSolicitacoesPendentes()
       fetchProblemasPendentes()
       fetchSaquesPendentes()
     }
   }, [isAdmin])
-
-  const fetchSolicitacoesPendentes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('solicitacoes_saque')
-        .select('id')
-        .eq('status_saque', 'pendente')
-
-      if (!error && data) {
-        setSolicitacoesPendentes(data.length)
-      }
-    } catch (error) {
-      console.error('Erro ao buscar solicitações pendentes:', error)
-    }
-  }
 
   const fetchProblemasPendentes = async () => {
     try {
@@ -88,7 +71,6 @@ export function ManagerSidebar({
           <AdminMainMenu
             activeTab={activeTab}
             selectedManager={selectedManager}
-            solicitacoesPendentes={solicitacoesPendentes}
             problemasPendentes={problemasPendentes}
             saquesPendentes={saquesPendentes}
             onTabChange={onTabChange}

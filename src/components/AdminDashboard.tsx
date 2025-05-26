@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
-import { SolicitacoesSaque } from './SolicitacoesSaque'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { ManagerSelector } from './ManagerSelector'
 import { supabase } from '@/lib/supabase'
@@ -42,9 +41,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       
       case 'problemas':
         return <ProblemasPanel />
-      
-      case 'solicitacoes':
-        return <SolicitacoesSaque />
 
       case 'saques-pendentes':
         return (
