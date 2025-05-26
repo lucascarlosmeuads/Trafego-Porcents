@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -36,32 +35,92 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
     e.preventDefault()
     setLoading(true)
 
+    console.log('🔄 [BriefingForm] Iniciando submissão do formulário...')
+    console.log('📧 [BriefingForm] Email do cliente:', emailCliente)
+    console.log('📝 [BriefingForm] Dados do formulário:', formData)
+
     try {
+      // Validar campos obrigatórios
+      if (!formData.nome_produto.trim()) {
+        console.error('❌ [BriefingForm] Nome do produto é obrigatório')
+        toast({
+          title: "Erro de validação",
+          description: "Nome do produto é obrigatório.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      if (!emailCliente) {
+        console.error('❌ [BriefingForm] Email do cliente não fornecido')
+        toast({
+          title: "Erro",
+          description: "Email do cliente não encontrado.",
+          variant: "destructive"
+        })
+        return
+      }
+
       const briefingData = {
         email_cliente: emailCliente,
-        nome_produto: formData.nome_produto,
-        descricao_resumida: formData.descricao_resumida,
-        publico_alvo: formData.publico_alvo,
-        diferencial: formData.diferencial,
+        nome_produto: formData.nome_produto.trim(),
+        descricao_resumida: formData.descricao_resumida.trim() || null,
+        publico_alvo: formData.publico_alvo.trim() || null,
+        diferencial: formData.diferencial.trim() || null,
         investimento_diario: formData.investimento_diario ? Number(formData.investimento_diario) : null,
-        observacoes_finais: formData.observacoes_finais
+        observacoes_finais: formData.observacoes_finais.trim() || null,
+        liberar_edicao: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
+
+      console.log('💾 [BriefingForm] Dados preparados para inserção:', briefingData)
 
       if (briefing) {
         // Atualizar briefing existente
-        const { error } = await supabase
+        console.log('🔄 [BriefingForm] Atualizando briefing existente com ID:', briefing.id)
+        
+        const { data, error } = await supabase
           .from('briefings_cliente')
-          .update(briefingData)
+          .update({
+            nome_produto: briefingData.nome_produto,
+            descricao_resumida: briefingData.descricao_resumida,
+            publico_alvo: briefingData.publico_alvo,
+            diferencial: briefingData.diferencial,
+            investimento_diario: briefingData.investimento_diario,
+            observacoes_finais: briefingData.observacoes_finais,
+            updated_at: briefingData.updated_at
+          })
           .eq('id', briefing.id)
+          .select()
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ [BriefingForm] Erro ao atualizar briefing:', error)
+          throw error
+        }
+
+        console.log('✅ [BriefingForm] Briefing atualizado com sucesso:', data)
       } else {
         // Criar novo briefing
-        const { error } = await supabase
+        console.log('📝 [BriefingForm] Criando novo briefing...')
+        
+        const { data, error } = await supabase
           .from('briefings_cliente')
           .insert(briefingData)
+          .select()
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ [BriefingForm] Erro ao inserir briefing:', error)
+          console.error('❌ [BriefingForm] Detalhes do erro:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          })
+          throw error
+        }
+
+        console.log('✅ [BriefingForm] Briefing criado com sucesso:', data)
       }
 
       toast({
@@ -69,14 +128,26 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
         description: "Seus dados foram salvos e enviados para a equipe.",
       })
 
+      console.log('🎉 [BriefingForm] Processo concluído com sucesso')
       setIsEditing(false)
       onBriefingUpdated()
 
-    } catch (error) {
-      console.error('Erro ao salvar briefing:', error)
+    } catch (error: any) {
+      console.error('💥 [BriefingForm] Erro crítico ao salvar briefing:', error)
+      
+      let errorMessage = "Tente novamente em alguns instantes."
+      
+      if (error.message?.includes('permission denied')) {
+        errorMessage = "Você não tem permissão para salvar este briefing."
+      } else if (error.message?.includes('duplicate key')) {
+        errorMessage = "Já existe um briefing para este cliente."
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+
       toast({
         title: "Erro ao salvar briefing",
-        description: "Tente novamente em alguns instantes.",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -127,6 +198,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
                 onChange={(e) => setFormData(prev => ({ ...prev, nome_produto: e.target.value }))}
                 required
                 className={isMobile ? 'mt-1 text-base' : ''}
+                placeholder="Ex: Curso de Marketing Digital"
               />
             </div>
 
@@ -177,6 +249,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
                 id="investimento_diario"
                 type="number"
                 step="0.01"
+                min="0"
                 value={formData.investimento_diario}
                 onChange={(e) => setFormData(prev => ({ ...prev, investimento_diario: e.target.value }))}
                 placeholder="100.00"
