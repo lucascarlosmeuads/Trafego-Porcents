@@ -97,7 +97,7 @@ export function useSellerData(sellerEmail: string) {
           saque_solicitado
         `)
         .eq('vendedor', sellerEmail)
-        .order('data_venda', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false, nullsFirst: false })
 
       console.log('📊 [useSellerData] Exact email match result:', clientesData?.length || 0)
 
@@ -130,7 +130,7 @@ export function useSellerData(sellerEmail: string) {
             saque_solicitado
           `)
           .ilike('vendedor', `%${sellerName}%`)
-          .order('data_venda', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false, nullsFirst: false })
 
         if (!nameMatchError && nameMatchData) {
           clientesData = nameMatchData
@@ -168,7 +168,7 @@ export function useSellerData(sellerEmail: string) {
             saque_solicitado
           `)
           .eq('vendedor', capitalizedName)
-          .order('data_venda', { ascending: false, nullsFirst: false })
+          .order('created_at', { ascending: false, nullsFirst: false })
 
         if (!capitalizedError && capitalizedMatchData) {
           clientesData = capitalizedMatchData
@@ -190,7 +190,7 @@ export function useSellerData(sellerEmail: string) {
         console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
         console.log('📋 [useSellerData] Client details with dates:')
         clientesData.forEach((cliente, index) => {
-          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data Venda: ${cliente.data_venda} - Created: ${cliente.created_at}`)
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data Cadastro: ${cliente.created_at} - Data Venda: ${cliente.data_venda}`)
         })
 
         // Format data to match Cliente type
@@ -217,10 +217,10 @@ export function useSellerData(sellerEmail: string) {
           saque_solicitado: Boolean(item.saque_solicitado || false)
         }))
 
-        console.log('🔍 [useSellerData] Formatted clients with data_venda:', formattedClientes.map(c => ({ 
+        console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
           nome: c.nome_cliente, 
-          data_venda: c.data_venda,
-          created_at: c.created_at 
+          created_at: c.created_at,
+          data_venda: c.data_venda 
         })))
 
         setClientes(formattedClientes)
@@ -251,18 +251,18 @@ export function useSellerData(sellerEmail: string) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const yearStart = new Date(now.getFullYear(), 0, 1)
 
-    console.log('📊 [useSellerData] Calculating metrics based on data_venda')
+    console.log('📊 [useSellerData] Calculating metrics based on created_at')
     console.log('📅 [useSellerData] Reference dates:', {
       today: today.toDateString(),
       yesterday: yesterday.toDateString(),
       weekStart: weekStart.toDateString()
     })
 
-    // Client registration metrics based on data_venda
+    // Client registration metrics based on created_at
     const clientsToday = clientesData.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         clientDate.setHours(0, 0, 0, 0)
         return clientDate.getTime() === today.getTime()
       } catch (error) {
@@ -271,9 +271,9 @@ export function useSellerData(sellerEmail: string) {
     }).length
 
     const clientsThisWeek = clientesData.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         return clientDate >= weekStart
       } catch (error) {
         return false
@@ -281,9 +281,9 @@ export function useSellerData(sellerEmail: string) {
     }).length
 
     const clientsThisMonth = clientesData.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         return clientDate >= monthStart
       } catch (error) {
         return false
@@ -291,22 +291,22 @@ export function useSellerData(sellerEmail: string) {
     }).length
 
     const clientsThisYear = clientesData.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         return clientDate >= yearStart
       } catch (error) {
         return false
       }
     }).length
 
-    // Sales metrics based on commission data
+    // Sales metrics based on commission data and created_at
     const paidClients = clientesData.filter(c => c.comissao_paga)
 
     const salesToday = paidClients.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         clientDate.setHours(0, 0, 0, 0)
         return clientDate.getTime() === today.getTime()
       } catch (error) {
@@ -315,9 +315,9 @@ export function useSellerData(sellerEmail: string) {
     }).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
     const salesYesterday = paidClients.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         clientDate.setHours(0, 0, 0, 0)
         return clientDate.getTime() === yesterday.getTime()
       } catch (error) {
@@ -326,9 +326,9 @@ export function useSellerData(sellerEmail: string) {
     }).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
     const salesThisMonth = paidClients.filter(c => {
-      if (!c.data_venda) return false
+      if (!c.created_at) return false
       try {
-        const clientDate = new Date(c.data_venda)
+        const clientDate = new Date(c.created_at)
         return clientDate >= monthStart
       } catch (error) {
         return false
@@ -337,7 +337,7 @@ export function useSellerData(sellerEmail: string) {
 
     const salesAllTime = paidClients.reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
-    console.log('📊 [useSellerData] Calculated metrics based on data_venda:', {
+    console.log('📊 [useSellerData] Calculated metrics based on created_at:', {
       clientsToday,
       clientsThisWeek,
       clientsThisMonth,
@@ -443,12 +443,12 @@ export function useSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
       
-      // Insert new client
+      // Insert new client - created_at will be automatically set by the database
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
         email_cliente: String(clienteData.email_cliente || ''),
-        data_venda: clienteData.data_venda || new Date().toISOString().split('T')[0], // Use today if not provided
+        data_venda: clienteData.data_venda || new Date().toISOString().split('T')[0],
         vendedor: vendorName,
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),

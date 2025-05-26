@@ -96,7 +96,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     }
   }
 
-  // Função para formatar data
+  // Função para formatar data usando created_at
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') {
       return 'Data não disponível'
@@ -154,15 +154,17 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             <div className="flex items-center space-x-2 text-gray-600">
               <Calendar className="h-4 w-4" />
               <span>
-                📅 Data Venda: {formatDate(cliente.data_venda)}
-              </span>
-            </div>
-            <div className="flex items-center space-x-2 text-gray-600">
-              <Clock className="h-4 w-4" />
-              <span>
                 📅 Cadastro: {formatDate(cliente.created_at)}
               </span>
             </div>
+            {cliente.data_venda && (
+              <div className="flex items-center space-x-2 text-gray-600">
+                <Clock className="h-4 w-4" />
+                <span>
+                  💰 Data Venda: {formatDate(cliente.data_venda)}
+                </span>
+              </div>
+            )}
             {cliente.email_gestor && (
               <div className="flex items-center space-x-2 text-gray-600">
                 <span className="text-xs">

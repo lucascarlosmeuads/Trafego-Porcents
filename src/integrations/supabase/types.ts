@@ -171,7 +171,7 @@ export type Database = {
         Row: {
           comissao: string | null
           comissao_paga: boolean | null
-          created_at: string | null
+          created_at: string
           data_agendamento: string | null
           data_limite: string | null
           data_subida_campanha: string | null
@@ -197,7 +197,7 @@ export type Database = {
         Insert: {
           comissao?: string | null
           comissao_paga?: boolean | null
-          created_at?: string | null
+          created_at?: string
           data_agendamento?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null
@@ -223,7 +223,7 @@ export type Database = {
         Update: {
           comissao?: string | null
           comissao_paga?: boolean | null
-          created_at?: string | null
+          created_at?: string
           data_agendamento?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null

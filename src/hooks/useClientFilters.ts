@@ -23,7 +23,7 @@ export function useClientFilters(clientes: Cliente[]) {
     const ultimos7DiasInicio = new Date(hoje)
     ultimos7DiasInicio.setDate(hoje.getDate() - 7)
 
-    console.log('📅 [useClientFilters] Filtering clients by data_venda')
+    console.log('📅 [useClientFilters] Filtering clients by created_at')
     console.log('📅 [useClientFilters] Today:', hoje.toDateString())
     console.log('📅 [useClientFilters] Total clients to filter:', clientes.length)
 
@@ -46,24 +46,24 @@ export function useClientFilters(clientes: Cliente[]) {
       }
     }
 
-    // Organizar clientes por período baseado em data_venda
+    // Organizar clientes por período baseado em created_at
     const clientesHoje = clientes.filter(cliente => {
-      const isToday = isDateInRange(cliente.data_venda, hoje)
+      const isToday = isDateInRange(cliente.created_at, hoje)
       if (isToday) {
-        console.log(`✅ [useClientFilters] Client ${cliente.nome_cliente} - data_venda: ${cliente.data_venda} matches TODAY`)
+        console.log(`✅ [useClientFilters] Client ${cliente.nome_cliente} - created_at: ${cliente.created_at} matches TODAY`)
       }
       return isToday
     })
 
     const clientesOntem = clientes.filter(cliente => 
-      isDateInRange(cliente.data_venda, ontem)
+      isDateInRange(cliente.created_at, ontem)
     )
 
     const clientesUltimos7Dias = clientes.filter(cliente => {
-      if (!cliente.data_venda || cliente.data_venda.trim() === '') return false
+      if (!cliente.created_at || cliente.created_at.trim() === '') return false
       
       try {
-        const clientDate = new Date(cliente.data_venda)
+        const clientDate = new Date(cliente.created_at)
         clientDate.setHours(0, 0, 0, 0)
         
         return clientDate >= ultimos7DiasInicio && clientDate < hoje
@@ -73,10 +73,10 @@ export function useClientFilters(clientes: Cliente[]) {
     })
 
     const clientesAnteriores = clientes.filter(cliente => {
-      if (!cliente.data_venda || cliente.data_venda.trim() === '') return false
+      if (!cliente.created_at || cliente.created_at.trim() === '') return false
       
       try {
-        const clientDate = new Date(cliente.data_venda)
+        const clientDate = new Date(cliente.created_at)
         clientDate.setHours(0, 0, 0, 0)
         
         return clientDate < ultimos7DiasInicio
@@ -101,9 +101,9 @@ export function useClientFilters(clientes: Cliente[]) {
       case 'thisMonth':
         const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
         filteredClientes = clientes.filter(cliente => {
-          if (!cliente.data_venda) return false
+          if (!cliente.created_at) return false
           try {
-            const clientDate = new Date(cliente.data_venda)
+            const clientDate = new Date(cliente.created_at)
             return clientDate >= inicioMes && clientDate <= hoje
           } catch (error) {
             return false
@@ -113,9 +113,9 @@ export function useClientFilters(clientes: Cliente[]) {
       case 'thisYear':
         const inicioAno = new Date(hoje.getFullYear(), 0, 1)
         filteredClientes = clientes.filter(cliente => {
-          if (!cliente.data_venda) return false
+          if (!cliente.created_at) return false
           try {
-            const clientDate = new Date(cliente.data_venda)
+            const clientDate = new Date(cliente.created_at)
             return clientDate >= inicioAno && clientDate <= hoje
           } catch (error) {
             return false
