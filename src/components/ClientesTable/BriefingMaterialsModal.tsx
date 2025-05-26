@@ -56,31 +56,58 @@ export function BriefingMaterialsModal({
   const { toast } = useToast()
 
   const fetchBriefing = async () => {
-    if (!emailCliente) return
+    if (!emailCliente) {
+      console.log('❌ [BriefingMaterialsModal] Email do cliente não fornecido')
+      return
+    }
 
     setBriefingLoading(true)
-    console.log('📋 [BriefingMaterialsModal] BUSCANDO BRIEFING para:', emailCliente)
+    console.log('📋 [BriefingMaterialsModal] INICIANDO BUSCA DO BRIEFING para:', emailCliente)
     
     try {
+      // Buscar briefing na tabela briefings_cliente
       const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
         .eq('email_cliente', emailCliente)
         .maybeSingle()
 
+      console.log('🔍 [BriefingMaterialsModal] Query executada:', {
+        table: 'briefings_cliente',
+        filter: `email_cliente = ${emailCliente}`,
+        data: briefingData,
+        error: briefingError
+      })
+
       if (briefingError) {
         console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
         setBriefing(null)
       } else if (briefingData) {
-        console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO:', {
+        console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO!', {
           email: emailCliente,
           produto: briefingData.nome_produto,
           investimento: briefingData.investimento_diario,
+          created_at: briefingData.created_at,
           publico: briefingData.publico_alvo?.substring(0, 50) + '...'
         })
         setBriefing(briefingData)
       } else {
-        console.log('⚠️ [BriefingMaterialsModal] BRIEFING NÃO ENCONTRADO para:', emailCliente)
+        console.log('⚠️ [BriefingMaterialsModal] BRIEFING NÃO ENCONTRADO - nenhum registro retornado para:', emailCliente)
+        
+        // Debug adicional: verificar se existem briefings na tabela
+        const { data: allBriefings, error: debugError } = await supabase
+          .from('briefings_cliente')
+          .select('email_cliente, nome_produto')
+          .limit(5)
+
+        if (!debugError && allBriefings) {
+          console.log('🔍 [BriefingMaterialsModal] DEBUG - Alguns briefings na tabela:', allBriefings)
+          const emailsNaTabela = allBriefings.map(b => b.email_cliente)
+          console.log('📧 [BriefingMaterialsModal] DEBUG - Emails encontrados na tabela:', emailsNaTabela)
+          console.log('🔍 [BriefingMaterialsModal] DEBUG - Email procurado:', emailCliente)
+          console.log('🔍 [BriefingMaterialsModal] DEBUG - Email existe na tabela?', emailsNaTabela.includes(emailCliente))
+        }
+        
         setBriefing(null)
       }
     } catch (error) {
@@ -130,41 +157,36 @@ export function BriefingMaterialsModal({
     }
   }
 
-  const fetchClientData = async () => {
-    if (!emailCliente || !open) return
-
-    setLoading(true)
-    console.log('🔍 [BriefingMaterialsModal] INÍCIO - Modal aberto para:', emailCliente, 'filterType:', filterType)
-    
-    try {
-      // SEMPRE buscar briefing E arquivos em paralelo
-      await Promise.all([
-        fetchBriefing(),
-        fetchArquivos()
-      ])
-
-      console.log('🎯 [BriefingMaterialsModal] BUSCA CONCLUÍDA - Briefing e arquivos processados')
-
-    } catch (error) {
-      console.error('💥 [BriefingMaterialsModal] Erro crítico na busca geral:', error)
-      toast({
-        title: "Erro",
-        description: "Falha ao carregar materiais do cliente",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // SEMPRE buscar briefing quando o modal abrir, independente do filterType
   useEffect(() => {
-    if (open) {
-      console.log('🚀 [BriefingMaterialsModal] Modal aberto - resetando dados e iniciando busca...')
+    if (open && emailCliente) {
+      console.log('🚀 [BriefingMaterialsModal] Modal aberto - iniciando busca completa para:', emailCliente)
+      
+      // Reset dos estados
       setBriefing(null)
       setArquivos([])
-      fetchClientData()
+      setLoading(true)
+
+      // SEMPRE buscar briefing, independente do filterType
+      const fetchAllData = async () => {
+        try {
+          // Executar buscas em paralelo
+          await Promise.all([
+            fetchBriefing(), // SEMPRE buscar briefing
+            fetchArquivos()  // Buscar arquivos conforme filterType
+          ])
+          
+          console.log('🎯 [BriefingMaterialsModal] Busca completa finalizada')
+        } catch (error) {
+          console.error('💥 [BriefingMaterialsModal] Erro na busca completa:', error)
+        } finally {
+          setLoading(false)
+        }
+      }
+
+      fetchAllData()
     }
-  }, [open, emailCliente, filterType])
+  }, [open, emailCliente]) // Removido filterType da dependência pois sempre buscamos tudo
 
   const formatFileSize = (bytes: number) => {
     if (bytes === 0) return '0 Bytes'
@@ -487,7 +509,7 @@ export function BriefingMaterialsModal({
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
                           <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
-                            {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : '❓ Não informado'}
+                            {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : briefing.comissao_aceita || '❓ Não informado'}
                           </Badge>
                         </div>
                       </div>
