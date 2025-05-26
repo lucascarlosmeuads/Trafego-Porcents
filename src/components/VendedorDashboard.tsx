@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AdicionarClienteModal } from './AdicionarClienteModal'
+import { AddClientModal } from './ClientesTable/AddClientModal'
 import { Plus, Users, TrendingUp } from 'lucide-react'
 
 export function VendedorDashboard() {
@@ -75,7 +75,7 @@ export function VendedorDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <AdicionarClienteModal onClienteAdicionado={handleClienteAdicionado} />
+          <AddClientModal onClienteAdicionado={handleClienteAdicionado} />
         </CardContent>
       </Card>
 
