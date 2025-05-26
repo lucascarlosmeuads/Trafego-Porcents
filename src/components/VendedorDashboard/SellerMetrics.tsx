@@ -26,6 +26,9 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
     )
   }
 
+  // Comissão fixa de R$ 20,00 por cliente cadastrado
+  const comissaoPorCliente = 20.00
+
   return (
     <div className="space-y-6">
       {/* Client Registration Report */}
@@ -89,11 +92,72 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
         </div>
       </div>
 
-      {/* Sales Report */}
+      {/* Commission Report */}
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <DollarSign className="h-5 w-5 mr-2" />
-          💰 Relatório de Vendas (Comissões Pagas)
+          💰 Relatório de Comissões (R$ 20,00 por cliente)
+        </h3>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Hoje</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {(metrics.clientsToday * comissaoPorCliente).toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.clientsToday} cliente{metrics.clientsToday !== 1 ? 's' : ''} hoje
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {(metrics.clientsThisWeek * comissaoPorCliente).toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.clientsThisWeek} cliente{metrics.clientsThisWeek !== 1 ? 's' : ''} esta semana
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {(metrics.clientsThisMonth * comissaoPorCliente).toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.clientsThisMonth} cliente{metrics.clientsThisMonth !== 1 ? 's' : ''} este mês
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total Geral</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">R$ {(metrics.clientsThisYear * comissaoPorCliente).toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                {metrics.clientsThisYear} cliente{metrics.clientsThisYear !== 1 ? 's' : ''} no total
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Legacy Sales Report (mantido para compatibilidade) */}
+      <div>
+        <h3 className="text-lg font-semibold mb-4 flex items-center">
+          <DollarSign className="h-5 w-5 mr-2" />
+          💰 Relatório de Vendas (Sistema Antigo - Comissões Pagas)
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -104,7 +168,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
             <CardContent>
               <div className="text-2xl font-bold">R$ {metrics.salesToday.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
-                em comissões hoje
+                em comissões pagas hoje
               </p>
             </CardContent>
           </Card>
@@ -117,7 +181,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
             <CardContent>
               <div className="text-2xl font-bold">R$ {metrics.salesYesterday.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
-                em comissões ontem
+                em comissões pagas ontem
               </p>
             </CardContent>
           </Card>
@@ -130,7 +194,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
             <CardContent>
               <div className="text-2xl font-bold">R$ {metrics.salesThisMonth.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
-                em comissões este mês
+                em comissões pagas este mês
               </p>
             </CardContent>
           </Card>
@@ -143,7 +207,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
             <CardContent>
               <div className="text-2xl font-bold">R$ {metrics.salesAllTime.toFixed(2)}</div>
               <p className="text-xs text-muted-foreground">
-                total de comissões
+                total de comissões pagas
               </p>
             </CardContent>
           </Card>
