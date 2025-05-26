@@ -90,7 +90,7 @@ export function useSellerData(sellerEmail: string) {
       // Try multiple query strategies
       console.log('🔎 [useSellerData] Trying exact email match first...')
       
-      // Strategy 1: Exact email match
+      // Strategy 1: Exact email match - IMPORTANTE: Incluir created_at na query
       let { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select(`
@@ -179,12 +179,12 @@ export function useSellerData(sellerEmail: string) {
 
       if (clientesData && clientesData.length > 0) {
         console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
-        console.log('📋 [useSellerData] Client details:')
+        console.log('📋 [useSellerData] Client details with dates:')
         clientesData.forEach((cliente, index) => {
-          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor}`)
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data: ${cliente.created_at}`)
         })
 
-        // Format data to match Cliente type
+        // Format data to match Cliente type - IMPORTANTE: Garantir que created_at seja preservado
         const formattedClientes: Cliente[] = clientesData.map(item => ({
           id: String(item.id || ''),
           data_venda: item.data_venda || '',
@@ -202,11 +202,13 @@ export function useSellerData(sellerEmail: string) {
           numero_bm: item.numero_bm || '',
           comissao_paga: Boolean(item.comissao_paga),
           valor_comissao: Number(item.valor_comissao || 60),
-          created_at: item.created_at || '',
+          created_at: item.created_at || '', // IMPORTANTE: Preservar a data de criação
           site_status: item.site_status || 'pendente',
           descricao_problema: item.descricao_problema || '',
           saque_solicitado: Boolean(item.saque_solicitado || false)
         }))
+
+        console.log('🔍 [useSellerData] Formatted clients with dates:', formattedClientes.map(c => ({ nome: c.nome_cliente, created_at: c.created_at })))
 
         setClientes(formattedClientes)
         await calculateMetrics(formattedClientes)
@@ -379,7 +381,7 @@ export function useSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
       
-      // Insert new client
+      // Insert new client - IMPORTANTE: O created_at será definido automaticamente pelo banco
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
@@ -396,8 +398,8 @@ export function useSellerData(sellerEmail: string) {
         link_briefing: '',
         link_criativo: '',
         link_site: '',
-        numero_bm: '',
-        created_at: new Date().toISOString()
+        numero_bm: ''
+        // Não definir created_at aqui - deixar o banco definir automaticamente
       }
 
       console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)
