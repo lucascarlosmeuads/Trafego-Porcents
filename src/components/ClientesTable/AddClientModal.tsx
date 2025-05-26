@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -35,7 +34,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
-  // Predefined manager emails for admin selection
   const managerOptions = [
     { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
     { name: 'Carol', email: 'carol@trafegoporcents.com' },
@@ -125,10 +123,12 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
 
       const result = await addCliente(clienteData)
       
-      console.log("🟡 [AddClientModal] Resultado da adição:", result)
+      console.log("🟡 [AddClientModal] Resultado completo da adição:", result)
       
-      // Se a adição foi bem-sucedida
-      if (result && typeof result === 'object' && result.success) {
+      // Verificar se a operação foi bem-sucedida
+      if (result && result.success) {
+        console.log("🟢 [AddClientModal] Cliente criado com sucesso!")
+        
         // Limpar formulário
         setFormData({
           nome_cliente: '',
@@ -144,15 +144,17 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         // Atualizar dados
         onClienteAdicionado()
 
-        // SEMPRE mostrar o modal de instruções após sucesso
-        console.log("🟡 [AddClientModal] Preparando dados para modal de instruções:", result.clientData)
+        // SEMPRE mostrar o modal de instruções - sem condições
+        console.log("🟡 [AddClientModal] Preparando modal de instruções com dados:", result.clientData)
         setNewClientData(result.clientData)
         
-        // Pequeno delay para garantir que o modal principal feche antes
+        // Delay menor para garantir que funcione
         setTimeout(() => {
-          console.log("🟡 [AddClientModal] Mostrando modal de instruções")
+          console.log("🟢 [AddClientModal] Abrindo modal de instruções AGORA!")
           setShowInstructions(true)
-        }, 300)
+        }, 100)
+      } else {
+        console.error("🔴 [AddClientModal] Falha na criação do cliente:", result)
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
@@ -221,7 +223,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
               />
             </div>
 
-            {/* Admin-only: Gestor Selection (mas não em gestorMode) */}
             {isAdmin && !gestorMode && (
               <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
@@ -280,10 +281,10 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Instruções - Aparece automaticamente após criar cliente */}
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => {
+          console.log("🟡 [AddClientModal] Fechando modal de instruções")
           setShowInstructions(false)
           setNewClientData(null)
         }}

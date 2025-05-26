@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -114,7 +113,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
   const addCliente = async (clienteData: any) => {
     if (!userEmail) {
       console.error('❌ [useClienteOperations] Email do usuário não fornecido')
-      return false
+      return { success: false, isNewClient: false, clientData: null }
     }
 
     try {
@@ -220,8 +219,13 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       // Refresh data
       refetchData()
       
-      // Sempre retornar dados para o modal funcionar
-      console.log('🎯 [useClienteOperations] Retornando dados para modal:', finalClientData)
+      // SEMPRE retornar dados estruturados para garantir que o modal funcione
+      console.log('🎯 [useClienteOperations] Retornando dados estruturados:', {
+        success: true,
+        isNewClient: !clienteJaExistia,
+        clientData: finalClientData
+      })
+      
       return { 
         success: true, 
         isNewClient: !clienteJaExistia, 
