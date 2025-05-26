@@ -70,9 +70,9 @@ export function ClienteRow({
   const [briefingExists, setBriefingExists] = useState<boolean | null>(null)
   const [checkingBriefing, setCheckingBriefing] = useState(false)
 
-  // Verificar se existe briefing para este cliente
+  // IMPROVED: Enhanced briefing check function
   const checkBriefingExists = async () => {
-    if (!cliente.email_cliente || cliente.email_cliente.trim() === '') {
+    if (!cliente.email_cliente) {
       console.log('❌ [ClienteRow] Email do cliente não fornecido para ID:', cliente.id)
       setBriefingExists(false)
       return
@@ -82,79 +82,69 @@ export function ClienteRow({
     
     try {
       const emailToSearch = cliente.email_cliente.trim().toLowerCase()
-      console.log('🔍 [ClienteRow] Verificando briefing para cliente:', {
-        original: cliente.email_cliente,
-        processed: emailToSearch,
+      console.log('🔍 [ClienteRow] Verificando briefing para:', {
         clienteId: cliente.id,
+        emailOriginal: cliente.email_cliente,
+        emailProcessado: emailToSearch,
         nomeCliente: cliente.nome_cliente
       })
       
-      // Primeira tentativa: busca exata
-      const { data: exactData, error: exactError } = await supabase
+      // Busca mais ampla - buscar todos os briefings e filtrar manualmente
+      const { data: allBriefings, error } = await supabase
         .from('briefings_cliente')
-        .select('id, email_cliente, nome_produto, created_at')
-        .eq('email_cliente', emailToSearch)
-        .limit(1)
+        .select('*')
+        .order('created_at', { ascending: false })
 
-      console.log('📊 [ClienteRow] Busca exata:', { 
-        emailToSearch, 
-        found: exactData?.length || 0, 
-        data: exactData, 
-        error: exactError 
-      })
-
-      if (!exactError && exactData && exactData.length > 0) {
-        console.log('✅ [ClienteRow] Briefing encontrado na busca exata:', exactData[0])
-        setBriefingExists(true)
-        return
-      }
-
-      // Segunda tentativa: busca case-insensitive
-      const { data: iLikeData, error: iLikeError } = await supabase
-        .from('briefings_cliente')
-        .select('id, email_cliente, nome_produto, created_at')
-        .ilike('email_cliente', emailToSearch)
-        .limit(1)
-
-      console.log('📊 [ClienteRow] Busca ilike:', { 
-        emailToSearch, 
-        found: iLikeData?.length || 0, 
-        data: iLikeData, 
-        error: iLikeError 
-      })
-
-      if (!iLikeError && iLikeData && iLikeData.length > 0) {
-        console.log('✅ [ClienteRow] Briefing encontrado na busca ilike:', iLikeData[0])
-        setBriefingExists(true)
-        return
-      }
-
-      // Terceira tentativa: busca todos os briefings e comparar manualmente
-      const { data: allBriefings, error: allError } = await supabase
-        .from('briefings_cliente')
-        .select('id, email_cliente, nome_produto, created_at')
-
-      console.log('📊 [ClienteRow] Todos os briefings para debug:', {
+      console.log('📊 [ClienteRow] Todos os briefings encontrados:', {
         total: allBriefings?.length || 0,
-        searchingFor: emailToSearch,
-        allEmails: allBriefings?.map(b => b.email_cliente) || []
+        emails: allBriefings?.map(b => b.email_cliente) || [],
+        error
       })
 
-      if (!allError && allBriefings) {
-        // Verificar se algum email bate (removendo espaços e case-insensitive)
-        const found = allBriefings.find(briefing => 
-          briefing.email_cliente.trim().toLowerCase() === emailToSearch
-        )
-
-        if (found) {
-          console.log('✅ [ClienteRow] Briefing encontrado na busca manual:', found)
-          setBriefingExists(true)
-          return
-        }
+      if (error) {
+        console.error('❌ [ClienteRow] Erro na busca:', error)
+        setBriefingExists(false)
+        return
       }
 
-      console.log('❌ [ClienteRow] Nenhum briefing encontrado para:', emailToSearch)
-      setBriefingExists(false)
+      if (!allBriefings || allBriefings.length === 0) {
+        console.log('❌ [ClienteRow] Nenhum briefing encontrado na tabela')
+        setBriefingExists(false)
+        return
+      }
+
+      // Filtrar manualmente com múltiplas estratégias
+      const found = allBriefings.find(briefing => {
+        const briefingEmail = briefing.email_cliente?.trim().toLowerCase()
+        
+        // Comparação exata
+        if (briefingEmail === emailToSearch) {
+          console.log('✅ [ClienteRow] Match exato encontrado:', briefing)
+          return true
+        }
+        
+        // Comparação sem espaços extras
+        if (briefingEmail?.replace(/\s+/g, '') === emailToSearch.replace(/\s+/g, '')) {
+          console.log('✅ [ClienteRow] Match sem espaços encontrado:', briefing)
+          return true
+        }
+        
+        return false
+      })
+
+      if (found) {
+        console.log('✅ [ClienteRow] Briefing encontrado para cliente:', {
+          clienteEmail: emailToSearch,
+          briefingData: found
+        })
+        setBriefingExists(true)
+      } else {
+        console.log('❌ [ClienteRow] Nenhum briefing encontrado para:', {
+          emailProcurado: emailToSearch,
+          emailsDisponíveis: allBriefings.map(b => `"${b.email_cliente}"`)
+        })
+        setBriefingExists(false)
+      }
 
     } catch (error) {
       console.error('💥 [ClienteRow] Erro na verificação do briefing:', error)
@@ -165,14 +155,17 @@ export function ClienteRow({
   }
 
   useEffect(() => {
-    // Sempre verificar quando o componente montar ou o email mudar
     if (cliente.email_cliente) {
-      console.log('🔄 [ClienteRow] Iniciando verificação de briefing para:', cliente.email_cliente)
+      console.log('🔄 [ClienteRow] Iniciando verificação de briefing para cliente:', {
+        id: cliente.id,
+        email: cliente.email_cliente,
+        nome: cliente.nome_cliente
+      })
       checkBriefingExists()
     } else {
       setBriefingExists(false)
     }
-  }, [cliente.email_cliente, cliente.id]) // Adicionei cliente.id para garantir re-check
+  }, [cliente.email_cliente, cliente.id])
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -195,7 +188,6 @@ export function ClienteRow({
     const diffTime = limite.getTime() - hoje.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
     
-    // NOVA LÓGICA: Se o status é "No Ar", mostrar como cumprido
     if (cliente.status_campanha === 'No Ar') {
       return {
         text: '✅ Cumprido',
@@ -203,7 +195,6 @@ export function ClienteRow({
       }
     }
     
-    // Se o status é "Otimização", mostrar como cumprido
     if (cliente.status_campanha === 'Otimização') {
       return {
         text: '✅ Cumprido',
@@ -227,10 +218,7 @@ export function ClienteRow({
   const renderWhatsAppButton = (telefone: string) => {
     if (!telefone) return <span className="text-xs text-contrast">-</span>
     
-    // Limpar o número removendo caracteres especiais
     const cleanPhone = telefone.replace(/\D/g, '')
-    
-    // Se não tiver DDD, assumir 55 (Brasil)
     const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
     
     return (
@@ -318,7 +306,6 @@ export function ClienteRow({
     const siteStatus = cliente.site_status || 'pendente'
     const siteUrl = cliente.link_site || ''
     
-    // Se está editando o link do site
     const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
     if (isEditingLink) {
       return (
@@ -349,7 +336,6 @@ export function ClienteRow({
       )
     }
 
-    // Se está mostrando as opções Sim/Não
     if (showSiteOptions) {
       return (
         <div className="flex items-center gap-1">
@@ -381,7 +367,6 @@ export function ClienteRow({
       )
     }
 
-    // Estados do site com ícone de edição sempre presente
     switch (siteStatus) {
       case 'nao_precisa':
         return (
@@ -411,7 +396,6 @@ export function ClienteRow({
               variant="ghost"
               className="h-6 w-6 p-0"
               onClick={() => {
-                // Limpar o link existente quando voltamos para aguardando link
                 onLinkEdit(cliente.id, 'link_site', '')
               }}
             >
@@ -429,10 +413,8 @@ export function ClienteRow({
                 size="sm"
                 className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
                 onClick={() => {
-                  // Corrigir a abertura do link: usar exatamente o valor salvo
                   let urlToOpen = siteUrl.trim()
                   
-                  // Se não começar com http:// ou https://, adicionar https://
                   if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
                     urlToOpen = `https://${urlToOpen}`
                   }
@@ -463,7 +445,6 @@ export function ClienteRow({
                 variant="ghost"
                 className="h-6 w-6 p-0"
                 onClick={() => {
-                  // Limpar o link existente quando voltamos para aguardando link
                   onLinkEdit(cliente.id, 'link_site', '')
                 }}
               >
@@ -474,7 +455,6 @@ export function ClienteRow({
         }
 
       default:
-        // Estado inicial - traço cinza com opção de editar
         return (
           <div className="flex items-center gap-1">
             <Button
@@ -502,15 +482,12 @@ export function ClienteRow({
     console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
     
     try {
-      // Atualizar o site_status
       await onStatusChange(cliente.id, option)
       setShowSiteOptions(false)
       
-      // Se mudou para "aguardando_link", limpar o link_site existente
       if (option === 'aguardando_link') {
         console.log('🧹 Limpando link_site existente')
         await onStatusChange(cliente.id, 'aguardando_link')
-        // Limpar o link do site se existir
         if (cliente.link_site) {
           await onLinkSave(cliente.id, 'link_site')
         }
@@ -529,11 +506,9 @@ export function ClienteRow({
     }
     
     try {
-      // Salvar o link do site
       const linkSuccess = await onLinkSave(cliente.id, 'link_site')
       
       if (linkSuccess) {
-        // Atualizar o status para finalizado
         await onStatusChange(cliente.id, 'finalizado')
         console.log('✅ Link salvo e status atualizado para finalizado')
       } else {
@@ -593,9 +568,16 @@ export function ClienteRow({
     )
   }
 
+  // IMPROVED: Better briefing cell rendering
   const renderBriefingCell = () => {
+    console.log('🎨 [ClienteRow] Renderizando célula briefing:', {
+      clienteId: cliente.id,
+      email: cliente.email_cliente,
+      checkingBriefing,
+      briefingExists
+    })
+
     if (checkingBriefing) {
-      // Enquanto está verificando
       return (
         <div className="flex items-center justify-center">
           <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
@@ -603,8 +585,8 @@ export function ClienteRow({
       )
     }
 
-    if (briefingExists) {
-      // Briefing existe - mostrar botão para visualizar
+    if (briefingExists === true) {
+      console.log('✅ [ClienteRow] Mostrando botão "Ver Briefing" para cliente:', cliente.email_cliente)
       return (
         <BriefingModal
           emailCliente={cliente.email_cliente || ''}
@@ -622,7 +604,7 @@ export function ClienteRow({
         />
       )
     } else {
-      // Briefing não existe
+      console.log('❌ [ClienteRow] Mostrando "Não preenchido" para cliente:', cliente.email_cliente)
       return (
         <span className="text-xs text-muted-foreground px-2 py-1 bg-gray-50 rounded border">
           Não preenchido
@@ -631,9 +613,7 @@ export function ClienteRow({
     }
   }
 
-  // Detectar se estamos no painel do gestor
   const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
-
   const dateLimit = calculateDateLimit(cliente.data_venda)
 
   return (
@@ -712,7 +692,6 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        {/* MATERIALS CELL - Only "Ver" button without edit icon */}
         <BriefingMaterialsModal
           emailCliente={cliente.email_cliente}
           nomeCliente={cliente.nome_cliente}

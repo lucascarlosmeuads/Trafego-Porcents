@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Eye, AlertCircle } from 'lucide-react'
+import { FileText, Eye, AlertCircle, RefreshCw } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface BriefingData {
@@ -18,6 +18,7 @@ interface BriefingData {
   observacoes_finais: string
   created_at: string
   updated_at: string
+  email_cliente: string
 }
 
 interface BriefingModalProps {
@@ -30,102 +31,107 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
   const [briefingData, setBriefingData] = useState<BriefingData | null>(null)
   const [loading, setLoading] = useState(false)
   const [open, setOpen] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const fetchBriefing = async () => {
-    // Verificar se temos um email válido
     if (!emailCliente || emailCliente.trim() === '') {
-      console.log('❌ [BriefingModal] Email do cliente não fornecido ou vazio')
+      console.log('❌ [BriefingModal] Email do cliente não fornecido')
       setBriefingData(null)
-      setLoading(false)
+      setError('Email do cliente não fornecido')
       return
     }
 
     setLoading(true)
-    console.log('🔍 [BriefingModal] Buscando briefing para cliente:', {
-      original: emailCliente,
-      processed: emailCliente.trim().toLowerCase(),
+    setError(null)
+    
+    const emailToSearch = emailCliente.trim().toLowerCase()
+    
+    console.log('🔍 [BriefingModal] INICIANDO busca de briefing:', {
+      emailOriginal: emailCliente,
+      emailProcessado: emailToSearch,
       nomeCliente
     })
 
     try {
-      const emailToSearch = emailCliente.trim().toLowerCase()
-      
-      // Primeira tentativa: busca exata
-      const { data: exactData, error: exactError } = await supabase
-        .from('briefings_cliente')
-        .select('*')
-        .eq('email_cliente', emailToSearch)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      console.log('📊 [BriefingModal] Busca exata:', { 
-        emailToSearch, 
-        found: exactData?.length || 0, 
-        data: exactData, 
-        error: exactError 
-      })
-
-      if (!exactError && exactData && exactData.length > 0) {
-        console.log('✅ [BriefingModal] Briefing encontrado na busca exata:', exactData[0])
-        setBriefingData(exactData[0])
-        return
-      }
-
-      // Segunda tentativa: busca case-insensitive
-      const { data: iLikeData, error: iLikeError } = await supabase
-        .from('briefings_cliente')
-        .select('*')
-        .ilike('email_cliente', emailToSearch)
-        .order('created_at', { ascending: false })
-        .limit(1)
-
-      console.log('📊 [BriefingModal] Busca ilike:', { 
-        emailToSearch, 
-        found: iLikeData?.length || 0, 
-        data: iLikeData, 
-        error: iLikeError 
-      })
-
-      if (!iLikeError && iLikeData && iLikeData.length > 0) {
-        console.log('✅ [BriefingModal] Briefing encontrado na busca ilike:', iLikeData[0])
-        setBriefingData(iLikeData[0])
-        return
-      }
-
-      // Terceira tentativa: buscar todos e filtrar manualmente
-      const { data: allBriefings, error: allError } = await supabase
+      // ESTRATÉGIA MELHORADA: Buscar todos os briefings e filtrar manualmente
+      const { data: allBriefings, error: fetchError } = await supabase
         .from('briefings_cliente')
         .select('*')
         .order('created_at', { ascending: false })
 
-      console.log('📊 [BriefingModal] Busca manual em todos os briefings:', {
-        total: allBriefings?.length || 0,
-        searchingFor: emailToSearch,
+      console.log('📊 [BriefingModal] Resultado da busca:', {
+        totalBriefings: allBriefings?.length || 0,
+        error: fetchError,
         allEmails: allBriefings?.map(b => `"${b.email_cliente}"`) || []
       })
 
-      if (!allError && allBriefings) {
-        // Filtrar manualmente com trim e lowercase
-        const found = allBriefings.find(briefing => 
-          briefing.email_cliente.trim().toLowerCase() === emailToSearch
+      if (fetchError) {
+        console.error('❌ [BriefingModal] Erro na consulta:', fetchError)
+        setError(`Erro na consulta: ${fetchError.message}`)
+        setBriefingData(null)
+        return
+      }
+
+      if (!allBriefings || allBriefings.length === 0) {
+        console.log('❌ [BriefingModal] Nenhum briefing encontrado na tabela')
+        setError('Nenhum briefing encontrado na base de dados')
+        setBriefingData(null)
+        return
+      }
+
+      // Filtrar com múltiplas estratégias
+      let foundBriefing = null
+
+      // 1. Busca exata
+      foundBriefing = allBriefings.find(briefing => 
+        briefing.email_cliente?.trim().toLowerCase() === emailToSearch
+      )
+
+      if (foundBriefing) {
+        console.log('✅ [BriefingModal] Match exato encontrado:', foundBriefing)
+      } else {
+        // 2. Busca sem espaços
+        foundBriefing = allBriefings.find(briefing => 
+          briefing.email_cliente?.replace(/\s+/g, '').toLowerCase() === emailToSearch.replace(/\s+/g, '')
         )
 
-        if (found) {
-          console.log('✅ [BriefingModal] Briefing encontrado na busca manual:', found)
-          setBriefingData(found)
-          return
+        if (foundBriefing) {
+          console.log('✅ [BriefingModal] Match sem espaços encontrado:', foundBriefing)
+        } else {
+          // 3. Busca parcial (contém)
+          foundBriefing = allBriefings.find(briefing => 
+            briefing.email_cliente?.toLowerCase().includes(emailToSearch) ||
+            emailToSearch.includes(briefing.email_cliente?.toLowerCase())
+          )
+
+          if (foundBriefing) {
+            console.log('✅ [BriefingModal] Match parcial encontrado:', foundBriefing)
+          }
         }
       }
 
-      console.log('❌ [BriefingModal] Nenhum briefing encontrado para:', {
-        emailOriginal: emailCliente,
-        emailProcurado: emailToSearch,
-        nomeCliente
-      })
-      setBriefingData(null)
+      if (foundBriefing) {
+        console.log('🎉 [BriefingModal] BRIEFING ENCONTRADO:', {
+          id: foundBriefing.id,
+          email: foundBriefing.email_cliente,
+          produto: foundBriefing.nome_produto,
+          criadoEm: foundBriefing.created_at
+        })
+        setBriefingData(foundBriefing)
+        setError(null)
+      } else {
+        console.log('❌ [BriefingModal] BRIEFING NÃO ENCONTRADO:', {
+          emailProcurado: emailToSearch,
+          emailsDisponíveis: allBriefings.map(b => b.email_cliente),
+          totalRegistros: allBriefings.length
+        })
+        setError(`Briefing não encontrado para o email: ${emailCliente}`)
+        setBriefingData(null)
+      }
 
     } catch (error) {
-      console.error('💥 [BriefingModal] Erro na busca:', error)
+      console.error('💥 [BriefingModal] Erro inesperado:', error)
+      setError(`Erro inesperado: ${error}`)
       setBriefingData(null)
     } finally {
       setLoading(false)
@@ -134,6 +140,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
 
   useEffect(() => {
     if (open && emailCliente) {
+      console.log('🔄 [BriefingModal] Modal aberto, iniciando busca...')
       fetchBriefing()
     }
   }, [open, emailCliente])
@@ -150,6 +157,11 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
     } catch {
       return dateString
     }
+  }
+
+  const handleRetry = () => {
+    console.log('🔄 [BriefingModal] Tentando novamente...')
+    fetchBriefing()
   }
 
   return (
@@ -174,22 +186,42 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
           </div>
         )}
 
-        {!loading && !briefingData && (
+        {!loading && error && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Briefing não preenchido</h3>
-            <p className="text-muted-foreground mb-2">
-              O cliente ainda não preencheu o formulário de briefing.
+            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Erro ao carregar briefing</h3>
+            <p className="text-muted-foreground mb-4">
+              {error}
             </p>
-            <p className="text-xs text-muted-foreground">
-              Email buscado: {emailCliente}
+            <p className="text-xs text-muted-foreground mb-4">
+              Email procurado: {emailCliente}
             </p>
+            <Button onClick={handleRetry} variant="outline" size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Tentar novamente
+            </Button>
           </div>
         )}
 
-        {!loading && briefingData && (
+        {!loading && !error && !briefingData && (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Briefing não encontrado</h3>
+            <p className="text-muted-foreground mb-2">
+              Não foi possível encontrar o briefing para este cliente.
+            </p>
+            <p className="text-xs text-muted-foreground mb-4">
+              Email: {emailCliente}
+            </p>
+            <Button onClick={handleRetry} variant="outline" size="sm">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              Verificar novamente
+            </Button>
+          </div>
+        )}
+
+        {!loading && !error && briefingData && (
           <div className="space-y-6">
-            {/* Header com informações básicas */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -243,6 +275,11 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
                     <p className="text-foreground">{briefingData.observacoes_finais}</p>
                   </div>
                 )}
+
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Email do Cliente</h4>
+                  <p className="text-foreground text-xs">{briefingData.email_cliente}</p>
+                </div>
               </CardContent>
             </Card>
 
