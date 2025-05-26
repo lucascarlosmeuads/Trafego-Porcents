@@ -15,9 +15,10 @@ import { ClientInstructionsModal } from '../ClientInstructionsModal'
 interface AddClientModalProps {
   selectedManager?: string
   onClienteAdicionado: () => void
+  gestorMode?: boolean
 }
 
-export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClientModalProps) {
+export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMode = false }: AddClientModalProps) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedGestor, setSelectedGestor] = useState<string>('')
@@ -82,8 +83,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       return
     }
 
-    // For admin: require gestor selection
-    if (isAdmin && !selectedGestor) {
+    // For admin (not in gestor mode): require gestor selection
+    if (isAdmin && !gestorMode && !selectedGestor) {
       toast({
         title: "Erro",
         description: "Selecione um gestor para atribuir o cliente",
@@ -99,10 +100,18 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
       console.log('📥 [AddClientModal] Dados do formulário:', formData)
       console.log('👤 [AddClientModal] Usuário logado:', user?.email)
       console.log('🔒 [AddClientModal] É admin?', isAdmin)
+      console.log('👨‍💼 [AddClientModal] Modo gestor?', gestorMode)
       console.log('🏷️ [AddClientModal] Gestor selecionado:', selectedGestor)
       
-      // Determine final email_gestor based on role
-      const emailGestorFinal = isAdmin ? selectedGestor : user?.email
+      // Determine final email_gestor based on role and mode
+      let emailGestorFinal
+      if (gestorMode) {
+        // Modo gestor: sempre usa o email do usuário logado
+        emailGestorFinal = user?.email
+      } else {
+        // Modo admin: usa o gestor selecionado ou o próprio email
+        emailGestorFinal = isAdmin ? selectedGestor : user?.email
+      }
 
       console.log('📧 [AddClientModal] Email gestor final determinado:', emailGestorFinal)
       
@@ -205,8 +214,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado }: AddClie
               />
             </div>
 
-            {/* Admin-only: Gestor Selection */}
-            {isAdmin && (
+            {/* Admin-only: Gestor Selection (only when not in gestor mode) */}
+            {isAdmin && !gestorMode && (
               <div>
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
                 <Select value={selectedGestor} onValueChange={setSelectedGestor}>

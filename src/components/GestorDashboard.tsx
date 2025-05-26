@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -93,6 +92,7 @@ export function GestorDashboard() {
             <AddClientModal 
               selectedManager={currentManagerName} 
               onClienteAdicionado={refetch}
+              gestorMode={true}
             />
             <span className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded badge-contrast">
               ✅ Pode adicionar clientes

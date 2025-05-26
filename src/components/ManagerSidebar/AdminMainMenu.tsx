@@ -5,7 +5,8 @@ import {
   Users, 
   Settings, 
   AlertTriangle,
-  Wallet
+  Wallet,
+  Shield
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -71,6 +72,18 @@ export function AdminMainMenu({
       >
         <Settings size={16} />
         <span>Gestores</span>
+      </button>
+
+      <button
+        onClick={() => handleTabChange('auditoria')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'auditoria'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <Shield size={16} />
+        <span>Auditoria de Clientes</span>
       </button>
 
       <button

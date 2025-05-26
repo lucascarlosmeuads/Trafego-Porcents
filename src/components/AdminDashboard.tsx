@@ -5,6 +5,7 @@ import { ClientesTable } from './ClientesTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
+import { AuditoriaClientes } from './AuditoriaClientes'
 import { ManagerSelector } from './ManagerSelector'
 import { supabase } from '@/lib/supabase'
 
@@ -41,6 +42,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       
       case 'problemas':
         return <ProblemasPanel />
+
+      case 'auditoria':
+        return <AuditoriaClientes />
 
       case 'saques-pendentes':
         return (
