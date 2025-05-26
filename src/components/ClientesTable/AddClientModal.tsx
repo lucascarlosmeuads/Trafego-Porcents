@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
+import { Plus, Copy, Check } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
@@ -25,6 +25,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
   const [selectedGestor, setSelectedGestor] = useState<string>('')
   const [showInstructions, setShowInstructions] = useState(false)
   const [newClientData, setNewClientData] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -52,6 +53,34 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     { name: 'Matheus Paviani', email: 'matheuspaviani@trafegoporcents.com' },
     { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
   ]
+
+  const instructions = `Olá ${formData.nome_cliente || '[Nome do Cliente]'},
+
+1. Acesse o link: https://login.trafegoporcents.com
+2. Clique em "Criar Conta"
+3. Use este mesmo e-mail: ${formData.email_cliente || '[Email do Cliente]'}
+4. Escolha uma senha segura (ex: cliente123)
+5. Após o cadastro, você verá o painel com os materiais e campanhas atribuídas
+
+Qualquer dúvida, entre em contato conosco!`
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(instructions)
+      setCopied(true)
+      toast({
+        title: "Copiado!",
+        description: "Instruções copiadas para a área de transferência"
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar as instruções",
+        variant: "destructive"
+      })
+    }
+  }
 
   const handleSubmit = async () => {
     if (!formData.nome_cliente || !formData.telefone) {
@@ -196,10 +225,44 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
+          
+          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE - POSICIONADAS AQUI CONFORME SOLICITADO */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-yellow-800 text-sm">📋 Instruções para enviar ao cliente</h3>
+              <Button
+                onClick={handleCopy}
+                size="sm"
+                className="ml-2"
+                variant={copied ? "default" : "outline"}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 mr-1" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 mr-1" />
+                    Copiar
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="bg-white border rounded p-3 text-sm">
+              <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800">
+                {instructions}
+              </pre>
+            </div>
+            <p className="text-yellow-700 text-xs mt-2">
+              💡 Após cadastrar o cliente, envie essas instruções via WhatsApp
+            </p>
+          </div>
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="data_venda">Data da Venda *</Label>
