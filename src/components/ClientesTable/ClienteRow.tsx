@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { MoreVertical, Edit, Copy, Trash2, CheckCircle, AlertTriangle } from 'lucide-react'
 import {
@@ -17,7 +18,6 @@ import { UpdateStatusDialog } from './UpdateStatusDialog'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Checkbox } from '@/components/ui/checkbox'
-import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
 import { BriefingColumn } from './BriefingColumn'
 
 interface ClienteRowProps {
@@ -25,16 +25,21 @@ interface ClienteRowProps {
   isAdmin: boolean
   userEmail: string
   onUpdate: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
+  showBriefingColumn?: boolean
 }
 
-export function ClienteRow({ cliente, isAdmin, userEmail, onUpdate }: ClienteRowProps) {
+export function ClienteRow({ 
+  cliente, 
+  isAdmin, 
+  userEmail, 
+  onUpdate, 
+  showBriefingColumn = true 
+}: ClienteRowProps) {
   const { toast } = useToast()
   const [isComissaoPaga, setIsComissaoPaga] = useState(cliente.comissao_paga)
   const [isSaqueSolicitado, setIsSaqueSolicitado] = useState(cliente.saque_solicitado)
   const [siteStatus, setSiteStatus] = useState(cliente.site_status)
   const [descricaoProblema, setDescricaoProblema] = useState(cliente.descricao_problema)
-  const [showBriefingColumn, setShowBriefingColumn] = useState(true)
-  const { isStatusLocked } = useGestorStatusRestrictions()
 
   const formatDate = (dateString: string | null): string => {
     if (!dateString) return 'Não definida'
@@ -58,17 +63,6 @@ export function ClienteRow({ cliente, isAdmin, userEmail, onUpdate }: ClienteRow
     }
   }
 
-  const handleSaqueSolicitadoChange = async (checked: boolean) => {
-    const success = await onUpdate(cliente.id.toString(), 'saque_solicitado', checked)
-    if (success) {
-      setIsSaqueSolicitado(checked)
-      toast({
-        title: `Saque ${checked ? 'solicitado' : 'não solicitado'}`,
-        description: `Saque de ${cliente.nome_cliente} marcado como ${checked ? 'solicitado' : 'não solicitado'}.`
-      })
-    }
-  }
-
   const handleSiteStatusChange = async (value: string) => {
     const success = await onUpdate(cliente.id.toString(), 'site_status', value)
     if (success) {
@@ -80,25 +74,12 @@ export function ClienteRow({ cliente, isAdmin, userEmail, onUpdate }: ClienteRow
     }
   }
 
-  const handleDescricaoProblemaChange = async (value: string) => {
-    const success = await onUpdate(cliente.id.toString(), 'descricao_problema', value)
-    if (success) {
-      setDescricaoProblema(value)
-      toast({
-        title: 'Descrição do Problema Atualizada',
-        description: `Descrição do problema de ${cliente.nome_cliente} atualizada.`
-      })
-    }
-  }
-
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text)
     toast({
       description: `${label} copiado para a área de transferência.`
     })
   }
-
-  const isStatusReadOnly = isStatusLocked(cliente.id.toString())
 
   return (
     <tr className="border-b border-border/50 hover:bg-muted/50 transition-colors">
@@ -115,7 +96,7 @@ export function ClienteRow({ cliente, isAdmin, userEmail, onUpdate }: ClienteRow
         <UpdateStatusDialog
           cliente={cliente}
           onStatusUpdate={handleSiteStatusChange}
-          isStatusReadOnly={isStatusReadOnly}
+          isStatusReadOnly={false}
         />
       </td>
 
@@ -174,7 +155,10 @@ export function ClienteRow({ cliente, isAdmin, userEmail, onUpdate }: ClienteRow
             <DropdownMenuSeparator />
             {isAdmin && (
               <DropdownMenuItem>
-                <DeleteClientDialog clienteId={cliente.id} clienteNome={cliente.nome_cliente} />
+                <DeleteClientDialog 
+                  clienteId={cliente.id} 
+                  clienteNome={cliente.nome_cliente} 
+                />
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
