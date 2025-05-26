@@ -30,7 +30,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Brief'
+    status_campanha: 'Brief',
+    data_venda: new Date().toISOString().split('T')[0] // Campo data_venda com data atual
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
@@ -72,6 +73,15 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       return
     }
 
+    if (!formData.data_venda) {
+      toast({
+        title: "Erro",
+        description: "Data da venda é obrigatória",
+        variant: "destructive"
+      })
+      return
+    }
+
     // For admin: require gestor selection (unless in gestorMode)
     if (isAdmin && !gestorMode && !selectedGestor) {
       toast({
@@ -106,7 +116,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         vendedor,
         email_gestor: emailGestorFinal,
         status_campanha: formData.status_campanha,
-        data_venda: new Date().toISOString().split('T')[0],
+        data_venda: formData.data_venda,
         valor_comissao: 60.00,
         comissao_paga: false
       }
@@ -115,6 +125,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
 
       const result = await addCliente(clienteData)
       
+      console.log("🟡 [AddClientModal] Resultado da adição:", result)
+      
       // Type guard to check if result is not false
       if (result && typeof result === 'object' && result.success) {
         setFormData({
@@ -122,17 +134,17 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
           telefone: '',
           email_cliente: '',
           vendedor: '',
-          status_campanha: 'Brief'
+          status_campanha: 'Brief',
+          data_venda: new Date().toISOString().split('T')[0]
         })
         setSelectedGestor('')
         setOpen(false)
         onClienteAdicionado()
 
-        // Show instructions modal for new clients only
-        if (result.isNewClient) {
-          setNewClientData(result.clientData)
-          setShowInstructions(true)
-        }
+        // SEMPRE mostrar instruções quando cliente é adicionado com sucesso
+        console.log("🟡 [AddClientModal] Mostrando instruções para cliente:", result.clientData)
+        setNewClientData(result.clientData)
+        setShowInstructions(true)
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
@@ -155,11 +167,21 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="data_venda">Data da Venda *</Label>
+              <Input
+                id="data_venda"
+                type="date"
+                value={formData.data_venda}
+                onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
+              />
+            </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome do Cliente *</Label>
               <Input
@@ -169,6 +191,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 placeholder="Nome completo"
               />
             </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="telefone">Telefone *</Label>
               <Input
@@ -178,6 +201,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 placeholder="(11) 99999-9999"
               />
             </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="email">Email do Cliente *</Label>
               <Input
@@ -217,6 +241,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 placeholder={`Padrão: ${currentManagerName}`}
               />
             </div>
+            
             <div className="grid gap-2">
               <Label htmlFor="status">Status da Campanha</Label>
               <Select
@@ -247,7 +272,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         </DialogContent>
       </Dialog>
 
-      {/* Instructions Modal */}
+      {/* Instructions Modal - SEMPRE mostrar quando cliente é adicionado */}
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
