@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -564,25 +563,21 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
-        <div className="flex items-center gap-1">
-          {renderLinkCell(cliente.link_criativo || '', 'link_criativo', 'Materiais')}
-          
-          {/* MATERIALS BUTTON - Only "Ver" button without edit icon */}
-          <BriefingMaterialsModal
-            emailCliente={cliente.email_cliente}
-            nomeCliente={cliente.nome_cliente}
-            trigger={
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-              >
-                <Eye className="w-3 h-3 mr-1" />
-                Ver
-              </Button>
-            }
-          />
-        </div>
+        {/* MATERIALS CELL - Only "Ver" button without edit icon */}
+        <BriefingMaterialsModal
+          emailCliente={cliente.email_cliente}
+          nomeCliente={cliente.nome_cliente}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+            >
+              <Eye className="w-3 h-3 mr-1" />
+              Ver
+            </Button>
+          }
+        />
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
