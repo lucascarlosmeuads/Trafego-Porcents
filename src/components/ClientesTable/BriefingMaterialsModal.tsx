@@ -628,7 +628,7 @@ export function BriefingMaterialsModal({
                       </div>
                     )}
 
-                    {arquivos.length === 0 && !loading && filterType !== 'briefing' && (
+                    {arquivos.length === 0 && !loading && filterType === 'creative' && (
                       <div className="text-center py-6">
                         <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                         <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
