@@ -16,6 +16,7 @@ export function GestorDashboard() {
   const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
   const { inicializarClientesTravados } = useGestorStatusRestrictions()
+  const [clientesTravadosInicializados, setClientesTravadosInicializados] = useState(false)
 
   // Separar clientes por status - ATUALIZADO para incluir nova aba de Saques Solicitados
   const clientesAtivos = clientes.filter(cliente => 
@@ -38,12 +39,14 @@ export function GestorDashboard() {
     cliente.status_campanha === 'Saque Pendente'
   )
 
-  // Inicializar controle de status travados
+  // Inicializar controle de status travados - CORRIGIDO para evitar loop infinito
   useEffect(() => {
-    if (clientes.length > 0) {
+    if (clientes.length > 0 && !clientesTravadosInicializados) {
+      console.log('🔧 [GestorDashboard] Inicializando clientes travados...')
       inicializarClientesTravados(clientes)
+      setClientesTravadosInicializados(true)
     }
-  }, [clientes, inicializarClientesTravados])
+  }, [clientes.length, clientesTravadosInicializados, inicializarClientesTravados])
 
   // Log de segurança para verificar se o filtro está funcionando
   useEffect(() => {
