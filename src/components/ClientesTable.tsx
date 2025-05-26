@@ -1,7 +1,8 @@
+
 import { useState, useEffect, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
-import { useRealtimeSubscription } from '@/utils/realtimeUtils'
+import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/button'
 import { Download, RefreshCw } from 'lucide-react'
 import { Table, TableBody } from '@/components/ui/table'
@@ -13,12 +14,63 @@ import { RealtimeStatus } from './ClientesTable/RealtimeStatus'
 import { AddClientModal } from './ClientesTable/AddClientModal'
 import { Skeleton } from '@/components/ui/skeleton'
 import { toast } from '@/hooks/use-toast'
-import { exportClientesToCSV } from '@/utils/clienteFormatter'
 
 interface ClientesTableProps {
   selectedManager: string | null
   filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'all'
   hideAddButton?: boolean
+}
+
+// Simple realtime subscription hook
+const useRealtimeSubscription = (manager: string, setConnected: (connected: boolean) => void, refetch: () => void) => {
+  useEffect(() => {
+    if (!manager) return
+
+    setConnected(true)
+    const channel = supabase
+      .channel(`public:todos_clientes-${manager}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'todos_clientes'
+        },
+        () => {
+          refetch()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+      setConnected(false)
+    }
+  }, [manager, setConnected, refetch])
+}
+
+// Simple CSV export function
+const exportClientesToCSV = (clientes: any[]) => {
+  const headers = ['Nome', 'Email', 'Telefone', 'Status', 'Vendedor', 'Data Venda']
+  const csvContent = [
+    headers.join(','),
+    ...clientes.map(cliente => [
+      cliente.nome_cliente,
+      cliente.email_cliente,
+      cliente.telefone,
+      cliente.status_campanha,
+      cliente.vendedor,
+      cliente.data_venda
+    ].join(','))
+  ].join('\n')
+
+  const blob = new Blob([csvContent], { type: 'text/csv' })
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `clientes-${new Date().toISOString().split('T')[0]}.csv`
+  a.click()
+  window.URL.revokeObjectURL(url)
 }
 
 export function ClientesTable({ selectedManager, filterType = 'all', hideAddButton = false }: ClientesTableProps) {
@@ -34,7 +86,7 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
     setLoading(true)
     try {
       const { data, error } = await supabase
-        .from('clientes')
+        .from('todos_clientes')
         .select('*')
         .eq('email_gestor', selectedManager)
 
@@ -118,12 +170,29 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
       toast({
         title: "Atenção",
         description: "Nenhum cliente para exportar.",
-        variant: "warning"
+        variant: "destructive"
       })
       return
     }
 
     exportClientesToCSV(filteredClientes)
+  }
+
+  const getStatusColor = (status: string) => {
+    const colorMap: { [key: string]: string } = {
+      'Preenchimento do Formulário': 'bg-gray-100 text-gray-800',
+      'Brief': 'bg-blue-100 text-blue-800',
+      'Criativo': 'bg-purple-100 text-purple-800',
+      'Site': 'bg-yellow-100 text-yellow-800',
+      'Agendamento': 'bg-orange-100 text-orange-800',
+      'No Ar': 'bg-green-100 text-green-800',
+      'Otimização': 'bg-cyan-100 text-cyan-800',
+      'Problema': 'bg-red-100 text-red-800',
+      'Off': 'bg-slate-100 text-slate-800',
+      'Reembolso': 'bg-pink-100 text-pink-800',
+      'Saque Pendente': 'bg-amber-100 text-amber-800'
+    }
+    return colorMap[status] || 'bg-gray-100 text-gray-800'
   }
 
   return (
@@ -140,11 +209,12 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
 
       <TableFilters
         searchTerm={searchTerm}
-        onSearchChange={setSearchTerm}
+        setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
-        onStatusFilterChange={setStatusFilter}
+        setStatusFilter={setStatusFilter}
         comissaoFilter={comissaoFilter}
-        onComissaoFilterChange={setComissaoFilter}
+        setComissaoFilter={setComissaoFilter}
+        getStatusColor={getStatusColor}
       />
 
       <div className="rounded-lg border border-border overflow-hidden shadow-lg bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
@@ -180,7 +250,7 @@ export function ClientesTable({ selectedManager, filterType = 'all', hideAddButt
                 <ClienteRow
                   key={cliente.id}
                   cliente={cliente}
-                  onClienteUpdated={refetch}
+                  onUpdate={refetch}
                 />
               ))
             )}

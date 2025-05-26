@@ -15,6 +15,8 @@ interface TableFiltersProps {
   setSearchTerm: (value: string) => void
   statusFilter: string
   setStatusFilter: (value: string) => void
+  comissaoFilter: string
+  setComissaoFilter: (value: string) => void
   getStatusColor: (status: string) => string
 }
 
@@ -23,6 +25,8 @@ export function TableFilters({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  comissaoFilter,
+  setComissaoFilter,
   getStatusColor
 }: TableFiltersProps) {
   return (
@@ -51,6 +55,17 @@ export function TableFilters({
               </span>
             </SelectItem>
           ))}
+        </SelectContent>
+      </Select>
+
+      <Select value={comissaoFilter} onValueChange={setComissaoFilter}>
+        <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
+          <SelectValue placeholder="Status comissão" />
+        </SelectTrigger>
+        <SelectContent className="bg-card border-border">
+          <SelectItem value="all">Todas</SelectItem>
+          <SelectItem value="pendentes">Pendentes</SelectItem>
+          <SelectItem value="pagas">Pagas</SelectItem>
         </SelectContent>
       </Select>
     </div>
