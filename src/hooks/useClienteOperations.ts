@@ -139,12 +139,13 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       }
 
       let clienteJaExistia = false
+      let finalClientData = clienteData
 
       if (existingCliente) {
         console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
         clienteJaExistia = true
         
-        const { error: updateError } = await supabase
+        const { data: updatedData, error: updateError } = await supabase
           .from('todos_clientes')
           .update({
             nome_cliente: String(clienteData.nome_cliente || ''),
@@ -155,15 +156,18 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
             email_gestor: String(emailGestorFinal)
           })
           .eq('id', existingCliente.id)
+          .select()
+          .single()
 
         if (updateError) {
           console.error('❌ [useClienteOperations] Erro ao atualizar cliente existente:', updateError)
           throw new Error(`Erro ao atualizar cliente: ${updateError.message}`)
         }
 
+        finalClientData = { ...clienteData, ...updatedData }
         console.log('✅ [useClienteOperations] Cliente existente atualizado com sucesso')
       } else {
-        // Step 2: Create new client record (without Auth user creation)
+        // Step 2: Create new client record
         const novoCliente = {
           nome_cliente: String(clienteData.nome_cliente || ''),
           telefone: String(clienteData.telefone || ''),
@@ -188,12 +192,14 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
           .from('todos_clientes')
           .insert([novoCliente])
           .select()
+          .single()
 
         if (error) {
           console.error('❌ [useClienteOperations] Erro ao inserir cliente:', error)
           throw new Error(`Erro ao adicionar cliente: ${error.message}`)
         }
 
+        finalClientData = { ...clienteData, ...data }
         console.log('✅ [useClienteOperations] Cliente adicionado com sucesso:', data)
       }
       
@@ -201,8 +207,8 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       if (!clienteJaExistia) {
         toast({
           title: "Cliente cadastrado com sucesso!",
-          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista. Verifique as instruções para enviar ao cliente.`,
-          duration: 5000
+          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.`,
+          duration: 3000
         })
       } else {
         toast({
@@ -214,7 +220,13 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       // Refresh data
       refetchData()
       
-      return { success: true, isNewClient: !clienteJaExistia, clientData: clienteData }
+      // Sempre retornar dados para o modal funcionar
+      console.log('🎯 [useClienteOperations] Retornando dados para modal:', finalClientData)
+      return { 
+        success: true, 
+        isNewClient: !clienteJaExistia, 
+        clientData: finalClientData 
+      }
     } catch (error) {
       console.error('💥 [useClienteOperations] === ERRO GERAL ===')
       console.error('💥 Erro capturado no catch:', error)

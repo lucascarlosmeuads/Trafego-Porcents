@@ -127,8 +127,9 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       
       console.log("🟡 [AddClientModal] Resultado da adição:", result)
       
-      // Type guard to check if result is not false
+      // Se a adição foi bem-sucedida
       if (result && typeof result === 'object' && result.success) {
+        // Limpar formulário
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -139,12 +140,19 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         })
         setSelectedGestor('')
         setOpen(false)
+        
+        // Atualizar dados
         onClienteAdicionado()
 
-        // SEMPRE mostrar instruções quando cliente é adicionado com sucesso
-        console.log("🟡 [AddClientModal] Mostrando instruções para cliente:", result.clientData)
+        // SEMPRE mostrar o modal de instruções após sucesso
+        console.log("🟡 [AddClientModal] Preparando dados para modal de instruções:", result.clientData)
         setNewClientData(result.clientData)
-        setShowInstructions(true)
+        
+        // Pequeno delay para garantir que o modal principal feche antes
+        setTimeout(() => {
+          console.log("🟡 [AddClientModal] Mostrando modal de instruções")
+          setShowInstructions(true)
+        }, 300)
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
@@ -272,10 +280,13 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         </DialogContent>
       </Dialog>
 
-      {/* Instructions Modal - SEMPRE mostrar quando cliente é adicionado */}
+      {/* Modal de Instruções - Aparece automaticamente após criar cliente */}
       <ClientInstructionsModal
         isOpen={showInstructions}
-        onClose={() => setShowInstructions(false)}
+        onClose={() => {
+          setShowInstructions(false)
+          setNewClientData(null)
+        }}
         clientEmail={newClientData?.email_cliente || ''}
         clientName={newClientData?.nome_cliente || ''}
       />
