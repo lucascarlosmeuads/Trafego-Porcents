@@ -57,40 +57,20 @@ export function useSellerData(sellerEmail: string) {
 
       console.log('✅ [useSellerData] Database connection successful')
 
-      // Get total clients count for debugging
-      const { count: totalCount } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact', head: true })
-
-      console.log('📊 [useSellerData] Total clients in database:', totalCount)
-
-      // Get unique vendors for debugging
-      const { data: uniqueVendors, error: vendorError } = await supabase
-        .from('todos_clientes')
-        .select('vendedor')
-        .not('vendedor', 'is', null)
-
-      if (!vendorError && uniqueVendors) {
-        const vendors = [...new Set(uniqueVendors.map(v => v.vendedor))]
-        console.log('👥 [useSellerData] Unique vendors in database:', vendors)
-        console.log('🔍 [useSellerData] Looking for matches with:', sellerEmail)
-        
-        // Extract seller name from email for matching
-        const sellerName = sellerEmail.split('@')[0].replace('vendedor', '').toLowerCase()
-        const possibleMatches = vendors.filter(vendor => 
-          vendor && (
-            vendor.toLowerCase().includes(sellerName) ||
-            sellerName.includes(vendor.toLowerCase()) ||
-            vendor === sellerEmail
-          )
-        )
-        console.log('🎯 [useSellerData] Possible vendor matches:', possibleMatches)
-      }
-
-      // Try multiple query strategies
-      console.log('🔎 [useSellerData] Trying exact email match first...')
+      // Extract seller name from email for matching
+      const emailPrefix = sellerEmail.split('@')[0]
+      let sellerName = emailPrefix.replace('vendedor', '').toLowerCase()
       
-      // Strategy 1: Exact email match - IMPORTANTE: Incluir data_venda e created_at na query
+      // Handle specific cases
+      if (emailPrefix.includes('itamar')) sellerName = 'itamar'
+      if (emailPrefix.includes('edu')) sellerName = 'edu'
+      
+      console.log('🏷️ [useSellerData] Extracted seller name:', sellerName)
+
+      // Try multiple query strategies to match the seller
+      console.log('🔎 [useSellerData] Trying seller matching strategies...')
+      
+      // Strategy 1: Exact email match
       let { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select(`
@@ -116,23 +96,13 @@ export function useSellerData(sellerEmail: string) {
           saque_solicitado
         `)
         .eq('vendedor', sellerEmail)
-        .order('created_at', { ascending: false })
+        .order('data_venda', { ascending: false, nullsLast: true })
 
       console.log('📊 [useSellerData] Exact email match result:', clientesData?.length || 0)
 
       // Strategy 2: If no exact match, try partial name matching
       if (!clientesData || clientesData.length === 0) {
         console.log('🔍 [useSellerData] Trying name-based matching...')
-        
-        // Extract name from email (e.g., "vendedoredu" -> "edu")
-        const emailPrefix = sellerEmail.split('@')[0]
-        let sellerName = emailPrefix.replace('vendedor', '').toLowerCase()
-        
-        // Handle specific cases
-        if (emailPrefix.includes('itamar')) sellerName = 'itamar'
-        if (emailPrefix.includes('edu')) sellerName = 'edu'
-        
-        console.log('🏷️ [useSellerData] Extracted seller name:', sellerName)
         
         const { data: nameMatchData, error: nameMatchError } = await supabase
           .from('todos_clientes')
@@ -159,11 +129,49 @@ export function useSellerData(sellerEmail: string) {
             saque_solicitado
           `)
           .ilike('vendedor', `%${sellerName}%`)
-          .order('created_at', { ascending: false })
+          .order('data_venda', { ascending: false, nullsLast: true })
 
         if (!nameMatchError && nameMatchData) {
           clientesData = nameMatchData
           console.log('📊 [useSellerData] Name-based match result:', clientesData.length)
+        }
+      }
+
+      // Strategy 3: Try exact name match (capitalized)
+      if (!clientesData || clientesData.length === 0) {
+        const capitalizedName = sellerName.charAt(0).toUpperCase() + sellerName.slice(1)
+        console.log('🔍 [useSellerData] Trying capitalized name match:', capitalizedName)
+        
+        const { data: capitalizedMatchData, error: capitalizedError } = await supabase
+          .from('todos_clientes')
+          .select(`
+            id,
+            data_venda,
+            nome_cliente,
+            telefone,
+            email_cliente,
+            vendedor,
+            email_gestor,
+            status_campanha,
+            data_limite,
+            link_grupo,
+            link_briefing,
+            link_criativo,
+            link_site,
+            numero_bm,
+            comissao_paga,
+            valor_comissao,
+            created_at,
+            site_status,
+            descricao_problema,
+            saque_solicitado
+          `)
+          .eq('vendedor', capitalizedName)
+          .order('data_venda', { ascending: false, nullsLast: true })
+
+        if (!capitalizedError && capitalizedMatchData) {
+          clientesData = capitalizedMatchData
+          console.log('📊 [useSellerData] Capitalized name match result:', clientesData.length)
         }
       }
 
@@ -184,7 +192,7 @@ export function useSellerData(sellerEmail: string) {
           console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data Venda: ${cliente.data_venda} - Created: ${cliente.created_at}`)
         })
 
-        // Format data to match Cliente type - IMPORTANTE: Garantir que data_venda e created_at sejam preservados
+        // Format data to match Cliente type
         const formattedClientes: Cliente[] = clientesData.map(item => ({
           id: String(item.id || ''),
           data_venda: item.data_venda || '',
@@ -202,13 +210,13 @@ export function useSellerData(sellerEmail: string) {
           numero_bm: item.numero_bm || '',
           comissao_paga: Boolean(item.comissao_paga),
           valor_comissao: Number(item.valor_comissao || 60),
-          created_at: item.created_at || '', // IMPORTANTE: Preservar a data de criação
+          created_at: item.created_at || '',
           site_status: item.site_status || 'pendente',
           descricao_problema: item.descricao_problema || '',
           saque_solicitado: Boolean(item.saque_solicitado || false)
         }))
 
-        console.log('🔍 [useSellerData] Formatted clients with dates:', formattedClientes.map(c => ({ 
+        console.log('🔍 [useSellerData] Formatted clients with data_venda:', formattedClientes.map(c => ({ 
           nome: c.nome_cliente, 
           data_venda: c.data_venda,
           created_at: c.created_at 
@@ -242,43 +250,93 @@ export function useSellerData(sellerEmail: string) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const yearStart = new Date(now.getFullYear(), 0, 1)
 
-    // Client registration metrics
-    const clientsToday = clientesData.filter(c => 
-      c.created_at && new Date(c.created_at) >= today
-    ).length
+    console.log('📊 [useSellerData] Calculating metrics based on data_venda')
+    console.log('📅 [useSellerData] Reference dates:', {
+      today: today.toDateString(),
+      yesterday: yesterday.toDateString(),
+      weekStart: weekStart.toDateString()
+    })
 
-    const clientsThisWeek = clientesData.filter(c => 
-      c.created_at && new Date(c.created_at) >= weekStart
-    ).length
+    // Client registration metrics based on data_venda
+    const clientsToday = clientesData.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        clientDate.setHours(0, 0, 0, 0)
+        return clientDate.getTime() === today.getTime()
+      } catch (error) {
+        return false
+      }
+    }).length
 
-    const clientsThisMonth = clientesData.filter(c => 
-      c.created_at && new Date(c.created_at) >= monthStart
-    ).length
+    const clientsThisWeek = clientesData.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        return clientDate >= weekStart
+      } catch (error) {
+        return false
+      }
+    }).length
 
-    const clientsThisYear = clientesData.filter(c => 
-      c.created_at && new Date(c.created_at) >= yearStart
-    ).length
+    const clientsThisMonth = clientesData.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        return clientDate >= monthStart
+      } catch (error) {
+        return false
+      }
+    }).length
+
+    const clientsThisYear = clientesData.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        return clientDate >= yearStart
+      } catch (error) {
+        return false
+      }
+    }).length
 
     // Sales metrics based on commission data
     const paidClients = clientesData.filter(c => c.comissao_paga)
 
-    const salesToday = paidClients.filter(c => 
-      c.data_venda && new Date(c.data_venda) >= today
-    ).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
+    const salesToday = paidClients.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        clientDate.setHours(0, 0, 0, 0)
+        return clientDate.getTime() === today.getTime()
+      } catch (error) {
+        return false
+      }
+    }).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
-    const salesYesterday = paidClients.filter(c => 
-      c.data_venda && 
-      new Date(c.data_venda) >= yesterday && 
-      new Date(c.data_venda) < today
-    ).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
+    const salesYesterday = paidClients.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        clientDate.setHours(0, 0, 0, 0)
+        return clientDate.getTime() === yesterday.getTime()
+      } catch (error) {
+        return false
+      }
+    }).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
-    const salesThisMonth = paidClients.filter(c => 
-      c.data_venda && new Date(c.data_venda) >= monthStart
-    ).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
+    const salesThisMonth = paidClients.filter(c => {
+      if (!c.data_venda) return false
+      try {
+        const clientDate = new Date(c.data_venda)
+        return clientDate >= monthStart
+      } catch (error) {
+        return false
+      }
+    }).reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
     const salesAllTime = paidClients.reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
-    console.log('📊 [useSellerData] Calculated metrics:', {
+    console.log('📊 [useSellerData] Calculated metrics based on data_venda:', {
       clientsToday,
       clientsThisWeek,
       clientsThisMonth,
@@ -321,10 +379,9 @@ export function useSellerData(sellerEmail: string) {
           nome: existingClient.nome_cliente,
           email: existingClient.email_cliente,
           vendedor: existingClient.vendedor,
-          created_at: existingClient.created_at
+          data_venda: existingClient.data_venda
         })
 
-        // Format the found client to match Cliente type
         const formattedClient: Cliente = {
           id: String(existingClient.id || ''),
           data_venda: existingClient.data_venda || '',
@@ -339,7 +396,7 @@ export function useSellerData(sellerEmail: string) {
           link_briefing: existingClient.link_briefing || '',
           link_criativo: existingClient.link_criativo || '',
           link_site: existingClient.link_site || '',
-          numero_bm: existingClient.numero_bm || '',
+          numero_bm: item.numero_bm || '',
           comissao_paga: Boolean(existingClient.comissao_paga),
           valor_comissao: Number(existingClient.valor_comissao || 60),
           created_at: existingClient.created_at || '',
@@ -385,13 +442,13 @@ export function useSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
       
-      // Insert new client - IMPORTANTE: O created_at será definido automaticamente pelo banco
+      // Insert new client
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
         email_cliente: String(clienteData.email_cliente || ''),
-        data_venda: clienteData.data_venda || null,
-        vendedor: vendorName, // Use extracted name instead of full email
+        data_venda: clienteData.data_venda || new Date().toISOString().split('T')[0], // Use today if not provided
+        vendedor: vendorName,
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
@@ -403,7 +460,6 @@ export function useSellerData(sellerEmail: string) {
         link_criativo: '',
         link_site: '',
         numero_bm: ''
-        // Não definir created_at aqui - deixar o banco definir automaticamente
       }
 
       console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)

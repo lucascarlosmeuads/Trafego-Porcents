@@ -2,77 +2,136 @@
 import { useState, useMemo } from 'react'
 import { Cliente } from '@/lib/supabase'
 
+export interface OrganizedClientes {
+  hoje: Cliente[]
+  ontem: Cliente[]
+  ultimos7Dias: Cliente[]
+  anteriores: Cliente[]
+  total: Cliente[]
+}
+
 export function useClientFilters(clientes: Cliente[]) {
-  const [dateFilter, setDateFilter] = useState('all')
+  const [dateFilter, setDateFilter] = useState<string>('all')
 
-  const filteredClientes = useMemo(() => {
-    if (dateFilter === 'all') return clientes
+  const organizedClientes = useMemo(() => {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    const ontem = new Date(hoje)
+    ontem.setDate(hoje.getDate() - 1)
+    
+    const ultimos7DiasInicio = new Date(hoje)
+    ultimos7DiasInicio.setDate(hoje.getDate() - 7)
 
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
-    const yearStart = new Date(now.getFullYear(), 0, 1)
+    console.log('📅 [useClientFilters] Filtering clients by data_venda')
+    console.log('📅 [useClientFilters] Today:', hoje.toDateString())
+    console.log('📅 [useClientFilters] Total clients to filter:', clientes.length)
 
-    return clientes.filter(cliente => {
-      if (!cliente.created_at) return false
+    // Função para verificar se uma data está em um período específico
+    const isDateInRange = (dateString: string, startDate: Date, endDate?: Date) => {
+      if (!dateString || dateString.trim() === '') return false
       
-      const createdDate = new Date(cliente.created_at)
-      const createdDateOnly = new Date(createdDate.getFullYear(), createdDate.getMonth(), createdDate.getDate())
+      try {
+        const clientDate = new Date(dateString)
+        clientDate.setHours(0, 0, 0, 0)
+        
+        if (endDate) {
+          return clientDate >= startDate && clientDate <= endDate
+        } else {
+          return clientDate.getTime() === startDate.getTime()
+        }
+      } catch (error) {
+        console.error('❌ [useClientFilters] Error parsing date:', dateString, error)
+        return false
+      }
+    }
 
-      switch (dateFilter) {
-        case 'today':
-          return createdDateOnly.getTime() === today.getTime()
-        case 'yesterday':
-          return createdDateOnly.getTime() === yesterday.getTime()
-        case 'last7days':
-          return createdDate >= sevenDaysAgo
-        case 'thisMonth':
-          return createdDate >= monthStart
-        case 'thisYear':
-          return createdDate >= yearStart
-        default:
-          return true
+    // Organizar clientes por período baseado em data_venda
+    const clientesHoje = clientes.filter(cliente => {
+      const isToday = isDateInRange(cliente.data_venda, hoje)
+      if (isToday) {
+        console.log(`✅ [useClientFilters] Client ${cliente.nome_cliente} - data_venda: ${cliente.data_venda} matches TODAY`)
+      }
+      return isToday
+    })
+
+    const clientesOntem = clientes.filter(cliente => 
+      isDateInRange(cliente.data_venda, ontem)
+    )
+
+    const clientesUltimos7Dias = clientes.filter(cliente => {
+      if (!cliente.data_venda || cliente.data_venda.trim() === '') return false
+      
+      try {
+        const clientDate = new Date(cliente.data_venda)
+        clientDate.setHours(0, 0, 0, 0)
+        
+        return clientDate >= ultimos7DiasInicio && clientDate < hoje
+      } catch (error) {
+        return false
       }
     })
-  }, [clientes, dateFilter])
 
-  // Organize filtered clients by date
-  const organizedClientes = useMemo(() => {
-    const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000)
-    const sevenDaysAgo = new Date(today.getTime() - 7 * 24 * 60 * 60 * 1000)
-
-    const clientesHoje = filteredClientes.filter(c => {
-      if (!c.created_at) return false
-      const clientDate = new Date(c.created_at)
-      const clientDateOnly = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
-      return clientDateOnly.getTime() === today.getTime()
+    const clientesAnteriores = clientes.filter(cliente => {
+      if (!cliente.data_venda || cliente.data_venda.trim() === '') return false
+      
+      try {
+        const clientDate = new Date(cliente.data_venda)
+        clientDate.setHours(0, 0, 0, 0)
+        
+        return clientDate < ultimos7DiasInicio
+      } catch (error) {
+        return false
+      }
     })
 
-    const clientesOntem = filteredClientes.filter(c => {
-      if (!c.created_at) return false
-      const clientDate = new Date(c.created_at)
-      const clientDateOnly = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
-      return clientDateOnly.getTime() === yesterday.getTime()
-    })
+    // Aplicar filtro selecionado
+    let filteredClientes: Cliente[] = []
+    
+    switch (dateFilter) {
+      case 'today':
+        filteredClientes = clientesHoje
+        break
+      case 'yesterday':
+        filteredClientes = clientesOntem
+        break
+      case 'last7days':
+        filteredClientes = [...clientesHoje, ...clientesOntem, ...clientesUltimos7Dias]
+        break
+      case 'thisMonth':
+        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+        filteredClientes = clientes.filter(cliente => {
+          if (!cliente.data_venda) return false
+          try {
+            const clientDate = new Date(cliente.data_venda)
+            return clientDate >= inicioMes && clientDate <= hoje
+          } catch (error) {
+            return false
+          }
+        })
+        break
+      case 'thisYear':
+        const inicioAno = new Date(hoje.getFullYear(), 0, 1)
+        filteredClientes = clientes.filter(cliente => {
+          if (!cliente.data_venda) return false
+          try {
+            const clientDate = new Date(cliente.data_venda)
+            return clientDate >= inicioAno && clientDate <= hoje
+          } catch (error) {
+            return false
+          }
+        })
+        break
+      default:
+        filteredClientes = clientes
+    }
 
-    const clientesUltimos7Dias = filteredClientes.filter(c => {
-      if (!c.created_at) return false
-      const clientDate = new Date(c.created_at)
-      const clientDateOnly = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
-      return clientDate >= sevenDaysAgo && 
-             clientDateOnly.getTime() !== today.getTime() && 
-             clientDateOnly.getTime() !== yesterday.getTime()
-    })
-
-    const clientesAnteriores = filteredClientes.filter(c => {
-      if (!c.created_at) return true
-      const clientDate = new Date(c.created_at)
-      return clientDate < sevenDaysAgo
-    })
+    console.log('📊 [useClientFilters] Results:')
+    console.log(`   - Hoje: ${clientesHoje.length}`)
+    console.log(`   - Ontem: ${clientesOntem.length}`)
+    console.log(`   - Últimos 7 dias: ${clientesUltimos7Dias.length}`)
+    console.log(`   - Anteriores: ${clientesAnteriores.length}`)
+    console.log(`   - Filtro aplicado (${dateFilter}): ${filteredClientes.length}`)
 
     return {
       hoje: clientesHoje,
@@ -81,12 +140,11 @@ export function useClientFilters(clientes: Cliente[]) {
       anteriores: clientesAnteriores,
       total: filteredClientes
     }
-  }, [filteredClientes])
+  }, [clientes, dateFilter])
 
   return {
     dateFilter,
     setDateFilter,
-    filteredClientes,
     organizedClientes
   }
 }
