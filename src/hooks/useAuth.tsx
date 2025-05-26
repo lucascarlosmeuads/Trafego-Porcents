@@ -15,6 +15,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isGestor,
     isCliente,
+    isVendedor,
     currentManagerName,
     updateUserType,
     resetUserState
@@ -207,6 +208,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin, 
       isGestor,
       isCliente,
+      isVendedor,
       currentManagerName
     }}>
       {children}

@@ -5,7 +5,7 @@ export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()
 }
 
-export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'> => {
+export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
   console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
   console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
@@ -18,6 +18,12 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     if (normalizedEmail.includes('@admin')) {
       console.log('👑 [authHelpers] Usuário é ADMIN (domínio @admin)')
       return 'admin'
+    }
+
+    // NOVO: Verificação para vendedores
+    if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
+      console.log('💼 [authHelpers] Usuário é VENDEDOR (vendedor*@trafegoporcents.com)')
+      return 'vendedor'
     }
 
     if (normalizedEmail.includes('@trafegoporcents.com')) {

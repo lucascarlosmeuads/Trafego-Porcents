@@ -8,6 +8,7 @@ export function useAuthState() {
   const [loading, setLoading] = useState(true)
   const [isGestor, setIsGestor] = useState(false)
   const [isCliente, setIsCliente] = useState(false)
+  const [isVendedor, setIsVendedor] = useState(false)
   const [currentManagerName, setCurrentManagerName] = useState('')
 
   const isAdmin = user?.email?.includes('@admin') || false
@@ -19,6 +20,7 @@ export function useAuthState() {
     // Reset inicial
     setIsGestor(false)
     setIsCliente(false)
+    setIsVendedor(false)
     setCurrentManagerName('')
     
     if (email.includes('@admin')) {
@@ -37,14 +39,25 @@ export function useAuthState() {
           console.log('👨‍💼 [useAuthState] Configurando GESTOR')
           setIsGestor(true)
           setIsCliente(false)
+          setIsVendedor(false)
           const managerName = await getManagerName(email)
           setCurrentManagerName(managerName)
+          break
+          
+        case 'vendedor':
+          console.log('💼 [useAuthState] === CONFIGURANDO VENDEDOR ===')
+          setIsGestor(false)
+          setIsCliente(false)
+          setIsVendedor(true)
+          setCurrentManagerName('Vendedor')
+          console.log('✅ [useAuthState] Vendedor configurado com sucesso!')
           break
           
         case 'cliente':
           console.log('👤 [useAuthState] === CONFIGURANDO CLIENTE ===')
           setIsGestor(false)
           setIsCliente(true)
+          setIsVendedor(false)
           setCurrentManagerName('')
           console.log('✅ [useAuthState] Cliente configurado com sucesso!')
           break
@@ -53,6 +66,7 @@ export function useAuthState() {
           console.log('❓ [useAuthState] Tipo desconhecido, configurando como cliente')
           setIsGestor(false)
           setIsCliente(true)
+          setIsVendedor(false)
           setCurrentManagerName('')
           break
       }
@@ -61,6 +75,7 @@ export function useAuthState() {
       console.log('   - userType:', userType)
       console.log('   - isAdmin:', email.includes('@admin'))
       console.log('   - isGestor:', userType === 'gestor')
+      console.log('   - isVendedor:', userType === 'vendedor')
       console.log('   - isCliente:', userType === 'cliente')
       
     } catch (error) {
@@ -68,6 +83,7 @@ export function useAuthState() {
       // Em caso de erro, considerar como cliente
       setIsGestor(false)
       setIsCliente(true)
+      setIsVendedor(false)
       setCurrentManagerName('')
     }
   }, [])
@@ -76,6 +92,7 @@ export function useAuthState() {
     console.log('🧹 [useAuthState] Resetando estado')
     setIsGestor(false)
     setIsCliente(false)
+    setIsVendedor(false)
     setCurrentManagerName('')
   }, [])
 
@@ -87,6 +104,7 @@ export function useAuthState() {
     isAdmin,
     isGestor,
     isCliente,
+    isVendedor,
     currentManagerName,
     updateUserType,
     resetUserState

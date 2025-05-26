@@ -10,7 +10,8 @@ export interface AuthContextType {
   isAdmin: boolean
   isGestor: boolean
   isCliente: boolean
+  isVendedor: boolean
   currentManagerName: string
 }
 
-export type UserType = 'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'
+export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'unauthorized' | 'error'
