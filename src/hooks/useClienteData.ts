@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -92,36 +93,10 @@ export function useClienteData(emailCliente: string) {
 
       if (!clienteData) {
         console.warn('⚠️ [useClienteData] Cliente não encontrado na tabela todos_clientes:', emailCliente)
-        console.warn('⚠️ [useClienteData] Isso pode indicar que o registro foi deletado ou nunca existiu')
+        console.warn('⚠️ [useClienteData] Cliente precisa ser adicionado manualmente pelos gestores')
         
-        // Create a default cliente object for users not in todos_clientes
-        const defaultCliente: Cliente = {
-          id: 0,
-          email_cliente: emailCliente,
-          nome_cliente: 'Cliente',
-          status_campanha: 'Preenchimento do Formulário',
-          data_venda: '',
-          data_subida_campanha: '',
-          vendedor: '',
-          comissao: '',
-          comissao_paga: false,
-          status_envio: '',
-          email_gestor: '',
-          data_limite: '',
-          link_grupo: '',
-          link_briefing: '',
-          link_criativo: '',
-          link_site: '',
-          data_agendamento: '',
-          numero_bm: '',
-          telefone: '',
-          site_status: 'pendente',
-          descricao_problema: '',
-          valor_comissao: 60,
-          saque_solicitado: false,
-          created_at: new Date().toISOString()
-        }
-        setCliente(defaultCliente)
+        // NÃO criar cliente automático - retornar null
+        setCliente(null)
       } else {
         console.log('✅ [useClienteData] Cliente encontrado:', clienteData.nome_cliente)
         setCliente(clienteData)
