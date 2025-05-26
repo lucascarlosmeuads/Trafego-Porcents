@@ -60,8 +60,8 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // SEMPRE buscar briefing quando filterType for 'all' ou 'briefing'
-      if (filterType === 'all' || filterType === 'briefing') {
+      // CORRIGIDO: Buscar briefing SEMPRE, exceto quando filterType for especificamente 'creative'
+      if (filterType !== 'creative') {
         console.log('📋 [BriefingMaterialsModal] Carregando briefing...')
         const { data: briefingData, error: briefingError } = await supabase
           .from('briefings_cliente')
@@ -81,8 +81,8 @@ export function BriefingMaterialsModal({
         }
       }
 
-      // SEMPRE buscar arquivos quando filterType for 'all' ou 'creative'
-      if (filterType === 'all' || filterType === 'creative') {
+      // CORRIGIDO: Buscar arquivos SEMPRE, exceto quando filterType for especificamente 'briefing'
+      if (filterType !== 'briefing') {
         console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
         const { data: arquivosData, error: arquivosError } = await supabase
           .from('arquivos_cliente')
@@ -363,7 +363,7 @@ export function BriefingMaterialsModal({
       case 'creative':
         return arquivos.length > 0
       default:
-        // Para filterType 'all', mostrar conteúdo se tem briefing OU arquivos
+        // Para filterType 'all' ou undefined, mostrar conteúdo se tem briefing OU arquivos
         return briefing !== null || arquivos.length > 0
     }
   }
@@ -388,7 +388,7 @@ export function BriefingMaterialsModal({
     }
   }
 
-  // Separar arquivos por autor apenas se filterType for 'creative' ou 'all'
+  // Separar arquivos por autor apenas se filterType for 'creative' ou não for 'briefing'
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -420,7 +420,7 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* SEÇÃO DE BRIEFING - Sempre mostrar quando briefing existe e filterType não é 'creative' */}
+              {/* SEÇÃO DE BRIEFING - CORRIGIDO: Mostrar quando briefing existe e filterType não é 'creative' */}
               {filterType !== 'creative' && briefing && (
                 <Card>
                   <CardHeader>
