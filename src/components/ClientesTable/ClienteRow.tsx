@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -69,33 +68,58 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [showSiteOptions, setShowSiteOptions] = useState(false)
   const [briefingExists, setBriefingExists] = useState<boolean | null>(null)
+  const [checkingBriefing, setCheckingBriefing] = useState(false)
 
   // Verificar se existe briefing para este cliente
   const checkBriefingExists = async () => {
-    if (!cliente.email_cliente) return
+    if (!cliente.email_cliente || cliente.email_cliente.trim() === '') {
+      console.log('❌ [ClienteRow] Email do cliente não fornecido para ID:', cliente.id)
+      setBriefingExists(false)
+      return
+    }
 
+    setCheckingBriefing(true)
+    
     try {
+      console.log('🔍 [ClienteRow] Verificando briefing para:', cliente.email_cliente)
+      
       const { data, error } = await supabase
         .from('briefings_cliente')
         .select('id')
-        .eq('email_cliente', cliente.email_cliente)
+        .eq('email_cliente', cliente.email_cliente.trim().toLowerCase())
         .limit(1)
 
       if (error) {
-        console.error('Erro ao verificar briefing:', error)
-        setBriefingExists(false)
+        console.error('❌ [ClienteRow] Erro ao verificar briefing:', error)
+        
+        // Tentar busca alternativa
+        const { data: dataAlt } = await supabase
+          .from('briefings_cliente')
+          .select('id')
+          .ilike('email_cliente', cliente.email_cliente.trim())
+          .limit(1)
+
+        setBriefingExists(dataAlt && dataAlt.length > 0)
+        console.log('🔍 [ClienteRow] Resultado busca alternativa:', dataAlt && dataAlt.length > 0)
         return
       }
 
-      setBriefingExists(data && data.length > 0)
+      const exists = data && data.length > 0
+      setBriefingExists(exists)
+      console.log('✅ [ClienteRow] Briefing existe?', exists, 'para email:', cliente.email_cliente)
     } catch (error) {
-      console.error('Erro na verificação do briefing:', error)
+      console.error('💥 [ClienteRow] Erro na verificação do briefing:', error)
       setBriefingExists(false)
+    } finally {
+      setCheckingBriefing(false)
     }
   }
 
   useEffect(() => {
-    checkBriefingExists()
+    // Verificar apenas uma vez quando o email do cliente estiver disponível
+    if (cliente.email_cliente && briefingExists === null && !checkingBriefing) {
+      checkBriefingExists()
+    }
   }, [cliente.email_cliente])
 
   const formatDate = (dateString: string | null) => {
@@ -518,8 +542,8 @@ export function ClienteRow({
   }
 
   const renderBriefingCell = () => {
-    if (briefingExists === null) {
-      // Ainda carregando
+    if (checkingBriefing) {
+      // Enquanto está verificando
       return (
         <div className="flex items-center justify-center">
           <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />

@@ -32,7 +32,13 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
   const [open, setOpen] = useState(false)
 
   const fetchBriefing = async () => {
-    if (!emailCliente) return
+    // Verificar se temos um email válido
+    if (!emailCliente || emailCliente.trim() === '') {
+      console.log('❌ [BriefingModal] Email do cliente não fornecido ou vazio')
+      setBriefingData(null)
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     console.log('🔍 [BriefingModal] Buscando briefing para cliente:', emailCliente)
@@ -41,9 +47,11 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
       const { data, error } = await supabase
         .from('briefings_cliente')
         .select('*')
-        .eq('email_cliente', emailCliente)
+        .eq('email_cliente', emailCliente.trim().toLowerCase())
         .order('created_at', { ascending: false })
         .limit(1)
+
+      console.log('📊 [BriefingModal] Resposta do Supabase:', { data, error })
 
       if (error) {
         console.error('❌ [BriefingModal] Erro ao buscar briefing:', error)
@@ -56,7 +64,23 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
         setBriefingData(data[0])
       } else {
         console.log('ℹ️ [BriefingModal] Nenhum briefing encontrado para:', emailCliente)
-        setBriefingData(null)
+        
+        // Tentar busca sem case-sensitive
+        const { data: dataAlt, error: errorAlt } = await supabase
+          .from('briefings_cliente')
+          .select('*')
+          .ilike('email_cliente', emailCliente.trim())
+          .order('created_at', { ascending: false })
+          .limit(1)
+
+        console.log('🔍 [BriefingModal] Busca alternativa (ilike):', { dataAlt, errorAlt })
+
+        if (!errorAlt && dataAlt && dataAlt.length > 0) {
+          console.log('✅ [BriefingModal] Briefing encontrado na busca alternativa:', dataAlt[0])
+          setBriefingData(dataAlt[0])
+        } else {
+          setBriefingData(null)
+        }
       }
     } catch (error) {
       console.error('💥 [BriefingModal] Erro na busca:', error)
@@ -67,7 +91,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
   }
 
   useEffect(() => {
-    if (open) {
+    if (open && emailCliente) {
       fetchBriefing()
     }
   }, [open, emailCliente])
@@ -112,8 +136,11 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Briefing não preenchido</h3>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mb-2">
               O cliente ainda não preencheu o formulário de briefing.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Email buscado: {emailCliente}
             </p>
           </div>
         )}
@@ -133,7 +160,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
               <CardContent className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-sm text-muted-foreground mb-1">Nome do Produto/Serviço</h4>
-                  <p className="text-foreground">{briefingData.nome_produto}</p>
+                  <p className="text-foreground">{briefingData.nome_produto || 'Não informado'}</p>
                 </div>
 
                 <div>
