@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -96,7 +97,7 @@ export function useSellerData(sellerEmail: string) {
           saque_solicitado
         `)
         .eq('vendedor', sellerEmail)
-        .order('data_venda', { ascending: false, nullsLast: true })
+        .order('data_venda', { ascending: false, nullsFirst: false })
 
       console.log('📊 [useSellerData] Exact email match result:', clientesData?.length || 0)
 
@@ -129,7 +130,7 @@ export function useSellerData(sellerEmail: string) {
             saque_solicitado
           `)
           .ilike('vendedor', `%${sellerName}%`)
-          .order('data_venda', { ascending: false, nullsLast: true })
+          .order('data_venda', { ascending: false, nullsFirst: false })
 
         if (!nameMatchError && nameMatchData) {
           clientesData = nameMatchData
@@ -167,7 +168,7 @@ export function useSellerData(sellerEmail: string) {
             saque_solicitado
           `)
           .eq('vendedor', capitalizedName)
-          .order('data_venda', { ascending: false, nullsLast: true })
+          .order('data_venda', { ascending: false, nullsFirst: false })
 
         if (!capitalizedError && capitalizedMatchData) {
           clientesData = capitalizedMatchData
@@ -396,7 +397,7 @@ export function useSellerData(sellerEmail: string) {
           link_briefing: existingClient.link_briefing || '',
           link_criativo: existingClient.link_criativo || '',
           link_site: existingClient.link_site || '',
-          numero_bm: item.numero_bm || '',
+          numero_bm: existingClient.numero_bm || '',
           comissao_paga: Boolean(existingClient.comissao_paga),
           valor_comissao: Number(existingClient.valor_comissao || 60),
           created_at: existingClient.created_at || '',
