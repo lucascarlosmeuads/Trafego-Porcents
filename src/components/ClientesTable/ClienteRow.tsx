@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -7,6 +8,7 @@ import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, Messag
 import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { BriefingModal } from './BriefingModal'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -66,6 +68,35 @@ export function ClienteRow({
   setComissionValueInput
 }: ClienteRowProps) {
   const [showSiteOptions, setShowSiteOptions] = useState(false)
+  const [briefingExists, setBriefingExists] = useState<boolean | null>(null)
+
+  // Verificar se existe briefing para este cliente
+  const checkBriefingExists = async () => {
+    if (!cliente.email_cliente) return
+
+    try {
+      const { data, error } = await supabase
+        .from('briefings_cliente')
+        .select('id')
+        .eq('email_cliente', cliente.email_cliente)
+        .limit(1)
+
+      if (error) {
+        console.error('Erro ao verificar briefing:', error)
+        setBriefingExists(false)
+        return
+      }
+
+      setBriefingExists(data && data.length > 0)
+    } catch (error) {
+      console.error('Erro na verificação do briefing:', error)
+      setBriefingExists(false)
+    }
+  }
+
+  useEffect(() => {
+    checkBriefingExists()
+  }, [cliente.email_cliente])
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -104,7 +135,7 @@ export function ClienteRow({
       }
     }
     
-    if (diffDays <0) {
+    if (diffDays < 0) {
       return {
         text: `Atrasado ${Math.abs(diffDays)} dias`,
         style: 'bg-red-100 text-red-800 border-red-300'
@@ -486,6 +517,44 @@ export function ClienteRow({
     )
   }
 
+  const renderBriefingCell = () => {
+    if (briefingExists === null) {
+      // Ainda carregando
+      return (
+        <div className="flex items-center justify-center">
+          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        </div>
+      )
+    }
+
+    if (briefingExists) {
+      // Briefing existe - mostrar botão para visualizar
+      return (
+        <BriefingModal
+          emailCliente={cliente.email_cliente || ''}
+          nomeCliente={cliente.nome_cliente || ''}
+          trigger={
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-6 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
+            >
+              <FileText className="w-3 h-3 mr-1" />
+              Ver Briefing
+            </Button>
+          }
+        />
+      )
+    } else {
+      // Briefing não existe
+      return (
+        <span className="text-xs text-muted-foreground px-2 py-1 bg-gray-50 rounded border">
+          Não preenchido
+        </span>
+      )
+    }
+  }
+
   // Detectar se estamos no painel do gestor
   const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
 
@@ -560,6 +629,10 @@ export function ClienteRow({
           )}
           <span>{dateLimit.text}</span>
         </div>
+      </TableCell>
+
+      <TableCell>
+        {renderBriefingCell()}
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">

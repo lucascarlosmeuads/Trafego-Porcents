@@ -1,5 +1,5 @@
 
-import { Calendar, AlertTriangle, ExternalLink } from 'lucide-react'
+import { Calendar, AlertTriangle, ExternalLink, FileText } from 'lucide-react'
 import { TableHead, TableHeader as ShadcnTableHeader, TableRow } from '@/components/ui/table'
 
 export function TableHeader() {
@@ -48,6 +48,12 @@ export function TableHeader() {
           <div className="flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 text-orange-400" />
             <span>Data Limite</span>
+          </div>
+        </TableHead>
+        <TableHead className="min-w-[120px] text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
+          <div className="flex items-center gap-2">
+            <FileText className="w-4 h-4 text-blue-400" />
+            <span>Briefing</span>
           </div>
         </TableHead>
         <TableHead className="min-w-[80px] hidden lg:table-cell text-white font-bold text-sm tracking-wide uppercase bg-gradient-to-b from-slate-600 to-slate-700 border-r border-slate-600/50 shadow-inner">
