@@ -6,10 +6,11 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Search, Eye, Calendar, User, Package } from 'lucide-react'
+import { Search, Eye, Calendar, User, Package, CheckCircle, Clock } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { BriefingCliente } from '@/hooks/useClienteData'
+import { toast } from '@/hooks/use-toast'
 
 export function BriefingsPanel() {
   const [briefings, setBriefings] = useState<BriefingCliente[]>([])
@@ -17,6 +18,7 @@ export function BriefingsPanel() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedBriefing, setSelectedBriefing] = useState<BriefingCliente | null>(null)
+  const [processingBriefing, setProcessingBriefing] = useState<string | null>(null)
 
   const fetchBriefings = async () => {
     try {
@@ -40,6 +42,64 @@ export function BriefingsPanel() {
       console.error('💥 [BriefingsPanel] Erro crítico:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const markAsProcessed = async (briefingId: string) => {
+    setProcessingBriefing(briefingId)
+    
+    try {
+      console.log('✅ [BriefingsPanel] Marcando briefing como processado:', briefingId)
+      
+      const { error } = await supabase
+        .from('briefings_cliente')
+        .update({ 
+          liberar_edicao: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', briefingId)
+
+      if (error) {
+        console.error('❌ Erro ao marcar briefing como processado:', error)
+        toast({
+          title: "Erro",
+          description: "Falha ao marcar briefing como processado",
+          variant: "destructive",
+        })
+        return
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Briefing marcado como processado e bloqueado para edição",
+      })
+
+      // Atualizar a lista local
+      setBriefings(prev => 
+        prev.map(b => 
+          b.id === briefingId 
+            ? { ...b, liberar_edicao: false, updated_at: new Date().toISOString() }
+            : b
+        )
+      )
+      
+      setFilteredBriefings(prev => 
+        prev.map(b => 
+          b.id === briefingId 
+            ? { ...b, liberar_edicao: false, updated_at: new Date().toISOString() }
+            : b
+        )
+      )
+      
+    } catch (error) {
+      console.error('💥 Erro ao marcar briefing:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao processar briefing",
+        variant: "destructive",
+      })
+    } finally {
+      setProcessingBriefing(null)
     }
   }
 
@@ -163,7 +223,7 @@ export function BriefingsPanel() {
             <label className="text-sm font-medium text-gray-600">Status de Edição</label>
             <div className="mt-1">
               <Badge variant={briefing.liberar_edicao ? "default" : "secondary"}>
-                {briefing.liberar_edicao ? "Edição Liberada" : "Edição Bloqueada"}
+                {briefing.liberar_edicao ? "Edição Liberada" : "Processado"}
               </Badge>
             </div>
           </div>
@@ -176,6 +236,28 @@ export function BriefingsPanel() {
               })}
             </p>
           </div>
+        </div>
+
+        <div className="flex justify-end pt-4 border-t">
+          {briefing.liberar_edicao && (
+            <Button
+              onClick={() => markAsProcessed(briefing.id)}
+              disabled={processingBriefing === briefing.id}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {processingBriefing === briefing.id ? (
+                <>
+                  <Clock className="w-4 h-4 mr-2 animate-spin" />
+                  Processando...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  Marcar como Processado
+                </>
+              )}
+            </Button>
+          )}
         </div>
       </div>
     </DialogContent>
@@ -251,8 +333,23 @@ export function BriefingsPanel() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Badge variant={briefing.liberar_edicao ? "default" : "secondary"} className="text-xs">
-                      {briefing.liberar_edicao ? "Editável" : "Bloqueado"}
+                      {briefing.liberar_edicao ? "Editável" : "Processado"}
                     </Badge>
+                    {briefing.liberar_edicao && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => markAsProcessed(briefing.id)}
+                        disabled={processingBriefing === briefing.id}
+                        className="border-green-500 text-green-600 hover:bg-green-50"
+                      >
+                        {processingBriefing === briefing.id ? (
+                          <Clock className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <CheckCircle className="w-4 h-4" />
+                        )}
+                      </Button>
+                    )}
                     <Dialog>
                       <DialogTrigger asChild>
                         <Button
