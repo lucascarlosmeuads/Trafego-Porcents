@@ -1,4 +1,3 @@
-
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -14,7 +13,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   define: {
-    __WS_TOKEN__: JSON.stringify(process.env.WS_TOKEN || 'default-token')
+    __WS_TOKEN__: JSON.stringify('')
   },
   plugins: [
     react(),
