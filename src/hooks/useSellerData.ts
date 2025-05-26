@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -40,10 +39,10 @@ export function useSellerData(sellerEmail: string) {
       console.log('🔍 [useSellerData] === FETCHING CLIENTS FOR SELLER ===')
       console.log('📧 [useSellerData] Seller email:', sellerEmail)
 
-      // First, let's check the database connection and table structure
+      // Test database connection first
       const { data: testConnection, error: connectionError } = await supabase
         .from('todos_clientes')
-        .select('count(*)')
+        .select('id')
         .limit(1)
 
       if (connectionError) {
@@ -58,14 +57,12 @@ export function useSellerData(sellerEmail: string) {
 
       console.log('✅ [useSellerData] Database connection successful')
 
-      // Fetch all clients for debugging (sample to verify data exists)
-      const { data: allClientsCount, error: countError } = await supabase
+      // Get total clients count for debugging
+      const { count: totalCount } = await supabase
         .from('todos_clientes')
-        .select('vendedor', { count: 'exact' })
+        .select('*', { count: 'exact', head: true })
 
-      if (!countError) {
-        console.log('📊 [useSellerData] Total clients in database:', allClientsCount?.length || 0)
-      }
+      console.log('📊 [useSellerData] Total clients in database:', totalCount)
 
       // Get unique vendors for debugging
       const { data: uniqueVendors, error: vendorError } = await supabase
@@ -79,22 +76,28 @@ export function useSellerData(sellerEmail: string) {
         console.log('🔍 [useSellerData] Looking for exact match:', sellerEmail)
       }
 
-      // Main query - fetch clients for this specific seller
+      // Main query - fetch ALL required fields for this specific seller
       console.log('🔎 [useSellerData] Executing main query...')
       const { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select(`
           id,
+          data_venda,
           nome_cliente,
-          email_cliente,
           telefone,
+          email_cliente,
           vendedor,
           email_gestor,
           status_campanha,
-          data_venda,
-          created_at,
+          data_limite,
+          link_grupo,
+          link_briefing,
+          link_criativo,
+          link_site,
+          numero_bm,
           comissao_paga,
           valor_comissao,
+          created_at,
           site_status,
           descricao_problema,
           saque_solicitado
@@ -123,6 +126,33 @@ export function useSellerData(sellerEmail: string) {
         clientesData.forEach((cliente, index) => {
           console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Created: ${cliente.created_at}`)
         })
+
+        // Format data to match Cliente type
+        const formattedClientes: Cliente[] = clientesData.map(item => ({
+          id: String(item.id || ''),
+          data_venda: item.data_venda || '',
+          nome_cliente: item.nome_cliente || '',
+          telefone: item.telefone || '',
+          email_cliente: item.email_cliente || '',
+          vendedor: item.vendedor || '',
+          email_gestor: item.email_gestor || '',
+          status_campanha: item.status_campanha || 'Brief',
+          data_limite: item.data_limite || '',
+          link_grupo: item.link_grupo || '',
+          link_briefing: item.link_briefing || '',
+          link_criativo: item.link_criativo || '',
+          link_site: item.link_site || '',
+          numero_bm: item.numero_bm || '',
+          comissao_paga: Boolean(item.comissao_paga),
+          valor_comissao: Number(item.valor_comissao || 60),
+          created_at: item.created_at || '',
+          site_status: item.site_status || 'pendente',
+          descricao_problema: item.descricao_problema || '',
+          saque_solicitado: Boolean(item.saque_solicitado || false)
+        }))
+
+        setClientes(formattedClientes)
+        await calculateMetrics(formattedClientes)
       } else {
         console.log('⚠️ [useSellerData] No clients found for seller:', sellerEmail)
         
@@ -135,10 +165,10 @@ export function useSellerData(sellerEmail: string) {
         if (similarClients && similarClients.length > 0) {
           console.log('🔍 [useSellerData] Found clients with similar vendor emails:', similarClients)
         }
-      }
 
-      setClientes(clientesData || [])
-      await calculateMetrics(clientesData || [])
+        setClientes([])
+        await calculateMetrics([])
+      }
 
     } catch (error) {
       console.error('💥 [useSellerData] Critical error:', error)
@@ -241,7 +271,32 @@ export function useSellerData(sellerEmail: string) {
           vendedor: existingClient.vendedor,
           created_at: existingClient.created_at
         })
-        return { exists: true, foundClient: existingClient }
+
+        // Format the found client to match Cliente type
+        const formattedClient: Cliente = {
+          id: String(existingClient.id || ''),
+          data_venda: existingClient.data_venda || '',
+          nome_cliente: existingClient.nome_cliente || '',
+          telefone: existingClient.telefone || '',
+          email_cliente: existingClient.email_cliente || '',
+          vendedor: existingClient.vendedor || '',
+          email_gestor: existingClient.email_gestor || '',
+          status_campanha: existingClient.status_campanha || 'Brief',
+          data_limite: existingClient.data_limite || '',
+          link_grupo: existingClient.link_grupo || '',
+          link_briefing: existingClient.link_briefing || '',
+          link_criativo: existingClient.link_criativo || '',
+          link_site: existingClient.link_site || '',
+          numero_bm: existingClient.numero_bm || '',
+          comissao_paga: Boolean(existingClient.comissao_paga),
+          valor_comissao: Number(existingClient.valor_comissao || 60),
+          created_at: existingClient.created_at || '',
+          site_status: existingClient.site_status || 'pendente',
+          descricao_problema: existingClient.descricao_problema || '',
+          saque_solicitado: Boolean(existingClient.saque_solicitado || false)
+        }
+
+        return { exists: true, foundClient: formattedClient }
       }
 
       console.log('✅ [useSellerData] Client does not exist, can proceed')
