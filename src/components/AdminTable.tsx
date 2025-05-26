@@ -15,7 +15,7 @@ import { AdicionarClienteModal } from './AdicionarClienteModal'
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [viewMode, setViewMode<'table' | 'cards'>('table')
   const [deletingCliente, setDeletingCliente] = useState<string | null>(null)
   const { toast } = useToast()
   const { user, isAdmin } = useAuth()
