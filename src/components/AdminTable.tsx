@@ -11,6 +11,7 @@ import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useAuth } from '@/hooks/useAuth'
 import { DeleteClientButton } from './ClientesTable/DeleteClientButton'
+import { AdicionarClienteModal } from './AdicionarClienteModal'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -167,15 +168,18 @@ export function AdminTable() {
           <CardTitle className="text-lg sm:text-xl text-card-foreground">
             Todos os Clientes ({clientes.length})
           </CardTitle>
-          <Button
-            onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-          >
-            {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
-            {viewMode === 'table' ? 'Cartões' : 'Tabela'}
-          </Button>
+          <div className="flex items-center gap-2">
+            <AdicionarClienteModal onClienteAdicionado={fetchAllClientes} />
+            <Button
+              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
+              variant="outline"
+              size="sm"
+              className="lg:hidden"
+            >
+              {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
+              {viewMode === 'table' ? 'Cartões' : 'Tabela'}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="p-0 sm:p-6">
@@ -222,7 +226,7 @@ export function AdminTable() {
           </div>
         )}
 
-        {/* Tabela para desktop - WITH DELETE COLUMN */}
+        {/* Tabela para desktop */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
