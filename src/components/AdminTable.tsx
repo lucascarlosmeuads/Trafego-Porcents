@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -10,7 +11,7 @@ import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useAuth } from '@/hooks/useAuth'
 import { DeleteClientButton } from './ClientesTable/DeleteClientButton'
-import { AdicionarClienteModal } from './AdicionarClienteModal'
+import { AdicionarClienteAdminModal } from './AdminTable/AdicionarClienteAdminModal'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
@@ -168,7 +169,7 @@ export function AdminTable() {
             Todos os Clientes ({clientes.length})
           </CardTitle>
           <div className="flex items-center gap-2">
-            <AdicionarClienteModal onClienteAdicionado={fetchAllClientes} />
+            <AdicionarClienteAdminModal onClienteAdicionado={fetchAllClientes} />
             <Button
               onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
               variant="outline"
