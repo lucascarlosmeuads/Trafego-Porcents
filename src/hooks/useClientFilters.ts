@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react'
-import { Cliente } from '@/lib/supabase'
 import { DateTime } from 'luxon'
+import { Cliente } from '@/lib/supabase'
 
 export interface OrganizedClientes {
   hoje: Cliente[]
@@ -17,7 +17,7 @@ export function useClientFilters(clientes: Cliente[]) {
     const now = DateTime.now().setZone('America/Sao_Paulo')
     const today = now.startOf('day')
     const yesterday = today.minus({ days: 1 })
-    const seteDiasAtras = today.minus({ days: 7 })
+    const ultimos7DiasInicio = today.minus({ days: 7 })
 
     const parseDate = (dateStr: string) => {
       try {
@@ -27,27 +27,28 @@ export function useClientFilters(clientes: Cliente[]) {
       }
     }
 
-    const isSameDay = (data: DateTime | null, target: DateTime) => {
-      return data?.hasSame(target, 'day') || false
+    const isSameDay = (clientDate: string, reference: DateTime) => {
+      const parsed = parseDate(clientDate)
+      return parsed?.hasSame(reference, 'day')
     }
 
-    const inRange = (data: DateTime | null, start: DateTime, end: DateTime) => {
-      return data && data >= start && data <= end
+    const isInRange = (clientDate: string, start: DateTime, end: DateTime) => {
+      const parsed = parseDate(clientDate)
+      return parsed && parsed >= start && parsed <= end
     }
 
-    const clientesHoje = clientes.filter(c => isSameDay(parseDate(c.created_at), today))
-    const clientesOntem = clientes.filter(c => isSameDay(parseDate(c.created_at), yesterday))
+    const clientesHoje = clientes.filter(c => isSameDay(c.created_at, today))
+    const clientesOntem = clientes.filter(c => isSameDay(c.created_at, yesterday))
     const clientesUltimos7Dias = clientes.filter(c => {
-      const date = parseDate(c.created_at)
-      return date && date > yesterday && date >= seteDiasAtras
+      const parsed = parseDate(c.created_at)
+      return parsed && parsed >= ultimos7DiasInicio && parsed < yesterday
     })
     const clientesAnteriores = clientes.filter(c => {
-      const date = parseDate(c.created_at)
-      return date && date < seteDiasAtras
+      const parsed = parseDate(c.created_at)
+      return parsed && parsed < ultimos7DiasInicio
     })
 
     let filteredClientes: Cliente[] = []
-
     switch (dateFilter) {
       case 'today':
         filteredClientes = clientesHoje
@@ -59,18 +60,14 @@ export function useClientFilters(clientes: Cliente[]) {
         filteredClientes = [...clientesHoje, ...clientesOntem, ...clientesUltimos7Dias]
         break
       case 'thisMonth':
-        const inicioMes = today.startOf('month')
-        const fimMes = today.endOf('month')
-        filteredClientes = clientes.filter(c =>
-          inRange(parseDate(c.created_at), inicioMes, fimMes)
-        )
+        const startMonth = today.startOf('month')
+        const endMonth = today.endOf('month')
+        filteredClientes = clientes.filter(c => isInRange(c.created_at, startMonth, endMonth))
         break
       case 'thisYear':
-        const inicioAno = today.startOf('year')
-        const fimAno = today.endOf('year')
-        filteredClientes = clientes.filter(c =>
-          inRange(parseDate(c.created_at), inicioAno, fimAno)
-        )
+        const startYear = today.startOf('year')
+        const endYear = today.endOf('year')
+        filteredClientes = clientes.filter(c => isInRange(c.created_at, startYear, endYear))
         break
       default:
         filteredClientes = clientes
