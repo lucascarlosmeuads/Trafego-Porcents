@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,12 +7,14 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
-import { Plus, Users, DollarSign } from 'lucide-react'
+import { Plus, Users, DollarSign, Calendar, Filter } from 'lucide-react'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
+import { useClientFilters } from '@/hooks/useClientFilters'
 
 export function SimpleVendedorDashboard() {
   const { user, currentManagerName } = useAuth()
   const { clientes, totalClientes, loading, addCliente, refetch } = useSimpleSellerData(user?.email || '')
+  const { dateFilter, setDateFilter, organizedClientes } = useClientFilters(clientes)
   const [showForm, setShowForm] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const { toast } = useToast()
@@ -39,6 +40,44 @@ export function SimpleVendedorDashboard() {
     'junior@trafegoporcents.com',
     'kely@trafegoporcents.com',
     'jefferson@trafegoporcents.com'
+  ]
+
+  // Lógica de filtro conforme solicitado
+  const getFilteredClients = () => {
+    let listaFiltrada = []
+    if (dateFilter === "today") {
+      listaFiltrada = organizedClientes.hoje
+    } else if (dateFilter === "yesterday") {
+      listaFiltrada = organizedClientes.ontem
+    } else if (dateFilter === "last7days") {
+      listaFiltrada = organizedClientes.ultimos7Dias
+    } else if (dateFilter === "thisMonth") {
+      listaFiltrada = organizedClientes.total.filter(cliente => {
+        const data = new Date(cliente.created_at)
+        const hoje = new Date()
+        return data.getMonth() === hoje.getMonth() && data.getFullYear() === hoje.getFullYear()
+      })
+    } else if (dateFilter === "thisYear") {
+      listaFiltrada = organizedClientes.total.filter(cliente => {
+        const data = new Date(cliente.created_at)
+        const hoje = new Date()
+        return data.getFullYear() === hoje.getFullYear()
+      })
+    } else {
+      listaFiltrada = organizedClientes.total
+    }
+    return listaFiltrada
+  }
+
+  const clientesFiltrados = getFilteredClients()
+
+  const filterOptions = [
+    { value: 'all', label: 'Todos os períodos' },
+    { value: 'today', label: 'Hoje' },
+    { value: 'yesterday', label: 'Ontem' },
+    { value: 'last7days', label: 'Últimos 7 dias' },
+    { value: 'thisMonth', label: 'Este mês' },
+    { value: 'thisYear', label: 'Este ano' },
   ]
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -116,28 +155,58 @@ export function SimpleVendedorDashboard() {
 
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-200">Comissão Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-green-400" />
+              <CardTitle className="text-sm font-medium text-gray-200">Filtrados</CardTitle>
+              <Filter className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-white">
-                R$ {(totalClientes * 20).toFixed(2)}
-              </div>
-              <p className="text-xs text-gray-400">R$ 20,00 por cliente</p>
+              <div className="text-2xl font-bold text-white">{clientesFiltrados.length}</div>
+              <p className="text-xs text-gray-400">no período selecionado</p>
             </CardContent>
           </Card>
 
           <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-gray-200">Status</CardTitle>
-              <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+              <CardTitle className="text-sm font-medium text-gray-200">Comissão Filtrada</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-400">Ativo</div>
-              <p className="text-xs text-gray-400">Sistema funcionando</p>
+              <div className="text-2xl font-bold text-white">
+                R$ {(clientesFiltrados.length * 20).toFixed(2)}
+              </div>
+              <p className="text-xs text-gray-400">R$ 20,00 por cliente</p>
             </CardContent>
           </Card>
         </div>
+
+        {/* Filtros */}
+        <Card className="bg-gray-800 border-gray-700">
+          <CardHeader>
+            <CardTitle className="text-white flex items-center gap-2">
+              <Filter className="h-5 w-5" />
+              Filtrar Clientes
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-4">
+              <Label className="text-gray-200">Período:</Label>
+              <Select value={dateFilter} onValueChange={setDateFilter}>
+                <SelectTrigger className="w-64 bg-gray-700 border-gray-600 text-white">
+                  <SelectValue placeholder="Selecione o período" />
+                </SelectTrigger>
+                <SelectContent className="bg-gray-700 border-gray-600">
+                  {filterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value} className="text-white hover:bg-gray-600">
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <div className="text-sm text-gray-400">
+                {clientesFiltrados.length} cliente{clientesFiltrados.length !== 1 ? 's' : ''} encontrado{clientesFiltrados.length !== 1 ? 's' : ''}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Botão Adicionar Cliente */}
         {!showForm && (
@@ -229,27 +298,35 @@ export function SimpleVendedorDashboard() {
           </Card>
         )}
 
-        {/* Lista Simples de Clientes */}
+        {/* Lista Filtrada de Clientes */}
         <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle className="text-white">Meus Clientes ({totalClientes})</CardTitle>
+            <CardTitle className="text-white">
+              Clientes - {filterOptions.find(f => f.value === dateFilter)?.label} ({clientesFiltrados.length})
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <p className="text-gray-300">Carregando...</p>
-            ) : clientes.length === 0 ? (
+            ) : clientesFiltrados.length === 0 ? (
               <p className="text-gray-400 text-center py-8">
-                Nenhum cliente cadastrado ainda
+                Nenhum cliente encontrado para o período selecionado
               </p>
             ) : (
               <div className="space-y-3">
-                {clientes.map((cliente) => (
+                {clientesFiltrados.map((cliente) => (
                   <div key={cliente.id} className="border border-gray-600 rounded-lg p-4 bg-gray-700">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="font-semibold text-white">{cliente.nome_cliente}</h3>
                         <p className="text-sm text-gray-300">{cliente.email_cliente}</p>
                         <p className="text-sm text-gray-300">{cliente.telefone}</p>
+                        {cliente.created_at && (
+                          <p className="text-xs text-gray-400 flex items-center gap-1 mt-1">
+                            <Calendar className="h-3 w-3" />
+                            {new Date(cliente.created_at).toLocaleDateString('pt-BR')}
+                          </p>
+                        )}
                       </div>
                       <div className="text-right">
                         <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
