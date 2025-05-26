@@ -20,7 +20,7 @@ interface VendedorSidebarProps {
 }
 
 export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps) {
-  const { user, currentManagerName, logout } = useAuth()
+  const { user, currentManagerName, signOut } = useAuth()
 
   const menuItems = [
     {
@@ -78,7 +78,7 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
       <SidebarFooter className="p-4">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton onClick={logout}>
+            <SidebarMenuButton onClick={signOut}>
               <LogOut className="h-4 w-4" />
               <span>Sair</span>
             </SidebarMenuButton>
