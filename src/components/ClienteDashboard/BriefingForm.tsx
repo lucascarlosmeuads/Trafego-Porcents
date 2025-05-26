@@ -44,7 +44,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
       if (!formData.nome_produto.trim()) {
         console.error('❌ [BriefingForm] Nome do produto é obrigatório')
         toast({
-          title: "Erro de validação",
+          title: "Campo obrigatório",
           description: "Nome do produto é obrigatório.",
           variant: "destructive"
         })
@@ -54,12 +54,27 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
       if (!emailCliente) {
         console.error('❌ [BriefingForm] Email do cliente não fornecido')
         toast({
-          title: "Erro",
-          description: "Email do cliente não encontrado.",
+          title: "Erro de autenticação",
+          description: "Email do cliente não encontrado. Faça login novamente.",
           variant: "destructive"
         })
         return
       }
+
+      // Verificar se o usuário está autenticado
+      const { data: { user }, error: authError } = await supabase.auth.getUser()
+      
+      if (authError) {
+        console.error('❌ [BriefingForm] Erro de autenticação:', authError)
+        toast({
+          title: "Erro de autenticação",
+          description: "Faça login para continuar.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      console.log('👤 [BriefingForm] Usuário autenticado:', user?.email)
 
       const briefingData = {
         email_cliente: emailCliente,
@@ -96,6 +111,12 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
         if (error) {
           console.error('❌ [BriefingForm] Erro ao atualizar briefing:', error)
+          console.error('❌ [BriefingForm] Detalhes do erro:', {
+            message: error.message,
+            details: error.details,
+            hint: error.hint,
+            code: error.code
+          })
           throw error
         }
 
@@ -111,11 +132,12 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
         if (error) {
           console.error('❌ [BriefingForm] Erro ao inserir briefing:', error)
-          console.error('❌ [BriefingForm] Detalhes do erro:', {
+          console.error('❌ [BriefingForm] Detalhes completos do erro:', {
             message: error.message,
             details: error.details,
             hint: error.hint,
-            code: error.code
+            code: error.code,
+            supabaseError: error
           })
           throw error
         }
@@ -124,8 +146,8 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
       }
 
       toast({
-        title: "Briefing salvo com sucesso!",
-        description: "Seus dados foram salvos e enviados para a equipe.",
+        title: "Sucesso!",
+        description: "Seu briefing foi salvo com sucesso e enviado para nossa equipe.",
       })
 
       console.log('🎉 [BriefingForm] Processo concluído com sucesso')
@@ -135,14 +157,16 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
     } catch (error: any) {
       console.error('💥 [BriefingForm] Erro crítico ao salvar briefing:', error)
       
-      let errorMessage = "Tente novamente em alguns instantes."
+      let errorMessage = "Ocorreu um erro inesperado. Tente novamente."
       
-      if (error.message?.includes('permission denied')) {
-        errorMessage = "Você não tem permissão para salvar este briefing."
+      if (error.message?.includes('permission denied') || error.message?.includes('RLS')) {
+        errorMessage = "Você não tem permissão para salvar este briefing. Verifique se está logado."
       } else if (error.message?.includes('duplicate key')) {
         errorMessage = "Já existe um briefing para este cliente."
+      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente."
       } else if (error.message) {
-        errorMessage = error.message
+        errorMessage = `Erro: ${error.message}`
       }
 
       toast({
