@@ -16,7 +16,8 @@ export function useClientFilters(clientes: Cliente[]) {
   const organizedClientes = useMemo(() => {
     // Usar timezone do Brasil (UTC-3) para garantir comparação correta
     const now = new Date()
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+    const brNow = new Date(now.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }))
+    const today = new Date(brNow.getFullYear(), brNow.getMonth(), brNow.getDate())
     
     const yesterday = new Date(today)
     yesterday.setDate(today.getDate() - 1)
@@ -24,7 +25,7 @@ export function useClientFilters(clientes: Cliente[]) {
     const ultimos7DiasInicio = new Date(today)
     ultimos7DiasInicio.setDate(today.getDate() - 7)
 
-    console.log('📅 [useClientFilters] Data atual (Brasil):', now.toLocaleString('pt-BR'))
+    console.log('📅 [useClientFilters] Data atual (Brasil):', brNow.toLocaleString('pt-BR'))
     console.log('📅 [useClientFilters] Hoje (00:00):', today.toLocaleDateString('pt-BR'))
     console.log('📅 [useClientFilters] Ontem (00:00):', yesterday.toLocaleDateString('pt-BR'))
     console.log('📅 [useClientFilters] Total de clientes para filtrar:', clientes.length)
@@ -37,7 +38,7 @@ export function useClientFilters(clientes: Cliente[]) {
       }
       
       try {
-        // Parse da data do cliente
+        // Parse da data do cliente em UTC e converter para timezone do Brasil
         const clientDate = new Date(dateString)
         
         // Verificar se a data é válida
@@ -46,8 +47,11 @@ export function useClientFilters(clientes: Cliente[]) {
           return false
         }
 
+        // Converter para timezone do Brasil
+        const brClientDate = new Date(clientDate.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }))
+        
         // Normalizar para 00:00:00 para comparação apenas de data
-        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        const normalizedClientDate = new Date(brClientDate.getFullYear(), brClientDate.getMonth(), brClientDate.getDate())
         const normalizedTargetDate = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate())
         
         const isEqual = normalizedClientDate.getTime() === normalizedTargetDate.getTime()
@@ -70,7 +74,10 @@ export function useClientFilters(clientes: Cliente[]) {
         const clientDate = new Date(dateString)
         if (isNaN(clientDate.getTime())) return false
 
-        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        // Converter para timezone do Brasil
+        const brClientDate = new Date(clientDate.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }))
+        
+        const normalizedClientDate = new Date(brClientDate.getFullYear(), brClientDate.getMonth(), brClientDate.getDate())
         const normalizedStartDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())
         const normalizedEndDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate())
         
@@ -105,7 +112,9 @@ export function useClientFilters(clientes: Cliente[]) {
         const clientDate = new Date(cliente.created_at)
         if (isNaN(clientDate.getTime())) return false
 
-        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        // Converter para timezone do Brasil
+        const brClientDate = new Date(clientDate.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }))
+        const normalizedClientDate = new Date(brClientDate.getFullYear(), brClientDate.getMonth(), brClientDate.getDate())
         
         // Últimos 7 dias: entre 7 dias atrás e hoje (exclusive), não incluindo hoje nem ontem
         return normalizedClientDate >= ultimos7DiasInicio && normalizedClientDate < yesterday
@@ -121,7 +130,9 @@ export function useClientFilters(clientes: Cliente[]) {
         const clientDate = new Date(cliente.created_at)
         if (isNaN(clientDate.getTime())) return false
 
-        const normalizedClientDate = new Date(clientDate.getFullYear(), clientDate.getMonth(), clientDate.getDate())
+        // Converter para timezone do Brasil
+        const brClientDate = new Date(clientDate.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }))
+        const normalizedClientDate = new Date(brClientDate.getFullYear(), brClientDate.getMonth(), brClientDate.getDate())
         
         return normalizedClientDate < ultimos7DiasInicio
       } catch (error) {
