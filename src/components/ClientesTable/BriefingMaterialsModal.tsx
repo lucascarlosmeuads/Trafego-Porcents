@@ -65,15 +65,18 @@ export function BriefingMaterialsModal({
     console.log('🚀 [BriefingMaterialsModal] BUSCANDO BRIEFING PREENCHIDO PELO CLIENTE para:', emailCliente)
     
     try {
-      // Buscar o formulário que o cliente preencheu na tabela briefings_cliente
+      // CORREÇÃO: Busca mais robusta com case-insensitive e trim
+      const emailNormalizado = emailCliente.trim().toLowerCase()
+      console.log('🔍 [BriefingMaterialsModal] Email normalizado para busca:', emailNormalizado)
+      
       const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
-        .eq('email_cliente', emailCliente)
+        .ilike('email_cliente', emailNormalizado)
         .maybeSingle()
 
       console.log('🔍 [BriefingMaterialsModal] Resultado da busca do briefing:', {
-        email: emailCliente,
+        email: emailNormalizado,
         encontrou: !!briefingData,
         erro: briefingError,
         dados: briefingData ? {
@@ -85,7 +88,22 @@ export function BriefingMaterialsModal({
 
       if (briefingError) {
         console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
-        setBriefing(null)
+        
+        // Se não encontrou com ilike, tentar busca exata como fallback
+        console.log('🔄 [BriefingMaterialsModal] Tentando busca exata como fallback...')
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('briefings_cliente')
+          .select('*')
+          .eq('email_cliente', emailCliente)
+          .maybeSingle()
+          
+        if (fallbackError) {
+          console.error('❌ [BriefingMaterialsModal] Erro na busca fallback:', fallbackError)
+          setBriefing(null)
+        } else {
+          console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO via fallback!')
+          setBriefing(fallbackData)
+        }
       } else if (briefingData) {
         console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO! Cliente preencheu o formulário.')
         setBriefing(briefingData)
@@ -152,12 +170,18 @@ export function BriefingMaterialsModal({
         try {
           // SEMPRE buscar o briefing quando não for filterType 'creative'
           if (filterType !== 'creative') {
+            console.log('📋 [BriefingMaterialsModal] Buscando briefing (filterType não é creative)')
             await fetchBriefing()
+          } else {
+            console.log('🎨 [BriefingMaterialsModal] Pulando busca de briefing (filterType = creative)')
           }
           
           // Buscar arquivos se necessário
           if (filterType !== 'briefing') {
+            console.log('📁 [BriefingMaterialsModal] Buscando arquivos')
             await fetchArquivos()
+          } else {
+            console.log('📋 [BriefingMaterialsModal] Pulando busca de arquivos (filterType = briefing)')
           }
         } catch (error) {
           console.error('💥 [BriefingMaterialsModal] Erro na busca completa:', error)
@@ -456,12 +480,14 @@ export function BriefingMaterialsModal({
                         </div>
                       )}
 
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
-                        <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
-                          {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : briefing.comissao_aceita || '❓ Não informado'}
-                        </Badge>
-                      </div>
+                      {briefing.comissao_aceita && (
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
+                          <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
+                            {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : briefing.comissao_aceita || '❓ Não informado'}
+                          </Badge>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="text-center py-6">

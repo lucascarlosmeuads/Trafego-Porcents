@@ -25,6 +25,29 @@ export function LoginForm() {
 
     try {
       if (isSignUp) {
+        // Validação adicional antes do cadastro
+        if (!email || !email.includes('@') || email.length < 5) {
+          console.error('❌ [LoginForm] Email inválido:', email)
+          toast({
+            title: "Email Inválido",
+            description: "Por favor, insira um email válido.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        // Prevenir emails de teste problemáticos
+        const testEmails = ['cliente@cliente.com', 'test@test.com', 'teste@teste.com']
+        if (testEmails.includes(email.toLowerCase())) {
+          console.error('❌ [LoginForm] Email de teste bloqueado:', email)
+          toast({
+            title: "Email não permitido",
+            description: "Use um email válido para criar sua conta.",
+            variant: "destructive"
+          })
+          return
+        }
+
         console.log('✍️ [LoginForm] Tentando criar conta no Supabase Auth...')
         console.log('🔍 [LoginForm] IMPORTANTE: Validação baseada APENAS no Supabase Auth')
         
@@ -57,32 +80,59 @@ export function LoginForm() {
           console.log('✅ [LoginForm] Cadastro realizado com sucesso no Supabase Auth!')
           console.log('🎯 [LoginForm] Conta criada para:', email)
 
-          // Auto-insert into todos_clientes table for new signups
+          // CORREÇÃO: Verificar se cliente já existe antes de inserir
           try {
-            console.log('📋 [LoginForm] Inserindo cliente na tabela todos_clientes...')
-            const { error: insertError } = await supabase
+            console.log('🔍 [LoginForm] Verificando se cliente já existe na tabela todos_clientes...')
+            const { data: existingClient, error: checkError } = await supabase
               .from('todos_clientes')
-              .insert([{
-                nome_cliente: email.split('@')[0], // Use part before @ as default name
-                telefone: '', // Will be filled later
-                email_cliente: email,
-                vendedor: 'Sistema',
-                email_gestor: '', // Will be assigned later by a manager
-                status_campanha: 'Preenchimento do Formulário',
-                data_venda: new Date().toISOString().split('T')[0],
-                valor_comissao: 60.00,
-                comissao_paga: false,
-                site_status: 'pendente'
-              }])
+              .select('id, email_cliente')
+              .eq('email_cliente', email)
+              .maybeSingle()
 
-            if (insertError) {
-              console.warn('⚠️ [LoginForm] Erro ao inserir na tabela todos_clientes:', insertError)
-              // Don't block signup if this fails
+            if (checkError && checkError.code !== 'PGRST116') {
+              console.error('❌ [LoginForm] Erro ao verificar cliente existente:', checkError)
+              // Não bloquear o cadastro por isso
+            } else if (existingClient) {
+              console.log('⚠️ [LoginForm] Cliente já existe na tabela todos_clientes:', existingClient)
+              // Cliente já existe, não inserir novamente
             } else {
-              console.log('✅ [LoginForm] Cliente inserido na tabela todos_clientes com sucesso!')
+              console.log('📋 [LoginForm] Inserindo novo cliente na tabela todos_clientes...')
+              
+              // Extrair nome do email (parte antes do @)
+              const nomeCliente = email.split('@')[0] || 'Cliente'
+              
+              // Validar se o nome não está vazio
+              if (!nomeCliente || nomeCliente.trim() === '') {
+                console.error('❌ [LoginForm] Nome do cliente inválido, pulando inserção')
+              } else {
+                const { error: insertError } = await supabase
+                  .from('todos_clientes')
+                  .insert([{
+                    nome_cliente: nomeCliente,
+                    telefone: '', // Will be filled later
+                    email_cliente: email,
+                    vendedor: 'Sistema',
+                    email_gestor: '', // Will be assigned later by a manager
+                    status_campanha: 'Preenchimento do Formulário',
+                    data_venda: new Date().toISOString().split('T')[0],
+                    valor_comissao: 60.00,
+                    comissao_paga: false,
+                    site_status: 'pendente'
+                  }])
+
+                if (insertError) {
+                  console.warn('⚠️ [LoginForm] Erro ao inserir na tabela todos_clientes:', insertError)
+                  // Don't block signup if this fails, but log the error
+                  if (insertError.code === '23505') {
+                    console.log('💡 [LoginForm] Cliente já existe (constraint violation)')
+                  }
+                } else {
+                  console.log('✅ [LoginForm] Cliente inserido na tabela todos_clientes com sucesso!')
+                }
+              }
             }
           } catch (insertError) {
-            console.warn('⚠️ [LoginForm] Erro inesperado ao inserir cliente:', insertError)
+            console.warn('⚠️ [LoginForm] Erro inesperado ao gerenciar cliente:', insertError)
             // Don't block signup if this fails
           }
 
