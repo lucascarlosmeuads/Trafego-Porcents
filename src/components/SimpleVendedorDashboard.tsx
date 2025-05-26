@@ -89,62 +89,62 @@ export function SimpleVendedorDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4">
+    <div className="min-h-screen bg-gray-900 p-4">
       <div className="max-w-6xl mx-auto space-y-6">
         {/* Header */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <h1 className="text-2xl font-bold text-gray-900">
+        <div className="bg-gray-800 border border-gray-700 rounded-lg shadow-lg p-6">
+          <h1 className="text-2xl font-bold text-white">
             Painel do Vendedor
           </h1>
-          <p className="text-gray-600">
+          <p className="text-gray-300 mt-1">
             Olá, {currentManagerName} ({user?.email})
           </p>
         </div>
 
         {/* Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-200">Total de Clientes</CardTitle>
+              <Users className="h-4 w-4 text-blue-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{totalClientes}</div>
-              <p className="text-xs text-muted-foreground">clientes cadastrados</p>
+              <div className="text-2xl font-bold text-white">{totalClientes}</div>
+              <p className="text-xs text-gray-400">clientes cadastrados</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Comissão Total</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium text-gray-200">Comissão Total</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-2xl font-bold text-white">
                 R$ {(totalClientes * 20).toFixed(2)}
               </div>
-              <p className="text-xs text-muted-foreground">R$ 20,00 por cliente</p>
+              <p className="text-xs text-gray-400">R$ 20,00 por cliente</p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Status</CardTitle>
+              <CardTitle className="text-sm font-medium text-gray-200">Status</CardTitle>
               <div className="h-2 w-2 bg-green-500 rounded-full"></div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">Ativo</div>
-              <p className="text-xs text-muted-foreground">Sistema funcionando</p>
+              <div className="text-2xl font-bold text-green-400">Ativo</div>
+              <p className="text-xs text-gray-400">Sistema funcionando</p>
             </CardContent>
           </Card>
         </div>
 
         {/* Botão Adicionar Cliente */}
         {!showForm && (
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="pt-6">
               <div className="text-center">
-                <Button onClick={() => setShowForm(true)} size="lg" className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => setShowForm(true)} size="lg" className="bg-blue-600 hover:bg-blue-700 text-white border-0">
                   <Plus className="w-5 h-5 mr-2" />
                   Adicionar Novo Cliente
                 </Button>
@@ -155,37 +155,39 @@ export function SimpleVendedorDashboard() {
 
         {/* Formulário */}
         {showForm && (
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardHeader>
-              <CardTitle>Novo Cliente</CardTitle>
+              <CardTitle className="text-white">Novo Cliente</CardTitle>
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="nome">Nome Completo *</Label>
+                    <Label htmlFor="nome" className="text-gray-200">Nome Completo *</Label>
                     <Input
                       id="nome"
                       value={novoCliente.nome_cliente}
                       onChange={(e) => setNovoCliente({ ...novoCliente, nome_cliente: e.target.value })}
                       placeholder="Nome do cliente"
                       required
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="telefone">Telefone *</Label>
+                    <Label htmlFor="telefone" className="text-gray-200">Telefone *</Label>
                     <Input
                       id="telefone"
                       value={novoCliente.telefone}
                       onChange={(e) => setNovoCliente({ ...novoCliente, telefone: e.target.value })}
                       placeholder="(11) 99999-9999"
                       required
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email" className="text-gray-200">Email *</Label>
                     <Input
                       id="email"
                       type="email"
@@ -193,18 +195,19 @@ export function SimpleVendedorDashboard() {
                       onChange={(e) => setNovoCliente({ ...novoCliente, email_cliente: e.target.value })}
                       placeholder="cliente@email.com"
                       required
+                      className="bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:border-blue-500"
                     />
                   </div>
                   
                   <div>
-                    <Label htmlFor="gestor">Gestor Responsável *</Label>
+                    <Label htmlFor="gestor" className="text-gray-200">Gestor Responsável *</Label>
                     <Select value={novoCliente.email_gestor} onValueChange={(value) => setNovoCliente({ ...novoCliente, email_gestor: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                         <SelectValue placeholder="Selecione o gestor" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-gray-700 border-gray-600">
                         {gestores.map((gestor) => (
-                          <SelectItem key={gestor} value={gestor}>
+                          <SelectItem key={gestor} value={gestor} className="text-white hover:bg-gray-600">
                             {gestor.split('@')[0]}
                           </SelectItem>
                         ))}
@@ -214,10 +217,10 @@ export function SimpleVendedorDashboard() {
                 </div>
 
                 <div className="flex gap-2 pt-4">
-                  <Button type="submit" disabled={isSubmitting}>
+                  <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white border-0">
                     {isSubmitting ? 'Salvando...' : 'Salvar Cliente'}
                   </Button>
-                  <Button type="button" variant="outline" onClick={resetForm}>
+                  <Button type="button" variant="outline" onClick={resetForm} className="border-gray-600 text-gray-200 hover:bg-gray-700">
                     Cancelar
                   </Button>
                 </div>
@@ -227,32 +230,32 @@ export function SimpleVendedorDashboard() {
         )}
 
         {/* Lista Simples de Clientes */}
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardHeader>
-            <CardTitle>Meus Clientes ({totalClientes})</CardTitle>
+            <CardTitle className="text-white">Meus Clientes ({totalClientes})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
-              <p>Carregando...</p>
+              <p className="text-gray-300">Carregando...</p>
             ) : clientes.length === 0 ? (
-              <p className="text-gray-500 text-center py-8">
+              <p className="text-gray-400 text-center py-8">
                 Nenhum cliente cadastrado ainda
               </p>
             ) : (
               <div className="space-y-3">
                 {clientes.map((cliente) => (
-                  <div key={cliente.id} className="border rounded-lg p-4 bg-gray-50">
+                  <div key={cliente.id} className="border border-gray-600 rounded-lg p-4 bg-gray-700">
                     <div className="flex justify-between items-start">
                       <div>
-                        <h3 className="font-semibold">{cliente.nome_cliente}</h3>
-                        <p className="text-sm text-gray-600">{cliente.email_cliente}</p>
-                        <p className="text-sm text-gray-600">{cliente.telefone}</p>
+                        <h3 className="font-semibold text-white">{cliente.nome_cliente}</h3>
+                        <p className="text-sm text-gray-300">{cliente.email_cliente}</p>
+                        <p className="text-sm text-gray-300">{cliente.telefone}</p>
                       </div>
                       <div className="text-right">
-                        <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded text-xs">
+                        <span className="bg-blue-600 text-white px-2 py-1 rounded text-xs">
                           {cliente.status_campanha || 'Brief'}
                         </span>
-                        <p className="text-xs text-gray-500 mt-1">
+                        <p className="text-xs text-gray-400 mt-1">
                           R$ 20,00 comissão
                         </p>
                       </div>
