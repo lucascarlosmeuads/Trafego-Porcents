@@ -57,42 +57,40 @@ export function BriefingMaterialsModal({
 
   const fetchBriefing = async () => {
     if (!emailCliente) {
-      console.log('❌ [BriefingMaterialsModal] Email do cliente não fornecido para buscar briefing')
+      console.log('❌ [BriefingMaterialsModal] Email do cliente não fornecido')
       return
     }
 
     setBriefingLoading(true)
-    console.log('🚀 [BriefingMaterialsModal] INICIANDO BUSCA DO BRIEFING para:', emailCliente)
+    console.log('🚀 [BriefingMaterialsModal] BUSCANDO BRIEFING PREENCHIDO PELO CLIENTE para:', emailCliente)
     
     try {
-      // Buscar briefing na tabela briefings_cliente
+      // Buscar o formulário que o cliente preencheu na tabela briefings_cliente
       const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
         .eq('email_cliente', emailCliente)
         .maybeSingle()
 
-      console.log('🔍 [BriefingMaterialsModal] Query do briefing executada:', {
-        table: 'briefings_cliente',
-        filter: `email_cliente = ${emailCliente}`,
-        data: briefingData,
-        error: briefingError
+      console.log('🔍 [BriefingMaterialsModal] Resultado da busca do briefing:', {
+        email: emailCliente,
+        encontrou: !!briefingData,
+        erro: briefingError,
+        dados: briefingData ? {
+          produto: briefingData.nome_produto,
+          investimento: briefingData.investimento_diario,
+          criado_em: briefingData.created_at
+        } : null
       })
 
       if (briefingError) {
         console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
         setBriefing(null)
       } else if (briefingData) {
-        console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO!', {
-          email: emailCliente,
-          produto: briefingData.nome_produto,
-          investimento: briefingData.investimento_diario,
-          created_at: briefingData.created_at,
-          publico: briefingData.publico_alvo?.substring(0, 50) + '...'
-        })
+        console.log('✅ [BriefingMaterialsModal] BRIEFING ENCONTRADO! Cliente preencheu o formulário.')
         setBriefing(briefingData)
       } else {
-        console.log('⚠️ [BriefingMaterialsModal] BRIEFING NÃO ENCONTRADO para:', emailCliente)
+        console.log('⚠️ [BriefingMaterialsModal] Nenhum briefing encontrado - cliente ainda não preencheu o formulário')
         setBriefing(null)
       }
     } catch (error) {
@@ -100,7 +98,6 @@ export function BriefingMaterialsModal({
       setBriefing(null)
     } finally {
       setBriefingLoading(false)
-      console.log('🏁 [BriefingMaterialsModal] Busca do briefing finalizada para:', emailCliente)
     }
   }
 
@@ -108,7 +105,7 @@ export function BriefingMaterialsModal({
     if (!emailCliente) return
 
     setArquivosLoading(true)
-    console.log('📁 [BriefingMaterialsModal] BUSCANDO ARQUIVOS para:', emailCliente)
+    console.log('📁 [BriefingMaterialsModal] Buscando arquivos para:', emailCliente)
     
     try {
       const { data: arquivosData, error: arquivosError } = await supabase
@@ -123,7 +120,6 @@ export function BriefingMaterialsModal({
       } else {
         console.log('✅ [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
         
-        // Filtrar arquivos baseado no filterType
         if (filterType === 'creative') {
           const mediaFiles = arquivosData?.filter(arquivo => 
             arquivo.tipo_arquivo.startsWith('image/') || 
@@ -143,30 +139,24 @@ export function BriefingMaterialsModal({
     }
   }
 
-  // SEMPRE buscar dados quando o modal abrir
+  // Buscar dados quando o modal abrir
   useEffect(() => {
     if (open && emailCliente) {
-      console.log('🔓 [BriefingMaterialsModal] Modal aberto - iniciando busca completa para:', emailCliente)
+      console.log('🔓 [BriefingMaterialsModal] Modal aberto - buscando dados para:', emailCliente)
       
-      // Reset dos estados
+      setLoading(true)
       setBriefing(null)
       setArquivos([])
-      setLoading(true)
 
-      // Executar buscas independentemente
       const fetchAllData = async () => {
         try {
-          // SEMPRE buscar briefing, independente de arquivos
-          console.log('📋 [BriefingMaterialsModal] Buscando briefing independentemente...')
+          // SEMPRE buscar o briefing que o cliente preencheu
           await fetchBriefing()
           
-          // Buscar arquivos se não for filterType 'briefing'
+          // Buscar arquivos se necessário
           if (filterType !== 'briefing') {
-            console.log('📁 [BriefingMaterialsModal] Buscando arquivos...')
             await fetchArquivos()
           }
-          
-          console.log('🎯 [BriefingMaterialsModal] Busca completa finalizada')
         } catch (error) {
           console.error('💥 [BriefingMaterialsModal] Erro na busca completa:', error)
         } finally {
@@ -202,7 +192,6 @@ export function BriefingMaterialsModal({
     if (!files || files.length === 0) return
 
     setUploading(true)
-    console.log('🚀 [Manager Upload] Iniciando upload de', files.length, 'arquivo(s)')
 
     try {
       let successCount = 0
@@ -210,9 +199,6 @@ export function BriefingMaterialsModal({
 
       for (const file of files) {
         try {
-          console.log('📤 [Manager Upload] Processando arquivo:', file.name)
-
-          // Validar tipo de arquivo (incluindo PDF)
           const allowedTypes = [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
             'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
@@ -220,7 +206,6 @@ export function BriefingMaterialsModal({
           ]
           
           if (!allowedTypes.includes(file.type)) {
-            console.warn('⚠️ [Manager Upload] Tipo não permitido:', file.type)
             toast({
               title: "Tipo de arquivo não permitido",
               description: `O arquivo ${file.name} não é suportado.`,
@@ -230,9 +215,7 @@ export function BriefingMaterialsModal({
             continue
           }
 
-          // Validar tamanho (máximo 50MB)
           if (file.size > 50 * 1024 * 1024) {
-            console.warn('⚠️ [Manager Upload] Arquivo muito grande:', file.size)
             toast({
               title: "Arquivo muito grande",
               description: `O arquivo ${file.name} deve ter no máximo 50MB.`,
@@ -242,20 +225,15 @@ export function BriefingMaterialsModal({
             continue
           }
 
-          // Sanitize email for storage path
           const sanitizedEmail = sanitizeEmailForPath(emailCliente)
           const fileName = `gestor_${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
           const filePath = `${sanitizedEmail}/${fileName}`
 
-          console.log('📤 [Manager Upload] Enviando para storage:', filePath)
-
-          // Upload para o Supabase Storage
           const { error: uploadError } = await supabase.storage
             .from('cliente-arquivos')
             .upload(filePath, file)
 
           if (uploadError) {
-            console.error('❌ [Manager Upload] Erro no upload para storage:', uploadError)
             toast({
               title: "Erro no upload",
               description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
@@ -265,10 +243,6 @@ export function BriefingMaterialsModal({
             continue
           }
 
-          console.log('✅ [Manager Upload] Upload para storage concluído')
-          console.log('💾 [Manager Upload] Salvando no banco de dados...')
-
-          // Salvar informações do arquivo no banco
           const { error: dbError } = await supabase
             .from('arquivos_cliente')
             .insert({
@@ -281,16 +255,12 @@ export function BriefingMaterialsModal({
             })
 
           if (dbError) {
-            console.error('❌ [Manager Upload] Erro ao salvar no banco:', dbError)
-            
-            // Tentar remover o arquivo do storage se falhou no banco
             try {
               await supabase.storage
                 .from('cliente-arquivos')
                 .remove([filePath])
-              console.log('🧹 [Manager Upload] Arquivo removido do storage após erro no banco')
             } catch (cleanupError) {
-              console.error('❌ [Manager Upload] Erro ao limpar storage:', cleanupError)
+              console.error('❌ Erro ao limpar storage:', cleanupError)
             }
             
             toast({
@@ -302,43 +272,37 @@ export function BriefingMaterialsModal({
             continue
           }
 
-          console.log('✅ [Manager Upload] Arquivo salvo com sucesso no banco')
           successCount++
 
         } catch (fileError) {
-          console.error('❌ [Manager Upload] Erro ao processar arquivo:', file.name, fileError)
+          console.error('❌ Erro ao processar arquivo:', file.name, fileError)
           errorCount++
         }
       }
 
-      // Mostrar resultado final
       if (successCount > 0) {
         toast({
           title: "Upload concluído!",
           description: `${successCount} arquivo(s) enviado(s) com sucesso.`,
         })
-        console.log('🎉 [Manager Upload] Upload concluído:', successCount, 'sucessos,', errorCount, 'erros')
-        
-        // Refresh apenas os arquivos
         fetchArquivos()
       } else if (errorCount > 0) {
         toast({
           title: "Falha no upload",
-          description: "Nenhum arquivo foi enviado com sucesso. Verifique os erros acima.",
+          description: "Nenhum arquivo foi enviado com sucesso.",
           variant: "destructive"
         })
       }
 
     } catch (error) {
-      console.error('💥 [Manager Upload] Erro crítico no upload:', error)
+      console.error('💥 Erro crítico no upload:', error)
       toast({
         title: "Erro no upload",
-        description: error instanceof Error ? error.message : "Erro desconhecido. Tente novamente.",
+        description: "Erro desconhecido. Tente novamente.",
         variant: "destructive"
       })
     } finally {
       setUploading(false)
-      // Limpar o input
       e.target.value = ''
     }
   }
@@ -361,7 +325,7 @@ export function BriefingMaterialsModal({
       URL.revokeObjectURL(url)
 
     } catch (error) {
-      console.error('❌ [BriefingMaterialsModal] Erro ao baixar arquivo:', error)
+      console.error('❌ Erro ao baixar arquivo:', error)
       toast({
         title: "Erro ao baixar",
         description: "Não foi possível baixar o arquivo",
@@ -381,7 +345,7 @@ export function BriefingMaterialsModal({
       window.open(data.signedUrl, '_blank')
 
     } catch (error) {
-      console.error('❌ [BriefingMaterialsModal] Erro ao visualizar arquivo:', error)
+      console.error('❌ Erro ao visualizar arquivo:', error)
       toast({
         title: "Erro ao visualizar",
         description: "Não foi possível abrir o arquivo",
@@ -420,26 +384,26 @@ export function BriefingMaterialsModal({
         
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
-            {/* 🟢 SEÇÃO DO BRIEFING - RENDERIZADA INCONDICIONALMENTE quando filterType != 'creative' */}
+            {/* SEÇÃO DO BRIEFING - SEMPRE RENDERIZADA quando não for filterType 'creative' */}
             {filterType !== 'creative' && (
               <Card className="border-2 border-green-200 bg-green-50">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
                     <FileText className="w-5 h-5" />
-                    🟢 Briefing do Cliente
+                    📋 Formulário Preenchido pelo Cliente
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   {briefingLoading ? (
                     <div className="flex items-center gap-2 py-4">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <p className="text-sm text-green-600">Carregando briefing...</p>
+                      <p className="text-sm text-green-600">Carregando formulário...</p>
                     </div>
                   ) : briefing ? (
                     <div className="space-y-4">
                       <div className="flex items-center gap-2 text-xs text-green-600">
                         <Calendar className="w-3 h-3" />
-                        Enviado em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
+                        Preenchido em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
                         {briefing.updated_at !== briefing.created_at && (
                           <span>• Atualizado em {new Date(briefing.updated_at).toLocaleDateString('pt-BR')}</span>
                         )}
@@ -500,30 +464,30 @@ export function BriefingMaterialsModal({
                   ) : (
                     <div className="text-center py-6">
                       <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                      <p className="text-gray-600 font-medium">Briefing ainda não preenchido</p>
-                      <p className="text-sm text-gray-500">O cliente ainda não enviou o briefing do produto.</p>
+                      <p className="text-gray-600 font-medium">Formulário ainda não preenchido</p>
+                      <p className="text-sm text-gray-500">O cliente ainda não preencheu o formulário de briefing.</p>
                     </div>
                   )}
                 </CardContent>
               </Card>
             )}
 
-            {/* 🔵 SEÇÃO DE MATERIAIS CRIATIVOS - mostrar quando filterType não é apenas 'briefing' */}
+            {/* SEÇÃO DE MATERIAIS CRIATIVOS */}
             {filterType !== 'briefing' && (
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Image className="w-5 h-5 text-purple-600" />
-                    🔵 Materiais Criativos
+                    🎨 Materiais Criativos
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                  {/* Upload de novos arquivos pelo gestor - apenas para admins e gestores */}
+                  {/* Upload pelo gestor */}
                   {(isAdmin || user?.email) && (
                     <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
                       <div className="flex items-center gap-2 mb-2">
                         <Upload className="w-5 h-5 text-purple-600" />
-                        <h4 className="font-medium text-purple-700">🟣 Adicionar Criativos da Equipe</h4>
+                        <h4 className="font-medium text-purple-700">📤 Adicionar Criativos da Equipe</h4>
                       </div>
                       <Input
                         type="file"
@@ -552,7 +516,7 @@ export function BriefingMaterialsModal({
                     </div>
                   ) : (
                     <>
-                      {/* Materiais enviados pelo cliente */}
+                      {/* Materiais do cliente */}
                       {arquivosCliente.length > 0 && (
                         <div>
                           <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
@@ -600,7 +564,7 @@ export function BriefingMaterialsModal({
                         </div>
                       )}
 
-                      {/* Criativos adicionados pela equipe */}
+                      {/* Criativos da equipe */}
                       {arquivosGestor.length > 0 && (
                         <div>
                           <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
