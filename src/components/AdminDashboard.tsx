@@ -8,6 +8,7 @@ import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { AuditoriaClientes } from './AuditoriaClientes'
 import { BriefingsPanel } from './BriefingsPanel'
 import { ManagerSelector } from './ManagerSelector'
+import { ImportarVendasManuais } from './ImportarVendasManuais'
 import { supabase } from '@/lib/supabase'
 
 interface AdminDashboardProps {
@@ -49,6 +50,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'briefings':
         return <BriefingsPanel />
+
+      case 'importar-vendas':
+        return <ImportarVendasManuais />
 
       case 'saques-pendentes':
         return (

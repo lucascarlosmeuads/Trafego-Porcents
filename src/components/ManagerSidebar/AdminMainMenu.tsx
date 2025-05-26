@@ -7,7 +7,8 @@ import {
   AlertTriangle,
   Wallet,
   Shield,
-  FileText
+  FileText,
+  Upload
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -73,6 +74,18 @@ export function AdminMainMenu({
       >
         <FileText size={16} />
         <span>Formulários Briefing</span>
+      </button>
+
+      <button
+        onClick={() => handleTabChange('importar-vendas')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'importar-vendas'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <Upload size={16} />
+        <span>Importar Vendas Manuais</span>
       </button>
       
       <button
