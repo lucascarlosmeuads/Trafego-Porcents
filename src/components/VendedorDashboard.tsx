@@ -108,7 +108,7 @@ export function VendedorDashboard() {
         )
 
       case 'lista-vendas':
-        return <SellerClientsList clientes={clientes} loading={loading} />
+        return <SellerClientsList clientes={clientes} loading={loading} onRefresh={refetch} />
 
       case 'adicionar-cliente':
         return (

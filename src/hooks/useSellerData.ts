@@ -29,63 +29,111 @@ export function useSellerData(sellerEmail: string) {
   const [loading, setLoading] = useState(true)
 
   const fetchSellerClientes = async () => {
-    if (!sellerEmail) return
+    if (!sellerEmail) {
+      console.log('⚠️ [useSellerData] No seller email provided')
+      setLoading(false)
+      return
+    }
 
     try {
       setLoading(true)
-      console.log('🔍 [useSellerData] Buscando clientes para vendedor:', sellerEmail)
+      console.log('🔍 [useSellerData] === FETCHING CLIENTS FOR SELLER ===')
+      console.log('📧 [useSellerData] Seller email:', sellerEmail)
 
-      // Buscar todos os clientes para debug
-      const { data: allClients, error: allError } = await supabase
+      // First, let's check the database connection and table structure
+      const { data: testConnection, error: connectionError } = await supabase
         .from('todos_clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
+        .select('count(*)')
+        .limit(1)
 
-      if (allError) {
-        console.error('❌ [useSellerData] Erro ao buscar todos os clientes:', allError)
-      } else {
-        console.log('📊 [useSellerData] Total de clientes na base:', allClients?.length || 0)
-        console.log('🔍 [useSellerData] Alguns emails de vendedores encontrados:', 
-          [...new Set(allClients?.map(c => c.vendedor).filter(Boolean))])
-      }
-
-      // Buscar clientes específicos do vendedor
-      const { data: clientesData, error: clientesError } = await supabase
-        .from('todos_clientes')
-        .select('*')
-        .eq('vendedor', sellerEmail)
-        .order('created_at', { ascending: false })
-
-      if (clientesError) {
-        console.error('❌ [useSellerData] Erro ao buscar clientes do vendedor:', clientesError)
+      if (connectionError) {
+        console.error('❌ [useSellerData] Database connection error:', connectionError)
         toast({
-          title: "Erro",
-          description: "Erro ao carregar clientes: " + clientesError.message,
+          title: "Erro de Conexão",
+          description: "Não foi possível conectar ao banco de dados",
           variant: "destructive"
         })
         return
       }
 
-      console.log('✅ [useSellerData] Clientes encontrados para', sellerEmail, ':', clientesData?.length || 0)
-      
+      console.log('✅ [useSellerData] Database connection successful')
+
+      // Fetch all clients for debugging (sample to verify data exists)
+      const { data: allClientsCount, error: countError } = await supabase
+        .from('todos_clientes')
+        .select('vendedor', { count: 'exact' })
+
+      if (!countError) {
+        console.log('📊 [useSellerData] Total clients in database:', allClientsCount?.length || 0)
+      }
+
+      // Get unique vendors for debugging
+      const { data: uniqueVendors, error: vendorError } = await supabase
+        .from('todos_clientes')
+        .select('vendedor')
+        .not('vendedor', 'is', null)
+
+      if (!vendorError && uniqueVendors) {
+        const vendors = [...new Set(uniqueVendors.map(v => v.vendedor))]
+        console.log('👥 [useSellerData] Unique vendors in database:', vendors)
+        console.log('🔍 [useSellerData] Looking for exact match:', sellerEmail)
+      }
+
+      // Main query - fetch clients for this specific seller
+      console.log('🔎 [useSellerData] Executing main query...')
+      const { data: clientesData, error: clientesError } = await supabase
+        .from('todos_clientes')
+        .select(`
+          id,
+          nome_cliente,
+          email_cliente,
+          telefone,
+          vendedor,
+          email_gestor,
+          status_campanha,
+          data_venda,
+          created_at,
+          comissao_paga,
+          valor_comissao,
+          site_status,
+          descricao_problema,
+          saque_solicitado
+        `)
+        .eq('vendedor', sellerEmail)
+        .order('created_at', { ascending: false })
+
+      if (clientesError) {
+        console.error('❌ [useSellerData] Query error:', clientesError)
+        toast({
+          title: "Erro ao carregar clientes",
+          description: `Erro na consulta: ${clientesError.message}`,
+          variant: "destructive"
+        })
+        return
+      }
+
+      console.log('📊 [useSellerData] Query result:', {
+        found: clientesData?.length || 0,
+        data: clientesData
+      })
+
       if (clientesData && clientesData.length > 0) {
-        console.log('📋 [useSellerData] Lista de clientes do vendedor:', clientesData.map(c => ({ 
-          nome: c.nome_cliente, 
-          email: c.email_cliente, 
-          created_at: c.created_at,
-          vendedor: c.vendedor
-        })))
+        console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
+        console.log('📋 [useSellerData] Client details:')
+        clientesData.forEach((cliente, index) => {
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Created: ${cliente.created_at}`)
+        })
       } else {
-        console.log('⚠️ [useSellerData] Nenhum cliente encontrado para o vendedor:', sellerEmail)
+        console.log('⚠️ [useSellerData] No clients found for seller:', sellerEmail)
         
-        // Verificar se existem clientes com emails similares
-        const similarEmails = allClients?.filter(c => 
-          c.vendedor && c.vendedor.toLowerCase().includes(sellerEmail.toLowerCase().split('@')[0])
-        )
-        
-        if (similarEmails && similarEmails.length > 0) {
-          console.log('🔍 [useSellerData] Encontrados clientes com emails similares:', 
-            similarEmails.map(c => c.vendedor))
+        // Additional debugging - check for similar emails
+        const { data: similarClients } = await supabase
+          .from('todos_clientes')
+          .select('vendedor, nome_cliente, email_cliente, created_at')
+          .ilike('vendedor', `%${sellerEmail.split('@')[0]}%`)
+
+        if (similarClients && similarClients.length > 0) {
+          console.log('🔍 [useSellerData] Found clients with similar vendor emails:', similarClients)
         }
       }
 
@@ -93,10 +141,10 @@ export function useSellerData(sellerEmail: string) {
       await calculateMetrics(clientesData || [])
 
     } catch (error) {
-      console.error('💥 [useSellerData] Erro crítico:', error)
+      console.error('💥 [useSellerData] Critical error:', error)
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao carregar dados",
+        title: "Erro Crítico",
+        description: "Erro inesperado ao carregar dados do vendedor",
         variant: "destructive"
       })
     } finally {
@@ -112,7 +160,7 @@ export function useSellerData(sellerEmail: string) {
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
     const yearStart = new Date(now.getFullYear(), 0, 1)
 
-    // Métricas de cadastro de clientes
+    // Client registration metrics
     const clientsToday = clientesData.filter(c => 
       c.created_at && new Date(c.created_at) >= today
     ).length
@@ -129,7 +177,7 @@ export function useSellerData(sellerEmail: string) {
       c.created_at && new Date(c.created_at) >= yearStart
     ).length
 
-    // Métricas de vendas baseadas em comissao_paga e data_venda
+    // Sales metrics based on commission data
     const paidClients = clientesData.filter(c => c.comissao_paga)
 
     const salesToday = paidClients.filter(c => 
@@ -148,7 +196,7 @@ export function useSellerData(sellerEmail: string) {
 
     const salesAllTime = paidClients.reduce((sum, c) => sum + (c.valor_comissao || 0), 0)
 
-    console.log('📊 [useSellerData] Métricas calculadas:', {
+    console.log('📊 [useSellerData] Calculated metrics:', {
       clientsToday,
       clientsThisWeek,
       clientsThisMonth,
@@ -173,62 +221,62 @@ export function useSellerData(sellerEmail: string) {
 
   const checkClientExists = async (emailCliente: string): Promise<{ exists: boolean; foundClient?: Cliente }> => {
     try {
-      console.log('🔍 [useSellerData] Verificando se cliente existe:', emailCliente)
+      console.log('🔍 [useSellerData] Checking if client exists:', emailCliente)
       
-      const { data: existingClients, error } = await supabase
+      const { data: existingClient, error } = await supabase
         .from('todos_clientes')
         .select('*')
         .eq('email_cliente', emailCliente)
         .maybeSingle()
 
       if (error && error.code !== 'PGRST116') {
-        console.error('❌ [useSellerData] Erro ao verificar cliente existente:', error)
+        console.error('❌ [useSellerData] Error checking existing client:', error)
         return { exists: false }
       }
 
-      if (existingClients) {
-        console.log('⚠️ [useSellerData] Cliente JÁ EXISTE:', {
-          nome: existingClients.nome_cliente,
-          email: existingClients.email_cliente,
-          vendedor: existingClients.vendedor,
-          created_at: existingClients.created_at
+      if (existingClient) {
+        console.log('⚠️ [useSellerData] CLIENT ALREADY EXISTS:', {
+          nome: existingClient.nome_cliente,
+          email: existingClient.email_cliente,
+          vendedor: existingClient.vendedor,
+          created_at: existingClient.created_at
         })
-        return { exists: true, foundClient: existingClients }
+        return { exists: true, foundClient: existingClient }
       }
 
-      console.log('✅ [useSellerData] Cliente NÃO existe, pode prosseguir')
+      console.log('✅ [useSellerData] Client does not exist, can proceed')
       return { exists: false }
 
     } catch (error) {
-      console.error('💥 [useSellerData] Erro ao verificar duplicata:', error)
+      console.error('💥 [useSellerData] Error checking for duplicates:', error)
       return { exists: false }
     }
   }
 
   const addCliente = async (clienteData: any) => {
     try {
-      console.log('🚀 [useSellerData] Iniciando adição de cliente:', clienteData.email_cliente)
+      console.log('🚀 [useSellerData] Starting client addition:', clienteData.email_cliente)
       
-      // Verificar duplicatas primeiro
+      // Check for duplicates first
       const { exists, foundClient } = await checkClientExists(clienteData.email_cliente)
       
       if (exists) {
-        console.log('❌ [useSellerData] DUPLICATA DETECTADA!')
+        console.log('❌ [useSellerData] DUPLICATE DETECTED!')
         toast({
           title: "Cliente já existe",
-          description: `Este email já está cadastrado no sistema${foundClient?.vendedor ? ` pelo vendedor: ${foundClient.vendedor}` : ''}`,
+          description: `Este email já está cadastrado${foundClient?.vendedor ? ` pelo vendedor: ${foundClient.vendedor}` : ''}`,
           variant: "destructive"
         })
         return { success: false, duplicate: true }
       }
 
-      // Inserir novo cliente
+      // Insert new client
       const novoCliente = {
         nome_cliente: String(clienteData.nome_cliente || ''),
         telefone: String(clienteData.telefone || ''),
         email_cliente: String(clienteData.email_cliente || ''),
         data_venda: clienteData.data_venda || null,
-        vendedor: sellerEmail, // Auto-preencher com email do vendedor
+        vendedor: sellerEmail, // Auto-fill with seller's email
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
@@ -243,7 +291,7 @@ export function useSellerData(sellerEmail: string) {
         created_at: new Date().toISOString()
       }
 
-      console.log('📤 [useSellerData] Inserindo novo cliente:', novoCliente)
+      console.log('📤 [useSellerData] Inserting new client:', novoCliente)
 
       const { data, error } = await supabase
         .from('todos_clientes')
@@ -252,7 +300,7 @@ export function useSellerData(sellerEmail: string) {
         .single()
 
       if (error) {
-        console.error('❌ [useSellerData] Erro ao inserir cliente:', error)
+        console.error('❌ [useSellerData] Error inserting client:', error)
         toast({
           title: "Erro",
           description: `Erro ao adicionar cliente: ${error.message}`,
@@ -261,7 +309,7 @@ export function useSellerData(sellerEmail: string) {
         return { success: false, duplicate: false }
       }
 
-      console.log('✅ [useSellerData] Cliente adicionado com sucesso:', data)
+      console.log('✅ [useSellerData] Client added successfully:', data)
       
       toast({
         title: "Cliente cadastrado com sucesso!",
@@ -269,13 +317,13 @@ export function useSellerData(sellerEmail: string) {
         duration: 3000
       })
 
-      // Atualizar dados imediatamente
+      // Refresh data immediately
       await fetchSellerClientes()
 
       return { success: true, duplicate: false, clientData: data }
 
     } catch (error) {
-      console.error('💥 [useSellerData] Erro crítico ao adicionar cliente:', error)
+      console.error('💥 [useSellerData] Critical error adding client:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
@@ -286,13 +334,18 @@ export function useSellerData(sellerEmail: string) {
   }
 
   useEffect(() => {
-    fetchSellerClientes()
+    if (sellerEmail) {
+      console.log('🔄 [useSellerData] Initial fetch triggered for:', sellerEmail)
+      fetchSellerClientes()
+    }
   }, [sellerEmail])
 
   // Setup realtime updates
   useEffect(() => {
     if (!sellerEmail) return
 
+    console.log('📡 [useSellerData] Setting up realtime subscription for:', sellerEmail)
+    
     const channel = supabase
       .channel(`seller-clients-${sellerEmail}`)
       .on(
@@ -303,14 +356,15 @@ export function useSellerData(sellerEmail: string) {
           table: 'todos_clientes',
           filter: `vendedor=eq.${sellerEmail}`
         },
-        () => {
-          console.log('🔄 [useSellerData] Mudança detectada, atualizando dados...')
+        (payload) => {
+          console.log('🔄 [useSellerData] Realtime update detected:', payload)
           fetchSellerClientes()
         }
       )
       .subscribe()
 
     return () => {
+      console.log('🔌 [useSellerData] Cleaning up realtime subscription')
       supabase.removeChannel(channel)
     }
   }, [sellerEmail])
