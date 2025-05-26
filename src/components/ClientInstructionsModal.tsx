@@ -54,7 +54,7 @@ Qualquer dúvida, entre em contato conosco!`
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Próximos Passos</h3>
             <p className="text-yellow-700 text-sm">
-              Agora, envie para o cliente as seguintes instruções via WhatsApp, e-mail ou outro meio de comunicação.
+              Agora, envie para o cliente as seguintes instruções no WhatsApp do cliente.
             </p>
           </div>
 
