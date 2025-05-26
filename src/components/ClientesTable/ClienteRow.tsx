@@ -3,11 +3,10 @@ import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, FileText, Eye } from 'lucide-react'
+import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, Eye } from 'lucide-react'
 import { STATUS_CAMPANHA, type Cliente, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
-import { BriefingModal } from './BriefingModal'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -67,105 +66,6 @@ export function ClienteRow({
   setComissionValueInput
 }: ClienteRowProps) {
   const [showSiteOptions, setShowSiteOptions] = useState(false)
-  const [briefingExists, setBriefingExists] = useState<boolean | null>(null)
-  const [checkingBriefing, setCheckingBriefing] = useState(false)
-
-  // IMPROVED: Enhanced briefing check function
-  const checkBriefingExists = async () => {
-    if (!cliente.email_cliente) {
-      console.log('❌ [ClienteRow] Email do cliente não fornecido para ID:', cliente.id)
-      setBriefingExists(false)
-      return
-    }
-
-    setCheckingBriefing(true)
-    
-    try {
-      const emailToSearch = cliente.email_cliente.trim().toLowerCase()
-      console.log('🔍 [ClienteRow] Verificando briefing para:', {
-        clienteId: cliente.id,
-        emailOriginal: cliente.email_cliente,
-        emailProcessado: emailToSearch,
-        nomeCliente: cliente.nome_cliente
-      })
-      
-      // Busca mais ampla - buscar todos os briefings e filtrar manualmente
-      const { data: allBriefings, error } = await supabase
-        .from('briefings_cliente')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      console.log('📊 [ClienteRow] Todos os briefings encontrados:', {
-        total: allBriefings?.length || 0,
-        emails: allBriefings?.map(b => b.email_cliente) || [],
-        error
-      })
-
-      if (error) {
-        console.error('❌ [ClienteRow] Erro na busca:', error)
-        setBriefingExists(false)
-        return
-      }
-
-      if (!allBriefings || allBriefings.length === 0) {
-        console.log('❌ [ClienteRow] Nenhum briefing encontrado na tabela')
-        setBriefingExists(false)
-        return
-      }
-
-      // Filtrar manualmente com múltiplas estratégias
-      const found = allBriefings.find(briefing => {
-        const briefingEmail = briefing.email_cliente?.trim().toLowerCase()
-        
-        // Comparação exata
-        if (briefingEmail === emailToSearch) {
-          console.log('✅ [ClienteRow] Match exato encontrado:', briefing)
-          return true
-        }
-        
-        // Comparação sem espaços extras
-        if (briefingEmail?.replace(/\s+/g, '') === emailToSearch.replace(/\s+/g, '')) {
-          console.log('✅ [ClienteRow] Match sem espaços encontrado:', briefing)
-          return true
-        }
-        
-        return false
-      })
-
-      if (found) {
-        console.log('✅ [ClienteRow] Briefing encontrado para cliente:', {
-          clienteEmail: emailToSearch,
-          briefingData: found
-        })
-        setBriefingExists(true)
-      } else {
-        console.log('❌ [ClienteRow] Nenhum briefing encontrado para:', {
-          emailProcurado: emailToSearch,
-          emailsDisponíveis: allBriefings.map(b => `"${b.email_cliente}"`)
-        })
-        setBriefingExists(false)
-      }
-
-    } catch (error) {
-      console.error('💥 [ClienteRow] Erro na verificação do briefing:', error)
-      setBriefingExists(false)
-    } finally {
-      setCheckingBriefing(false)
-    }
-  }
-
-  useEffect(() => {
-    if (cliente.email_cliente) {
-      console.log('🔄 [ClienteRow] Iniciando verificação de briefing para cliente:', {
-        id: cliente.id,
-        email: cliente.email_cliente,
-        nome: cliente.nome_cliente
-      })
-      checkBriefingExists()
-    } else {
-      setBriefingExists(false)
-    }
-  }, [cliente.email_cliente, cliente.id])
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
@@ -449,10 +349,10 @@ export function ClienteRow({
                 }}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
-              </Button>
-            </div>
-          )
-        }
+            </Button>
+          </div>
+        )
+      }
 
       default:
         return (
@@ -568,51 +468,6 @@ export function ClienteRow({
     )
   }
 
-  // IMPROVED: Better briefing cell rendering
-  const renderBriefingCell = () => {
-    console.log('🎨 [ClienteRow] Renderizando célula briefing:', {
-      clienteId: cliente.id,
-      email: cliente.email_cliente,
-      checkingBriefing,
-      briefingExists
-    })
-
-    if (checkingBriefing) {
-      return (
-        <div className="flex items-center justify-center">
-          <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
-        </div>
-      )
-    }
-
-    if (briefingExists === true) {
-      console.log('✅ [ClienteRow] Mostrando botão "Ver Briefing" para cliente:', cliente.email_cliente)
-      return (
-        <BriefingModal
-          emailCliente={cliente.email_cliente || ''}
-          nomeCliente={cliente.nome_cliente || ''}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 text-xs bg-green-50 hover:bg-green-100 text-green-700 border-green-200"
-            >
-              <FileText className="w-3 h-3 mr-1" />
-              Ver Briefing
-            </Button>
-          }
-        />
-      )
-    } else {
-      console.log('❌ [ClienteRow] Mostrando "Não preenchido" para cliente:', cliente.email_cliente)
-      return (
-        <span className="text-xs text-muted-foreground px-2 py-1 bg-gray-50 rounded border">
-          Não preenchido
-        </span>
-      )
-    }
-  }
-
   const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
   const dateLimit = calculateDateLimit(cliente.data_venda)
 
@@ -685,10 +540,6 @@ export function ClienteRow({
           )}
           <span>{dateLimit.text}</span>
         </div>
-      </TableCell>
-
-      <TableCell>
-        {renderBriefingCell()}
       </TableCell>
       
       <TableCell className="hidden lg:table-cell">
