@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from '@/components/ui/sidebar'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface ClienteSidebarProps {
   activeTab: string
@@ -18,6 +19,8 @@ interface ClienteSidebarProps {
 }
 
 export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) {
+  const isMobile = useIsMobile()
+  
   const menuItems = [
     {
       id: 'dashboard',
@@ -47,16 +50,18 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
   ]
 
   return (
-    <Sidebar className="w-64">
+    <Sidebar className={`${isMobile ? 'w-full' : 'w-64'}`}>
       <SidebarHeader>
         <div className="px-4 py-3">
-          <h2 className="text-lg font-semibold text-sidebar-foreground">Painel do Cliente</h2>
+          <h2 className={`${isMobile ? 'text-base' : 'text-lg'} font-semibold text-sidebar-foreground`}>
+            Painel do Cliente
+          </h2>
         </div>
       </SidebarHeader>
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
+          <SidebarGroupLabel className={isMobile ? 'text-sm' : ''}>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
@@ -64,9 +69,13 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
                   <SidebarMenuButton
                     isActive={activeTab === item.id}
                     onClick={() => onTabChange(item.id)}
-                    className="w-full justify-start gap-3 px-4 py-2.5 text-sm font-medium"
+                    className={`w-full justify-start gap-3 ${
+                      isMobile 
+                        ? 'px-3 py-3 text-base font-medium min-h-[48px]' 
+                        : 'px-4 py-2.5 text-sm font-medium'
+                    }`}
                   >
-                    <item.icon className="w-4 h-4 flex-shrink-0" />
+                    <item.icon className={`${isMobile ? 'w-5 h-5' : 'w-4 h-4'} flex-shrink-0`} />
                     <span className="truncate">{item.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

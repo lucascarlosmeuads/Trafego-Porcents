@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -11,12 +12,14 @@ import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { useClienteData } from '@/hooks/useClienteData'
 import { ensureClienteExists, restoreClienteData } from '@/utils/clienteDataHelpers'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const [activeTab, setActiveTab] = useState('dashboard')
   const [dataIntegrityChecked, setDataIntegrityChecked] = useState(false)
+  const isMobile = useIsMobile()
 
   // Check and ensure data integrity on mount
   useEffect(() => {
@@ -113,35 +116,47 @@ export function ClienteDashboard() {
         <SidebarInset className="flex-1 min-w-0 flex flex-col">
           {/* Header */}
           <header className="bg-card shadow-sm border-b sticky top-0 z-40 w-full">
-            <div className="flex justify-between items-center py-4 px-4 sm:px-6 lg:px-8">
+            <div className={`flex justify-between items-center ${
+              isMobile ? 'py-3 px-3' : 'py-4 px-4 sm:px-6 lg:px-8'
+            }`}>
               <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1">
-                <SidebarTrigger className="flex-shrink-0" />
+                <SidebarTrigger className={`flex-shrink-0 ${isMobile ? 'w-8 h-8' : ''}`} />
                 <div className="min-w-0 flex-1">
-                  <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-foreground truncate">
+                  <h1 className={`${
+                    isMobile ? 'text-base' : 'text-lg sm:text-xl lg:text-2xl'
+                  } font-bold text-foreground truncate`}>
                     Minha Campanha
                   </h1>
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-2 text-xs sm:text-sm text-muted-foreground">
+                  <div className={`flex flex-col sm:flex-row sm:items-center sm:space-x-2 ${
+                    isMobile ? 'text-xs' : 'text-xs sm:text-sm'
+                  } text-muted-foreground`}>
                     <span>Painel do Cliente</span>
                     {cliente && (
                       <>
                         <span className="hidden sm:inline">•</span>
-                        <Badge variant="outline">{cliente.nome_cliente}</Badge>
+                        <Badge variant="outline" className={isMobile ? 'text-xs mt-1 sm:mt-0' : ''}>
+                          {cliente.nome_cliente}
+                        </Badge>
                       </>
                     )}
                   </div>
                 </div>
               </div>
               
-              <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
-                <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
-                  <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
+              {!isMobile && (
+                <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+                  <div className="hidden md:flex items-center space-x-2 text-sm text-muted-foreground">
+                    <span className="truncate max-w-[120px] lg:max-w-none">{user?.email}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </header>
 
           {/* Content */}
-          <main className="flex-1 py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8 overflow-auto">
+          <main className={`flex-1 overflow-auto ${
+            isMobile ? 'py-3 px-3' : 'py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8'
+          }`}>
             {renderContent()}
           </main>
         </SidebarInset>
