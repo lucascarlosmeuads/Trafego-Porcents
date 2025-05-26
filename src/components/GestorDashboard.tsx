@@ -8,7 +8,6 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorPermissions } from '@/hooks/useGestorPermissions'
 import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AddClientModal } from './ClientesTable/AddClientModal'
 
 export function GestorDashboard() {
   const { user, currentManagerName, isAdmin } = useAuth()
@@ -103,14 +102,6 @@ export function GestorDashboard() {
         </TabsContent>
         
         <TabsContent value="clientes" className="space-y-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Clientes Ativos</h2>
-            <AddClientModal 
-              selectedManager={currentManagerName} 
-              onClienteAdicionado={refetch}
-              gestorMode={true}
-            />
-          </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
         </TabsContent>
 
