@@ -60,8 +60,8 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // SEMPRE buscar briefing quando modal abrir (exceto quando filterType for especificamente 'creative')
-      if (filterType !== 'creative') {
+      // SEMPRE buscar briefing quando filterType for 'all' ou 'briefing'
+      if (filterType === 'all' || filterType === 'briefing') {
         console.log('📋 [BriefingMaterialsModal] Carregando briefing...')
         const { data: briefingData, error: briefingError } = await supabase
           .from('briefings_cliente')
@@ -81,8 +81,8 @@ export function BriefingMaterialsModal({
         }
       }
 
-      // SEMPRE buscar arquivos quando filterType for 'creative' ou 'all'
-      if (filterType !== 'briefing') {
+      // SEMPRE buscar arquivos quando filterType for 'all' ou 'creative'
+      if (filterType === 'all' || filterType === 'creative') {
         console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
         const { data: arquivosData, error: arquivosError } = await supabase
           .from('arquivos_cliente')
