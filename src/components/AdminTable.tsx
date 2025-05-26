@@ -18,12 +18,6 @@ export function AdminTable() {
   const [deletingCliente, setDeletingCliente] = useState<string | null>(null)
   const { toast } = useToast()
   const { user, isAdmin } = useAuth()
-  
-  const { deleteCliente } = useClienteOperations(user?.email || '', isAdmin, fetchAllClientes)
-
-  useEffect(() => {
-    fetchAllClientes()
-  }, [])
 
   const fetchAllClientes = async () => {
     console.log('Carregando todos os clientes da tabela unificada...')
@@ -55,6 +49,12 @@ export function AdminTable() {
       setLoading(false)
     }
   }
+  
+  const { deleteCliente } = useClienteOperations(user?.email || '', isAdmin, fetchAllClientes)
+
+  useEffect(() => {
+    fetchAllClientes()
+  }, [])
 
   const handleDeleteCliente = async (clienteId: string): Promise<boolean> => {
     setDeletingCliente(clienteId)
