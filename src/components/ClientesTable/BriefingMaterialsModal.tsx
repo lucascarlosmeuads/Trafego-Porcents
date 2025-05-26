@@ -60,7 +60,7 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // Buscar briefing APENAS se for tipo 'briefing' ou 'all'
+      // SEMPRE buscar briefing quando filterType for 'briefing' ou 'all'
       if (filterType === 'briefing' || filterType === 'all') {
         console.log('📋 [BriefingMaterialsModal] Carregando briefing...')
         const { data: briefingData, error: briefingError } = await supabase
@@ -69,15 +69,20 @@ export function BriefingMaterialsModal({
           .eq('email_cliente', emailCliente)
           .single()
 
-        if (briefingError && briefingError.code !== 'PGRST116') {
-          console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
+        if (briefingError) {
+          if (briefingError.code !== 'PGRST116') {
+            console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
+          } else {
+            console.log('📋 [BriefingMaterialsModal] Briefing não encontrado')
+          }
+          setBriefing(null)
         } else {
-          console.log('📋 [BriefingMaterialsModal] Briefing encontrado:', briefingData ? 'Sim' : 'Não')
+          console.log('✅ [BriefingMaterialsModal] Briefing encontrado:', briefingData)
           setBriefing(briefingData)
         }
       }
 
-      // Buscar arquivos APENAS se for tipo 'creative' ou 'all'
+      // SEMPRE buscar arquivos quando filterType for 'creative' ou 'all'
       if (filterType === 'creative' || filterType === 'all') {
         console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
         const { data: arquivosData, error: arquivosError } = await supabase
@@ -88,8 +93,9 @@ export function BriefingMaterialsModal({
 
         if (arquivosError) {
           console.error('❌ [BriefingMaterialsModal] Erro ao buscar arquivos:', arquivosError)
+          setArquivos([])
         } else {
-          console.log('📁 [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
+          console.log('✅ [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
           
           // Para tipo 'creative', filtrar apenas imagens, vídeos e PDFs
           if (filterType === 'creative') {
@@ -358,7 +364,8 @@ export function BriefingMaterialsModal({
       case 'creative':
         return arquivos.length > 0
       default:
-        return briefing || arquivos.length > 0
+        // Para filterType 'all', mostrar conteúdo se tem briefing OU arquivos
+        return briefing !== null || arquivos.length > 0
     }
   }
 
@@ -414,7 +421,7 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* SEÇÃO DE BRIEFING - APENAS quando filterType é 'briefing' ou 'all' */}
+              {/* SEÇÃO DE BRIEFING - SEMPRE quando filterType é 'briefing' ou 'all' E briefing existe */}
               {(filterType === 'briefing' || filterType === 'all') && briefing && (
                 <Card>
                   <CardHeader>
