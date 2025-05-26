@@ -110,8 +110,8 @@ Qualquer dúvida, entre em contato conosco!`
       return
     }
 
-    // Para admin em modo não-gestor: require gestor selection
-    if (isAdmin && !gestorMode && !selectedGestor) {
+    // Para usuários em modo não-gestor: require gestor selection
+    if (!gestorMode && !selectedGestor) {
       toast({
         title: "Erro",
         description: "Selecione um gestor para atribuir o cliente",
@@ -305,8 +305,8 @@ Qualquer dúvida, entre em contato conosco!`
               />
             </div>
 
-            {/* Mostrar campo de gestor APENAS para admin em modo não-gestor */}
-            {isAdmin && !gestorMode && (
+            {/* Mostrar campo de gestor para qualquer usuário em modo não-gestor */}
+            {!gestorMode && (
               <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
                 <Select value={selectedGestor} onValueChange={setSelectedGestor}>
