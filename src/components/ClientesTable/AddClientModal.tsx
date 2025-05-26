@@ -1,4 +1,5 @@
-import { useState } from 'react'
+
+import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -212,7 +213,6 @@ Qualquer dúvida, entre em contato conosco!`
           <DialogTitle>Adicionar Novo Cliente</DialogTitle>
         </DialogHeader>
         
-        {/* INSTRUÇÕES PARA O CLIENTE */}
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
           <div className="flex items-start justify-between mb-2">
             <h3 className="font-semibold text-yellow-800">📋 Instruções para enviar ao cliente</h3>
@@ -287,7 +287,6 @@ Qualquer dúvida, entre em contato conosco!`
             />
           </div>
 
-          {/* Mostrar campo de gestor APENAS para admin em modo não-gestor */}
           {isAdmin && !gestorMode && (
             <div className="grid gap-2">
               <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
@@ -300,8 +299,8 @@ Qualquer dúvida, entre em contato conosco!`
                     <SelectItem key={manager.email} value={manager.email}>
                       {manager.name}
                     </SelectItem>
-                  </SelectContent>
-                </Select>
+                  ))}
+                </SelectContent>
               </Select>
             </div>
           )}
