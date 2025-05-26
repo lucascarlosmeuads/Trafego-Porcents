@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -80,7 +81,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       return
     }
 
-    // For admin: require gestor selection (unless in gestorMode)
+    // Para admin em modo não-gestor: require gestor selection
     if (isAdmin && !gestorMode && !selectedGestor) {
       toast({
         title: "Erro",
@@ -98,14 +99,14 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       console.log("🔵 [AddClientModal] É Admin:", isAdmin)
       console.log("🔵 [AddClientModal] Email do usuário:", user?.email)
       
-      // Determine final email_gestor based on role and mode
+      // Determine final email_gestor based on mode
       let emailGestorFinal
       if (gestorMode) {
         // Em modo gestor, sempre usar o email do usuário logado
         emailGestorFinal = user?.email
         console.log("🔵 [AddClientModal] Usando email do gestor logado:", emailGestorFinal)
       } else {
-        // Em modo admin, usar o gestor selecionado ou o email do usuário
+        // Em modo admin normal, usar o gestor selecionado ou o email do usuário
         emailGestorFinal = isAdmin ? selectedGestor : user?.email
         console.log("🔵 [AddClientModal] Usando email selecionado/admin:", emailGestorFinal)
       }
@@ -130,7 +131,6 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       
       console.log("🔵 [AddClientModal] Resultado da operação:", result)
       
-      // Verificar se a operação foi bem-sucedida
       if (result && result.success) {
         console.log("🟢 [AddClientModal] === CLIENTE CRIADO COM SUCESSO ===")
         
@@ -149,7 +149,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
         // Atualizar dados
         onClienteAdicionado()
 
-        // GARANTIR que o modal de instruções sempre apareça
+        // SEMPRE exibir o modal de instruções após criação bem-sucedida
         console.log("🔵 [AddClientModal] Preparando dados para o modal de instruções...")
         
         const dadosCliente = {
@@ -242,6 +242,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
               />
             </div>
 
+            {/* Mostrar campo de gestor APENAS para admin em modo não-gestor */}
             {isAdmin && !gestorMode && (
               <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>

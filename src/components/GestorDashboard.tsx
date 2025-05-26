@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { ProblemasPanel } from './ProblemasPanel'
-import { AddClientModal } from './ClientesTable/AddClientModal'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorPermissions } from '@/hooks/useGestorPermissions'
 import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
@@ -105,11 +104,6 @@ export function GestorDashboard() {
         <TabsContent value="clientes" className="space-y-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Clientes Ativos</h2>
-            <AddClientModal 
-              selectedManager={currentManagerName}
-              onClienteAdicionado={refetch}
-              gestorMode={true}
-            />
           </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
         </TabsContent>
