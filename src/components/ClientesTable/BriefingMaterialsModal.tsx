@@ -60,68 +60,48 @@ export function BriefingMaterialsModal({
     console.log('🔍 [BriefingMaterialsModal] Carregando dados para:', emailCliente, 'filterType:', filterType)
     
     try {
-      // SEMPRE buscar briefing (exceto quando filterType for especificamente 'creative')
-      if (filterType !== 'creative') {
-        console.log('📋 [BriefingMaterialsModal] Buscando briefing na tabela briefings_cliente...')
-        const { data: briefingData, error: briefingError } = await supabase
-          .from('briefings_cliente')
-          .select('*')
-          .eq('email_cliente', emailCliente)
-          .maybeSingle()
+      // SEMPRE buscar briefing para todos os tipos
+      console.log('📋 [BriefingMaterialsModal] Buscando briefing na tabela briefings_cliente...')
+      const { data: briefingData, error: briefingError } = await supabase
+        .from('briefings_cliente')
+        .select('*')
+        .eq('email_cliente', emailCliente)
+        .maybeSingle()
 
-        if (briefingError) {
-          console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
-          setBriefing(null)
-        } else if (briefingData) {
-          console.log('✅ [BriefingMaterialsModal] Briefing encontrado:', briefingData)
-          setBriefing(briefingData)
-        } else {
-          console.log('📋 [BriefingMaterialsModal] Briefing não encontrado. Verificando na tabela todos_clientes...')
-          
-          // Fallback: tentar buscar na tabela todos_clientes se não encontrar na briefings_cliente
-          const { data: clienteData, error: clienteError } = await supabase
-            .from('todos_clientes')
-            .select('*')
-            .eq('email_cliente', emailCliente)
-            .maybeSingle()
-
-          if (!clienteError && clienteData) {
-            console.log('📊 [BriefingMaterialsModal] Dados do cliente encontrados na todos_clientes:', clienteData)
-            // Se houver dados relevantes de briefing na tabela todos_clientes, mapear para a estrutura esperada
-            if (clienteData.nome_cliente) {
-              console.log('ℹ️ [BriefingMaterialsModal] Cliente existe mas briefing ainda não foi preenchido')
-            }
-          }
-          setBriefing(null)
-        }
+      if (briefingError) {
+        console.error('❌ [BriefingMaterialsModal] Erro ao buscar briefing:', briefingError)
+      } else if (briefingData) {
+        console.log('✅ [BriefingMaterialsModal] Briefing encontrado:', briefingData)
+        setBriefing(briefingData)
+      } else {
+        console.log('⚠️ [BriefingMaterialsModal] Briefing não encontrado na tabela briefings_cliente')
+        setBriefing(null)
       }
 
-      // SEMPRE buscar arquivos (exceto quando filterType for especificamente 'briefing')
-      if (filterType !== 'briefing') {
-        console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
-        const { data: arquivosData, error: arquivosError } = await supabase
-          .from('arquivos_cliente')
-          .select('*')
-          .eq('email_cliente', emailCliente)
-          .order('created_at', { ascending: false })
+      // SEMPRE buscar arquivos
+      console.log('📁 [BriefingMaterialsModal] Carregando arquivos...')
+      const { data: arquivosData, error: arquivosError } = await supabase
+        .from('arquivos_cliente')
+        .select('*')
+        .eq('email_cliente', emailCliente)
+        .order('created_at', { ascending: false })
 
-        if (arquivosError) {
-          console.error('❌ [BriefingMaterialsModal] Erro ao buscar arquivos:', arquivosError)
-          setArquivos([])
+      if (arquivosError) {
+        console.error('❌ [BriefingMaterialsModal] Erro ao buscar arquivos:', arquivosError)
+        setArquivos([])
+      } else {
+        console.log('✅ [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
+        
+        // Para tipo 'creative', filtrar apenas imagens, vídeos e PDFs
+        if (filterType === 'creative') {
+          const mediaFiles = arquivosData?.filter(arquivo => 
+            arquivo.tipo_arquivo.startsWith('image/') || 
+            arquivo.tipo_arquivo.startsWith('video/') ||
+            arquivo.tipo_arquivo === 'application/pdf'
+          ) || []
+          setArquivos(mediaFiles)
         } else {
-          console.log('✅ [BriefingMaterialsModal] Arquivos encontrados:', arquivosData?.length || 0)
-          
-          // Para tipo 'creative', filtrar apenas imagens, vídeos e PDFs
-          if (filterType === 'creative') {
-            const mediaFiles = arquivosData?.filter(arquivo => 
-              arquivo.tipo_arquivo.startsWith('image/') || 
-              arquivo.tipo_arquivo.startsWith('video/') ||
-              arquivo.tipo_arquivo === 'application/pdf'
-            ) || []
-            setArquivos(mediaFiles)
-          } else {
-            setArquivos(arquivosData || [])
-          }
+          setArquivos(arquivosData || [])
         }
       }
 
@@ -403,7 +383,7 @@ export function BriefingMaterialsModal({
     }
   }
 
-  // Separar arquivos por autor apenas se filterType for 'creative' ou não for 'briefing'
+  // Separar arquivos por autor
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -435,8 +415,8 @@ export function BriefingMaterialsModal({
             </div>
           ) : (
             <div className="space-y-6">
-              {/* SEÇÃO DE BRIEFING - SEMPRE mostrar quando briefing existe e filterType não é 'creative' */}
-              {filterType !== 'creative' && briefing && (
+              {/* SEÇÃO DE BRIEFING - SEMPRE mostrar quando briefing existe */}
+              {briefing && (
                 <Card className="border-2 border-blue-200 bg-blue-50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-blue-700">
@@ -507,154 +487,152 @@ export function BriefingMaterialsModal({
                 </Card>
               )}
 
-              {/* SEÇÃO DE MATERIAIS CRIATIVOS - APENAS quando filterType não é 'briefing' */}
-              {filterType !== 'briefing' && (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <Image className="w-5 h-5 text-purple-600" />
-                      Materiais Criativos
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Upload de novos arquivos pelo gestor - apenas para admins e gestores */}
-                    {(isAdmin || user?.email) && (
-                      <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
-                        <div className="flex items-center gap-2 mb-2">
-                          <Upload className="w-5 h-5 text-purple-600" />
-                          <h4 className="font-medium text-purple-700">Adicionar Criativos da Equipe</h4>
-                        </div>
-                        <Input
-                          type="file"
-                          multiple
-                          accept="image/*,video/*,.pdf"
-                          onChange={handleManagerFileUpload}
-                          disabled={uploading}
-                          className="mb-2"
-                        />
-                        <p className="text-xs text-purple-600">
-                          Envie materiais para o cliente: imagens, vídeos ou PDFs (máx. 50MB por arquivo)
-                        </p>
-                        {uploading && (
-                          <div className="flex items-center gap-2 mt-2">
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                            <p className="text-sm text-purple-600">Enviando arquivos...</p>
-                          </div>
-                        )}
+              {/* SEÇÃO DE MATERIAIS CRIATIVOS */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Image className="w-5 h-5 text-purple-600" />
+                    Materiais Criativos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Upload de novos arquivos pelo gestor - apenas para admins e gestores */}
+                  {(isAdmin || user?.email) && (
+                    <div className="border-2 border-dashed border-purple-300 rounded-lg p-4 bg-purple-50">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Upload className="w-5 h-5 text-purple-600" />
+                        <h4 className="font-medium text-purple-700">Adicionar Criativos da Equipe</h4>
                       </div>
-                    )}
+                      <Input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*,.pdf"
+                        onChange={handleManagerFileUpload}
+                        disabled={uploading}
+                        className="mb-2"
+                      />
+                      <p className="text-xs text-purple-600">
+                        Envie materiais para o cliente: imagens, vídeos ou PDFs (máx. 50MB por arquivo)
+                      </p>
+                      {uploading && (
+                        <div className="flex items-center gap-2 mt-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          <p className="text-sm text-purple-600">Enviando arquivos...</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-                    {/* Materiais enviados pelo cliente */}
-                    {arquivosCliente.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          Materiais enviados pelo cliente ({arquivosCliente.length})
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {arquivosCliente.map((arquivo) => (
-                            <div key={arquivo.id} className="border rounded-lg p-3 bg-blue-50">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  {getFileIcon(arquivo.tipo_arquivo)}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
-                                    <p className="text-xs text-muted-foreground">
+                  {/* Materiais enviados pelo cliente */}
+                  {arquivosCliente.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
+                        <User className="w-4 h-4" />
+                        Materiais enviados pelo cliente ({arquivosCliente.length})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {arquivosCliente.map((arquivo) => (
+                          <div key={arquivo.id} className="border rounded-lg p-3 bg-blue-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {getFileIcon(arquivo.tipo_arquivo)}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {formatFileSize(arquivo.tamanho_arquivo)} • 
+                                    {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
+                                  </p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleViewFile(arquivo)}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Ver
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleDownloadFile(arquivo)}
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Baixar
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Criativos adicionados pela equipe */}
+                  {arquivosGestor.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
+                        <Upload className="w-4 h-4" />
+                        Criativos da Tráfego Porcents ({arquivosGestor.length})
+                      </h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {arquivosGestor.map((arquivo) => (
+                          <div key={arquivo.id} className="border-2 border-purple-300 rounded-lg p-3 bg-purple-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <div className="flex items-center gap-2">
+                                {getFileIcon(arquivo.tipo_arquivo)}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
+                                  <div className="flex items-center gap-1">
+                                    <Badge variant="secondary" className="text-xs px-1 py-0">
+                                      Equipe
+                                    </Badge>
+                                    <p className="text-xs text-purple-600">
                                       {formatFileSize(arquivo.tamanho_arquivo)} • 
                                       {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
                                     </p>
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleViewFile(arquivo)}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  Ver
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleDownloadFile(arquivo)}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Baixar
-                                </Button>
-                              </div>
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Criativos adicionados pela equipe */}
-                    {arquivosGestor.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
-                          <Upload className="w-4 h-4" />
-                          Criativos da Tráfego Porcents ({arquivosGestor.length})
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {arquivosGestor.map((arquivo) => (
-                            <div key={arquivo.id} className="border-2 border-purple-300 rounded-lg p-3 bg-purple-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  {getFileIcon(arquivo.tipo_arquivo)}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
-                                    <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="text-xs px-1 py-0">
-                                        Equipe
-                                      </Badge>
-                                      <p className="text-xs text-purple-600">
-                                        {formatFileSize(arquivo.tamanho_arquivo)} • 
-                                        {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
-                                      </p>
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleViewFile(arquivo)}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  Ver
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleDownloadFile(arquivo)}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Baixar
-                                </Button>
-                              </div>
+                            <div className="flex gap-2">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleViewFile(arquivo)}
+                              >
+                                <Eye className="w-3 h-3 mr-1" />
+                                Ver
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleDownloadFile(arquivo)}
+                              >
+                                <Download className="w-3 h-3 mr-1" />
+                                Baixar
+                              </Button>
                             </div>
-                          ))}
-                        </div>
+                          </div>
+                        ))}
                       </div>
-                    )}
+                    </div>
+                  )}
 
-                    {arquivos.length === 0 && !loading && filterType === 'creative' && (
-                      <div className="text-center py-6">
-                        <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                        <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
-                        <p className="text-sm text-gray-500">O cliente ainda não enviou imagens, vídeos ou PDFs.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                  {arquivos.length === 0 && !loading && filterType === 'creative' && (
+                    <div className="text-center py-6">
+                      <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                      <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
+                      <p className="text-sm text-gray-500">O cliente ainda não enviou imagens, vídeos ou PDFs.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </ScrollArea>
