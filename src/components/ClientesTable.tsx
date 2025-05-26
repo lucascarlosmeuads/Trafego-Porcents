@@ -24,7 +24,7 @@ import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
-  filterType?: 'ativos' | 'inativos' | 'problemas'
+  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes'
 }
 
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
@@ -158,6 +158,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
       case 'Reembolso':
         return 'bg-red-500/20 text-red-300 border border-red-500/30'
+      case 'Saque Pendente':
+        return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
       default:
         return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
     }
@@ -695,32 +697,42 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  // Filtrar clientes baseado no filterType
+  // Filtrar clientes baseado no filterType - ATUALIZADO
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha !== 'Off' && 
       cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema'
+      cliente.status_campanha !== 'Problema' &&
+      cliente.status_campanha !== 'Saque Pendente'
     )
   } else if (filterType === 'inativos') {
     clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Reembolso' ||
+      cliente.status_campanha === 'Saque Pendente'
     )
   } else if (filterType === 'problemas') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha === 'Problema'
+    )
+  } else if (filterType === 'saques-pendentes') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.status_campanha === 'Saque Pendente'
     )
   } else {
     // Comportamento padrão (manter as abas existentes)
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Off' && 
       cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema'
+      cliente.status_campanha !== 'Problema' &&
+      cliente.status_campanha !== 'Saque Pendente'
     )
     
     const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Reembolso' ||
+      cliente.status_campanha === 'Saque Pendente'
     )
 
     return renderWithTabs(clientesAtivos, clientesInativos)
@@ -760,7 +772,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
     
     const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Reembolso'
     )
 
     return renderWithTabs(clientesAtivos, clientesInativos)

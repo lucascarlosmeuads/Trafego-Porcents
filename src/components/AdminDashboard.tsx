@@ -45,6 +45,14 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       
       case 'solicitacoes':
         return <SolicitacoesSaque />
+
+      case 'saques-pendentes':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Saques Pendentes</h2>
+            <ClientesTable selectedManager={null} filterType="saques-pendentes" />
+          </div>
+        )
       
       case 'clientes':
       default:

@@ -22,15 +22,18 @@ export function useSaqueOperations() {
         valorComissao
       })
 
-      // Primeiro, marcar que o saque foi solicitado no cliente
-      const { error: updateError } = await supabase
+      // NOVA LÓGICA: Mudar o status do cliente para "Saque Pendente"
+      const { error: updateStatusError } = await supabase
         .from('todos_clientes')
-        .update({ saque_solicitado: true })
+        .update({ 
+          status_campanha: 'Saque Pendente',
+          saque_solicitado: true 
+        })
         .eq('id', parseInt(clienteId))
 
-      if (updateError) {
-        console.error('❌ Erro ao marcar saque como solicitado:', updateError)
-        throw updateError
+      if (updateStatusError) {
+        console.error('❌ Erro ao alterar status para Saque Pendente:', updateStatusError)
+        throw updateStatusError
       }
 
       // Depois, criar a solicitação de saque
@@ -49,11 +52,11 @@ export function useSaqueOperations() {
         throw insertError
       }
 
-      console.log('✅ Solicitação de saque criada com sucesso')
+      console.log('✅ Solicitação de saque criada e cliente movido para Saque Pendente')
       
       toast({
         title: "Sucesso",
-        description: "Solicitação de saque enviada! Em até 1 dia útil o valor estará na conta.",
+        description: "Solicitação de saque enviada! O cliente foi movido para 'Saque Pendente' e será processado pelo admin.",
       })
 
       return true

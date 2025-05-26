@@ -16,15 +16,18 @@ export function GestorDashboard() {
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
   const { inicializarClientesTravados } = useGestorStatusRestrictions()
 
-  // Separar clientes por status
+  // Separar clientes por status - ATUALIZADO para excluir "Saque Pendente"
   const clientesAtivos = clientes.filter(cliente => 
     cliente.status_campanha !== 'Off' && 
     cliente.status_campanha !== 'Reembolso' && 
-    cliente.status_campanha !== 'Problema'
+    cliente.status_campanha !== 'Problema' &&
+    cliente.status_campanha !== 'Saque Pendente'
   )
   
   const clientesInativos = clientes.filter(cliente => 
-    cliente.status_campanha === 'Off' || cliente.status_campanha === 'Reembolso'
+    cliente.status_campanha === 'Off' || 
+    cliente.status_campanha === 'Reembolso' ||
+    cliente.status_campanha === 'Saque Pendente'
   )
 
   const clientesProblemas = clientes.filter(cliente => 

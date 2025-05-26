@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -64,7 +65,8 @@ export const STATUS_CAMPANHA = [
   'Otimização',
   'Problema',
   'Off',
-  'Reembolso'
+  'Reembolso',
+  'Saque Pendente'
 ] as const
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
