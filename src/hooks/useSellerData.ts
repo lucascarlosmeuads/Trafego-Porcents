@@ -90,7 +90,7 @@ export function useSellerData(sellerEmail: string) {
       // Try multiple query strategies
       console.log('🔎 [useSellerData] Trying exact email match first...')
       
-      // Strategy 1: Exact email match - IMPORTANTE: Incluir created_at na query
+      // Strategy 1: Exact email match - IMPORTANTE: Incluir data_venda e created_at na query
       let { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select(`
@@ -181,10 +181,10 @@ export function useSellerData(sellerEmail: string) {
         console.log('✅ [useSellerData] Clients found for seller:', clientesData.length)
         console.log('📋 [useSellerData] Client details with dates:')
         clientesData.forEach((cliente, index) => {
-          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data: ${cliente.created_at}`)
+          console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Data Venda: ${cliente.data_venda} - Created: ${cliente.created_at}`)
         })
 
-        // Format data to match Cliente type - IMPORTANTE: Garantir que created_at seja preservado
+        // Format data to match Cliente type - IMPORTANTE: Garantir que data_venda e created_at sejam preservados
         const formattedClientes: Cliente[] = clientesData.map(item => ({
           id: String(item.id || ''),
           data_venda: item.data_venda || '',
@@ -208,7 +208,11 @@ export function useSellerData(sellerEmail: string) {
           saque_solicitado: Boolean(item.saque_solicitado || false)
         }))
 
-        console.log('🔍 [useSellerData] Formatted clients with dates:', formattedClientes.map(c => ({ nome: c.nome_cliente, created_at: c.created_at })))
+        console.log('🔍 [useSellerData] Formatted clients with dates:', formattedClientes.map(c => ({ 
+          nome: c.nome_cliente, 
+          data_venda: c.data_venda,
+          created_at: c.created_at 
+        })))
 
         setClientes(formattedClientes)
         await calculateMetrics(formattedClientes)

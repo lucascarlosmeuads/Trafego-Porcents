@@ -96,6 +96,27 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     }
   }
 
+  // Função para formatar data
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString.trim() === '') {
+      return 'Data não disponível'
+    }
+    
+    try {
+      const date = new Date(dateString)
+      if (isNaN(date.getTime())) {
+        return 'Data inválida'
+      }
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    } catch (error) {
+      return 'Data inválida'
+    }
+  }
+
   // Calcular comissões (R$ 20,00 por cliente)
   const comissaoPorCliente = 20.00
 
@@ -133,10 +154,13 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             <div className="flex items-center space-x-2 text-gray-600">
               <Calendar className="h-4 w-4" />
               <span>
-                {cliente.created_at ? 
-                  new Date(cliente.created_at).toLocaleString('pt-BR') : 
-                  'Data não disponível'
-                }
+                📅 Data Venda: {formatDate(cliente.data_venda)}
+              </span>
+            </div>
+            <div className="flex items-center space-x-2 text-gray-600">
+              <Clock className="h-4 w-4" />
+              <span>
+                📅 Cadastro: {formatDate(cliente.created_at)}
               </span>
             </div>
             {cliente.email_gestor && (
