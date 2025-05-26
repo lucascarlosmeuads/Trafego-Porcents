@@ -75,7 +75,10 @@ export function VendedorDashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent className="text-center">
-          <AddClientModal onClienteAdicionado={handleClienteAdicionado} />
+          <AddClientModal 
+            onClienteAdicionado={handleClienteAdicionado} 
+            gestorMode={false}
+          />
         </CardContent>
       </Card>
 
