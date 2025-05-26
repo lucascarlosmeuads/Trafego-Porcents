@@ -1,15 +1,15 @@
 
 import { useState } from 'react'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { useClienteOperations } from '@/hooks/useClienteOperations'
-import { useAuth } from '@/hooks/useAuth'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
 
 interface AddClientModalProps {
@@ -19,6 +19,7 @@ interface AddClientModalProps {
 }
 
 export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMode = false }: AddClientModalProps) {
+  const { user, currentManagerName, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [selectedGestor, setSelectedGestor] = useState<string>('')
@@ -29,10 +30,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Preenchimento do Formulário',
-    data_venda: new Date().toISOString().split('T')[0]
+    status_campanha: 'Brief'
   })
-  const { user, isAdmin } = useAuth()
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
   // Predefined manager emails for admin selection
@@ -55,26 +54,16 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
   ]
 
   const handleSubmit = async () => {
-    // Validations
-    if (!formData.nome_cliente.trim()) {
+    if (!formData.nome_cliente || !formData.telefone) {
       toast({
         title: "Erro",
-        description: "Nome do cliente é obrigatório",
+        description: "Nome e telefone são obrigatórios",
         variant: "destructive"
       })
       return
     }
 
-    if (!formData.telefone.trim()) {
-      toast({
-        title: "Erro",
-        description: "Telefone é obrigatório",
-        variant: "destructive"
-      })
-      return
-    }
-
-    if (!formData.email_cliente.trim()) {
+    if (!formData.email_cliente) {
       toast({
         title: "Erro",
         description: "Email do cliente é obrigatório",
@@ -83,7 +72,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
       return
     }
 
-    // For admin (not in gestor mode): require gestor selection
+    // For admin: require gestor selection (unless in gestorMode)
     if (isAdmin && !gestorMode && !selectedGestor) {
       toast({
         title: "Erro",
@@ -94,59 +83,48 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     }
 
     setLoading(true)
-    
+
     try {
-      console.log('🚀 [AddClientModal] Adicionando cliente')
-      console.log('📥 [AddClientModal] Dados do formulário:', formData)
-      console.log('👤 [AddClientModal] Usuário logado:', user?.email)
-      console.log('🔒 [AddClientModal] É admin?', isAdmin)
-      console.log('👨‍💼 [AddClientModal] Modo gestor?', gestorMode)
-      console.log('🏷️ [AddClientModal] Gestor selecionado:', selectedGestor)
+      console.log("🟡 [AddClientModal] Iniciando adição de cliente")
       
       // Determine final email_gestor based on role and mode
       let emailGestorFinal
       if (gestorMode) {
-        // Modo gestor: sempre usa o email do usuário logado
+        // Em modo gestor, sempre usar o email do usuário logado
         emailGestorFinal = user?.email
       } else {
-        // Modo admin: usa o gestor selecionado ou o próprio email
+        // Em modo admin, usar o gestor selecionado ou o email do usuário
         emailGestorFinal = isAdmin ? selectedGestor : user?.email
       }
-
-      console.log('📧 [AddClientModal] Email gestor final determinado:', emailGestorFinal)
       
-      if (!emailGestorFinal) {
-        throw new Error('Não foi possível determinar o email do gestor')
-      }
+      const vendedor = formData.vendedor || currentManagerName
 
-      // Prepare client data
       const clienteData = {
-        nome_cliente: formData.nome_cliente.trim(),
-        telefone: formData.telefone.trim(),
-        email_cliente: formData.email_cliente.trim(),
-        vendedor: formData.vendedor.trim() || selectedManager || 'Gestor',
+        nome_cliente: formData.nome_cliente,
+        telefone: formData.telefone,
+        email_cliente: formData.email_cliente,
+        vendedor,
+        email_gestor: emailGestorFinal,
         status_campanha: formData.status_campanha,
-        data_venda: formData.data_venda,
-        email_gestor: emailGestorFinal
+        data_venda: new Date().toISOString().split('T')[0],
+        valor_comissao: 60.00,
+        comissao_paga: false
       }
 
-      console.log('🧹 [AddClientModal] Objeto final para inserção:', clienteData)
+      console.log("🟡 [AddClientModal] Dados para adicionar:", clienteData)
 
       const result = await addCliente(clienteData)
-
+      
       // Type guard to check if result is not false
       if (result && typeof result === 'object' && result.success) {
-        // Clear form
         setFormData({
           nome_cliente: '',
           telefone: '',
           email_cliente: '',
           vendedor: '',
-          status_campanha: 'Preenchimento do Formulário',
-          data_venda: new Date().toISOString().split('T')[0]
+          status_campanha: 'Brief'
         })
         setSelectedGestor('')
-        
         setOpen(false)
         onClienteAdicionado()
 
@@ -156,12 +134,11 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
           setShowInstructions(true)
         }
       }
-
     } catch (error: any) {
-      console.error('💥 [AddClientModal] Erro geral:', error)
+      console.error('Erro ao adicionar cliente:', error)
       toast({
         title: "Erro",
-        description: `Erro ao adicionar cliente: ${error.message}`,
+        description: error.message || "Erro ao adicionar cliente",
         variant: "destructive"
       })
     } finally {
@@ -173,17 +150,17 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     <>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
-          <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="w-4 h-4 mr-2" />
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
               <Label htmlFor="nome">Nome do Cliente *</Label>
               <Input
                 id="nome"
@@ -192,8 +169,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 placeholder="Nome completo"
               />
             </div>
-            
-            <div>
+            <div className="grid gap-2">
               <Label htmlFor="telefone">Telefone *</Label>
               <Input
                 id="telefone"
@@ -202,8 +178,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 placeholder="(11) 99999-9999"
               />
             </div>
-            
-            <div>
+            <div className="grid gap-2">
               <Label htmlFor="email">Email do Cliente *</Label>
               <Input
                 id="email"
@@ -214,9 +189,9 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
               />
             </div>
 
-            {/* Admin-only: Gestor Selection (only when not in gestor mode) */}
+            {/* Admin-only: Gestor Selection (mas não em gestorMode) */}
             {isAdmin && !gestorMode && (
-              <div>
+              <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
                 <Select value={selectedGestor} onValueChange={setSelectedGestor}>
                   <SelectTrigger>
@@ -232,38 +207,27 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 </Select>
               </div>
             )}
-            
-            <div>
+
+            <div className="grid gap-2">
               <Label htmlFor="vendedor">Vendedor</Label>
               <Input
                 id="vendedor"
                 value={formData.vendedor}
                 onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-                placeholder={`Padrão: ${selectedManager || 'Gestor'}`}
+                placeholder={`Padrão: ${currentManagerName}`}
               />
             </div>
-
-            <div>
-              <Label htmlFor="data_venda">Data da Venda</Label>
-              <Input
-                id="data_venda"
-                type="date"
-                value={formData.data_venda}
-                onChange={(e) => setFormData(prev => ({ ...prev, data_venda: e.target.value }))}
-              />
-            </div>
-            
-            <div>
+            <div className="grid gap-2">
               <Label htmlFor="status">Status da Campanha</Label>
-              <Select 
-                value={formData.status_campanha} 
+              <Select
+                value={formData.status_campanha}
                 onValueChange={(value) => setFormData(prev => ({ ...prev, status_campanha: value }))}
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {STATUS_CAMPANHA.map(status => (
+                  {STATUS_CAMPANHA.map((status) => (
                     <SelectItem key={status} value={status}>
                       {status}
                     </SelectItem>
@@ -271,15 +235,14 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
                 </SelectContent>
               </Select>
             </div>
-            
-            <div className="flex gap-2 pt-4">
-              <Button onClick={handleSubmit} disabled={loading} className="flex-1">
-                {loading ? 'Adicionando...' : 'Adicionar Cliente'}
-              </Button>
-              <Button variant="outline" onClick={() => setOpen(false)} className="flex-1">
-                Cancelar
-              </Button>
-            </div>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => setOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? "Adicionando..." : "Adicionar Cliente"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

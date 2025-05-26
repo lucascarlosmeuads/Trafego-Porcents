@@ -338,7 +338,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }, [clientes, currentManager, emailToUse, selectedManager, isAdmin])
 
-  // Verificar permissões do gestor
+  // Verificar permissões do gestor - REMOVENDO A VERIFICAÇÃO RESTRITIVA
   useEffect(() => {
     const verificarPermissoes = async () => {
       console.log('🔍 [ClientesTable] Verificando permissões para:', user?.email)
@@ -357,33 +357,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return
       }
 
-      setLoadingPermissoes(true)
-      try {
-        const { data, error } = await supabase
-          .from('gestores')
-          .select('pode_adicionar_cliente, ativo')
-          .eq('email', user.email)
-          .single()
-
-        if (error) {
-          console.log('⚠️ Gestor não encontrado na tabela gestores:', error)
-          setPodeAdicionarCliente(false)
-        } else {
-          const canAdd = data.pode_adicionar_cliente && data.ativo
-          console.log('📊 Permissões do gestor:', { 
-            email: user.email, 
-            pode_adicionar_cliente: data.pode_adicionar_cliente, 
-            ativo: data.ativo,
-            canAdd 
-          })
-          setPodeAdicionarCliente(canAdd)
-        }
-      } catch (error) {
-        console.error('💥 Erro ao verificar permissões:', error)
-        setPodeAdicionarCliente(false)
-      } finally {
-        setLoadingPermissoes(false)
-      }
+      // PARA GESTORES: SEMPRE PERMITIR ADICIONAR (removendo a verificação da tabela gestores por enquanto)
+      console.log('✅ Usuário é gestor - permitindo adicionar clientes')
+      setPodeAdicionarCliente(true)
+      setLoadingPermissoes(false)
     }
 
     verificarPermissoes()
@@ -701,10 +678,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 onExport={exportToCSV}
               />
               
+              {/* BOTÃO SEMPRE VISÍVEL PARA QUEM PODE ADICIONAR */}
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
                   selectedManager={currentManager || managerName}
                   onClienteAdicionado={refetch}
+                  gestorMode={!isAdmin}
                 />
               )}
             </div>
@@ -850,10 +829,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           onExport={exportToCSV}
         />
         
+        {/* BOTÃO SEMPRE VISÍVEL PARA CLIENTES ATIVOS */}
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
             selectedManager={currentManager || managerName}
             onClienteAdicionado={refetch}
+            gestorMode={!isAdmin}
           />
         )}
       </div>

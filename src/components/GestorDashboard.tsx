@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -87,18 +88,19 @@ export function GestorDashboard() {
           </div>
         </div>
         
-        {canAddClients && (
-          <div className="flex items-center gap-2">
-            <AddClientModal 
-              selectedManager={currentManagerName} 
-              onClienteAdicionado={refetch}
-              gestorMode={true}
-            />
+        {/* BOTÃO SEMPRE VISÍVEL - Sem verificação de permissão aqui */}
+        <div className="flex items-center gap-2">
+          <AddClientModal 
+            selectedManager={currentManagerName} 
+            onClienteAdicionado={refetch}
+            gestorMode={true}
+          />
+          {canAddClients && (
             <span className="text-xs text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-1 rounded badge-contrast">
               ✅ Pode adicionar clientes
             </span>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
