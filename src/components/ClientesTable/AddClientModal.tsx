@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -301,8 +300,8 @@ Qualquer dúvida, entre em contato conosco!`
                     <SelectItem key={manager.email} value={manager.email}>
                       {manager.name}
                     </SelectItem>
-                  ))}
-                </SelectContent>
+                  </SelectContent>
+                </Select>
               </Select>
             </div>
           )}
