@@ -7,12 +7,19 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
+import { useAuth } from '@/hooks/useAuth'
+import { DeleteClientButton } from './ClientesTable/DeleteClientButton'
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [deletingCliente, setDeletingCliente] = useState<string | null>(null)
   const { toast } = useToast()
+  const { user, isAdmin } = useAuth()
+  
+  const { deleteCliente } = useClienteOperations(user?.email || '', isAdmin, fetchAllClientes)
 
   useEffect(() => {
     fetchAllClientes()
@@ -46,6 +53,19 @@ export function AdminTable() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteCliente = async (clienteId: string): Promise<boolean> => {
+    setDeletingCliente(clienteId)
+    try {
+      const success = await deleteCliente(clienteId)
+      return success
+    } catch (error) {
+      console.error('Erro ao excluir cliente:', error)
+      return false
+    } finally {
+      setDeletingCliente(null)
     }
   }
 
@@ -166,7 +186,14 @@ export function AdminTable() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base flex items-center justify-between text-card-foreground">
                     <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
-                    <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
+                      <DeleteClientButton
+                        cliente={cliente}
+                        onDelete={handleDeleteCliente}
+                        isDeleting={deletingCliente === cliente.id}
+                      />
+                    </div>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm">
@@ -194,7 +221,7 @@ export function AdminTable() {
           </div>
         )}
 
-        {/* Tabela para desktop - REMOVED "Grupo" column */}
+        {/* Tabela para desktop - WITH DELETE COLUMN */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
@@ -205,6 +232,7 @@ export function AdminTable() {
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="w-20 text-muted-foreground">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -255,6 +283,13 @@ export function AdminTable() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    <DeleteClientButton
+                      cliente={cliente}
+                      onDelete={handleDeleteCliente}
+                      isDeleting={deletingCliente === cliente.id}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
