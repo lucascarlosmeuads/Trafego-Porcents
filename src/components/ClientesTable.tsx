@@ -237,11 +237,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
           <Table className="table-dark">
-            <TableHeader showBriefingColumn={true} />
+            <TableHeader />
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={7} className="text-center py-8 text-white">
+                  {/* UPDATED: Changed colSpan from 13 to 14 since we added the "Briefing" column */}
+                  <TableCell colSpan={14} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
                       : clientes.length === 0 
@@ -255,10 +256,31 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                   <ClienteRow
                     key={`${emailToUse}-${cliente.id}-${index}`}
                     cliente={cliente}
-                    isAdmin={isAdmin}
-                    userEmail={emailToUse}
-                    onUpdate={updateCliente}
-                    showBriefingColumn={true}
+                    selectedManager={currentManager || managerName}
+                    index={index}
+                    updatingStatus={updatingStatus}
+                    editingLink={editingLink}
+                    linkValue={linkValue}
+                    setLinkValue={setLinkValue}
+                    editingBM={editingBM}
+                    bmValue={bmValue}
+                    setBmValue={setBmValue}
+                    updatingComission={updatingComission}
+                    editingComissionValue={editingComissionValue}
+                    comissionValueInput={comissionValueInput}
+                    setComissionValueInput={setComissionValueInput}
+                    getStatusColor={getStatusColor}
+                    onStatusChange={handleStatusChange}
+                    onLinkEdit={handleLinkEdit}
+                    onLinkSave={handleLinkSave}
+                    onLinkCancel={handleLinkCancel}
+                    onBMEdit={handleBMEdit}
+                    onBMSave={handleBMSave}
+                    onBMCancel={handleBMCancel}
+                    onComissionToggle={filterType === 'saques-pendentes' ? marcarPagamentoFeito : handleComissionToggle}
+                    onComissionValueEdit={handleComissionValueEdit}
+                    onComissionValueSave={handleComissionValueSave}
+                    onComissionValueCancel={handleComissionValueCancel}
                   />
                 ))
               )}
