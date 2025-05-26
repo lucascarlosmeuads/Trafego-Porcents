@@ -172,6 +172,7 @@ export type Database = {
           comissao: string | null
           comissao_paga: boolean | null
           created_at: string
+          created_at_br: string | null
           data_agendamento: string | null
           data_limite: string | null
           data_subida_campanha: string | null
@@ -198,6 +199,7 @@ export type Database = {
           comissao?: string | null
           comissao_paga?: boolean | null
           created_at?: string
+          created_at_br?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null
@@ -224,6 +226,7 @@ export type Database = {
           comissao?: string | null
           comissao_paga?: boolean | null
           created_at?: string
+          created_at_br?: string | null
           data_agendamento?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null
