@@ -4,22 +4,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Eye, AlertCircle, RefreshCw } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
-
-interface BriefingData {
-  id: string
-  nome_produto: string
-  descricao_resumida: string
-  publico_alvo: string
-  diferencial: string
-  investimento_diario: number
-  comissao_aceita: string
-  observacoes_finais: string
-  created_at: string
-  updated_at: string
-  email_cliente: string
-}
+import { FileText, AlertCircle, RefreshCw } from 'lucide-react'
+import { useBriefingData } from '@/hooks/useBriefingData'
 
 interface BriefingModalProps {
   emailCliente: string
@@ -28,122 +14,12 @@ interface BriefingModalProps {
 }
 
 export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingModalProps) {
-  const [briefingData, setBriefingData] = useState<BriefingData | null>(null)
-  const [loading, setLoading] = useState(false)
+  const { getBriefingByEmail, loading, refetch } = useBriefingData()
   const [open, setOpen] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const fetchBriefing = async () => {
-    if (!emailCliente || emailCliente.trim() === '') {
-      console.log('❌ [BriefingModal] Email do cliente não fornecido')
-      setBriefingData(null)
-      setError('Email do cliente não fornecido')
-      return
-    }
+  const briefingData = getBriefingByEmail(emailCliente)
 
-    setLoading(true)
-    setError(null)
-    
-    const emailToSearch = emailCliente.trim().toLowerCase()
-    
-    console.log('🔍 [BriefingModal] INICIANDO busca de briefing:', {
-      emailOriginal: emailCliente,
-      emailProcessado: emailToSearch,
-      nomeCliente
-    })
-
-    try {
-      // ESTRATÉGIA MELHORADA: Buscar todos os briefings e filtrar manualmente
-      const { data: allBriefings, error: fetchError } = await supabase
-        .from('briefings_cliente')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      console.log('📊 [BriefingModal] Resultado da busca:', {
-        totalBriefings: allBriefings?.length || 0,
-        error: fetchError,
-        allEmails: allBriefings?.map(b => `"${b.email_cliente}"`) || []
-      })
-
-      if (fetchError) {
-        console.error('❌ [BriefingModal] Erro na consulta:', fetchError)
-        setError(`Erro na consulta: ${fetchError.message}`)
-        setBriefingData(null)
-        return
-      }
-
-      if (!allBriefings || allBriefings.length === 0) {
-        console.log('❌ [BriefingModal] Nenhum briefing encontrado na tabela')
-        setError('Nenhum briefing encontrado na base de dados')
-        setBriefingData(null)
-        return
-      }
-
-      // Filtrar com múltiplas estratégias
-      let foundBriefing = null
-
-      // 1. Busca exata
-      foundBriefing = allBriefings.find(briefing => 
-        briefing.email_cliente?.trim().toLowerCase() === emailToSearch
-      )
-
-      if (foundBriefing) {
-        console.log('✅ [BriefingModal] Match exato encontrado:', foundBriefing)
-      } else {
-        // 2. Busca sem espaços
-        foundBriefing = allBriefings.find(briefing => 
-          briefing.email_cliente?.replace(/\s+/g, '').toLowerCase() === emailToSearch.replace(/\s+/g, '')
-        )
-
-        if (foundBriefing) {
-          console.log('✅ [BriefingModal] Match sem espaços encontrado:', foundBriefing)
-        } else {
-          // 3. Busca parcial (contém)
-          foundBriefing = allBriefings.find(briefing => 
-            briefing.email_cliente?.toLowerCase().includes(emailToSearch) ||
-            emailToSearch.includes(briefing.email_cliente?.toLowerCase())
-          )
-
-          if (foundBriefing) {
-            console.log('✅ [BriefingModal] Match parcial encontrado:', foundBriefing)
-          }
-        }
-      }
-
-      if (foundBriefing) {
-        console.log('🎉 [BriefingModal] BRIEFING ENCONTRADO:', {
-          id: foundBriefing.id,
-          email: foundBriefing.email_cliente,
-          produto: foundBriefing.nome_produto,
-          criadoEm: foundBriefing.created_at
-        })
-        setBriefingData(foundBriefing)
-        setError(null)
-      } else {
-        console.log('❌ [BriefingModal] BRIEFING NÃO ENCONTRADO:', {
-          emailProcurado: emailToSearch,
-          emailsDisponíveis: allBriefings.map(b => b.email_cliente),
-          totalRegistros: allBriefings.length
-        })
-        setError(`Briefing não encontrado para o email: ${emailCliente}`)
-        setBriefingData(null)
-      }
-
-    } catch (error) {
-      console.error('💥 [BriefingModal] Erro inesperado:', error)
-      setError(`Erro inesperado: ${error}`)
-      setBriefingData(null)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (open && emailCliente) {
-      console.log('🔄 [BriefingModal] Modal aberto, iniciando busca...')
-      fetchBriefing()
-    }
-  }, [open, emailCliente])
+  console.log('🔍 [BriefingModal] Dados do briefing para', emailCliente, ':', briefingData)
 
   const formatDate = (dateString: string) => {
     try {
@@ -161,7 +37,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
 
   const handleRetry = () => {
     console.log('🔄 [BriefingModal] Tentando novamente...')
-    fetchBriefing()
+    refetch()
   }
 
   return (
@@ -186,24 +62,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
           </div>
         )}
 
-        {!loading && error && (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Erro ao carregar briefing</h3>
-            <p className="text-muted-foreground mb-4">
-              {error}
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Email procurado: {emailCliente}
-            </p>
-            <Button onClick={handleRetry} variant="outline" size="sm">
-              <RefreshCw className="w-4 h-4 mr-2" />
-              Tentar novamente
-            </Button>
-          </div>
-        )}
-
-        {!loading && !error && !briefingData && (
+        {!loading && !briefingData && (
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertCircle className="w-12 h-12 text-yellow-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Briefing não encontrado</h3>
@@ -220,7 +79,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
           </div>
         )}
 
-        {!loading && !error && briefingData && (
+        {!loading && briefingData && (
           <div className="space-y-6">
             <Card>
               <CardHeader>
@@ -237,37 +96,36 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
                   <p className="text-foreground">{briefingData.nome_produto || 'Não informado'}</p>
                 </div>
 
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Descrição Resumida</h4>
-                  <p className="text-foreground">{briefingData.descricao_resumida || 'Não informado'}</p>
-                </div>
+                {briefingData.descricao_resumida && (
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Descrição Resumida</h4>
+                    <p className="text-foreground">{briefingData.descricao_resumida}</p>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Público Alvo</h4>
-                    <p className="text-foreground">{briefingData.publico_alvo || 'Não informado'}</p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Diferencial</h4>
-                    <p className="text-foreground">{briefingData.diferencial || 'Não informado'}</p>
-                  </div>
+                  {briefingData.publico_alvo && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Público Alvo</h4>
+                      <p className="text-foreground">{briefingData.publico_alvo}</p>
+                    </div>
+                  )}
+                  {briefingData.diferencial && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">Diferencial</h4>
+                      <p className="text-foreground">{briefingData.diferencial}</p>
+                    </div>
+                  )}
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {briefingData.investimento_diario && (
                   <div>
                     <h4 className="font-semibold text-sm text-muted-foreground mb-1">Investimento Diário</h4>
                     <p className="text-foreground">
-                      {briefingData.investimento_diario 
-                        ? `R$ ${Number(briefingData.investimento_diario).toFixed(2)}`
-                        : 'Não informado'
-                      }
+                      R$ {Number(briefingData.investimento_diario).toFixed(2)}
                     </p>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Comissão Aceita</h4>
-                    <p className="text-foreground">{briefingData.comissao_aceita || 'Não informado'}</p>
-                  </div>
-                </div>
+                )}
 
                 {briefingData.observacoes_finais && (
                   <div>
