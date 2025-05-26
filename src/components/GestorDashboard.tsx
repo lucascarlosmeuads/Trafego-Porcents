@@ -16,7 +16,7 @@ export function GestorDashboard() {
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
   const { inicializarClientesTravados } = useGestorStatusRestrictions()
 
-  // Separar clientes por status - ATUALIZADO para excluir "Saque Pendente"
+  // Separar clientes por status - ATUALIZADO para incluir nova aba de Saques Solicitados
   const clientesAtivos = clientes.filter(cliente => 
     cliente.status_campanha !== 'Off' && 
     cliente.status_campanha !== 'Reembolso' && 
@@ -26,12 +26,15 @@ export function GestorDashboard() {
   
   const clientesInativos = clientes.filter(cliente => 
     cliente.status_campanha === 'Off' || 
-    cliente.status_campanha === 'Reembolso' ||
-    cliente.status_campanha === 'Saque Pendente'
+    cliente.status_campanha === 'Reembolso'
   )
 
   const clientesProblemas = clientes.filter(cliente => 
     cliente.status_campanha === 'Problema'
+  )
+
+  const clientesSaquesPendentes = clientes.filter(cliente => 
+    cliente.status_campanha === 'Saque Pendente'
   )
 
   // Inicializar controle de status travados
@@ -99,10 +102,11 @@ export function GestorDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-muted">
+        <TabsList className="grid w-full grid-cols-5 bg-muted">
           <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
           <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
           <TabsTrigger value="problemas" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
+          <TabsTrigger value="saques-solicitados" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">💰 Saques Solicitados ({clientesSaquesPendentes.length})</TabsTrigger>
           <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
         </TabsList>
         
@@ -116,6 +120,10 @@ export function GestorDashboard() {
 
         <TabsContent value="problemas" className="space-y-6">
           <ProblemasPanel gestorMode={true} />
+        </TabsContent>
+
+        <TabsContent value="saques-solicitados" className="space-y-6">
+          <ClientesTable selectedManager={currentManagerName} filterType="saques-pendentes" />
         </TabsContent>
 
         <TabsContent value="inativos" className="space-y-6">
