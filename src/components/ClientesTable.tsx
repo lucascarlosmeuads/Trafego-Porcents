@@ -175,6 +175,53 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // NOVA FUNÇÃO: Marcar pagamento como feito para saques pendentes
+  const marcarPagamentoFeito = async (clienteId: string) => {
+    setUpdatingComission(clienteId)
+    
+    try {
+      console.log('💰 [ClientesTable] Marcando pagamento como feito para cliente:', clienteId)
+      
+      // Atualizar o cliente para marcar comissão como paga
+      const success = await updateCliente(clienteId, 'comissao_paga', true)
+      
+      if (success) {
+        // Criar notificação na tabela solicitacoes_saque como "pago"
+        const { error: updateSaqueError } = await supabase
+          .from('solicitacoes_saque')
+          .update({ 
+            status_saque: 'pago',
+            processado_em: new Date().toISOString()
+          })
+          .eq('cliente_id', parseInt(clienteId))
+
+        if (updateSaqueError) {
+          console.error('❌ Erro ao atualizar solicitação de saque:', updateSaqueError)
+        }
+
+        toast({
+          title: "Pagamento Confirmado",
+          description: "Pagamento marcado como feito. O gestor será notificado.",
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao confirmar pagamento",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('💥 Erro ao marcar pagamento:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao confirmar pagamento",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
       {/* Campo de descrição do problema */}
@@ -230,7 +277,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     onBMEdit={handleBMEdit}
                     onBMSave={handleBMSave}
                     onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
+                    onComissionToggle={filterType === 'saques-pendentes' ? marcarPagamentoFeito : handleComissionToggle}
                     onComissionValueEdit={handleComissionValueEdit}
                     onComissionValueSave={handleComissionValueSave}
                     onComissionValueCancel={handleComissionValueCancel}
@@ -697,7 +744,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  // Filtrar clientes baseado no filterType - ATUALIZADO
+  // CORREÇÃO: Filtrar clientes baseado no filterType - REMOVENDO "Saque Pendente" dos inativos
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -707,10 +754,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Saque Pendente'
     )
   } else if (filterType === 'inativos') {
+    // CORREÇÃO: Remover "Saque Pendente" dos inativos
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha === 'Off' || 
-      cliente.status_campanha === 'Reembolso' ||
-      cliente.status_campanha === 'Saque Pendente'
+      cliente.status_campanha === 'Reembolso'
+      // REMOVIDO: || cliente.status_campanha === 'Saque Pendente'
     )
   } else if (filterType === 'problemas') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -729,10 +777,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Saque Pendente'
     )
     
+    // CORREÇÃO: Remover "Saque Pendente" dos inativos na visualização com abas também
     const clientesInativos = clientes.filter(cliente => 
       cliente.status_campanha === 'Off' || 
-      cliente.status_campanha === 'Reembolso' ||
-      cliente.status_campanha === 'Saque Pendente'
+      cliente.status_campanha === 'Reembolso'
+      // REMOVIDO: || cliente.status_campanha === 'Saque Pendente'
     )
 
     return renderWithTabs(clientesAtivos, clientesInativos)

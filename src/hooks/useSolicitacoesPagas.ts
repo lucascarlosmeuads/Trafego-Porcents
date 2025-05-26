@@ -13,23 +13,24 @@ export function useSolicitacoesPagas() {
 
     const fetchSolicitacoesPagas = async () => {
       try {
-        console.log('🔍 [useSolicitacoesPagas] Buscando solicitações pagas para:', user.email)
+        console.log('🔍 [useSolicitacoesPagas] Buscando solicitações pagas...')
         
         const { data, error } = await supabase
           .from('solicitacoes_saque')
           .select('cliente_id')
-          .eq('email_gestor', user.email)
           .eq('status_saque', 'pago')
 
-        if (!error && data) {
-          const clienteIds = data.map(item => item.cliente_id.toString())
-          setSolicitacoesPagas(clienteIds)
-          console.log('✅ [useSolicitacoesPagas] Clientes com saque pago:', clienteIds)
+        if (error) {
+          console.error('❌ [useSolicitacoesPagas] Erro ao buscar solicitações pagas:', error)
+          setSolicitacoesPagas([])
         } else {
-          console.error('❌ [useSolicitacoesPagas] Erro:', error)
+          const clienteIds = data?.map(item => item.cliente_id.toString()) || []
+          console.log('✅ [useSolicitacoesPagas] Clientes com saque pago:', clienteIds)
+          setSolicitacoesPagas(clienteIds)
         }
       } catch (error) {
-        console.error('💥 [useSolicitacoesPagas] Erro ao buscar solicitações pagas:', error)
+        console.error('💥 [useSolicitacoesPagas] Erro ao verificar solicitações pagas:', error)
+        setSolicitacoesPagas([])
       } finally {
         setLoading(false)
       }
@@ -37,7 +38,7 @@ export function useSolicitacoesPagas() {
 
     fetchSolicitacoesPagas()
 
-    // Configurar listener de realtime para atualizações automáticas
+    // Configurar realtime para atualizações
     const channel = supabase
       .channel(`solicitacoes-pagas-${user.email}`)
       .on(
@@ -45,20 +46,25 @@ export function useSolicitacoesPagas() {
         {
           event: '*',
           schema: 'public',
-          table: 'solicitacoes_saque',
-          filter: `email_gestor=eq.${user.email}`
+          table: 'solicitacoes_saque'
         },
         (payload) => {
           console.log('🔄 [useSolicitacoesPagas] Mudança detectada:', payload)
           fetchSolicitacoesPagas()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        console.log(`📡 [useSolicitacoesPagas] Status do realtime:`, status)
+      })
 
     return () => {
+      console.log('🧹 [useSolicitacoesPagas] Removendo canal de realtime')
       supabase.removeChannel(channel)
     }
   }, [user?.email])
 
-  return { solicitacoesPagas, loading }
+  return {
+    solicitacoesPagas,
+    loading
+  }
 }
