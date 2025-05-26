@@ -49,19 +49,19 @@ export function BriefingMaterialsModal({
   const [briefing, setBriefing] = useState<BriefingData | null>(null)
   const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
   const [loading, setLoading] = useState(false)
+  const [briefingLoading, setBriefingLoading] = useState(false)
+  const [arquivosLoading, setArquivosLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
 
-  const fetchClientData = async () => {
-    if (!emailCliente || !open) return
+  const fetchBriefing = async () => {
+    if (!emailCliente) return
 
-    setLoading(true)
-    console.log('🔍 [BriefingMaterialsModal] INÍCIO - Carregando dados para:', emailCliente, 'filterType:', filterType)
+    setBriefingLoading(true)
+    console.log('📋 [BriefingMaterialsModal] BUSCANDO BRIEFING para:', emailCliente)
     
     try {
-      // 🟢 SEMPRE buscar briefing primeiro - independente do filterType
-      console.log('📋 [BriefingMaterialsModal] BUSCANDO BRIEFING na tabela briefings_cliente...')
       const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
@@ -83,9 +83,21 @@ export function BriefingMaterialsModal({
         console.log('⚠️ [BriefingMaterialsModal] BRIEFING NÃO ENCONTRADO para:', emailCliente)
         setBriefing(null)
       }
+    } catch (error) {
+      console.error('💥 [BriefingMaterialsModal] Erro crítico ao buscar briefing:', error)
+      setBriefing(null)
+    } finally {
+      setBriefingLoading(false)
+    }
+  }
 
-      // 🔵 Buscar arquivos
-      console.log('📁 [BriefingMaterialsModal] Buscando arquivos...')
+  const fetchArquivos = async () => {
+    if (!emailCliente) return
+
+    setArquivosLoading(true)
+    console.log('📁 [BriefingMaterialsModal] BUSCANDO ARQUIVOS para:', emailCliente)
+    
+    try {
       const { data: arquivosData, error: arquivosError } = await supabase
         .from('arquivos_cliente')
         .select('*')
@@ -110,14 +122,31 @@ export function BriefingMaterialsModal({
           setArquivos(arquivosData || [])
         }
       }
+    } catch (error) {
+      console.error('💥 [BriefingMaterialsModal] Erro crítico ao buscar arquivos:', error)
+      setArquivos([])
+    } finally {
+      setArquivosLoading(false)
+    }
+  }
 
-      console.log('🎯 [BriefingMaterialsModal] RESUMO FINAL:')
-      console.log('- Briefing encontrado:', !!briefingData)
-      console.log('- Arquivos encontrados:', arquivosData?.length || 0)
-      console.log('- FilterType:', filterType)
+  const fetchClientData = async () => {
+    if (!emailCliente || !open) return
+
+    setLoading(true)
+    console.log('🔍 [BriefingMaterialsModal] INÍCIO - Modal aberto para:', emailCliente, 'filterType:', filterType)
+    
+    try {
+      // SEMPRE buscar briefing E arquivos em paralelo
+      await Promise.all([
+        fetchBriefing(),
+        fetchArquivos()
+      ])
+
+      console.log('🎯 [BriefingMaterialsModal] BUSCA CONCLUÍDA - Briefing e arquivos processados')
 
     } catch (error) {
-      console.error('💥 [BriefingMaterialsModal] Erro crítico:', error)
+      console.error('💥 [BriefingMaterialsModal] Erro crítico na busca geral:', error)
       toast({
         title: "Erro",
         description: "Falha ao carregar materiais do cliente",
@@ -130,7 +159,7 @@ export function BriefingMaterialsModal({
 
   useEffect(() => {
     if (open) {
-      console.log('🚀 [BriefingMaterialsModal] Modal aberto - resetando dados...')
+      console.log('🚀 [BriefingMaterialsModal] Modal aberto - resetando dados e iniciando busca...')
       setBriefing(null)
       setArquivos([])
       fetchClientData()
@@ -278,8 +307,8 @@ export function BriefingMaterialsModal({
         })
         console.log('🎉 [Manager Upload] Upload concluído:', successCount, 'sucessos,', errorCount, 'erros')
         
-        // Refresh data
-        fetchClientData()
+        // Refresh apenas os arquivos
+        fetchArquivos()
       } else if (errorCount > 0) {
         toast({
           title: "Falha no upload",
@@ -360,34 +389,6 @@ export function BriefingMaterialsModal({
     }
   }
 
-  const hasContent = () => {
-    if (loading) return true
-    
-    // SEMPRE mostrar conteúdo se tem briefing OU arquivos
-    return briefing !== null || arquivos.length > 0
-  }
-
-  const getEmptyMessage = () => {
-    switch (filterType) {
-      case 'briefing':
-        return {
-          title: "Briefing ainda não enviado",
-          description: "O cliente ainda não enviou o briefing do produto."
-        }
-      case 'creative':
-        return {
-          title: "Materiais criativos não enviados",
-          description: "O cliente ainda não enviou imagens, vídeos ou PDFs."
-        }
-      default:
-        return {
-          title: "Nenhum material encontrado",
-          description: "Este cliente ainda não enviou briefing ou materiais."
-        }
-    }
-  }
-
-  // Separar arquivos por autor
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -411,82 +412,92 @@ export function BriefingMaterialsModal({
               <Loader2 className="w-6 h-6 animate-spin mr-2" />
               <p className="text-sm text-muted-foreground">Carregando materiais...</p>
             </div>
-          ) : !hasContent() ? (
-            <div className="text-center py-8">
-              <FileText className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-600">{getEmptyMessage().title}</p>
-              <p className="text-sm text-gray-500">{getEmptyMessage().description}</p>
-            </div>
           ) : (
             <div className="space-y-6">
-              {/* 🟢 SEÇÃO DO BRIEFING - SEMPRE mostrar quando existe e filterType não é apenas 'creative' */}
-              {briefing && filterType !== 'creative' && (
+              {/* 🟢 SEÇÃO DO BRIEFING - SEMPRE mostrar quando filterType não é apenas 'creative' */}
+              {filterType !== 'creative' && (
                 <Card className="border-2 border-green-200 bg-green-50">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-green-700">
                       <FileText className="w-5 h-5" />
-                      🟢 Briefing do Cliente (Preenchido pelo Cliente)
+                      🟢 Briefing do Cliente
                     </CardTitle>
-                    <div className="flex items-center gap-2 text-xs text-green-600">
-                      <Calendar className="w-3 h-3" />
-                      Enviado em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
-                      {briefing.updated_at !== briefing.created_at && (
-                        <span>• Atualizado em {new Date(briefing.updated_at).toLocaleDateString('pt-BR')}</span>
-                      )}
-                    </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">📦 Nome do Produto</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                          {briefing.nome_produto || 'Não informado'}
-                        </p>
+                  <CardContent>
+                    {briefingLoading ? (
+                      <div className="flex items-center gap-2 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <p className="text-sm text-green-600">Carregando briefing...</p>
                       </div>
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">💰 Investimento Diário</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                          R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
-                        </p>
+                    ) : briefing ? (
+                      <div className="space-y-4">
+                        <div className="flex items-center gap-2 text-xs text-green-600">
+                          <Calendar className="w-3 h-3" />
+                          Enviado em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
+                          {briefing.updated_at !== briefing.created_at && (
+                            <span>• Atualizado em {new Date(briefing.updated_at).toLocaleDateString('pt-BR')}</span>
+                          )}
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-green-700">📦 Nome do Produto</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                              {briefing.nome_produto || 'Não informado'}
+                            </p>
+                          </div>
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-green-700">💰 Investimento Diário</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                              R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">📝 Descrição Resumida</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
+                            {briefing.descricao_resumida || 'Não informado'}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">🎯 Público-Alvo</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
+                            {briefing.publico_alvo || 'Não informado'}
+                          </p>
+                        </div>
+                        
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">⭐ Diferencial do Produto</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
+                            {briefing.diferencial || 'Não informado'}
+                          </p>
+                        </div>
+                        
+                        {briefing.observacoes_finais && (
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-green-700">💬 Observações Finais</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
+                              {briefing.observacoes_finais}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center gap-2">
+                          <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
+                          <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
+                            {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : '❓ Não informado'}
+                          </Badge>
+                        </div>
                       </div>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2 text-green-700">📝 Descrição Resumida</h4>
-                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                        {briefing.descricao_resumida || 'Não informado'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2 text-green-700">🎯 Público-Alvo</h4>
-                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                        {briefing.publico_alvo || 'Não informado'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <h4 className="font-semibold text-sm mb-2 text-green-700">⭐ Diferencial do Produto</h4>
-                      <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                        {briefing.diferencial || 'Não informado'}
-                      </p>
-                    </div>
-                    
-                    {briefing.observacoes_finais && (
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">💬 Observações Finais</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                          {briefing.observacoes_finais}
-                        </p>
+                    ) : (
+                      <div className="text-center py-6">
+                        <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                        <p className="text-gray-600 font-medium">Briefing ainda não preenchido</p>
+                        <p className="text-sm text-gray-500">O cliente ainda não enviou o briefing do produto.</p>
                       </div>
                     )}
-
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
-                      <Badge variant={briefing.comissao_aceita === 'sim' ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
-                        {briefing.comissao_aceita === 'sim' ? '✅ Sim' : briefing.comissao_aceita === 'nao' ? '❌ Não' : '❓ Não informado'}
-                      </Badge>
-                    </div>
                   </CardContent>
                 </Card>
               )}
@@ -528,127 +539,123 @@ export function BriefingMaterialsModal({
                       </div>
                     )}
 
-                    {/* Materiais enviados pelo cliente */}
-                    {arquivosCliente.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
-                          <User className="w-4 h-4" />
-                          Materiais enviados pelo cliente ({arquivosCliente.length})
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {arquivosCliente.map((arquivo) => (
-                            <div key={arquivo.id} className="border rounded-lg p-3 bg-blue-50">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  {getFileIcon(arquivo.tipo_arquivo)}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {formatFileSize(arquivo.tamanho_arquivo)} • 
-                                      {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleViewFile(arquivo)}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  Ver
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleDownloadFile(arquivo)}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Baixar
-                                </Button>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
+                    {arquivosLoading ? (
+                      <div className="flex items-center gap-2 py-4">
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <p className="text-sm text-muted-foreground">Carregando arquivos...</p>
                       </div>
-                    )}
-
-                    {/* Criativos adicionados pela equipe */}
-                    {arquivosGestor.length > 0 && (
-                      <div>
-                        <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
-                          <Upload className="w-4 h-4" />
-                          Criativos da Tráfego Porcents ({arquivosGestor.length})
-                        </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {arquivosGestor.map((arquivo) => (
-                            <div key={arquivo.id} className="border-2 border-purple-300 rounded-lg p-3 bg-purple-100">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  {getFileIcon(arquivo.tipo_arquivo)}
-                                  <div className="min-w-0 flex-1">
-                                    <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
-                                    <div className="flex items-center gap-1">
-                                      <Badge variant="secondary" className="text-xs px-1 py-0">
-                                        Equipe
-                                      </Badge>
-                                      <p className="text-xs text-purple-600">
-                                        {formatFileSize(arquivo.tamanho_arquivo)} • 
-                                        {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
-                                      </p>
+                    ) : (
+                      <>
+                        {/* Materiais enviados pelo cliente */}
+                        {arquivosCliente.length > 0 && (
+                          <div>
+                            <h4 className="font-medium text-blue-700 mb-3 flex items-center gap-2">
+                              <User className="w-4 h-4" />
+                              Materiais enviados pelo cliente ({arquivosCliente.length})
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {arquivosCliente.map((arquivo) => (
+                                <div key={arquivo.id} className="border rounded-lg p-3 bg-blue-50">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      {getFileIcon(arquivo.tipo_arquivo)}
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
+                                        <p className="text-xs text-muted-foreground">
+                                          {formatFileSize(arquivo.tamanho_arquivo)} • 
+                                          {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
+                                        </p>
+                                      </div>
                                     </div>
                                   </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1"
+                                      onClick={() => handleViewFile(arquivo)}
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      Ver
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1"
+                                      onClick={() => handleDownloadFile(arquivo)}
+                                    >
+                                      <Download className="w-3 h-3 mr-1" />
+                                      Baixar
+                                    </Button>
+                                  </div>
                                 </div>
-                              </div>
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleViewFile(arquivo)}
-                                >
-                                  <Eye className="w-3 h-3 mr-1" />
-                                  Ver
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1"
-                                  onClick={() => handleDownloadFile(arquivo)}
-                                >
-                                  <Download className="w-3 h-3 mr-1" />
-                                  Baixar
-                                </Button>
-                              </div>
+                              ))}
                             </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                          </div>
+                        )}
 
-                    {arquivos.length === 0 && !loading && filterType === 'creative' && (
-                      <div className="text-center py-6">
-                        <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                        <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
-                        <p className="text-sm text-gray-500">O cliente ainda não enviou imagens, vídeos ou PDFs.</p>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              )}
+                        {/* Criativos adicionados pela equipe */}
+                        {arquivosGestor.length > 0 && (
+                          <div>
+                            <h4 className="font-medium text-purple-700 mb-3 flex items-center gap-2">
+                              <Upload className="w-4 h-4" />
+                              Criativos da Tráfego Porcents ({arquivosGestor.length})
+                            </h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {arquivosGestor.map((arquivo) => (
+                                <div key={arquivo.id} className="border-2 border-purple-300 rounded-lg p-3 bg-purple-100">
+                                  <div className="flex items-center justify-between mb-2">
+                                    <div className="flex items-center gap-2">
+                                      {getFileIcon(arquivo.tipo_arquivo)}
+                                      <div className="min-w-0 flex-1">
+                                        <p className="text-sm font-medium truncate">{arquivo.nome_arquivo}</p>
+                                        <div className="flex items-center gap-1">
+                                          <Badge variant="secondary" className="text-xs px-1 py-0">
+                                            Equipe
+                                          </Badge>
+                                          <p className="text-xs text-purple-600">
+                                            {formatFileSize(arquivo.tamanho_arquivo)} • 
+                                            {new Date(arquivo.created_at).toLocaleDateString('pt-BR')}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1"
+                                      onClick={() => handleViewFile(arquivo)}
+                                    >
+                                      <Eye className="w-3 h-3 mr-1" />
+                                      Ver
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="flex-1"
+                                      onClick={() => handleDownloadFile(arquivo)}
+                                    >
+                                      <Download className="w-3 h-3 mr-1" />
+                                      Baixar
+                                    </Button>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
 
-              {/* Mensagem quando não tem briefing mas filterType permite mostrar */}
-              {!briefing && filterType !== 'creative' && (
-                <Card className="border-2 border-gray-200 bg-gray-50">
-                  <CardContent className="py-6">
-                    <div className="text-center">
-                      <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
-                      <p className="text-gray-600 font-medium">Briefing ainda não preenchido</p>
-                      <p className="text-sm text-gray-500">O cliente ainda não enviou o briefing do produto.</p>
-                    </div>
+                        {arquivos.length === 0 && (
+                          <div className="text-center py-6">
+                            <Image className="w-12 h-12 mx-auto text-gray-400 mb-3" />
+                            <p className="text-gray-600 font-medium">Nenhum material criativo encontrado</p>
+                            <p className="text-sm text-gray-500">O cliente ainda não enviou imagens, vídeos ou PDFs.</p>
+                          </div>
+                        )}
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               )}
