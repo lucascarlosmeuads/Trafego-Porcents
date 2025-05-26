@@ -110,84 +110,6 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
     }
   }
 
-  const deleteCliente = async (id: string) => {
-    console.log(`🗑️ [useClienteOperations] === INICIANDO EXCLUSÃO ===`)
-    console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
-    console.log(`👤 User Email: ${userEmail}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
-
-    if (!id || id.trim() === '') {
-      console.error('❌ [useClienteOperations] ID do cliente está vazio ou inválido:', id)
-      return false
-    }
-
-    if (!userEmail) {
-      console.error('❌ [useClienteOperations] Email do usuário não fornecido')
-      return false
-    }
-
-    // RESTRIÇÃO: Apenas admins podem excluir clientes
-    if (!isAdmin) {
-      console.error('🚨 [useClienteOperations] ACESSO NEGADO: Apenas admins podem excluir clientes')
-      return false
-    }
-
-    try {
-      const numericId = parseInt(id)
-      
-      if (isNaN(numericId) || numericId <= 0) {
-        console.error('❌ [useClienteOperations] ID inválido após conversão:', { original: id, converted: numericId })
-        return false
-      }
-
-      console.log('🔍 [useClienteOperations] Verificando se o registro existe antes da exclusão...')
-      const { data: existingData, error: checkError } = await supabase
-        .from('todos_clientes')
-        .select('id, nome_cliente, email_cliente')
-        .eq('id', numericId)
-        .single()
-
-      if (checkError) {
-        console.error('❌ [useClienteOperations] Erro ao verificar existência do registro:', checkError)
-        return false
-      }
-
-      if (!existingData) {
-        console.error('❌ [useClienteOperations] Nenhum registro encontrado com ID:', numericId)
-        return false
-      }
-
-      console.log('✅ [useClienteOperations] Registro encontrado:', existingData)
-      
-      console.log('🗑️ [useClienteOperations] Executando DELETE...')
-      const { error: deleteError } = await supabase
-        .from('todos_clientes')
-        .delete()
-        .eq('id', numericId)
-
-      if (deleteError) {
-        console.error('❌ [useClienteOperations] Erro ao excluir cliente:', deleteError)
-        return false
-      }
-
-      console.log('✅ [useClienteOperations] Cliente excluído com sucesso')
-      console.log('🎉 [useClienteOperations] === EXCLUSÃO CONCLUÍDA COM SUCESSO ===')
-      
-      toast({
-        title: "Cliente Excluído",
-        description: `Cliente "${existingData.nome_cliente}" foi removido com sucesso.`,
-      })
-      
-      // Atualizar dados
-      refetchData()
-      
-      return true
-    } catch (err) {
-      console.error('💥 [useClienteOperations] Erro na exclusão (catch):', err)
-      return false
-    }
-  }
-
   const addCliente = async (clienteData: any) => {
     if (!userEmail) {
       console.error('❌ [useClienteOperations] Email do usuário não fornecido')
@@ -324,7 +246,6 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
   return {
     updateCliente,
-    addCliente,
-    deleteCliente
+    addCliente
   }
 }
