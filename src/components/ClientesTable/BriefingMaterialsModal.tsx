@@ -150,8 +150,10 @@ export function BriefingMaterialsModal({
 
       const fetchAllData = async () => {
         try {
-          // SEMPRE buscar o briefing que o cliente preencheu
-          await fetchBriefing()
+          // SEMPRE buscar o briefing quando não for filterType 'creative'
+          if (filterType !== 'creative') {
+            await fetchBriefing()
+          }
           
           // Buscar arquivos se necessário
           if (filterType !== 'briefing') {
@@ -390,7 +392,7 @@ export function BriefingMaterialsModal({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
                     <FileText className="w-5 h-5" />
-                    📋 Formulário Preenchido pelo Cliente
+                    📝 Formulário Preenchido pelo Cliente
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
