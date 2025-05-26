@@ -87,12 +87,6 @@ export function GestorDashboard() {
             <span>Comissões travadas para edição. Status travado após "No Ar".</span>
           </div>
         </div>
-        {/* BOTÃO ÚNICO DO GESTOR - MESMO DO ADMIN */}
-        <AddClientModal
-          selectedManager={currentManagerName}
-          onClienteAdicionado={refetch}
-          gestorMode={false}
-        />
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
@@ -111,6 +105,11 @@ export function GestorDashboard() {
         <TabsContent value="clientes" className="space-y-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Clientes Ativos</h2>
+            <AddClientModal
+              selectedManager={currentManagerName}
+              onClienteAdicionado={refetch}
+              gestorMode={true}
+            />
           </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
         </TabsContent>

@@ -25,10 +25,9 @@ interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
   filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes'
-  hideAddButton?: boolean
 }
 
-export function ClientesTable({ selectedManager, userEmail, filterType, hideAddButton = false }: ClientesTableProps) {
+export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
   const { isAdmin, user } = useAuth()
   
   // FILTRO CRÍTICO: Para admin: usa selectedManager; para gestor: usa email do usuário
@@ -133,6 +132,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType, hideAddB
   }
 
   const getStatusColor = (status: string) => {
+    // Se não há status definido, mostrar como "Sem status"
     if (!status || status.trim() === '') {
       return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
     }
@@ -241,6 +241,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType, hideAddB
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
+                  {/* UPDATED: Changed colSpan from 14 to 13 since we removed the "Briefing" column */}
                   <TableCell colSpan={13} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
@@ -677,6 +678,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType, hideAddB
                 onExport={exportToCSV}
               />
               
+              {/* BOTÃO SEMPRE VISÍVEL PARA QUEM PODE ADICIONAR */}
+              {podeAdicionarCliente && !loadingPermissoes && (
+                <AddClientModal
+                  selectedManager={currentManager || managerName}
+                  onClienteAdicionado={refetch}
+                  gestorMode={!isAdmin}
+                />
+              )}
             </div>
 
             <TableFilters
@@ -820,6 +829,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType, hideAddB
           onExport={exportToCSV}
         />
         
+        {/* BOTÃO SEMPRE VISÍVEL PARA CLIENTES ATIVOS */}
+        {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
+          <AddClientModal
+            selectedManager={currentManager || managerName}
+            onClienteAdicionado={refetch}
+            gestorMode={!isAdmin}
+          />
+        )}
       </div>
 
       <TableFilters
