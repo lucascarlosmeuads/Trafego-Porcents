@@ -81,32 +81,81 @@ export function ClienteRow({
     setCheckingBriefing(true)
     
     try {
-      console.log('🔍 [ClienteRow] Verificando briefing para:', cliente.email_cliente)
+      const emailToSearch = cliente.email_cliente.trim().toLowerCase()
+      console.log('🔍 [ClienteRow] Verificando briefing para cliente:', {
+        original: cliente.email_cliente,
+        processed: emailToSearch,
+        clienteId: cliente.id,
+        nomeCliente: cliente.nome_cliente
+      })
       
-      const { data, error } = await supabase
+      // Primeira tentativa: busca exata
+      const { data: exactData, error: exactError } = await supabase
         .from('briefings_cliente')
-        .select('id')
-        .eq('email_cliente', cliente.email_cliente.trim().toLowerCase())
+        .select('id, email_cliente, nome_produto, created_at')
+        .eq('email_cliente', emailToSearch)
         .limit(1)
 
-      if (error) {
-        console.error('❌ [ClienteRow] Erro ao verificar briefing:', error)
-        
-        // Tentar busca alternativa
-        const { data: dataAlt } = await supabase
-          .from('briefings_cliente')
-          .select('id')
-          .ilike('email_cliente', cliente.email_cliente.trim())
-          .limit(1)
+      console.log('📊 [ClienteRow] Busca exata:', { 
+        emailToSearch, 
+        found: exactData?.length || 0, 
+        data: exactData, 
+        error: exactError 
+      })
 
-        setBriefingExists(dataAlt && dataAlt.length > 0)
-        console.log('🔍 [ClienteRow] Resultado busca alternativa:', dataAlt && dataAlt.length > 0)
+      if (!exactError && exactData && exactData.length > 0) {
+        console.log('✅ [ClienteRow] Briefing encontrado na busca exata:', exactData[0])
+        setBriefingExists(true)
         return
       }
 
-      const exists = data && data.length > 0
-      setBriefingExists(exists)
-      console.log('✅ [ClienteRow] Briefing existe?', exists, 'para email:', cliente.email_cliente)
+      // Segunda tentativa: busca case-insensitive
+      const { data: iLikeData, error: iLikeError } = await supabase
+        .from('briefings_cliente')
+        .select('id, email_cliente, nome_produto, created_at')
+        .ilike('email_cliente', emailToSearch)
+        .limit(1)
+
+      console.log('📊 [ClienteRow] Busca ilike:', { 
+        emailToSearch, 
+        found: iLikeData?.length || 0, 
+        data: iLikeData, 
+        error: iLikeError 
+      })
+
+      if (!iLikeError && iLikeData && iLikeData.length > 0) {
+        console.log('✅ [ClienteRow] Briefing encontrado na busca ilike:', iLikeData[0])
+        setBriefingExists(true)
+        return
+      }
+
+      // Terceira tentativa: busca todos os briefings e comparar manualmente
+      const { data: allBriefings, error: allError } = await supabase
+        .from('briefings_cliente')
+        .select('id, email_cliente, nome_produto, created_at')
+
+      console.log('📊 [ClienteRow] Todos os briefings para debug:', {
+        total: allBriefings?.length || 0,
+        searchingFor: emailToSearch,
+        allEmails: allBriefings?.map(b => b.email_cliente) || []
+      })
+
+      if (!allError && allBriefings) {
+        // Verificar se algum email bate (removendo espaços e case-insensitive)
+        const found = allBriefings.find(briefing => 
+          briefing.email_cliente.trim().toLowerCase() === emailToSearch
+        )
+
+        if (found) {
+          console.log('✅ [ClienteRow] Briefing encontrado na busca manual:', found)
+          setBriefingExists(true)
+          return
+        }
+      }
+
+      console.log('❌ [ClienteRow] Nenhum briefing encontrado para:', emailToSearch)
+      setBriefingExists(false)
+
     } catch (error) {
       console.error('💥 [ClienteRow] Erro na verificação do briefing:', error)
       setBriefingExists(false)
@@ -116,11 +165,14 @@ export function ClienteRow({
   }
 
   useEffect(() => {
-    // Verificar apenas uma vez quando o email do cliente estiver disponível
-    if (cliente.email_cliente && briefingExists === null && !checkingBriefing) {
+    // Sempre verificar quando o componente montar ou o email mudar
+    if (cliente.email_cliente) {
+      console.log('🔄 [ClienteRow] Iniciando verificação de briefing para:', cliente.email_cliente)
       checkBriefingExists()
+    } else {
+      setBriefingExists(false)
     }
-  }, [cliente.email_cliente])
+  }, [cliente.email_cliente, cliente.id]) // Adicionei cliente.id para garantir re-check
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'

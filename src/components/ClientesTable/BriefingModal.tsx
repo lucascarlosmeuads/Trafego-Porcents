@@ -41,47 +41,89 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
     }
 
     setLoading(true)
-    console.log('🔍 [BriefingModal] Buscando briefing para cliente:', emailCliente)
+    console.log('🔍 [BriefingModal] Buscando briefing para cliente:', {
+      original: emailCliente,
+      processed: emailCliente.trim().toLowerCase(),
+      nomeCliente
+    })
 
     try {
-      const { data, error } = await supabase
+      const emailToSearch = emailCliente.trim().toLowerCase()
+      
+      // Primeira tentativa: busca exata
+      const { data: exactData, error: exactError } = await supabase
         .from('briefings_cliente')
         .select('*')
-        .eq('email_cliente', emailCliente.trim().toLowerCase())
+        .eq('email_cliente', emailToSearch)
         .order('created_at', { ascending: false })
         .limit(1)
 
-      console.log('📊 [BriefingModal] Resposta do Supabase:', { data, error })
+      console.log('📊 [BriefingModal] Busca exata:', { 
+        emailToSearch, 
+        found: exactData?.length || 0, 
+        data: exactData, 
+        error: exactError 
+      })
 
-      if (error) {
-        console.error('❌ [BriefingModal] Erro ao buscar briefing:', error)
-        setBriefingData(null)
+      if (!exactError && exactData && exactData.length > 0) {
+        console.log('✅ [BriefingModal] Briefing encontrado na busca exata:', exactData[0])
+        setBriefingData(exactData[0])
         return
       }
 
-      if (data && data.length > 0) {
-        console.log('✅ [BriefingModal] Briefing encontrado:', data[0])
-        setBriefingData(data[0])
-      } else {
-        console.log('ℹ️ [BriefingModal] Nenhum briefing encontrado para:', emailCliente)
-        
-        // Tentar busca sem case-sensitive
-        const { data: dataAlt, error: errorAlt } = await supabase
-          .from('briefings_cliente')
-          .select('*')
-          .ilike('email_cliente', emailCliente.trim())
-          .order('created_at', { ascending: false })
-          .limit(1)
+      // Segunda tentativa: busca case-insensitive
+      const { data: iLikeData, error: iLikeError } = await supabase
+        .from('briefings_cliente')
+        .select('*')
+        .ilike('email_cliente', emailToSearch)
+        .order('created_at', { ascending: false })
+        .limit(1)
 
-        console.log('🔍 [BriefingModal] Busca alternativa (ilike):', { dataAlt, errorAlt })
+      console.log('📊 [BriefingModal] Busca ilike:', { 
+        emailToSearch, 
+        found: iLikeData?.length || 0, 
+        data: iLikeData, 
+        error: iLikeError 
+      })
 
-        if (!errorAlt && dataAlt && dataAlt.length > 0) {
-          console.log('✅ [BriefingModal] Briefing encontrado na busca alternativa:', dataAlt[0])
-          setBriefingData(dataAlt[0])
-        } else {
-          setBriefingData(null)
+      if (!iLikeError && iLikeData && iLikeData.length > 0) {
+        console.log('✅ [BriefingModal] Briefing encontrado na busca ilike:', iLikeData[0])
+        setBriefingData(iLikeData[0])
+        return
+      }
+
+      // Terceira tentativa: buscar todos e filtrar manualmente
+      const { data: allBriefings, error: allError } = await supabase
+        .from('briefings_cliente')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      console.log('📊 [BriefingModal] Busca manual em todos os briefings:', {
+        total: allBriefings?.length || 0,
+        searchingFor: emailToSearch,
+        allEmails: allBriefings?.map(b => `"${b.email_cliente}"`) || []
+      })
+
+      if (!allError && allBriefings) {
+        // Filtrar manualmente com trim e lowercase
+        const found = allBriefings.find(briefing => 
+          briefing.email_cliente.trim().toLowerCase() === emailToSearch
+        )
+
+        if (found) {
+          console.log('✅ [BriefingModal] Briefing encontrado na busca manual:', found)
+          setBriefingData(found)
+          return
         }
       }
+
+      console.log('❌ [BriefingModal] Nenhum briefing encontrado para:', {
+        emailOriginal: emailCliente,
+        emailProcurado: emailToSearch,
+        nomeCliente
+      })
+      setBriefingData(null)
+
     } catch (error) {
       console.error('💥 [BriefingModal] Erro na busca:', error)
       setBriefingData(null)
