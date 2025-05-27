@@ -134,6 +134,7 @@ Qualquer dúvida, entre em contato conosco!`
       
       if (result && result.success) {
         console.log("🟢 [SellerAddClientModal] Cliente criado com sucesso")
+        console.log("🟢 [SellerAddClientModal] Resultado:", result)
         
         // Limpar formulário
         setFormData({
@@ -158,7 +159,8 @@ Qualquer dúvida, entre em contato conosco!`
         }
         
         // SEMPRE mostrar modal de instruções para novos clientes
-        if (result.isNewClient) { // MUDANÇA: usar isNewClient ao invés de !duplicate
+        if (result.isNewClient) {
+          console.log("🟢 [SellerAddClientModal] É um novo cliente, mostrando instruções")
           const dadosCliente = {
             email_cliente: clienteData.email_cliente,
             nome_cliente: clienteData.nome_cliente,
@@ -171,7 +173,16 @@ Qualquer dúvida, entre em contato conosco!`
           setTimeout(() => {
             setShowInstructions(true)
           }, 300)
+        } else {
+          console.log("🟡 [SellerAddClientModal] Cliente já existia, não mostrando instruções")
         }
+      } else {
+        console.error("❌ [SellerAddClientModal] Resultado indica falha:", result)
+        toast({
+          title: "Erro",
+          description: "Erro ao adicionar cliente",
+          variant: "destructive"
+        })
       }
     } catch (error: any) {
       console.error('💥 [SellerAddClientModal] Erro ao adicionar cliente:', error)

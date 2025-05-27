@@ -158,14 +158,13 @@ export function useSimpleSellerData(sellerEmail: string) {
         clientId = updatedData.id
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
-        // Preparar nome do vendedor
+        // Cliente novo - inserir na tabela primeiro
         const emailPrefix = sellerEmail.split('@')[0]
         let vendorName = emailPrefix.replace('vendedor', '')
         
         if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
         if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
-        // Inserir cliente na tabela todos_clientes primeiro
         console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
         const { data: insertData, error: insertError } = await supabase
           .from('todos_clientes')
@@ -195,7 +194,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
         clientId = insertData.id
 
-        // Tentar criar conta de autenticação (opcional - não bloquear se falhar)
+        // Tentar criar conta de autenticação (opcional)
         console.log('🔐 [useSimpleSellerData] Tentando criar conta no Supabase Auth...')
         
         try {
@@ -211,18 +210,17 @@ export function useSimpleSellerData(sellerEmail: string) {
           })
 
           if (authError) {
-            console.warn('⚠️ [useSimpleSellerData] Erro na criação da conta Auth (continuando):', authError)
-            // Não bloquear se a conta já existir ou houver erro de auth
-            if (!authError.message.includes('already registered')) {
-              console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
+            console.warn('⚠️ [useSimpleSellerData] Erro na criação da conta Auth:', authError)
+            // Não bloquear se a conta já existir
+            if (authError.message.includes('already registered')) {
+              console.log('💡 [useSimpleSellerData] Email já possui conta no sistema')
             }
           } else {
             console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
             senhaDefinida = true
           }
         } catch (authError) {
-          console.warn('⚠️ [useSimpleSellerData] Erro inesperado na criação da conta Auth:', authError)
-          // Continuar mesmo com erro de auth
+          console.warn('⚠️ [useSimpleSellerData] Erro inesperado na criação da conta:', authError)
         }
       }
 
@@ -234,7 +232,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         toast({
           title: "✅ Cliente cadastrado com sucesso!",
           description: senhaDefinida 
-            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha padrão definida como: ${SENHA_PADRAO_CLIENTE}`
+            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha padrão: ${SENHA_PADRAO_CLIENTE}`
             : `Cliente ${clienteData.nome_cliente} foi adicionado.`,
           duration: 5000
         })
@@ -247,10 +245,10 @@ export function useSimpleSellerData(sellerEmail: string) {
       
       console.log('🎉 [useSimpleSellerData] Processo concluído com sucesso')
       
-      // Retornar a estrutura ALINHADA com useClienteOperations
+      // Retornar estrutura IDÊNTICA ao useClienteOperations
       return { 
         success: true, 
-        isNewClient: !clienteJaExistia, // MUDANÇA: usar isNewClient ao invés de duplicate
+        isNewClient: !clienteJaExistia,
         senhaDefinida,
         clientData: {
           id: clientId,
