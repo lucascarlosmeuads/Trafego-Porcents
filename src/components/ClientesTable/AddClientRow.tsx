@@ -96,6 +96,17 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
         description: "Cliente adicionado com sucesso"
       })
 
+      // Mostrar aviso sobre senha padrão se foi definida
+      if (result.senhaDefinida) {
+        setTimeout(() => {
+          toast({
+            title: "🔐 Senha padrão definida",
+            description: "Senha padrão definida como: parceriadesucesso",
+            duration: 8000
+          })
+        }, 1000)
+      }
+
       // Show instructions modal for new clients only
       if (result.isNewClient) {
         setNewClientData(result.clientData)

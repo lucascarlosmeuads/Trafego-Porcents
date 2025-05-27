@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -13,6 +12,9 @@ interface ClienteSimples {
   status_campanha: string
   created_at: string
 }
+
+// Senha padrão para novos clientes
+const SENHA_PADRAO_CLIENTE = 'parceriadesucesso'
 
 export function useSimpleSellerData(sellerEmail: string) {
   const [clientes, setClientes] = useState<ClienteSimples[]>([])
@@ -146,14 +148,46 @@ export function useSimpleSellerData(sellerEmail: string) {
         return { success: false, duplicate: false }
       }
 
+      // Criar conta de usuário com senha padrão
+      let senhaDefinida = false
+      try {
+        const { error: authError } = await supabase.auth.signUp({
+          email: clienteData.email_cliente,
+          password: SENHA_PADRAO_CLIENTE,
+          options: {
+            data: {
+              full_name: clienteData.nome_cliente,
+              role: 'cliente'
+            }
+          }
+        })
+
+        if (authError) {
+          console.error('Erro ao criar conta:', authError)
+        } else {
+          senhaDefinida = true
+        }
+      } catch (authErr) {
+        console.error('Erro na criação da conta:', authErr)
+      }
+
       // Recarregar lista
       await fetchClientes()
       
-      return { success: true, duplicate: false }
+      // Mostrar mensagem de sucesso com informação da senha
+      toast({
+        title: "Cliente cadastrado com sucesso!",
+        description: senhaDefinida 
+          ? `🔐 Senha padrão definida como: ${SENHA_PADRAO_CLIENTE}`
+          : "Cliente adicionado à lista.",
+        duration: 5000
+      })
+      
+      return { success: true, duplicate: false, senhaDefinida }
 
     } catch (error) {
       console.error('Erro:', error)
-      return { success: false, duplicate: false }
+      return { success: false, duplicate: false, senhaDefinida: false }
     }
   }
 

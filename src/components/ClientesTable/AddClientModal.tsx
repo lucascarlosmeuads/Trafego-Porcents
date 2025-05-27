@@ -178,6 +178,17 @@ Qualquer dúvida, entre em contato conosco!`
         // Atualizar dados
         onClienteAdicionado()
 
+        // Mostrar aviso sobre senha padrão se foi definida
+        if (result.senhaDefinida) {
+          setTimeout(() => {
+            toast({
+              title: "🔐 Senha padrão definida",
+              description: "Senha padrão definida como: parceriadesucesso",
+              duration: 8000
+            })
+          }, 1000)
+        }
+
         // SEMPRE exibir o modal de instruções após criação bem-sucedida
         console.log("🔵 [AddClientModal] Preparando dados para o modal de instruções...")
         
@@ -261,6 +272,13 @@ Qualquer dúvida, entre em contato conosco!`
             <p className="text-yellow-700 text-xs mt-2">
               💡 Após cadastrar o cliente, envie essas instruções via WhatsApp
             </p>
+            
+            {/* Aviso sobre senha padrão */}
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-blue-800 text-xs font-medium">
+                🔐 Senha padrão definida automaticamente como: <code className="bg-blue-100 px-1 rounded">parceriadesucesso</code>
+              </p>
+            </div>
           </div>
 
           <div className="grid gap-4 py-4">

@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -118,6 +117,17 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         setOpen(false)
         onClienteAdicionado()
 
+        // Mostrar aviso sobre senha padrão se foi definida
+        if (result.senhaDefinida) {
+          setTimeout(() => {
+            toast({
+              title: "🔐 Senha padrão definida",
+              description: "Senha padrão definida como: parceriadesucesso",
+              duration: 8000
+            })
+          }, 1000)
+        }
+
         // Show instructions modal for new clients only
         if (result.isNewClient) {
           setNewClientData(result.clientData)
@@ -149,6 +159,14 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
+          
+          {/* Aviso sobre senha padrão */}
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-blue-800 text-sm font-medium">
+              🔐 Senha padrão definida automaticamente como: <code className="bg-blue-100 px-1 rounded">parceriadesucesso</code>
+            </p>
+          </div>
+          
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome do Cliente *</Label>

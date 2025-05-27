@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -10,6 +11,9 @@ const generateRandomPassword = (): string => {
   }
   return password
 }
+
+// Senha padrão para novos clientes
+const SENHA_PADRAO_CLIENTE = 'parceriadesucesso'
 
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
@@ -139,6 +143,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
       let clienteJaExistia = false
       let finalClientData = clienteData
+      let senhaDefinida = false
 
       if (existingCliente) {
         console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
@@ -200,14 +205,45 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
         finalClientData = { ...clienteData, ...data }
         console.log('✅ [useClienteOperations] Cliente adicionado com sucesso:', data)
+
+        // Step 3: Create user account with default password for new clients
+        console.log('🔐 [useClienteOperations] Criando conta de usuário com senha padrão...')
+        try {
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: clienteData.email_cliente,
+            password: SENHA_PADRAO_CLIENTE,
+            options: {
+              data: {
+                full_name: clienteData.nome_cliente,
+                role: 'cliente'
+              }
+            }
+          })
+
+          if (authError) {
+            console.error('⚠️ [useClienteOperations] Erro ao criar conta de usuário:', authError)
+            // Não falhar a operação se a conta já existir
+            if (!authError.message.includes('already registered')) {
+              console.error('❌ [useClienteOperations] Erro crítico na criação da conta:', authError)
+            }
+          } else {
+            console.log('✅ [useClienteOperations] Conta de usuário criada com sucesso')
+            senhaDefinida = true
+          }
+        } catch (authErr) {
+          console.error('⚠️ [useClienteOperations] Erro na criação da conta (catch):', authErr)
+          // Continuar mesmo se houver erro na criação da conta
+        }
       }
       
       // Show success message
       if (!clienteJaExistia) {
         toast({
           title: "Cliente cadastrado com sucesso!",
-          description: `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.`,
-          duration: 3000
+          description: senhaDefinida 
+            ? `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.\n🔐 Senha padrão definida como: ${SENHA_PADRAO_CLIENTE}`
+            : `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.`,
+          duration: 5000
         })
       } else {
         toast({
@@ -223,13 +259,15 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       console.log('🎯 [useClienteOperations] Retornando dados estruturados:', {
         success: true,
         isNewClient: !clienteJaExistia,
-        clientData: finalClientData
+        clientData: finalClientData,
+        senhaDefinida
       })
       
       return { 
         success: true, 
         isNewClient: !clienteJaExistia, 
-        clientData: finalClientData 
+        clientData: finalClientData,
+        senhaDefinida
       }
     } catch (error) {
       console.error('💥 [useClienteOperations] === ERRO GERAL ===')
@@ -240,7 +278,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         description: error instanceof Error ? error.message : "Erro inesperado ao adicionar cliente",
         variant: "destructive"
       })
-      return { success: false, isNewClient: false, clientData: null }
+      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
     }
   }
 
