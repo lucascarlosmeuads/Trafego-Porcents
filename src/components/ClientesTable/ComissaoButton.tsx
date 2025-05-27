@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -174,7 +175,58 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO ADMIN - Comportamento completo
+  // PAINEL DO ADMIN - NOVA LÓGICA: Aguardando gestor solicitar saque
+  if (!isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueFoiPago) {
+    console.log('⏳ [ComissaoButton] Admin - Aguardando gestor solicitar saque')
+    return (
+      <div className="flex items-center gap-1">
+        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
+          Aguardando gestor solicitar saque
+        </div>
+      </div>
+    )
+  }
+
+  // PAINEL DO ADMIN - Saque solicitado pelo gestor, aguardando pagamento
+  if (!isGestorDashboard && isSaquePendente && jaFoiSolicitado && !saqueFoiPago) {
+    console.log('💰 [ComissaoButton] Admin - Saque solicitado, mostrando botão pagar')
+    return (
+      <div className="flex items-center gap-1">
+        <Button
+          variant="default"
+          size="sm"
+          className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
+          onClick={() => onComissionToggle(cliente.id, false)}
+          disabled={updatingComission === cliente.id}
+        >
+          {updatingComission === cliente.id ? (
+            <Loader2 className="w-3 h-3 animate-spin mr-1" />
+          ) : (
+            <Check className="w-3 h-3 mr-1" />
+          )}
+          <span>Pagar Agora!</span>
+          <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
+        </Button>
+      </div>
+    )
+  }
+
+  // PAINEL DO ADMIN - Saque já foi pago
+  if (!isGestorDashboard && saqueFoiPago) {
+    console.log('✅ [ComissaoButton] Admin - Saque já foi pago')
+    return (
+      <div className="flex items-center gap-1">
+        <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
+          <span className="flex items-center gap-1">
+            <Check className="w-3 h-3" />
+            Saque Realizado - R$ {valorComissao.toFixed(2)}
+          </span>
+        </div>
+      </div>
+    )
+  }
+
+  // PAINEL DO ADMIN - Comportamento padrão para outros status
   return (
     <div className="flex items-center gap-1">
       <Button
