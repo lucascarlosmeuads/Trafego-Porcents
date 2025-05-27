@@ -61,6 +61,8 @@ export const STATUS_CAMPANHA = [
   'Criativo', 
   'Site',
   'Agendamento',
+  'Configurando BM',
+  'Subindo Campanha',
   'No Ar',
   'Otimização',
   'Problema',

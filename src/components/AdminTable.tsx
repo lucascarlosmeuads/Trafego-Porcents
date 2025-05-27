@@ -113,6 +113,10 @@ export function AdminTable() {
         return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
       case 'Agendamento':
         return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
+      case 'Configurando BM':
+        return 'bg-cyan-500/20 text-cyan-700 border border-cyan-500/30'
+      case 'Subindo Campanha':
+        return 'bg-lime-500/20 text-lime-700 border border-lime-500/30'
       case 'No Ar':
         return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
