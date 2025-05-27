@@ -103,15 +103,20 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
     }
   }, [])
 
+  const handleManagerSelect = (managerEmail: string | null) => {
+    console.log('🎯 [ManagerSelector] Selecionando gestor:', managerEmail)
+    onManagerSelect(managerEmail)
+  }
+
   const getSelectedManagerName = () => {
     if (!selectedManager) return 'Todos os Clientes'
-    const gestor = gestores.find(g => g.nome === selectedManager)
+    const gestor = gestores.find(g => g.email === selectedManager)
     return gestor ? gestor.nome : 'Todos os Clientes'
   }
 
   const getSelectedManagerCount = () => {
     if (!selectedManager) return totalClientes
-    const gestor = gestores.find(g => g.nome === selectedManager)
+    const gestor = gestores.find(g => g.email === selectedManager)
     return gestor ? gestor.total_clientes : totalClientes
   }
 
@@ -159,7 +164,7 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
           <DropdownMenuSeparator />
           
           <DropdownMenuItem
-            onClick={() => onManagerSelect(null)}
+            onClick={() => handleManagerSelect(null)}
             className="flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -175,8 +180,8 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
           
           {gestores.map((gestor) => (
             <DropdownMenuItem
-              key={gestor.nome}
-              onClick={() => onManagerSelect(gestor.nome)}
+              key={gestor.email}
+              onClick={() => handleManagerSelect(gestor.email)}
               className="flex items-center justify-between cursor-pointer"
             >
               <div className="flex items-center gap-2 min-w-0 flex-1">

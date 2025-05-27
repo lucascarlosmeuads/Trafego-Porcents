@@ -76,7 +76,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* Tabela de clientes */}
+            {/* Tabela de clientes - passando selectedManager diretamente */}
             <ClientesTable selectedManager={selectedManager} />
           </div>
         )

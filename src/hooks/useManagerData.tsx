@@ -75,6 +75,11 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
     setError(null)
 
     try {
+      console.log('🔍 [useManagerData] Iniciando busca de clientes')
+      console.log('🔍 [useManagerData] Email:', email)
+      console.log('🔍 [useManagerData] isAdminUser:', isAdminUser)
+      console.log('🔍 [useManagerData] selectedManager:', selectedManager)
+
       const normalizedEmail = email?.toLowerCase().trim() || ''
       const isSitesUser = normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')
 
@@ -83,27 +88,55 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
       if (isSitesUser) {
         query = query.eq('site_status', 'aguardando_link')
         setCurrentManager('Criador de Sites')
+        console.log('🎯 [useManagerData] Filtro para sites: aguardando_link')
       } else if (isAdminUser) {
         if (selectedManager && selectedManager !== 'Todos os Clientes') {
-          query = query.eq('email_gestor', selectedManager)
-          setCurrentManager(selectedManager)
+          // Se selectedManager for um email, usar diretamente
+          // Se for um nome, buscar o email correspondente
+          if (selectedManager.includes('@')) {
+            query = query.eq('email_gestor', selectedManager)
+            setCurrentManager(selectedManager)
+            console.log('🎯 [useManagerData] Filtro admin por email:', selectedManager)
+          } else {
+            // Buscar o email do gestor pelo nome
+            const { data: gestorData } = await supabase
+              .from('gestores')
+              .select('email')
+              .eq('nome', selectedManager)
+              .single()
+            
+            if (gestorData?.email) {
+              query = query.eq('email_gestor', gestorData.email)
+              setCurrentManager(gestorData.email)
+              console.log('🎯 [useManagerData] Filtro admin por nome->email:', gestorData.email)
+            } else {
+              console.log('⚠️ [useManagerData] Gestor não encontrado:', selectedManager)
+              setCurrentManager('Todos os Clientes')
+            }
+          }
         } else {
           setCurrentManager('Todos os Clientes')
+          console.log('🎯 [useManagerData] Sem filtro - todos os clientes')
         }
       } else {
         query = query.eq('email_gestor', email)
         setCurrentManager(email)
+        console.log('🎯 [useManagerData] Filtro por gestor:', email)
       }
 
       const { data, error } = await query.order('created_at', { ascending: false })
 
       if (error) {
+        console.error('❌ [useManagerData] Erro de banco:', error)
         setError(`Erro de banco de dados: ${error.message}`)
         setClientes([])
       } else if (data) {
-        setClientes(validateAndSanitizeClienteData(data))
+        const clientesValidados = validateAndSanitizeClienteData(data)
+        console.log('✅ [useManagerData] Clientes carregados:', clientesValidados.length)
+        setClientes(clientesValidados)
       }
     } catch (e) {
+      console.error('💥 [useManagerData] Erro crítico:', e)
       setError('Erro crítico de sistema.')
       setClientes([])
     } finally {
