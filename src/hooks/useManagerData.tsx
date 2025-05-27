@@ -56,6 +56,79 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
     }
   }
 
+  // Função para validar e sanitizar dados de cliente
+  const validateAndSanitizeClienteData = (rawData: any[]): Cliente[] => {
+    if (!Array.isArray(rawData)) {
+      console.warn('⚠️ [useManagerData] Dados recebidos não são um array:', rawData)
+      return []
+    }
+
+    const validatedClientes = rawData
+      .filter((item, index) => {
+        // Validar campos obrigatórios
+        if (!item || typeof item !== 'object') {
+          console.warn(`⚠️ [useManagerData] Item ${index} inválido:`, item)
+          return false
+        }
+
+        if (!item.id) {
+          console.warn(`⚠️ [useManagerData] Cliente sem ID no índice ${index}:`, item)
+          return false
+        }
+
+        if (!item.nome_cliente || typeof item.nome_cliente !== 'string') {
+          console.warn(`⚠️ [useManagerData] Cliente ${item.id} sem nome válido:`, item)
+          return false
+        }
+
+        return true
+      })
+      .map((item, index) => {
+        try {
+          return {
+            id: String(item.id || ''),
+            data_venda: item.data_venda || '',
+            nome_cliente: item.nome_cliente || '',
+            telefone: item.telefone || '',
+            email_cliente: item.email_cliente || '',
+            vendedor: item.vendedor || '',
+            email_gestor: item.email_gestor || '',
+            status_campanha: item.status_campanha || 'Preenchimento do Formulário',
+            data_limite: item.data_limite || '',
+            link_grupo: item.link_grupo || '',
+            link_briefing: item.link_briefing || '',
+            link_criativo: item.link_criativo || '',
+            link_site: item.link_site || '',
+            numero_bm: item.numero_bm || '',
+            comissao_paga: Boolean(item.comissao_paga),
+            valor_comissao: Number(item.valor_comissao || 60),
+            created_at: item.created_at || '',
+            site_status: item.site_status || 'pendente',
+            descricao_problema: item.descricao_problema || '',
+            saque_solicitado: Boolean(item.saque_solicitado || false)
+          }
+        } catch (formatError) {
+          console.error(`❌ [useManagerData] Erro ao formatar cliente ${index}:`, formatError, item)
+          return null
+        }
+      })
+      .filter((cliente): cliente is Cliente => cliente !== null)
+
+    // Remover duplicatas baseado no ID
+    const uniqueClientes = validatedClientes.reduce((acc: Cliente[], current) => {
+      const exists = acc.find(item => item.id === current.id)
+      if (!exists) {
+        acc.push(current)
+      } else {
+        console.warn(`⚠️ [useManagerData] Duplicata removida para cliente ID: ${current.id}`)
+      }
+      return acc
+    }, [])
+
+    console.log(`✅ [useManagerData] Dados validados: ${rawData.length} → ${uniqueClientes.length} clientes válidos`)
+    return uniqueClientes
+  }
+
   const fetchClientes = useCallback(async () => {
     if (!email) {
       console.log('❌ [useManagerData] Email não fornecido')
@@ -87,24 +160,35 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
             .eq('site_status', 'aguardando_link')
 
           if (error) {
-            console.error('❌ [useManagerData] Erro ao buscar clientes para sites:', error)
-            setError(`Erro ao carregar clientes: ${error.message}`)
-            setClientes([]) // Fallback seguro
+            console.error('❌ [useManagerData] Erro Supabase ao buscar clientes para sites:', error)
+            setError(`Erro de banco de dados: ${error.message}`)
+            setClientes([])
+          } else if (!data) {
+            console.log('⚠️ [useManagerData] Nenhum dado retornado para sites')
+            setClientes([])
           } else {
-            console.log('✅ [useManagerData] Clientes aguardando sites carregados:', data?.length || 0)
-            console.log('🌐 [useManagerData] Detalhes dos clientes:', data?.map(c => ({
-              id: c.id,
-              nome: c.nome_cliente,
-              site_status: c.site_status,
-              email_gestor: c.email_gestor
-            })) || [])
-            setClientes(data || [])
+            console.log('📊 [useManagerData] Dados brutos recebidos para sites:', data.length)
+            
+            // Validar e sanitizar os dados
+            const clientesValidados = validateAndSanitizeClienteData(data)
+            console.log('✅ [useManagerData] Clientes aguardando sites validados:', clientesValidados.length)
+            
+            if (clientesValidados.length > 0) {
+              console.log('🌐 [useManagerData] Primeiros 3 clientes:', clientesValidados.slice(0, 3).map(c => ({
+                id: c.id,
+                nome: c.nome_cliente,
+                site_status: c.site_status,
+                email_gestor: c.email_gestor
+              })))
+            }
+            
+            setClientes(clientesValidados)
           }
           setCurrentManager('Responsável por Sites')
         } catch (fetchError) {
-          console.error('💥 [useManagerData] Erro de rede ao buscar clientes para sites:', fetchError)
+          console.error('💥 [useManagerData] Erro de rede/crítico ao buscar clientes para sites:', fetchError)
           setError('Erro de conexão. Verifique sua internet e tente novamente.')
-          setClientes([]) // Fallback seguro
+          setClientes([])
         }
         
       } else if (isAdminUser) {
@@ -126,17 +210,22 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
           const { data, error } = await query
 
           if (error) {
-            console.error('❌ [useManagerData] Erro ao buscar clientes (admin):', error)
-            setError(`Erro ao carregar clientes: ${error.message}`)
-            setClientes([]) // Fallback seguro
+            console.error('❌ [useManagerData] Erro Supabase ao buscar clientes (admin):', error)
+            setError(`Erro de banco de dados: ${error.message}`)
+            setClientes([])
+          } else if (!data) {
+            console.log('⚠️ [useManagerData] Nenhum dado retornado para admin')
+            setClientes([])
           } else {
-            console.log('✅ [useManagerData] Clientes carregados para admin:', data?.length || 0)
-            setClientes(data || [])
+            console.log('📊 [useManagerData] Dados brutos recebidos para admin:', data.length)
+            const clientesValidados = validateAndSanitizeClienteData(data)
+            console.log('✅ [useManagerData] Clientes carregados para admin:', clientesValidados.length)
+            setClientes(clientesValidados)
           }
         } catch (fetchError) {
-          console.error('💥 [useManagerData] Erro de rede ao buscar clientes (admin):', fetchError)
+          console.error('💥 [useManagerData] Erro de rede/crítico ao buscar clientes (admin):', fetchError)
           setError('Erro de conexão. Verifique sua internet e tente novamente.')
-          setClientes([]) // Fallback seguro
+          setClientes([])
         }
         
       } else {
@@ -150,25 +239,30 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
             .eq('email_gestor', email)
 
           if (error) {
-            console.error('❌ [useManagerData] Erro ao buscar clientes (gestor):', error)
-            setError(`Erro ao carregar clientes: ${error.message}`)
-            setClientes([]) // Fallback seguro
+            console.error('❌ [useManagerData] Erro Supabase ao buscar clientes (gestor):', error)
+            setError(`Erro de banco de dados: ${error.message}`)
+            setClientes([])
+          } else if (!data) {
+            console.log('⚠️ [useManagerData] Nenhum dado retornado para gestor')
+            setClientes([])
           } else {
-            console.log('✅ [useManagerData] Clientes carregados para gestor:', data?.length || 0)
-            setClientes(data || [])
+            console.log('📊 [useManagerData] Dados brutos recebidos para gestor:', data.length)
+            const clientesValidados = validateAndSanitizeClienteData(data)
+            console.log('✅ [useManagerData] Clientes carregados para gestor:', clientesValidados.length)
+            setClientes(clientesValidados)
           }
           setCurrentManager(email)
         } catch (fetchError) {
-          console.error('💥 [useManagerData] Erro de rede ao buscar clientes (gestor):', fetchError)
+          console.error('💥 [useManagerData] Erro de rede/crítico ao buscar clientes (gestor):', fetchError)
           setError('Erro de conexão. Verifique sua internet e tente novamente.')
-          setClientes([]) // Fallback seguro
+          setClientes([])
         }
       }
 
-    } catch (error) {
-      console.error('💥 [useManagerData] Erro crítico geral ao buscar clientes:', error)
-      setError('Erro crítico de conexão. Tente novamente em alguns minutos.')
-      setClientes([]) // Fallback seguro
+    } catch (criticalError) {
+      console.error('💥 [useManagerData] ERRO CRÍTICO GERAL:', criticalError)
+      setError('Erro crítico de sistema. Tente novamente em alguns minutos.')
+      setClientes([])
     } finally {
       setLoading(false)
     }

@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Globe, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
+import { Globe, Loader2, AlertCircle, RefreshCw, CheckCircle } from 'lucide-react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { Button } from '@/components/ui/button'
 
@@ -11,29 +11,36 @@ export function SitesDashboard() {
   const { user, currentManagerName } = useAuth()
   const { clientes, loading, error, refetch } = useManagerData(user?.email || '', false)
 
-  // Os clientes já vêm filtrados pelo hook
+  // Os clientes já vêm filtrados pelo hook para usuários de sites
   const clientesAguardandoSite = clientes
 
   useEffect(() => {
+    console.log('🌐 [SitesDashboard] === STATUS DO PAINEL ===')
+    console.log('📧 Usuário:', user?.email)
+    console.log('⏳ Loading:', loading)
+    console.log('❌ Error:', error)
+    console.log('📊 Total clientes:', clientesAguardandoSite.length)
+    
     if (clientesAguardandoSite.length > 0) {
-      console.log('🌐 [SitesDashboard] Total de clientes aguardando site:', clientesAguardandoSite.length)
-      console.log('📋 Primeiros clientes:', clientesAguardandoSite.slice(0, 5).map(c => ({ 
+      console.log('✅ [SitesDashboard] Clientes aguardando site carregados com sucesso:', clientesAguardandoSite.length)
+      console.log('📋 Detalhes dos primeiros 3 clientes:', clientesAguardandoSite.slice(0, 3).map(c => ({ 
+        id: c.id,
         nome: c.nome_cliente, 
         email: c.email_cliente,
         site_status: c.site_status,
         email_gestor: c.email_gestor
       })))
-    } else {
-      console.log('⚠️ [SitesDashboard] Nenhum cliente encontrado aguardando site')
+    } else if (!loading && !error) {
+      console.log('ℹ️ [SitesDashboard] Nenhum cliente encontrado aguardando site')
     }
-  }, [clientesAguardandoSite])
+  }, [clientesAguardandoSite, loading, error, user?.email])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-8">
         <div className="flex items-center gap-2">
           <Loader2 className="w-5 h-5 animate-spin" />
-          <span>Carregando clientes...</span>
+          <span>Carregando dados do painel de sites...</span>
         </div>
       </div>
     )
@@ -44,7 +51,7 @@ export function SitesDashboard() {
       <div className="flex flex-col items-center justify-center py-8 gap-4">
         <div className="flex items-center gap-2 text-red-600">
           <AlertCircle className="w-5 h-5" />
-          <span>Erro ao carregar dados: {error}</span>
+          <span>Erro ao carregar painel: {error}</span>
         </div>
         <div className="flex gap-2">
           <Button onClick={refetch} variant="outline" className="flex items-center gap-2">
@@ -58,6 +65,7 @@ export function SitesDashboard() {
             <li>• Verifique sua conexão com a internet</li>
             <li>• Atualize a página (F5)</li>
             <li>• Tente fazer logout e login novamente</li>
+            <li>• Se o problema persistir, contate o suporte</li>
           </ul>
         </div>
       </div>
@@ -120,7 +128,7 @@ export function SitesDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Status</CardTitle>
-            <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+            <CheckCircle className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">Ativo</div>
@@ -180,10 +188,12 @@ export function SitesDashboard() {
             </CardContent>
           </Card>
         ) : (
-          <ClientesTable 
-            selectedManager={currentManagerName} 
-            filterType="sites-pendentes"
-          />
+          <div className="bg-white rounded-lg shadow">
+            <ClientesTable 
+              selectedManager={currentManagerName} 
+              filterType="sites-pendentes"
+            />
+          </div>
         )}
       </div>
     </div>
