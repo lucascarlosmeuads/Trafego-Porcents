@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -30,6 +31,33 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
     investimento_diario: briefing?.investimento_diario || '',
     observacoes_finais: briefing?.observacoes_finais || ''
   })
+
+  const updateClienteStatus = async () => {
+    try {
+      console.log('🔄 [BriefingForm] Atualizando status do cliente para "Brief"...')
+      
+      const { error: updateError } = await supabase
+        .from('todos_clientes')
+        .update({ 
+          status_campanha: 'Brief'
+        })
+        .eq('email_cliente', emailCliente)
+
+      if (updateError) {
+        console.error('❌ [BriefingForm] Erro ao atualizar status do cliente:', updateError)
+        // Não falhar o processo principal por causa do status
+        toast({
+          title: "Aviso",
+          description: "Briefing salvo, mas houve um problema ao atualizar o status. Entre em contato com o suporte.",
+          variant: "default"
+        })
+      } else {
+        console.log('✅ [BriefingForm] Status do cliente atualizado para "Brief" com sucesso')
+      }
+    } catch (error) {
+      console.error('💥 [BriefingForm] Erro crítico ao atualizar status:', error)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -143,6 +171,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
         }
 
         console.log('✅ [BriefingForm] Briefing criado com sucesso:', data)
+        
+        // ATUALIZAR STATUS DO CLIENTE PARA "Brief" após salvar o briefing com sucesso
+        await updateClienteStatus()
       }
 
       toast({
