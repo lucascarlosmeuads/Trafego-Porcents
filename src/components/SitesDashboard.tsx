@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Globe, Loader2, AlertCircle } from 'lucide-react'
+import { Globe, Loader2, AlertCircle, RefreshCw } from 'lucide-react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { Button } from '@/components/ui/button'
 
@@ -46,9 +46,20 @@ export function SitesDashboard() {
           <AlertCircle className="w-5 h-5" />
           <span>Erro ao carregar dados: {error}</span>
         </div>
-        <Button onClick={refetch} variant="outline">
-          Tentar Novamente
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={refetch} variant="outline" className="flex items-center gap-2">
+            <RefreshCw className="w-4 h-4" />
+            Tentar Novamente
+          </Button>
+        </div>
+        <div className="text-sm text-gray-600 text-center max-w-md">
+          <p>💡 <strong>Dicas para resolver:</strong></p>
+          <ul className="text-left mt-2 space-y-1">
+            <li>• Verifique sua conexão com a internet</li>
+            <li>• Atualize a página (F5)</li>
+            <li>• Tente fazer logout e login novamente</li>
+          </ul>
+        </div>
       </div>
     )
   }
@@ -67,6 +78,15 @@ export function SitesDashboard() {
             <span>Visualizando clientes com status "aguardando_link" no campo site_status</span>
           </div>
         </div>
+        <Button 
+          onClick={refetch} 
+          variant="outline" 
+          size="sm"
+          className="flex items-center gap-2"
+        >
+          <RefreshCw className="w-4 h-4" />
+          Atualizar
+        </Button>
       </div>
 
       {/* Métricas do painel */}
@@ -150,9 +170,13 @@ export function SitesDashboard() {
             <CardContent className="text-center py-8">
               <Globe className="mx-auto h-12 w-12 text-gray-400 mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum site pendente</h3>
-              <p className="text-gray-600">
+              <p className="text-gray-600 mb-4">
                 Não há clientes aguardando criação de sites no momento.
               </p>
+              <Button onClick={refetch} variant="outline" className="flex items-center gap-2 mx-auto">
+                <RefreshCw className="w-4 h-4" />
+                Verificar Novamente
+              </Button>
             </CardContent>
           </Card>
         ) : (

@@ -79,74 +79,96 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
       if (isSitesUser) {
         console.log('🌐 [useManagerData] Modo sites - buscando clientes com site_status = aguardando_link')
         
-        // Para usuários de sites, buscar TODOS os clientes com site_status = 'aguardando_link'
-        const { data, error } = await supabase
-          .from('todos_clientes')
-          .select('*')
-          .eq('site_status', 'aguardando_link')
+        try {
+          // Para usuários de sites, buscar TODOS os clientes com site_status = 'aguardando_link'
+          const { data, error } = await supabase
+            .from('todos_clientes')
+            .select('*')
+            .eq('site_status', 'aguardando_link')
 
-        if (error) {
-          console.error('❌ [useManagerData] Erro ao buscar clientes para sites:', error)
-          setError(`Erro ao carregar clientes: ${error.message}`)
-        } else {
-          console.log('✅ [useManagerData] Clientes aguardando sites carregados:', data.length)
-          console.log('🌐 [useManagerData] Detalhes dos clientes:', data.map(c => ({
-            id: c.id,
-            nome: c.nome_cliente,
-            site_status: c.site_status,
-            email_gestor: c.email_gestor
-          })))
-          setClientes(data || [])
+          if (error) {
+            console.error('❌ [useManagerData] Erro ao buscar clientes para sites:', error)
+            setError(`Erro ao carregar clientes: ${error.message}`)
+            setClientes([]) // Fallback seguro
+          } else {
+            console.log('✅ [useManagerData] Clientes aguardando sites carregados:', data?.length || 0)
+            console.log('🌐 [useManagerData] Detalhes dos clientes:', data?.map(c => ({
+              id: c.id,
+              nome: c.nome_cliente,
+              site_status: c.site_status,
+              email_gestor: c.email_gestor
+            })) || [])
+            setClientes(data || [])
+          }
+          setCurrentManager('Responsável por Sites')
+        } catch (fetchError) {
+          console.error('💥 [useManagerData] Erro de rede ao buscar clientes para sites:', fetchError)
+          setError('Erro de conexão. Verifique sua internet e tente novamente.')
+          setClientes([]) // Fallback seguro
         }
-        setCurrentManager('Responsável por Sites')
         
       } else if (isAdminUser) {
         // Lógica para admin
-        let query = supabase
-          .from('todos_clientes')
-          .select('*')
+        try {
+          let query = supabase
+            .from('todos_clientes')
+            .select('*')
 
-        if (selectedManager && selectedManager !== 'Todos os Clientes') {
-          console.log('👑 [useManagerData] Modo admin - filtrando por gestor:', selectedManager)
-          query = query.eq('email_gestor', selectedManager)
-          setCurrentManager(selectedManager)
-        } else {
-          console.log('👑 [useManagerData] Modo admin - mostrando todos os clientes')
-          setCurrentManager('Todos os Clientes')
-        }
+          if (selectedManager && selectedManager !== 'Todos os Clientes') {
+            console.log('👑 [useManagerData] Modo admin - filtrando por gestor:', selectedManager)
+            query = query.eq('email_gestor', selectedManager)
+            setCurrentManager(selectedManager)
+          } else {
+            console.log('👑 [useManagerData] Modo admin - mostrando todos os clientes')
+            setCurrentManager('Todos os Clientes')
+          }
 
-        const { data, error } = await query
+          const { data, error } = await query
 
-        if (error) {
-          console.error('❌ [useManagerData] Erro ao buscar clientes (admin):', error)
-          setError(`Erro ao carregar clientes: ${error.message}`)
-        } else {
-          console.log('✅ [useManagerData] Clientes carregados para admin:', data.length)
-          setClientes(data || [])
+          if (error) {
+            console.error('❌ [useManagerData] Erro ao buscar clientes (admin):', error)
+            setError(`Erro ao carregar clientes: ${error.message}`)
+            setClientes([]) // Fallback seguro
+          } else {
+            console.log('✅ [useManagerData] Clientes carregados para admin:', data?.length || 0)
+            setClientes(data || [])
+          }
+        } catch (fetchError) {
+          console.error('💥 [useManagerData] Erro de rede ao buscar clientes (admin):', fetchError)
+          setError('Erro de conexão. Verifique sua internet e tente novamente.')
+          setClientes([]) // Fallback seguro
         }
         
       } else {
         // Para gestores e vendedores normais
         console.log('👨‍💼 [useManagerData] Modo gestor/vendedor - filtrando por email_gestor')
         
-        const { data, error } = await supabase
-          .from('todos_clientes')
-          .select('*')
-          .eq('email_gestor', email)
+        try {
+          const { data, error } = await supabase
+            .from('todos_clientes')
+            .select('*')
+            .eq('email_gestor', email)
 
-        if (error) {
-          console.error('❌ [useManagerData] Erro ao buscar clientes (gestor):', error)
-          setError(`Erro ao carregar clientes: ${error.message}`)
-        } else {
-          console.log('✅ [useManagerData] Clientes carregados para gestor:', data.length)
-          setClientes(data || [])
+          if (error) {
+            console.error('❌ [useManagerData] Erro ao buscar clientes (gestor):', error)
+            setError(`Erro ao carregar clientes: ${error.message}`)
+            setClientes([]) // Fallback seguro
+          } else {
+            console.log('✅ [useManagerData] Clientes carregados para gestor:', data?.length || 0)
+            setClientes(data || [])
+          }
+          setCurrentManager(email)
+        } catch (fetchError) {
+          console.error('💥 [useManagerData] Erro de rede ao buscar clientes (gestor):', fetchError)
+          setError('Erro de conexão. Verifique sua internet e tente novamente.')
+          setClientes([]) // Fallback seguro
         }
-        setCurrentManager(email)
       }
 
     } catch (error) {
-      console.error('💥 [useManagerData] Erro crítico ao buscar clientes:', error)
-      setError('Erro de conexão ao carregar clientes')
+      console.error('💥 [useManagerData] Erro crítico geral ao buscar clientes:', error)
+      setError('Erro crítico de conexão. Tente novamente em alguns minutos.')
+      setClientes([]) // Fallback seguro
     } finally {
       setLoading(false)
     }
