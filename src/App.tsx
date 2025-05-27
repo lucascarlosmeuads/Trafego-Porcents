@@ -1,31 +1,45 @@
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+} from "react-router-dom";
+import {
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
+import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import { LoginPage } from "@/pages/Login"
+import { ManagerRoutes } from "@/routes/ManagerRoutes"
+import { ClienteRoutes } from "@/routes/ClienteRoutes"
+import { ProtectedRoute } from "@/components/ProtectedRoute"
 
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "@/components/ThemeProvider";
-import Index from "./pages/Index";
-import NotFound from "./pages/NotFound";
+import { SiteDashboard } from '@/components/SiteDashboard'
 
-const queryClient = new QueryClient();
+function App() {
+  const queryClient = new QueryClient()
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
+  return (
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+          <div className="min-h-screen bg-background">
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/cliente/*" element={<ClienteRoutes />} />
+              <Route path="/sites" element={<SiteDashboard />} />
+              <Route path="/*" element={
+                <ProtectedRoute>
+                  <ManagerRoutes />
+                </ProtectedRoute>
+              } />
+            </Routes>
+            <Toaster />
+          </div>
+        </ThemeProvider>
+      </BrowserRouter>
+    </QueryClientProvider>
+  )
+}
 
-export default App;
+export default App
