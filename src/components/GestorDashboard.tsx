@@ -1,10 +1,8 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { ProblemasPanel } from './ProblemasPanel'
-import { BriefingsPanel } from './BriefingsPanel'
 import { AddClientModal } from './ClientesTable/AddClientModal'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorPermissions } from '@/hooks/useGestorPermissions'
@@ -94,10 +92,9 @@ export function GestorDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-6 bg-muted">
+        <TabsList className="grid w-full grid-cols-5 bg-muted">
           <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
           <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="briefings" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📝 Briefings</TabsTrigger>
           <TabsTrigger value="problemas" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
           <TabsTrigger value="saques-solicitados" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">💰 Saques Solicitados ({clientesSaquesPendentes.length})</TabsTrigger>
           <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
@@ -117,10 +114,6 @@ export function GestorDashboard() {
             />
           </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
-        </TabsContent>
-
-        <TabsContent value="briefings" className="space-y-6">
-          <BriefingsPanel />
         </TabsContent>
 
         <TabsContent value="problemas" className="space-y-6">
