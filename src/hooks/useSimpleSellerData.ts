@@ -123,35 +123,52 @@ export function useSimpleSellerData(sellerEmail: string) {
         return { success: false, duplicate: true }
       }
 
-      // PASSO 1: Criar conta de autenticação no Supabase Auth
+      // CORREÇÃO CRÍTICA: Criar conta de autenticação PRIMEIRO
       console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
       console.log('🔑 [useSimpleSellerData] Email:', clienteData.email_cliente)
       console.log('🔑 [useSimpleSellerData] Senha padrão:', SENHA_PADRAO_CLIENTE)
       
-      // Fazer logout da sessão atual para evitar conflitos
+      // Fazer logout de qualquer sessão ativa para evitar conflitos
       await supabase.auth.signOut()
       
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: clienteData.email_cliente,
         password: SENHA_PADRAO_CLIENTE,
         options: {
-          emailRedirectTo: undefined // Evita envio de email de confirmação
+          data: {
+            full_name: clienteData.nome_cliente,
+            role: 'cliente'
+          }
         }
       })
 
       let contaCriada = false
-      
       if (authError) {
         console.error('❌ [useSimpleSellerData] Erro na criação da conta Auth:', authError)
         
-        // Se o usuário já existe no Auth, isso pode ser aceitável
-        if (authError.message?.includes('User already registered') || authError.code === 'user_already_exists') {
-          console.log('⚠️ [useSimpleSellerData] Usuário já existe no Auth, continuando...')
-          contaCriada = true
+        // Se o usuário já existe no Auth, tentar fazer reset da senha
+        if (authError.message.includes('User already registered') || authError.code === 'user_already_exists') {
+          console.log('⚠️ [useSimpleSellerData] Usuário já existe no Auth')
+          
+          // Tentar redefinir a senha para a senha padrão
+          try {
+            console.log('🔄 [useSimpleSellerData] Tentando redefinir senha...')
+            const { error: resetError } = await supabase.auth.resetPasswordForEmail(
+              clienteData.email_cliente,
+              { redirectTo: window.location.origin }
+            )
+            
+            if (!resetError) {
+              console.log('✅ [useSimpleSellerData] Reset de senha enviado')
+              contaCriada = true
+            }
+          } catch (resetErr) {
+            console.warn('⚠️ [useSimpleSellerData] Falha no reset de senha:', resetErr)
+          }
         } else {
           toast({
             title: "Erro na criação da conta",
-            description: `Falha ao criar conta de acesso: ${authError.message}`,
+            description: `Erro: ${authError.message}`,
             variant: "destructive"
           })
           return { success: false, duplicate: false }
@@ -162,14 +179,14 @@ export function useSimpleSellerData(sellerEmail: string) {
         contaCriada = true
       }
 
-      // PASSO 2: Preparar nome do vendedor
+      // Preparar nome do vendedor
       const emailPrefix = sellerEmail.split('@')[0]
       let vendorName = emailPrefix.replace('vendedor', '')
       
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
-      // PASSO 3: Inserir cliente na tabela todos_clientes
+      // Inserir cliente na tabela todos_clientes
       console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
       const { error: insertError } = await supabase
         .from('todos_clientes')
@@ -195,10 +212,10 @@ export function useSimpleSellerData(sellerEmail: string) {
 
       console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
 
-      // PASSO 4: Recarregar lista
+      // Recarregar lista
       await fetchClientes()
       
-      // PASSO 5: Mostrar mensagem de sucesso
+      // Mostrar mensagem de sucesso com informações da senha
       toast({
         title: "✅ Cliente cadastrado com sucesso!",
         description: `🔐 Senha padrão: ${SENHA_PADRAO_CLIENTE}`,
