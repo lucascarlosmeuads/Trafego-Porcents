@@ -67,10 +67,47 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [showSiteOptions, setShowSiteOptions] = useState(false)
 
+  // Validação robusta dos dados do cliente
+  if (!cliente || typeof cliente !== 'object') {
+    console.error('❌ [ClienteRow] Cliente inválido:', cliente)
+    return (
+      <TableRow className="border-border hover:bg-muted/20 transition-colors">
+        <TableCell colSpan={12} className="text-center text-red-500 py-4">
+          ❌ Dados do cliente inválidos
+        </TableCell>
+      </TableRow>
+    )
+  }
+
+  // Verificar campos obrigatórios com fallbacks seguros - incluindo TODOS os campos do tipo Cliente
+  const safeCliente: Cliente = {
+    id: cliente.id || `temp-${index}`,
+    nome_cliente: cliente.nome_cliente || 'Nome não informado',
+    telefone: cliente.telefone || '',
+    email_cliente: cliente.email_cliente || '',
+    vendedor: cliente.vendedor || '',
+    email_gestor: cliente.email_gestor || '',
+    data_venda: cliente.data_venda || '',
+    status_campanha: cliente.status_campanha || 'Preenchimento do Formulário',
+    data_limite: cliente.data_limite || '',
+    link_grupo: cliente.link_grupo || '',
+    link_briefing: cliente.link_briefing || '',
+    link_criativo: cliente.link_criativo || '',
+    site_status: cliente.site_status || 'pendente',
+    link_site: cliente.link_site || '',
+    numero_bm: cliente.numero_bm || '',
+    comissao_paga: Boolean(cliente.comissao_paga),
+    valor_comissao: Number(cliente.valor_comissao || 60),
+    created_at: cliente.created_at || '',
+    descricao_problema: cliente.descricao_problema || '',
+    saque_solicitado: Boolean(cliente.saque_solicitado || false)
+  }
+
   const formatDate = (dateString: string | null) => {
     if (!dateString) return '-'
     try {
       const date = new Date(dateString)
+      if (isNaN(date.getTime())) return '-'
       return date.toLocaleDateString('pt-BR')
     } catch {
       return dateString
@@ -80,68 +117,79 @@ export function ClienteRow({
   const calculateDateLimit = (dataVenda: string | null) => {
     if (!dataVenda) return { text: '-', style: '' }
     
-    const venda = new Date(dataVenda)
-    const limite = new Date(venda)
-    limite.setDate(limite.getDate() + 15)
-    
-    const hoje = new Date()
-    const diffTime = limite.getTime() - hoje.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
-    if (cliente.status_campanha === 'No Ar') {
-      return {
-        text: '✅ Cumprido',
-        style: 'bg-green-100 text-green-800 border-green-300'
+    try {
+      const venda = new Date(dataVenda)
+      if (isNaN(venda.getTime())) return { text: '-', style: '' }
+      
+      const limite = new Date(venda)
+      limite.setDate(limite.getDate() + 15)
+      
+      const hoje = new Date()
+      const diffTime = limite.getTime() - hoje.getTime()
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      
+      if (safeCliente.status_campanha === 'No Ar' || safeCliente.status_campanha === 'Otimização') {
+        return {
+          text: '✅ Cumprido',
+          style: 'bg-green-100 text-green-800 border-green-300'
+        }
       }
-    }
-    
-    if (cliente.status_campanha === 'Otimização') {
-      return {
-        text: '✅ Cumprido',
-        style: 'bg-green-100 text-green-800 border-green-300'
+      
+      if (diffDays < 0) {
+        return {
+          text: `Atrasado ${Math.abs(diffDays)} dias`,
+          style: 'bg-red-100 text-red-800 border-red-300'
+        }
+      } else {
+        return {
+          text: `Faltam ${diffDays} dias`,
+          style: 'bg-blue-100 text-blue-800 border-blue-300'
+        }
       }
-    }
-    
-    if (diffDays < 0) {
-      return {
-        text: `Atrasado ${Math.abs(diffDays)} dias`,
-        style: 'bg-red-100 text-red-800 border-red-300'
-      }
-    } else {
-      return {
-        text: `Faltam ${diffDays} dias`,
-        style: 'bg-blue-100 text-blue-800 border-blue-300'
-      }
+    } catch (error) {
+      console.error('❌ [ClienteRow] Erro ao calcular data limite:', error)
+      return { text: '-', style: '' }
     }
   }
 
   const renderWhatsAppButton = (telefone: string) => {
-    if (!telefone) return <span className="text-xs text-contrast">-</span>
+    if (!telefone || telefone.trim() === '') {
+      return <span className="text-xs text-contrast">-</span>
+    }
     
-    const cleanPhone = telefone.replace(/\D/g, '')
-    const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
-        onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
-      >
-        <MessageCircle className="w-3 h-3 mr-1" />
-        WhatsApp
-      </Button>
-    )
+    try {
+      const cleanPhone = telefone.replace(/\D/g, '')
+      if (cleanPhone.length < 8) {
+        return <span className="text-xs text-contrast">Tel. inválido</span>
+      }
+      
+      const phoneWithCountry = cleanPhone.length <= 11 ? `55${cleanPhone}` : cleanPhone
+      
+      return (
+        <Button
+          variant="outline"
+          size="sm"
+          className="h-6 px-2 text-xs bg-green-600 hover:bg-green-700 text-white border-green-600"
+          onClick={() => window.open(`https://wa.me/${phoneWithCountry}`, '_blank')}
+        >
+          <MessageCircle className="w-3 h-3 mr-1" />
+          WhatsApp
+        </Button>
+      )
+    } catch (error) {
+      console.error('❌ [ClienteRow] Erro ao renderizar WhatsApp:', error)
+      return <span className="text-xs text-contrast">Erro</span>
+    }
   }
 
   const renderLinkCell = (url: string, field: string, label: string) => {
-    const isEditing = editingLink?.clienteId === cliente.id && editingLink?.field === field
+    const isEditing = editingLink?.clienteId === safeCliente.id && editingLink?.field === field
     
     if (isEditing) {
       return (
         <div className="flex items-center gap-1">
           <Input
-            value={linkValue}
+            value={linkValue || ''}
             onChange={(e) => setLinkValue(e.target.value)}
             className="h-6 text-xs"
             placeholder="https://..."
@@ -150,7 +198,7 @@ export function ClienteRow({
             size="sm"
             variant="ghost"
             className="h-6 w-6 p-0"
-            onClick={() => onLinkSave(cliente.id, field)}
+            onClick={() => onLinkSave(safeCliente.id, field)}
           >
             <Check className="w-3 h-3 text-green-600" />
           </Button>
@@ -166,13 +214,13 @@ export function ClienteRow({
       )
     }
 
-    if (!url) {
+    if (!url || url.trim() === '') {
       return (
         <Button
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
+          onClick={() => onLinkEdit(safeCliente.id, field, url || '')}
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
@@ -185,7 +233,13 @@ export function ClienteRow({
           variant="outline"
           size="sm"
           className="h-6 px-2 text-xs"
-          onClick={() => window.open(url, '_blank')}
+          onClick={() => {
+            try {
+              window.open(url, '_blank')
+            } catch (error) {
+              console.error('❌ [ClienteRow] Erro ao abrir link:', error)
+            }
+          }}
         >
           <ExternalLink className="w-3 h-3 mr-1" />
           Ver
@@ -194,7 +248,7 @@ export function ClienteRow({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onLinkEdit(cliente.id, field, url)}
+          onClick={() => onLinkEdit(safeCliente.id, field, url)}
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
@@ -203,15 +257,15 @@ export function ClienteRow({
   }
 
   const renderSiteCell = () => {
-    const siteStatus = cliente.site_status || 'pendente'
-    const siteUrl = cliente.link_site || ''
+    const siteStatus = safeCliente.site_status
+    const siteUrl = safeCliente.link_site
     
-    const isEditingLink = editingLink?.clienteId === cliente.id && editingLink?.field === 'link_site'
+    const isEditingLink = editingLink?.clienteId === safeCliente.id && editingLink?.field === 'link_site'
     if (isEditingLink) {
       return (
         <div className="flex items-center gap-1">
           <Input
-            value={linkValue}
+            value={linkValue || ''}
             onChange={(e) => setLinkValue(e.target.value)}
             className="h-6 text-xs"
             placeholder="https://..."
@@ -296,7 +350,7 @@ export function ClienteRow({
               variant="ghost"
               className="h-6 w-6 p-0"
               onClick={() => {
-                onLinkEdit(cliente.id, 'link_site', '')
+                onLinkEdit(safeCliente.id, 'link_site', '')
               }}
             >
               <Edit2 className="w-3 h-3 text-muted-foreground" />
@@ -305,7 +359,7 @@ export function ClienteRow({
         )
 
       case 'finalizado':
-        if (siteUrl) {
+        if (siteUrl && siteUrl.trim() !== '') {
           return (
             <div className="flex items-center gap-1">
               <Button
@@ -313,13 +367,17 @@ export function ClienteRow({
                 size="sm"
                 className="h-7 px-2 text-xs bg-blue-100 text-blue-700 border-blue-300 hover:bg-blue-200"
                 onClick={() => {
-                  let urlToOpen = siteUrl.trim()
-                  
-                  if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
-                    urlToOpen = `https://${urlToOpen}`
+                  try {
+                    let urlToOpen = siteUrl.trim()
+                    
+                    if (!urlToOpen.startsWith('http://') && !urlToOpen.startsWith('https://')) {
+                      urlToOpen = `https://${urlToOpen}`
+                    }
+                    
+                    window.open(urlToOpen, '_blank')
+                  } catch (error) {
+                    console.error('❌ [ClienteRow] Erro ao abrir site:', error)
                   }
-                  
-                  window.open(urlToOpen, '_blank')
                 }}
               >
                 🌐 Ver site
@@ -345,14 +403,14 @@ export function ClienteRow({
                 variant="ghost"
                 className="h-6 w-6 p-0"
                 onClick={() => {
-                  onLinkEdit(cliente.id, 'link_site', '')
+                  onLinkEdit(safeCliente.id, 'link_site', '')
                 }}
               >
                 <Edit2 className="w-3 h-3 text-muted-foreground" />
-            </Button>
-          </div>
-        )
-      }
+              </Button>
+            </div>
+          )
+        }
 
       default:
         return (
@@ -379,17 +437,16 @@ export function ClienteRow({
   }
 
   const handleSiteOptionSelect = async (option: string) => {
-    console.log('🎯 Selecionando opção do site:', { clienteId: cliente.id, option })
-    
     try {
-      await onStatusChange(cliente.id, option)
+      console.log('🎯 Selecionando opção do site:', { clienteId: safeCliente.id, option })
+      
+      await onStatusChange(safeCliente.id, option)
       setShowSiteOptions(false)
       
       if (option === 'aguardando_link') {
         console.log('🧹 Limpando link_site existente')
-        await onStatusChange(cliente.id, 'aguardando_link')
-        if (cliente.link_site) {
-          await onLinkSave(cliente.id, 'link_site')
+        if (safeCliente.link_site) {
+          await onLinkSave(safeCliente.id, 'link_site')
         }
       }
     } catch (error) {
@@ -398,18 +455,18 @@ export function ClienteRow({
   }
 
   const handleSiteLinkSave = async () => {
-    console.log('💾 Salvando link do site:', linkValue)
-    
-    if (!linkValue.trim()) {
-      console.error('❌ Link do site está vazio')
-      return
-    }
-    
     try {
-      const linkSuccess = await onLinkSave(cliente.id, 'link_site')
+      console.log('💾 Salvando link do site:', linkValue)
+      
+      if (!linkValue || linkValue.trim() === '') {
+        console.error('❌ Link do site está vazio')
+        return
+      }
+      
+      const linkSuccess = await onLinkSave(safeCliente.id, 'link_site')
       
       if (linkSuccess) {
-        await onStatusChange(cliente.id, 'finalizado')
+        await onStatusChange(safeCliente.id, 'finalizado')
         console.log('✅ Link salvo e status atualizado para finalizado')
       } else {
         console.error('❌ Falha ao salvar o link')
@@ -420,13 +477,13 @@ export function ClienteRow({
   }
 
   const renderBMCell = () => {
-    const isEditing = editingBM === cliente.id
+    const isEditing = editingBM === safeCliente.id
     
     if (isEditing) {
       return (
         <div className="flex items-center gap-1">
           <Input
-            value={bmValue}
+            value={bmValue || ''}
             onChange={(e) => setBmValue(e.target.value)}
             className="h-6 text-xs"
             placeholder="Número BM"
@@ -435,7 +492,7 @@ export function ClienteRow({
             size="sm"
             variant="ghost"
             className="h-6 w-6 p-0"
-            onClick={() => onBMSave(cliente.id)}
+            onClick={() => onBMSave(safeCliente.id)}
           >
             <Check className="w-3 h-3 text-green-600" />
           </Button>
@@ -454,13 +511,13 @@ export function ClienteRow({
     return (
       <div className="flex items-center gap-1">
         <span className="text-xs text-contrast">
-          {cliente.numero_bm || '-'}
+          {safeCliente.numero_bm || '-'}
         </span>
         <Button
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onBMEdit(cliente.id, cliente.numero_bm || '')}
+          onClick={() => onBMEdit(safeCliente.id, safeCliente.numero_bm)}
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
@@ -469,118 +526,129 @@ export function ClienteRow({
   }
 
   const isGestorDashboard = window.location.pathname.includes('gestor') || selectedManager !== 'Todos os Clientes'
-  const dateLimit = calculateDateLimit(cliente.data_venda)
+  const dateLimit = calculateDateLimit(safeCliente.data_venda)
 
-  return (
-    <TableRow className="border-border hover:bg-muted/20 transition-colors">
-      <TableCell className="font-mono text-xs text-contrast">
-        {String(index + 1).padStart(3, '0')}
-      </TableCell>
-      
-      <TableCell>
-        <div className="flex items-center gap-1">
-          <Calendar className="w-3 h-3 text-muted-foreground" />
-          <span className="text-xs text-contrast">{formatDate(cliente.data_venda)}</span>
-        </div>
-      </TableCell>
-      
-      <TableCell className="font-medium">
-        <div className="max-w-[200px] truncate text-contrast">
-          {cliente.nome_cliente}
-        </div>
-      </TableCell>
-      
-      <TableCell>{renderWhatsAppButton(cliente.telefone || '')}</TableCell>
-      
-      <TableCell>
-        <div className="max-w-[150px] truncate text-contrast">
-          {cliente.email_gestor}
-        </div>
-      </TableCell>
-      
-      <TableCell>
-        <Select 
-          value={cliente.status_campanha || ''}
-          onValueChange={(value) => onStatusChange(cliente.id, value)}
-          disabled={updatingStatus === cliente.id}
-        >
-          <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-            <SelectValue>
-              {updatingStatus === cliente.id ? (
-                <div className="flex items-center gap-2">
-                  <Loader2 className="w-3 h-3 animate-spin" />
-                  <span>Atualizando...</span>
-                </div>
-              ) : (
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                  {cliente.status_campanha || 'Sem status'}
-                </span>
-              )}
-            </SelectValue>
-          </SelectTrigger>
-          <SelectContent className="bg-card border-border z-50">
-            {STATUS_CAMPANHA.map(status => (
-              <SelectItem key={status} value={status}>
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                  {status}
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </TableCell>
-      
-      <TableCell>
-        <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${dateLimit.style}`}>
-          {dateLimit.text.includes('Faltam') && (
-            <Calendar className="w-3 h-3" />
-          )}
-          {dateLimit.text.includes('Atrasado') && (
-            <AlertTriangle className="w-3 h-3" />
-          )}
-          <span>{dateLimit.text}</span>
-        </div>
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        <BriefingMaterialsModal
-          emailCliente={cliente.email_cliente}
-          nomeCliente={cliente.nome_cliente}
-          trigger={
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
-            >
-              <Eye className="w-3 h-3 mr-1" />
-              Ver
-            </Button>
-          }
-        />
-      </TableCell>
-      
-      <TableCell className="hidden lg:table-cell">
-        {renderSiteCell()}
-      </TableCell>
-      
-      <TableCell className="hidden xl:table-cell">
-        {renderBMCell()}
-      </TableCell>
-      
-      <TableCell>
-        <ComissaoButton
-          cliente={cliente}
-          isGestorDashboard={isGestorDashboard}
-          updatingComission={updatingComission}
-          editingComissionValue={editingComissionValue}
-          comissionValueInput={comissionValueInput}
-          setComissionValueInput={setComissionValueInput}
-          onComissionToggle={onComissionToggle}
-          onComissionValueEdit={onComissionValueEdit}
-          onComissionValueSave={onComissionValueSave}
-          onComissionValueCancel={onComissionValueCancel}
-        />
-      </TableCell>
-    </TableRow>
-  )
+  try {
+    return (
+      <TableRow className="border-border hover:bg-muted/20 transition-colors">
+        <TableCell className="font-mono text-xs text-contrast">
+          {String(index + 1).padStart(3, '0')}
+        </TableCell>
+        
+        <TableCell>
+          <div className="flex items-center gap-1">
+            <Calendar className="w-3 h-3 text-muted-foreground" />
+            <span className="text-xs text-contrast">{formatDate(safeCliente.data_venda)}</span>
+          </div>
+        </TableCell>
+        
+        <TableCell className="font-medium">
+          <div className="max-w-[200px] truncate text-contrast">
+            {safeCliente.nome_cliente}
+          </div>
+        </TableCell>
+        
+        <TableCell>{renderWhatsAppButton(safeCliente.telefone)}</TableCell>
+        
+        <TableCell>
+          <div className="max-w-[150px] truncate text-contrast">
+            {safeCliente.email_gestor}
+          </div>
+        </TableCell>
+        
+        <TableCell>
+          <Select 
+            value={safeCliente.status_campanha}
+            onValueChange={(value) => onStatusChange(safeCliente.id, value)}
+            disabled={updatingStatus === safeCliente.id}
+          >
+            <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+              <SelectValue>
+                {updatingStatus === safeCliente.id ? (
+                  <div className="flex items-center gap-2">
+                    <Loader2 className="w-3 h-3 animate-spin" />
+                    <span>Atualizando...</span>
+                  </div>
+                ) : (
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(safeCliente.status_campanha)}`}>
+                    {safeCliente.status_campanha || 'Sem status'}
+                  </span>
+                )}
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent className="bg-card border-border z-50">
+              {STATUS_CAMPANHA.map(status => (
+                <SelectItem key={status} value={status}>
+                  <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                    {status}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </TableCell>
+        
+        <TableCell>
+          <div className={`flex items-center gap-1 px-2 py-1 rounded text-xs font-medium ${dateLimit.style}`}>
+            {dateLimit.text.includes('Faltam') && (
+              <Calendar className="w-3 h-3" />
+            )}
+            {dateLimit.text.includes('Atrasado') && (
+              <AlertTriangle className="w-3 h-3" />
+            )}
+            <span>{dateLimit.text}</span>
+          </div>
+        </TableCell>
+        
+        <TableCell className="hidden lg:table-cell">
+          <BriefingMaterialsModal
+            emailCliente={safeCliente.email_cliente}
+            nomeCliente={safeCliente.nome_cliente}
+            trigger={
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-6 px-2 text-xs bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200"
+              >
+                <Eye className="w-3 h-3 mr-1" />
+                Ver
+              </Button>
+            }
+          />
+        </TableCell>
+        
+        <TableCell className="hidden lg:table-cell">
+          {renderSiteCell()}
+        </TableCell>
+        
+        <TableCell className="hidden xl:table-cell">
+          {renderBMCell()}
+        </TableCell>
+        
+        <TableCell>
+          <ComissaoButton
+            cliente={safeCliente}
+            isGestorDashboard={isGestorDashboard}
+            updatingComission={updatingComission}
+            editingComissionValue={editingComissionValue}
+            comissionValueInput={comissionValueInput}
+            setComissionValueInput={setComissionValueInput}
+            onComissionToggle={onComissionToggle}
+            onComissionValueEdit={onComissionValueEdit}
+            onComissionValueSave={onComissionValueSave}
+            onComissionValueCancel={onComissionValueCancel}
+          />
+        </TableCell>
+      </TableRow>
+    )
+  } catch (renderError) {
+    console.error('❌ [ClienteRow] Erro crítico na renderização:', renderError, safeCliente)
+    return (
+      <TableRow className="border-border hover:bg-muted/20 transition-colors">
+        <TableCell colSpan={12} className="text-center text-red-500 py-4">
+          ❌ Erro ao renderizar cliente: {safeCliente.nome_cliente} (ID: {safeCliente.id})
+        </TableCell>
+      </TableRow>
+    )
+  }
 }
