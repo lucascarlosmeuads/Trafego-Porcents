@@ -1,21 +1,14 @@
-
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Globe, RefreshCw, CheckCircle } from 'lucide-react'
-import { useManagerData } from '@/hooks/useManagerData'
+import { useSitesData } from '@/hooks/useSitesData'
 import { Button } from '@/components/ui/button'
 
 export function SitesDashboard() {
-  const { user, currentManagerName } = useAuth()
-  const { clientes, loading, error, refetch } = useManagerData(user?.email || '', false)
-
-  console.log('🌐 [SitesDashboard] === STATUS DO PAINEL ===')
-  console.log('📧 Usuário:', user?.email)
-  console.log('⏳ Loading:', loading)
-  console.log('❌ Error:', error)
-  console.log('📊 Total clientes:', clientes.length)
+  const { user } = useAuth()
+  const { clientes, loading, error, refetch } = useSitesData()
 
   if (loading) {
     return (
@@ -46,18 +39,13 @@ export function SitesDashboard() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold header-title">Painel de Sites - {currentManagerName}</h1>
+          <h1 className="text-3xl font-bold">Painel de Criação de Sites</h1>
           <div className="flex items-center gap-2 text-sm text-blue-600 mt-2">
             <Globe className="w-4 h-4" />
-            <span className="header-subtitle">Clientes aguardando criação de sites</span>
+            <span>Clientes aguardando criação de sites</span>
           </div>
         </div>
-        <Button 
-          onClick={refetch} 
-          variant="outline" 
-          size="sm"
-          className="flex items-center gap-2"
-        >
+        <Button onClick={refetch} variant="outline" size="sm" className="flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
           Atualizar
         </Button>
@@ -156,7 +144,7 @@ export function SitesDashboard() {
         ) : (
           <div className="bg-white rounded-lg shadow">
             <ClientesTable 
-              selectedManager={currentManagerName} 
+              selectedManager="Criador de Sites" 
               filterType="sites-pendentes"
             />
           </div>
