@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
@@ -128,6 +129,8 @@ export function useAuthState(): UseAuthState {
     setUser,
     loading,
     setLoading,
+    userType,
+    setUserType,
     isAdmin,
     isGestor,
     isCliente,
