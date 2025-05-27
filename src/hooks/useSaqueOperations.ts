@@ -1,71 +1,85 @@
 
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { toast } from '@/hooks/use-toast'
+import { useToast } from '@/hooks/use-toast'
 
 export function useSaqueOperations() {
   const [loading, setLoading] = useState(false)
+  const { toast } = useToast()
 
   const criarSolicitacaoSaque = async (
-    clienteId: string,
+    clienteId: string | number,
     emailGestor: string,
     nomeGestor: string,
     valorComissao: number
   ) => {
+    console.log('🚀 [useSaqueOperations] Iniciando criação de saque:', {
+      clienteId,
+      emailGestor,
+      nomeGestor,
+      valorComissao
+    })
+
+    if (!emailGestor || !nomeGestor) {
+      console.error('❌ [useSaqueOperations] Dados incompletos do gestor')
+      toast({
+        title: "Erro",
+        description: "Dados do gestor incompletos. Faça login novamente.",
+        variant: "destructive"
+      })
+      return false
+    }
+
     setLoading(true)
     
     try {
-      console.log('🚀 [useSaqueOperations] Criando solicitação de saque:', {
-        clienteId,
-        emailGestor,
-        nomeGestor,
-        valorComissao
-      })
-
-      // NOVA LÓGICA: Mudar o status do cliente para "Saque Pendente"
-      const { error: updateStatusError } = await supabase
-        .from('todos_clientes')
-        .update({ 
-          status_campanha: 'Saque Pendente',
-          saque_solicitado: true 
-        })
-        .eq('id', parseInt(clienteId))
-
-      if (updateStatusError) {
-        console.error('❌ Erro ao alterar status para Saque Pendente:', updateStatusError)
-        throw updateStatusError
-      }
-
-      // Depois, criar a solicitação de saque
-      const { error: insertError } = await supabase
+      // 1. Criar solicitação na tabela solicitacoes_saque
+      const { data: solicitacao, error: errorSolicitacao } = await supabase
         .from('solicitacoes_saque')
         .insert({
-          cliente_id: parseInt(clienteId),
+          cliente_id: Number(clienteId), // Garantir que seja número
           email_gestor: emailGestor,
           nome_gestor: nomeGestor,
           valor_comissao: valorComissao,
           status_saque: 'pendente'
         })
+        .select()
 
-      if (insertError) {
-        console.error('❌ Erro ao criar solicitação de saque:', insertError)
-        throw insertError
+      if (errorSolicitacao) {
+        console.error('❌ [useSaqueOperations] Erro ao criar solicitação:', errorSolicitacao)
+        throw errorSolicitacao
       }
 
-      console.log('✅ Solicitação de saque criada e cliente movido para Saque Pendente')
-      
+      console.log('✅ [useSaqueOperations] Solicitação criada:', solicitacao)
+
+      // 2. Atualizar o cliente para marcar saque_solicitado = true
+      const { error: errorUpdate } = await supabase
+        .from('todos_clientes')
+        .update({ 
+          saque_solicitado: true 
+        })
+        .eq('id', Number(clienteId)) // Garantir que seja número
+
+      if (errorUpdate) {
+        console.error('❌ [useSaqueOperations] Erro ao atualizar cliente:', errorUpdate)
+        throw errorUpdate
+      }
+
+      console.log('✅ [useSaqueOperations] Cliente atualizado com saque_solicitado = true')
+
       toast({
-        title: "Sucesso",
-        description: "Solicitação de saque enviada! O cliente foi movido para 'Saque Pendente' e será processado pelo admin.",
+        title: "Saque solicitado!",
+        description: `Solicitação de R$ ${valorComissao.toFixed(2)} enviada com sucesso.`,
       })
 
       return true
+
     } catch (error) {
-      console.error('💥 Erro ao criar solicitação de saque:', error)
+      console.error('💥 [useSaqueOperations] Erro geral:', error)
       toast({
-        title: "Erro",
-        description: "Falha ao enviar solicitação de saque",
-        variant: "destructive",
+        title: "Erro ao solicitar saque",
+        description: "Tente novamente em alguns instantes.",
+        variant: "destructive"
       })
       return false
     } finally {

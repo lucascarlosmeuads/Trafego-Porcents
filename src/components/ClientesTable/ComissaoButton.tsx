@@ -46,6 +46,16 @@ export function ComissaoButton({
   // Verificar se a solicitação foi paga pelo admin
   const saqueFoiPago = solicitacoesPagas.includes(cliente.id.toString())
 
+  // Debug logs para verificar o estado
+  console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
+    status: cliente.status_campanha,
+    isNoAr,
+    jaFoiSolicitado,
+    saqueFoiPago,
+    saqueEnviado,
+    isGestorDashboard
+  })
+
   // NOVA REGRA: Gestores não podem editar comissão em nenhuma situação
   if (isGestorDashboard && isEditingValue) {
     // Se for painel do gestor e estiver tentando editar, cancelar automaticamente
@@ -90,6 +100,7 @@ export function ComissaoButton({
 
   // PAINEL DO GESTOR - Saque foi pago pelo admin
   if (isGestorDashboard && saqueFoiPago) {
+    console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
@@ -104,6 +115,7 @@ export function ComissaoButton({
 
   // PAINEL DO GESTOR - Status "Campanha no Ar" + Saque disponível
   if (isGestorDashboard && isNoAr && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
+    console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
     return (
       <div className="flex items-center gap-1">
         <Button
@@ -111,6 +123,7 @@ export function ComissaoButton({
           size="sm"
           className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
           onClick={async () => {
+            console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
             const success = await criarSolicitacaoSaque(
               cliente.id,
               cliente.email_gestor || '',
@@ -118,7 +131,10 @@ export function ComissaoButton({
               valorComissao
             )
             if (success) {
+              console.log('✅ [ComissaoButton] Saque criado com sucesso!')
               setSaqueEnviado(true)
+            } else {
+              console.error('❌ [ComissaoButton] Falha ao criar saque')
             }
           }}
           disabled={loadingSaque}
@@ -137,6 +153,7 @@ export function ComissaoButton({
 
   // PAINEL DO GESTOR - Saque já solicitado ou enviado (mas ainda não pago)
   if (isGestorDashboard && (jaFoiSolicitado || saqueEnviado) && !saqueFoiPago) {
+    console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
@@ -148,6 +165,7 @@ export function ComissaoButton({
 
   // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Campanha no Ar" ou comissão paga)
   if (isGestorDashboard) {
+    console.log('🔒 [ComissaoButton] Status travado para gestor')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">

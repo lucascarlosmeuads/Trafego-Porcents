@@ -4,6 +4,8 @@ import type { Cliente } from '@/lib/supabase'
 
 export function useComissaoMetrics(clientes: Cliente[], solicitacoesPagas: string[] = []) {
   const metrics = useMemo(() => {
+    console.log('📊 [useComissaoMetrics] Calculando métricas para', clientes.length, 'clientes')
+    
     // Comissões pendentes - todas que não estão "Campanha no Ar", não são "Off", "Reembolso" e não foram pagas
     const comissoesPendentes = clientes.filter(cliente => 
       cliente.status_campanha !== 'Campanha no Ar' && 
@@ -13,12 +15,23 @@ export function useComissaoMetrics(clientes: Cliente[], solicitacoesPagas: strin
     )
 
     // Comissões disponíveis para saque - status "Campanha no Ar", não solicitadas ainda e não pagas pelo admin
-    const comissoesDisponiveis = clientes.filter(cliente => 
-      cliente.status_campanha === 'Campanha no Ar' && 
-      !cliente.saque_solicitado &&
-      !cliente.comissao_paga &&
-      !solicitacoesPagas.includes(cliente.id)
-    )
+    const comissoesDisponiveis = clientes.filter(cliente => {
+      const disponivel = cliente.status_campanha === 'Campanha no Ar' && 
+        !cliente.saque_solicitado &&
+        !cliente.comissao_paga &&
+        !solicitacoesPagas.includes(cliente.id)
+      
+      if (disponivel) {
+        console.log('💰 [useComissaoMetrics] Cliente disponível para saque:', cliente.nome_cliente, {
+          status: cliente.status_campanha,
+          saque_solicitado: cliente.saque_solicitado,
+          comissao_paga: cliente.comissao_paga,
+          pago_admin: solicitacoesPagas.includes(cliente.id)
+        })
+      }
+      
+      return disponivel
+    })
 
     // Comissões já recebidas - marcadas como pagas pelo admin
     const comissoesRecebidas = clientes.filter(cliente => 
@@ -36,6 +49,15 @@ export function useComissaoMetrics(clientes: Cliente[], solicitacoesPagas: strin
     const totalRecebido = comissoesRecebidas.reduce((total, cliente) => 
       total + (cliente.valor_comissao || 0), 0
     )
+
+    console.log('📈 [useComissaoMetrics] Métricas calculadas:', {
+      pendentes: comissoesPendentes.length,
+      disponiveis: comissoesDisponiveis.length,
+      recebidas: comissoesRecebidas.length,
+      totalDisponivel,
+      totalPendente,
+      totalRecebido
+    })
 
     return {
       comissoesPendentes: comissoesPendentes.length,
