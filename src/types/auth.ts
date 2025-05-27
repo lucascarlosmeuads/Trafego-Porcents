@@ -11,8 +11,7 @@ export interface AuthContextType {
   isGestor: boolean
   isCliente: boolean
   isVendedor: boolean
-  isCriadorSite: boolean
   currentManagerName: string
 }
 
-export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'criador_site' | 'unauthorized' | 'error'
+export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'unauthorized' | 'error'

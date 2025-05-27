@@ -24,7 +24,7 @@ import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
-  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'sites-pendentes'
+  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes'
 }
 
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
@@ -746,11 +746,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   } else if (filterType === 'saques-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha === 'Saque Pendente'
-    )
-  } else if (filterType === 'sites-pendentes') {
-    // NOVO: Filtrar apenas clientes com site_status = 'aguardando_link'
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.site_status === 'aguardando_link'
     )
   } else {
     // Comportamento padrão (manter as abas existentes)
