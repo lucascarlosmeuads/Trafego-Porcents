@@ -149,6 +149,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
         }
 
         console.log('✅ [BriefingForm] Briefing atualizado com sucesso:', data)
+        
+        // SEMPRE atualizar status para "Brief" após atualização
+        await updateClienteStatus()
       } else {
         // Criar novo briefing
         console.log('📝 [BriefingForm] Criando novo briefing...')
@@ -172,7 +175,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
         console.log('✅ [BriefingForm] Briefing criado com sucesso:', data)
         
-        // ATUALIZAR STATUS DO CLIENTE PARA "Brief" após salvar o briefing com sucesso
+        // SEMPRE atualizar status para "Brief" após criação
         await updateClienteStatus()
       }
 
