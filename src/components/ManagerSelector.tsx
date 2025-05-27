@@ -110,8 +110,9 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
 
   const getSelectedManagerName = () => {
     if (!selectedManager) return 'Todos os Clientes'
+    // CORREÇÃO: selectedManager agora é sempre o email, então buscar o nome pelo email
     const gestor = gestores.find(g => g.email === selectedManager)
-    return gestor ? gestor.nome : 'Todos os Clientes'
+    return gestor ? gestor.nome : selectedManager
   }
 
   const getSelectedManagerCount = () => {

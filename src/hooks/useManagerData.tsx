@@ -90,30 +90,11 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
         setCurrentManager('Criador de Sites')
         console.log('🎯 [useManagerData] Filtro para sites: aguardando_link')
       } else if (isAdminUser) {
-        if (selectedManager && selectedManager !== 'Todos os Clientes') {
-          // Se selectedManager for um email, usar diretamente
-          // Se for um nome, buscar o email correspondente
-          if (selectedManager.includes('@')) {
-            query = query.eq('email_gestor', selectedManager)
-            setCurrentManager(selectedManager)
-            console.log('🎯 [useManagerData] Filtro admin por email:', selectedManager)
-          } else {
-            // Buscar o email do gestor pelo nome
-            const { data: gestorData } = await supabase
-              .from('gestores')
-              .select('email')
-              .eq('nome', selectedManager)
-              .single()
-            
-            if (gestorData?.email) {
-              query = query.eq('email_gestor', gestorData.email)
-              setCurrentManager(gestorData.email)
-              console.log('🎯 [useManagerData] Filtro admin por nome->email:', gestorData.email)
-            } else {
-              console.log('⚠️ [useManagerData] Gestor não encontrado:', selectedManager)
-              setCurrentManager('Todos os Clientes')
-            }
-          }
+        if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== null) {
+          // CORREÇÃO: Para admin, sempre usar selectedManager como email do gestor diretamente
+          query = query.eq('email_gestor', selectedManager)
+          setCurrentManager(selectedManager)
+          console.log('🎯 [useManagerData] Filtro admin por selectedManager:', selectedManager)
         } else {
           setCurrentManager('Todos os Clientes')
           console.log('🎯 [useManagerData] Sem filtro - todos os clientes')
@@ -133,6 +114,11 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
       } else if (data) {
         const clientesValidados = validateAndSanitizeClienteData(data)
         console.log('✅ [useManagerData] Clientes carregados:', clientesValidados.length)
+        console.log('📊 [useManagerData] Primeiros clientes:', clientesValidados.slice(0, 3).map(c => ({ 
+          id: c.id, 
+          nome: c.nome_cliente, 
+          email_gestor: c.email_gestor 
+        })))
         setClientes(clientesValidados)
       }
     } catch (e) {
