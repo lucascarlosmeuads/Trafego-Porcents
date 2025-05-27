@@ -8,8 +8,7 @@ import {
   Wallet,
   Shield,
   FileText,
-  Upload,
-  Globe
+  Upload
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -37,11 +36,6 @@ export function AdminMainMenu({
   const handleGestoresManagement = () => {
     onManagerSelect('__GESTORES__')
     onTabChange('clientes')
-  }
-
-  const handleSitePanelRedirect = () => {
-    // Navigate to the sites route
-    window.location.href = '/sites'
   }
 
   return (
@@ -80,14 +74,6 @@ export function AdminMainMenu({
       >
         <FileText size={16} />
         <span>Formulários Briefing</span>
-      </button>
-
-      <button
-        onClick={handleSitePanelRedirect}
-        className="w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 text-card-foreground hover:bg-muted"
-      >
-        <Globe size={16} />
-        <span>Painel de Sites</span>
       </button>
 
       <button
