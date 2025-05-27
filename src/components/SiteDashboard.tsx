@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ClientesTable } from './ClientesTable'
+import { SiteClientesTable } from './SiteClientesTable'
 import { useManagerData } from '@/hooks/useManagerData'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 

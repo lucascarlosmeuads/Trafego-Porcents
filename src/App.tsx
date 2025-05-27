@@ -1,3 +1,4 @@
+
 import {
   BrowserRouter,
   Routes,
@@ -7,13 +8,9 @@ import {
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query";
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/ThemeProvider"
 import { Toaster } from "@/components/ui/toaster"
-import { LoginPage } from "@/pages/Login"
-import { ManagerRoutes } from "@/routes/ManagerRoutes"
-import { ClienteRoutes } from "@/routes/ClienteRoutes"
-import { ProtectedRoute } from "@/components/ProtectedRoute"
-
+import { LoginPage } from "@/pages/Index"
 import { SiteDashboard } from '@/components/SiteDashboard'
 
 function App() {
@@ -26,13 +23,8 @@ function App() {
           <div className="min-h-screen bg-background">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
-              <Route path="/cliente/*" element={<ClienteRoutes />} />
               <Route path="/sites" element={<SiteDashboard />} />
-              <Route path="/*" element={
-                <ProtectedRoute>
-                  <ManagerRoutes />
-                </ProtectedRoute>
-              } />
+              <Route path="/*" element={<LoginPage />} />
             </Routes>
             <Toaster />
           </div>
