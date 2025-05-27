@@ -64,21 +64,18 @@ export function useAuthState(): UseAuthState {
         return
       }
 
-      // Se não for admin, buscar na tabela de gestores
+      // CORREÇÃO: Verificar na tabela de gestores PRIMEIRO antes de verificar clientes
+      console.log('🔍 [useAuthState] Verificando se é gestor na tabela gestores...')
       const { data: gestor, error: gestorError } = await supabase
         .from('gestores')
         .select('*')
         .eq('email', email)
+        .eq('ativo', true)
         .single()
 
       if (gestorError && gestorError.code !== 'PGRST116') {
         console.error('❌ [useAuthState] Erro ao buscar gestor:', gestorError)
-        setUserType('error')
-        setCurrentManagerName('')
-        return
-      }
-
-      if (gestor) {
+      } else if (gestor) {
         console.log('👨‍💼 [useAuthState] Usuário autenticado como GESTOR:', gestor.nome)
         setUserType('gestor')
         setCurrentManagerName(gestor.nome || 'Gestor')
@@ -86,6 +83,7 @@ export function useAuthState(): UseAuthState {
       }
 
       // Se não for gestor, verificar na tabela de clientes
+      console.log('🔍 [useAuthState] Não é gestor, verificando se é cliente...')
       const { data: cliente, error: clienteError } = await supabase
         .from('todos_clientes')
         .select('*')
@@ -94,12 +92,7 @@ export function useAuthState(): UseAuthState {
 
       if (clienteError && clienteError.code !== 'PGRST116') {
         console.warn('⚠️ [useAuthState] Cliente não encontrado:', email)
-        setUserType('unauthorized')
-        setCurrentManagerName('')
-        return
-      }
-
-      if (cliente) {
+      } else if (cliente) {
         console.log('👤 [useAuthState] Usuário autenticado como CLIENTE:', cliente.nome_cliente)
         setUserType('cliente')
         setCurrentManagerName(cliente.nome_cliente || 'Cliente')
@@ -122,7 +115,7 @@ export function useAuthState(): UseAuthState {
   const isGestor = userType === 'gestor'
   const isCliente = userType === 'cliente'
   const isVendedor = userType === 'vendedor'
-  const isSites = userType === 'sites' // NOVO
+  const isSites = userType === 'sites'
 
   return {
     user,
@@ -135,7 +128,7 @@ export function useAuthState(): UseAuthState {
     isGestor,
     isCliente,
     isVendedor,
-    isSites, // NOVO
+    isSites,
     currentManagerName,
     setCurrentManagerName,
     updateUserType,
