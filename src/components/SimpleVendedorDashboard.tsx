@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -23,7 +24,9 @@ export function SimpleVendedorDashboard() {
     nome_cliente: '',
     telefone: '',
     email_cliente: '',
-    email_gestor: ''
+    email_gestor: '',
+    status_campanha: 'Brief',
+    data_venda: new Date().toISOString().split('T')[0]
   })
 
   const gestores = [
@@ -102,7 +105,9 @@ export function SimpleVendedorDashboard() {
           nome_cliente: '',
           telefone: '',
           email_cliente: '',
-          email_gestor: ''
+          email_gestor: '',
+          status_campanha: 'Brief',
+          data_venda: new Date().toISOString().split('T')[0]
         })
         setShowForm(false)
         toast({
@@ -122,7 +127,9 @@ export function SimpleVendedorDashboard() {
       nome_cliente: '',
       telefone: '',
       email_cliente: '',
-      email_gestor: ''
+      email_gestor: '',
+      status_campanha: 'Brief',
+      data_venda: new Date().toISOString().split('T')[0]
     })
     setShowForm(false)
   }
