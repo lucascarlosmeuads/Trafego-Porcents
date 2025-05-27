@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -42,6 +41,12 @@ export interface BriefingCliente {
   liberar_edicao: boolean | null
   created_at: string
   updated_at: string
+  // New strategic briefing fields
+  faixa_etaria: string | null
+  genero: string | null
+  localizacao: string | null
+  tem_site: string | null
+  links_redes_sociais: string | null
 }
 
 export interface VendaCliente {
