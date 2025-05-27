@@ -64,8 +64,15 @@ export function useAuthState(): UseAuthState {
         return
       }
 
-      // CORREÇÃO: Verificar na tabela de gestores PRIMEIRO antes de verificar clientes
+      // DEBUG ESPECÍFICO PARA CAROL
+      console.log('🔍 [useAuthState] === DEBUG ESPECÍFICO PARA CAROL ===')
+      console.log('🔍 [useAuthState] Email recebido:', `"${email}"`)
+      console.log('🔍 [useAuthState] Email normalizado:', `"${email.toLowerCase().trim()}"`)
+      
+      // Verificar na tabela de gestores PRIMEIRO
       console.log('🔍 [useAuthState] Verificando se é gestor na tabela gestores...')
+      console.log('🔍 [useAuthState] Query: SELECT * FROM gestores WHERE email = ? AND ativo = true')
+      
       const { data: gestor, error: gestorError } = await supabase
         .from('gestores')
         .select('*')
@@ -73,13 +80,24 @@ export function useAuthState(): UseAuthState {
         .eq('ativo', true)
         .single()
 
+      console.log('🔍 [useAuthState] Resultado da query gestores:')
+      console.log('🔍 [useAuthState] - Data:', gestor)
+      console.log('🔍 [useAuthState] - Error:', gestorError)
+      console.log('🔍 [useAuthState] - Error code:', gestorError?.code)
+
       if (gestorError && gestorError.code !== 'PGRST116') {
         console.error('❌ [useAuthState] Erro ao buscar gestor:', gestorError)
       } else if (gestor) {
-        console.log('👨‍💼 [useAuthState] Usuário autenticado como GESTOR:', gestor.nome)
+        console.log('👨‍💼 [useAuthState] ✅ GESTOR ENCONTRADO!')
+        console.log('👨‍💼 [useAuthState] Nome:', gestor.nome)
+        console.log('👨‍💼 [useAuthState] Email:', gestor.email)
+        console.log('👨‍💼 [useAuthState] Ativo:', gestor.ativo)
         setUserType('gestor')
         setCurrentManagerName(gestor.nome || 'Gestor')
         return
+      } else {
+        console.log('❌ [useAuthState] GESTOR NÃO ENCONTRADO na tabela gestores')
+        console.log('❌ [useAuthState] Isso significa que o email não existe ou não está ativo')
       }
 
       // Se não for gestor, verificar na tabela de clientes
@@ -99,18 +117,19 @@ export function useAuthState(): UseAuthState {
         return
       }
 
-      console.warn('❌ [useAuthState] Tipo de usuário não determinado para:', email)
+      console.warn('❌ [useAuthState] TIPO DE USUÁRIO NÃO DETERMINADO para:', email)
+      console.warn('❌ [useAuthState] O usuário não foi encontrado em nenhuma tabela')
       setUserType('unauthorized')
       setCurrentManagerName('')
 
     } catch (error) {
-      console.error('❌ [useAuthState] Erro ao determinar tipo de usuário:', error)
+      console.error('❌ [useAuthState] Erro CRÍTICO ao determinar tipo de usuário:', error)
       setUserType('error')
       setCurrentManagerName('')
     }
   }, [])
 
-  // Computed properties - ATUALIZADO para incluir isSites
+  // Computed properties
   const isAdmin = userType === 'admin'
   const isGestor = userType === 'gestor'
   const isCliente = userType === 'cliente'
