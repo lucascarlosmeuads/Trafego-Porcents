@@ -40,7 +40,7 @@ export function ComissaoButton({
 
   const isEditingValue = editingComissionValue === cliente.id
   const valorComissao = cliente.valor_comissao || 0
-  const isNoAr = cliente.status_campanha === 'Campanha no Ar'
+  const isSaquePendente = cliente.status_campanha === 'Saque Pendente'
   const jaFoiSolicitado = cliente.saque_solicitado || false
   
   // Verificar se a solicitação foi paga pelo admin
@@ -49,7 +49,7 @@ export function ComissaoButton({
   // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
     status: cliente.status_campanha,
-    isNoAr,
+    isSaquePendente,
     jaFoiSolicitado,
     saqueFoiPago,
     saqueEnviado,
@@ -113,8 +113,8 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Status "Campanha no Ar" + Saque disponível
-  if (isGestorDashboard && isNoAr && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
+  // PAINEL DO GESTOR - Status "Saque Pendente" + Saque disponível
+  if (isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
     console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
     return (
       <div className="flex items-center gap-1">
@@ -163,7 +163,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Campanha no Ar" ou comissão paga)
+  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Saque Pendente" ou comissão paga)
   if (isGestorDashboard) {
     console.log('🔒 [ComissaoButton] Status travado para gestor')
     return (

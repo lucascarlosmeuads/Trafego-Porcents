@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -54,7 +53,7 @@ export type SolicitacaoSaque = {
   updated_at: string
 }
 
-// Status operacionais disponíveis
+// Status operacionais disponíveis - REMOVIDO "Campanha no Ar"
 export const STATUS_CAMPANHA = [
   'Preenchimento do Formulário',
   'Brief',
@@ -63,7 +62,6 @@ export const STATUS_CAMPANHA = [
   'Agendamento',
   'Configurando BM',
   'Subindo Campanha',
-  'Campanha no Ar',
   'Otimização',
   'Problema',
   'Cliente Sumiu',

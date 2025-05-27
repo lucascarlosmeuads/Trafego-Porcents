@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -19,7 +18,6 @@ const STATUS_STAGES = [
   'Brief',
   'Criativo',
   'Agendamento',
-  'No Ar',
   'Otimização'
 ]
 
@@ -28,8 +26,7 @@ const STATUS_MAPPING = {
   'Brief': 2,
   'Criativo': 3,
   'Agendamento': 4,
-  'No Ar': 5,
-  'Otimização': 6
+  'Otimização': 5
 }
 
 export function ClienteDashboardOverview({ 
