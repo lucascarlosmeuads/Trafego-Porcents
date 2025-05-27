@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -128,7 +129,7 @@ export function ClienteRow({
       const diffTime = limite.getTime() - hoje.getTime()
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
       
-      if (safeCliente.status_campanha === 'No Ar' || safeCliente.status_campanha === 'Otimização') {
+      if (safeCliente.status_campanha === 'Campanha no Ar' || safeCliente.status_campanha === 'Otimização') {
         return {
           text: '✅ Cumprido',
           style: 'bg-green-100 text-green-800 border-green-300'

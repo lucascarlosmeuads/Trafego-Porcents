@@ -20,7 +20,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
   )
 
   const clientesNoAr = clientes.filter(cliente => 
-    cliente.status_campanha === 'No Ar' || cliente.status_campanha === 'Otimização'
+    cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
   const clientesProblemas = clientes.filter(cliente => 
@@ -28,7 +28,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
   )
 
   const clientesAtrasados = clientes.filter(cliente => {
-    if (!cliente.data_venda || cliente.status_campanha === 'No Ar' || cliente.status_campanha === 'Otimização') return false
+    if (!cliente.data_venda || cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização') return false
     
     const venda = new Date(cliente.data_venda)
     const limite = new Date(venda)
