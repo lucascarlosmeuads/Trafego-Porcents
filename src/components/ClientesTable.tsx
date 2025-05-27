@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -152,7 +153,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
       case 'Subindo Campanha':
         return 'bg-lime-500/20 text-lime-300 border border-lime-500/30'
-      case 'No Ar':
+      case 'Campanha no Ar':
         return 'bg-green-500/20 text-green-300 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
