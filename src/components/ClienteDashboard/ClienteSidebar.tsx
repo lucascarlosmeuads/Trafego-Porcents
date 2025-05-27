@@ -1,5 +1,4 @@
-
-import { BarChart3, DollarSign, Folder, GraduationCap, FileText } from 'lucide-react'
+import { BarChart3, DollarSign, Folder, GraduationCap, FileText, Home } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +21,11 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
   const isMobile = useIsMobile()
   
   const menuItems = [
+    {
+      id: 'welcome',
+      title: 'Início',
+      icon: Home,
+    },
     {
       id: 'dashboard',
       title: 'Dashboard',

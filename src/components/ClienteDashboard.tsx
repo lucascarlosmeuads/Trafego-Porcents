@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -13,11 +12,12 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { useClienteData } from '@/hooks/useClienteData'
 import { ensureClienteExists, restoreClienteData } from '@/utils/clienteDataHelpers'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { ClienteWelcome } from './ClienteDashboard/ClienteWelcome'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState('welcome') // Changed default to 'welcome'
   const [dataIntegrityChecked, setDataIntegrityChecked] = useState(false)
   const isMobile = useIsMobile()
 
@@ -58,6 +58,10 @@ export function ClienteDashboard() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'welcome':
+        return (
+          <ClienteWelcome onTabChange={setActiveTab} />
+        )
       case 'dashboard':
         return (
           <ClienteDashboardOverview 
@@ -95,12 +99,7 @@ export function ClienteDashboard() {
         return <TutorialVideos />
       default:
         return (
-          <ClienteDashboardOverview 
-            cliente={cliente}
-            briefing={briefing}
-            vendas={vendas}
-            arquivos={arquivos}
-          />
+          <ClienteWelcome onTabChange={setActiveTab} />
         )
     }
   }
