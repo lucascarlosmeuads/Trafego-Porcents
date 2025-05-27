@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -159,7 +158,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
       case 'Problema':
         return 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-      case 'Off':
+      case 'Cliente Sumiu':
         return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
       case 'Reembolso':
         return 'bg-red-500/20 text-red-300 border border-red-500/30'
@@ -732,14 +731,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
     clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
       cliente.status_campanha !== 'Problema' &&
       cliente.status_campanha !== 'Saque Pendente'
     )
   } else if (filterType === 'inativos') {
     clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Cliente Sumiu' || 
       cliente.status_campanha === 'Reembolso'
     )
   } else if (filterType === 'problemas') {
@@ -757,14 +756,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   } else {
     // Comportamento padrão (manter as abas existentes)
     const clientesAtivos = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
       cliente.status_campanha !== 'Problema' &&
       cliente.status_campanha !== 'Saque Pendente'
     )
     
     const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Cliente Sumiu' || 
       cliente.status_campanha === 'Reembolso'
     )
 
@@ -799,13 +798,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   // Se não é um filterType específico, renderizar com abas
   if (!filterType) {
     const clientesAtivos = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Off' && 
+      cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
       cliente.status_campanha !== 'Problema'
     )
     
     const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Off' || 
+      cliente.status_campanha === 'Cliente Sumiu' || 
       cliente.status_campanha === 'Reembolso'
     )
 

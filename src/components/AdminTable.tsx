@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
@@ -122,7 +121,7 @@ export function AdminTable() {
         return 'bg-green-500/20 text-green-700 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
-      case 'Off':
+      case 'Cliente Sumiu':
         return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
       case 'Reembolso':
         return 'bg-red-500/20 text-red-700 border border-red-500/30'

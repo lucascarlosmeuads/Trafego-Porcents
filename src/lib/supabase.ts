@@ -66,7 +66,7 @@ export const STATUS_CAMPANHA = [
   'Campanha no Ar',
   'Otimização',
   'Problema',
-  'Off',
+  'Cliente Sumiu',
   'Reembolso',
   'Saque Pendente'
 ] as const
