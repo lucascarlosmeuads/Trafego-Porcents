@@ -22,7 +22,6 @@ function App() {
         <ThemeProvider>
           <div className="min-h-screen bg-background">
             <Routes>
-              <Route path="/login" element={<Index />} />
               <Route path="/sites" element={<SiteDashboard />} />
               <Route path="/*" element={<Index />} />
             </Routes>
