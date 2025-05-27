@@ -67,8 +67,7 @@ export const STATUS_CAMPANHA = [
   'Otimização',
   'Problema',
   'Cliente Sumiu',
-  'Reembolso',
-  'Saque Pendente'
+  'Reembolso'
 ] as const
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
