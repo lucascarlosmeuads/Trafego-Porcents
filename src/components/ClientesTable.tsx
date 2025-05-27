@@ -5,10 +5,12 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Smartphone, Monitor, Calendar, ArrowRightLeft } from 'lucide-react'
+import { Loader2, Smartphone, Monitor, Calendar, ArrowRightLeft, ExternalLink, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { TransferClientModal } from './TransferClientModal'
+import { AddClientRow } from './ClientesTable/AddClientRow'
+import { Input } from '@/components/ui/input'
 
 interface ClientesTableProps {
   selectedManager: string | null
@@ -84,7 +86,6 @@ export function ClientesTable({ selectedManager, filterType }: ClientesTableProp
           variant: "destructive"
         })
       } else {
-        // Atualizar o estado local
         setClientes(prev => prev.map(cliente => 
           cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
@@ -116,7 +117,45 @@ export function ClientesTable({ selectedManager, filterType }: ClientesTableProp
 
   const handleTransferComplete = () => {
     console.log('Transferência concluída, recarregando dados')
-    fetchClientes() // Recarregar dados após transferência
+    fetchClientes()
+  }
+
+  const addCliente = async (clienteData: any) => {
+    try {
+      const { data, error } = await supabase
+        .from('todos_clientes')
+        .insert([{
+          ...clienteData,
+          email_gestor: selectedManager || '',
+          created_at: new Date().toISOString()
+        }])
+        .select()
+
+      if (error) {
+        console.error('Erro ao adicionar cliente:', error)
+        toast({
+          title: "Erro",
+          description: `Erro ao adicionar cliente: ${error.message}`,
+          variant: "destructive"
+        })
+        return false
+      }
+
+      if (data && data.length > 0) {
+        setClientes(prev => [data[0], ...prev])
+        return { success: true, isNewClient: true, clientData: data[0] }
+      }
+
+      return false
+    } catch (error) {
+      console.error('Erro:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao adicionar cliente",
+        variant: "destructive"
+      })
+      return false
+    }
   }
 
   const formatDate = (dateString: string | null) => {
@@ -247,12 +286,25 @@ export function ClientesTable({ selectedManager, filterType }: ClientesTableProp
                   <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
                   <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
                   <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
+                  <TableHead className="min-w-[150px] text-muted-foreground">Email Cliente</TableHead>
+                  <TableHead className="min-w-[120px] text-muted-foreground">Vendedor</TableHead>
                   <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                   <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Data Limite</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Link Grupo</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Materiais</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Link Site</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Nº BM</TableHead>
+                  <TableHead className="min-w-[100px] text-muted-foreground">Comissão</TableHead>
                   <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
+                <AddClientRow 
+                  onAddClient={addCliente}
+                  isLoading={loading}
+                  getStatusColor={getStatusColor}
+                />
                 {clientes.map((cliente, index) => (
                   <TableRow 
                     key={cliente.id} 
@@ -273,6 +325,12 @@ export function ClientesTable({ selectedManager, filterType }: ClientesTableProp
                       </div>
                     </TableCell>
                     <TableCell className="text-foreground">{cliente.telefone}</TableCell>
+                    <TableCell className="text-foreground">
+                      <div className="max-w-[150px] truncate">
+                        {cliente.email_cliente}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground">{cliente.vendedor}</TableCell>
                     <TableCell>
                       <div className="max-w-[180px] truncate text-foreground">
                         {cliente.email_gestor}
@@ -300,6 +358,91 @@ export function ClientesTable({ selectedManager, filterType }: ClientesTableProp
                           ))}
                         </SelectContent>
                       </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        type="date"
+                        value={cliente.data_limite || ''}
+                        onChange={(e) => updateField(cliente.id, 'data_limite', e.target.value)}
+                        className="h-8 w-32 text-xs"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      {cliente.link_grupo ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => window.open(cliente.link_grupo, '_blank')}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      ) : (
+                        <Input 
+                          placeholder="Link do grupo"
+                          value={cliente.link_grupo || ''}
+                          onChange={(e) => updateField(cliente.id, 'link_grupo', e.target.value)}
+                          className="h-8 w-32 text-xs"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex gap-1">
+                        {cliente.link_briefing && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() => window.open(cliente.link_briefing, '_blank')}
+                            title="Briefing"
+                          >
+                            <FileText className="w-3 h-3" />
+                          </Button>
+                        )}
+                        {cliente.link_criativo && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2"
+                            onClick={() => window.open(cliente.link_criativo, '_blank')}
+                            title="Criativo"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {cliente.link_site ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 px-2"
+                          onClick={() => window.open(cliente.link_site, '_blank')}
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </Button>
+                      ) : (
+                        <Input 
+                          placeholder="Link do site"
+                          value={cliente.link_site || ''}
+                          onChange={(e) => updateField(cliente.id, 'link_site', e.target.value)}
+                          className="h-8 w-32 text-xs"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Input 
+                        placeholder="Nº BM"
+                        value={cliente.numero_bm || ''}
+                        onChange={(e) => updateField(cliente.id, 'numero_bm', e.target.value)}
+                        className="h-8 w-24 text-xs"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-xs text-foreground">
+                        R$ {(cliente.valor_comissao || 60).toFixed(2)}
+                      </span>
                     </TableCell>
                     <TableCell>
                       <Button 
