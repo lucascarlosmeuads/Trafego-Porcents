@@ -65,7 +65,6 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
 
     const validatedClientes = rawData
       .filter((item, index) => {
-        // Validar campos obrigatórios
         if (!item || typeof item !== 'object') {
           console.warn(`⚠️ [useManagerData] Item ${index} inválido:`, item)
           return false
@@ -114,7 +113,6 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
       })
       .filter((cliente): cliente is Cliente => cliente !== null)
 
-    // Remover duplicatas baseado no ID
     const uniqueClientes = validatedClientes.reduce((acc: Cliente[], current) => {
       const exists = acc.find(item => item.id === current.id)
       if (!exists) {
@@ -146,18 +144,21 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
     setError(null)
 
     try {
-      // Verificar se é usuário responsável por sites
-      const isSitesUser = email.includes('sites') || email.includes('site@') || email.includes('webdesign')
+      // Verificar se é usuário responsável por sites - LÓGICA MELHORADA
+      const normalizedEmail = email.toLowerCase().trim()
+      const isSitesUser = normalizedEmail.includes('criador') || 
+                         normalizedEmail.includes('site') || 
+                         normalizedEmail.includes('webdesign')
       
       if (isSitesUser) {
         console.log('🌐 [useManagerData] Modo sites - buscando clientes com site_status = aguardando_link')
         
         try {
-          // Para usuários de sites, buscar TODOS os clientes com site_status = 'aguardando_link'
           const { data, error } = await supabase
             .from('todos_clientes')
             .select('*')
             .eq('site_status', 'aguardando_link')
+            .order('created_at', { ascending: false })
 
           if (error) {
             console.error('❌ [useManagerData] Erro Supabase ao buscar clientes para sites:', error)
@@ -169,7 +170,6 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
           } else {
             console.log('📊 [useManagerData] Dados brutos recebidos para sites:', data.length)
             
-            // Validar e sanitizar os dados
             const clientesValidados = validateAndSanitizeClienteData(data)
             console.log('✅ [useManagerData] Clientes aguardando sites validados:', clientesValidados.length)
             
@@ -184,7 +184,7 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
             
             setClientes(clientesValidados)
           }
-          setCurrentManager('Responsável por Sites')
+          setCurrentManager('Criador de Sites')
         } catch (fetchError) {
           console.error('💥 [useManagerData] Erro de rede/crítico ao buscar clientes para sites:', fetchError)
           setError('Erro de conexão. Verifique sua internet e tente novamente.')
@@ -197,6 +197,7 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
           let query = supabase
             .from('todos_clientes')
             .select('*')
+            .order('created_at', { ascending: false })
 
           if (selectedManager && selectedManager !== 'Todos os Clientes') {
             console.log('👑 [useManagerData] Modo admin - filtrando por gestor:', selectedManager)
@@ -237,6 +238,7 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
             .from('todos_clientes')
             .select('*')
             .eq('email_gestor', email)
+            .order('created_at', { ascending: false })
 
           if (error) {
             console.error('❌ [useManagerData] Erro Supabase ao buscar clientes (gestor):', error)
@@ -271,12 +273,11 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
   useEffect(() => {
     fetchClientes()
 
-    // Configuração do listener para atualizações em tempo real
     const channel = supabase
       .channel('any')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'todos_clientes' }, payload => {
         console.log('⚡️ [useManagerData] Mudança detectada via Realtime:', payload)
-        fetchClientes() // Refetch para garantir que os dados estão atualizados
+        fetchClientes()
       })
       .subscribe()
 
