@@ -213,11 +213,50 @@ export function BriefingMaterialsModal({
     return email.replace(/[@.]/g, '_')
   }
 
+  const validateManagerFile = (file: File) => {
+    console.log('🔍 [BriefingMaterialsModal] Validando arquivo do gestor:', {
+      nome: file.name,
+      tipo: file.type,
+      tamanho: file.size
+    })
+
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
+      'application/pdf'
+    ]
+    
+    // Validação especial para PDFs
+    const isValidPDF = file.type === 'application/pdf' || 
+                      (file.name.toLowerCase().endsWith('.pdf') && 
+                       (file.type === 'application/pdf' || file.type === '' || file.type === 'application/octet-stream'))
+    
+    const fileExtension = file.name.toLowerCase().split('.').pop()
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'avi', 'mov', 'wmv', 'pdf']
+    
+    if (!allowedTypes.includes(file.type) && !isValidPDF && !allowedExtensions.includes(fileExtension || '')) {
+      return {
+        valid: false,
+        message: `Tipo de arquivo não permitido: ${file.name} (${file.type || 'tipo não detectado'})`
+      }
+    }
+
+    if (file.size > 2 * 1024 * 1024 * 1024) {
+      return {
+        valid: false,
+        message: `Arquivo muito grande: ${file.name} deve ter no máximo 2GB.`
+      }
+    }
+
+    return { valid: true, message: '' }
+  }
+
   const handleManagerFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
 
     setUploading(true)
+    console.log('🚀 [BriefingMaterialsModal] Gestor iniciando upload de', files.length, 'arquivo(s)')
 
     try {
       let successCount = 0
@@ -225,26 +264,17 @@ export function BriefingMaterialsModal({
 
       for (const file of files) {
         try {
-          const allowedTypes = [
-            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
-            'application/pdf'
-          ]
-          
-          if (!allowedTypes.includes(file.type)) {
-            toast({
-              title: "Tipo de arquivo não permitido",
-              description: `O arquivo ${file.name} não é suportado.`,
-              variant: "destructive"
-            })
-            errorCount++
-            continue
-          }
+          console.log('📤 [BriefingMaterialsModal] Processando arquivo do gestor:', {
+            nome: file.name,
+            tipo: file.type,
+            isPDF: file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+          })
 
-          if (file.size > 2 * 1024 * 1024 * 1024) {
+          const validation = validateManagerFile(file)
+          if (!validation.valid) {
             toast({
-              title: "Arquivo muito grande",
-              description: `O arquivo ${file.name} deve ter no máximo 2GB.`,
+              title: "Arquivo rejeitado",
+              description: validation.message,
               variant: "destructive"
             })
             errorCount++
@@ -255,11 +285,16 @@ export function BriefingMaterialsModal({
           const fileName = `gestor_${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
           const filePath = `${sanitizedEmail}/${fileName}`
 
+          console.log('📤 [BriefingMaterialsModal] Enviando arquivo do gestor para storage:', filePath)
+
           const { error: uploadError } = await supabase.storage
             .from('cliente-arquivos')
-            .upload(filePath, file)
+            .upload(filePath, file, {
+              contentType: file.type || undefined
+            })
 
           if (uploadError) {
+            console.error('❌ [BriefingMaterialsModal] Erro no upload do gestor:', uploadError)
             toast({
               title: "Erro no upload",
               description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
@@ -275,7 +310,7 @@ export function BriefingMaterialsModal({
               email_cliente: emailCliente,
               nome_arquivo: file.name,
               caminho_arquivo: filePath,
-              tipo_arquivo: file.type,
+              tipo_arquivo: file.type || 'application/octet-stream',
               tamanho_arquivo: file.size,
               author_type: 'gestor'
             })
@@ -298,6 +333,7 @@ export function BriefingMaterialsModal({
             continue
           }
 
+          console.log('✅ [BriefingMaterialsModal] Arquivo do gestor salvo com sucesso:', file.name)
           successCount++
 
         } catch (fileError) {
@@ -520,7 +556,7 @@ export function BriefingMaterialsModal({
                       <Input
                         type="file"
                         multiple
-                        accept="image/*,video/*,.pdf"
+                        accept="image/*,video/*,.pdf,application/pdf"
                         onChange={handleManagerFileUpload}
                         disabled={uploading}
                         className="mb-2"

@@ -36,6 +36,59 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
     return email.replace(/[@.]/g, '_')
   }
 
+  const validateFile = (file: File) => {
+    console.log('🔍 [ArquivosUpload] Validando arquivo:', {
+      nome: file.name,
+      tipo: file.type,
+      tamanho: file.size,
+      tipoDetectado: file.type || 'MIME type não detectado'
+    })
+
+    // Lista expandida de tipos permitidos com validações específicas para PDF
+    const allowedTypes = [
+      'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
+      'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
+      'application/pdf'
+    ]
+    
+    // Validação especial para PDFs - verificar extensão também
+    const isValidPDF = file.type === 'application/pdf' || 
+                      (file.name.toLowerCase().endsWith('.pdf') && 
+                       (file.type === 'application/pdf' || file.type === '' || file.type === 'application/octet-stream'))
+    
+    // Validação por extensão como backup
+    const fileExtension = file.name.toLowerCase().split('.').pop()
+    const allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'mp4', 'avi', 'mov', 'wmv', 'pdf']
+    
+    if (!allowedTypes.includes(file.type) && !isValidPDF && !allowedExtensions.includes(fileExtension || '')) {
+      console.error('❌ [ArquivosUpload] Tipo não permitido:', {
+        tipo: file.type,
+        extensao: fileExtension,
+        nome: file.name
+      })
+      return {
+        valid: false,
+        message: `Tipo de arquivo não permitido. Arquivo: ${file.name} (${file.type || 'tipo não detectado'}). Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF`
+      }
+    }
+
+    // Validação de tamanho (máximo 2GB)
+    if (file.size > 2 * 1024 * 1024 * 1024) {
+      console.error('❌ [ArquivosUpload] Arquivo muito grande:', file.size)
+      return {
+        valid: false,
+        message: `Arquivo muito grande. ${file.name} deve ter no máximo 2GB.`
+      }
+    }
+
+    // Log para PDFs válidos
+    if (isValidPDF) {
+      console.log('✅ [ArquivosUpload] PDF válido detectado:', file.name)
+    }
+
+    return { valid: true, message: '' }
+  }
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files
     if (!files || files.length === 0) return
@@ -64,32 +117,19 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
 
       for (const file of files) {
         try {
-          console.log('📤 [ArquivosUpload] Processando arquivo:', file.name, 'Tamanho:', file.size)
+          console.log('📤 [ArquivosUpload] Processando arquivo:', {
+            nome: file.name,
+            tipo: file.type,
+            tamanho: formatFileSize(file.size),
+            isPDF: file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')
+          })
 
-          // Validar tipo de arquivo (incluindo PDF)
-          const allowedTypes = [
-            'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
-            'video/mp4', 'video/avi', 'video/mov', 'video/wmv',
-            'application/pdf'
-          ]
-          
-          if (!allowedTypes.includes(file.type)) {
-            console.warn('⚠️ [ArquivosUpload] Tipo não permitido:', file.type)
+          // Validar arquivo
+          const validation = validateFile(file)
+          if (!validation.valid) {
             toast({
-              title: "Tipo de arquivo não permitido",
-              description: `O arquivo ${file.name} não é suportado.`,
-              variant: "destructive"
-            })
-            errorCount++
-            continue
-          }
-
-          // Validar tamanho (máximo 2GB)
-          if (file.size > 2 * 1024 * 1024 * 1024) {
-            console.warn('⚠️ [ArquivosUpload] Arquivo muito grande:', file.size)
-            toast({
-              title: "Arquivo muito grande",
-              description: `O arquivo ${file.name} deve ter no máximo 2GB.`,
+              title: "Arquivo rejeitado",
+              description: validation.message,
               variant: "destructive"
             })
             errorCount++
@@ -101,18 +141,28 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           const fileName = `${Date.now()}-${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`
           const filePath = `${sanitizedEmail}/${fileName}`
 
-          console.log('📤 [ArquivosUpload] Enviando para storage:', filePath)
+          console.log('📤 [ArquivosUpload] Enviando para storage:', {
+            caminho: filePath,
+            bucket: 'cliente-arquivos',
+            tipo: file.type,
+            tamanho: file.size
+          })
 
           // Upload para o Supabase Storage
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('cliente-arquivos')
             .upload(filePath, file, {
               cacheControl: '3600',
-              upsert: false
+              upsert: false,
+              contentType: file.type || undefined
             })
 
           if (uploadError) {
-            console.error('❌ [ArquivosUpload] Erro no upload para storage:', uploadError)
+            console.error('❌ [ArquivosUpload] Erro no upload para storage:', {
+              erro: uploadError,
+              arquivo: file.name,
+              caminho: filePath
+            })
             toast({
               title: "Erro no upload",
               description: `Falha ao enviar ${file.name}: ${uploadError.message}`,
@@ -122,7 +172,10 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             continue
           }
 
-          console.log('✅ [ArquivosUpload] Upload para storage concluído:', uploadData.path)
+          console.log('✅ [ArquivosUpload] Upload para storage concluído:', {
+            caminho: uploadData.path,
+            arquivo: file.name
+          })
 
           // Salvar no banco de dados
           console.log('💾 [ArquivosUpload] Salvando no banco de dados...')
@@ -133,14 +186,17 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
               email_cliente: emailCliente,
               nome_arquivo: file.name,
               caminho_arquivo: filePath,
-              tipo_arquivo: file.type,
+              tipo_arquivo: file.type || 'application/octet-stream',
               tamanho_arquivo: file.size,
               author_type: 'cliente'
             })
             .select()
 
           if (dbError) {
-            console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', dbError)
+            console.error('❌ [ArquivosUpload] Erro ao salvar no banco:', {
+              erro: dbError,
+              arquivo: file.name
+            })
             
             // Tentar remover o arquivo do storage se falhou no banco
             try {
@@ -161,7 +217,11 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             continue
           }
 
-          console.log('✅ [ArquivosUpload] Arquivo salvo com sucesso no banco:', dbData)
+          console.log('✅ [ArquivosUpload] Arquivo salvo com sucesso no banco:', {
+            id: dbData[0]?.id,
+            arquivo: file.name,
+            tipo: file.type
+          })
           successCount++
 
         } catch (fileError) {
@@ -301,24 +361,23 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
           <Input
             type="file"
             multiple
-            accept="image/*,video/*,.pdf"
+            accept="image/*,video/*,.pdf,application/pdf"
             onChange={handleFileUpload}
             disabled={uploading}
             className="max-w-xs mx-auto"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF (máx. 2GB)
+            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF (máx. 2GB por arquivo)
           </p>
-        </div>
-
-        {uploading && (
-          <div className="text-center py-4">
-            <div className="flex items-center justify-center gap-2">
-              <Loader2 className="w-5 h-5 animate-spin" />
-              <p className="text-sm text-blue-600">Enviando arquivos...</p>
+          {uploading && (
+            <div className="mt-4 text-center py-2">
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="w-5 h-5 animate-spin text-blue-600" />
+                <p className="text-sm text-blue-600 font-medium">Enviando arquivos...</p>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Seção: Seus Arquivos Enviados */}
         {arquivosCliente.length > 0 && (
