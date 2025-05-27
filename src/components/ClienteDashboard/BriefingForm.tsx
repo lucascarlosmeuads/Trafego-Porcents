@@ -376,7 +376,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
               </RadioGroup>
             </div>
 
-            {/* Tem site */}
+            {/* Pergunta sobre site - NOVA SEÇÃO MAIS ESPECÍFICA */}
             <div>
               <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2 mb-3`}>
                 🌐 Você já tem um site?
@@ -390,29 +390,31 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
                   <Label htmlFor="site_sim">Sim, já tenho um site</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="nao" id="site_nao" />
-                  <Label htmlFor="site_nao">Não tenho site ainda</Label>
+                  <RadioGroupItem value="quero" id="site_quero" />
+                  <Label htmlFor="site_quero">Não tenho, mas quero que vocês façam um</Label>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="ajuda" id="site_ajuda" />
-                  <Label htmlFor="site_ajuda">Preciso de ajuda para criar um</Label>
+                  <RadioGroupItem value="nao_preciso" id="site_nao_preciso" />
+                  <Label htmlFor="site_nao_preciso">Não tenho e não preciso de um</Label>
                 </div>
               </RadioGroup>
             </div>
 
-            {/* Links e redes sociais */}
-            <div>
-              <Label htmlFor="links_redes_sociais" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                🔗 Se já tiver site ou redes sociais, cole os links aqui:
-              </Label>
-              <Textarea
-                id="links_redes_sociais"
-                value={formData.links_redes_sociais}
-                onChange={(e) => setFormData(prev => ({ ...prev, links_redes_sociais: e.target.value }))}
-                placeholder="Instagram, site, YouTube, página de vendas..."
-                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
-              />
-            </div>
+            {/* Links e redes sociais - CONDICIONAL */}
+            {formData.tem_site === 'sim' && (
+              <div>
+                <Label htmlFor="links_redes_sociais" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  🔗 Cole os links do seu site e redes sociais aqui:
+                </Label>
+                <Textarea
+                  id="links_redes_sociais"
+                  value={formData.links_redes_sociais}
+                  onChange={(e) => setFormData(prev => ({ ...prev, links_redes_sociais: e.target.value }))}
+                  placeholder="Instagram, site, YouTube, página de vendas..."
+                  className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
+                />
+              </div>
+            )}
 
             {/* Observações finais */}
             <div>
@@ -530,13 +532,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
                 </Label>
                 <p className={isMobile ? 'text-base' : 'text-sm'}>
                   {briefing.tem_site === 'sim' && 'Já tem um site'}
-                  {briefing.tem_site === 'nao' && 'Não tem site ainda'}
-                  {briefing.tem_site === 'ajuda' && 'Precisa de ajuda para criar um'}
+                  {briefing.tem_site === 'quero' && 'Quer que a equipe crie um site'}
+                  {briefing.tem_site === 'nao_preciso' && 'Não precisa de site'}
                 </p>
               </div>
             )}
 
-            {briefing.links_redes_sociais && (
+            {briefing.links_redes_sociais && briefing.tem_site === 'sim' && (
               <div>
                 <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
                   🔗 Links e Redes Sociais
