@@ -10,7 +10,7 @@ import {
 } from "@tanstack/react-query";
 import { ThemeProvider } from "@/components/ThemeProvider"
 import { Toaster } from "@/components/ui/toaster"
-import { LoginPage } from "@/pages/Index"
+import Index from "@/pages/Index"
 import { SiteDashboard } from '@/components/SiteDashboard'
 
 function App() {
@@ -19,12 +19,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ThemeProvider defaultTheme="dark" storageKey="vite-ui-theme">
+        <ThemeProvider>
           <div className="min-h-screen bg-background">
             <Routes>
-              <Route path="/login" element={<LoginPage />} />
+              <Route path="/login" element={<Index />} />
               <Route path="/sites" element={<SiteDashboard />} />
-              <Route path="/*" element={<LoginPage />} />
+              <Route path="/*" element={<Index />} />
             </Routes>
             <Toaster />
           </div>
