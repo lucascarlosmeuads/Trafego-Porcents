@@ -572,7 +572,9 @@ export function ClienteRow({
                   </div>
                 ) : (
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(safeCliente.status_campanha)}`}>
-                    {safeCliente.status_campanha || 'Sem status'}
+                    {import('@/lib/supabase').then(module => 
+                      module.getStatusDisplayLabel(safeCliente.status_campanha)
+                    )}
                   </span>
                 )}
               </SelectValue>
@@ -581,7 +583,9 @@ export function ClienteRow({
               {STATUS_CAMPANHA.map(status => (
                 <SelectItem key={status} value={status}>
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                    {status}
+                    {import('@/lib/supabase').then(module => 
+                      module.getStatusDisplayLabel(status)
+                    )}
                   </span>
                 </SelectItem>
               ))}

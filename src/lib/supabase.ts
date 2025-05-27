@@ -53,7 +53,7 @@ export type SolicitacaoSaque = {
   updated_at: string
 }
 
-// Status operacionais disponíveis - REMOVIDO "Campanha no Ar"
+// Status operacionais disponíveis
 export const STATUS_CAMPANHA = [
   'Preenchimento do Formulário',
   'Brief',
@@ -70,3 +70,24 @@ export const STATUS_CAMPANHA = [
 ] as const
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
+
+// Mapeamento para exibição visual - apenas muda o rótulo, backend permanece igual
+export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
+  'Preenchimento do Formulário': 'Preenchimento do Formulário',
+  'Brief': 'Brief',
+  'Criativo': 'Criativo',
+  'Site': 'Site',
+  'Agendamento': 'Agendamento',
+  'Configurando BM': 'Configurando BM',
+  'Subindo Campanha': 'Subindo Campanha',
+  'Otimização': 'Otimização',
+  'Problema': 'Problema',
+  'Cliente Sumiu': 'Cliente Sumiu',
+  'Reembolso': 'Reembolso',
+  'Saque Pendente': 'Campanha no Ar'  // ✅ Apenas mudança visual
+}
+
+// Função para obter o rótulo visual do status
+export const getStatusDisplayLabel = (status: StatusCampanha): string => {
+  return STATUS_DISPLAY_MAP[status] || status
+}
