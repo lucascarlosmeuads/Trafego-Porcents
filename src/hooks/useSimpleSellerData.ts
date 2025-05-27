@@ -116,8 +116,8 @@ export function useSimpleSellerData(sellerEmail: string) {
         .maybeSingle()
 
       let clienteJaExistia = false
-      let finalClientData = clienteData
       let senhaDefinida = false
+      let clientId: string | number
 
       if (existingClient) {
         console.log('⚠️ [useSimpleSellerData] Cliente já existe, fazendo update dos dados...')
@@ -155,7 +155,7 @@ export function useSimpleSellerData(sellerEmail: string) {
           return { success: false, isNewClient: false, senhaDefinida: false }
         }
 
-        finalClientData = { ...clienteData, ...updatedData }
+        clientId = updatedData.id
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
         // Preparar nome do vendedor
@@ -193,7 +193,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         }
 
         console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
-        finalClientData = { ...clienteData, ...insertData }
+        clientId = insertData.id
 
         // Tentar criar conta de autenticação (opcional - não bloquear se falhar)
         console.log('🔐 [useSimpleSellerData] Tentando criar conta no Supabase Auth...')
@@ -253,7 +253,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         isNewClient: !clienteJaExistia, // MUDANÇA: usar isNewClient ao invés de duplicate
         senhaDefinida,
         clientData: {
-          id: finalClientData?.id || Math.random(),
+          id: clientId,
           email_cliente: clienteData.email_cliente,
           nome_cliente: clienteData.nome_cliente
         }
