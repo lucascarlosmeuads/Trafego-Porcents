@@ -157,18 +157,7 @@ Qualquer dúvida, entre em contato conosco!`
           }, 1000)
         }
         
-        // REDIRECIONAMENTO AUTOMÁTICO PARA O PAINEL DO CLIENTE (igual aos outros painéis)
-        if (!result.duplicate && clienteData.email_cliente) {
-          console.log("🟢 [SellerAddClientModal] Redirecionando para painel do cliente:", clienteData.email_cliente)
-          
-          // Pequeno delay para garantir que tudo foi processado
-          setTimeout(() => {
-            // Redirecionar para o painel do cliente usando o email
-            window.location.href = `/?email=${encodeURIComponent(clienteData.email_cliente)}`
-          }, 1500)
-        }
-        
-        // Se não foi duplicata, preparar dados para modal de instruções
+        // Preparar dados para modal de instruções
         if (!result.duplicate) {
           const dadosCliente = {
             email_cliente: clienteData.email_cliente,
@@ -178,12 +167,10 @@ Qualquer dúvida, entre em contato conosco!`
           
           setNewClientData(dadosCliente)
           
-          // Mostrar modal de instruções apenas se não vai redirecionar
-          if (result.duplicate) {
-            setTimeout(() => {
-              setShowInstructions(true)
-            }, 300)
-          }
+          // Mostrar modal de instruções
+          setTimeout(() => {
+            setShowInstructions(true)
+          }, 300)
         }
       }
     } catch (error: any) {

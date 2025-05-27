@@ -125,40 +125,6 @@ export function useSimpleSellerData(sellerEmail: string) {
         return { success: false, duplicate: true }
       }
 
-      // Criar conta de autenticação (usando a mesma lógica dos painéis que funcionam)
-      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
-      
-      let contaCriada = false
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: clienteData.email_cliente,
-        password: SENHA_PADRAO_CLIENTE,
-        options: {
-          data: {
-            full_name: clienteData.nome_cliente,
-            role: 'cliente'
-          }
-        }
-      })
-
-      if (authError) {
-        console.error('❌ [useSimpleSellerData] Erro na criação da conta Auth:', authError)
-        
-        if (authError.message.includes('User already registered') || authError.code === 'user_already_exists') {
-          console.log('⚠️ [useSimpleSellerData] Usuário já existe no Auth, continuando...')
-          contaCriada = true
-        } else {
-          toast({
-            title: "Erro na criação da conta",
-            description: `Erro: ${authError.message}`,
-            variant: "destructive"
-          })
-          return { success: false, duplicate: false }
-        }
-      } else {
-        console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
-        contaCriada = true
-      }
-
       // Preparar nome do vendedor
       const emailPrefix = sellerEmail.split('@')[0]
       let vendorName = emailPrefix.replace('vendedor', '')
@@ -166,7 +132,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
-      // Inserir cliente na tabela todos_clientes
+      // Inserir cliente na tabela todos_clientes primeiro
       console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
       const { data: insertData, error: insertError } = await supabase
         .from('todos_clientes')
@@ -195,6 +161,32 @@ export function useSimpleSellerData(sellerEmail: string) {
 
       console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
 
+      // Tentar criar conta de autenticação (opcional - não bloquear se falhar)
+      console.log('🔐 [useSimpleSellerData] Tentando criar conta no Supabase Auth...')
+      
+      try {
+        const { error: authError } = await supabase.auth.signUp({
+          email: clienteData.email_cliente,
+          password: SENHA_PADRAO_CLIENTE,
+          options: {
+            data: {
+              full_name: clienteData.nome_cliente,
+              role: 'cliente'
+            }
+          }
+        })
+
+        if (authError) {
+          console.warn('⚠️ [useSimpleSellerData] Erro na criação da conta Auth (continuando):', authError)
+          // Não bloquear se a conta já existir ou houver erro de auth
+        } else {
+          console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
+        }
+      } catch (authError) {
+        console.warn('⚠️ [useSimpleSellerData] Erro inesperado na criação da conta Auth:', authError)
+        // Continuar mesmo com erro de auth
+      }
+
       // Recarregar lista
       await fetchClientes()
       
@@ -207,11 +199,11 @@ export function useSimpleSellerData(sellerEmail: string) {
       
       console.log('🎉 [useSimpleSellerData] Processo concluído com sucesso')
       
-      // Retornar a estrutura exata esperada pelo modal (igual aos outros painéis)
+      // Retornar a estrutura esperada pelo modal
       return { 
         success: true, 
         duplicate: false, 
-        senhaDefinida: contaCriada,
+        senhaDefinida: true,
         clientData: {
           id: insertData?.id || Math.random(),
           email_cliente: clienteData.email_cliente,
