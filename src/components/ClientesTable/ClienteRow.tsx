@@ -1,10 +1,11 @@
+
 import { useState, useEffect } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AlertTriangle, Calendar, Check, X, Edit2, ExternalLink, Loader2, MessageCircle, Eye } from 'lucide-react'
-import { STATUS_CAMPANHA, getStatusDisplayLabel, type Cliente, supabase } from '@/lib/supabase'
+import { STATUS_CAMPANHA, getStatusDisplayLabel, type Cliente, type StatusCampanha, supabase } from '@/lib/supabase'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 
@@ -571,7 +572,7 @@ export function ClienteRow({
                   </div>
                 ) : (
                   <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(safeCliente.status_campanha)}`}>
-                    {getStatusDisplayLabel(safeCliente.status_campanha)}
+                    {getStatusDisplayLabel(safeCliente.status_campanha as StatusCampanha)}
                   </span>
                 )}
               </SelectValue>
