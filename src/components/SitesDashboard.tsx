@@ -3,15 +3,15 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Globe, Loader2 } from 'lucide-react'
+import { Globe, Loader2, AlertCircle } from 'lucide-react'
 import { useManagerData } from '@/hooks/useManagerData'
+import { Button } from '@/components/ui/button'
 
 export function SitesDashboard() {
   const { user, currentManagerName } = useAuth()
-  const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
+  const { clientes, loading, error, refetch } = useManagerData(user?.email || '', false)
 
-  // Agora o hook já filtra diretamente os clientes com site_status "aguardando_link"
-  // Não precisamos filtrar novamente aqui
+  // Os clientes já vêm filtrados pelo hook
   const clientesAguardandoSite = clientes
 
   useEffect(() => {
@@ -35,6 +35,20 @@ export function SitesDashboard() {
           <Loader2 className="w-5 h-5 animate-spin" />
           <span>Carregando clientes...</span>
         </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-8 gap-4">
+        <div className="flex items-center gap-2 text-red-600">
+          <AlertCircle className="w-5 h-5" />
+          <span>Erro ao carregar dados: {error}</span>
+        </div>
+        <Button onClick={refetch} variant="outline">
+          Tentar Novamente
+        </Button>
       </div>
     )
   }

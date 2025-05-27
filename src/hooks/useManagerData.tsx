@@ -73,18 +73,39 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
     setError(null)
 
     try {
-      let query = supabase
-        .from('todos_clientes')
-        .select('*')
-
       // Verificar se é usuário responsável por sites
       const isSitesUser = email.includes('sites') || email.includes('site@') || email.includes('webdesign')
       
       if (isSitesUser) {
-        console.log('🌐 [useManagerData] Modo sites - filtrando por site_status = aguardando_link')
-        query = query.eq('site_status', 'aguardando_link')
+        console.log('🌐 [useManagerData] Modo sites - buscando clientes com site_status = aguardando_link')
+        
+        // Para usuários de sites, buscar TODOS os clientes com site_status = 'aguardando_link'
+        const { data, error } = await supabase
+          .from('todos_clientes')
+          .select('*')
+          .eq('site_status', 'aguardando_link')
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar clientes para sites:', error)
+          setError(`Erro ao carregar clientes: ${error.message}`)
+        } else {
+          console.log('✅ [useManagerData] Clientes aguardando sites carregados:', data.length)
+          console.log('🌐 [useManagerData] Detalhes dos clientes:', data.map(c => ({
+            id: c.id,
+            nome: c.nome_cliente,
+            site_status: c.site_status,
+            email_gestor: c.email_gestor
+          })))
+          setClientes(data || [])
+        }
         setCurrentManager('Responsável por Sites')
+        
       } else if (isAdminUser) {
+        // Lógica para admin
+        let query = supabase
+          .from('todos_clientes')
+          .select('*')
+
         if (selectedManager && selectedManager !== 'Todos os Clientes') {
           console.log('👑 [useManagerData] Modo admin - filtrando por gestor:', selectedManager)
           query = query.eq('email_gestor', selectedManager)
@@ -93,32 +114,39 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
           console.log('👑 [useManagerData] Modo admin - mostrando todos os clientes')
           setCurrentManager('Todos os Clientes')
         }
+
+        const { data, error } = await query
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar clientes (admin):', error)
+          setError(`Erro ao carregar clientes: ${error.message}`)
+        } else {
+          console.log('✅ [useManagerData] Clientes carregados para admin:', data.length)
+          setClientes(data || [])
+        }
+        
       } else {
-        // Para não-admins (gestores, vendedores), filtrar por email_gestor
+        // Para gestores e vendedores normais
         console.log('👨‍💼 [useManagerData] Modo gestor/vendedor - filtrando por email_gestor')
-        query = query.eq('email_gestor', email)
+        
+        const { data, error } = await supabase
+          .from('todos_clientes')
+          .select('*')
+          .eq('email_gestor', email)
+
+        if (error) {
+          console.error('❌ [useManagerData] Erro ao buscar clientes (gestor):', error)
+          setError(`Erro ao carregar clientes: ${error.message}`)
+        } else {
+          console.log('✅ [useManagerData] Clientes carregados para gestor:', data.length)
+          setClientes(data || [])
+        }
         setCurrentManager(email)
       }
 
-      const { data, error } = await query
-
-      if (error) {
-        console.error('❌ [useManagerData] Erro ao buscar clientes:', error)
-        setError(error.message)
-      } else {
-        console.log('✅ [useManagerData] Clientes carregados com sucesso:', data.length)
-        if (isSitesUser) {
-          console.log('🌐 [useManagerData] Clientes aguardando sites:', data.map(c => ({
-            nome: c.nome_cliente,
-            site_status: c.site_status,
-            email: c.email_cliente
-          })))
-        }
-        setClientes(data)
-      }
     } catch (error) {
       console.error('💥 [useManagerData] Erro crítico ao buscar clientes:', error)
-      setError('Erro ao carregar clientes')
+      setError('Erro de conexão ao carregar clientes')
     } finally {
       setLoading(false)
     }
