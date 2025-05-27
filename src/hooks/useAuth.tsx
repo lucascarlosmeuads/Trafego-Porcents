@@ -1,7 +1,7 @@
+
 import { useState, useEffect, useContext, createContext, useMemo } from 'react'
-import { Auth, SupabaseClient, User } from '@supabase/supabase-js'
+import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { useRouter } from 'next/router'
 import type { AuthContextType, UserType } from '@/types/auth'
 
 type AuthProviderProps = {
