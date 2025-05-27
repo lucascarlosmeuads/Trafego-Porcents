@@ -23,7 +23,7 @@ interface ClienteRowProps {
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
+  onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
@@ -79,20 +79,28 @@ export function ClienteRow({
     )
   }
 
-  // Verificar campos obrigatórios com fallbacks seguros
-  const safeCliente = {
+  // Verificar campos obrigatórios com fallbacks seguros - incluindo TODOS os campos do tipo Cliente
+  const safeCliente: Cliente = {
     id: cliente.id || `temp-${index}`,
     nome_cliente: cliente.nome_cliente || 'Nome não informado',
     telefone: cliente.telefone || '',
     email_cliente: cliente.email_cliente || '',
+    vendedor: cliente.vendedor || '',
     email_gestor: cliente.email_gestor || '',
-    data_venda: cliente.data_venda || null,
+    data_venda: cliente.data_venda || '',
     status_campanha: cliente.status_campanha || 'Preenchimento do Formulário',
+    data_limite: cliente.data_limite || '',
+    link_grupo: cliente.link_grupo || '',
+    link_briefing: cliente.link_briefing || '',
+    link_criativo: cliente.link_criativo || '',
     site_status: cliente.site_status || 'pendente',
     link_site: cliente.link_site || '',
     numero_bm: cliente.numero_bm || '',
     comissao_paga: Boolean(cliente.comissao_paga),
-    valor_comissao: Number(cliente.valor_comissao || 60)
+    valor_comissao: Number(cliente.valor_comissao || 60),
+    created_at: cliente.created_at || '',
+    descricao_problema: cliente.descricao_problema || '',
+    saque_solicitado: Boolean(cliente.saque_solicitado || false)
   }
 
   const formatDate = (dateString: string | null) => {
