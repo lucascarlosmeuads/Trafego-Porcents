@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -10,20 +10,54 @@ import { Button } from '@/components/ui/button'
 export function SitesDashboard() {
   const { user, currentManagerName } = useAuth()
   const { clientes, loading, error, refetch } = useManagerData(user?.email || '', false)
+  const [renderError, setRenderError] = useState<string | null>(null)
 
-  // Os clientes já vêm filtrados pelo hook para usuários de sites
-  const clientesAguardandoSite = clientes
+  // Validação e sanitização específica para o painel de sites
+  const clientesAguardandoSite = clientes.filter(cliente => {
+    try {
+      // Validação básica de dados obrigatórios
+      if (!cliente || typeof cliente !== 'object') {
+        console.warn('⚠️ [SitesDashboard] Cliente inválido:', cliente)
+        return false
+      }
+
+      if (!cliente.id || !cliente.nome_cliente) {
+        console.warn('⚠️ [SitesDashboard] Cliente sem ID ou nome:', cliente.id, cliente.nome_cliente)
+        return false
+      }
+
+      // Verificar se tem site_status = 'aguardando_link'
+      const hasCorrectStatus = cliente.site_status === 'aguardando_link'
+      
+      if (hasCorrectStatus) {
+        console.log('✅ [SitesDashboard] Cliente válido aguardando site:', {
+          id: cliente.id,
+          nome: cliente.nome_cliente,
+          site_status: cliente.site_status
+        })
+      }
+      
+      return hasCorrectStatus
+    } catch (filterError) {
+      console.error('❌ [SitesDashboard] Erro ao filtrar cliente:', filterError, cliente)
+      return false
+    }
+  })
 
   useEffect(() => {
     console.log('🌐 [SitesDashboard] === STATUS DO PAINEL ===')
     console.log('📧 Usuário:', user?.email)
     console.log('⏳ Loading:', loading)
     console.log('❌ Error:', error)
-    console.log('📊 Total clientes:', clientesAguardandoSite.length)
+    console.log('📊 Total clientes brutos:', clientes.length)
+    console.log('📊 Clientes aguardando site após filtro:', clientesAguardandoSite.length)
+    
+    // Reset render error when data changes
+    setRenderError(null)
     
     if (clientesAguardandoSite.length > 0) {
-      console.log('✅ [SitesDashboard] Clientes aguardando site carregados com sucesso:', clientesAguardandoSite.length)
-      console.log('📋 Detalhes dos primeiros 3 clientes:', clientesAguardandoSite.slice(0, 3).map(c => ({ 
+      console.log('✅ [SitesDashboard] Clientes aguardando site carregados:', clientesAguardandoSite.length)
+      console.log('📋 Primeiros 3 clientes válidos:', clientesAguardandoSite.slice(0, 3).map(c => ({ 
         id: c.id,
         nome: c.nome_cliente, 
         email: c.email_cliente,
@@ -33,7 +67,36 @@ export function SitesDashboard() {
     } else if (!loading && !error) {
       console.log('ℹ️ [SitesDashboard] Nenhum cliente encontrado aguardando site')
     }
-  }, [clientesAguardandoSite, loading, error, user?.email])
+  }, [clientesAguardandoSite, loading, error, user?.email, clientes])
+
+  // Componente de fallback simples para debugging
+  const renderSimpleTable = () => (
+    <div className="bg-white rounded-lg shadow p-4">
+      <h3 className="text-lg font-semibold mb-4">🚧 Modo Debug - Dados Simples</h3>
+      <div className="space-y-2">
+        {clientesAguardandoSite.slice(0, 10).map((cliente, index) => {
+          try {
+            return (
+              <div key={`debug-${cliente.id}-${index}`} className="border p-2 rounded text-sm">
+                <p><strong>ID:</strong> {cliente.id || 'N/A'}</p>
+                <p><strong>Nome:</strong> {cliente.nome_cliente || 'N/A'}</p>
+                <p><strong>Telefone:</strong> {cliente.telefone || 'N/A'}</p>
+                <p><strong>Site Status:</strong> {cliente.site_status || 'N/A'}</p>
+                <p><strong>Email Gestor:</strong> {cliente.email_gestor || 'N/A'}</p>
+              </div>
+            )
+          } catch (itemError) {
+            console.error('❌ [SitesDashboard] Erro ao renderizar item debug:', itemError, cliente)
+            return (
+              <div key={`error-${index}`} className="border border-red-300 p-2 rounded text-sm bg-red-50">
+                <p className="text-red-600">❌ Erro ao renderizar cliente índice {index}</p>
+              </div>
+            )
+          }
+        })}
+      </div>
+    </div>
+  )
 
   if (loading) {
     return (
@@ -169,7 +232,7 @@ export function SitesDashboard() {
         </CardContent>
       </Card>
 
-      {/* Tabela de clientes - usando o componente existente */}
+      {/* Tabela de clientes - com tratamento de erro */}
       <div className="space-y-4">
         <h2 className="text-xl font-semibold">Clientes Aguardando Sites ({clientesAguardandoSite.length})</h2>
         
@@ -188,14 +251,78 @@ export function SitesDashboard() {
             </CardContent>
           </Card>
         ) : (
-          <div className="bg-white rounded-lg shadow">
-            <ClientesTable 
-              selectedManager={currentManagerName} 
-              filterType="sites-pendentes"
-            />
+          <div className="space-y-4">
+            {/* Modo Debug Toggle */}
+            {renderError && (
+              <div className="bg-red-50 border border-red-200 p-4 rounded-lg">
+                <div className="flex items-center gap-2 text-red-800 mb-2">
+                  <AlertCircle className="w-4 h-4" />
+                  <span className="font-medium">Erro de Renderização Detectado</span>
+                </div>
+                <p className="text-sm text-red-700 mb-3">{renderError}</p>
+                <Button 
+                  onClick={() => setRenderError(null)} 
+                  variant="outline" 
+                  size="sm"
+                  className="text-red-700 border-red-300"
+                >
+                  Tentar Renderização Normal
+                </Button>
+              </div>
+            )}
+
+            {/* Renderização da tabela com fallback */}
+            {renderError ? (
+              renderSimpleTable()
+            ) : (
+              <div className="bg-white rounded-lg shadow">
+                <ErrorBoundary 
+                  onError={(error) => {
+                    console.error('❌ [SitesDashboard] Erro na tabela:', error)
+                    setRenderError(error.message)
+                  }}
+                >
+                  <ClientesTable 
+                    selectedManager={currentManagerName} 
+                    filterType="sites-pendentes"
+                  />
+                </ErrorBoundary>
+              </div>
+            )}
           </div>
         )}
       </div>
     </div>
   )
+}
+
+// Componente Error Boundary simples
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError: (error: Error) => void },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; onError: (error: Error) => void }) {
+    super(props)
+    this.state = { hasError: false }
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true }
+  }
+
+  componentDidCatch(error: Error) {
+    this.props.onError(error)
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="p-4 border border-red-300 rounded bg-red-50 text-center">
+          <p className="text-red-700">❌ Erro ao renderizar tabela. Tente o modo debug acima.</p>
+        </div>
+      )
+    }
+
+    return this.props.children
+  }
 }
