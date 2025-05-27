@@ -1,225 +1,212 @@
-
-import { useEffect, createContext, useContext, useCallback } from 'react'
+import { useState, useEffect, useContext, createContext, useMemo } from 'react'
+import { Auth, SupabaseClient, User } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase'
-import { useAuthState } from '@/hooks/useAuthState'
-import type { AuthContextType } from '@/types/auth'
+import { useRouter } from 'next/router'
+import type { AuthContextType, UserType } from '@/types/auth'
+
+type AuthProviderProps = {
+  children: React.ReactNode
+}
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const {
-    user,
-    setUser,
-    loading,
-    setLoading,
-    isAdmin,
-    isGestor,
-    isCliente,
-    isVendedor,
-    currentManagerName,
-    updateUserType,
-    resetUserState
-  } = useAuthState()
-
-  // Função otimizada para evitar loops
-  const handleAuthChange = useCallback(async (event: string, session: any) => {
-    console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
-    
-    // Atualizar estado do usuário imediatamente (síncrono)
-    setUser(session?.user ?? null)
-    
-    if (session?.user?.email) {
-      console.log('✅ [useAuth] Usuário AUTENTICADO:', session.user.email)
-      console.log('🔍 [useAuth] Determinando tipo de usuário baseado apenas em autenticação válida')
-      
-      // Usar setTimeout para evitar deadlock no onAuthStateChange
-      setTimeout(async () => {
-        try {
-          await updateUserType(session.user.email)
-        } catch (error) {
-          console.error('❌ [useAuth] Erro ao atualizar tipo de usuário:', error)
-          // Em caso de erro, não travar - permitir que o usuário continue
-        } finally {
-          setLoading(false)
-        }
-      }, 0)
-    } else {
-      console.log('❌ [useAuth] Nenhum usuário autenticado')
-      resetUserState()
-      setLoading(false)
-    }
-  }, [setUser, updateUserType, resetUserState, setLoading])
+export const AuthProvider = ({ children }: AuthProviderProps) => {
+  const [user, setUser] = useState<User | null>(null)
+  const [session, setSession] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [userType, setUserType] = useState<UserType>('unauthorized')
+  const [currentManagerName, setCurrentManagerName] = useState('')
 
   useEffect(() => {
-    let mounted = true
-    
-    // Configuração do listener PRIMEIRO
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
-
-    // Verificação inicial da sessão existente
-    const checkInitialSession = async () => {
+    const getSession = async () => {
       try {
-        const { data: { session }, error } = await supabase.auth.getSession()
-        
+        setLoading(true)
+        const {
+          data: { session },
+        } = await supabase.auth.getSession()
+
+        setSession(session)
+        setUser(session?.user ?? null)
+      } catch (error) {
+        console.error("Error getting session:", error);
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    getSession()
+
+    supabase.auth.onAuthStateChange(async (_event, session) => {
+      setUser(session?.user ?? null)
+      setSession(session)
+    })
+  }, [])
+
+  useEffect(() => {
+    const getCurrentManagerName = async (email: string) => {
+      if (!email) return
+
+      try {
+        const { data, error } = await supabase
+          .from('gestores')
+          .select('nome')
+          .eq('email', email)
+          .single()
+
         if (error) {
-          console.error('❌ [useAuth] Erro ao verificar sessão:', error)
-          setLoading(false)
-          return
+          console.error('Erro ao buscar nome do gestor:', error)
+          setCurrentManagerName(email)
         }
 
-        if (mounted) {
-          console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
-          setUser(session?.user ?? null)
-          
-          if (session?.user?.email) {
-            try {
-              await updateUserType(session.user.email)
-            } catch (error) {
-              console.error('❌ [useAuth] Erro na verificação inicial:', error)
-            }
-          }
-          setLoading(false)
+        if (data) {
+          setCurrentManagerName(data.nome)
+        } else {
+          setCurrentManagerName(email)
         }
       } catch (error) {
-        console.error('❌ [useAuth] Erro crítico na inicialização:', error)
-        if (mounted) {
-          setLoading(false)
-        }
+        console.error('Erro ao buscar nome do gestor:', error)
+        setCurrentManagerName(email)
       }
     }
 
-    checkInitialSession()
-
-    // Cleanup
-    return () => {
-      mounted = false
-      subscription.unsubscribe()
+    if (user?.email) {
+      getCurrentManagerName(user.email)
     }
-  }, []) // Dependências vazias para evitar loops
+  }, [user?.email])
+
+  useEffect(() => {
+    const checkUserType = async () => {
+      if (user?.email) {
+        const type = await determineUserType(user.email)
+        setUserType(type)
+      } else {
+        setUserType('unauthorized')
+      }
+      setLoading(false)
+    }
+
+    checkUserType()
+  }, [user?.email])
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 [useAuth] === PROCESSO DE LOGIN ===')
-    console.log('📧 [useAuth] Email:', email)
-    console.log('🔍 [useAuth] Validação baseada APENAS no Supabase Auth')
     setLoading(true)
-    
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ 
-        email, 
-        password 
-      })
-      
-      if (error) {
-        console.error('❌ [useAuth] Falha na autenticação Supabase:', error.message)
-        console.error('🔥 [useAuth] Código do erro:', error.code)
-        setLoading(false)
-        return { error }
-      }
-      
-      if (data.user) {
-        console.log('✅ [useAuth] Login bem-sucedido para:', data.user.email)
-        console.log('🎯 [useAuth] Usuário autenticado via Supabase Auth')
-      }
-      
-      return { error: null }
-    } catch (error) {
-      console.error('❌ [useAuth] Erro inesperado no login:', error)
-      setLoading(false)
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
       return { error }
+    } catch (error) {
+      console.error("Error signing in:", error);
+      return { error };
+    } finally {
+      setLoading(false)
     }
   }
 
   const signUp = async (email: string, password: string) => {
-    console.log('🔐 [useAuth] === PROCESSO DE CADASTRO ===')
-    console.log('📧 [useAuth] Email:', email)
-    console.log('🔍 [useAuth] Validação baseada APENAS no Supabase Auth')
-    console.log('❌ [useAuth] NÃO verificando todos_clientes ou outras tabelas')
-    
     setLoading(true)
-    
     try {
-      const { data, error } = await supabase.auth.signUp({ 
-        email, 
-        password 
-      })
-      
-      if (error) {
-        console.error('❌ [useAuth] Erro no cadastro Supabase:', error.message)
-        console.error('🔥 [useAuth] Código do erro:', error.code)
-        setLoading(false)
-        return { error }
-      }
-      
-      if (data.user) {
-        console.log('✅ [useAuth] Cadastro bem-sucedido para:', data.user.email)
-        console.log('🎯 [useAuth] Conta criada no Supabase Auth')
-      }
-      
-      setLoading(false)
-      return { error: null }
-    } catch (error) {
-      console.error('❌ [useAuth] Erro inesperado no cadastro:', error)
-      setLoading(false)
+      const { error } = await supabase.auth.signUp({ email, password })
       return { error }
+    } catch (error) {
+      console.error("Error signing up:", error);
+      return { error };
+    } finally {
+      setLoading(false)
     }
   }
 
   const signOut = async () => {
-    console.log('🚪 [useAuth] === PROCESSO DE LOGOUT ===')
     setLoading(true)
-    
     try {
-      console.log('🧹 [useAuth] Limpando estado local primeiro')
-      resetUserState()
-      
-      console.log('🗑️ [useAuth] Limpando localStorage')
-      Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          console.log('🗑️ [useAuth] Removendo:', key)
-          localStorage.removeItem(key)
-        }
-      })
-      
-      console.log('🚪 [useAuth] Fazendo logout no Supabase')
-      await supabase.auth.signOut({ scope: 'global' })
-      
-      console.log('✅ [useAuth] Logout concluído, redirecionando...')
-      
-      // Forçar reload da página para limpar completamente o estado
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 100)
-      
+      await supabase.auth.signOut()
+      setUser(null)
     } catch (error) {
-      console.error('❌ [useAuth] Erro no logout:', error)
-      // Em caso de erro, forçar redirecionamento mesmo assim
-      console.log('🚪 [useAuth] Forçando redirecionamento por erro')
-      window.location.href = '/'
+      console.error("Error signing out:", error);
+    } finally {
+      setLoading(false)
     }
   }
 
+const determineUserType = async (email: string): Promise<UserType> => {
+  console.log('🔍 [useAuth] Determinando tipo de usuário para:', email)
+  
+  // ADMIN: Verificação prioritária
+  if (email === 'admin@exemple.com' || email === 'admin@example.com') {
+    console.log('👑 [useAuth] Usuário identificado como ADMIN')
+    return 'admin'
+  }
+
+  // CRIADOR DE SITES: Verificação por padrão de email
+  if (email.includes('site') || email.includes('criador') || email.endsWith('@sites.com')) {
+    console.log('🌐 [useAuth] Usuário identificado como CRIADOR DE SITES')
+    return 'criador_site'
+  }
+
+  // GESTOR: Busca na tabela 'gestores'
+  const { data: gestor, error: gestorError } = await supabase
+    .from('gestores')
+    .select('email')
+    .eq('email', email)
+    .single()
+
+  if (gestorError && gestorError.code !== 'PGRST116') {
+    console.error('Erro ao buscar gestor:', gestorError)
+    return 'error'
+  }
+
+  if (gestor) {
+    console.log('👨‍💼 [useAuth] Usuário identificado como GESTOR')
+    return 'gestor'
+  }
+
+  // VENDEDOR: Busca na tabela 'vendedores'
+  const { data: vendedor, error: vendedorError } = await supabase
+    .from('vendedores')
+    .select('email')
+    .eq('email', email)
+    .single()
+
+  if (vendedorError && vendedorError.code !== 'PGRST116') {
+    console.error('Erro ao buscar vendedor:', vendedorError)
+    return 'error'
+  }
+
+  if (vendedor) {
+    console.log('💼 [useAuth] Usuário identificado como VENDEDOR')
+    return 'vendedor'
+  }
+
+  // CLIENTE: Por padrão, qualquer outro usuário é cliente
+  console.log('👤 [useAuth] Usuário identificado como CLIENTE (padrão)')
+  return 'cliente'
+}
+
+  const contextValue = useMemo(() => ({
+    user,
+    loading,
+    signIn,
+    signUp, 
+    signOut,
+    isAdmin: userType === 'admin',
+    isGestor: userType === 'gestor',
+    isCliente: userType === 'cliente',
+    isVendedor: userType === 'vendedor',
+    isCriadorSite: userType === 'criador_site',
+    currentManagerName
+  }), [user, loading, userType, currentManagerName])
+
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      loading, 
-      signIn, 
-      signUp, 
-      signOut, 
-      isAdmin, 
-      isGestor,
-      isCliente,
-      isVendedor,
-      currentManagerName
-    }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   )
 }
 
-export function useAuth() {
+export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext)
-  if (context === undefined) {
+
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider')
   }
+
   return context
 }

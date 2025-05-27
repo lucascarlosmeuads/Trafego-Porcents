@@ -1,4 +1,3 @@
-
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
@@ -11,9 +10,10 @@ import { User, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
+import { CriadorSiteDashboard } from './CriadorSiteDashboard'
 
 export function Dashboard() {
-  const { user, signOut, isAdmin, isGestor, isCliente, isVendedor, currentManagerName, loading } = useAuth()
+  const { user, signOut, isAdmin, isGestor, isCliente, isVendedor, isCriadorSite, currentManagerName, loading } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -25,6 +25,7 @@ export function Dashboard() {
   console.log('   - isGestor:', isGestor)
   console.log('   - isCliente:', isCliente)
   console.log('   - isVendedor:', isVendedor)
+  console.log('   - isCriadorSite:', isCriadorSite)
   console.log('   - currentManagerName:', currentManagerName)
 
   if (loading) {
@@ -47,12 +48,13 @@ export function Dashboard() {
   }
 
   // CORREÇÃO PRINCIPAL: Verificação mais clara de acesso autorizado
-  const isAuthorized = isAdmin || isGestor || isCliente || isVendedor
+  const isAuthorized = isAdmin || isGestor || isCliente || isVendedor || isCriadorSite
   console.log('🔐 [Dashboard] Verificação de autorização:')
   console.log('   - isAuthorized:', isAuthorized)
   console.log('   - Painel que será exibido:', 
     isCliente ? '👤 CLIENTE' :
     isVendedor ? '💼 VENDEDOR' :
+    isCriadorSite ? '🌐 CRIADOR DE SITES' :
     isGestor ? '👨‍💼 GESTOR' :
     isAdmin ? '👑 ADMIN' :
     '🚫 ACESSO NEGADO'
@@ -61,6 +63,7 @@ export function Dashboard() {
   const getDisplayTitle = () => {
     if (isCliente) return 'Minha Campanha'
     if (isVendedor) return 'Painel do Vendedor'
+    if (isCriadorSite) return 'Painel de Sites'
     if (!isAdmin) return currentManagerName
     
     if (activeTab === 'dashboard') return 'Dashboard Geral'
@@ -73,6 +76,7 @@ export function Dashboard() {
   const getDisplaySubtitle = () => {
     if (isCliente) return 'Painel do Cliente'
     if (isVendedor) return 'Cadastro de Clientes'
+    if (isCriadorSite) return 'Criação de Sites'
     if (!isAdmin) return 'Gestor'
     
     if (activeTab === 'dashboard') return 'Análise Completa'
@@ -223,6 +227,8 @@ export function Dashboard() {
               <GestorDashboard />
             ) : isVendedor ? (
               <VendedorDashboard />
+            ) : isCriadorSite ? (
+              <CriadorSiteDashboard />
             ) : isCliente ? (
               <ClienteDashboard />
             ) : (
