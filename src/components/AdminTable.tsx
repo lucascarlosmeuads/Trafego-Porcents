@@ -4,19 +4,124 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
-import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle } from 'lucide-react'
+import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+
+interface TransferirModalProps {
+  cliente: Cliente
+  onTransferirCliente: (clienteId: string, novoEmailGestor: string) => void
+  isLoading: boolean
+  gestores: Array<{ email: string, nome: string }>
+}
+
+function TransferirModal({ cliente, onTransferirCliente, isLoading, gestores }: TransferirModalProps) {
+  const [novoEmailGestor, setNovoEmailGestor] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const handleTransferir = () => {
+    if (!novoEmailGestor) return
+    onTransferirCliente(cliente.id, novoEmailGestor)
+    setOpen(false)
+    setNovoEmailGestor('')
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="outline" size="sm" className="h-8">
+          <UserX className="w-3 h-3 mr-1" />
+          Transferir
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="bg-card border-border">
+        <DialogHeader>
+          <DialogTitle className="text-card-foreground">
+            Transferir Cliente: {cliente.nome_cliente}
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div>
+            <label className="text-sm font-medium text-muted-foreground">
+              Gestor Atual: {cliente.email_gestor}
+            </label>
+          </div>
+          <div>
+            <label className="text-sm font-medium text-muted-foreground mb-2 block">
+              Novo Gestor:
+            </label>
+            <Select value={novoEmailGestor} onValueChange={setNovoEmailGestor}>
+              <SelectTrigger className="bg-background border-border text-foreground">
+                <SelectValue placeholder="Selecione um gestor..." />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border">
+                {gestores.map((gestor) => (
+                  <SelectItem key={gestor.email} value={gestor.email}>
+                    {gestor.nome} ({gestor.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setOpen(false)}
+              disabled={isLoading}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleTransferir} 
+              disabled={!novoEmailGestor || isLoading}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Transferindo...
+                </>
+              ) : (
+                'Confirmar Transferência'
+              )}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 export function AdminTable() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [gestores, setGestores] = useState<Array<{ email: string, nome: string }>>([])
+  const [transferindoCliente, setTransferindoCliente] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
     fetchAllClientes()
+    fetchGestores()
   }, [])
+
+  const fetchGestores = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('gestores')
+        .select('email, nome')
+        .eq('ativo', true)
+        .order('nome')
+
+      if (error) {
+        console.error('Erro ao buscar gestores:', error)
+      } else {
+        setGestores(data || [])
+      }
+    } catch (error) {
+      console.error('Erro na consulta de gestores:', error)
+    }
+  }
 
   const fetchAllClientes = async () => {
     console.log('Carregando todos os clientes da tabela unificada...')
@@ -83,6 +188,47 @@ export function AdminTable() {
         description: "Erro inesperado ao salvar",
         variant: "destructive"
       })
+    }
+  }
+
+  const handleTransferirCliente = async (clienteId: string, novoEmailGestor: string) => {
+    setTransferindoCliente(clienteId)
+    
+    try {
+      console.log(`Transferindo cliente ${clienteId} para gestor: ${novoEmailGestor}`)
+      
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ email_gestor: novoEmailGestor })
+        .eq('id', clienteId)
+
+      if (error) {
+        console.error('Erro ao transferir cliente:', error)
+        toast({
+          title: "Erro",
+          description: `Erro ao transferir cliente: ${error.message}`,
+          variant: "destructive"
+        })
+      } else {
+        // Atualizar o estado local
+        setClientes(prev => prev.map(cliente => 
+          cliente.id === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
+        ))
+        console.log('Cliente transferido com sucesso')
+        toast({
+          title: "Sucesso",
+          description: "Cliente transferido com sucesso"
+        })
+      }
+    } catch (error) {
+      console.error('Erro:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao transferir cliente",
+        variant: "destructive"
+      })
+    } finally {
+      setTransferindoCliente(null)
     }
   }
 
@@ -192,13 +338,21 @@ export function AdminTable() {
                     <span className="font-medium text-muted-foreground">Data Venda:</span>
                     <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
                   </div>
+                  <div className="pt-2">
+                    <TransferirModal
+                      cliente={cliente}
+                      onTransferirCliente={handleTransferirCliente}
+                      isLoading={transferindoCliente === cliente.id}
+                      gestores={gestores}
+                    />
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
         )}
 
-        {/* Tabela para desktop - REMOVED "Grupo" column */}
+        {/* Tabela para desktop - ADICIONADA coluna "Transferir" */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
@@ -209,6 +363,7 @@ export function AdminTable() {
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -259,6 +414,14 @@ export function AdminTable() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </TableCell>
+                  <TableCell>
+                    <TransferirModal
+                      cliente={cliente}
+                      onTransferirCliente={handleTransferirCliente}
+                      isLoading={transferindoCliente === cliente.id}
+                      gestores={gestores}
+                    />
                   </TableCell>
                 </TableRow>
               ))}
