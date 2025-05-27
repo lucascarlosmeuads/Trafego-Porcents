@@ -1,3 +1,4 @@
+
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
@@ -10,10 +11,9 @@ import { User, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { supabase } from '@/lib/supabase'
-import { SitesDashboard } from './SitesDashboard' // NOVO
 
 export function Dashboard() {
-  const { user, signOut, isAdmin, isGestor, isCliente, isVendedor, isSites, currentManagerName, loading } = useAuth() // ATUALIZADO
+  const { user, signOut, isAdmin, isGestor, isCliente, isVendedor, currentManagerName, loading } = useAuth()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<string>('clientes')
   const [isLoggingOut, setIsLoggingOut] = useState(false)
@@ -46,14 +46,13 @@ export function Dashboard() {
     return <div>Redirecionando...</div>
   }
 
-  // CORREÇÃO PRINCIPAL: Verificação mais clara de acesso autorizado - ATUALIZADO
-  const isAuthorized = isAdmin || isGestor || isCliente || isVendedor || isSites // ATUALIZADO
+  // CORREÇÃO PRINCIPAL: Verificação mais clara de acesso autorizado
+  const isAuthorized = isAdmin || isGestor || isCliente || isVendedor
   console.log('🔐 [Dashboard] Verificação de autorização:')
   console.log('   - isAuthorized:', isAuthorized)
   console.log('   - Painel que será exibido:', 
     isCliente ? '👤 CLIENTE' :
     isVendedor ? '💼 VENDEDOR' :
-    isSites ? '🌐 SITES' : // NOVO
     isGestor ? '👨‍💼 GESTOR' :
     isAdmin ? '👑 ADMIN' :
     '🚫 ACESSO NEGADO'
@@ -124,6 +123,7 @@ export function Dashboard() {
 
   // Mostrar acesso negado apenas se NÃO for autorizado
   if (!isAuthorized) {
+    console.log('🚫 [Dashboard] === ACESSO NEGADO ===')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="w-full max-w-md">
@@ -223,8 +223,6 @@ export function Dashboard() {
               <GestorDashboard />
             ) : isVendedor ? (
               <VendedorDashboard />
-            ) : isSites ? ( // NOVO
-              <SitesDashboard />
             ) : isCliente ? (
               <ClienteDashboard />
             ) : (

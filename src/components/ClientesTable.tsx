@@ -24,7 +24,7 @@ import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
-  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'sites-pendentes'
+  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes'
 }
 
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
@@ -723,7 +723,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  // CORREÇÃO: Filtrar clientes baseado no filterType - ATUALIZADO para incluir sites-pendentes
+  // CORREÇÃO: Filtrar clientes baseado no filterType - REMOVENDO "Saque Pendente" dos inativos
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -733,9 +733,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Saque Pendente'
     )
   } else if (filterType === 'inativos') {
+    // CORREÇÃO: Remover "Saque Pendente" dos inativos
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha === 'Off' || 
       cliente.status_campanha === 'Reembolso'
+      // REMOVIDO: || cliente.status_campanha === 'Saque Pendente'
     )
   } else if (filterType === 'problemas') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -744,10 +746,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   } else if (filterType === 'saques-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.status_campanha === 'Saque Pendente'
-    )
-  } else if (filterType === 'sites-pendentes') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.site_status === 'aguardando_link'
     )
   } else {
     // Comportamento padrão (manter as abas existentes)
@@ -758,9 +756,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Saque Pendente'
     )
     
+    // CORREÇÃO: Remover "Saque Pendente" dos inativos na visualização com abas também
     const clientesInativos = clientes.filter(cliente => 
       cliente.status_campanha === 'Off' || 
       cliente.status_campanha === 'Reembolso'
+      // REMOVIDO: || cliente.status_campanha === 'Saque Pendente'
     )
 
     return renderWithTabs(clientesAtivos, clientesInativos)
