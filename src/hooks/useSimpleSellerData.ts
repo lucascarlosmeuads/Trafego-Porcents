@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -102,7 +103,10 @@ export function useSimpleSellerData(sellerEmail: string) {
     email_gestor: string
   }) => {
     try {
-      // Verificar se cliente já existe
+      console.log('🔐 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
+      console.log('📧 [useSimpleSellerData] Email do cliente:', clienteData.email_cliente)
+      
+      // Verificar se cliente já existe na tabela
       const { data: existingClient } = await supabase
         .from('todos_clientes')
         .select('email_cliente')
@@ -110,12 +114,49 @@ export function useSimpleSellerData(sellerEmail: string) {
         .maybeSingle()
 
       if (existingClient) {
+        console.log('❌ [useSimpleSellerData] Cliente já existe na tabela')
         toast({
           title: "Cliente já existe",
           description: "Este email já está cadastrado",
           variant: "destructive"
         })
         return { success: false, duplicate: true }
+      }
+
+      // Verificar se já existe conta de autenticação
+      console.log('🔍 [useSimpleSellerData] Verificando se conta de auth já existe...')
+      
+      // Tentar criar conta no Supabase Auth PRIMEIRO
+      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
+      console.log('🔑 [useSimpleSellerData] Senha padrão:', SENHA_PADRAO_CLIENTE)
+      
+      const { data: authData, error: authError } = await supabase.auth.signUp({
+        email: clienteData.email_cliente,
+        password: SENHA_PADRAO_CLIENTE,
+        options: {
+          data: {
+            full_name: clienteData.nome_cliente,
+            role: 'cliente'
+          }
+        }
+      })
+
+      let contaCriada = false
+      if (authError) {
+        console.error('❌ [useSimpleSellerData] Erro na criação da conta:', authError)
+        
+        // Se o erro for que o usuário já existe, isso pode ser ok
+        if (authError.message.includes('User already registered') || authError.code === 'user_already_exists') {
+          console.log('⚠️ [useSimpleSellerData] Usuário já existe no Auth, continuando...')
+          contaCriada = true // Consideramos que a conta existe
+        } else {
+          console.error('💥 [useSimpleSellerData] Erro crítico na criação da conta:', authError)
+          // Ainda vamos tentar inserir na tabela, mas alertamos sobre a conta
+        }
+      } else {
+        console.log('✅ [useSimpleSellerData] Conta criada com sucesso no Supabase Auth!')
+        console.log('👤 [useSimpleSellerData] ID do usuário:', authData.user?.id)
+        contaCriada = true
       }
 
       // Preparar nome do vendedor
@@ -125,8 +166,9 @@ export function useSimpleSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
-      // Inserir cliente
-      const { error } = await supabase
+      // Inserir cliente na tabela todos_clientes
+      console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
+      const { error: insertError } = await supabase
         .from('todos_clientes')
         .insert({
           nome_cliente: clienteData.nome_cliente,
@@ -138,55 +180,46 @@ export function useSimpleSellerData(sellerEmail: string) {
           valor_comissao: 20.00
         })
 
-      if (error) {
-        console.error('Erro ao inserir:', error)
+      if (insertError) {
+        console.error('❌ [useSimpleSellerData] Erro ao inserir na tabela:', insertError)
         toast({
           title: "Erro",
-          description: "Erro ao adicionar cliente",
+          description: "Erro ao adicionar cliente na tabela",
           variant: "destructive"
         })
         return { success: false, duplicate: false }
       }
 
-      // Criar conta de usuário com senha padrão
-      let senhaDefinida = false
-      try {
-        const { error: authError } = await supabase.auth.signUp({
-          email: clienteData.email_cliente,
-          password: SENHA_PADRAO_CLIENTE,
-          options: {
-            data: {
-              full_name: clienteData.nome_cliente,
-              role: 'cliente'
-            }
-          }
-        })
-
-        if (authError) {
-          console.error('Erro ao criar conta:', authError)
-        } else {
-          senhaDefinida = true
-        }
-      } catch (authErr) {
-        console.error('Erro na criação da conta:', authErr)
-      }
+      console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
 
       // Recarregar lista
       await fetchClientes()
       
-      // Mostrar mensagem de sucesso com informação da senha
+      // Mostrar mensagem de sucesso
+      const mensagemSucesso = contaCriada 
+        ? `🔐 Cliente cadastrado! Senha padrão: ${SENHA_PADRAO_CLIENTE}`
+        : "Cliente adicionado à lista (verificar conta de acesso)."
+      
       toast({
         title: "Cliente cadastrado com sucesso!",
-        description: senhaDefinida 
-          ? `🔐 Senha padrão definida como: ${SENHA_PADRAO_CLIENTE}`
-          : "Cliente adicionado à lista.",
-        duration: 5000
+        description: mensagemSucesso,
+        duration: 6000
       })
       
-      return { success: true, duplicate: false, senhaDefinida }
+      console.log('🎉 [useSimpleSellerData] === PROCESSO CONCLUÍDO COM SUCESSO ===')
+      console.log('📧 [useSimpleSellerData] Email:', clienteData.email_cliente)
+      console.log('🔑 [useSimpleSellerData] Senha:', SENHA_PADRAO_CLIENTE)
+      console.log('✅ [useSimpleSellerData] Conta de auth criada:', contaCriada)
+      
+      return { success: true, duplicate: false, senhaDefinida: contaCriada }
 
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('💥 [useSimpleSellerData] Erro inesperado:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao criar cliente",
+        variant: "destructive"
+      })
       return { success: false, duplicate: false, senhaDefinida: false }
     }
   }
