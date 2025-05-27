@@ -734,7 +734,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
       cliente.status_campanha !== 'Problema' &&
-      cliente.status_campanha !== 'Saque Pendente'
+      cliente.status_campanha !== 'Saque Pendente' &&
+      cliente.status_campanha !== 'Campanha Anual'
     )
   } else if (filterType === 'inativos') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -747,7 +748,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   } else if (filterType === 'saques-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Saque Pendente'
+      cliente.status_campanha === 'Saque Pendente' ||
+      cliente.status_campanha === 'Campanha Anual'
     )
   } else if (filterType === 'sites-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -759,7 +761,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
       cliente.status_campanha !== 'Problema' &&
-      cliente.status_campanha !== 'Saque Pendente'
+      cliente.status_campanha !== 'Saque Pendente' &&
+      cliente.status_campanha !== 'Campanha Anual'
     )
     
     const clientesInativos = clientes.filter(cliente => 
@@ -800,7 +803,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema'
+      cliente.status_campanha !== 'Problema' &&
+      cliente.status_campanha !== 'Saque Pendente' &&
+      cliente.status_campanha !== 'Campanha Anual'
     )
     
     const clientesInativos = clientes.filter(cliente => 

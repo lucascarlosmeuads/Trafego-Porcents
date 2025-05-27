@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -40,7 +39,7 @@ export function ComissaoButton({
 
   const isEditingValue = editingComissionValue === cliente.id
   const valorComissao = cliente.valor_comissao || 0
-  const isSaquePendente = cliente.status_campanha === 'Saque Pendente'
+  const isSaquePendente = cliente.status_campanha === 'Saque Pendente' || cliente.status_campanha === 'Campanha Anual'
   const jaFoiSolicitado = cliente.saque_solicitado || false
   
   // Verificar se a solicitação foi paga pelo admin
@@ -163,7 +162,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Saque Pendente" ou comissão paga)
+  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Saque Pendente"/"Campanha Anual" ou comissão paga)
   if (isGestorDashboard) {
     console.log('🔒 [ComissaoButton] Status travado para gestor')
     return (

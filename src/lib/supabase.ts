@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -66,7 +67,8 @@ export const STATUS_CAMPANHA = [
   'Problema',
   'Cliente Sumiu',
   'Reembolso',
-  'Saque Pendente'
+  'Saque Pendente',
+  'Campanha Anual'
 ] as const
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
@@ -84,7 +86,8 @@ export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
   'Problema': 'Problema',
   'Cliente Sumiu': 'Cliente Sumiu',
   'Reembolso': 'Reembolso',
-  'Saque Pendente': 'Campanha no Ar'  // ✅ Apenas mudança visual
+  'Saque Pendente': 'Campanha no Ar',  // ✅ Apenas mudança visual
+  'Campanha Anual': 'Campanha Anual'
 }
 
 // Função para obter o rótulo visual do status
