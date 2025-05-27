@@ -23,7 +23,7 @@ interface ClienteRowProps {
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string) => Promise<boolean>
+  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
