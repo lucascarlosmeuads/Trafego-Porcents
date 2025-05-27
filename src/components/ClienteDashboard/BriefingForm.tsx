@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
 import { Edit, Save, CheckCircle } from 'lucide-react'
@@ -29,7 +30,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
     publico_alvo: briefing?.publico_alvo || '',
     diferencial: briefing?.diferencial || '',
     investimento_diario: briefing?.investimento_diario || '',
-    observacoes_finais: briefing?.observacoes_finais || ''
+    observacoes_finais: briefing?.observacoes_finais || '',
+    // New fields
+    faixa_etaria: briefing?.faixa_etaria || '',
+    genero: briefing?.genero || '',
+    localizacao: briefing?.localizacao || '',
+    tem_site: briefing?.tem_site || '',
+    links_redes_sociais: briefing?.links_redes_sociais || ''
   })
 
   const updateClienteStatus = async () => {
@@ -45,7 +52,6 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
       if (updateError) {
         console.error('❌ [BriefingForm] Erro ao atualizar status do cliente:', updateError)
-        // Não falhar o processo principal por causa do status
         toast({
           title: "Aviso",
           description: "Briefing salvo, mas houve um problema ao atualizar o status. Entre em contato com o suporte.",
@@ -112,6 +118,12 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
         diferencial: formData.diferencial.trim() || null,
         investimento_diario: formData.investimento_diario ? Number(formData.investimento_diario) : null,
         observacoes_finais: formData.observacoes_finais.trim() || null,
+        // New fields for strategic briefing data
+        faixa_etaria: formData.faixa_etaria.trim() || null,
+        genero: formData.genero.trim() || null,
+        localizacao: formData.localizacao.trim() || null,
+        tem_site: formData.tem_site || null,
+        links_redes_sociais: formData.links_redes_sociais.trim() || null,
         liberar_edicao: true,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -132,6 +144,11 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
             diferencial: briefingData.diferencial,
             investimento_diario: briefingData.investimento_diario,
             observacoes_finais: briefingData.observacoes_finais,
+            faixa_etaria: briefingData.faixa_etaria,
+            genero: briefingData.genero,
+            localizacao: briefingData.localizacao,
+            tem_site: briefingData.tem_site,
+            links_redes_sociais: briefingData.links_redes_sociais,
             updated_at: briefingData.updated_at
           })
           .eq('id', briefing.id)
@@ -139,18 +156,10 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
         if (error) {
           console.error('❌ [BriefingForm] Erro ao atualizar briefing:', error)
-          console.error('❌ [BriefingForm] Detalhes do erro:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code
-          })
           throw error
         }
 
         console.log('✅ [BriefingForm] Briefing atualizado com sucesso:', data)
-        
-        // SEMPRE atualizar status para "Brief" após atualização
         await updateClienteStatus()
       } else {
         // Criar novo briefing
@@ -163,19 +172,10 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
         if (error) {
           console.error('❌ [BriefingForm] Erro ao inserir briefing:', error)
-          console.error('❌ [BriefingForm] Detalhes completos do erro:', {
-            message: error.message,
-            details: error.details,
-            hint: error.hint,
-            code: error.code,
-            supabaseError: error
-          })
           throw error
         }
 
         console.log('✅ [BriefingForm] Briefing criado com sucesso:', data)
-        
-        // SEMPRE atualizar status para "Brief" após criação
         await updateClienteStatus()
       }
 
@@ -245,10 +245,11 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
       </CardHeader>
       <CardContent className={isMobile ? 'px-4' : ''}>
         {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            {/* Nome do Produto */}
             <div>
-              <Label htmlFor="nome_produto" className={isMobile ? 'text-sm font-medium' : ''}>
-                Nome do Produto *
+              <Label htmlFor="nome_produto" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                📝 Nome do Produto ou Serviço *
               </Label>
               <Input
                 id="nome_produto"
@@ -256,65 +257,165 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
                 onChange={(e) => setFormData(prev => ({ ...prev, nome_produto: e.target.value }))}
                 required
                 className={isMobile ? 'mt-1 text-base' : ''}
-                placeholder="Ex: Curso de Marketing Digital"
+                placeholder="Ex: Mentoria Transformacional, Loja de Moda Fitness, Curso de Inglês para Adultos"
               />
             </div>
 
+            {/* Descrição do que vende */}
             <div>
-              <Label htmlFor="descricao_resumida" className={isMobile ? 'text-sm font-medium' : ''}>
-                Descrição Resumida
+              <Label htmlFor="descricao_resumida" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                📣 Como você explicaria o que você vende (de forma breve)?
               </Label>
               <Textarea
                 id="descricao_resumida"
                 value={formData.descricao_resumida}
                 onChange={(e) => setFormData(prev => ({ ...prev, descricao_resumida: e.target.value }))}
-                placeholder="Descreva brevemente seu produto..."
+                placeholder="Descreva como você apresenta seu produto para alguém pela primeira vez."
                 className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
               />
             </div>
 
+            {/* Público-alvo */}
             <div>
-              <Label htmlFor="publico_alvo" className={isMobile ? 'text-sm font-medium' : ''}>
-                Público-alvo
+              <Label htmlFor="publico_alvo" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                🎯 Quem é o seu público-alvo?
               </Label>
               <Textarea
                 id="publico_alvo"
                 value={formData.publico_alvo}
                 onChange={(e) => setFormData(prev => ({ ...prev, publico_alvo: e.target.value }))}
-                placeholder="Quem é seu cliente ideal?"
+                placeholder="Ex: Mulheres de 25 a 40 anos, mães solo, empreendedores, homens que querem emagrecer..."
                 className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
               />
             </div>
 
+            {/* Dados do comprador ideal */}
             <div>
-              <Label htmlFor="diferencial" className={isMobile ? 'text-sm font-medium' : ''}>
-                Diferencial do Produto
+              <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2 mb-4`}>
+                📊 Dados do comprador ideal (se souber):
+              </Label>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="faixa_etaria" className="text-sm text-muted-foreground">
+                    Faixa etária
+                  </Label>
+                  <Input
+                    id="faixa_etaria"
+                    value={formData.faixa_etaria}
+                    onChange={(e) => setFormData(prev => ({ ...prev, faixa_etaria: e.target.value }))}
+                    placeholder="Ex: 25-40 anos"
+                    className={isMobile ? 'text-base' : ''}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="genero" className="text-sm text-muted-foreground">
+                    Gênero
+                  </Label>
+                  <Input
+                    id="genero"
+                    value={formData.genero}
+                    onChange={(e) => setFormData(prev => ({ ...prev, genero: e.target.value }))}
+                    placeholder="Ex: Feminino, Masculino, Ambos"
+                    className={isMobile ? 'text-base' : ''}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="localizacao" className="text-sm text-muted-foreground">
+                    Localização
+                  </Label>
+                  <Input
+                    id="localizacao"
+                    value={formData.localizacao}
+                    onChange={(e) => setFormData(prev => ({ ...prev, localizacao: e.target.value }))}
+                    placeholder="Ex: São Paulo, Brasil, Nacional"
+                    className={isMobile ? 'text-base' : ''}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Diferencial */}
+            <div>
+              <Label htmlFor="diferencial" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                🚀 Qual é o maior diferencial do seu produto ou serviço?
               </Label>
               <Textarea
                 id="diferencial"
                 value={formData.diferencial}
                 onChange={(e) => setFormData(prev => ({ ...prev, diferencial: e.target.value }))}
-                placeholder="O que torna seu produto único?"
+                placeholder="O que torna seu produto único e especial?"
                 className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
               />
             </div>
 
+            {/* Investimento */}
             <div>
-              <Label htmlFor="investimento_diario" className={isMobile ? 'text-sm font-medium' : ''}>
-                Investimento Diário (R$)
+              <Label htmlFor="investimento_diario" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                💰 Quanto você pretende investir por dia em tráfego pago?
               </Label>
-              <Input
-                id="investimento_diario"
-                type="number"
-                step="0.01"
-                min="0"
+              <RadioGroup
                 value={formData.investimento_diario}
-                onChange={(e) => setFormData(prev => ({ ...prev, investimento_diario: e.target.value }))}
-                placeholder="100.00"
-                className={isMobile ? 'mt-1 text-base' : ''}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, investimento_diario: value }))}
+                className="mt-2"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="10" id="inv10" />
+                  <Label htmlFor="inv10">R$ 10/dia</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="30" id="inv30" />
+                  <Label htmlFor="inv30">R$ 30/dia</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="50" id="inv50" />
+                  <Label htmlFor="inv50">R$ 50/dia</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="100" id="inv100" />
+                  <Label htmlFor="inv100">R$ 100+/dia</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Tem site */}
+            <div>
+              <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2 mb-3`}>
+                🌐 Você já tem um site?
+              </Label>
+              <RadioGroup
+                value={formData.tem_site}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tem_site: value }))}
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="sim" id="site_sim" />
+                  <Label htmlFor="site_sim">Sim, já tenho um site</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="nao" id="site_nao" />
+                  <Label htmlFor="site_nao">Não tenho site ainda</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="ajuda" id="site_ajuda" />
+                  <Label htmlFor="site_ajuda">Preciso de ajuda para criar um</Label>
+                </div>
+              </RadioGroup>
+            </div>
+
+            {/* Links e redes sociais */}
+            <div>
+              <Label htmlFor="links_redes_sociais" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                🔗 Se já tiver site ou redes sociais, cole os links aqui:
+              </Label>
+              <Textarea
+                id="links_redes_sociais"
+                value={formData.links_redes_sociais}
+                onChange={(e) => setFormData(prev => ({ ...prev, links_redes_sociais: e.target.value }))}
+                placeholder="Instagram, site, YouTube, página de vendas..."
+                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
               />
             </div>
 
+            {/* Observações finais */}
             <div>
               <Label htmlFor="observacoes_finais" className={isMobile ? 'text-sm font-medium' : ''}>
                 Observações Finais
@@ -352,7 +453,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
         ) : briefing ? (
           <div className="space-y-4">
             <div>
-              <Label className={isMobile ? 'text-sm font-medium' : ''}>Nome do Produto</Label>
+              <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                📝 Nome do Produto/Serviço
+              </Label>
               <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium`}>
                 {briefing.nome_produto}
               </p>
@@ -360,31 +463,86 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
 
             {briefing.descricao_resumida && (
               <div>
-                <Label className={isMobile ? 'text-sm font-medium' : ''}>Descrição Resumida</Label>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  📣 Como você explica o que vende
+                </Label>
                 <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.descricao_resumida}</p>
               </div>
             )}
 
             {briefing.publico_alvo && (
               <div>
-                <Label className={isMobile ? 'text-sm font-medium' : ''}>Público-alvo</Label>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  🎯 Público-alvo
+                </Label>
                 <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.publico_alvo}</p>
+              </div>
+            )}
+
+            {(briefing.faixa_etaria || briefing.genero || briefing.localizacao) && (
+              <div>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  📊 Dados do comprador ideal
+                </Label>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mt-1">
+                  {briefing.faixa_etaria && (
+                    <p className={isMobile ? 'text-base' : 'text-sm'}>
+                      <span className="font-medium">Idade:</span> {briefing.faixa_etaria}
+                    </p>
+                  )}
+                  {briefing.genero && (
+                    <p className={isMobile ? 'text-base' : 'text-sm'}>
+                      <span className="font-medium">Gênero:</span> {briefing.genero}
+                    </p>
+                  )}
+                  {briefing.localizacao && (
+                    <p className={isMobile ? 'text-base' : 'text-sm'}>
+                      <span className="font-medium">Local:</span> {briefing.localizacao}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
             {briefing.diferencial && (
               <div>
-                <Label className={isMobile ? 'text-sm font-medium' : ''}>Diferencial do Produto</Label>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  🚀 Diferencial do Produto
+                </Label>
                 <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.diferencial}</p>
               </div>
             )}
 
             {briefing.investimento_diario && (
               <div>
-                <Label className={isMobile ? 'text-sm font-medium' : ''}>Investimento Diário</Label>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  💰 Investimento Diário
+                </Label>
                 <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium`}>
-                  R$ {briefing.investimento_diario}
+                  R$ {briefing.investimento_diario}/dia
                 </p>
+              </div>
+            )}
+
+            {briefing.tem_site && (
+              <div>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  🌐 Situação do Site
+                </Label>
+                <p className={isMobile ? 'text-base' : 'text-sm'}>
+                  {briefing.tem_site === 'sim' && 'Já tem um site'}
+                  {briefing.tem_site === 'nao' && 'Não tem site ainda'}
+                  {briefing.tem_site === 'ajuda' && 'Precisa de ajuda para criar um'}
+                </p>
+              </div>
+            )}
+
+            {briefing.links_redes_sociais && (
+              <div>
+                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
+                  🔗 Links e Redes Sociais
+                </Label>
+                <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.links_redes_sociais}</p>
               </div>
             )}
 
