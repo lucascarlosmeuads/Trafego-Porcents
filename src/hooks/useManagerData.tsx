@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 

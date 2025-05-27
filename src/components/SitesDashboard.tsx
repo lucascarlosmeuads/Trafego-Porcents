@@ -1,14 +1,19 @@
+
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Globe, RefreshCw, CheckCircle } from 'lucide-react'
-import { useSitesData } from '@/hooks/useSitesData'
+import { useManagerData } from '@/hooks/useManagerData'
 import { Button } from '@/components/ui/button'
 
 export function SitesDashboard() {
   const { user } = useAuth()
-  const { clientes, loading, error, refetch } = useSitesData()
+  const { clientes, loading, error, refetch } = useManagerData(
+    user?.email || '',
+    false, // isAdminUser = false para criadores de sites
+    undefined // selectedManager não é usado para criadores de sites
+  )
 
   if (loading) {
     return (

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -6,7 +7,8 @@ interface Cliente {
   nome_cliente: string
   telefone: string
   email_cliente: string
-  site: string
+  link_site: string
+  site_status: string
   data_venda: string
   // adicione outros campos conforme sua tabela
 }
@@ -23,7 +25,7 @@ export function useSitesData() {
     const { data, error } = await supabase
       .from('todos_clientes')
       .select('*')
-      .eq('site', 'aguardando_link')
+      .eq('site_status', 'aguardando_link')
       .order('data_venda', { ascending: false })
 
     if (error) {
