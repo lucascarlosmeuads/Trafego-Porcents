@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -76,7 +77,14 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
         .from('todos_clientes')
         .select('*')
 
-      if (isAdminUser) {
+      // Verificar se é usuário responsável por sites
+      const isSitesUser = email.includes('sites') || email.includes('site@') || email.includes('webdesign')
+      
+      if (isSitesUser) {
+        console.log('🌐 [useManagerData] Modo sites - filtrando por site_status = aguardando_link')
+        query = query.eq('site_status', 'aguardando_link')
+        setCurrentManager('Responsável por Sites')
+      } else if (isAdminUser) {
         if (selectedManager && selectedManager !== 'Todos os Clientes') {
           console.log('👑 [useManagerData] Modo admin - filtrando por gestor:', selectedManager)
           query = query.eq('email_gestor', selectedManager)
@@ -86,8 +94,8 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
           setCurrentManager('Todos os Clientes')
         }
       } else {
-        // Para não-admins (gestores, vendedores, sites), filtrar por email_gestor
-        console.log('👨‍💼 [useManagerData] Modo gestor/vendedor/sites - filtrando por email_gestor')
+        // Para não-admins (gestores, vendedores), filtrar por email_gestor
+        console.log('👨‍💼 [useManagerData] Modo gestor/vendedor - filtrando por email_gestor')
         query = query.eq('email_gestor', email)
         setCurrentManager(email)
       }
@@ -99,6 +107,13 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
         setError(error.message)
       } else {
         console.log('✅ [useManagerData] Clientes carregados com sucesso:', data.length)
+        if (isSitesUser) {
+          console.log('🌐 [useManagerData] Clientes aguardando sites:', data.map(c => ({
+            nome: c.nome_cliente,
+            site_status: c.site_status,
+            email: c.email_cliente
+          })))
+        }
         setClientes(data)
       }
     } catch (error) {

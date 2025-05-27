@@ -10,19 +10,21 @@ export function SitesDashboard() {
   const { user, currentManagerName } = useAuth()
   const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
 
-  // Filtrar apenas clientes com site_status "aguardando_link"
-  const clientesAguardandoSite = clientes.filter(cliente => 
-    cliente.site_status === 'aguardando_link'
-  )
+  // Agora o hook já filtra diretamente os clientes com site_status "aguardando_link"
+  // Não precisamos filtrar novamente aqui
+  const clientesAguardandoSite = clientes
 
   useEffect(() => {
     if (clientesAguardandoSite.length > 0) {
-      console.log('🌐 [SitesDashboard] Clientes aguardando site:', clientesAguardandoSite.length)
-      console.log('📋 Primeiros clientes:', clientesAguardandoSite.slice(0, 3).map(c => ({ 
+      console.log('🌐 [SitesDashboard] Total de clientes aguardando site:', clientesAguardandoSite.length)
+      console.log('📋 Primeiros clientes:', clientesAguardandoSite.slice(0, 5).map(c => ({ 
         nome: c.nome_cliente, 
         email: c.email_cliente,
-        site_status: c.site_status 
+        site_status: c.site_status,
+        email_gestor: c.email_gestor
       })))
+    } else {
+      console.log('⚠️ [SitesDashboard] Nenhum cliente encontrado aguardando site')
     }
   }, [clientesAguardandoSite])
 
@@ -48,7 +50,7 @@ export function SitesDashboard() {
           </div>
           <div className="flex items-center gap-2 text-xs text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
             <span>ℹ️</span>
-            <span>Visualizando apenas clientes com status "aguardando link" no campo site</span>
+            <span>Visualizando clientes com status "aguardando_link" no campo site_status</span>
           </div>
         </div>
       </div>
