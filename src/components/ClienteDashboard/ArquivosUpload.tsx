@@ -84,12 +84,12 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             continue
           }
 
-          // Validar tamanho (máximo 100MB)
-          if (file.size > 100 * 1024 * 1024) {
+          // Validar tamanho (máximo 2GB)
+          if (file.size > 2 * 1024 * 1024 * 1024) {
             console.warn('⚠️ [ArquivosUpload] Arquivo muito grande:', file.size)
             toast({
               title: "Arquivo muito grande",
-              description: `O arquivo ${file.name} deve ter no máximo 100MB.`,
+              description: `O arquivo ${file.name} deve ter no máximo 2GB.`,
               variant: "destructive"
             })
             errorCount++
@@ -307,7 +307,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated }: Ar
             className="max-w-xs mx-auto"
           />
           <p className="text-xs text-gray-500 mt-2">
-            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF (máx. 100MB)
+            Formatos aceitos: JPG, PNG, GIF, WebP, MP4, AVI, MOV, WMV, PDF (máx. 2GB)
           </p>
         </div>
 

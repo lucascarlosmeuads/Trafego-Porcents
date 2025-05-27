@@ -241,10 +241,10 @@ export function BriefingMaterialsModal({
             continue
           }
 
-          if (file.size > 100 * 1024 * 1024) {
+          if (file.size > 2 * 1024 * 1024 * 1024) {
             toast({
               title: "Arquivo muito grande",
-              description: `O arquivo ${file.name} deve ter no máximo 100MB.`,
+              description: `O arquivo ${file.name} deve ter no máximo 2GB.`,
               variant: "destructive"
             })
             errorCount++
@@ -526,7 +526,7 @@ export function BriefingMaterialsModal({
                         className="mb-2"
                       />
                       <p className="text-xs text-purple-600">
-                        Envie materiais para o cliente: imagens, vídeos ou PDFs (máx. 100MB por arquivo)
+                        Envie materiais para o cliente: imagens, vídeos ou PDFs (máx. 2GB por arquivo)
                       </p>
                       {uploading && (
                         <div className="flex items-center gap-2 mt-2">
