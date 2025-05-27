@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -29,7 +28,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: Brie
     descricao_resumida: briefing?.descricao_resumida || '',
     publico_alvo: briefing?.publico_alvo || '',
     diferencial: briefing?.diferencial || '',
-    investimento_diario: briefing?.investimento_diario || '',
+    investimento_diario: briefing?.investimento_diario?.toString() || '',
     observacoes_finais: briefing?.observacoes_finais || '',
     // New fields
     faixa_etaria: briefing?.faixa_etaria || '',
