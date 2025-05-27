@@ -40,7 +40,7 @@ export function ComissaoButton({
 
   const isEditingValue = editingComissionValue === cliente.id
   const valorComissao = cliente.valor_comissao || 0
-  const isNoAr = cliente.status_campanha === 'No Ar'
+  const isNoAr = cliente.status_campanha === 'Campanha no Ar'
   const jaFoiSolicitado = cliente.saque_solicitado || false
   
   // Verificar se a solicitação foi paga pelo admin
@@ -102,7 +102,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Status "No Ar" + Saque disponível
+  // PAINEL DO GESTOR - Status "Campanha no Ar" + Saque disponível
   if (isGestorDashboard && isNoAr && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
     return (
       <div className="flex items-center gap-1">
@@ -146,7 +146,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "No Ar" ou comissão paga)
+  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Campanha no Ar" ou comissão paga)
   if (isGestorDashboard) {
     return (
       <div className="flex items-center gap-1">
