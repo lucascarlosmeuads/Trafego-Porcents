@@ -96,11 +96,13 @@ export function AdminTable() {
   }
 
   const handleTransferClick = (cliente: Cliente) => {
+    console.log('Abrindo modal de transferência para cliente:', cliente.nome_cliente)
     setSelectedClienteForTransfer(cliente)
     setTransferModalOpen(true)
   }
 
   const handleTransferComplete = () => {
+    console.log('Transferência concluída, recarregando dados')
     fetchAllClientes() // Recarregar dados após transferência
   }
 
@@ -234,7 +236,7 @@ export function AdminTable() {
                   <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                   <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                   <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
-                  <TableHead className="min-w-[100px] text-muted-foreground">Transferir</TableHead>
+                  <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -291,7 +293,7 @@ export function AdminTable() {
                         onClick={() => handleTransferClick(cliente)}
                         variant="outline" 
                         size="sm"
-                        className="gap-1"
+                        className="gap-1 h-8 px-3"
                       >
                         <ArrowRightLeft className="w-3 h-3" />
                         Transferir
