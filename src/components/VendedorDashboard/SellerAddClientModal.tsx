@@ -157,8 +157,8 @@ Qualquer dúvida, entre em contato conosco!`
           }, 1000)
         }
         
-        // Preparar dados para modal de instruções
-        if (!result.duplicate) {
+        // SEMPRE mostrar modal de instruções para novos clientes
+        if (result.isNewClient) { // MUDANÇA: usar isNewClient ao invés de !duplicate
           const dadosCliente = {
             email_cliente: clienteData.email_cliente,
             nome_cliente: clienteData.nome_cliente,
