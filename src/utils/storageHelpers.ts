@@ -53,3 +53,43 @@ export const syncStorageWithDatabase = async () => {
     return false
   }
 }
+
+// Helper function to check file size limits and storage usage
+export const checkStorageUsage = async () => {
+  console.log('📊 [storageHelpers] Verificando uso do storage...')
+  
+  try {
+    const { data: files, error } = await supabase
+      .from('arquivos_cliente')
+      .select('tamanho_arquivo')
+
+    if (error) {
+      console.error('❌ [storageHelpers] Erro ao buscar tamanhos dos arquivos:', error)
+      return null
+    }
+
+    const totalSize = files?.reduce((acc, file) => acc + (file.tamanho_arquivo || 0), 0) || 0
+    const totalSizeGB = totalSize / (1024 * 1024 * 1024)
+    
+    console.log(`📊 [storageHelpers] Uso total do storage: ${totalSizeGB.toFixed(2)} GB`)
+    console.log(`📊 [storageHelpers] Total de arquivos: ${files?.length || 0}`)
+    
+    return {
+      totalSize,
+      totalSizeGB,
+      totalFiles: files?.length || 0
+    }
+  } catch (error) {
+    console.error('💥 [storageHelpers] Erro ao verificar uso do storage:', error)
+    return null
+  }
+}
+
+// Helper to get file size in human readable format
+export const formatFileSize = (bytes: number) => {
+  if (bytes === 0) return '0 Bytes'
+  const k = 1024
+  const sizes = ['Bytes', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(bytes) / Math.log(k))
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+}
