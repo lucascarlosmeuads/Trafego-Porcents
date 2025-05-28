@@ -117,7 +117,7 @@ Qualquer dúvida, entre em contato conosco!`
     setLoading(true)
 
     try {
-      console.log("🔵 [SellerAddClientModal] Iniciando adição de cliente pelo vendedor")
+      console.log("🔵 [SellerAddClientModal] === INICIANDO PROCESSO ===")
       
       const clienteData = {
         nome_cliente: formData.nome_cliente,
@@ -133,7 +133,7 @@ Qualquer dúvida, entre em contato conosco!`
       const result = await onClienteAdicionado(clienteData)
       
       if (result && result.success) {
-        console.log("🟢 [SellerAddClientModal] Cliente criado com sucesso")
+        console.log("🟢 [SellerAddClientModal] === CLIENTE CRIADO COM SUCESSO ===")
         console.log("🟢 [SellerAddClientModal] Resultado:", result)
         
         // Limpar formulário
@@ -158,24 +158,23 @@ Qualquer dúvida, entre em contato conosco!`
           }, 1000)
         }
         
-        // SEMPRE mostrar modal de instruções para novos clientes
-        if (result.isNewClient) {
-          console.log("🟢 [SellerAddClientModal] É um novo cliente, mostrando instruções")
-          const dadosCliente = {
-            email_cliente: clienteData.email_cliente,
-            nome_cliente: clienteData.nome_cliente,
-            id: result.clientData?.id || Math.random()
-          }
-          
-          setNewClientData(dadosCliente)
-          
-          // Mostrar modal de instruções
-          setTimeout(() => {
-            setShowInstructions(true)
-          }, 300)
-        } else {
-          console.log("🟡 [SellerAddClientModal] Cliente já existia, não mostrando instruções")
+        // SEMPRE mostrar modal de instruções para clientes criados com sucesso
+        console.log("🟢 [SellerAddClientModal] Preparando modal de instruções...")
+        
+        const dadosCliente = {
+          email_cliente: clienteData.email_cliente,
+          nome_cliente: clienteData.nome_cliente,
+          id: result.clientData?.id || Math.random()
         }
+        
+        setNewClientData(dadosCliente)
+        
+        // Mostrar modal de instruções
+        setTimeout(() => {
+          console.log("🟢 [SellerAddClientModal] === ABRINDO MODAL DE INSTRUÇÕES ===")
+          setShowInstructions(true)
+        }, 300)
+        
       } else {
         console.error("❌ [SellerAddClientModal] Resultado indica falha:", result)
         toast({
@@ -341,6 +340,7 @@ Qualquer dúvida, entre em contato conosco!`
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => {
+          console.log("🔵 [SellerAddClientModal] === FECHANDO MODAL DE INSTRUÇÕES ===")
           setShowInstructions(false)
           setNewClientData(null)
         }}
