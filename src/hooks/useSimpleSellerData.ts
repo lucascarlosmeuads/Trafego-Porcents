@@ -130,13 +130,14 @@ export function useSimpleSellerData(sellerEmail: string) {
 
       let clienteJaExistia = false
       let senhaDefinida = false
-      let finalClientData
+      let clientId: string | number
 
       if (existingClient) {
         console.log('⚠️ [useSimpleSellerData] Cliente já existe, fazendo update dos dados...')
         clienteJaExistia = true
+        clientId = existingClient.id
         
-        const { data: updatedData, error: updateError } = await supabase
+        const { error: updateError } = await supabase
           .from('todos_clientes')
           .update({
             nome_cliente: clienteData.nome_cliente,
@@ -148,15 +149,12 @@ export function useSimpleSellerData(sellerEmail: string) {
             valor_comissao: 20.00
           })
           .eq('id', existingClient.id)
-          .select()
-          .single()
 
         if (updateError) {
           console.error('❌ [useSimpleSellerData] Erro ao atualizar cliente existente:', updateError)
           throw new Error(`Erro ao atualizar cliente: ${updateError.message}`)
         }
 
-        finalClientData = updatedData
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
         // Step 2: Cliente novo - inserir na tabela primeiro
@@ -187,9 +185,9 @@ export function useSimpleSellerData(sellerEmail: string) {
         }
 
         console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
-        finalClientData = insertData
+        clientId = insertData.id
 
-        // Step 3: Criar conta de autenticação usando admin.createUser (como nos outros painéis)
+        // Step 3: Criar conta de autenticação usando admin.createUser
         console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth com admin.createUser...')
         
         try {
@@ -200,7 +198,7 @@ export function useSimpleSellerData(sellerEmail: string) {
               full_name: clienteData.nome_cliente,
               role: 'cliente'
             },
-            email_confirm: true // Confirmar email automaticamente
+            email_confirm: false // Não exigir confirmação de email
           })
 
           if (authError) {
@@ -245,7 +243,11 @@ export function useSimpleSellerData(sellerEmail: string) {
         success: true, 
         isNewClient: !clienteJaExistia,
         senhaDefinida,
-        clientData: finalClientData
+        clientData: {
+          id: clientId,
+          email_cliente: clienteData.email_cliente,
+          nome_cliente: clienteData.nome_cliente
+        }
       }
 
     } catch (error) {
