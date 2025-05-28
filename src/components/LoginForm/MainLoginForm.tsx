@@ -1,6 +1,6 @@
 
 import { useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -14,19 +14,17 @@ export function MainLoginForm({ onForgotPassword }: MainLoginFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
-  const { signIn } = useAuth()
+  const { signIn } = useSimpleAuth()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
-    console.log('🔐 [MainLoginForm] === INICIANDO PROCESSO DE LOGIN ===')
+    console.log('🔐 [MainLoginForm] === INICIANDO LOGIN ===')
     console.log('📧 [MainLoginForm] Email:', email)
 
     try {
-      console.log('🔑 [MainLoginForm] Tentando fazer login...')
-      
       if (!email || !password) {
         toast({
           title: "Erro",
@@ -41,7 +39,6 @@ export function MainLoginForm({ onForgotPassword }: MainLoginFormProps) {
       if (error) {
         console.error('❌ [MainLoginForm] Erro de login:', error)
         
-        // Mensagens de erro mais específicas para login
         let errorMessage = "Email ou senha incorretos. Verifique suas credenciais."
         
         if (error.message.includes('Invalid login credentials')) {
@@ -60,7 +57,7 @@ export function MainLoginForm({ onForgotPassword }: MainLoginFormProps) {
           variant: "destructive"
         })
       } else {
-        console.log('✅ [MainLoginForm] Login realizado com sucesso para:', email)
+        console.log('✅ [MainLoginForm] Login realizado com sucesso')
         toast({
           title: "Sucesso",
           description: "Login realizado com sucesso!"

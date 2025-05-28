@@ -1,5 +1,5 @@
 
-import { useAuth, AuthProvider } from '@/hooks/useAuth'
+import { useSimpleAuth, SimpleAuthProvider } from '@/hooks/useSimpleAuth'
 import { LoginForm } from '@/components/LoginForm'
 import { Dashboard } from '@/components/Dashboard'
 import { Button } from '@/components/ui/button'
@@ -8,7 +8,7 @@ import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 function AppContent() {
-  const { user, loading } = useAuth()
+  const { user, loading } = useSimpleAuth()
   const navigate = useNavigate()
 
   // Detectar tokens de recuperação de senha na URL
@@ -64,18 +64,15 @@ function AppContent() {
     window.location.href = '/'
   }
 
-  // Log detalhado do estado atual
-  useEffect(() => {
-    console.log('📊 [Index] === ESTADO ATUAL DA APLICAÇÃO ===')
-    console.log('   - loading:', loading)
-    console.log('   - user presente:', !!user)
-    console.log('   - email do user:', user?.email || 'null')
-    console.log('   - deve mostrar login:', !user)
-    console.log('   - deve mostrar dashboard:', !!user)
-  }, [loading, user])
+  // Log do estado atual
+  console.log('📊 [Index] Estado:', { 
+    loading, 
+    userPresent: !!user, 
+    userEmail: user?.email || 'null' 
+  })
 
   if (loading) {
-    console.log('⏳ [Index] === ESTADO DE CARREGAMENTO ===')
+    console.log('⏳ [Index] === CARREGANDO ===')
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -116,22 +113,20 @@ function AppContent() {
   }
 
   if (!user) {
-    console.log('🔑 [Index] === SEM USUÁRIO AUTENTICADO ===')
-    console.log('🔑 [Index] Mostrando formulário de login...')
+    console.log('🔑 [Index] === SEM USUÁRIO - MOSTRANDO LOGIN ===')
     return <LoginForm />
   }
 
-  console.log('✅ [Index] === USUÁRIO AUTENTICADO ===')
+  console.log('✅ [Index] === USUÁRIO AUTENTICADO - MOSTRANDO DASHBOARD ===')
   console.log('✅ [Index] Email:', user.email)
-  console.log('🎯 [Index] Carregando Dashboard...')
   return <Dashboard />
 }
 
 const Index = () => {
   return (
-    <AuthProvider>
+    <SimpleAuthProvider>
       <AppContent />
-    </AuthProvider>
+    </SimpleAuthProvider>
   )
 }
 
