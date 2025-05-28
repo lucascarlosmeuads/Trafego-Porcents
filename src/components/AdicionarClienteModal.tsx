@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -106,6 +107,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
       
       // Type guard to check if result is not false
       if (result && typeof result === 'object' && result.success) {
+        // Limpar formulário
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -115,7 +117,16 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         })
         setSelectedGestor('')
         setOpen(false)
+        
+        // Atualizar lista de clientes
         onClienteAdicionado()
+
+        // Mostrar toast de sucesso
+        toast({
+          title: "✅ Cliente criado com sucesso",
+          description: `Cliente ${formData.nome_cliente} foi adicionado ao sistema`,
+          duration: 5000
+        })
 
         // Mostrar aviso sobre senha padrão se foi definida
         if (result.senhaDefinida) {
@@ -131,8 +142,12 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
         // Show instructions modal for new clients only
         if (result.isNewClient) {
           setNewClientData(result.clientData)
-          setShowInstructions(true)
+          setTimeout(() => {
+            setShowInstructions(true)
+          }, 1500)
         }
+        
+        console.log("✅ [AdicionarClienteModal] Cliente criado com sucesso - permanecendo no painel atual")
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)

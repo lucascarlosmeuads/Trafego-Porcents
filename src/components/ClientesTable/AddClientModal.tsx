@@ -178,6 +178,13 @@ Qualquer dúvida, entre em contato conosco!`
         // Atualizar dados
         onClienteAdicionado()
 
+        // Toast de sucesso
+        toast({
+          title: "✅ Cliente criado com sucesso",
+          description: `Cliente ${clienteData.nome_cliente} foi adicionado ao sistema`,
+          duration: 5000
+        })
+
         // Mostrar aviso sobre senha padrão se foi definida
         if (result.senhaDefinida) {
           setTimeout(() => {
@@ -189,7 +196,7 @@ Qualquer dúvida, entre em contato conosco!`
           }, 1000)
         }
 
-        // SEMPRE exibir o modal de instruções após criação bem-sucedida
+        // Exibir modal de instruções após criação bem-sucedida
         console.log("🔵 [AddClientModal] Preparando dados para o modal de instruções...")
         
         const dadosCliente = {
@@ -206,6 +213,8 @@ Qualquer dúvida, entre em contato conosco!`
           console.log("🟢 [AddClientModal] === ABRINDO MODAL DE INSTRUÇÕES ===")
           setShowInstructions(true)
         }, 300)
+        
+        console.log("✅ [AddClientModal] Cliente criado com sucesso - permanecendo no painel atual")
         
       } else {
         console.error("🔴 [AddClientModal] Falha na criação do cliente:", result)
