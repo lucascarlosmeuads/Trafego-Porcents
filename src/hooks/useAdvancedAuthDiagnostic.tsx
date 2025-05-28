@@ -81,14 +81,13 @@ export function useAdvancedAuthDiagnostic() {
         console.log('⚠️ [AdvancedDiagnostic] Cliente não encontrado na base')
       }
 
-      // 2. Verificar se usuário existe no Auth usando a Edge Function otimizada
+      // 2. Verificar se usuário existe no Auth usando Edge Function otimizada V4
       updateProgress("Verificando usuário no Auth", 40, "Consultando sistema de autenticação...")
       
       let authUserExists = false
       let authUserData = null
       
       try {
-        // Usar Edge Function para verificar se usuário existe (agora com getUserByEmail)
         const { data: checkResult, error: checkError } = await supabase.functions.invoke('fix-client-auth', {
           body: {
             email: normalizedEmail,
@@ -121,10 +120,20 @@ export function useAdvancedAuthDiagnostic() {
         })
       }
 
-      // 3. Se usuário existe, testar login para diagnóstico preciso
-      updateProgress("Testando credenciais", 60, "Verificando se consegue fazer login...")
+      // 3. LÓGICA MELHORADA: Determinar issues baseado no estado real
+      updateProgress("Analisando problemas", 60, "Identificando correções necessárias...")
       
-      if (authUserExists) {
+      if (!authUserExists) {
+        diagnosticResult.issues.push({
+          type: 'missing_user',
+          severity: 'critical',
+          description: 'Usuário não existe no sistema de autenticação',
+          solution: 'Criar usuário com senha "parceriadesucesso"'
+        })
+      } else {
+        // Usuário existe - verificar se precisa de reset
+        updateProgress("Testando credenciais", 70, "Verificando se consegue fazer login...")
+        
         try {
           const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
             email: normalizedEmail,
@@ -142,51 +151,27 @@ export function useAdvancedAuthDiagnostic() {
           } else {
             console.log('❌ [AdvancedDiagnostic] Erro no login:', loginErr?.message)
             
-            if (loginErr?.message?.includes('Invalid login credentials')) {
-              diagnosticResult.issues.push({
-                type: 'wrong_password',
-                severity: 'critical',
-                description: 'Usuário existe mas senha está incorreta',
-                solution: 'Resetar senha para "parceriadesucesso"'
-              })
-            } else if (loginErr?.message?.includes('Email not confirmed')) {
-              diagnosticResult.emailConfirmed = false
-              diagnosticResult.issues.push({
-                type: 'unconfirmed_email',
-                severity: 'critical',
-                description: 'Email não confirmado no sistema',
-                solution: 'Confirmar email automaticamente'
-              })
-            } else {
-              diagnosticResult.issues.push({
-                type: 'unknown',
-                severity: 'critical',
-                description: `Erro de login: ${loginErr?.message}`,
-                solution: 'Resetar senha e confirmar email'
-              })
-            }
+            // Sempre assumir que precisa de reset de senha
+            diagnosticResult.issues.push({
+              type: 'wrong_password',
+              severity: 'critical',
+              description: 'Usuário existe mas credenciais precisam ser resetadas',
+              solution: 'Resetar senha para "parceriadesucesso" e confirmar email'
+            })
           }
         } catch (error) {
           console.error('❌ [AdvancedDiagnostic] Erro no teste de login:', error)
           diagnosticResult.issues.push({
-            type: 'unknown',
+            type: 'wrong_password',
             severity: 'critical',
-            description: 'Erro inesperado no teste de login',
-            solution: 'Verificar configuração de autenticação'
+            description: 'Erro no teste de login - reset necessário',
+            solution: 'Resetar senha para "parceriadesucesso"'
           })
         }
-      } else {
-        // Usuário não existe
-        diagnosticResult.issues.push({
-          type: 'missing_user',
-          severity: 'critical',
-          description: 'Usuário não existe no sistema de autenticação',
-          solution: 'Criar usuário com senha "parceriadesucesso"'
-        })
       }
 
-      // 4. Gerar mensagem para o cliente
-      updateProgress("Gerando relatório", 80, "Preparando correções...")
+      // 4. Gerar mensagem otimizada
+      updateProgress("Gerando relatório", 90, "Preparando correções...")
       
       const criticalIssues = diagnosticResult.issues.filter(i => i.severity === 'critical')
       
@@ -218,29 +203,29 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V3 ===')
+    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V4 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', diagnosticResult.email)
 
     try {
-      // LÓGICA INTELIGENTE: Sempre tentar correções se há problemas identificados
-      const correctableIssues = diagnosticResult.issues.filter(issue => 
-        ['missing_user', 'wrong_password', 'unconfirmed_email'].includes(issue.type)
+      // LÓGICA OTIMIZADA: Sempre tentar correções se há problemas críticos
+      const criticalIssues = diagnosticResult.issues.filter(issue => 
+        issue.severity === 'critical'
       )
 
-      console.log('🔧 [AdvancedDiagnostic] Issues identificados:', diagnosticResult.issues.length)
-      console.log('🔧 [AdvancedDiagnostic] Issues corrigíveis:', correctableIssues.length)
+      console.log('🔧 [AdvancedDiagnostic] Issues críticos encontrados:', criticalIssues.length)
 
-      // MUDANÇA CRÍTICA: Sempre chamar a Edge Function, mesmo sem correções explícitas
-      // A Edge Function agora tem lógica inteligente para criar usuários automaticamente
-      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function para aplicar correções...')
+      // Preparar correções baseadas nos issues identificados
+      const correctionsToApply = criticalIssues.map(issue => ({
+        type: issue.type,
+        action: issue.solution
+      }))
+
+      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function V4 para correções inteligentes...')
 
       const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
         body: {
           email: diagnosticResult.email,
-          corrections: correctableIssues.map(issue => ({
-            type: issue.type,
-            action: issue.solution
-          }))
+          corrections: correctionsToApply
         }
       })
 
@@ -249,7 +234,7 @@ export function useAdvancedAuthDiagnostic() {
         throw new Error(`Erro ao aplicar correções: ${fixError.message}`)
       }
 
-      console.log('✅ [AdvancedDiagnostic] Resultado das correções:', fixResult)
+      console.log('✅ [AdvancedDiagnostic] Resultado das correções V4:', fixResult)
 
       // Atualizar resultado com correções aplicadas
       const updatedResult = {
@@ -266,48 +251,24 @@ export function useAdvancedAuthDiagnostic() {
       
       setResult(updatedResult)
 
-      // MELHOR FEEDBACK: Mostrar resultado detalhado
-      if (fixResult.success && fixResult.successfulCorrections > 0) {
-        let title = "✅ Correções Aplicadas com Sucesso!"
-        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas`
-        
-        if (fixResult.loginValidated) {
-          title = "🎯 Acesso 100% Liberado!"
-          description += ". Login validado com sucesso!"
-        } else if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Verifique os avisos no resultado`
-        }
-
+      // FEEDBACK OTIMIZADO baseado no resultado real
+      if (fixResult.success && fixResult.loginValidated) {
         toast({
-          title,
-          description,
+          title: "🎯 Correção 100% Bem-Sucedida!",
+          description: `Email: ${diagnosticResult.email} - Acesso validado e funcionando!`,
           variant: "default"
         })
-      } else if (fixResult.successfulCorrections === 0) {
-        // NOVO: Explicar melhor quando nenhuma correção é aplicada
-        let description = "Nenhuma correção foi aplicada"
-        
-        if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Verifique: ${fixResult.warnings.join(', ')}`
-        }
-
+      } else if (fixResult.success && fixResult.successfulCorrections > 0) {
         toast({
-          title: "⚠️ Nenhuma Correção Aplicada",
-          description,
-          variant: "destructive"
+          title: "✅ Correções Aplicadas!",
+          description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas`,
+          variant: "default"
         })
       } else {
-        // Correções parciais
-        let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`
-        
-        if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Alguns avisos foram encontrados`
-        }
-
         toast({
-          title: "Correções Parciais",
-          description,
-          variant: "default"
+          title: "⚠️ Problema na Correção",
+          description: fixResult.warnings ? fixResult.warnings.join(', ') : "Nenhuma correção foi aplicada",
+          variant: "destructive"
         })
       }
 
