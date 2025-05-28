@@ -218,27 +218,22 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V2 ===')
+    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V3 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', diagnosticResult.email)
 
     try {
-      // Preparar lista de correções que podem ser aplicadas automaticamente
+      // LÓGICA INTELIGENTE: Sempre tentar correções se há problemas identificados
       const correctableIssues = diagnosticResult.issues.filter(issue => 
         ['missing_user', 'wrong_password', 'unconfirmed_email'].includes(issue.type)
       )
 
-      if (correctableIssues.length === 0) {
-        toast({
-          title: "Nenhuma Correção Necessária",
-          description: "Não há correções automáticas disponíveis para este caso",
-          variant: "default"
-        })
-        return
-      }
+      console.log('🔧 [AdvancedDiagnostic] Issues identificados:', diagnosticResult.issues.length)
+      console.log('🔧 [AdvancedDiagnostic] Issues corrigíveis:', correctableIssues.length)
 
-      console.log('🔧 [AdvancedDiagnostic] Correções a aplicar:', correctableIssues.length)
+      // MUDANÇA CRÍTICA: Sempre chamar a Edge Function, mesmo sem correções explícitas
+      // A Edge Function agora tem lógica inteligente para criar usuários automaticamente
+      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function para aplicar correções...')
 
-      // Chamar a Edge Function para aplicar as correções
       const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
         body: {
           email: diagnosticResult.email,
@@ -271,16 +266,16 @@ export function useAdvancedAuthDiagnostic() {
       
       setResult(updatedResult)
 
-      // Mostrar resultado com base no sucesso e validação de login
+      // MELHOR FEEDBACK: Mostrar resultado detalhado
       if (fixResult.success && fixResult.successfulCorrections > 0) {
-        let title = "Correções Aplicadas"
-        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas`
+        let title = "✅ Correções Aplicadas com Sucesso!"
+        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas`
         
         if (fixResult.loginValidated) {
-          title = "✅ Acesso Liberado!"
+          title = "🎯 Acesso 100% Liberado!"
           description += ". Login validado com sucesso!"
         } else if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Alguns avisos foram encontrados`
+          description += `. Verifique os avisos no resultado`
         }
 
         toast({
@@ -288,17 +283,31 @@ export function useAdvancedAuthDiagnostic() {
           description,
           variant: "default"
         })
-      } else {
-        let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`
+      } else if (fixResult.successfulCorrections === 0) {
+        // NOVO: Explicar melhor quando nenhuma correção é aplicada
+        let description = "Nenhuma correção foi aplicada"
         
         if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Verifique os avisos no resultado`
+          description += `. Verifique: ${fixResult.warnings.join(', ')}`
         }
 
         toast({
-          title: fixResult.successfulCorrections > 0 ? "Correções Parciais" : "Correções Falharam",
+          title: "⚠️ Nenhuma Correção Aplicada",
           description,
-          variant: fixResult.successfulCorrections > 0 ? "default" : "destructive"
+          variant: "destructive"
+        })
+      } else {
+        // Correções parciais
+        let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`
+        
+        if (fixResult.warnings && fixResult.warnings.length > 0) {
+          description += `. Alguns avisos foram encontrados`
+        }
+
+        toast({
+          title: "Correções Parciais",
+          description,
+          variant: "default"
         })
       }
 
