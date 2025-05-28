@@ -20,7 +20,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // Verificação específica para criadores de sites
+    // Verificação específica para criadores de sites - PRIORIDADE ALTA
     if (normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')) {
       console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign)')
       return 'sites'
@@ -38,7 +38,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'gestor'
     }
 
-    // CORREÇÃO PRINCIPAL: Verificar se é cliente na tabela todos_clientes
+    // VERIFICAÇÃO PARA CLIENTES - Buscar na tabela todos_clientes
     console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
     const { data: cliente, error: clienteError } = await supabase
       .from('todos_clientes')

@@ -33,12 +33,18 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const emailToUse = userEmail || user?.email || ''
   const managerName = selectedManager || 'Próprios dados'
   
+  const isSitesContext = filterType === 'sites-pendentes' || 
+                        emailToUse.includes('criador') || 
+                        emailToUse.includes('site') || 
+                        emailToUse.includes('webdesign')
+  
   console.log('🔍 [ClientesTable] Configuração de acesso:', {
     isAdmin,
     emailToUse,
     selectedManager,
     userEmail: user?.email,
-    filterType
+    filterType,
+    isSitesContext
   })
   
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
@@ -348,38 +354,49 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }, [])
 
   useEffect(() => {
-    console.log(`🔍 [ClientesTable] Total de clientes carregados:`, clientes.length)
-    console.log(`📊 Manager atual:`, currentManager)
-    console.log(`📊 Email usado:`, emailToUse)
-    console.log(`📊 Selected Manager:`, selectedManager)
-    console.log(`🔒 IsAdmin:`, isAdmin)
+    console.log(`🔍 [ClientesTable] Validação de segurança:`, {
+      totalClientes: clientes.length,
+      currentManager,
+      emailToUse,
+      selectedManager,
+      isAdmin,
+      isSitesContext
+    })
     
     if (clientes.length > 0) {
-      console.log(`📊 Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ 
+      console.log(`📊 [ClientesTable] Primeiros 5 clientes:`, clientes.slice(0, 5).map(c => ({ 
         id: c.id, 
         nome: c.nome_cliente, 
-        email_gestor: c.email_gestor 
+        email_gestor: c.email_gestor,
+        site_status: c.site_status
       })))
       
-      if (!isAdmin) {
+      if (!isAdmin && !isSitesContext) {
         const clientesInvalidos = clientes.filter(c => c.email_gestor !== emailToUse)
         if (clientesInvalidos.length > 0) {
           console.error('🚨 [ClientesTable] ERRO DE SEGURANÇA: Clientes com email_gestor incorreto detectados!', {
             emailToUse,
             clientesInvalidos: clientesInvalidos.map(c => ({ id: c.id, email_gestor: c.email_gestor }))
           })
-          toast({
-            title: "Erro de Segurança",
-            description: "Dados inconsistentes detectados. Recarregando...",
-            variant: "destructive"
-          })
-          refetch()
+          
+          setTimeout(() => {
+            toast({
+              title: "Erro de Segurança",
+              description: "Dados inconsistentes detectados. Recarregando...",
+              variant: "destructive"
+            })
+            refetch()
+          }, 1000)
           return
         }
         console.log('✅ [ClientesTable] Validação de segurança: todos os clientes pertencem ao gestor correto')
+      } else if (isSitesContext) {
+        console.log('🌐 [ClientesTable] Contexto de SITES: validação de email_gestor desabilitada')
+      } else if (isAdmin) {
+        console.log('👑 [ClientesTable] Contexto de ADMIN: validação de email_gestor desabilitada')
       }
     }
-  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin])
+  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin, isSitesContext])
 
   useEffect(() => {
     const verificarPermissoes = async () => {
@@ -678,11 +695,20 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     return (
       <div className="space-y-4 p-4 lg:p-0">
-        {!isAdmin && (
+        {!isAdmin && !isSitesContext && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-green-600 text-sm">
               <span className="w-2 h-2 bg-green-500 rounded-full"></span>
               <span>🔒 Filtro de Segurança Ativo - Visualizando apenas seus clientes ({emailToUse})</span>
+            </div>
+          </div>
+        )}
+        
+        {isSitesContext && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+            <div className="flex items-center gap-2 text-blue-600 text-sm">
+              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+              <span>🌐 Painel de Criação de Sites - Visualizando clientes aguardando sites</span>
             </div>
           </div>
         )}
@@ -835,11 +861,20 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   return (
     <div className="space-y-4 p-4 lg:p-0">
-      {!isAdmin && (
+      {!isAdmin && !isSitesContext && (
         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 text-green-600 text-sm">
             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
             <span>🔒 Filtro de Segurança Ativo - Visualizando apenas seus clientes ({emailToUse})</span>
+          </div>
+        </div>
+      )}
+
+      {isSitesContext && (
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-blue-600 text-sm">
+            <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+            <span>🌐 Painel de Criação de Sites - Visualizando clientes aguardando sites</span>
           </div>
         </div>
       )}
