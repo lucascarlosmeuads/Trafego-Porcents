@@ -81,91 +81,89 @@ export function useAdvancedAuthDiagnostic() {
         console.log('❌ [AdvancedDiagnostic] Cliente não encontrado na base')
       }
 
-      // 2. Verificar usuário no Auth
-      updateProgress("Verificando autenticação", 40, "Testando credenciais...")
+      // 2. Verificar se usuário existe no Auth (método correto)
+      updateProgress("Verificando usuário no Auth", 40, "Consultando sistema de autenticação...")
       
-      let authUser = null
-      let loginError = null
+      let authUserExists = false
+      let authUserData = null
       
       try {
-        // Tentar login de teste
-        const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
-          email: normalizedEmail,
-          password: 'parceriadesucesso'
+        // Usar Edge Function para verificar se usuário existe (service role necessário)
+        const { data: checkResult, error: checkError } = await supabase.functions.invoke('fix-client-auth', {
+          body: {
+            email: normalizedEmail,
+            checkOnly: true // Flag para apenas verificar
+          }
         })
+
+        if (checkError) {
+          console.error('❌ [AdvancedDiagnostic] Erro ao verificar usuário:', checkError)
+          throw new Error(`Erro ao verificar usuário: ${checkError.message}`)
+        }
+
+        authUserExists = checkResult.userExists || false
+        authUserData = checkResult.userData || null
         
-        if (!loginErr && loginData.user) {
+        console.log('🔍 [AdvancedDiagnostic] Usuário existe no Auth:', authUserExists ? 'SIM' : 'NÃO')
+        
+        if (authUserExists) {
           diagnosticResult.userExistsInAuth = true
-          diagnosticResult.emailConfirmed = loginData.user.email_confirmed_at !== null
-          diagnosticResult.canLogin = true
-          authUser = loginData.user
-          
-          // Fazer logout imediato
-          await supabase.auth.signOut()
-          
-          console.log('✅ [AdvancedDiagnostic] Login bem-sucedido')
-        } else {
-          loginError = loginErr
-          console.log('❌ [AdvancedDiagnostic] Erro no login:', loginErr?.message)
+          diagnosticResult.emailConfirmed = authUserData?.email_confirmed_at !== null
         }
       } catch (error) {
-        loginError = error
-        console.log('❌ [AdvancedDiagnostic] Erro no teste de login:', error)
+        console.error('❌ [AdvancedDiagnostic] Erro ao verificar usuário:', error)
+        // Continuar com fallback para login test se der erro
       }
 
-      // 3. Analisar problemas específicos
-      updateProgress("Analisando problemas", 60, "Identificando issues...")
+      // 3. Se usuário existe, testar login
+      updateProgress("Testando credenciais", 60, "Verificando se consegue fazer login...")
       
-      if (loginError) {
-        if (loginError.message?.includes('Invalid login credentials')) {
-          // Pode ser usuário inexistente ou senha errada
-          try {
-            // Tentar verificar se usuário existe tentando reset de senha
-            const { error: resetError } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
-              redirectTo: 'https://example.com' // URL dummy só para testar
-            })
+      if (authUserExists) {
+        try {
+          const { data: loginData, error: loginErr } = await supabase.auth.signInWithPassword({
+            email: normalizedEmail,
+            password: 'parceriadesucesso'
+          })
+          
+          if (!loginErr && loginData.user) {
+            diagnosticResult.canLogin = true
+            diagnosticResult.emailConfirmed = loginData.user.email_confirmed_at !== null
             
-            if (!resetError) {
-              diagnosticResult.userExistsInAuth = true
+            // Fazer logout imediato
+            await supabase.auth.signOut()
+            
+            console.log('✅ [AdvancedDiagnostic] Login bem-sucedido')
+          } else {
+            console.log('❌ [AdvancedDiagnostic] Erro no login:', loginErr?.message)
+            
+            if (loginErr?.message?.includes('Invalid login credentials')) {
               diagnosticResult.issues.push({
                 type: 'wrong_password',
                 severity: 'critical',
                 description: 'Usuário existe mas senha está incorreta',
                 solution: 'Resetar senha para "parceriadesucesso"'
               })
-            } else {
+            } else if (loginErr?.message?.includes('Email not confirmed')) {
+              diagnosticResult.emailConfirmed = false
               diagnosticResult.issues.push({
-                type: 'missing_user',
-                severity: 'critical', 
-                description: 'Usuário não existe no sistema de autenticação',
-                solution: 'Criar usuário com senha "parceriadesucesso"'
+                type: 'unconfirmed_email',
+                severity: 'critical',
+                description: 'Email não confirmado no sistema',
+                solution: 'Confirmar email automaticamente'
               })
             }
-          } catch (error) {
-            diagnosticResult.issues.push({
-              type: 'missing_user',
-              severity: 'critical',
-              description: 'Usuário não existe no sistema de autenticação',
-              solution: 'Criar usuário com senha "parceriadesucesso"'
-            })
           }
-        } else if (loginError.message?.includes('Email not confirmed')) {
-          diagnosticResult.userExistsInAuth = true
-          diagnosticResult.emailConfirmed = false
-          diagnosticResult.issues.push({
-            type: 'unconfirmed_email',
-            severity: 'critical',
-            description: 'Email não confirmado no sistema',
-            solution: 'Confirmar email automaticamente'
-          })
-        } else {
-          diagnosticResult.issues.push({
-            type: 'unknown',
-            severity: 'critical',
-            description: `Erro desconhecido: ${loginError.message}`,
-            solution: 'Recriar usuário do zero'
-          })
+        } catch (error) {
+          console.error('❌ [AdvancedDiagnostic] Erro no teste de login:', error)
         }
+      } else {
+        // Usuário não existe
+        diagnosticResult.issues.push({
+          type: 'missing_user',
+          severity: 'critical',
+          description: 'Usuário não existe no sistema de autenticação',
+          solution: 'Criar usuário com senha "parceriadesucesso"'
+        })
       }
 
       // 4. Gerar mensagem para o cliente
@@ -259,7 +257,7 @@ export function useAdvancedAuthDiagnostic() {
         toast({
           title: "Correções Aplicadas",
           description,
-          variant: fixResult.warnings && fixResult.warnings.length > 0 ? "default" : "default"
+          variant: "default"
         })
       } else {
         let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`

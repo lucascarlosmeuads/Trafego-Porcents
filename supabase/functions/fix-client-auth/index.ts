@@ -9,23 +9,26 @@ const corsHeaders = {
 
 interface FixRequest {
   email: string
-  corrections: Array<{
+  corrections?: Array<{
     type: 'missing_user' | 'wrong_password' | 'unconfirmed_email'
     action: string
   }>
+  checkOnly?: boolean // Flag para apenas verificar se usuário existe
 }
 
 interface FixResult {
   email: string
-  corrections: Array<{
+  userExists?: boolean
+  userData?: any
+  corrections?: Array<{
     action: string
     status: 'success' | 'failed'
     message: string
     timestamp: string
   }>
   success: boolean
-  totalCorrections: number
-  successfulCorrections: number
+  totalCorrections?: number
+  successfulCorrections?: number
   warnings?: string[]
 }
 
@@ -36,12 +39,12 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔧 [FixClientAuth] Iniciando correções automáticas')
+    console.log('🔧 [FixClientAuth] Iniciando operação')
 
-    const { email, corrections }: FixRequest = await req.json()
+    const { email, corrections, checkOnly }: FixRequest = await req.json()
     
-    if (!email || !corrections || !Array.isArray(corrections)) {
-      throw new Error('Email e lista de correções são obrigatórios')
+    if (!email) {
+      throw new Error('Email é obrigatório')
     }
 
     // Criar cliente Supabase com service_role para privilégios administrativos
@@ -56,21 +59,61 @@ serve(async (req) => {
     })
 
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔧 [FixClientAuth] Processando correções para:', normalizedEmail)
-    console.log('🔧 [FixClientAuth] Correções solicitadas:', corrections.length)
+    console.log('🔧 [FixClientAuth] Processando para:', normalizedEmail)
 
-    const appliedCorrections: Array<{
-      action: string
-      status: 'success' | 'failed'
-      message: string
-      timestamp: string
-    }> = []
+    // 1. Verificar se usuário existe no Auth usando service role
+    console.log('🔍 [FixClientAuth] Verificando existência do usuário...')
+    
+    let existingUser = null
+    let userExists = false
+    
+    try {
+      const { data: usersResponse, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+      
+      if (usersError) {
+        console.error('❌ [FixClientAuth] Erro ao buscar usuários:', usersError)
+        throw new Error(`Erro ao buscar usuários: ${usersError.message}`)
+      }
 
-    const warnings: string[] = []
+      existingUser = usersResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+      userExists = !!existingUser
+      
+      console.log('🔍 [FixClientAuth] Usuário existe no Auth:', userExists ? 'SIM' : 'NÃO')
+      
+      if (existingUser) {
+        console.log('👤 [FixClientAuth] Dados do usuário:', {
+          id: existingUser.id,
+          email: existingUser.email,
+          email_confirmed: existingUser.email_confirmed_at !== null,
+          created_at: existingUser.created_at
+        })
+      }
+    } catch (error) {
+      console.error('❌ [FixClientAuth] Erro crítico ao verificar usuários:', error)
+      throw error
+    }
 
-    // 1. Verificar se cliente existe na base de dados (não-bloqueante)
+    // Se for apenas verificação, retornar resultado
+    if (checkOnly) {
+      console.log('🔍 [FixClientAuth] Modo verificação - retornando resultado')
+      return new Response(
+        JSON.stringify({
+          email: normalizedEmail,
+          userExists,
+          userData: existingUser,
+          success: true
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
+    // 2. Verificar cliente na base de dados (não-bloqueante para correções)
     let clienteExists = false
     let clienteData = null
+    const warnings: string[] = []
     
     try {
       const { data: cliente, error: clienteError } = await supabaseAdmin
@@ -87,33 +130,41 @@ serve(async (req) => {
         clienteData = cliente
         console.log('✅ [FixClientAuth] Cliente encontrado:', cliente.nome_cliente)
       } else {
-        console.log('⚠️ [FixClientAuth] Cliente não encontrado na base de dados - continuando com correções de Auth')
-        warnings.push('Cliente não encontrado na base de dados, mas continuando com correções de autenticação')
+        console.log('⚠️ [FixClientAuth] Cliente não encontrado na base de dados')
+        warnings.push('Cliente não encontrado na base de dados')
       }
     } catch (error) {
       console.error('⚠️ [FixClientAuth] Erro inesperado ao verificar cliente:', error)
       warnings.push(`Erro inesperado ao verificar cliente: ${error.message}`)
     }
 
-    // 2. Buscar usuário existente no Auth (sempre executar)
-    let existingUser = null
-    
-    try {
-      const { data: existingUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
-      
-      if (usersError) {
-        console.error('❌ [FixClientAuth] Erro ao buscar usuários:', usersError)
-        throw new Error(`Erro ao buscar usuários: ${usersError.message}`)
-      }
-
-      existingUser = existingUsers.users.find(u => u.email?.toLowerCase() === normalizedEmail)
-      console.log('🔍 [FixClientAuth] Usuário existente no Auth:', existingUser ? 'SIM' : 'NÃO')
-    } catch (error) {
-      console.error('❌ [FixClientAuth] Erro crítico ao verificar usuários:', error)
-      throw error
+    // 3. Aplicar correções se fornecidas
+    if (!corrections || corrections.length === 0) {
+      return new Response(
+        JSON.stringify({
+          email: normalizedEmail,
+          userExists,
+          userData: existingUser,
+          success: true,
+          warnings: warnings.length > 0 ? warnings : undefined
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
     }
 
-    // 3. Aplicar cada correção (sempre tentar)
+    console.log('🔧 [FixClientAuth] Aplicando correções:', corrections.length)
+
+    const appliedCorrections: Array<{
+      action: string
+      status: 'success' | 'failed'
+      message: string
+      timestamp: string
+    }> = []
+
+    // Aplicar cada correção
     for (const correction of corrections) {
       console.log(`🔧 [FixClientAuth] Aplicando correção: ${correction.type}`)
       
@@ -127,6 +178,7 @@ serve(async (req) => {
                 message: 'Usuário já existe no sistema de autenticação',
                 timestamp: new Date().toISOString()
               })
+              console.log('⚠️ [FixClientAuth] Usuário já existe, pulando criação')
             } else {
               const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
                 email: normalizedEmail,
@@ -164,6 +216,7 @@ serve(async (req) => {
                 message: 'Usuário não existe para resetar senha - precisa ser criado primeiro',
                 timestamp: new Date().toISOString()
               })
+              console.log('⚠️ [FixClientAuth] Usuário não existe para resetar senha')
             } else {
               const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
                 existingUser.id,
@@ -196,6 +249,7 @@ serve(async (req) => {
                 message: 'Usuário não existe para confirmar email - precisa ser criado primeiro',
                 timestamp: new Date().toISOString()
               })
+              console.log('⚠️ [FixClientAuth] Usuário não existe para confirmar email')
             } else {
               const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
                 existingUser.id,
