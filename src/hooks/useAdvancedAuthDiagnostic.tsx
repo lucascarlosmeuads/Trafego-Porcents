@@ -3,7 +3,6 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { DiagnosticResult, DiagnosticIssue, DiagnosticCorrection, DiagnosticProgress } from '@/components/AuthDiagnostic/DiagnosticTypes'
-import type { User } from '@supabase/supabase-js'
 
 export function useAdvancedAuthDiagnostic() {
   const [loading, setLoading] = useState(false)
@@ -201,61 +200,63 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    const corrections: DiagnosticCorrection[] = []
-    
     console.log('🔧 [AdvancedDiagnostic] Aplicando correções para:', diagnosticResult.email)
 
     try {
-      for (const issue of diagnosticResult.issues) {
-        console.log('🔧 [AdvancedDiagnostic] Corrigindo:', issue.type)
-        
-        switch (issue.type) {
-          case 'missing_user':
-            await correctMissingUser(diagnosticResult.email, corrections)
-            break
-            
-          case 'wrong_password':
-            await correctWrongPassword(diagnosticResult.email, corrections)
-            break
-            
-          case 'unconfirmed_email':
-            await correctUnconfirmedEmail(diagnosticResult.email, corrections)
-            break
-            
-          case 'duplicate_clients':
-            await correctDuplicateClients(diagnosticResult.email, corrections)
-            break
-            
-          default:
-            corrections.push({
-              action: `Correção para ${issue.type}`,
-              status: 'failed',
-              message: 'Tipo de correção não implementado'
-            })
-        }
+      // Preparar lista de correções que podem ser aplicadas automaticamente
+      const correctableIssues = diagnosticResult.issues.filter(issue => 
+        ['missing_user', 'wrong_password', 'unconfirmed_email'].includes(issue.type)
+      )
+
+      if (correctableIssues.length === 0) {
+        toast({
+          title: "Nenhuma Correção Disponível",
+          description: "Não há correções automáticas disponíveis para este caso",
+          variant: "destructive"
+        })
+        return
       }
 
-      // Atualizar resultado com correções
+      // Chamar a Edge Function para aplicar as correções
+      const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
+        body: {
+          email: diagnosticResult.email,
+          corrections: correctableIssues.map(issue => ({
+            type: issue.type,
+            action: issue.solution
+          }))
+        }
+      })
+
+      if (fixError) {
+        console.error('❌ [AdvancedDiagnostic] Erro na Edge Function:', fixError)
+        throw new Error(`Erro ao aplicar correções: ${fixError.message}`)
+      }
+
+      console.log('✅ [AdvancedDiagnostic] Resultado das correções:', fixResult)
+
+      // Atualizar resultado com correções aplicadas
       const updatedResult = {
         ...diagnosticResult,
-        corrections,
-        clientMessage: generateCorrectionMessage(diagnosticResult.email, corrections, diagnosticResult.clienteData?.nome_cliente)
+        corrections: fixResult.corrections || [],
+        clientMessage: generateCorrectionMessage(
+          diagnosticResult.email, 
+          fixResult.corrections || [], 
+          diagnosticResult.clienteData?.nome_cliente
+        )
       }
       
       setResult(updatedResult)
 
-      const successCount = corrections.filter(c => c.status === 'success').length
-      const totalCount = corrections.length
-
-      if (successCount === totalCount) {
+      if (fixResult.success && fixResult.successfulCorrections > 0) {
         toast({
           title: "Correções Aplicadas",
-          description: `Todas as ${successCount} correções foram aplicadas com sucesso`
+          description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas com sucesso`
         })
       } else {
         toast({
-          title: "Correções Parciais",
-          description: `${successCount} de ${totalCount} correções aplicadas`,
+          title: "Correções Falharam",
+          description: `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`,
           variant: "destructive"
         })
       }
@@ -264,118 +265,12 @@ export function useAdvancedAuthDiagnostic() {
       console.error('💥 [AdvancedDiagnostic] Erro nas correções:', error)
       toast({
         title: "Erro nas Correções",
-        description: "Erro inesperado durante as correções",
+        description: error instanceof Error ? error.message : "Erro inesperado durante as correções",
         variant: "destructive"
       })
     } finally {
       setFixing(false)
     }
-  }
-
-  const correctMissingUser = async (email: string, corrections: DiagnosticCorrection[]) => {
-    try {
-      console.log('🔧 [AdvancedDiagnostic] Criando usuário:', email)
-      
-      const { data, error } = await supabase.auth.admin.createUser({
-        email,
-        password: 'parceriadesucesso',
-        email_confirm: true
-      })
-
-      if (error) throw error
-
-      corrections.push({
-        action: 'Criar usuário no sistema',
-        status: 'success',
-        message: 'Usuário criado com sucesso',
-        timestamp: new Date().toISOString()
-      })
-      
-      console.log('✅ [AdvancedDiagnostic] Usuário criado:', data.user?.id)
-    } catch (error: any) {
-      console.error('❌ [AdvancedDiagnostic] Erro ao criar usuário:', error)
-      corrections.push({
-        action: 'Criar usuário no sistema',
-        status: 'failed',
-        message: `Erro: ${error.message}`
-      })
-    }
-  }
-
-  const correctWrongPassword = async (email: string, corrections: DiagnosticCorrection[]) => {
-    try {
-      console.log('🔧 [AdvancedDiagnostic] Atualizando senha:', email)
-      
-      // Primeiro buscar o usuário pelo email
-      const { data: users } = await supabase.auth.admin.listUsers()
-      const user = users.users.find((u: User) => u.email === email)
-      
-      if (!user) throw new Error('Usuário não encontrado')
-
-      const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
-        password: 'parceriadesucesso'
-      })
-
-      if (error) throw error
-
-      corrections.push({
-        action: 'Resetar senha do usuário',
-        status: 'success',
-        message: 'Senha resetada para "parceriadesucesso"',
-        timestamp: new Date().toISOString()
-      })
-      
-      console.log('✅ [AdvancedDiagnostic] Senha atualizada')
-    } catch (error: any) {
-      console.error('❌ [AdvancedDiagnostic] Erro ao resetar senha:', error)
-      corrections.push({
-        action: 'Resetar senha do usuário',
-        status: 'failed',
-        message: `Erro: ${error.message}`
-      })
-    }
-  }
-
-  const correctUnconfirmedEmail = async (email: string, corrections: DiagnosticCorrection[]) => {
-    try {
-      console.log('🔧 [AdvancedDiagnostic] Confirmando email:', email)
-      
-      // Buscar o usuário pelo email
-      const { data: users } = await supabase.auth.admin.listUsers()
-      const user = users.users.find((u: User) => u.email === email)
-      
-      if (!user) throw new Error('Usuário não encontrado')
-
-      const { error } = await supabase.auth.admin.updateUserById(user.id, {
-        email_confirm: true
-      })
-
-      if (error) throw error
-
-      corrections.push({
-        action: 'Confirmar email do usuário',
-        status: 'success',
-        message: 'Email confirmado automaticamente',
-        timestamp: new Date().toISOString()
-      })
-      
-      console.log('✅ [AdvancedDiagnostic] Email confirmado')
-    } catch (error: any) {
-      console.error('❌ [AdvancedDiagnostic] Erro ao confirmar email:', error)
-      corrections.push({
-        action: 'Confirmar email do usuário',
-        status: 'failed',
-        message: `Erro: ${error.message}`
-      })
-    }
-  }
-
-  const correctDuplicateClients = async (email: string, corrections: DiagnosticCorrection[]) => {
-    corrections.push({
-      action: 'Consolidar registros duplicados',
-      status: 'failed',
-      message: 'Correção manual necessária - contactar admin'
-    })
   }
 
   const generateSuccessMessage = (email: string, nome?: string) => {
