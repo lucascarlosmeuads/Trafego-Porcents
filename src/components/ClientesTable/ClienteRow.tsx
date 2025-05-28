@@ -36,6 +36,7 @@ interface ClienteRowProps {
   setComissionValueInput: (value: string) => void
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: string) => void
+  onSiteStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string, field: string) => Promise<boolean>
   onLinkCancel: () => void
@@ -65,6 +66,7 @@ export function ClienteRow({
   setComissionValueInput,
   getStatusColor,
   onStatusChange,
+  onSiteStatusChange,
   onLinkEdit,
   onLinkSave,
   onLinkCancel,
@@ -182,7 +184,7 @@ export function ClienteRow({
       <TableCell>
         <SiteStatusSelect
           value={cliente.site_status || 'pendente'}
-          onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus)}
+          onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
           disabled={updatingStatus === cliente.id!.toString()}
           isUpdating={updatingStatus === cliente.id!.toString()}
         />
@@ -194,7 +196,8 @@ export function ClienteRow({
 
       <TableCell>
         <BriefingMaterialsModal 
-          cliente={cliente}
+          emailCliente={cliente.email_cliente || ''}
+          nomeCliente={cliente.nome_cliente || ''}
           trigger={
             <Button
               size="sm"
@@ -358,17 +361,15 @@ export function ClienteRow({
 
       <TableCell>
         <ComissaoButton
-          clienteId={cliente.id!.toString()}
-          comissaoPaga={cliente.comissao_paga || false}
-          valorComissao={cliente.valor_comissao || 60}
-          isUpdating={updatingComission === cliente.id!.toString()}
-          isEditingValue={editingComissionValue === cliente.id!.toString()}
-          valueInput={comissionValueInput}
-          onValueInputChange={setComissionValueInput}
-          onToggle={onComissionToggle}
-          onEditValue={onComissionValueEdit}
-          onSaveValue={onComissionValueSave}
-          onCancelValue={onComissionValueCancel}
+          cliente={cliente}
+          updatingComission={updatingComission}
+          editingComissionValue={editingComissionValue}
+          comissionValueInput={comissionValueInput}
+          setComissionValueInput={setComissionValueInput}
+          onComissionToggle={onComissionToggle}
+          onComissionValueEdit={onComissionValueEdit}
+          onComissionValueSave={onComissionValueSave}
+          onComissionValueCancel={onComissionValueCancel}
         />
       </TableCell>
     </TableRow>
