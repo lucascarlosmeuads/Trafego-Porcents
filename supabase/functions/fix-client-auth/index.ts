@@ -13,7 +13,7 @@ interface FixRequest {
     type: 'missing_user' | 'wrong_password' | 'unconfirmed_email'
     action: string
   }>
-  checkOnly?: boolean // Flag para apenas verificar se usuário existe
+  checkOnly?: boolean
 }
 
 interface FixResult {
@@ -30,6 +30,8 @@ interface FixResult {
   totalCorrections?: number
   successfulCorrections?: number
   warnings?: string[]
+  loginValidated?: boolean
+  clientMessage?: string
 }
 
 serve(async (req) => {
@@ -39,7 +41,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔧 [FixClientAuth] Iniciando operação')
+    console.log('🔧 [FixClientAuth] === OPERAÇÃO INICIADA ===')
 
     const { email, corrections, checkOnly }: FixRequest = await req.json()
     
@@ -59,58 +61,48 @@ serve(async (req) => {
     })
 
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔧 [FixClientAuth] Processando para:', normalizedEmail)
+    console.log('📧 [FixClientAuth] Processando email:', normalizedEmail)
 
-    // 1. Verificar se usuário existe no Auth usando service role
-    console.log('🔍 [FixClientAuth] Verificando existência do usuário...')
+    // 1. ETAPA CRÍTICA: Verificar usuário usando getUserByEmail (mais eficiente e preciso)
+    console.log('🔍 [FixClientAuth] Verificando usuário com getUserByEmail...')
     
     let existingUser = null
     let userExists = false
     
     try {
-      const { data: usersResponse, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+      // CORREÇÃO PRINCIPAL: Usar getUserByEmail ao invés de listUsers + find
+      const { data: userResponse, error: userError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail)
       
-      if (usersError) {
-        console.error('❌ [FixClientAuth] Erro ao buscar usuários:', usersError)
-        throw new Error(`Erro ao buscar usuários: ${usersError.message}`)
+      if (userError) {
+        console.log('⚠️ [FixClientAuth] getUserByEmail retornou erro:', userError.message)
+        // Fallback para listUsers caso getUserByEmail falhe
+        console.log('🔄 [FixClientAuth] Tentando fallback com listUsers...')
+        const { data: usersResponse, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+        
+        if (usersError) {
+          console.error('❌ [FixClientAuth] Fallback também falhou:', usersError)
+          throw new Error(`Erro ao verificar usuário: ${usersError.message}`)
+        }
+        
+        existingUser = usersResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+      } else {
+        existingUser = userResponse.user
       }
-
-      existingUser = usersResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+      
       userExists = !!existingUser
       
-      console.log('🔍 [FixClientAuth] Usuário existe no Auth:', userExists ? 'SIM' : 'NÃO')
+      console.log('🔍 [FixClientAuth] Resultado da verificação:', {
+        userExists,
+        userId: existingUser?.id,
+        emailConfirmed: existingUser?.email_confirmed_at !== null
+      })
       
-      if (existingUser) {
-        console.log('👤 [FixClientAuth] Dados do usuário:', {
-          id: existingUser.id,
-          email: existingUser.email,
-          email_confirmed: existingUser.email_confirmed_at !== null,
-          created_at: existingUser.created_at
-        })
-      }
     } catch (error) {
-      console.error('❌ [FixClientAuth] Erro crítico ao verificar usuários:', error)
+      console.error('❌ [FixClientAuth] Erro crítico na verificação:', error)
       throw error
     }
 
-    // Se for apenas verificação, retornar resultado
-    if (checkOnly) {
-      console.log('🔍 [FixClientAuth] Modo verificação - retornando resultado')
-      return new Response(
-        JSON.stringify({
-          email: normalizedEmail,
-          userExists,
-          userData: existingUser,
-          success: true
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          status: 200,
-        },
-      )
-    }
-
-    // 2. Verificar cliente na base de dados (não-bloqueante para correções)
+    // 2. Verificar cliente na base de dados (não-bloqueante)
     let clienteExists = false
     let clienteData = null
     const warnings: string[] = []
@@ -138,7 +130,25 @@ serve(async (req) => {
       warnings.push(`Erro inesperado ao verificar cliente: ${error.message}`)
     }
 
-    // 3. Aplicar correções se fornecidas
+    // Se for apenas verificação, retornar resultado
+    if (checkOnly) {
+      console.log('🔍 [FixClientAuth] Modo verificação - retornando resultado')
+      return new Response(
+        JSON.stringify({
+          email: normalizedEmail,
+          userExists,
+          userData: existingUser,
+          success: true,
+          warnings: warnings.length > 0 ? warnings : undefined
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
+    // 3. ETAPA CRÍTICA: Aplicar correções inteligentes se fornecidas
     if (!corrections || corrections.length === 0) {
       return new Response(
         JSON.stringify({
@@ -155,7 +165,8 @@ serve(async (req) => {
       )
     }
 
-    console.log('🔧 [FixClientAuth] Aplicando correções:', corrections.length)
+    console.log('🔧 [FixClientAuth] === APLICANDO CORREÇÕES INTELIGENTES ===')
+    console.log('📊 [FixClientAuth] Total de correções:', corrections.length)
 
     const appliedCorrections: Array<{
       action: string
@@ -164,9 +175,9 @@ serve(async (req) => {
       timestamp: string
     }> = []
 
-    // Aplicar cada correção
+    // APLICAR CADA CORREÇÃO COM ROBUSTEZ MÁXIMA
     for (const correction of corrections) {
-      console.log(`🔧 [FixClientAuth] Aplicando correção: ${correction.type}`)
+      console.log(`🔧 [FixClientAuth] Aplicando: ${correction.type}`)
       
       try {
         switch (correction.type) {
@@ -180,6 +191,7 @@ serve(async (req) => {
               })
               console.log('⚠️ [FixClientAuth] Usuário já existe, pulando criação')
             } else {
+              console.log('➕ [FixClientAuth] Criando usuário...')
               const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
                 email: normalizedEmail,
                 password: 'parceriadesucesso',
@@ -193,18 +205,51 @@ serve(async (req) => {
               })
 
               if (createError) {
-                throw createError
-              }
+                if (createError.message?.includes('already been registered')) {
+                  // Se usuário já existe, tentar resetar senha ao invés de falhar
+                  console.log('🔄 [FixClientAuth] Usuário já existe, convertendo para reset de senha...')
+                  
+                  // Buscar usuário novamente
+                  const { data: foundUser } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail)
+                  if (foundUser?.user) {
+                    const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+                      foundUser.user.id,
+                      { 
+                        password: 'parceriadesucesso',
+                        email_confirm: true
+                      }
+                    )
 
-              appliedCorrections.push({
-                action: correction.action,
-                status: 'success',
-                message: 'Usuário criado com sucesso no sistema de autenticação',
-                timestamp: new Date().toISOString()
-              })
-              
-              console.log('✅ [FixClientAuth] Usuário criado:', newUser.user?.id)
-              existingUser = newUser.user // Atualizar referência
+                    if (updateError) {
+                      throw updateError
+                    }
+
+                    appliedCorrections.push({
+                      action: 'Usuário já existia - senha resetada',
+                      status: 'success',
+                      message: 'Usuário já existia, senha resetada para "parceriadesucesso"',
+                      timestamp: new Date().toISOString()
+                    })
+                    
+                    existingUser = foundUser.user // Atualizar referência
+                    console.log('✅ [FixClientAuth] Conversão bem-sucedida - senha resetada')
+                  } else {
+                    throw createError
+                  }
+                } else {
+                  throw createError
+                }
+              } else {
+                appliedCorrections.push({
+                  action: correction.action,
+                  status: 'success',
+                  message: 'Usuário criado com sucesso no sistema de autenticação',
+                  timestamp: new Date().toISOString()
+                })
+                
+                console.log('✅ [FixClientAuth] Usuário criado:', newUser.user?.id)
+                existingUser = newUser.user // Atualizar referência
+              }
             }
             break
 
@@ -218,6 +263,7 @@ serve(async (req) => {
               })
               console.log('⚠️ [FixClientAuth] Usuário não existe para resetar senha')
             } else {
+              console.log('🔑 [FixClientAuth] Resetando senha...')
               const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
                 existingUser.id,
                 { 
@@ -251,6 +297,7 @@ serve(async (req) => {
               })
               console.log('⚠️ [FixClientAuth] Usuário não existe para confirmar email')
             } else {
+              console.log('✉️ [FixClientAuth] Confirmando email...')
               const { error: confirmError } = await supabaseAdmin.auth.admin.updateUserById(
                 existingUser.id,
                 { email_confirm: true }
@@ -290,31 +337,81 @@ serve(async (req) => {
       }
     }
 
-    // 4. Log da operação no banco (tentar sempre, mas não falhar se der erro)
+    // 4. ETAPA CRÍTICA: Validação pós-correção com login real
+    let loginValidated = false
+    console.log('🧪 [FixClientAuth] === VALIDAÇÃO PÓS-CORREÇÃO ===')
+    
+    const successfulCorrections = appliedCorrections.filter(c => c.status === 'success').length
+    
+    if (successfulCorrections > 0) {
+      console.log('🔐 [FixClientAuth] Testando login com senha padrão...')
+      
+      try {
+        // Criar cliente normal para teste de login
+        const supabaseTest = createClient(supabaseUrl, Deno.env.get('SUPABASE_ANON_KEY')!, {
+          auth: {
+            autoRefreshToken: false,
+            persistSession: false
+          }
+        })
+
+        const { data: loginData, error: loginError } = await supabaseTest.auth.signInWithPassword({
+          email: normalizedEmail,
+          password: 'parceriadesucesso'
+        })
+
+        if (!loginError && loginData.user) {
+          loginValidated = true
+          console.log('✅ [FixClientAuth] Login validado com sucesso!')
+          
+          // Fazer logout imediato do teste
+          await supabaseTest.auth.signOut()
+        } else {
+          console.log('⚠️ [FixClientAuth] Falha na validação do login:', loginError?.message)
+        }
+      } catch (error) {
+        console.error('❌ [FixClientAuth] Erro no teste de login:', error)
+      }
+    }
+
+    // 5. Log da operação no banco
     try {
       await supabaseAdmin
         .from('client_user_creation_log')
         .insert({
           email_cliente: normalizedEmail,
-          operation_type: 'auto_corrections',
-          result_message: `Aplicadas ${appliedCorrections.filter(c => c.status === 'success').length}/${appliedCorrections.length} correções. Cliente na base: ${clienteExists ? 'Sim' : 'Não'}`
+          operation_type: 'auto_corrections_v2',
+          result_message: `Aplicadas ${successfulCorrections}/${appliedCorrections.length} correções. Login validado: ${loginValidated ? 'Sim' : 'Não'}. Cliente na base: ${clienteExists ? 'Sim' : 'Não'}`
         })
     } catch (logError) {
       console.error('⚠️ [FixClientAuth] Erro ao salvar log (não crítico):', logError)
       warnings.push('Erro ao salvar log da operação')
     }
 
-    const successfulCorrections = appliedCorrections.filter(c => c.status === 'success').length
+    // 6. ETAPA CRÍTICA: Gerar mensagem final pronta para o cliente
+    const clientMessage = generateClientMessage(
+      normalizedEmail, 
+      clienteData?.nome_cliente, 
+      appliedCorrections, 
+      loginValidated, 
+      warnings
+    )
+
     const result: FixResult = {
       email: normalizedEmail,
       corrections: appliedCorrections,
       success: successfulCorrections > 0,
       totalCorrections: corrections.length,
       successfulCorrections,
+      loginValidated,
+      clientMessage,
       warnings: warnings.length > 0 ? warnings : undefined
     }
 
-    console.log('📝 [FixClientAuth] Resultado final:', result)
+    console.log('📝 [FixClientAuth] === RESULTADO FINAL ===')
+    console.log('✅ Correções aplicadas:', successfulCorrections)
+    console.log('🔐 Login validado:', loginValidated)
+    console.log('📱 Mensagem gerada para cliente:', clientMessage ? 'Sim' : 'Não')
 
     return new Response(
       JSON.stringify(result),
@@ -332,12 +429,73 @@ serve(async (req) => {
         error: error instanceof Error ? error.message : 'Erro desconhecido',
         corrections: [],
         totalCorrections: 0,
-        successfulCorrections: 0
+        successfulCorrections: 0,
+        loginValidated: false
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500,
+        status: 200, // Sempre retornar 200 quando possível
       },
     )
   }
 })
+
+function generateClientMessage(
+  email: string, 
+  nomeCliente: string | undefined, 
+  corrections: Array<{action: string, status: string, message: string}>, 
+  loginValidated: boolean,
+  warnings?: string[]
+): string {
+  const successful = corrections.filter(c => c.status === 'success')
+  const failed = corrections.filter(c => c.status === 'failed')
+  
+  let message = `✅ ACESSO LIBERADO PARA O SISTEMA
+
+Olá ${nomeCliente || 'Cliente'},
+
+${loginValidated ? 'Seu acesso foi corrigido e está funcionando perfeitamente!' : 'Aplicamos as correções no seu acesso.'}`
+
+  if (successful.length > 0) {
+    message += `
+
+🔧 CORREÇÕES REALIZADAS:
+${successful.map(c => `• ${c.message}`).join('\n')}`
+  }
+
+  if (failed.length > 0) {
+    message += `
+
+⚠️ AVISOS:
+${failed.map(c => `• ${c.message}`).join('\n')}`
+  }
+
+  if (warnings && warnings.length > 0) {
+    message += `
+
+ℹ️ INFORMAÇÕES TÉCNICAS:
+${warnings.map(w => `• ${w}`).join('\n')}`
+  }
+
+  message += `
+
+🔑 SUAS CREDENCIAIS DE ACESSO:
+• Email: ${email}
+• Senha: parceriadesucesso
+
+🚀 COMO ACESSAR O SISTEMA:
+1. Acesse: https://login.trafegoporcents.com
+2. Clique em "Entrar"
+3. Digite seu email e senha exatamente como mostrado acima
+4. Clique em "Entrar"
+
+${loginValidated ? '✅ STATUS: Acesso validado e funcionando' : '⚠️ STATUS: Aguardando teste de acesso'}
+⏰ Processado em: ${new Date().toLocaleString('pt-BR')}
+
+${loginValidated ? 'Seu acesso está 100% funcionando! Se tiver qualquer dúvida, estamos aqui.' : 'Teste o acesso e nos informe se houver algum problema.'}
+
+Atenciosamente,
+Equipe Suporte Técnico`
+
+  return message
+}

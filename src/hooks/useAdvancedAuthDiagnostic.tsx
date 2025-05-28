@@ -30,7 +30,7 @@ export function useAdvancedAuthDiagnostic() {
     setResult(null)
 
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO COMPLETO ===')
+    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO COMPLETO V2 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', normalizedEmail)
 
     try {
@@ -74,25 +74,25 @@ export function useAdvancedAuthDiagnostic() {
       } else {
         diagnosticResult.issues.push({
           type: 'missing_client',
-          severity: 'critical',
+          severity: 'warning', // Não crítico - apenas informativo
           description: 'Cliente não encontrado na base de dados',
-          solution: 'Cadastrar cliente na base ou verificar email correto'
+          solution: 'Verificar se email está correto ou cadastrar cliente'
         })
-        console.log('❌ [AdvancedDiagnostic] Cliente não encontrado na base')
+        console.log('⚠️ [AdvancedDiagnostic] Cliente não encontrado na base')
       }
 
-      // 2. Verificar se usuário existe no Auth (método correto)
+      // 2. Verificar se usuário existe no Auth usando a Edge Function otimizada
       updateProgress("Verificando usuário no Auth", 40, "Consultando sistema de autenticação...")
       
       let authUserExists = false
       let authUserData = null
       
       try {
-        // Usar Edge Function para verificar se usuário existe (service role necessário)
+        // Usar Edge Function para verificar se usuário existe (agora com getUserByEmail)
         const { data: checkResult, error: checkError } = await supabase.functions.invoke('fix-client-auth', {
           body: {
             email: normalizedEmail,
-            checkOnly: true // Flag para apenas verificar
+            checkOnly: true
           }
         })
 
@@ -109,13 +109,19 @@ export function useAdvancedAuthDiagnostic() {
         if (authUserExists) {
           diagnosticResult.userExistsInAuth = true
           diagnosticResult.emailConfirmed = authUserData?.email_confirmed_at !== null
+          console.log('📧 [AdvancedDiagnostic] Email confirmado:', diagnosticResult.emailConfirmed ? 'SIM' : 'NÃO')
         }
       } catch (error) {
         console.error('❌ [AdvancedDiagnostic] Erro ao verificar usuário:', error)
-        // Continuar com fallback para login test se der erro
+        diagnosticResult.issues.push({
+          type: 'unknown',
+          severity: 'critical',
+          description: 'Erro ao verificar usuário no sistema',
+          solution: 'Tentar novamente ou contatar suporte'
+        })
       }
 
-      // 3. Se usuário existe, testar login
+      // 3. Se usuário existe, testar login para diagnóstico preciso
       updateProgress("Testando credenciais", 60, "Verificando se consegue fazer login...")
       
       if (authUserExists) {
@@ -151,10 +157,23 @@ export function useAdvancedAuthDiagnostic() {
                 description: 'Email não confirmado no sistema',
                 solution: 'Confirmar email automaticamente'
               })
+            } else {
+              diagnosticResult.issues.push({
+                type: 'unknown',
+                severity: 'critical',
+                description: `Erro de login: ${loginErr?.message}`,
+                solution: 'Resetar senha e confirmar email'
+              })
             }
           }
         } catch (error) {
           console.error('❌ [AdvancedDiagnostic] Erro no teste de login:', error)
+          diagnosticResult.issues.push({
+            type: 'unknown',
+            severity: 'critical',
+            description: 'Erro inesperado no teste de login',
+            solution: 'Verificar configuração de autenticação'
+          })
         }
       } else {
         // Usuário não existe
@@ -169,10 +188,12 @@ export function useAdvancedAuthDiagnostic() {
       // 4. Gerar mensagem para o cliente
       updateProgress("Gerando relatório", 80, "Preparando correções...")
       
-      if (diagnosticResult.issues.length === 0) {
+      const criticalIssues = diagnosticResult.issues.filter(i => i.severity === 'critical')
+      
+      if (criticalIssues.length === 0) {
         diagnosticResult.clientMessage = generateSuccessMessage(normalizedEmail, diagnosticResult.clienteData?.nome_cliente)
       } else {
-        diagnosticResult.clientMessage = generateIssueMessage(normalizedEmail, diagnosticResult.issues, diagnosticResult.clienteData?.nome_cliente)
+        diagnosticResult.clientMessage = generateIssueMessage(normalizedEmail, criticalIssues, diagnosticResult.clienteData?.nome_cliente)
       }
 
       updateProgress("Concluído", 100, "Diagnóstico finalizado")
@@ -197,7 +218,8 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    console.log('🔧 [AdvancedDiagnostic] Aplicando correções para:', diagnosticResult.email)
+    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V2 ===')
+    console.log('📧 [AdvancedDiagnostic] Email:', diagnosticResult.email)
 
     try {
       // Preparar lista de correções que podem ser aplicadas automaticamente
@@ -207,12 +229,14 @@ export function useAdvancedAuthDiagnostic() {
 
       if (correctableIssues.length === 0) {
         toast({
-          title: "Nenhuma Correção Disponível",
+          title: "Nenhuma Correção Necessária",
           description: "Não há correções automáticas disponíveis para este caso",
-          variant: "destructive"
+          variant: "default"
         })
         return
       }
+
+      console.log('🔧 [AdvancedDiagnostic] Correções a aplicar:', correctableIssues.length)
 
       // Chamar a Edge Function para aplicar as correções
       const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
@@ -236,7 +260,8 @@ export function useAdvancedAuthDiagnostic() {
       const updatedResult = {
         ...diagnosticResult,
         corrections: fixResult.corrections || [],
-        clientMessage: generateCorrectionMessage(
+        canLogin: fixResult.loginValidated || false,
+        clientMessage: fixResult.clientMessage || generateCorrectionMessage(
           diagnosticResult.email, 
           fixResult.corrections || [], 
           diagnosticResult.clienteData?.nome_cliente,
@@ -246,16 +271,20 @@ export function useAdvancedAuthDiagnostic() {
       
       setResult(updatedResult)
 
-      // Mostrar resultado com base no sucesso e warnings
+      // Mostrar resultado com base no sucesso e validação de login
       if (fixResult.success && fixResult.successfulCorrections > 0) {
-        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas com sucesso`
+        let title = "Correções Aplicadas"
+        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas`
         
-        if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Avisos: ${fixResult.warnings.length}`
+        if (fixResult.loginValidated) {
+          title = "✅ Acesso Liberado!"
+          description += ". Login validado com sucesso!"
+        } else if (fixResult.warnings && fixResult.warnings.length > 0) {
+          description += `. Alguns avisos foram encontrados`
         }
 
         toast({
-          title: "Correções Aplicadas",
+          title,
           description,
           variant: "default"
         })
@@ -263,7 +292,7 @@ export function useAdvancedAuthDiagnostic() {
         let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`
         
         if (fixResult.warnings && fixResult.warnings.length > 0) {
-          description += `. Alguns avisos foram encontrados - verifique o resultado`
+          description += `. Verifique os avisos no resultado`
         }
 
         toast({
@@ -297,7 +326,7 @@ Realizamos um diagnóstico completo do seu acesso e está tudo funcionando perfe
 • Senha: parceriadesucesso
 
 🔑 COMO ACESSAR:
-1. Acesse: [LINK DO SISTEMA]
+1. Acesse: https://login.trafegoporcents.com
 2. Clique em "Entrar"
 3. Digite seu email e senha
 4. Clique em "Entrar"
@@ -377,7 +406,7 @@ ${warnings.map(w => `• ${w}`).join('\n')}`
 • Senha: parceriadesucesso
 
 🚀 COMO ACESSAR AGORA:
-1. Acesse: [LINK DO SISTEMA]
+1. Acesse: https://login.trafegoporcents.com
 2. Clique em "Entrar"  
 3. Digite seu email e senha
 4. Clique em "Entrar"
