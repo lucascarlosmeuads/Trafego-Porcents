@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { supabase } from '@/lib/supabase'
+import { Copy, Check } from 'lucide-react'
 
 interface GestorOption {
   nome: string
@@ -20,11 +21,11 @@ export function NewSellerAddClientForm() {
   const { addCliente, refetch } = useSimpleSellerData(user?.email || '')
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
+  const [copied, setCopied] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     email_cliente: '',
     telefone: '',
-    produto_nicho: '',
     senha: 'parceriadesucesso',
     email_gestor: ''
   })
@@ -62,10 +63,10 @@ export function NewSellerAddClientForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (!formData.nome_cliente || !formData.email_cliente || !formData.telefone || !formData.produto_nicho) {
+    if (!formData.nome_cliente || !formData.email_cliente || !formData.telefone) {
       toast({
         title: "Erro",
-        description: "Todos os campos são obrigatórios",
+        description: "Nome, e-mail e telefone são obrigatórios",
         variant: "destructive"
       })
       return
@@ -102,7 +103,7 @@ export function NewSellerAddClientForm() {
         email_gestor: formData.email_gestor,
         status_campanha: 'Brief',
         data_venda: new Date().toISOString().split('T')[0],
-        produto_nicho: formData.produto_nicho,
+        produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha
       }
 
@@ -120,7 +121,6 @@ export function NewSellerAddClientForm() {
           nome_cliente: '',
           email_cliente: '',
           telefone: '',
-          produto_nicho: '',
           senha: 'parceriadesucesso',
           email_gestor: ''
         })
@@ -159,6 +159,48 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const generateClientInstructions = () => {
+    const clienteName = formData.nome_cliente || '[Nome do Cliente]'
+    const clienteEmail = formData.email_cliente || '[Email do Cliente]'
+    const clienteSenha = formData.senha || 'parceriadesucesso'
+    
+    return `Olá ${clienteName}! 🎉
+
+Sua conta foi criada com sucesso! Agora você pode acessar nosso painel:
+
+📧 E-mail: ${clienteEmail}
+🔐 Senha: ${clienteSenha}
+
+🔗 Para acessar: https://trafegoporcents.com
+
+📋 PASSOS PARA ACESSAR:
+1. Clique no link acima
+2. Faça login com seu e-mail e senha
+3. Siga o passo a passo que aparecerá na tela
+4. Complete seu briefing para iniciarmos sua campanha
+
+Qualquer dúvida, estamos aqui para ajudar! 💪`
+  }
+
+  const handleCopyInstructions = async () => {
+    const instructions = generateClientInstructions()
+    try {
+      await navigator.clipboard.writeText(instructions)
+      setCopied(true)
+      toast({
+        title: "Copiado!",
+        description: "Instruções copiadas para enviar ao cliente"
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar as instruções",
+        variant: "destructive"
+      })
     }
   }
 
@@ -207,17 +249,6 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="produto_nicho">Produto ou Nicho *</Label>
-            <Input
-              id="produto_nicho"
-              value={formData.produto_nicho}
-              onChange={(e) => setFormData(prev => ({ ...prev, produto_nicho: e.target.value }))}
-              placeholder="Tráfego para Loja Fitness"
-              required
-            />
-          </div>
-
-          <div className="grid gap-2">
             <Label htmlFor="email_gestor">Gestor Responsável *</Label>
             <Select value={formData.email_gestor} onValueChange={(value) => setFormData(prev => ({ ...prev, email_gestor: value }))}>
               <SelectTrigger>
@@ -260,13 +291,47 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
             </p>
           </div>
 
+          {/* Seção de Instruções para o Cliente */}
+          {formData.nome_cliente && formData.email_cliente && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-semibold text-green-800 text-sm">📱 Instruções para enviar ao cliente:</h3>
+                <Button
+                  type="button"
+                  onClick={handleCopyInstructions}
+                  size="sm"
+                  variant={copied ? "default" : "outline"}
+                  className="text-xs"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 mr-1" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="bg-white border rounded p-3 text-sm">
+                <pre className="whitespace-pre-wrap font-sans text-gray-700">
+                  {generateClientInstructions()}
+                </pre>
+              </div>
+            </div>
+          )}
+
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h3 className="font-semibold text-blue-800 text-sm mb-2">📋 Informações importantes:</h3>
             <ul className="text-blue-700 text-sm space-y-1">
-              <li>• O cliente será criado no Supabase Auth com a senha informada</li>
+              <li>• O cliente será criado no sistema com a senha informada</li>
               <li>• O login funcionará imediatamente após a criação</li>
               <li>• As credenciais serão: <strong>{formData.email_cliente || '[email]'}</strong> / <strong>{formData.senha}</strong></li>
               <li>• O cliente aparecerá automaticamente nos painéis do Gestor e Admin</li>
+              <li>• Use as instruções acima para orientar o cliente sobre o acesso</li>
             </ul>
           </div>
 
