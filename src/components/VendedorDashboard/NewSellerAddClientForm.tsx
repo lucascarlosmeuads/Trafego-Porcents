@@ -1,24 +1,63 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
+import { supabase } from '@/lib/supabase'
+
+interface GestorOption {
+  nome: string
+  email: string
+}
 
 export function NewSellerAddClientForm() {
   const { user } = useAuth()
   const { addCliente, refetch } = useSimpleSellerData(user?.email || '')
   const [loading, setLoading] = useState(false)
+  const [gestores, setGestores] = useState<GestorOption[]>([])
   const [formData, setFormData] = useState({
     nome_cliente: '',
     email_cliente: '',
     telefone: '',
     produto_nicho: '',
-    senha: 'parceriadesucesso'
+    senha: 'parceriadesucesso',
+    email_gestor: ''
   })
+
+  // Buscar gestores disponíveis
+  useEffect(() => {
+    const fetchGestores = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('gestores')
+          .select('nome, email')
+          .eq('ativo', true)
+          .order('nome')
+
+        if (error) {
+          console.error('Erro ao buscar gestores:', error)
+          return
+        }
+
+        const gestoresFormatados = (data || []).map(gestor => ({
+          nome: gestor.nome,
+          email: gestor.email
+        }))
+
+        setGestores(gestoresFormatados)
+        console.log('✅ Gestores carregados:', gestoresFormatados.length)
+      } catch (error) {
+        console.error('Erro ao carregar gestores:', error)
+      }
+    }
+
+    fetchGestores()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -27,6 +66,15 @@ export function NewSellerAddClientForm() {
       toast({
         title: "Erro",
         description: "Todos os campos são obrigatórios",
+        variant: "destructive"
+      })
+      return
+    }
+
+    if (!formData.email_gestor) {
+      toast({
+        title: "Erro",
+        description: "Selecione um gestor responsável",
         variant: "destructive"
       })
       return
@@ -45,21 +93,24 @@ export function NewSellerAddClientForm() {
 
     try {
       console.log("🔵 [NewSellerAddClientForm] === INICIANDO PROCESSO ===")
+      console.log("🔵 [NewSellerAddClientForm] Dados do formulário:", formData)
       
       const clienteData = {
         nome_cliente: formData.nome_cliente,
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
-        email_gestor: user?.email || '', // Vendedor como responsável
+        email_gestor: formData.email_gestor,
         status_campanha: 'Brief',
         data_venda: new Date().toISOString().split('T')[0],
         produto_nicho: formData.produto_nicho,
         senha_cliente: formData.senha
       }
 
-      console.log("🔵 [NewSellerAddClientForm] Dados para adicionar:", clienteData)
+      console.log("🔵 [NewSellerAddClientForm] Dados para addCliente:", clienteData)
 
       const result = await addCliente(clienteData)
+      
+      console.log("🔵 [NewSellerAddClientForm] Resultado do addCliente:", result)
       
       if (result && result.success) {
         console.log("🟢 [NewSellerAddClientForm] === CLIENTE CRIADO COM SUCESSO ===")
@@ -70,24 +121,32 @@ export function NewSellerAddClientForm() {
           email_cliente: '',
           telefone: '',
           produto_nicho: '',
-          senha: 'parceriadesucesso'
+          senha: 'parceriadesucesso',
+          email_gestor: ''
         })
         
         // Recarregar dados
         await refetch()
         
-        // Mostrar mensagem de sucesso com credenciais
+        // Mostrar mensagem de sucesso detalhada
         toast({
           title: "✅ Cliente criado com sucesso!",
-          description: `Cliente: ${formData.nome_cliente}\nE-mail: ${formData.email_cliente}\nSenha: ${formData.senha}`,
-          duration: 8000
+          description: `Cliente: ${clienteData.nome_cliente}
+E-mail: ${clienteData.email_cliente}
+Senha: ${clienteData.senha_cliente}
+Gestor: ${formData.email_gestor}
+
+O cliente pode fazer login imediatamente com essas credenciais.`,
+          duration: 10000
         })
+        
+        console.log("🎉 [NewSellerAddClientForm] Processo completo - cliente pode fazer login!")
         
       } else {
         console.error("❌ [NewSellerAddClientForm] Resultado indica falha:", result)
         toast({
           title: "Erro",
-          description: "Erro ao criar cliente",
+          description: result?.error || "Erro ao criar cliente",
           variant: "destructive"
         })
       }
@@ -159,6 +218,22 @@ export function NewSellerAddClientForm() {
           </div>
 
           <div className="grid gap-2">
+            <Label htmlFor="email_gestor">Gestor Responsável *</Label>
+            <Select value={formData.email_gestor} onValueChange={(value) => setFormData(prev => ({ ...prev, email_gestor: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um gestor" />
+              </SelectTrigger>
+              <SelectContent>
+                {gestores.map((gestor) => (
+                  <SelectItem key={gestor.email} value={gestor.email}>
+                    {gestor.nome} ({gestor.email})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="grid gap-2">
             <Label htmlFor="senha">Senha *</Label>
             <Input
               id="senha"
@@ -173,7 +248,7 @@ export function NewSellerAddClientForm() {
           </div>
 
           <div className="grid gap-2">
-            <Label htmlFor="responsavel">Responsável</Label>
+            <Label htmlFor="responsavel">Vendedor</Label>
             <Input
               id="responsavel"
               value={user?.email || ''}
@@ -183,6 +258,16 @@ export function NewSellerAddClientForm() {
             <p className="text-sm text-muted-foreground">
               Preenchido automaticamente com seu e-mail
             </p>
+          </div>
+
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-800 text-sm mb-2">📋 Informações importantes:</h3>
+            <ul className="text-blue-700 text-sm space-y-1">
+              <li>• O cliente será criado no Supabase Auth com a senha informada</li>
+              <li>• O login funcionará imediatamente após a criação</li>
+              <li>• As credenciais serão: <strong>{formData.email_cliente || '[email]'}</strong> / <strong>{formData.senha}</strong></li>
+              <li>• O cliente aparecerá automaticamente nos painéis do Gestor e Admin</li>
+            </ul>
           </div>
 
           <Button type="submit" disabled={loading} className="w-full">
