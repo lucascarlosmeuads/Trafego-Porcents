@@ -1,15 +1,16 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
+import { ForgotPasswordForm } from '@/components/ForgotPasswordForm'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { signIn } = useAuth()
   const { toast } = useToast()
 
@@ -75,6 +76,14 @@ export function LoginForm() {
     }
   }
 
+  if (showForgotPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
+        <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
       <Card className="w-full max-w-md">
@@ -119,6 +128,18 @@ export function LoginForm() {
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? 'Processando...' : 'Entrar'}
             </Button>
+            
+            <div className="text-center">
+              <Button
+                type="button"
+                variant="link"
+                className="text-sm text-blue-600 hover:text-blue-800"
+                onClick={() => setShowForgotPassword(true)}
+                disabled={loading}
+              >
+                Esqueci minha senha
+              </Button>
+            </div>
           </form>
         </CardContent>
       </Card>
