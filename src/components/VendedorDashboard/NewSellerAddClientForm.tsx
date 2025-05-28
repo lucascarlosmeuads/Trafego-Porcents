@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -162,43 +161,41 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
     }
   }
 
-  const generateClientInstructions = () => {
+  const generateClientWelcomeMessage = () => {
     const clienteName = formData.nome_cliente || '[Nome do Cliente]'
     const clienteEmail = formData.email_cliente || '[Email do Cliente]'
     const clienteSenha = formData.senha || 'parceriadesucesso'
     
     return `Olá ${clienteName}! 🎉
 
-Sua conta foi criada com sucesso! Agora você pode acessar nosso painel:
+Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
-📧 E-mail: ${clienteEmail}
+📧 Email: ${clienteEmail}
 🔐 Senha: ${clienteSenha}
 
-🔗 Para acessar: https://trafegoporcents.com
+🔗 Acesse: https://trafegoporcents.com
 
-📋 PASSOS PARA ACESSAR:
-1. Clique no link acima
-2. Faça login com seu e-mail e senha
-3. Siga o passo a passo que aparecerá na tela
-4. Complete seu briefing para iniciarmos sua campanha
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+
+⏰ Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo! 
 
 Qualquer dúvida, estamos aqui para ajudar! 💪`
   }
 
-  const handleCopyInstructions = async () => {
-    const instructions = generateClientInstructions()
+  const handleCopyWelcomeMessage = async () => {
+    const message = generateClientWelcomeMessage()
     try {
-      await navigator.clipboard.writeText(instructions)
+      await navigator.clipboard.writeText(message)
       setCopied(true)
       toast({
         title: "Copiado!",
-        description: "Instruções copiadas para enviar ao cliente"
+        description: "Mensagem de boas-vindas copiada para enviar ao cliente"
       })
       setTimeout(() => setCopied(false), 2000)
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Não foi possível copiar as instruções",
+        description: "Não foi possível copiar a mensagem",
         variant: "destructive"
       })
     }
@@ -291,14 +288,14 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </p>
           </div>
 
-          {/* Seção de Instruções para o Cliente */}
+          {/* Mensagem personalizada para o cliente */}
           {formData.nome_cliente && formData.email_cliente && (
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-green-800 text-sm">📱 Instruções para enviar ao cliente:</h3>
+                <h3 className="font-semibold text-green-800 text-sm">📱 Mensagem para enviar ao cliente:</h3>
                 <Button
                   type="button"
-                  onClick={handleCopyInstructions}
+                  onClick={handleCopyWelcomeMessage}
                   size="sm"
                   variant={copied ? "default" : "outline"}
                   className="text-xs"
@@ -318,22 +315,11 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               </div>
               <div className="bg-white border rounded p-3 text-sm">
                 <pre className="whitespace-pre-wrap font-sans text-gray-700">
-                  {generateClientInstructions()}
+                  {generateClientWelcomeMessage()}
                 </pre>
               </div>
             </div>
           )}
-
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-            <h3 className="font-semibold text-blue-800 text-sm mb-2">📋 Informações importantes:</h3>
-            <ul className="text-blue-700 text-sm space-y-1">
-              <li>• O cliente será criado no sistema com a senha informada</li>
-              <li>• O login funcionará imediatamente após a criação</li>
-              <li>• As credenciais serão: <strong>{formData.email_cliente || '[email]'}</strong> / <strong>{formData.senha}</strong></li>
-              <li>• O cliente aparecerá automaticamente nos painéis do Gestor e Admin</li>
-              <li>• Use as instruções acima para orientar o cliente sobre o acesso</li>
-            </ul>
-          </div>
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? "Criando Cliente..." : "Criar Cliente"}
