@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -11,8 +10,9 @@ export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { signIn, signUp } = useAuth()
+  const { signIn, signUp, resetPassword } = useAuth()
   const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -21,10 +21,42 @@ export function LoginForm() {
 
     console.log('🔐 [LoginForm] === INICIANDO PROCESSO DE AUTENTICAÇÃO ===')
     console.log('📧 [LoginForm] Email:', email)
-    console.log('🔄 [LoginForm] Modo:', isSignUp ? 'CADASTRO' : 'LOGIN')
+    console.log('🔄 [LoginForm] Modo:', isSignUp ? 'CADASTRO' : isForgotPassword ? 'RECUPERAÇÃO' : 'LOGIN')
 
     try {
-      if (isSignUp) {
+      if (isForgotPassword) {
+        // Fluxo de recuperação de senha
+        if (!email || !email.includes('@') || email.length < 5) {
+          console.error('❌ [LoginForm] Email inválido para recuperação:', email)
+          toast({
+            title: "Email Inválido",
+            description: "Por favor, insira um email válido para recuperação.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        console.log('🔑 [LoginForm] Tentando recuperar senha...')
+        
+        const { error } = await resetPassword(email)
+        
+        if (error) {
+          console.error('❌ [LoginForm] Erro na recuperação:', error)
+          toast({
+            title: "Erro na Recuperação",
+            description: "Não foi possível enviar o email de recuperação. Tente novamente.",
+            variant: "destructive"
+          })
+        } else {
+          console.log('✅ [LoginForm] Email de recuperação enviado!')
+          toast({
+            title: "Email Enviado",
+            description: "Verifique sua caixa de entrada para redefinir sua senha.",
+          })
+          setIsForgotPassword(false)
+          setEmail('')
+        }
+      } else if (isSignUp) {
         // Validação adicional antes do cadastro
         if (!email || !email.includes('@') || email.length < 5) {
           console.error('❌ [LoginForm] Email inválido:', email)
@@ -190,7 +222,12 @@ export function LoginForm() {
           </div>
           <CardTitle className="text-2xl font-bold">Painel de Gestão</CardTitle>
           <CardDescription>
-            {isSignUp ? 'Criar nova conta' : 'Entre com suas credenciais'}
+            {isForgotPassword 
+              ? 'Recuperar senha' 
+              : isSignUp 
+                ? 'Criar nova conta' 
+                : 'Entre com suas credenciais'
+            }
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -206,30 +243,69 @@ export function LoginForm() {
                 disabled={loading}
               />
             </div>
-            <div>
-              <Input
-                type="password"
-                placeholder="Senha"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full"
-                minLength={6}
-                disabled={loading}
-              />
-            </div>
+            {!isForgotPassword && (
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Senha"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required={!isForgotPassword}
+                  className="w-full"
+                  minLength={6}
+                  disabled={loading}
+                />
+              </div>
+            )}
             <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Processando...' : (isSignUp ? 'Criar conta' : 'Entrar')}
+              {loading 
+                ? 'Processando...' 
+                : isForgotPassword 
+                  ? 'Enviar email de recuperação'
+                  : isSignUp 
+                    ? 'Criar conta' 
+                    : 'Entrar'
+              }
             </Button>
-            <Button
-              type="button"
-              variant="outline"
-              className="w-full"
-              onClick={() => setIsSignUp(!isSignUp)}
-              disabled={loading}
-            >
-              {isSignUp ? 'Já tem conta? Entre' : 'Não tem conta? Cadastre-se'}
-            </Button>
+            
+            {!isForgotPassword && (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setIsSignUp(!isSignUp)}
+                  disabled={loading}
+                >
+                  {isSignUp ? 'Já tem conta? Entre' : 'Não tem conta? Cadastre-se'}
+                </Button>
+                
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full text-sm"
+                  onClick={() => setIsForgotPassword(true)}
+                  disabled={loading}
+                >
+                  Esqueci minha senha
+                </Button>
+              </>
+            )}
+            
+            {isForgotPassword && (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={() => {
+                  setIsForgotPassword(false)
+                  setEmail('')
+                }}
+                disabled={loading}
+              >
+                Voltar ao login
+              </Button>
+            )}
           </form>
         </CardContent>
       </Card>

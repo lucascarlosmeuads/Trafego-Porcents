@@ -1,4 +1,3 @@
-
 import { useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthState } from '@/hooks/useAuthState'
@@ -165,6 +164,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const resetPassword = async (email: string) => {
+    console.log('🔐 [useAuth] === PROCESSO DE RECUPERAÇÃO DE SENHA ===')
+    console.log('📧 [useAuth] Email:', email)
+    setLoading(true)
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: 'https://login.trafegoporcents.com'
+      })
+      
+      if (error) {
+        console.error('❌ [useAuth] Erro na recuperação de senha:', error.message)
+        setLoading(false)
+        return { error }
+      }
+      
+      console.log('✅ [useAuth] Email de recuperação enviado para:', email)
+      setLoading(false)
+      return { error: null }
+    } catch (error) {
+      console.error('❌ [useAuth] Erro inesperado na recuperação:', error)
+      setLoading(false)
+      return { error }
+    }
+  }
+
   const signOut = async () => {
     console.log('🚪 [useAuth] === PROCESSO DE LOGOUT ===')
     setLoading(true)
@@ -205,7 +230,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading, 
       signIn, 
       signUp, 
-      signOut, 
+      signOut,
+      resetPassword,
       isAdmin, 
       isGestor,
       isCliente,
