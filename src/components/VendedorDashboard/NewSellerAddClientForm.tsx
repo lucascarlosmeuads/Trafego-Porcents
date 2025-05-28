@@ -173,7 +173,7 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 📧 Email: ${clienteEmail}
 🔐 Senha: ${clienteSenha}
 
-🔗 Acesse: https://trafegoporcents.com
+🔗 Acesse: https://login.trafegoporcents.com
 
 O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
 
