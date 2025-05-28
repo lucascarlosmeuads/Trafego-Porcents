@@ -7,6 +7,7 @@ import { useSellerData } from '@/hooks/useSellerData'
 import { SellerMetrics } from './VendedorDashboard/SellerMetrics'
 import { SellerClientsList } from './VendedorDashboard/SellerClientsList'
 import { SellerAddClientModal } from './VendedorDashboard/SellerAddClientModal'
+import { NewSellerAddClientForm } from './VendedorDashboard/NewSellerAddClientForm'
 import { VendedorSidebar } from './VendedorDashboard/VendedorSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
@@ -85,21 +86,21 @@ export function VendedorDashboard() {
                   <div className="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm font-bold">1</div>
                   <div>
                     <p className="font-medium">Preencha os dados do cliente</p>
-                    <p className="text-sm text-gray-600">Nome completo, telefone e email são obrigatórios</p>
+                    <p className="text-sm text-gray-600">Nome completo, email, telefone e produto/nicho são obrigatórios</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <div className="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm font-bold">2</div>
                   <div>
-                    <p className="font-medium">Selecione o gestor responsável</p>
-                    <p className="text-sm text-gray-600">Escolha qual gestor ficará responsável pela campanha</p>
+                    <p className="font-medium">Configure a senha do cliente</p>
+                    <p className="text-sm text-gray-600">Use a senha padrão ou customize conforme necessário</p>
                   </div>
                 </div>
                 <div className="flex items-start space-x-3">
                   <div className="bg-blue-500 rounded-full w-6 h-6 flex items-center justify-center text-white text-sm font-bold">3</div>
                   <div>
-                    <p className="font-medium">Envie as instruções para o cliente</p>
-                    <p className="text-sm text-gray-600">Após cadastrar, envie as instruções de acesso via WhatsApp</p>
+                    <p className="font-medium">Cliente pode fazer login imediatamente</p>
+                    <p className="text-sm text-gray-600">As credenciais funcionam na tela de login do sistema</p>
                   </div>
                 </div>
               </CardContent>
@@ -111,15 +112,18 @@ export function VendedorDashboard() {
         return <SellerClientsList clientes={clientes} loading={loading} onRefresh={refetch} />
 
       case 'adicionar-cliente':
+        return <NewSellerAddClientForm />
+
+      case 'adicionar-cliente-modal':
         return (
           <Card className="border-2 border-dashed border-blue-300 bg-blue-50/50">
             <CardHeader className="text-center">
               <div className="mx-auto bg-blue-500 rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
                 <Plus className="h-8 w-8 text-white" />
               </div>
-              <CardTitle className="text-xl">Adicionar Novo Cliente</CardTitle>
+              <CardTitle className="text-xl">Adicionar Novo Cliente (Modal)</CardTitle>
               <CardDescription className="text-base">
-                Use o formulário abaixo para cadastrar novos clientes no sistema.
+                Use o formulário modal para cadastrar novos clientes no sistema.
                 Selecione o gestor responsável e preencha todas as informações necessárias.
               </CardDescription>
             </CardHeader>
@@ -157,6 +161,7 @@ export function VendedorDashboard() {
                     {activeTab === 'dashboard' && 'Dashboard'}
                     {activeTab === 'lista-vendas' && 'Lista de Vendas'}
                     {activeTab === 'adicionar-cliente' && 'Adicionar Cliente'}
+                    {activeTab === 'adicionar-cliente-modal' && 'Adicionar Cliente (Modal)'}
                   </h1>
                   <div className={`flex flex-col sm:flex-row sm:items-center sm:space-x-2 ${
                     isMobile ? 'text-xs' : 'text-xs sm:text-sm'

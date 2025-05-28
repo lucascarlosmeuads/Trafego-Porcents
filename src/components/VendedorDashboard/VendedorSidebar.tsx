@@ -1,5 +1,4 @@
 
-import { User, Users, Plus, BarChart3, LogOut } from 'lucide-react'
 import {
   Sidebar,
   SidebarContent,
@@ -10,9 +9,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
-  SidebarFooter,
-} from '@/components/ui/sidebar'
-import { useAuth } from '@/hooks/useAuth'
+} from "@/components/ui/sidebar"
+import { BarChart3, Users, Plus, UserPlus, FileText } from "lucide-react"
+import { useAuth } from "@/hooks/useAuth"
 
 interface VendedorSidebarProps {
   activeTab: string
@@ -20,50 +19,56 @@ interface VendedorSidebarProps {
 }
 
 export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps) {
-  const { user, currentManagerName, signOut } = useAuth()
+  const { currentManagerName } = useAuth()
 
   const menuItems = [
     {
       title: "Dashboard",
       icon: BarChart3,
-      id: "dashboard",
+      id: "dashboard"
     },
     {
       title: "Lista de Vendas",
       icon: Users,
-      id: "lista-vendas",
+      id: "lista-vendas"
     },
     {
       title: "Adicionar Cliente",
-      icon: Plus,
-      id: "adicionar-cliente",
+      icon: UserPlus,
+      id: "adicionar-cliente"
     },
+    {
+      title: "Adicionar Cliente (Modal)",
+      icon: Plus,
+      id: "adicionar-cliente-modal"
+    }
   ]
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4">
-        <div className="flex items-center space-x-3">
-          <div className="bg-blue-500 rounded-full p-2">
-            <User className="h-5 w-5 text-white" />
+      <SidebarHeader className="border-b px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+            <Users className="h-4 w-4" />
           </div>
-          <div>
-            <h2 className="font-semibold text-sm">{currentManagerName}</h2>
-            <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+          <div className="flex flex-col">
+            <span className="text-sm font-semibold">Painel Vendedor</span>
+            <span className="text-xs text-muted-foreground truncate">{currentManagerName}</span>
           </div>
         </div>
       </SidebarHeader>
-
+      
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Painel do Vendedor</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    isActive={activeTab === item.id}
+                  <SidebarMenuButton 
                     onClick={() => onTabChange(item.id)}
+                    isActive={activeTab === item.id}
+                    className="w-full justify-start"
                   >
                     <item.icon className="h-4 w-4" />
                     <span>{item.title}</span>
@@ -74,17 +79,6 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-
-      <SidebarFooter className="p-4">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton onClick={signOut}>
-              <LogOut className="h-4 w-4" />
-              <span>Sair</span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarFooter>
     </Sidebar>
   )
 }

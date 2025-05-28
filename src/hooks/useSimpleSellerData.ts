@@ -103,6 +103,8 @@ export function useSimpleSellerData(sellerEmail: string) {
     email_gestor: string
     status_campanha: string
     data_venda: string
+    produto_nicho?: string
+    senha_cliente?: string
   }) => {
     try {
       console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
@@ -115,15 +117,18 @@ export function useSimpleSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
+      // Usar senha customizada ou padrão
+      const senhaParaUsar = clienteData.senha_cliente || SENHA_PADRAO_CLIENTE
+
       // Step 1: PRIMEIRO criar conta no Supabase Auth
-      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth PRIMEIRO...')
+      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
       let senhaDefinida = false
       
       try {
-        // Tentar criar conta usando signUp com confirmação automática
+        // Criar conta usando signUp com a senha informada
         const { data: authData, error: authError } = await supabase.auth.signUp({
           email: clienteData.email_cliente,
-          password: SENHA_PADRAO_CLIENTE,
+          password: senhaParaUsar,
           options: {
             data: {
               full_name: clienteData.nome_cliente,
@@ -227,7 +232,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         toast({
           title: "✅ Cliente cadastrado com sucesso!",
           description: senhaDefinida 
-            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha padrão: ${SENHA_PADRAO_CLIENTE}`
+            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha: ${senhaParaUsar}`
             : `Cliente ${clienteData.nome_cliente} foi adicionado.`,
           duration: 5000
         })
