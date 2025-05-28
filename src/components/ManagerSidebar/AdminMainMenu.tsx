@@ -8,7 +8,8 @@ import {
   Wallet,
   Shield,
   Upload,
-  UserPlus
+  UserPlus,
+  Stethoscope
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -86,6 +87,18 @@ export function AdminMainMenu({
       >
         <UserPlus size={16} />
         <span>Criar Usuários Clientes</span>
+      </button>
+
+      <button
+        onClick={() => handleTabChange('diagnostico-auth')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'diagnostico-auth'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <Stethoscope size={16} />
+        <span>Diagnóstico Auth</span>
       </button>
       
       <button
