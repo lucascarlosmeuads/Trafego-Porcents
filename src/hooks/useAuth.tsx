@@ -1,3 +1,4 @@
+
 import { useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthState } from '@/hooks/useAuthState'
@@ -190,6 +191,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updatePassword = async (newPassword: string) => {
+    console.log('🔐 [useAuth] === PROCESSO DE ATUALIZAÇÃO DE SENHA ===')
+    setLoading(true)
+    
+    try {
+      const { error } = await supabase.auth.updateUser({ 
+        password: newPassword 
+      })
+      
+      if (error) {
+        console.error('❌ [useAuth] Erro ao atualizar senha:', error.message)
+        setLoading(false)
+        return { error }
+      }
+      
+      console.log('✅ [useAuth] Senha atualizada com sucesso!')
+      setLoading(false)
+      return { error: null }
+    } catch (error) {
+      console.error('❌ [useAuth] Erro inesperado na atualização:', error)
+      setLoading(false)
+      return { error }
+    }
+  }
+
   const signOut = async () => {
     console.log('🚪 [useAuth] === PROCESSO DE LOGOUT ===')
     setLoading(true)
@@ -232,6 +258,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp, 
       signOut,
       resetPassword,
+      updatePassword, // NOVO
       isAdmin, 
       isGestor,
       isCliente,

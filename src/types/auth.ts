@@ -8,6 +8,7 @@ export interface AuthContextType {
   signUp: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: any }>
+  updatePassword: (newPassword: string) => Promise<{ error: any }> // NOVO
   isAdmin: boolean
   isGestor: boolean
   isCliente: boolean

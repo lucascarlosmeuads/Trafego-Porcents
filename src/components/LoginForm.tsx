@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -9,11 +9,36 @@ import { supabase } from '@/lib/supabase'
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [isSettingNewPassword, setIsSettingNewPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { signIn, signUp, resetPassword } = useAuth()
+  const { signIn, signUp, resetPassword, updatePassword } = useAuth()
   const { toast } = useToast()
+
+  // Verificar se está vindo de um link de recuperação de senha
+  useEffect(() => {
+    const checkRecoveryParams = () => {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const type = hashParams.get('type')
+      const accessToken = hashParams.get('access_token')
+
+      console.log('🔍 [LoginForm] Verificando parâmetros de recovery:', { type, hasToken: !!accessToken })
+
+      if (type === 'recovery' && accessToken) {
+        console.log('✅ [LoginForm] Link de recovery detectado!')
+        setIsSettingNewPassword(true)
+        setIsForgotPassword(false)
+        setIsSignUp(false)
+        
+        // Limpar a URL para ficar mais limpa (opcional)
+        window.history.replaceState({}, document.title, window.location.pathname)
+      }
+    }
+
+    checkRecoveryParams()
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -21,11 +46,70 @@ export function LoginForm() {
 
     console.log('🔐 [LoginForm] === INICIANDO PROCESSO DE AUTENTICAÇÃO ===')
     console.log('📧 [LoginForm] Email:', email)
-    console.log('🔄 [LoginForm] Modo:', isSignUp ? 'CADASTRO' : isForgotPassword ? 'RECUPERAÇÃO' : 'LOGIN')
+    console.log('🔄 [LoginForm] Modo:', 
+      isSettingNewPassword ? 'NOVA SENHA' :
+      isSignUp ? 'CADASTRO' : 
+      isForgotPassword ? 'RECUPERAÇÃO' : 'LOGIN'
+    )
 
     try {
-      if (isForgotPassword) {
-        // Fluxo de recuperação de senha
+      if (isSettingNewPassword) {
+        // Fluxo de definir nova senha
+        if (!password || password.length < 6) {
+          console.error('❌ [LoginForm] Senha muito curta')
+          toast({
+            title: "Senha Inválida",
+            description: "A senha deve ter pelo menos 6 caracteres.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        if (password !== confirmPassword) {
+          console.error('❌ [LoginForm] Senhas não coincidem')
+          toast({
+            title: "Senhas não coincidem",
+            description: "As senhas digitadas não são iguais.",
+            variant: "destructive"
+          })
+          return
+        }
+
+        console.log('🔑 [LoginForm] Atualizando senha...')
+        
+        const { error } = await updatePassword(password)
+        
+        if (error) {
+          console.error('❌ [LoginForm] Erro ao atualizar senha:', error)
+          
+          let errorMessage = "Erro ao atualizar senha. Tente novamente."
+          if (error.message.includes('session_not_found')) {
+            errorMessage = 'Sessão expirada. Solicite um novo link de recuperação.'
+          } else if (error.message.includes('Password')) {
+            errorMessage = 'Senha deve ter pelo menos 6 caracteres.'
+          }
+          
+          toast({
+            title: "Erro ao Atualizar Senha",
+            description: errorMessage,
+            variant: "destructive"
+          })
+        } else {
+          console.log('✅ [LoginForm] Senha atualizada com sucesso!')
+          toast({
+            title: "Sucesso",
+            description: "Senha atualizada com sucesso! Você já está logado."
+          })
+          
+          // Limpar estados e redirecionar
+          setIsSettingNewPassword(false)
+          setPassword('')
+          setConfirmPassword('')
+          
+          // O usuário já estará logado automaticamente após atualizar a senha
+        }
+      } else if (isForgotPassword) {
+        // Fluxo de recuperação de senha (mantido igual)
         if (!email || !email.includes('@') || email.length < 5) {
           console.error('❌ [LoginForm] Email inválido para recuperação:', email)
           toast({
@@ -222,32 +306,37 @@ export function LoginForm() {
           </div>
           <CardTitle className="text-2xl font-bold">Painel de Gestão</CardTitle>
           <CardDescription>
-            {isForgotPassword 
-              ? 'Recuperar senha' 
-              : isSignUp 
-                ? 'Criar nova conta' 
-                : 'Entre com suas credenciais'
+            {isSettingNewPassword 
+              ? 'Defina sua nova senha' 
+              : isForgotPassword 
+                ? 'Recuperar senha' 
+                : isSignUp 
+                  ? 'Criar nova conta' 
+                  : 'Entre com suas credenciais'
             }
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Input
-                type="email"
-                placeholder="Email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full"
-                disabled={loading}
-              />
-            </div>
+            {!isSettingNewPassword && (
+              <div>
+                <Input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full"
+                  disabled={loading}
+                />
+              </div>
+            )}
+            
             {!isForgotPassword && (
               <div>
                 <Input
                   type="password"
-                  placeholder="Senha"
+                  placeholder={isSettingNewPassword ? "Nova senha" : "Senha"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required={!isForgotPassword}
@@ -257,18 +346,36 @@ export function LoginForm() {
                 />
               </div>
             )}
+
+            {isSettingNewPassword && (
+              <div>
+                <Input
+                  type="password"
+                  placeholder="Confirmar nova senha"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full"
+                  minLength={6}
+                  disabled={loading}
+                />
+              </div>
+            )}
+            
             <Button type="submit" className="w-full" disabled={loading}>
               {loading 
                 ? 'Processando...' 
-                : isForgotPassword 
-                  ? 'Enviar email de recuperação'
-                  : isSignUp 
-                    ? 'Criar conta' 
-                    : 'Entrar'
+                : isSettingNewPassword 
+                  ? 'Definir nova senha'
+                  : isForgotPassword 
+                    ? 'Enviar email de recuperação'
+                    : isSignUp 
+                      ? 'Criar conta' 
+                      : 'Entrar'
               }
             </Button>
             
-            {!isForgotPassword && (
+            {!isForgotPassword && !isSettingNewPassword && (
               <>
                 <Button
                   type="button"
@@ -292,14 +399,17 @@ export function LoginForm() {
               </>
             )}
             
-            {isForgotPassword && (
+            {(isForgotPassword || isSettingNewPassword) && (
               <Button
                 type="button"
                 variant="outline"
                 className="w-full"
                 onClick={() => {
                   setIsForgotPassword(false)
+                  setIsSettingNewPassword(false)
                   setEmail('')
+                  setPassword('')
+                  setConfirmPassword('')
                 }}
                 disabled={loading}
               >
