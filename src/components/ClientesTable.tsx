@@ -221,6 +221,52 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
+    console.log(`🚀 === ALTERANDO STATUS DO SITE ===`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🎯 Novo Status Site: "${newStatus}"`)
+    console.log(`👤 User Email: ${emailToUse}`)
+    console.log(`🔒 IsAdmin: ${isAdmin}`)
+    
+    if (!clienteId || clienteId.trim() === '') {
+      console.error('❌ ID do cliente inválido:', clienteId)
+      toast({
+        title: "Erro",
+        description: "ID do cliente não encontrado",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUpdatingStatus(clienteId)
+    
+    try {
+      const success = await updateCliente(clienteId, 'site_status', newStatus)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`,
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status do site",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro na atualização do status do site:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar status do site",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
       {editandoProblema && (
