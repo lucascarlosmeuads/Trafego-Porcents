@@ -149,6 +149,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         console.log('⚠️ [useClienteOperations] Cliente já existe, fazendo update dos dados...')
         clienteJaExistia = true
         
+        // Para clientes existentes, NÃO forçar "Cliente Novo" - manter status atual ou usar o fornecido
         const { data: updatedData, error: updateError } = await supabase
           .from('todos_clientes')
           .update({
@@ -156,7 +157,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
             telefone: String(clienteData.telefone || ''),
             data_venda: clienteData.data_venda || null,
             vendedor: String(clienteData.vendedor || ''),
-            status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
+            status_campanha: String(clienteData.status_campanha || 'Cliente Novo'), // Manter o status fornecido
             email_gestor: String(emailGestorFinal)
           })
           .eq('id', existingCliente.id)
@@ -171,14 +172,14 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         finalClientData = { ...clienteData, ...updatedData }
         console.log('✅ [useClienteOperations] Cliente existente atualizado com sucesso')
       } else {
-        // Step 2: Create new client record
+        // Step 2: Create new client record - SEMPRE usar "Cliente Novo" como status padrão
         const novoCliente = {
           nome_cliente: String(clienteData.nome_cliente || ''),
           telefone: String(clienteData.telefone || ''),
           email_cliente: String(clienteData.email_cliente || ''),
           data_venda: clienteData.data_venda || null,
           vendedor: String(clienteData.vendedor || ''),
-          status_campanha: String(clienteData.status_campanha || 'Preenchimento do Formulário'),
+          status_campanha: 'Cliente Novo', // ✅ SEMPRE "Cliente Novo" para novos clientes
           email_gestor: String(emailGestorFinal),
           comissao_paga: false,
           valor_comissao: 60.00,

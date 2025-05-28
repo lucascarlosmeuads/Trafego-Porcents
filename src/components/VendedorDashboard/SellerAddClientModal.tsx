@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -27,7 +26,7 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     nome_cliente: '',
     telefone: '',
     email_cliente: '',
-    status_campanha: 'Brief',
+    status_campanha: 'Cliente Novo', // ✅ Mudando de 'Brief' para 'Cliente Novo'
     data_venda: new Date().toISOString().split('T')[0]
   })
 
@@ -141,7 +140,7 @@ Qualquer dúvida, entre em contato conosco!`
           nome_cliente: '',
           telefone: '',
           email_cliente: '',
-          status_campanha: 'Brief',
+          status_campanha: 'Cliente Novo',
           data_venda: new Date().toISOString().split('T')[0]
         })
         setSelectedGestor('')

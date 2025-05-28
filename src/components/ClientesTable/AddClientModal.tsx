@@ -30,7 +30,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Brief',
+    status_campanha: 'Cliente Novo', // ✅ Mudando de 'Brief' para 'Cliente Novo'
     data_venda: new Date().toISOString().split('T')[0]
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
@@ -173,7 +173,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           telefone: '',
           email_cliente: '',
           vendedor: '',
-          status_campanha: 'Brief',
+          status_campanha: 'Cliente Novo',
           data_venda: new Date().toISOString().split('T')[0]
         })
         setSelectedGestor('')

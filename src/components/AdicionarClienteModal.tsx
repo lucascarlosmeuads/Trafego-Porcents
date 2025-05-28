@@ -28,7 +28,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Brief'
+    status_campanha: 'Cliente Novo'
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
 
@@ -145,7 +145,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           telefone: '',
           email_cliente: '',
           vendedor: '',
-          status_campanha: 'Brief'
+          status_campanha: 'Cliente Novo'
         })
         setSelectedGestor('')
         setOpen(false)

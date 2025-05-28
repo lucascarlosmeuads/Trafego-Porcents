@@ -100,7 +100,7 @@ export function NewSellerAddClientForm() {
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
         email_gestor: formData.email_gestor,
-        status_campanha: 'Brief',
+        status_campanha: 'Cliente Novo', // ✅ Usando "Cliente Novo" como padrão
         data_venda: new Date().toISOString().split('T')[0],
         produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha

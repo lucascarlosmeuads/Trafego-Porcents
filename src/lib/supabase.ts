@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -54,8 +53,9 @@ export type SolicitacaoSaque = {
   updated_at: string
 }
 
-// Status operacionais disponíveis
+// Status operacionais disponíveis - Adicionando "Cliente Novo" como primeiro status
 export const STATUS_CAMPANHA = [
+  'Cliente Novo',
   'Preenchimento do Formulário',
   'Brief',
   'Criativo', 
@@ -75,6 +75,7 @@ export type StatusCampanha = typeof STATUS_CAMPANHA[number]
 
 // Mapeamento para exibição visual - apenas muda o rótulo, backend permanece igual
 export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
+  'Cliente Novo': 'Cliente Novo',
   'Preenchimento do Formulário': 'Preenchimento do Formulário',
   'Brief': 'Brief',
   'Criativo': 'Criativo',
