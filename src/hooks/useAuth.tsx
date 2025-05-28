@@ -16,63 +16,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites,
+    isSites, // NOVO
     currentManagerName,
     updateUserType,
     resetUserState
   } = useAuthState()
 
-  // Função otimizada para detectar recovery
+  // Função otimizada para evitar loops
   const handleAuthChange = useCallback(async (event: string, session: any) => {
     console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
-    
-    // Verificar se é um fluxo de recovery de múltiplas formas
-    const checkRecoveryContext = () => {
-      // 1. Verificar parâmetros da URL (tanto query quanto hash)
-      const urlParams = new URLSearchParams(window.location.search)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const hasRecoveryInUrl = urlParams.get('type') === 'recovery' || 
-                              hashParams.get('type') === 'recovery' ||
-                              window.location.href.includes('type=recovery')
-      
-      // 2. Verificar se há tokens de recovery no hash (formato Supabase)
-      const hasRecoveryTokens = window.location.hash.includes('access_token') && 
-                               window.location.hash.includes('recovery')
-      
-      // 3. Verificar se a sessão tem características de recovery
-      const hasRecoverySession = session?.user && 
-                                event === 'SIGNED_IN' && 
-                                (hasRecoveryInUrl || hasRecoveryTokens)
-      
-      return hasRecoveryInUrl || hasRecoveryTokens || hasRecoverySession
-    }
-    
-    // Detectar recovery e sinalizar
-    if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user) {
-      const isRecovery = checkRecoveryContext()
-      
-      if (isRecovery) {
-        console.log('🔑 [useAuth] RECOVERY DETECTADO! Usuário deve redefinir senha')
-        
-        // Limpar URL para evitar loops
-        if (window.location.search || window.location.hash) {
-          window.history.replaceState({}, document.title, window.location.pathname)
-        }
-        
-        // Sinalizar recovery através de evento customizado
-        setTimeout(() => {
-          window.dispatchEvent(new CustomEvent('supabase-recovery', { 
-            detail: { user: session.user, isRecovery: true } 
-          }))
-        }, 100)
-      }
-    }
     
     // Atualizar estado do usuário imediatamente (síncrono)
     setUser(session?.user ?? null)
     
     if (session?.user?.email) {
       console.log('✅ [useAuth] Usuário AUTENTICADO:', session.user.email)
+      console.log('🔍 [useAuth] Determinando tipo de usuário baseado apenas em autenticação válida')
       
       // Usar setTimeout para evitar deadlock no onAuthStateChange
       setTimeout(async () => {
@@ -80,6 +39,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await updateUserType(session.user.email)
         } catch (error) {
           console.error('❌ [useAuth] Erro ao atualizar tipo de usuário:', error)
+          // Em caso de erro, não travar - permitir que o usuário continue
         } finally {
           setLoading(false)
         }
@@ -110,28 +70,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (mounted) {
           console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
-          
-          // Verificar recovery na inicialização também
-          const urlParams = new URLSearchParams(window.location.search)
-          const hashParams = new URLSearchParams(window.location.hash.substring(1))
-          const hasRecoveryTokens = window.location.hash.includes('access_token') && 
-                                   window.location.hash.includes('recovery')
-          const isRecovery = urlParams.get('type') === 'recovery' || 
-                            hashParams.get('type') === 'recovery' ||
-                            hasRecoveryTokens ||
-                            window.location.href.includes('type=recovery')
-          
-          if (isRecovery && session?.user) {
-            console.log('🔑 [useAuth] RECOVERY INICIAL DETECTADO!')
-            // Limpar URL e sinalizar recovery
-            window.history.replaceState({}, document.title, window.location.pathname)
-            setTimeout(() => {
-              window.dispatchEvent(new CustomEvent('supabase-recovery', { 
-                detail: { user: session.user, isRecovery: true } 
-              }))
-            }, 200)
-          }
-          
           setUser(session?.user ?? null)
           
           if (session?.user?.email) {
@@ -227,57 +165,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const resetPassword = async (email: string) => {
-    console.log('🔐 [useAuth] === PROCESSO DE RECUPERAÇÃO DE SENHA ===')
-    console.log('📧 [useAuth] Email:', email)
-    setLoading(true)
-    
-    try {
-      const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/?type=recovery`
-      })
-      
-      if (error) {
-        console.error('❌ [useAuth] Erro na recuperação de senha:', error.message)
-        setLoading(false)
-        return { error }
-      }
-      
-      console.log('✅ [useAuth] Email de recuperação enviado para:', email)
-      setLoading(false)
-      return { error: null }
-    } catch (error) {
-      console.error('❌ [useAuth] Erro inesperado na recuperação:', error)
-      setLoading(false)
-      return { error }
-    }
-  }
-
-  const updatePassword = async (newPassword: string) => {
-    console.log('🔐 [useAuth] === PROCESSO DE ATUALIZAÇÃO DE SENHA ===')
-    setLoading(true)
-    
-    try {
-      const { error } = await supabase.auth.updateUser({ 
-        password: newPassword 
-      })
-      
-      if (error) {
-        console.error('❌ [useAuth] Erro ao atualizar senha:', error.message)
-        setLoading(false)
-        return { error }
-      }
-      
-      console.log('✅ [useAuth] Senha atualizada com sucesso!')
-      setLoading(false)
-      return { error: null }
-    } catch (error) {
-      console.error('❌ [useAuth] Erro inesperado na atualização:', error)
-      setLoading(false)
-      return { error }
-    }
-  }
-
   const signOut = async () => {
     console.log('🚪 [useAuth] === PROCESSO DE LOGOUT ===')
     setLoading(true)
@@ -318,14 +205,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       loading, 
       signIn, 
       signUp, 
-      signOut,
-      resetPassword,
-      updatePassword,
+      signOut, 
       isAdmin, 
       isGestor,
       isCliente,
       isVendedor,
-      isSites,
+      isSites, // NOVO
       currentManagerName
     }}>
       {children}

@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,86 +10,10 @@ import { supabase } from '@/lib/supabase'
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
   const [isSignUp, setIsSignUp] = useState(false)
-  const [isForgotPassword, setIsForgotPassword] = useState(false)
-  const [isSettingNewPassword, setIsSettingNewPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { signIn, signUp, resetPassword, updatePassword, user } = useAuth()
+  const { signIn, signUp } = useAuth()
   const { toast } = useToast()
-
-  // Detectar recovery de múltiplas formas
-  useEffect(() => {
-    const checkRecoveryFlow = () => {
-      // Verificar se já está logado mas veio de recovery
-      if (user && !isSettingNewPassword) {
-        // Se tem usuário logado, verificar se há contexto de recovery
-        const urlParams = new URLSearchParams(window.location.search)
-        const hashParams = new URLSearchParams(window.location.hash.substring(1))
-        const hasRecoveryTokens = window.location.hash.includes('access_token') && 
-                                 window.location.hash.includes('recovery')
-        const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
-                             hashParams.get('type') === 'recovery' ||
-                             hasRecoveryTokens ||
-                             window.location.href.includes('type=recovery')
-
-        if (isRecoveryUrl) {
-          console.log('✅ [LoginForm] Recovery detectado com usuário logado!')
-          setIsSettingNewPassword(true)
-          setIsForgotPassword(false)
-          setIsSignUp(false)
-          
-          // Limpar URL
-          window.history.replaceState({}, document.title, window.location.pathname)
-          
-          toast({
-            title: "Redefinir Senha",
-            description: "Você veio de um link de recuperação. Defina sua nova senha abaixo.",
-          })
-        }
-      }
-    }
-
-    // Listener para evento customizado de recovery
-    const handleRecoveryEvent = (event: any) => {
-      console.log('🔑 [LoginForm] Recovery event recebido:', event.detail)
-      if (event.detail.isRecovery) {
-        setIsSettingNewPassword(true)
-        setIsForgotPassword(false)
-        setIsSignUp(false)
-        toast({
-          title: "Redefinir Senha",
-          description: "Você veio de um link de recuperação. Defina sua nova senha abaixo.",
-        })
-      }
-    }
-
-    // Verificar na inicialização
-    checkRecoveryFlow()
-    
-    // Adicionar listener para eventos de recovery
-    window.addEventListener('supabase-recovery', handleRecoveryEvent)
-    
-    return () => {
-      window.removeEventListener('supabase-recovery', handleRecoveryEvent)
-    }
-  }, [user, isSettingNewPassword, toast])
-
-  // Se o usuário está logado e não está definindo nova senha, mostrar mensagem
-  if (user && !isSettingNewPassword) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold">Você já está logado!</CardTitle>
-            <CardDescription>
-              Redirecionando para o dashboard...
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      </div>
-    )
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,104 +21,10 @@ export function LoginForm() {
 
     console.log('🔐 [LoginForm] === INICIANDO PROCESSO DE AUTENTICAÇÃO ===')
     console.log('📧 [LoginForm] Email:', email)
-    console.log('🔄 [LoginForm] Modo:', 
-      isSettingNewPassword ? 'NOVA SENHA' :
-      isSignUp ? 'CADASTRO' : 
-      isForgotPassword ? 'RECUPERAÇÃO' : 'LOGIN'
-    )
+    console.log('🔄 [LoginForm] Modo:', isSignUp ? 'CADASTRO' : 'LOGIN')
 
     try {
-      if (isSettingNewPassword) {
-        // Fluxo de definir nova senha
-        if (!password || password.length < 6) {
-          console.error('❌ [LoginForm] Senha muito curta')
-          toast({
-            title: "Senha Inválida",
-            description: "A senha deve ter pelo menos 6 caracteres.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        if (password !== confirmPassword) {
-          console.error('❌ [LoginForm] Senhas não coincidem')
-          toast({
-            title: "Senhas não coincidem",
-            description: "As senhas digitadas não são iguais.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        console.log('🔑 [LoginForm] Atualizando senha...')
-        
-        const { error } = await updatePassword(password)
-        
-        if (error) {
-          console.error('❌ [LoginForm] Erro ao atualizar senha:', error)
-          
-          let errorMessage = "Erro ao atualizar senha. Tente novamente."
-          if (error.message.includes('session_not_found') || error.message.includes('unauthorized')) {
-            errorMessage = 'Sessão expirada. Solicite um novo link de recuperação.'
-          } else if (error.message.includes('Password') || error.message.includes('password')) {
-            errorMessage = 'Senha deve ter pelo menos 6 caracteres.'
-          }
-          
-          toast({
-            title: "Erro ao Atualizar Senha",
-            description: errorMessage,
-            variant: "destructive"
-          })
-        } else {
-          console.log('✅ [LoginForm] Senha atualizada com sucesso!')
-          toast({
-            title: "Senha Atualizada!",
-            description: "Sua senha foi atualizada com sucesso. Redirecionando para o dashboard..."
-          })
-          
-          // Limpar estados e redirecionar
-          setIsSettingNewPassword(false)
-          setPassword('')
-          setConfirmPassword('')
-          
-          // Forçar recarregamento para ir para o dashboard
-          setTimeout(() => {
-            window.location.href = '/'
-          }, 1500)
-        }
-      } else if (isForgotPassword) {
-        // Fluxo de recuperação de senha (mantido igual)
-        if (!email || !email.includes('@') || email.length < 5) {
-          console.error('❌ [LoginForm] Email inválido para recuperação:', email)
-          toast({
-            title: "Email Inválido",
-            description: "Por favor, insira um email válido para recuperação.",
-            variant: "destructive"
-          })
-          return
-        }
-
-        console.log('🔑 [LoginForm] Tentando recuperar senha...')
-        
-        const { error } = await resetPassword(email)
-        
-        if (error) {
-          console.error('❌ [LoginForm] Erro na recuperação:', error)
-          toast({
-            title: "Erro na Recuperação",
-            description: "Não foi possível enviar o email de recuperação. Tente novamente.",
-            variant: "destructive"
-          })
-        } else {
-          console.log('✅ [LoginForm] Email de recuperação enviado!')
-          toast({
-            title: "Email Enviado",
-            description: "Verifique sua caixa de entrada para redefinir sua senha.",
-          })
-          setIsForgotPassword(false)
-          setEmail('')
-        }
-      } else if (isSignUp) {
+      if (isSignUp) {
         // Validação adicional antes do cadastro
         if (!email || !email.includes('@') || email.length < 5) {
           console.error('❌ [LoginForm] Email inválido:', email)
@@ -358,120 +188,48 @@ export function LoginForm() {
               className="h-32 w-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold">
-            {isSettingNewPassword ? 'Redefinir Senha' : 'Painel de Gestão'}
-          </CardTitle>
+          <CardTitle className="text-2xl font-bold">Painel de Gestão</CardTitle>
           <CardDescription>
-            {isSettingNewPassword 
-              ? 'Defina sua nova senha para continuar' 
-              : isForgotPassword 
-                ? 'Recuperar senha' 
-                : isSignUp 
-                  ? 'Criar nova conta' 
-                  : 'Entre com suas credenciais'
-            }
+            {isSignUp ? 'Criar nova conta' : 'Entre com suas credenciais'}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            {!isSettingNewPassword && (
-              <div>
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  className="w-full"
-                  disabled={loading}
-                />
-              </div>
-            )}
-            
-            {!isForgotPassword && (
-              <div>
-                <Input
-                  type="password"
-                  placeholder={isSettingNewPassword ? "Nova senha" : "Senha"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required={!isForgotPassword}
-                  className="w-full"
-                  minLength={6}
-                  disabled={loading}
-                />
-              </div>
-            )}
-
-            {isSettingNewPassword && (
-              <div>
-                <Input
-                  type="password"
-                  placeholder="Confirmar nova senha"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  required
-                  className="w-full"
-                  minLength={6}
-                  disabled={loading}
-                />
-              </div>
-            )}
-            
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading 
-                ? 'Processando...' 
-                : isSettingNewPassword 
-                  ? 'Atualizar senha e continuar'
-                  : isForgotPassword 
-                    ? 'Enviar email de recuperação'
-                    : isSignUp 
-                      ? 'Criar conta' 
-                      : 'Entrar'
-              }
-            </Button>
-            
-            {!isForgotPassword && !isSettingNewPassword && (
-              <>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={() => setIsSignUp(!isSignUp)}
-                  disabled={loading}
-                >
-                  {isSignUp ? 'Já tem conta? Entre' : 'Não tem conta? Cadastre-se'}
-                </Button>
-                
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="w-full text-sm"
-                  onClick={() => setIsForgotPassword(true)}
-                  disabled={loading}
-                >
-                  Esqueci minha senha
-                </Button>
-              </>
-            )}
-            
-            {(isForgotPassword || isSettingNewPassword) && (
-              <Button
-                type="button"
-                variant="outline"
+            <div>
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
                 className="w-full"
-                onClick={() => {
-                  setIsForgotPassword(false)
-                  setIsSettingNewPassword(false)
-                  setEmail('')
-                  setPassword('')
-                  setConfirmPassword('')
-                }}
                 disabled={loading}
-              >
-                Voltar ao login
-              </Button>
-            )}
+              />
+            </div>
+            <div>
+              <Input
+                type="password"
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full"
+                minLength={6}
+                disabled={loading}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? 'Processando...' : (isSignUp ? 'Criar conta' : 'Entrar')}
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full"
+              onClick={() => setIsSignUp(!isSignUp)}
+              disabled={loading}
+            >
+              {isSignUp ? 'Já tem conta? Entre' : 'Não tem conta? Cadastre-se'}
+            </Button>
           </form>
         </CardContent>
       </Card>

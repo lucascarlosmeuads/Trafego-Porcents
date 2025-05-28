@@ -7,14 +7,12 @@ export interface AuthContextType {
   signIn: (email: string, password: string) => Promise<{ error: any }>
   signUp: (email: string, password: string) => Promise<{ error: any }>
   signOut: () => Promise<void>
-  resetPassword: (email: string) => Promise<{ error: any }>
-  updatePassword: (newPassword: string) => Promise<{ error: any }> // NOVO
   isAdmin: boolean
   isGestor: boolean
   isCliente: boolean
   isVendedor: boolean
-  isSites: boolean
+  isSites: boolean // NOVO
   currentManagerName: string
 }
 
-export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error'
+export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error' // ATUALIZADO
