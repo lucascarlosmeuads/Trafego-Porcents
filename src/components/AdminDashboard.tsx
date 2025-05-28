@@ -58,6 +58,14 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'criar-usuarios-clientes':
         return <ClientUserCreation />
 
+      case 'sites':
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
+            <ClientesTable selectedManager={null} filterType="sites-pendentes" />
+          </div>
+        )
+
       case 'saques-pendentes':
         return (
           <div className="space-y-4">

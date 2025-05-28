@@ -65,6 +65,18 @@ export function AdminMainMenu({
       </button>
 
       <button
+        onClick={() => handleTabChange('sites')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'sites'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <Shield size={16} />
+        <span>Painel de Sites</span>
+      </button>
+
+      <button
         onClick={() => handleTabChange('importar-vendas')}
         className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
           activeTab === 'importar-vendas'

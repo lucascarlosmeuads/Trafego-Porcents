@@ -245,8 +245,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  {/* UPDATED: Changed colSpan from 14 to 12 since we removed the "Briefing" column */}
-                  <TableCell colSpan={12} className="text-center py-8 text-white">
+                  <TableCell colSpan={14} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
                       : clientes.length === 0 
@@ -448,10 +447,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       const success = await updateCliente(clienteId, field, newStatus)
       
       if (success) {
+        const isSiteStatusMessage = isSiteStatus ? getDisplaySiteStatus(newStatus) : newStatus
         toast({
           title: "Sucesso",
           description: isSiteStatus 
-            ? `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`
+            ? `Status do site alterado para: ${isSiteStatusMessage}`
             : `Status da campanha alterado para: ${newStatus}`,
         })
       } else {
