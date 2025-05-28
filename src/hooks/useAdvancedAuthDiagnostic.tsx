@@ -291,7 +291,7 @@ export function useAdvancedAuthDiagnostic() {
       })
       
       console.log('✅ [AdvancedDiagnostic] Usuário criado:', data.user.id)
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [AdvancedDiagnostic] Erro ao criar usuário:', error)
       corrections.push({
         action: 'Criar usuário no sistema',
@@ -305,10 +305,15 @@ export function useAdvancedAuthDiagnostic() {
     try {
       console.log('🔧 [AdvancedDiagnostic] Atualizando senha:', email)
       
-      const { data, error } = await supabase.auth.admin.updateUserById(
-        email, // Assumindo que temos o ID, se não temos, usaremos listUsers
-        { password: 'parceriadesucesso' }
-      )
+      // Primeiro buscar o usuário pelo email
+      const { data: users } = await supabase.auth.admin.listUsers()
+      const user = users.users.find(u => u.email === email)
+      
+      if (!user) throw new Error('Usuário não encontrado')
+
+      const { data, error } = await supabase.auth.admin.updateUserById(user.id, {
+        password: 'parceriadesucesso'
+      })
 
       if (error) throw error
 
@@ -320,7 +325,7 @@ export function useAdvancedAuthDiagnostic() {
       })
       
       console.log('✅ [AdvancedDiagnostic] Senha atualizada')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [AdvancedDiagnostic] Erro ao resetar senha:', error)
       corrections.push({
         action: 'Resetar senha do usuário',
@@ -354,7 +359,7 @@ export function useAdvancedAuthDiagnostic() {
       })
       
       console.log('✅ [AdvancedDiagnostic] Email confirmado')
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [AdvancedDiagnostic] Erro ao confirmar email:', error)
       corrections.push({
         action: 'Confirmar email do usuário',
