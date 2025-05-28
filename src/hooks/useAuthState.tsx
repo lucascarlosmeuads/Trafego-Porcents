@@ -30,10 +30,11 @@ export function useAuthState(): UseAuthState {
   const [currentManagerName, setCurrentManagerName] = useState<string>('')
 
   const resetUserState = useCallback(() => {
+    console.log('🧹 [useAuthState] Resetando estado do usuário')
     setUser(null)
     setUserType('unauthorized')
     setCurrentManagerName('')
-  }, [setUser, setUserType, setCurrentManagerName])
+  }, [])
 
   const updateUserType = useCallback(async (email: string) => {
     console.log('🔍 [useAuthState] === DETERMINANDO TIPO DE USUÁRIO ===')
@@ -65,6 +66,18 @@ export function useAuthState(): UseAuthState {
       setCurrentManagerName('')
     }
   }, [])
+
+  // Timeout de segurança adicional
+  useEffect(() => {
+    const emergencyTimeout = setTimeout(() => {
+      if (loading) {
+        console.log('🚨 [useAuthState] TIMEOUT DE EMERGÊNCIA - Forçando fim do carregamento')
+        setLoading(false)
+      }
+    }, 15000) // 15 segundos
+
+    return () => clearTimeout(emergencyTimeout)
+  }, [loading])
 
   // Computed properties
   const isAdmin = userType === 'admin'

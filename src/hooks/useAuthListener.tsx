@@ -42,18 +42,31 @@ export function useAuthListener() {
 
   useEffect(() => {
     let mounted = true
+    let initialCheckComplete = false
     
+    // Timeout de segurança para evitar carregamento infinito
+    const loadingTimeout = setTimeout(() => {
+      if (mounted && !initialCheckComplete) {
+        console.log('⚠️ [useAuthListener] Timeout de carregamento - forçando fim do loading')
+        setLoading(false)
+      }
+    }, 10000) // 10 segundos timeout
+
     // Configuração do listener PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
 
     // Verificação inicial da sessão existente
     const checkInitialSession = async () => {
       try {
+        console.log('🔍 [useAuthListener] Verificando sessão inicial...')
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
           console.error('❌ [useAuthListener] Erro ao verificar sessão:', error)
-          setLoading(false)
+          if (mounted) {
+            setLoading(false)
+            initialCheckComplete = true
+          }
           return
         }
 
@@ -69,11 +82,13 @@ export function useAuthListener() {
             }
           }
           setLoading(false)
+          initialCheckComplete = true
         }
       } catch (error) {
         console.error('❌ [useAuthListener] Erro crítico na inicialização:', error)
         if (mounted) {
           setLoading(false)
+          initialCheckComplete = true
         }
       }
     }
@@ -83,6 +98,8 @@ export function useAuthListener() {
     // Cleanup
     return () => {
       mounted = false
+      initialCheckComplete = true
+      clearTimeout(loadingTimeout)
       subscription.unsubscribe()
     }
   }, [handleAuthChange, setUser, updateUserType, setLoading])
