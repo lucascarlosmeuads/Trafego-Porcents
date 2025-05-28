@@ -73,22 +73,22 @@ serve(async (req) => {
 
     console.log('✅ [FixClientAuth] Cliente encontrado:', cliente.nome_cliente)
 
-    // 2. Verificar se usuário existe no Supabase Auth
-    const { data: existingUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+    // 2. Buscar usuário específico no Supabase Auth por email
+    const { data: listResponse, error: listError } = await supabaseAdmin.auth.admin.listUsers()
     
-    if (usersError) {
-      console.error('❌ [FixClientAuth] Erro ao buscar usuários:', usersError)
-      throw usersError
+    if (listError) {
+      console.error('❌ [FixClientAuth] Erro ao buscar usuários:', listError)
+      throw listError
     }
 
-    const existingUser = existingUsers.users.find(u => u.email?.toLowerCase() === normalizedEmail)
-    console.log('🔍 [FixClientAuth] Usuário existente:', existingUser ? 'SIM' : 'NÃO')
+    const existingUser = listResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+    console.log('🔍 [FixClientAuth] Usuário existente encontrado:', existingUser ? 'SIM' : 'NÃO')
 
     let result: FixResult
 
     if (existingUser) {
       // Usuário existe - resetar senha para padrão
-      console.log('🔧 [FixClientAuth] Resetando senha do usuário existente')
+      console.log('🔧 [FixClientAuth] Resetando senha do usuário existente:', existingUser.id)
       
       const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
         existingUser.id,
@@ -139,7 +139,7 @@ serve(async (req) => {
           message: `Erro ao criar usuário: ${createError.message}`
         }
       } else {
-        console.log('✅ [FixClientAuth] Usuário criado com sucesso')
+        console.log('✅ [FixClientAuth] Usuário criado com sucesso:', newUser.user?.id)
         result = {
           email: normalizedEmail,
           action: 'user_created',
@@ -150,15 +150,20 @@ serve(async (req) => {
     }
 
     // Log da operação no banco
-    await supabaseAdmin
-      .from('client_user_creation_log')
-      .insert({
-        email_cliente: normalizedEmail,
-        operation_type: 'fix_auth',
-        result_message: result.message
-      })
+    try {
+      await supabaseAdmin
+        .from('client_user_creation_log')
+        .insert({
+          email_cliente: normalizedEmail,
+          operation_type: 'fix_auth',
+          result_message: result.message
+        })
+    } catch (logError) {
+      console.warn('⚠️ [FixClientAuth] Erro ao salvar log:', logError)
+      // Não falhar a operação por causa do log
+    }
 
-    console.log('📝 [FixClientAuth] Resultado:', result)
+    console.log('📝 [FixClientAuth] Resultado final:', result)
 
     return new Response(
       JSON.stringify(result),
