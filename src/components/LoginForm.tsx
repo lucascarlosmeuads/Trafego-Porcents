@@ -15,34 +15,38 @@ export function LoginForm() {
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [isSettingNewPassword, setIsSettingNewPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { signIn, signUp, resetPassword, updatePassword } = useAuth()
+  const { signIn, signUp, resetPassword, updatePassword, user } = useAuth()
   const { toast } = useToast()
 
-  // Detectar recovery via evento customizado E parâmetros de URL
+  // Detectar recovery de múltiplas formas
   useEffect(() => {
     const checkRecoveryFlow = () => {
-      // Verificar múltiplos formatos de parâmetros
-      const urlParams = new URLSearchParams(window.location.search)
-      const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
-                           hashParams.get('type') === 'recovery' ||
-                           window.location.href.includes('type=recovery')
+      // Verificar se já está logado mas veio de recovery
+      if (user && !isSettingNewPassword) {
+        // Se tem usuário logado, verificar se há contexto de recovery
+        const urlParams = new URLSearchParams(window.location.search)
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        const hasRecoveryTokens = window.location.hash.includes('access_token') && 
+                                 window.location.hash.includes('recovery')
+        const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
+                             hashParams.get('type') === 'recovery' ||
+                             hasRecoveryTokens ||
+                             window.location.href.includes('type=recovery')
 
-      console.log('🔍 [LoginForm] Verificando recovery:', {
-        search: window.location.search,
-        hash: window.location.hash,
-        href: window.location.href,
-        isRecoveryUrl
-      })
-
-      if (isRecoveryUrl) {
-        console.log('✅ [LoginForm] Recovery detectado via URL!')
-        setIsSettingNewPassword(true)
-        setIsForgotPassword(false)
-        setIsSignUp(false)
-        
-        // Limpar URL
-        window.history.replaceState({}, document.title, window.location.pathname)
+        if (isRecoveryUrl) {
+          console.log('✅ [LoginForm] Recovery detectado com usuário logado!')
+          setIsSettingNewPassword(true)
+          setIsForgotPassword(false)
+          setIsSignUp(false)
+          
+          // Limpar URL
+          window.history.replaceState({}, document.title, window.location.pathname)
+          
+          toast({
+            title: "Redefinir Senha",
+            description: "Você veio de um link de recuperação. Defina sua nova senha abaixo.",
+          })
+        }
       }
     }
 
@@ -55,7 +59,7 @@ export function LoginForm() {
         setIsSignUp(false)
         toast({
           title: "Redefinir Senha",
-          description: "Defina sua nova senha abaixo.",
+          description: "Você veio de um link de recuperação. Defina sua nova senha abaixo.",
         })
       }
     }
@@ -69,7 +73,23 @@ export function LoginForm() {
     return () => {
       window.removeEventListener('supabase-recovery', handleRecoveryEvent)
     }
-  }, [toast])
+  }, [user, isSettingNewPassword, toast])
+
+  // Se o usuário está logado e não está definindo nova senha, mostrar mensagem
+  if (user && !isSettingNewPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold">Você já está logado!</CardTitle>
+            <CardDescription>
+              Redirecionando para o dashboard...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,13 +149,18 @@ export function LoginForm() {
           console.log('✅ [LoginForm] Senha atualizada com sucesso!')
           toast({
             title: "Senha Atualizada!",
-            description: "Sua senha foi atualizada com sucesso. Você já está logado."
+            description: "Sua senha foi atualizada com sucesso. Redirecionando para o dashboard..."
           })
           
-          // Limpar estados
+          // Limpar estados e redirecionar
           setIsSettingNewPassword(false)
           setPassword('')
           setConfirmPassword('')
+          
+          // Forçar recarregamento para ir para o dashboard
+          setTimeout(() => {
+            window.location.href = '/'
+          }, 1500)
         }
       } else if (isForgotPassword) {
         // Fluxo de recuperação de senha (mantido igual)
@@ -333,10 +358,12 @@ export function LoginForm() {
               className="h-32 w-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold">Painel de Gestão</CardTitle>
+          <CardTitle className="text-2xl font-bold">
+            {isSettingNewPassword ? 'Redefinir Senha' : 'Painel de Gestão'}
+          </CardTitle>
           <CardDescription>
             {isSettingNewPassword 
-              ? 'Defina sua nova senha' 
+              ? 'Defina sua nova senha para continuar' 
               : isForgotPassword 
                 ? 'Recuperar senha' 
                 : isSignUp 
@@ -395,7 +422,7 @@ export function LoginForm() {
               {loading 
                 ? 'Processando...' 
                 : isSettingNewPassword 
-                  ? 'Definir nova senha'
+                  ? 'Atualizar senha e continuar'
                   : isForgotPassword 
                     ? 'Enviar email de recuperação'
                     : isSignUp 

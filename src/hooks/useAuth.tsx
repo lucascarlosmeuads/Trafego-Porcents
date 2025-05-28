@@ -16,30 +16,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites, // NOVO
+    isSites,
     currentManagerName,
     updateUserType,
     resetUserState
   } = useAuthState()
 
-  // Função otimizada para evitar loops
+  // Função otimizada para detectar recovery
   const handleAuthChange = useCallback(async (event: string, session: any) => {
     console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
     
-    // Verificar se é um fluxo de recovery
-    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+    // Verificar se é um fluxo de recovery de múltiplas formas
+    const checkRecoveryContext = () => {
+      // 1. Verificar parâmetros da URL (tanto query quanto hash)
       const urlParams = new URLSearchParams(window.location.search)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const isRecovery = urlParams.get('type') === 'recovery' || 
-                        hashParams.get('type') === 'recovery' ||
-                        window.location.href.includes('type=recovery')
+      const hasRecoveryInUrl = urlParams.get('type') === 'recovery' || 
+                              hashParams.get('type') === 'recovery' ||
+                              window.location.href.includes('type=recovery')
       
-      if (isRecovery && session?.user) {
+      // 2. Verificar se há tokens de recovery no hash (formato Supabase)
+      const hasRecoveryTokens = window.location.hash.includes('access_token') && 
+                               window.location.hash.includes('recovery')
+      
+      // 3. Verificar se a sessão tem características de recovery
+      const hasRecoverySession = session?.user && 
+                                event === 'SIGNED_IN' && 
+                                (hasRecoveryInUrl || hasRecoveryTokens)
+      
+      return hasRecoveryInUrl || hasRecoveryTokens || hasRecoverySession
+    }
+    
+    // Detectar recovery e sinalizar
+    if ((event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') && session?.user) {
+      const isRecovery = checkRecoveryContext()
+      
+      if (isRecovery) {
         console.log('🔑 [useAuth] RECOVERY DETECTADO! Usuário deve redefinir senha')
-        // Sinalizar que é um fluxo de recovery através de um evento customizado
-        window.dispatchEvent(new CustomEvent('supabase-recovery', { 
-          detail: { user: session.user, isRecovery: true } 
-        }))
+        
+        // Limpar URL para evitar loops
+        if (window.location.search || window.location.hash) {
+          window.history.replaceState({}, document.title, window.location.pathname)
+        }
+        
+        // Sinalizar recovery através de evento customizado
+        setTimeout(() => {
+          window.dispatchEvent(new CustomEvent('supabase-recovery', { 
+            detail: { user: session.user, isRecovery: true } 
+          }))
+        }, 100)
       }
     }
     
@@ -48,7 +73,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     if (session?.user?.email) {
       console.log('✅ [useAuth] Usuário AUTENTICADO:', session.user.email)
-      console.log('🔍 [useAuth] Determinando tipo de usuário baseado apenas em autenticação válida')
       
       // Usar setTimeout para evitar deadlock no onAuthStateChange
       setTimeout(async () => {
@@ -56,7 +80,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           await updateUserType(session.user.email)
         } catch (error) {
           console.error('❌ [useAuth] Erro ao atualizar tipo de usuário:', error)
-          // Em caso de erro, não travar - permitir que o usuário continue
         } finally {
           setLoading(false)
         }
@@ -88,20 +111,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (mounted) {
           console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
           
-          // Verificar se é um recovery na inicialização
+          // Verificar recovery na inicialização também
           const urlParams = new URLSearchParams(window.location.search)
           const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          const hasRecoveryTokens = window.location.hash.includes('access_token') && 
+                                   window.location.hash.includes('recovery')
           const isRecovery = urlParams.get('type') === 'recovery' || 
                             hashParams.get('type') === 'recovery' ||
+                            hasRecoveryTokens ||
                             window.location.href.includes('type=recovery')
           
           if (isRecovery && session?.user) {
             console.log('🔑 [useAuth] RECOVERY INICIAL DETECTADO!')
             // Limpar URL e sinalizar recovery
             window.history.replaceState({}, document.title, window.location.pathname)
-            window.dispatchEvent(new CustomEvent('supabase-recovery', { 
-              detail: { user: session.user, isRecovery: true } 
-            }))
+            setTimeout(() => {
+              window.dispatchEvent(new CustomEvent('supabase-recovery', { 
+                detail: { user: session.user, isRecovery: true } 
+              }))
+            }, 200)
           }
           
           setUser(session?.user ?? null)
@@ -292,12 +320,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       signUp, 
       signOut,
       resetPassword,
-      updatePassword, // NOVO
+      updatePassword,
       isAdmin, 
       isGestor,
       isCliente,
       isVendedor,
-      isSites, // NOVO
+      isSites,
       currentManagerName
     }}>
       {children}
