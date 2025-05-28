@@ -1,8 +1,8 @@
-
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { DiagnosticResult, DiagnosticIssue, DiagnosticCorrection, DiagnosticProgress } from '@/components/AuthDiagnostic/DiagnosticTypes'
+import type { User } from '@supabase/supabase-js'
 
 export function useAdvancedAuthDiagnostic() {
   const [loading, setLoading] = useState(false)
@@ -307,7 +307,7 @@ export function useAdvancedAuthDiagnostic() {
       
       // Primeiro buscar o usuário pelo email
       const { data: users } = await supabase.auth.admin.listUsers()
-      const user = users.users.find(u => u.email === email)
+      const user = users.users.find((u: User) => u.email === email)
       
       if (!user) throw new Error('Usuário não encontrado')
 
@@ -341,7 +341,7 @@ export function useAdvancedAuthDiagnostic() {
       
       // Aqui precisaríamos do ID do usuário, vamos buscar primeiro
       const { data: users } = await supabase.auth.admin.listUsers()
-      const user = users.users.find(u => u.email === email)
+      const user = users.users.find((u: User) => u.email === email)
       
       if (!user) throw new Error('Usuário não encontrado')
 
