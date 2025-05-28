@@ -1,6 +1,5 @@
-
 import { useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp } from 'lucide-react'
 import { useSellerData } from '@/hooks/useSellerData'
@@ -12,7 +11,7 @@ import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/s
 import { useIsMobile } from '@/hooks/use-mobile'
 
 export function VendedorDashboard() {
-  const { user, currentManagerName } = useAuth()
+  const { user, currentManagerName } = useSimpleAuth()
   const { clientes, metrics, loading, refetch } = useSellerData(user?.email || '')
   const [activeTab, setActiveTab] = useState('dashboard')
   const isMobile = useIsMobile()

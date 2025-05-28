@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { ProblemasPanel } from './ProblemasPanel'
@@ -10,7 +11,7 @@ import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 export function GestorDashboard() {
-  const { user, currentManagerName, isAdmin } = useAuth()
+  const { user, currentManagerName, isAdmin } = useSimpleAuth()
   const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
   const { canAddClients, loading: permissionsLoading } = useGestorPermissions()
   const { inicializarClientesTravados } = useGestorStatusRestrictions()

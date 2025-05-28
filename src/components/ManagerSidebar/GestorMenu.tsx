@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { supabase } from '@/lib/supabase'
 import { Badge } from '@/components/ui/badge'
 import { 
@@ -21,7 +20,7 @@ export function GestorMenu({
   activeTab, 
   onManagerSelect 
 }: GestorMenuProps) {
-  const { user } = useAuth()
+  const { user } = useSimpleAuth()
   const [problemasPendentes, setProblemasPendentes] = useState(0)
   const [saquesPendentes, setSaquesPendentes] = useState(0)
 
