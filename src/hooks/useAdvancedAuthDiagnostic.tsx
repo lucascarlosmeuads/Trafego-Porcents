@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -242,22 +241,37 @@ export function useAdvancedAuthDiagnostic() {
         clientMessage: generateCorrectionMessage(
           diagnosticResult.email, 
           fixResult.corrections || [], 
-          diagnosticResult.clienteData?.nome_cliente
+          diagnosticResult.clienteData?.nome_cliente,
+          fixResult.warnings
         )
       }
       
       setResult(updatedResult)
 
+      // Mostrar resultado com base no sucesso e warnings
       if (fixResult.success && fixResult.successfulCorrections > 0) {
+        let description = `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas com sucesso`
+        
+        if (fixResult.warnings && fixResult.warnings.length > 0) {
+          description += `. Avisos: ${fixResult.warnings.length}`
+        }
+
         toast({
           title: "Correções Aplicadas",
-          description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections} correções aplicadas com sucesso`
+          description,
+          variant: fixResult.warnings && fixResult.warnings.length > 0 ? "default" : "default"
         })
       } else {
+        let description = `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`
+        
+        if (fixResult.warnings && fixResult.warnings.length > 0) {
+          description += `. Alguns avisos foram encontrados - verifique o resultado`
+        }
+
         toast({
-          title: "Correções Falharam",
-          description: `${fixResult.successfulCorrections || 0} de ${fixResult.totalCorrections || 0} correções aplicadas`,
-          variant: "destructive"
+          title: fixResult.successfulCorrections > 0 ? "Correções Parciais" : "Correções Falharam",
+          description,
+          variant: fixResult.successfulCorrections > 0 ? "default" : "destructive"
         })
       }
 
@@ -327,23 +341,38 @@ Atenciosamente,
 Equipe Suporte`
   }
 
-  const generateCorrectionMessage = (email: string, corrections: DiagnosticCorrection[], nome?: string) => {
+  const generateCorrectionMessage = (email: string, corrections: DiagnosticCorrection[], nome?: string, warnings?: string[]) => {
     const successful = corrections.filter(c => c.status === 'success')
     const failed = corrections.filter(c => c.status === 'failed')
     
-    return `✅ CORREÇÕES APLICADAS COM SUCESSO
+    let message = `✅ CORREÇÕES APLICADAS
 
 Olá ${nome || 'Cliente'},
 
-Aplicamos as correções no seu acesso! Agora você já pode entrar no sistema.
+Aplicamos as correções no seu acesso! `
+
+    if (successful.length > 0) {
+      message += `Agora você já pode entrar no sistema.
 
 ✅ CORREÇÕES REALIZADAS:
-${successful.map(c => `• ${c.action} - ${c.message}`).join('\n')}
+${successful.map(c => `• ${c.action} - ${c.message}`).join('\n')}`
+    }
 
-${failed.length > 0 ? `
-⚠️ PENDÊNCIAS (se houver):
-${failed.map(c => `• ${c.action} - ${c.message}`).join('\n')}
-` : ''}
+    if (failed.length > 0) {
+      message += `
+
+⚠️ CORREÇÕES QUE FALHARAM:
+${failed.map(c => `• ${c.action} - ${c.message}`).join('\n')}`
+    }
+
+    if (warnings && warnings.length > 0) {
+      message += `
+
+ℹ️ AVISOS:
+${warnings.map(w => `• ${w}`).join('\n')}`
+    }
+
+    message += `
 
 🔑 SUAS CREDENCIAIS ATUALIZADAS:
 • Email: ${email}  
@@ -355,13 +384,15 @@ ${failed.map(c => `• ${c.action} - ${c.message}`).join('\n')}
 3. Digite seu email e senha
 4. Clique em "Entrar"
 
-✅ STATUS: Acesso liberado e funcionando
-⏰ Corrigido em: ${new Date().toLocaleString('pt-BR')}
+✅ STATUS: ${successful.length > 0 ? 'Acesso liberado e funcionando' : 'Verificar pendências acima'}
+⏰ Processado em: ${new Date().toLocaleString('pt-BR')}
 
-Seu acesso está 100% funcionando! Se tiver qualquer dúvida, estamos aqui.
+${successful.length > 0 ? 'Seu acesso está funcionando! Se tiver qualquer dúvida, estamos aqui.' : 'Entre em contato caso precise de ajuda adicional.'}
 
 Atenciosamente,
 Equipe Suporte`
+
+    return message
   }
 
   return {
