@@ -9,25 +9,28 @@ export function useAuthActions() {
   const signIn = async (email: string, password: string) => {
     console.log('🔐 [useAuthActions] === PROCESSO DE LOGIN ===')
     console.log('📧 [useAuthActions] Email:', email)
-    console.log('🔍 [useAuthActions] Validação baseada APENAS no Supabase Auth')
+    
     setLoading(true)
     
     try {
+      // Limpar estado anterior antes de fazer login
+      console.log('🧹 [useAuthActions] Limpando estado anterior...')
+      
       const { data, error } = await supabase.auth.signInWithPassword({ 
         email, 
         password 
       })
       
       if (error) {
-        console.error('❌ [useAuthActions] Falha na autenticação Supabase:', error.message)
-        console.error('🔥 [useAuthActions] Código do erro:', error.code)
+        console.error('❌ [useAuthActions] Falha na autenticação:', error.message)
         setLoading(false)
         return { error }
       }
       
       if (data.user) {
         console.log('✅ [useAuthActions] Login bem-sucedido para:', data.user.email)
-        console.log('🎯 [useAuthActions] Usuário autenticado via Supabase Auth')
+        console.log('⏳ [useAuthActions] Aguardando determinação de tipo...')
+        // NÃO definir loading como false aqui - deixar o useAuthListener fazer isso
       }
       
       return { error: null }
@@ -41,8 +44,6 @@ export function useAuthActions() {
   const signUp = async (email: string, password: string) => {
     console.log('🔐 [useAuthActions] === PROCESSO DE CADASTRO ===')
     console.log('📧 [useAuthActions] Email:', email)
-    console.log('🔍 [useAuthActions] Validação baseada APENAS no Supabase Auth')
-    console.log('❌ [useAuthActions] NÃO verificando todos_clientes ou outras tabelas')
     
     setLoading(true)
     
@@ -53,18 +54,15 @@ export function useAuthActions() {
       })
       
       if (error) {
-        console.error('❌ [useAuthActions] Erro no cadastro Supabase:', error.message)
-        console.error('🔥 [useAuthActions] Código do erro:', error.code)
+        console.error('❌ [useAuthActions] Erro no cadastro:', error.message)
         setLoading(false)
         return { error }
       }
       
       if (data.user) {
         console.log('✅ [useAuthActions] Cadastro bem-sucedido para:', data.user.email)
-        console.log('🎯 [useAuthActions] Conta criada no Supabase Auth')
       }
       
-      setLoading(false)
       return { error: null }
     } catch (error) {
       console.error('❌ [useAuthActions] Erro inesperado no cadastro:', error)
@@ -75,7 +73,6 @@ export function useAuthActions() {
 
   const signOut = async () => {
     console.log('🚪 [useAuthActions] === PROCESSO DE LOGOUT ===')
-    setLoading(true)
     
     try {
       console.log('🧹 [useAuthActions] Limpando estado local primeiro')
@@ -83,8 +80,7 @@ export function useAuthActions() {
       
       console.log('🗑️ [useAuthActions] Limpando localStorage')
       Object.keys(localStorage).forEach((key) => {
-        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
-          console.log('🗑️ [useAuthActions] Removendo:', key)
+        if (key.startsWith('supabase') || key.includes('sb-') || key.includes('auth')) {
           localStorage.removeItem(key)
         }
       })
@@ -94,15 +90,14 @@ export function useAuthActions() {
       
       console.log('✅ [useAuthActions] Logout concluído, redirecionando...')
       
-      // Forçar reload da página para limpar completamente o estado
+      // Redirecionamento mais rápido
       setTimeout(() => {
         window.location.href = '/'
-      }, 100)
+      }, 50)
       
     } catch (error) {
       console.error('❌ [useAuthActions] Erro no logout:', error)
-      // Em caso de erro, forçar redirecionamento mesmo assim
-      console.log('🚪 [useAuthActions] Forçando redirecionamento por erro')
+      // Forçar redirecionamento mesmo com erro
       window.location.href = '/'
     }
   }

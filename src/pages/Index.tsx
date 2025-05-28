@@ -3,7 +3,7 @@ import { useAuth, AuthProvider } from '@/hooks/useAuth'
 import { LoginForm } from '@/components/LoginForm'
 import { Dashboard } from '@/components/Dashboard'
 import { Button } from '@/components/ui/button'
-import { AlertCircle, RefreshCw } from 'lucide-react'
+import { AlertCircle, RefreshCw, Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 
@@ -18,27 +18,16 @@ function AppContent() {
       const searchParams = new URLSearchParams(window.location.search)
       
       console.log('🔍 [Index] Verificando tokens de recuperação...')
-      console.log('🔍 [Index] Hash:', hash)
-      console.log('🔍 [Index] Search params:', window.location.search)
       
       if (hash && hash.includes('access_token=')) {
         console.log('✅ [Index] Token de recuperação encontrado no hash!')
-        console.log('🔄 [Index] Redirecionando para /reset-password...')
         const newUrl = `/reset-password${hash}`
         navigate(newUrl, { replace: true })
         return
       }
       
-      if (searchParams.has('access_token')) {
-        console.log('✅ [Index] Token de recuperação encontrado nos query params!')
-        console.log('🔄 [Index] Redirecionando para /reset-password...')
-        navigate(`/reset-password${window.location.search}`, { replace: true })
-        return
-      }
-      
-      if (searchParams.get('type') === 'recovery') {
-        console.log('✅ [Index] Link de recuperação detectado!')
-        console.log('🔄 [Index] Redirecionando para /reset-password...')
+      if (searchParams.has('access_token') || searchParams.get('type') === 'recovery') {
+        console.log('✅ [Index] Token de recuperação encontrado!')
         navigate(`/reset-password${window.location.search}`, { replace: true })
         return
       }
@@ -51,26 +40,42 @@ function AppContent() {
     }
   }, [navigate, loading])
 
-  // Função para limpar estado e recarregar
-  const handleEmergencyReset = () => {
-    console.log('🚨 [Index] === RESET DE EMERGÊNCIA ===')
-    console.log('🚨 [Index] Limpando localStorage...')
+  // Função para limpeza completa do estado
+  const handleCompleteReset = () => {
+    console.log('🚨 [Index] === LIMPEZA COMPLETA ===')
     
-    // Limpar todo o estado de autenticação
+    // Limpar TUDO do localStorage relacionado ao Supabase
     Object.keys(localStorage).forEach((key) => {
-      if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+      if (key.startsWith('supabase') || key.includes('sb-') || key.includes('auth')) {
         console.log('🗑️ [Index] Removendo chave:', key)
         localStorage.removeItem(key)
       }
     })
     
+    // Limpar sessionStorage também
+    Object.keys(sessionStorage || {}).forEach((key) => {
+      if (key.startsWith('supabase') || key.includes('sb-') || key.includes('auth')) {
+        console.log('🗑️ [Index] Removendo chave do sessionStorage:', key)
+        sessionStorage.removeItem(key)
+      }
+    })
+    
     console.log('🔄 [Index] Recarregando página...')
-    window.location.reload()
+    window.location.href = '/'
   }
+
+  // Log detalhado do estado atual
+  useEffect(() => {
+    console.log('📊 [Index] === ESTADO ATUAL DA APLICAÇÃO ===')
+    console.log('   - loading:', loading)
+    console.log('   - user presente:', !!user)
+    console.log('   - email do user:', user?.email || 'null')
+    console.log('   - deve mostrar login:', !user)
+    console.log('   - deve mostrar dashboard:', !!user)
+  }, [loading, user])
 
   if (loading) {
     console.log('⏳ [Index] === ESTADO DE CARREGAMENTO ===')
-    console.log('⏳ [Index] Aguardando determinação de tipo de usuário...')
     
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -81,7 +86,6 @@ function AppContent() {
             Verificando permissões de acesso...
           </div>
           
-          {/* Botão de emergência que aparece após alguns segundos */}
           <div className="mt-6 space-y-2">
             <Button 
               variant="outline" 
@@ -94,17 +98,17 @@ function AppContent() {
             
             <Button 
               variant="destructive" 
-              onClick={handleEmergencyReset}
+              onClick={handleCompleteReset}
               className="w-full"
               size="sm"
             >
-              <AlertCircle className="w-4 h-4 mr-2" />
-              Reset de Emergência
+              <Trash2 className="w-4 h-4 mr-2" />
+              Limpeza Completa
             </Button>
           </div>
           
           <div className="text-xs text-muted-foreground mt-4">
-            Se o carregamento demorar muito, use o reset de emergência
+            Se o problema persistir, use a limpeza completa
           </div>
         </div>
       </div>
@@ -119,7 +123,7 @@ function AppContent() {
 
   console.log('✅ [Index] === USUÁRIO AUTENTICADO ===')
   console.log('✅ [Index] Email:', user.email)
-  console.log('🎯 [Index] Redirecionando para Dashboard...')
+  console.log('🎯 [Index] Carregando Dashboard...')
   return <Dashboard />
 }
 

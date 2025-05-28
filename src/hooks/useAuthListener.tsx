@@ -18,15 +18,16 @@ export function useAuthListener() {
     console.log('🔄 [useAuthListener] Email do usuário:', session?.user?.email || 'nenhum usuário')
     console.log('🔄 [useAuthListener] Sessão válida:', !!session)
     
-    // Atualizar estado do usuário imediatamente
-    setUser(session?.user ?? null)
-    
     if (session?.user?.email) {
       console.log('✅ [useAuthListener] === USUÁRIO AUTENTICADO ===')
       console.log('✅ [useAuthListener] Email:', session.user.email)
+      
+      // Atualizar estado do usuário IMEDIATAMENTE
+      setUser(session.user)
+      
       console.log('🔍 [useAuthListener] Iniciando determinação de tipo de usuário...')
       
-      // Usar setTimeout para evitar deadlock, mas com delay menor
+      // Usar setTimeout para evitar deadlock
       setTimeout(async () => {
         try {
           console.log('🔄 [useAuthListener] Executando updateUserType...')
@@ -35,10 +36,10 @@ export function useAuthListener() {
         } catch (error) {
           console.error('❌ [useAuthListener] === ERRO NO updateUserType ===')
           console.error('❌ [useAuthListener] Erro:', error)
-          console.error('❌ [useAuthListener] Forçando fim do loading por erro')
+          // NÃO resetar o usuário em caso de erro na determinação do tipo
           setLoading(false)
         }
-      }, 100) // Reduzido para 100ms
+      }, 50)
     } else {
       console.log('❌ [useAuthListener] === SEM USUÁRIO AUTENTICADO ===')
       console.log('🧹 [useAuthListener] Limpando estado...')
@@ -52,7 +53,7 @@ export function useAuthListener() {
     
     console.log('🚀 [useAuthListener] === INICIALIZANDO AUTH LISTENER ===')
     
-    // Timeout de segurança reduzido
+    // Timeout de segurança
     const loadingTimeout = setTimeout(() => {
       if (mounted && !initialCheckComplete) {
         console.log('⚠️ [useAuthListener] === TIMEOUT DE CARREGAMENTO ===')
@@ -60,9 +61,9 @@ export function useAuthListener() {
         setLoading(false)
         initialCheckComplete = true
       }
-    }, 8000) // Reduzido para 8 segundos
+    }, 6000) // Reduzido para 6 segundos
 
-    // Configuração do listener PRIMEIRO
+    // Configuração do listener
     console.log('🔧 [useAuthListener] Configurando onAuthStateChange...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
     console.log('✅ [useAuthListener] Listener configurado')
@@ -82,7 +83,7 @@ export function useAuthListener() {
           return
         }
 
-        if (mounted) {
+        if (mounted && !initialCheckComplete) {
           console.log('🔍 [useAuthListener] Sessão inicial encontrada:', session?.user?.email || 'nenhuma')
           
           if (session?.user?.email) {

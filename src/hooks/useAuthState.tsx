@@ -26,8 +26,9 @@ interface UseAuthState {
 export function useAuthState(): UseAuthState {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
-	const [userType, setUserType] = useState<UserType>('unauthorized')
+  const [userType, setUserType] = useState<UserType>('unauthorized')
   const [currentManagerName, setCurrentManagerName] = useState<string>('')
+  const [isProcessing, setIsProcessing] = useState<boolean>(false)
 
   const resetUserState = useCallback(() => {
     console.log('🧹 [useAuthState] === RESETANDO ESTADO DO USUÁRIO ===')
@@ -35,23 +36,25 @@ export function useAuthState(): UseAuthState {
     setUserType('unauthorized')
     setCurrentManagerName('')
     setLoading(false)
+    setIsProcessing(false)
   }, [])
 
   const updateUserType = useCallback(async (email: string) => {
+    // Prevenir múltiplas execuções simultâneas
+    if (isProcessing) {
+      console.log('⚠️ [useAuthState] updateUserType já em execução, ignorando...')
+      return
+    }
+
     console.log('🔍 [useAuthState] === DETERMINANDO TIPO DE USUÁRIO ===')
     console.log('🔍 [useAuthState] Email recebido:', `"${email}"`)
-    console.log('🔍 [useAuthState] Iniciando processo de verificação...')
+    
+    setIsProcessing(true)
     
     try {
       console.log('🔄 [useAuthState] Chamando checkUserType...')
       const tipoUsuario = await checkUserType(email)
       console.log('✅ [useAuthState] Tipo determinado:', tipoUsuario)
-      
-      // Verificação específica para o problema atual
-      if (tipoUsuario === 'unauthorized' || tipoUsuario === 'error') {
-        console.log('❌ [useAuthState] PROBLEMA DETECTADO - Usuário não autorizado')
-        console.log('🔧 [useAuthState] Verificando se é problema de dados...')
-      }
       
       setUserType(tipoUsuario)
 
@@ -67,57 +70,51 @@ export function useAuthState(): UseAuthState {
       console.log('   - Tipo:', tipoUsuario)
       console.log('   - Nome:', nomeUsuario)
       console.log('   - Autorizado:', tipoUsuario !== 'unauthorized' && tipoUsuario !== 'error')
-      console.log('   - Deve mostrar dashboard:', tipoUsuario !== 'unauthorized' && tipoUsuario !== 'error')
-
-      // IMPORTANTE: Sempre finalizar o loading após determinar o tipo
-      console.log('🏁 [useAuthState] Finalizando loading...')
-      setLoading(false)
 
     } catch (error) {
       console.error('❌ [useAuthState] === ERRO CRÍTICO ===')
       console.error('❌ [useAuthState] Erro ao determinar tipo de usuário:', error)
-      console.error('❌ [useAuthState] Stack trace:', error instanceof Error ? error.stack : 'N/A')
       
       setUserType('error')
       setCurrentManagerName('')
-      setLoading(false) // CRÍTICO: Sempre finalizar loading mesmo em erro
+    } finally {
+      // CRÍTICO: Sempre finalizar loading e processing
+      console.log('🏁 [useAuthState] Finalizando loading e processing...')
+      setLoading(false)
+      setIsProcessing(false)
     }
-  }, [])
+  }, [isProcessing])
 
-  // Timeout de emergência com logs mais detalhados
+  // Timeout de emergência mais curto
   useEffect(() => {
     const emergencyTimeout = setTimeout(() => {
       if (loading) {
         console.log('🚨 [useAuthState] === TIMEOUT DE EMERGÊNCIA ===')
-        console.log('🚨 [useAuthState] Loading ainda estava true após 10 segundos')
-        console.log('🚨 [useAuthState] Estado atual:')
-        console.log('   - user:', user?.email || 'null')
-        console.log('   - userType:', userType)
-        console.log('   - currentManagerName:', currentManagerName)
         console.log('🚨 [useAuthState] Forçando fim do carregamento')
         setLoading(false)
+        setIsProcessing(false)
       }
-    }, 10000) // Reduzido para 10 segundos
+    }, 5000) // Reduzido para 5 segundos
 
     return () => clearTimeout(emergencyTimeout)
-  }, [loading, user, userType, currentManagerName])
+  }, [loading])
 
-  // Computed properties com logs
+  // Computed properties
   const isAdmin = userType === 'admin'
   const isGestor = userType === 'gestor'
   const isCliente = userType === 'cliente'
   const isVendedor = userType === 'vendedor'
   const isSites = userType === 'sites'
 
-  // Log do estado atual sempre que houver mudanças
+  // Log simplificado do estado atual
   useEffect(() => {
-    console.log('📊 [useAuthState] === ESTADO ATUAL ===')
-    console.log('   - loading:', loading)
-    console.log('   - user:', user?.email || 'null')
-    console.log('   - userType:', userType)
-    console.log('   - isGestor:', isGestor)
-    console.log('   - currentManagerName:', currentManagerName)
-  }, [loading, user, userType, isGestor, currentManagerName])
+    console.log('📊 [useAuthState] Estado:', { 
+      loading, 
+      userEmail: user?.email || 'null', 
+      userType, 
+      isProcessing 
+    })
+  }, [loading, user?.email, userType, isProcessing])
 
   return {
     user,
