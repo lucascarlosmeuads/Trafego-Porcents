@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -30,7 +31,7 @@ export function useAdvancedAuthDiagnostic() {
     setResult(null)
 
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO SIMPLIFICADO V2 ===')
+    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO ROBUSTO V6 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', normalizedEmail)
 
     try {
@@ -81,8 +82,8 @@ export function useAdvancedAuthDiagnostic() {
         console.log('⚠️ [AdvancedDiagnostic] Cliente não encontrado na base')
       }
 
-      // 2. Verificar se usuário existe no Auth
-      updateProgress("Verificando usuário no Auth", 40, "Consultando sistema de autenticação...")
+      // 2. Verificar usuário no Auth com detecção robusta
+      updateProgress("Verificando usuário no Auth", 40, "Consulta robusta no sistema de autenticação...")
       
       let authUserExists = false
       let authUserData = null
@@ -202,7 +203,7 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V5 ===')
+    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES ROBUSTAS V6 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', diagnosticResult.email)
 
     try {
@@ -212,8 +213,8 @@ export function useAdvancedAuthDiagnostic() {
 
       console.log('🔧 [AdvancedDiagnostic] Issues críticos encontrados:', criticalIssues.length)
 
-      // Chamar Edge Function simplificada
-      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function V5 simplificada...')
+      // Chamar Edge Function robusta
+      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function V6 robusta...')
 
       const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
         body: {
@@ -230,7 +231,7 @@ export function useAdvancedAuthDiagnostic() {
         throw new Error(`Erro ao aplicar correções: ${fixError.message}`)
       }
 
-      console.log('✅ [AdvancedDiagnostic] Resultado das correções V5:', fixResult)
+      console.log('✅ [AdvancedDiagnostic] Resultado das correções V6:', fixResult)
 
       // Atualizar resultado com correções aplicadas
       const updatedResult = {
@@ -247,8 +248,8 @@ export function useAdvancedAuthDiagnostic() {
       
       setResult(updatedResult)
 
-      // FEEDBACK MELHORADO baseado no resultado real
-      console.log('📊 [AdvancedDiagnostic] Analisando resultado:', {
+      // FEEDBACK ROBUSTA baseado no resultado real
+      console.log('📊 [AdvancedDiagnostic] Analisando resultado robusto:', {
         success: fixResult.success,
         successfulCorrections: fixResult.successfulCorrections,
         totalCorrections: fixResult.totalCorrections,

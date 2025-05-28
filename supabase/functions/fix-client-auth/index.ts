@@ -1,4 +1,5 @@
 
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -41,7 +42,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('🔧 [FixClientAuth] === CORREÇÃO DEFINITIVA V5 ===')
+    console.log('🔧 [FixClientAuth] === CORREÇÃO ROBUSTA V6 ===')
 
     const { email, corrections, checkOnly }: FixRequest = await req.json()
     
@@ -63,33 +64,55 @@ serve(async (req) => {
     const normalizedEmail = email.toLowerCase().trim()
     console.log('📧 [FixClientAuth] Processando email:', normalizedEmail)
 
-    // 1. DETECÇÃO SIMPLIFICADA: Usar apenas listUsers (mais confiável)
-    console.log('🔍 [FixClientAuth] === DETECÇÃO SIMPLIFICADA ===')
+    // 1. DETECÇÃO ROBUSTA MÚLTIPLA
+    console.log('🔍 [FixClientAuth] === DETECÇÃO ROBUSTA MÚLTIPLA ===')
     
     let existingUser = null
     let userExists = false
+    let detectionMethod = 'none'
     
+    // Método 1: getUserByEmail (mais direto)
     try {
-      const { data: usersResponse, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+      console.log('🔍 [FixClientAuth] Tentativa 1: getUserByEmail...')
+      const { data: userByEmail, error: emailError } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail)
       
-      if (usersError) {
-        console.error('❌ [FixClientAuth] Erro ao listar usuários:', usersError)
-        throw new Error(`Erro ao verificar usuário: ${usersError.message}`)
+      if (!emailError && userByEmail?.user) {
+        existingUser = userByEmail.user
+        userExists = true
+        detectionMethod = 'getUserByEmail'
+        console.log('✅ [FixClientAuth] Usuário encontrado via getUserByEmail:', existingUser.id)
+      } else {
+        console.log('⚠️ [FixClientAuth] getUserByEmail não encontrou:', emailError?.message || 'usuário não existe')
       }
-      
-      existingUser = usersResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
-      userExists = !!existingUser
-      
-      console.log(`🔍 [FixClientAuth] Usuário encontrado: ${userExists ? 'SIM' : 'NÃO'}`)
-      
-      if (userExists) {
-        console.log('✅ [FixClientAuth] ID do usuário:', existingUser.id)
-      }
-      
     } catch (error) {
-      console.error('❌ [FixClientAuth] Erro crítico na verificação:', error)
-      throw error
+      console.error('❌ [FixClientAuth] Erro no getUserByEmail:', error)
     }
+
+    // Método 2: listUsers (fallback)
+    if (!userExists) {
+      try {
+        console.log('🔍 [FixClientAuth] Tentativa 2: listUsers...')
+        const { data: usersResponse, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+        
+        if (usersError) {
+          console.error('❌ [FixClientAuth] Erro ao listar usuários:', usersError)
+        } else {
+          const foundUser = usersResponse.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+          if (foundUser) {
+            existingUser = foundUser
+            userExists = true
+            detectionMethod = 'listUsers'
+            console.log('✅ [FixClientAuth] Usuário encontrado via listUsers:', foundUser.id)
+          } else {
+            console.log('⚠️ [FixClientAuth] listUsers não encontrou usuário')
+          }
+        }
+      } catch (error) {
+        console.error('❌ [FixClientAuth] Erro no listUsers:', error)
+      }
+    }
+
+    console.log(`🎯 [FixClientAuth] Resultado da detecção: ${userExists ? 'ENCONTRADO' : 'NÃO ENCONTRADO'} via ${detectionMethod}`)
 
     // 2. Verificar cliente na base de dados (não-bloqueante)
     let clienteExists = false
@@ -140,8 +163,8 @@ serve(async (req) => {
       )
     }
 
-    // 3. LÓGICA CORRETIVA SIMPLIFICADA
-    console.log('🔧 [FixClientAuth] === APLICANDO CORREÇÕES SIMPLIFICADAS ===')
+    // 3. ESTRATÉGIA DE CORREÇÃO ROBUSTA
+    console.log('🔧 [FixClientAuth] === ESTRATÉGIA DE CORREÇÃO ROBUSTA ===')
 
     const appliedCorrections: Array<{
       action: string
@@ -151,13 +174,14 @@ serve(async (req) => {
     }> = []
 
     let operationSuccessful = false
+    let finalUserId = null
 
-    // ESTRATÉGIA SIMPLES: Se usuário existe, resetar senha. Se não existe, criar.
-    if (userExists) {
-      console.log('🔑 [FixClientAuth] Usuário existe - resetando senha...')
+    // ESTRATÉGIA: Reset se existe, criação com fallback se não existe
+    if (userExists && existingUser) {
+      console.log('🔑 [FixClientAuth] Usuário existe - aplicando reset de senha...')
       
       try {
-        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        const { data: updatedUser, error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
           existingUser.id,
           { 
             password: 'parceriadesucesso',
@@ -178,6 +202,7 @@ serve(async (req) => {
         })
         
         operationSuccessful = true
+        finalUserId = existingUser.id
         console.log('✅ [FixClientAuth] Reset de senha aplicado com sucesso')
         
       } catch (error: any) {
@@ -209,39 +234,60 @@ serve(async (req) => {
         if (createError) {
           console.error('❌ [FixClientAuth] Erro na criação:', createError)
           
-          // FALLBACK AUTOMÁTICO: Se falha porque já existe, tentar buscar e resetar
+          // FALLBACK AUTOMÁTICO para "already registered"
           if (createError.message?.includes('already been registered') || createError.message?.includes('User already registered')) {
-            console.log('🔄 [FixClientAuth] Usuário já existe - tentando fallback para reset...')
+            console.log('🔄 [FixClientAuth] Usuário já existe (erro de criação) - executando detecção e reset...')
             
-            // Buscar usuário novamente e resetar senha
-            const { data: retryUsers } = await supabaseAdmin.auth.admin.listUsers()
-            const foundUser = retryUsers.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+            // Nova detecção após erro de criação
+            let fallbackUser = null
             
-            if (foundUser) {
-              const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
-                foundUser.id,
+            // Tentar getUserByEmail novamente
+            try {
+              const { data: retryUserByEmail } = await supabaseAdmin.auth.admin.getUserByEmail(normalizedEmail)
+              if (retryUserByEmail?.user) {
+                fallbackUser = retryUserByEmail.user
+              }
+            } catch (e) {
+              console.log('⚠️ [FixClientAuth] Retry getUserByEmail falhou:', e)
+            }
+            
+            // Se ainda não encontrou, tentar listUsers
+            if (!fallbackUser) {
+              try {
+                const { data: retryUsers } = await supabaseAdmin.auth.admin.listUsers()
+                fallbackUser = retryUsers.users.find(u => u.email?.toLowerCase() === normalizedEmail)
+              } catch (e) {
+                console.log('⚠️ [FixClientAuth] Retry listUsers falhou:', e)
+              }
+            }
+            
+            if (fallbackUser) {
+              console.log('✅ [FixClientAuth] Usuário encontrado no fallback - aplicando reset...')
+              
+              const { error: fallbackUpdateError } = await supabaseAdmin.auth.admin.updateUserById(
+                fallbackUser.id,
                 { 
                   password: 'parceriadesucesso',
                   email_confirm: true
                 }
               )
 
-              if (updateError) {
-                throw updateError
+              if (fallbackUpdateError) {
+                throw fallbackUpdateError
               }
 
               appliedCorrections.push({
                 action: 'Criar usuário (convertido para reset automático)',
                 status: 'success',
-                message: 'Usuário já existia - senha resetada automaticamente',
+                message: 'Usuário já existia - senha resetada automaticamente via fallback',
                 timestamp: new Date().toISOString()
               })
               
-              existingUser = foundUser
               operationSuccessful = true
+              finalUserId = fallbackUser.id
               console.log('✅ [FixClientAuth] Fallback automático bem-sucedido')
             } else {
-              throw createError
+              throw new Error('Usuário não pôde ser encontrado após erro de criação')
             }
           } else {
             throw createError
@@ -255,8 +301,8 @@ serve(async (req) => {
           })
           
           console.log('✅ [FixClientAuth] Usuário criado:', newUser.user?.id)
-          existingUser = newUser.user
           operationSuccessful = true
+          finalUserId = newUser.user?.id
         }
       } catch (error: any) {
         console.error('❌ [FixClientAuth] Erro na criação/fallback:', error)
@@ -271,7 +317,7 @@ serve(async (req) => {
 
     // 4. VALIDAÇÃO DE LOGIN OBRIGATÓRIA
     let loginValidated = false
-    console.log('🧪 [FixClientAuth] === VALIDAÇÃO DE LOGIN ===')
+    console.log('🧪 [FixClientAuth] === VALIDAÇÃO DE LOGIN OBRIGATÓRIA ===')
     
     if (operationSuccessful) {
       console.log('🔐 [FixClientAuth] Testando login com credenciais...')
@@ -327,8 +373,8 @@ serve(async (req) => {
         .from('client_user_creation_log')
         .insert({
           email_cliente: normalizedEmail,
-          operation_type: 'simplified_corrections_v5',
-          result_message: `Usuário existia: ${userExists ? 'Sim' : 'Não'}. Operação realizada: ${operationSuccessful ? 'Sim' : 'Não'}. Correções aplicadas: ${successfulCorrections}. Login validado: ${loginValidated ? 'Sim' : 'Não'}. Cliente na base: ${clienteExists ? 'Sim' : 'Não'}.`
+          operation_type: 'robust_corrections_v6',
+          result_message: `Detecção: ${detectionMethod}. Usuário existia: ${userExists ? 'Sim' : 'Não'}. Operação realizada: ${operationSuccessful ? 'Sim' : 'Não'}. Correções aplicadas: ${successfulCorrections}. Login validado: ${loginValidated ? 'Sim' : 'Não'}. Cliente na base: ${clienteExists ? 'Sim' : 'Não'}.`
         })
     } catch (logError) {
       console.error('⚠️ [FixClientAuth] Erro ao salvar log (não crítico):', logError)
@@ -358,7 +404,8 @@ serve(async (req) => {
     console.log('📝 [FixClientAuth] Resultado enviado para frontend:', {
       success: result.success,
       successfulCorrections: result.successfulCorrections,
-      totalCorrections: result.totalCorrections
+      totalCorrections: result.totalCorrections,
+      loginValidated: result.loginValidated
     })
 
     return new Response(
