@@ -2,11 +2,10 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Plus, Users, TrendingUp } from 'lucide-react'
+import { Users, TrendingUp } from 'lucide-react'
 import { useSellerData } from '@/hooks/useSellerData'
 import { SellerMetrics } from './VendedorDashboard/SellerMetrics'
 import { SellerClientsList } from './VendedorDashboard/SellerClientsList'
-import { SellerAddClientModal } from './VendedorDashboard/SellerAddClientModal'
 import { NewSellerAddClientForm } from './VendedorDashboard/NewSellerAddClientForm'
 import { VendedorSidebar } from './VendedorDashboard/VendedorSidebar'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
@@ -14,13 +13,9 @@ import { useIsMobile } from '@/hooks/use-mobile'
 
 export function VendedorDashboard() {
   const { user, currentManagerName } = useAuth()
-  const { clientes, metrics, loading, addCliente, refetch } = useSellerData(user?.email || '')
+  const { clientes, metrics, loading, refetch } = useSellerData(user?.email || '')
   const [activeTab, setActiveTab] = useState('dashboard')
   const isMobile = useIsMobile()
-
-  const handleClienteAdicionado = async (clienteData: any) => {
-    return await addCliente(clienteData)
-  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -114,25 +109,6 @@ export function VendedorDashboard() {
       case 'adicionar-cliente':
         return <NewSellerAddClientForm />
 
-      case 'adicionar-cliente-modal':
-        return (
-          <Card className="border-2 border-dashed border-blue-300 bg-blue-50/50">
-            <CardHeader className="text-center">
-              <div className="mx-auto bg-blue-500 rounded-full p-4 w-16 h-16 flex items-center justify-center mb-4">
-                <Plus className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="text-xl">Adicionar Novo Cliente (Modal)</CardTitle>
-              <CardDescription className="text-base">
-                Use o formulário modal para cadastrar novos clientes no sistema.
-                Selecione o gestor responsável e preencha todas as informações necessárias.
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <SellerAddClientModal onClienteAdicionado={handleClienteAdicionado} />
-            </CardContent>
-          </Card>
-        )
-
       default:
         return <div>Página não encontrada</div>
     }
@@ -161,7 +137,6 @@ export function VendedorDashboard() {
                     {activeTab === 'dashboard' && 'Dashboard'}
                     {activeTab === 'lista-vendas' && 'Lista de Vendas'}
                     {activeTab === 'adicionar-cliente' && 'Adicionar Cliente'}
-                    {activeTab === 'adicionar-cliente-modal' && 'Adicionar Cliente (Modal)'}
                   </h1>
                   <div className={`flex flex-col sm:flex-row sm:items-center sm:space-x-2 ${
                     isMobile ? 'text-xs' : 'text-xs sm:text-sm'

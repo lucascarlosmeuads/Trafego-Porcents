@@ -10,7 +10,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
 } from "@/components/ui/sidebar"
-import { BarChart3, Users, Plus, UserPlus, FileText } from "lucide-react"
+import { BarChart3, Users, UserPlus } from "lucide-react"
 import { useAuth } from "@/hooks/useAuth"
 
 interface VendedorSidebarProps {
@@ -36,11 +36,6 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
       title: "Adicionar Cliente",
       icon: UserPlus,
       id: "adicionar-cliente"
-    },
-    {
-      title: "Adicionar Cliente (Modal)",
-      icon: Plus,
-      id: "adicionar-cliente-modal"
     }
   ]
 
