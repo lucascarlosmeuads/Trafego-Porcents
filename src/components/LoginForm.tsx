@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -17,28 +18,58 @@ export function LoginForm() {
   const { signIn, signUp, resetPassword, updatePassword } = useAuth()
   const { toast } = useToast()
 
-  // Verificar se está vindo de um link de recuperação de senha
+  // Detectar recovery via evento customizado E parâmetros de URL
   useEffect(() => {
-    const checkRecoveryParams = () => {
+    const checkRecoveryFlow = () => {
+      // Verificar múltiplos formatos de parâmetros
+      const urlParams = new URLSearchParams(window.location.search)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      const type = hashParams.get('type')
-      const accessToken = hashParams.get('access_token')
+      const isRecoveryUrl = urlParams.get('type') === 'recovery' || 
+                           hashParams.get('type') === 'recovery' ||
+                           window.location.href.includes('type=recovery')
 
-      console.log('🔍 [LoginForm] Verificando parâmetros de recovery:', { type, hasToken: !!accessToken })
+      console.log('🔍 [LoginForm] Verificando recovery:', {
+        search: window.location.search,
+        hash: window.location.hash,
+        href: window.location.href,
+        isRecoveryUrl
+      })
 
-      if (type === 'recovery' && accessToken) {
-        console.log('✅ [LoginForm] Link de recovery detectado!')
+      if (isRecoveryUrl) {
+        console.log('✅ [LoginForm] Recovery detectado via URL!')
         setIsSettingNewPassword(true)
         setIsForgotPassword(false)
         setIsSignUp(false)
         
-        // Limpar a URL para ficar mais limpa (opcional)
+        // Limpar URL
         window.history.replaceState({}, document.title, window.location.pathname)
       }
     }
 
-    checkRecoveryParams()
-  }, [])
+    // Listener para evento customizado de recovery
+    const handleRecoveryEvent = (event: any) => {
+      console.log('🔑 [LoginForm] Recovery event recebido:', event.detail)
+      if (event.detail.isRecovery) {
+        setIsSettingNewPassword(true)
+        setIsForgotPassword(false)
+        setIsSignUp(false)
+        toast({
+          title: "Redefinir Senha",
+          description: "Defina sua nova senha abaixo.",
+        })
+      }
+    }
+
+    // Verificar na inicialização
+    checkRecoveryFlow()
+    
+    // Adicionar listener para eventos de recovery
+    window.addEventListener('supabase-recovery', handleRecoveryEvent)
+    
+    return () => {
+      window.removeEventListener('supabase-recovery', handleRecoveryEvent)
+    }
+  }, [toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -83,9 +114,9 @@ export function LoginForm() {
           console.error('❌ [LoginForm] Erro ao atualizar senha:', error)
           
           let errorMessage = "Erro ao atualizar senha. Tente novamente."
-          if (error.message.includes('session_not_found')) {
+          if (error.message.includes('session_not_found') || error.message.includes('unauthorized')) {
             errorMessage = 'Sessão expirada. Solicite um novo link de recuperação.'
-          } else if (error.message.includes('Password')) {
+          } else if (error.message.includes('Password') || error.message.includes('password')) {
             errorMessage = 'Senha deve ter pelo menos 6 caracteres.'
           }
           
@@ -97,16 +128,14 @@ export function LoginForm() {
         } else {
           console.log('✅ [LoginForm] Senha atualizada com sucesso!')
           toast({
-            title: "Sucesso",
-            description: "Senha atualizada com sucesso! Você já está logado."
+            title: "Senha Atualizada!",
+            description: "Sua senha foi atualizada com sucesso. Você já está logado."
           })
           
-          // Limpar estados e redirecionar
+          // Limpar estados
           setIsSettingNewPassword(false)
           setPassword('')
           setConfirmPassword('')
-          
-          // O usuário já estará logado automaticamente após atualizar a senha
         }
       } else if (isForgotPassword) {
         // Fluxo de recuperação de senha (mantido igual)

@@ -26,6 +26,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const handleAuthChange = useCallback(async (event: string, session: any) => {
     console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
     
+    // Verificar se é um fluxo de recovery
+    if (event === 'TOKEN_REFRESHED' || event === 'SIGNED_IN') {
+      const urlParams = new URLSearchParams(window.location.search)
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      const isRecovery = urlParams.get('type') === 'recovery' || 
+                        hashParams.get('type') === 'recovery' ||
+                        window.location.href.includes('type=recovery')
+      
+      if (isRecovery && session?.user) {
+        console.log('🔑 [useAuth] RECOVERY DETECTADO! Usuário deve redefinir senha')
+        // Sinalizar que é um fluxo de recovery através de um evento customizado
+        window.dispatchEvent(new CustomEvent('supabase-recovery', { 
+          detail: { user: session.user, isRecovery: true } 
+        }))
+      }
+    }
+    
     // Atualizar estado do usuário imediatamente (síncrono)
     setUser(session?.user ?? null)
     
@@ -70,6 +87,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (mounted) {
           console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
+          
+          // Verificar se é um recovery na inicialização
+          const urlParams = new URLSearchParams(window.location.search)
+          const hashParams = new URLSearchParams(window.location.hash.substring(1))
+          const isRecovery = urlParams.get('type') === 'recovery' || 
+                            hashParams.get('type') === 'recovery' ||
+                            window.location.href.includes('type=recovery')
+          
+          if (isRecovery && session?.user) {
+            console.log('🔑 [useAuth] RECOVERY INICIAL DETECTADO!')
+            // Limpar URL e sinalizar recovery
+            window.history.replaceState({}, document.title, window.location.pathname)
+            window.dispatchEvent(new CustomEvent('supabase-recovery', { 
+              detail: { user: session.user, isRecovery: true } 
+            }))
+          }
+          
           setUser(session?.user ?? null)
           
           if (session?.user?.email) {
@@ -172,7 +206,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: 'https://login.trafegoporcents.com'
+        redirectTo: `${window.location.origin}/?type=recovery`
       })
       
       if (error) {
