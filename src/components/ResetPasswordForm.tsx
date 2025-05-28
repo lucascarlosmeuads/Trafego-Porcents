@@ -5,33 +5,123 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { usePasswordReset } from '@/hooks/usePasswordReset'
 import { extractTokensFromUrl } from '@/utils/passwordResetHelpers'
-import { Eye, EyeOff, Lock } from 'lucide-react'
+import { supabase } from '@/lib/supabase'
+import { useToast } from '@/hooks/use-toast'
+import { Eye, EyeOff, Lock, Loader2 } from 'lucide-react'
 
 export function ResetPasswordForm() {
   const [newPassword, setNewPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [sessionReady, setSessionReady] = useState(false)
+  const [sessionLoading, setSessionLoading] = useState(true)
   const [hasValidToken, setHasValidToken] = useState(false)
   const { loading, resetPassword } = usePasswordReset()
+  const { toast } = useToast()
 
   useEffect(() => {
-    // Verificar se há tokens válidos na URL
-    const tokens = extractTokensFromUrl()
-    if (tokens && tokens.type === 'recovery') {
-      console.log('✅ [ResetPassword] Tokens de recuperação válidos encontrados')
-      setHasValidToken(true)
-    } else {
-      console.log('❌ [ResetPassword] Tokens de recuperação não encontrados ou inválidos')
-      setHasValidToken(false)
+    const setupSession = async () => {
+      console.log('🔐 [ResetPassword] Iniciando setup da sessão de recuperação...')
+      setSessionLoading(true)
+      
+      try {
+        // Verificar se há tokens válidos na URL
+        const tokens = extractTokensFromUrl()
+        
+        if (!tokens || tokens.type !== 'recovery') {
+          console.log('❌ [ResetPassword] Tokens de recuperação não encontrados ou inválidos')
+          setHasValidToken(false)
+          setSessionLoading(false)
+          return
+        }
+
+        console.log('✅ [ResetPassword] Tokens válidos encontrados, configurando sessão...')
+        console.log('🔑 [ResetPassword] Access token:', `${tokens.access_token.substring(0, 20)}...`)
+        console.log('🔑 [ResetPassword] Refresh token:', tokens.refresh_token ? `${tokens.refresh_token.substring(0, 20)}...` : 'vazio')
+
+        // Configurar a sessão no Supabase
+        const { data, error } = await supabase.auth.setSession({
+          access_token: tokens.access_token,
+          refresh_token: tokens.refresh_token || ''
+        })
+
+        if (error) {
+          console.error('❌ [ResetPassword] Erro ao configurar sessão:', error)
+          toast({
+            title: "Link Inválido",
+            description: "Link de recuperação inválido ou expirado. Solicite um novo.",
+            variant: "destructive"
+          })
+          setHasValidToken(false)
+          setSessionLoading(false)
+          return
+        }
+
+        if (data.session && data.user) {
+          console.log('✅ [ResetPassword] Sessão configurada com sucesso!')
+          console.log('👤 [ResetPassword] Usuário autenticado:', data.user.email)
+          setHasValidToken(true)
+          setSessionReady(true)
+        } else {
+          console.error('❌ [ResetPassword] Sessão ou usuário não encontrado após setSession')
+          setHasValidToken(false)
+        }
+
+      } catch (error) {
+        console.error('💥 [ResetPassword] Erro inesperado ao configurar sessão:', error)
+        toast({
+          title: "Erro",
+          description: "Erro interno. Tente solicitar um novo link de recuperação.",
+          variant: "destructive"
+        })
+        setHasValidToken(false)
+      } finally {
+        setSessionLoading(false)
+      }
     }
-  }, [])
+
+    setupSession()
+  }, [toast])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!sessionReady) {
+      toast({
+        title: "Erro",
+        description: "Sessão não está pronta. Tente recarregar a página.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    console.log('🔐 [ResetPassword] Iniciando redefinição de senha...')
     await resetPassword(newPassword, confirmPassword)
   }
 
+  // Mostrar loading enquanto verifica a sessão
+  if (sessionLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center">
+                <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl font-bold">Verificando Link</CardTitle>
+            <CardDescription>
+              Aguarde enquanto validamos seu link de recuperação...
+            </CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    )
+  }
+
+  // Mostrar erro se não há token válido
   if (!hasValidToken) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
@@ -66,6 +156,7 @@ export function ResetPasswordForm() {
     )
   }
 
+  // Mostrar formulário de redefinição apenas se a sessão estiver pronta
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
       <Card className="w-full max-w-md">
@@ -153,7 +244,7 @@ export function ResetPasswordForm() {
             <Button 
               type="submit" 
               className="w-full" 
-              disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 6}
+              disabled={loading || !newPassword || !confirmPassword || newPassword !== confirmPassword || newPassword.length < 6 || !sessionReady}
             >
               {loading ? 'Redefinindo...' : 'Redefinir Senha'}
             </Button>

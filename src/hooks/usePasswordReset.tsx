@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
-import { extractTokensFromUrl, clearTokensFromUrl, validatePassword } from '@/utils/passwordResetHelpers'
+import { clearTokensFromUrl, validatePassword } from '@/utils/passwordResetHelpers'
 
 export function usePasswordReset() {
   const [loading, setLoading] = useState(false)
@@ -82,37 +82,9 @@ export function usePasswordReset() {
         return false
       }
 
-      // Extrair tokens da URL
-      const tokens = extractTokensFromUrl()
-      if (!tokens || tokens.type !== 'recovery') {
-        console.error('❌ [PasswordReset] Tokens de recuperação não encontrados')
-        toast({
-          title: "Link Inválido",
-          description: "Link de recuperação inválido ou expirado. Solicite um novo.",
-          variant: "destructive"
-        })
-        return false
-      }
+      console.log('🔑 [PasswordReset] Validações passaram, atualizando senha...')
 
-      console.log('🔑 [PasswordReset] Tokens válidos encontrados, atualizando senha...')
-
-      // Definir sessão com os tokens de recuperação
-      const { error: sessionError } = await supabase.auth.setSession({
-        access_token: tokens.access_token,
-        refresh_token: tokens.refresh_token
-      })
-
-      if (sessionError) {
-        console.error('❌ [PasswordReset] Erro ao definir sessão:', sessionError)
-        toast({
-          title: "Erro de Autenticação",
-          description: "Link de recuperação inválido ou expirado",
-          variant: "destructive"
-        })
-        return false
-      }
-
-      // Atualizar a senha
+      // Atualizar a senha (a sessão já foi configurada no componente)
       const { error: updateError } = await supabase.auth.updateUser({
         password: newPassword
       })
