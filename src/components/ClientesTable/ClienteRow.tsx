@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -17,7 +16,7 @@ import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
-import { Cliente } from '@/lib/supabase'
+import { Cliente, type StatusCampanha } from '@/lib/supabase'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -35,7 +34,7 @@ interface ClienteRowProps {
   comissionValueInput: string
   setComissionValueInput: (value: string) => void
   getStatusColor: (status: string) => string
-  onStatusChange: (clienteId: string, newStatus: string) => void
+  onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
   onSiteStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string, field: string) => Promise<boolean>
@@ -174,7 +173,7 @@ export function ClienteRow({
       <TableCell>
         <StatusSelect
           value={cliente.status_campanha || 'Cliente Novo'}
-          onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus)}
+          onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
           disabled={updatingStatus === cliente.id!.toString()}
           isUpdating={updatingStatus === cliente.id!.toString()}
           getStatusColor={getStatusColor}
