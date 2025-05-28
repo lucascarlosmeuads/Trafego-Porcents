@@ -54,15 +54,20 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
   ]
 
-  const instructions = `Olá ${formData.nome_cliente || '[Nome do Cliente]'},
+  const instructions = `Olá teste de criação! 🎉
 
-1. Acesse o link: https://login.trafegoporcents.com
-2. Clique em "Criar Conta"
-3. Use este mesmo e-mail: ${formData.email_cliente || '[Email do Cliente]'}
-4. Escolha uma senha segura (ex: cliente123)
-5. Após o cadastro, você verá o painel com os materiais e campanhas atribuídas
+Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
-Qualquer dúvida, entre em contato conosco!`
+📧 Email: ${formData.email_cliente || '[Email do Cliente]'}
+🔐 Senha: parceriadesucesso
+
+🔗 Acesse: https://trafegoporcents.com
+
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+
+🚨 Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo!
+
+Qualquer dúvida, estamos aqui para ajudar! 💪`
 
   const handleCopy = async () => {
     try {
@@ -244,7 +249,7 @@ Qualquer dúvida, entre em contato conosco!`
           {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE - POSICIONADAS AQUI CONFORME SOLICITADO */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-yellow-800 text-sm">📋 Instruções para enviar ao cliente</h3>
+              <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
               <Button
                 onClick={handleCopy}
                 size="sm"
@@ -270,13 +275,13 @@ Qualquer dúvida, entre em contato conosco!`
               </pre>
             </div>
             <p className="text-yellow-700 text-xs mt-2">
-              💡 Após cadastrar o cliente, envie essas instruções via WhatsApp
+              💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
             </p>
             
-            {/* Aviso sobre senha padrão */}
+            {/* Nota sobre senha padrão */}
             <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-blue-800 text-xs font-medium">
-                🔐 Senha padrão definida automaticamente como: <code className="bg-blue-100 px-1 rounded">parceriadesucesso</code>
+              <p className="text-blue-800 text-xs">
+                Se não quiser alterar, a senha padrão será <strong>parceriadesucesso</strong>.
               </p>
             </div>
           </div>
@@ -348,8 +353,9 @@ Qualquer dúvida, entre em contato conosco!`
                 id="vendedor"
                 value={formData.vendedor}
                 onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-                placeholder={`Padrão: ${currentManagerName}`}
+                placeholder="Preenchido automaticamente com seu e-mail"
               />
+              <p className="text-xs text-gray-500">Preenchido automaticamente com seu e-mail</p>
             </div>
             
             <div className="grid gap-2">

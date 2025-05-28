@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -5,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus } from 'lucide-react'
+import { Plus, Copy, Check } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
@@ -22,6 +23,7 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
   const [selectedGestor, setSelectedGestor] = useState<string>('')
   const [showInstructions, setShowInstructions] = useState(false)
   const [newClientData, setNewClientData] = useState<any>(null)
+  const [copied, setCopied] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -49,6 +51,39 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
     { name: 'Matheus Paviani', email: 'matheuspaviani@trafegoporcents.com' },
     { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
   ]
+
+  const instructions = `Olá teste de criação! 🎉
+
+Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
+
+📧 Email: ${formData.email_cliente || '[Email do Cliente]'}
+🔐 Senha: parceriadesucesso
+
+🔗 Acesse: https://trafegoporcents.com
+
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+
+🚨 Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo!
+
+Qualquer dúvida, estamos aqui para ajudar! 💪`
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(instructions)
+      setCopied(true)
+      toast({
+        title: "Copiado!",
+        description: "Instruções copiadas para a área de transferência"
+      })
+      setTimeout(() => setCopied(false), 2000)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível copiar as instruções",
+        variant: "destructive"
+      })
+    }
+  }
 
   const handleSubmit = async () => {
     if (!formData.nome_cliente || !formData.telefone) {
@@ -155,18 +190,51 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
           
-          {/* Aviso sobre senha padrão */}
-          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-            <p className="text-blue-800 text-sm font-medium">
-              🔐 Senha padrão definida automaticamente como: <code className="bg-blue-100 px-1 rounded">parceriadesucesso</code>
+          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE */}
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+            <div className="flex items-start justify-between mb-2">
+              <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
+              <Button
+                onClick={handleCopy}
+                size="sm"
+                className="ml-2"
+                variant={copied ? "default" : "outline"}
+              >
+                {copied ? (
+                  <>
+                    <Check className="w-3 h-3 mr-1" />
+                    Copiado!
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3 h-3 mr-1" />
+                    Copiar
+                  </>
+                )}
+              </Button>
+            </div>
+            <div className="bg-white border rounded p-3 text-sm">
+              <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800">
+                {instructions}
+              </pre>
+            </div>
+            <p className="text-yellow-700 text-xs mt-2">
+              💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
             </p>
+            
+            {/* Nota sobre senha padrão */}
+            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
+              <p className="text-blue-800 text-xs">
+                Se não quiser alterar, a senha padrão será <strong>parceriadesucesso</strong>.
+              </p>
+            </div>
           </div>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">
               <Label htmlFor="nome">Nome do Cliente *</Label>
@@ -222,8 +290,9 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
                 id="vendedor"
                 value={formData.vendedor}
                 onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-                placeholder={`Padrão: ${currentManagerName}`}
+                placeholder="Preenchido automaticamente com seu e-mail"
               />
+              <p className="text-xs text-gray-500">Preenchido automaticamente com seu e-mail</p>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="status">Status da Campanha</Label>
