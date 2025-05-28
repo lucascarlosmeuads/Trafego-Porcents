@@ -146,7 +146,7 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
         console.error("❌ [NewSellerAddClientForm] Resultado indica falha:", result)
         toast({
           title: "Erro",
-          description: result?.error || "Erro ao criar cliente",
+          description: "Erro ao criar cliente - verifique os dados e tente novamente",
           variant: "destructive"
         })
       }
@@ -154,7 +154,7 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
       console.error('💥 [NewSellerAddClientForm] Erro ao criar cliente:', error)
       toast({
         title: "Erro",
-        description: error.message || "Erro ao criar cliente",
+        description: error.message || "Erro inesperado ao criar cliente",
         variant: "destructive"
       })
     } finally {
