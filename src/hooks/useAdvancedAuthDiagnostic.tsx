@@ -30,7 +30,7 @@ export function useAdvancedAuthDiagnostic() {
     setResult(null)
 
     const normalizedEmail = email.toLowerCase().trim()
-    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO COMPLETO V2 ===')
+    console.log('🔍 [AdvancedDiagnostic] === DIAGNÓSTICO SIMPLIFICADO V2 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', normalizedEmail)
 
     try {
@@ -74,14 +74,14 @@ export function useAdvancedAuthDiagnostic() {
       } else {
         diagnosticResult.issues.push({
           type: 'missing_client',
-          severity: 'warning', // Não crítico - apenas informativo
+          severity: 'warning',
           description: 'Cliente não encontrado na base de dados',
           solution: 'Verificar se email está correto ou cadastrar cliente'
         })
         console.log('⚠️ [AdvancedDiagnostic] Cliente não encontrado na base')
       }
 
-      // 2. Verificar se usuário existe no Auth usando Edge Function otimizada V4
+      // 2. Verificar se usuário existe no Auth
       updateProgress("Verificando usuário no Auth", 40, "Consultando sistema de autenticação...")
       
       let authUserExists = false
@@ -120,7 +120,7 @@ export function useAdvancedAuthDiagnostic() {
         })
       }
 
-      // 3. LÓGICA MELHORADA: Determinar issues baseado no estado real
+      // 3. Determinar se precisa de correções
       updateProgress("Analisando problemas", 60, "Identificando correções necessárias...")
       
       if (!authUserExists) {
@@ -131,7 +131,7 @@ export function useAdvancedAuthDiagnostic() {
           solution: 'Criar usuário com senha "parceriadesucesso"'
         })
       } else {
-        // Usuário existe - verificar se precisa de reset
+        // Usuário existe - testar login
         updateProgress("Testando credenciais", 70, "Verificando se consegue fazer login...")
         
         try {
@@ -151,7 +151,6 @@ export function useAdvancedAuthDiagnostic() {
           } else {
             console.log('❌ [AdvancedDiagnostic] Erro no login:', loginErr?.message)
             
-            // Sempre assumir que precisa de reset de senha
             diagnosticResult.issues.push({
               type: 'wrong_password',
               severity: 'critical',
@@ -170,7 +169,7 @@ export function useAdvancedAuthDiagnostic() {
         }
       }
 
-      // 4. Gerar mensagem otimizada
+      // 4. Gerar mensagem
       updateProgress("Gerando relatório", 90, "Preparando correções...")
       
       const criticalIssues = diagnosticResult.issues.filter(i => i.severity === 'critical')
@@ -203,29 +202,26 @@ export function useAdvancedAuthDiagnostic() {
     if (!diagnosticResult) return
 
     setFixing(true)
-    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V4 ===')
+    console.log('🔧 [AdvancedDiagnostic] === APLICANDO CORREÇÕES V5 ===')
     console.log('📧 [AdvancedDiagnostic] Email:', diagnosticResult.email)
 
     try {
-      // LÓGICA OTIMIZADA: Sempre tentar correções se há problemas críticos
       const criticalIssues = diagnosticResult.issues.filter(issue => 
         issue.severity === 'critical'
       )
 
       console.log('🔧 [AdvancedDiagnostic] Issues críticos encontrados:', criticalIssues.length)
 
-      // Preparar correções baseadas nos issues identificados
-      const correctionsToApply = criticalIssues.map(issue => ({
-        type: issue.type,
-        action: issue.solution
-      }))
-
-      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function V4 para correções inteligentes...')
+      // Chamar Edge Function simplificada
+      console.log('🔧 [AdvancedDiagnostic] Chamando Edge Function V5 simplificada...')
 
       const { data: fixResult, error: fixError } = await supabase.functions.invoke('fix-client-auth', {
         body: {
           email: diagnosticResult.email,
-          corrections: correctionsToApply
+          corrections: criticalIssues.map(issue => ({
+            type: issue.type,
+            action: issue.solution
+          }))
         }
       })
 
@@ -234,7 +230,7 @@ export function useAdvancedAuthDiagnostic() {
         throw new Error(`Erro ao aplicar correções: ${fixError.message}`)
       }
 
-      console.log('✅ [AdvancedDiagnostic] Resultado das correções V4:', fixResult)
+      console.log('✅ [AdvancedDiagnostic] Resultado das correções V5:', fixResult)
 
       // Atualizar resultado com correções aplicadas
       const updatedResult = {
@@ -251,19 +247,28 @@ export function useAdvancedAuthDiagnostic() {
       
       setResult(updatedResult)
 
-      // FEEDBACK OTIMIZADO baseado no resultado real
-      if (fixResult.success && fixResult.loginValidated) {
-        toast({
-          title: "🎯 Correção 100% Bem-Sucedida!",
-          description: `Email: ${diagnosticResult.email} - Acesso validado e funcionando!`,
-          variant: "default"
-        })
-      } else if (fixResult.success && fixResult.successfulCorrections > 0) {
-        toast({
-          title: "✅ Correções Aplicadas!",
-          description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas`,
-          variant: "default"
-        })
+      // FEEDBACK MELHORADO baseado no resultado real
+      console.log('📊 [AdvancedDiagnostic] Analisando resultado:', {
+        success: fixResult.success,
+        successfulCorrections: fixResult.successfulCorrections,
+        totalCorrections: fixResult.totalCorrections,
+        loginValidated: fixResult.loginValidated
+      })
+
+      if (fixResult.success && fixResult.successfulCorrections > 0) {
+        if (fixResult.loginValidated) {
+          toast({
+            title: "🎯 Correção 100% Bem-Sucedida!",
+            description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas - Login validado!`,
+            variant: "default"
+          })
+        } else {
+          toast({
+            title: "✅ Correções Aplicadas!",
+            description: `${fixResult.successfulCorrections} de ${fixResult.totalCorrections || fixResult.successfulCorrections} correções aplicadas com sucesso`,
+            variant: "default"
+          })
+        }
       } else {
         toast({
           title: "⚠️ Problema na Correção",
