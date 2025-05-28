@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -54,14 +53,14 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
   ]
 
-  const instructions = `Olá teste de criação! 🎉
+  const instructions = `Olá ${formData.nome_cliente || '[Nome do Cliente]'}! 🎉
 
 Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 📧 Email: ${formData.email_cliente || '[Email do Cliente]'}
 🔐 Senha: parceriadesucesso
 
-🔗 Acesse: https://trafegoporcents.com
+🔗 Acesse: https://login.trafegoporcents.com
 
 O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
 
@@ -281,7 +280,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             {/* Nota sobre senha padrão */}
             <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
               <p className="text-blue-800 text-xs">
-                Se não quiser alterar, a senha padrão será <strong>parceriadesucesso</strong>.
+                A senha padrão será definida automaticamente como <strong>parceriadesucesso</strong>.
               </p>
             </div>
           </div>
