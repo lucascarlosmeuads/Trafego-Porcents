@@ -7,7 +7,8 @@ import {
   AlertTriangle,
   Wallet,
   Shield,
-  Upload
+  Upload,
+  UserPlus
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -73,6 +74,18 @@ export function AdminMainMenu({
       >
         <Upload size={16} />
         <span>Importar Vendas Manuais</span>
+      </button>
+
+      <button
+        onClick={() => handleTabChange('criar-usuarios-clientes')}
+        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center gap-2 ${
+          activeTab === 'criar-usuarios-clientes'
+            ? 'bg-primary text-primary-foreground'
+            : 'text-card-foreground hover:bg-muted'
+        }`}
+      >
+        <UserPlus size={16} />
+        <span>Criar Usuários Clientes</span>
       </button>
       
       <button

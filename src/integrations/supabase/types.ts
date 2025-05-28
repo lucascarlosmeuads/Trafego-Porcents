@@ -87,6 +87,30 @@ export type Database = {
         }
         Relationships: []
       }
+      client_user_creation_log: {
+        Row: {
+          created_at: string | null
+          email_cliente: string
+          id: string
+          operation_type: string
+          result_message: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          email_cliente: string
+          id?: string
+          operation_type: string
+          result_message?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          email_cliente?: string
+          id?: string
+          operation_type?: string
+          result_message?: string | null
+        }
+        Relationships: []
+      }
       gestores: {
         Row: {
           ativo: boolean | null
