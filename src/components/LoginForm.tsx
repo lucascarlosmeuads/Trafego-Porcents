@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -5,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { ForgotPasswordForm } from '@/components/ForgotPasswordForm'
+import { AlertCircle, HelpCircle } from 'lucide-react'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -43,9 +45,9 @@ export function LoginForm() {
         let errorMessage = "Email ou senha incorretos. Verifique suas credenciais."
         
         if (error.message.includes('Invalid login credentials')) {
-          errorMessage = 'Email ou senha incorretos. Verifique suas credenciais.'
+          errorMessage = 'Email ou senha incorretos. Tente "Esqueci minha senha" se precisar.'
         } else if (error.message.includes('Email not confirmed')) {
-          errorMessage = 'Email não confirmado. Verifique seu email para confirmar a conta.'
+          errorMessage = 'Email não confirmado. Use "Esqueci minha senha" para resolver.'
         } else if (error.message.includes('Too many requests')) {
           errorMessage = 'Muitas tentativas. Aguarde alguns minutos antes de tentar novamente.'
         } else if (error.message.includes('Invalid email')) {
@@ -129,15 +131,27 @@ export function LoginForm() {
               {loading ? 'Processando...' : 'Entrar'}
             </Button>
             
-            <div className="text-center">
+            {/* Seção de ajuda destacada */}
+            <div className="border-t pt-4 mt-4">
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg mb-3">
+                <div className="flex items-center space-x-2 text-blue-800">
+                  <HelpCircle className="w-5 h-5" />
+                  <span className="font-semibold text-sm">Problemas para entrar?</span>
+                </div>
+                <p className="text-xs text-blue-700 mt-1">
+                  Clique no botão abaixo para resolver automaticamente
+                </p>
+              </div>
+              
               <Button
                 type="button"
-                variant="link"
-                className="text-sm text-blue-600 hover:text-blue-800"
+                variant="outline"
+                className="w-full border-blue-300 hover:bg-blue-50 hover:border-blue-400"
                 onClick={() => setShowForgotPassword(true)}
                 disabled={loading}
               >
-                Esqueci minha senha
+                <AlertCircle className="w-4 h-4 mr-2 text-blue-600" />
+                <span className="text-blue-700 font-semibold">Esqueci minha senha / Não consigo entrar</span>
               </Button>
             </div>
           </form>
