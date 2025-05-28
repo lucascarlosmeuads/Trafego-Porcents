@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +21,7 @@ interface GestorOption {
 }
 
 export function StatusFunnelDashboard() {
-  const { isAdmin } = useSimpleAuth()
+  const { isAdmin } = useAuth()
   const [statusCounts, setStatusCounts] = useState<StatusCount[]>([])
   const [gestores, setGestores] = useState<GestorOption[]>([])
   const [selectedGestor, setSelectedGestor] = useState<string>('todos')

@@ -6,71 +6,40 @@ export const normalizeEmail = (email: string): string => {
 }
 
 export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error'> => {
-  console.log('🔍 [authHelpers] === VERIFICAÇÃO DETALHADA DE TIPO ===')
-  console.log('🔍 [authHelpers] Email recebido:', `"${email}"`)
-  console.log('🔍 [authHelpers] IMPORTANTE: Usuário JÁ autenticado pelo Supabase')
+  console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
+  console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
+  console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
   
   const normalizedEmail = normalizeEmail(email)
   console.log('🔍 [authHelpers] Email normalizado:', `"${normalizedEmail}"`)
   
   try {
-    // CASO ESPECÍFICO: falcao@trafegoporcents.com deve ser gestor
-    if (normalizedEmail === 'falcao@trafegoporcents.com') {
-      console.log('👨‍💼 [authHelpers] === USUÁRIO ESPECÍFICO DETECTADO ===')
-      console.log('👨‍💼 [authHelpers] falcao@trafegoporcents.com identificado como GESTOR')
-      return 'gestor'
-    }
-
-    // Admin primeiro (domínio @admin)
+    // LÓGICA BASEADA NO DOMÍNIO - Admin primeiro
     if (normalizedEmail.includes('@admin')) {
       console.log('👑 [authHelpers] Usuário é ADMIN (domínio @admin)')
       return 'admin'
     }
 
-    // Sites (criadores)
+    // Verificação específica para criadores de sites
     if (normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')) {
       console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign)')
       return 'sites'
     }
 
-    // Vendedores
+    // Verificação para vendedores
     if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
       console.log('💼 [authHelpers] Usuário é VENDEDOR (vendedor*@trafegoporcents.com)')
       return 'vendedor'
     }
 
-    // Gestores (@trafegoporcents.com mas não vendedor)
+    // Verificação para gestores (@trafegoporcents.com mas não vendedor)
     if (normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('👨‍💼 [authHelpers] Usuário do domínio @trafegoporcents.com')
-      console.log('🔍 [authHelpers] Verificando na tabela gestores...')
-      
-      try {
-        const { data: gestor, error: gestorError } = await supabase
-          .from('gestores')
-          .select('id, nome, email, ativo')
-          .eq('email', normalizedEmail)
-          .single()
-
-        if (gestorError) {
-          console.log('⚠️ [authHelpers] Erro ao buscar gestor:', gestorError.message)
-          console.log('⚠️ [authHelpers] Assumindo gestor por domínio')
-        } else if (gestor) {
-          console.log('✅ [authHelpers] GESTOR ENCONTRADO na tabela!')
-          console.log('👤 [authHelpers] ID:', gestor.id)
-          console.log('👤 [authHelpers] Nome:', gestor.nome)
-          console.log('👤 [authHelpers] Ativo:', gestor.ativo)
-        }
-        
-        console.log('👨‍💼 [authHelpers] Retornando GESTOR para domínio @trafegoporcents.com')
-        return 'gestor'
-      } catch (error) {
-        console.log('⚠️ [authHelpers] Erro na consulta gestores, assumindo gestor por domínio')
-        return 'gestor'
-      }
+      console.log('👨‍💼 [authHelpers] Usuário é GESTOR (domínio @trafegoporcents.com)')
+      return 'gestor'
     }
 
-    // Verificar clientes na tabela todos_clientes
-    console.log('🔍 [authHelpers] Verificando se é cliente...')
+    // CORREÇÃO PRINCIPAL: Verificar se é cliente na tabela todos_clientes
+    console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
     const { data: cliente, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('id, email_cliente, nome_cliente')
@@ -78,23 +47,34 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       .single()
 
     if (clienteError) {
-      console.log('⚠️ [authHelpers] Cliente não encontrado:', clienteError.message)
-      console.log('⚠️ [authHelpers] Código:', clienteError.code)
+      console.log('⚠️ [authHelpers] Erro ao buscar cliente ou cliente não encontrado:', clienteError.message)
+      console.log('⚠️ [authHelpers] Código do erro:', clienteError.code)
+      
+      // Se o erro for PGRST116 (nenhum resultado encontrado), é normal
+      if (clienteError.code === 'PGRST116') {
+        console.log('❌ [authHelpers] Cliente não encontrado na tabela todos_clientes')
+      }
     } else if (cliente) {
       console.log('✅ [authHelpers] CLIENTE ENCONTRADO!')
       console.log('👤 [authHelpers] ID:', cliente.id)
       console.log('👤 [authHelpers] Nome:', cliente.nome_cliente)
+      console.log('👤 [authHelpers] Email:', cliente.email_cliente)
       return 'cliente'
     }
 
-    // Se chegou até aqui, não foi encontrado
-    console.log('❌ [authHelpers] === USUÁRIO NÃO ENCONTRADO ===')
-    console.log('❌ [authHelpers] Email não encontrado em nenhuma categoria')
+    // Se chegou até aqui, o usuário não foi encontrado em nenhuma categoria
+    console.log('❌ [authHelpers] USUÁRIO NÃO AUTORIZADO')
+    console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
+    console.log('❌ [authHelpers] Possíveis soluções:')
+    console.log('   1. Verificar se o email está cadastrado na tabela todos_clientes')
+    console.log('   2. Verificar se o email está cadastrado na tabela gestores')
+    console.log('   3. Solicitar ao admin para adicionar o usuário ao sistema')
+    
     return 'unauthorized'
 
   } catch (error) {
-    console.error('❌ [authHelpers] === ERRO CRÍTICO ===')
-    console.error('❌ [authHelpers] Erro:', error)
+    console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
+    console.log('🔧 [authHelpers] Retornando erro para investigação')
     return 'error'
   }
 }
@@ -102,19 +82,13 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
 export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
   
-  // CASO ESPECÍFICO: falcao@trafegoporcents.com
-  if (normalizedEmail === 'falcao@trafegoporcents.com') {
-    console.log('👤 [authHelpers] Nome específico para falcao@trafegoporcents.com')
-    return 'Falcão - Gestor'
-  }
-  
-  // Para usuários de sites
+  // Para usuários de sites, retornar nome específico
   if (normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')) {
     return 'Criador de Sites'
   }
   
   try {
-    // Tentar buscar nome do gestor
+    // Tentar buscar nome do gestor primeiro
     const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
       .select('nome')
@@ -123,7 +97,6 @@ export const getManagerName = async (email: string): Promise<string> => {
       .single()
 
     if (!gestorError && gestorData) {
-      console.log('✅ [authHelpers] Nome do gestor encontrado:', gestorData.nome)
       return gestorData.nome
     }
 
@@ -135,12 +108,11 @@ export const getManagerName = async (email: string): Promise<string> => {
       .single()
 
     if (!clienteError && clienteData) {
-      console.log('✅ [authHelpers] Nome do cliente encontrado:', clienteData.nome_cliente)
       return clienteData.nome_cliente || 'Cliente'
     }
 
   } catch (error) {
-    console.warn('⚠️ [authHelpers] Erro ao buscar nome:', error)
+    console.warn('⚠️ [authHelpers] Erro ao buscar nome do usuário:', error)
   }
   
   return 'Usuário'

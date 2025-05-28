@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useGestorPermissions() {
-  const { user } = useSimpleAuth()
+  const { user } = useAuth()
   const [canAddClients, setCanAddClients] = useState(false)
   const [loading, setLoading] = useState(true)
 

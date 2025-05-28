@@ -1,6 +1,7 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
@@ -36,7 +37,7 @@ interface ProblemasPanelProps {
 }
 
 export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
-  const { user, isAdmin } = useSimpleAuth()
+  const { user, isAdmin } = useAuth()
   const [clientesComProblema, setClientesComProblema] = useState<ClienteComProblema[]>([])
   const [loading, setLoading] = useState(true)
   const [atualizandoStatus, setAtualizandoStatus] = useState<string | null>(null)

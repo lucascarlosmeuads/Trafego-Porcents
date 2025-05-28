@@ -1,9 +1,10 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Check, X, Edit2, Loader2 } from 'lucide-react'
 import { useSaqueOperations } from '@/hooks/useSaqueOperations'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { useSolicitacoesPagas } from '@/hooks/useSolicitacoesPagas'
 import type { Cliente } from '@/lib/supabase'
 
@@ -32,7 +33,7 @@ export function ComissaoButton({
   onComissionValueSave,
   onComissionValueCancel
 }: ComissaoButtonProps) {
-  const { currentManagerName, isAdmin } = useSimpleAuth()
+  const { currentManagerName, isAdmin } = useAuth()
   const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
   const { solicitacoesPagas } = useSolicitacoesPagas()
   const [saqueEnviado, setSaqueEnviado] = useState(false)

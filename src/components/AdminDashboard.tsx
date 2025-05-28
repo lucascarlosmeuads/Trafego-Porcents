@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from 'react'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
@@ -17,7 +18,7 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
-  const { user, isAdmin } = useSimpleAuth()
+  const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

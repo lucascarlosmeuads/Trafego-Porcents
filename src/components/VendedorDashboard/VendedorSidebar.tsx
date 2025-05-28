@@ -1,3 +1,4 @@
+
 import {
   Sidebar,
   SidebarContent,
@@ -10,7 +11,7 @@ import {
   SidebarHeader,
 } from "@/components/ui/sidebar"
 import { BarChart3, Users, UserPlus } from "lucide-react"
-import { useSimpleAuth } from "@/hooks/useSimpleAuth"
+import { useAuth } from "@/hooks/useAuth"
 
 interface VendedorSidebarProps {
   activeTab: string
@@ -18,7 +19,7 @@ interface VendedorSidebarProps {
 }
 
 export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps) {
-  const { currentManagerName } = useSimpleAuth()
+  const { currentManagerName } = useAuth()
 
   const menuItems = [
     {

@@ -1,10 +1,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 
 export function useSolicitacoesPagas() {
-  const { user } = useSimpleAuth()
+  const { user } = useAuth()
   const [solicitacoesPagas, setSolicitacoesPagas] = useState<string[]>([])
   const [loading, setLoading] = useState(true)
 

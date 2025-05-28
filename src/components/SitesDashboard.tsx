@@ -1,5 +1,6 @@
+
 import React from 'react'
-import { useSimpleAuth } from '@/hooks/useSimpleAuth'
+import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Globe, RefreshCw, CheckCircle } from 'lucide-react'
@@ -7,7 +8,7 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { Button } from '@/components/ui/button'
 
 export function SitesDashboard() {
-  const { user } = useSimpleAuth()
+  const { user } = useAuth()
   const { clientes, loading, error, refetch } = useManagerData(
     user?.email || '',
     false, // isAdminUser = false para criadores de sites
