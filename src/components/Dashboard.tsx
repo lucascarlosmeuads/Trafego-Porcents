@@ -1,4 +1,5 @@
 
+import { useState } from 'react'
 import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { AdminDashboard } from './AdminDashboard'
 import { GestorDashboard } from './GestorDashboard'
@@ -20,6 +21,10 @@ export function Dashboard() {
     isSites,
     currentManagerName 
   } = useSimpleAuth()
+
+  // Estados para AdminDashboard
+  const [selectedManager, setSelectedManager] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState('clientes')
 
   console.log('🎯 [Dashboard] === CARREGANDO DASHBOARD ===')
   console.log('🎯 [Dashboard] User:', user?.email)
@@ -85,7 +90,11 @@ export function Dashboard() {
       {isAdmin && (
         <>
           {console.log('✅ [Dashboard] Carregando AdminDashboard')}
-          <AdminDashboard />
+          <AdminDashboard 
+            selectedManager={selectedManager}
+            onManagerSelect={setSelectedManager}
+            activeTab={activeTab}
+          />
         </>
       )}
       
