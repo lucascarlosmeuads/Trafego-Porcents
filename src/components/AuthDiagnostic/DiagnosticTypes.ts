@@ -10,6 +10,7 @@ export interface DiagnosticResult {
   duplicateClientes?: Array<{
     id: string
     nome_cliente: string
+    email_cliente: string
   }>
   userExistsInAuth: boolean
   emailConfirmed: boolean

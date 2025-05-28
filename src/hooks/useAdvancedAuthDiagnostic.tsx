@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -290,7 +291,7 @@ export function useAdvancedAuthDiagnostic() {
         timestamp: new Date().toISOString()
       })
       
-      console.log('✅ [AdvancedDiagnostic] Usuário criado:', data.user.id)
+      console.log('✅ [AdvancedDiagnostic] Usuário criado:', data.user?.id)
     } catch (error: any) {
       console.error('❌ [AdvancedDiagnostic] Erro ao criar usuário:', error)
       corrections.push({
@@ -339,7 +340,7 @@ export function useAdvancedAuthDiagnostic() {
     try {
       console.log('🔧 [AdvancedDiagnostic] Confirmando email:', email)
       
-      // Aqui precisaríamos do ID do usuário, vamos buscar primeiro
+      // Buscar o usuário pelo email
       const { data: users } = await supabase.auth.admin.listUsers()
       const user = users.users.find((u: User) => u.email === email)
       

@@ -127,7 +127,7 @@ export function DiagnosticResult({ result, onApplyCorrections, fixing }: Diagnos
                   <div key={index} className="flex items-start justify-between p-2 bg-white rounded border">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1">
-                        <Badge variant={getSeverityColor(issue.severity)} className="text-xs">
+                        <Badge variant={getSeverityColor(issue.severity) as any} className="text-xs">
                           {issue.severity.toUpperCase()}
                         </Badge>
                         <span className="text-sm font-medium">{issue.description}</span>
