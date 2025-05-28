@@ -115,8 +115,40 @@ export function useSimpleSellerData(sellerEmail: string) {
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
 
-      // Step 1: Verificar se cliente já existe na tabela
-      console.log('🔍 [useSimpleSellerData] Verificando se cliente já existe...')
+      // Step 1: PRIMEIRO criar conta no Supabase Auth
+      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth PRIMEIRO...')
+      let senhaDefinida = false
+      
+      try {
+        // Tentar criar conta usando signUp com confirmação automática
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: clienteData.email_cliente,
+          password: SENHA_PADRAO_CLIENTE,
+          options: {
+            data: {
+              full_name: clienteData.nome_cliente,
+              role: 'cliente'
+            }
+          }
+        })
+
+        if (authError) {
+          console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
+          // Não bloquear se a conta já existir
+          if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
+            console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
+          }
+        } else {
+          console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
+          senhaDefinida = true
+        }
+      } catch (authErr) {
+        console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
+        // Continuar mesmo se houver erro na criação da conta
+      }
+
+      // Step 2: Verificar se cliente já existe na tabela
+      console.log('🔍 [useSimpleSellerData] Verificando se cliente já existe na tabela...')
       const { data: existingClient, error: checkError } = await supabase
         .from('todos_clientes')
         .select('id, email_cliente, nome_cliente')
@@ -129,7 +161,6 @@ export function useSimpleSellerData(sellerEmail: string) {
       }
 
       let clienteJaExistia = false
-      let senhaDefinida = false
       let clientId: string | number
 
       if (existingClient) {
@@ -157,7 +188,7 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
-        // Step 2: Cliente novo - inserir na tabela primeiro
+        // Step 3: Cliente novo - inserir na tabela
         console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
         
         const novoCliente = {
@@ -186,35 +217,6 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
         clientId = insertData.id
-
-        // Step 3: Criar conta de autenticação usando admin.createUser
-        console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth com admin.createUser...')
-        
-        try {
-          const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-            email: clienteData.email_cliente,
-            password: SENHA_PADRAO_CLIENTE,
-            user_metadata: {
-              full_name: clienteData.nome_cliente,
-              role: 'cliente'
-            },
-            email_confirm: false // Não exigir confirmação de email
-          })
-
-          if (authError) {
-            console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
-            // Não bloquear se a conta já existir
-            if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
-              console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
-            }
-          } else {
-            console.log('✅ [useSimpleSellerData] Conta criada com sucesso usando admin.createUser!')
-            senhaDefinida = true
-          }
-        } catch (authErr) {
-          console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
-          // Continuar mesmo se houver erro na criação da conta
-        }
       }
 
       // Recarregar lista
