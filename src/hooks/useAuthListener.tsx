@@ -11,32 +11,38 @@ export function useAuthListener() {
     resetUserState
   } = useAuthState()
 
-  // Função otimizada para evitar loops
+  // Função para lidar com mudanças de autenticação
   const handleAuthChange = useCallback(async (event: string, session: any) => {
-    console.log('🔄 [useAuthListener] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
+    console.log('🔄 [useAuthListener] === MUDANÇA DE AUTENTICAÇÃO ===')
+    console.log('🔄 [useAuthListener] Evento:', event)
+    console.log('🔄 [useAuthListener] Email do usuário:', session?.user?.email || 'nenhum usuário')
+    console.log('🔄 [useAuthListener] Sessão válida:', !!session)
     
-    // Atualizar estado do usuário imediatamente (síncrono)
+    // Atualizar estado do usuário imediatamente
     setUser(session?.user ?? null)
     
     if (session?.user?.email) {
-      console.log('✅ [useAuthListener] Usuário AUTENTICADO:', session.user.email)
-      console.log('🔍 [useAuthListener] Determinando tipo de usuário baseado apenas em autenticação válida')
+      console.log('✅ [useAuthListener] === USUÁRIO AUTENTICADO ===')
+      console.log('✅ [useAuthListener] Email:', session.user.email)
+      console.log('🔍 [useAuthListener] Iniciando determinação de tipo de usuário...')
       
-      // Usar setTimeout para evitar deadlock no onAuthStateChange
+      // Usar setTimeout para evitar deadlock, mas com delay menor
       setTimeout(async () => {
         try {
+          console.log('🔄 [useAuthListener] Executando updateUserType...')
           await updateUserType(session.user.email)
+          console.log('✅ [useAuthListener] updateUserType concluído com sucesso')
         } catch (error) {
-          console.error('❌ [useAuthListener] Erro ao atualizar tipo de usuário:', error)
-          // Em caso de erro, não travar - permitir que o usuário continue
-        } finally {
+          console.error('❌ [useAuthListener] === ERRO NO updateUserType ===')
+          console.error('❌ [useAuthListener] Erro:', error)
+          console.error('❌ [useAuthListener] Forçando fim do loading por erro')
           setLoading(false)
         }
-      }, 0)
+      }, 100) // Reduzido para 100ms
     } else {
-      console.log('❌ [useAuthListener] Nenhum usuário autenticado')
+      console.log('❌ [useAuthListener] === SEM USUÁRIO AUTENTICADO ===')
+      console.log('🧹 [useAuthListener] Limpando estado...')
       resetUserState()
-      setLoading(false)
     }
   }, [setUser, updateUserType, resetUserState, setLoading])
 
@@ -44,25 +50,31 @@ export function useAuthListener() {
     let mounted = true
     let initialCheckComplete = false
     
-    // Timeout de segurança para evitar carregamento infinito
+    console.log('🚀 [useAuthListener] === INICIALIZANDO AUTH LISTENER ===')
+    
+    // Timeout de segurança reduzido
     const loadingTimeout = setTimeout(() => {
       if (mounted && !initialCheckComplete) {
-        console.log('⚠️ [useAuthListener] Timeout de carregamento - forçando fim do loading')
+        console.log('⚠️ [useAuthListener] === TIMEOUT DE CARREGAMENTO ===')
+        console.log('⚠️ [useAuthListener] Forçando fim do loading por timeout')
         setLoading(false)
+        initialCheckComplete = true
       }
-    }, 10000) // 10 segundos timeout
+    }, 8000) // Reduzido para 8 segundos
 
     // Configuração do listener PRIMEIRO
+    console.log('🔧 [useAuthListener] Configurando onAuthStateChange...')
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
+    console.log('✅ [useAuthListener] Listener configurado')
 
     // Verificação inicial da sessão existente
     const checkInitialSession = async () => {
       try {
-        console.log('🔍 [useAuthListener] Verificando sessão inicial...')
+        console.log('🔍 [useAuthListener] === VERIFICAÇÃO INICIAL DE SESSÃO ===')
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
-          console.error('❌ [useAuthListener] Erro ao verificar sessão:', error)
+          console.error('❌ [useAuthListener] Erro ao verificar sessão inicial:', error)
           if (mounted) {
             setLoading(false)
             initialCheckComplete = true
@@ -71,21 +83,30 @@ export function useAuthListener() {
         }
 
         if (mounted) {
-          console.log('🔍 [useAuthListener] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
-          setUser(session?.user ?? null)
+          console.log('🔍 [useAuthListener] Sessão inicial encontrada:', session?.user?.email || 'nenhuma')
           
           if (session?.user?.email) {
+            console.log('✅ [useAuthListener] Usuário já autenticado na inicialização')
+            setUser(session.user)
+            
             try {
+              console.log('🔄 [useAuthListener] Determinando tipo na inicialização...')
               await updateUserType(session.user.email)
+              console.log('✅ [useAuthListener] Tipo determinado na inicialização')
             } catch (error) {
               console.error('❌ [useAuthListener] Erro na verificação inicial:', error)
+              setLoading(false)
             }
+          } else {
+            console.log('ℹ️ [useAuthListener] Nenhum usuário autenticado na inicialização')
+            setLoading(false)
           }
-          setLoading(false)
+          
           initialCheckComplete = true
         }
       } catch (error) {
-        console.error('❌ [useAuthListener] Erro crítico na inicialização:', error)
+        console.error('❌ [useAuthListener] === ERRO CRÍTICO NA INICIALIZAÇÃO ===')
+        console.error('❌ [useAuthListener] Erro:', error)
         if (mounted) {
           setLoading(false)
           initialCheckComplete = true
@@ -97,10 +118,12 @@ export function useAuthListener() {
 
     // Cleanup
     return () => {
+      console.log('🧹 [useAuthListener] Limpando listener...')
       mounted = false
       initialCheckComplete = true
       clearTimeout(loadingTimeout)
       subscription.unsubscribe()
+      console.log('✅ [useAuthListener] Listener limpo')
     }
   }, [handleAuthChange, setUser, updateUserType, setLoading])
 }
