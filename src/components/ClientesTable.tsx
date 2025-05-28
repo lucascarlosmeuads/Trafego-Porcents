@@ -30,7 +30,6 @@ interface ClientesTableProps {
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
   const { isAdmin, user } = useAuth()
   
-  // FILTRO CRÍTICO: Para admin: usa selectedManager; para gestor: usa email do usuário
   const emailToUse = userEmail || user?.email || ''
   const managerName = selectedManager || 'Próprios dados'
   
@@ -132,7 +131,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }
 
   const getStatusColor = (status: string) => {
-    // Se não há status definido, mostrar como "Sem status"
     if (!status || status.trim() === '') {
       return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
     }
@@ -179,18 +177,15 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // NOVA FUNÇÃO: Marcar pagamento como feito para saques pendentes
   const marcarPagamentoFeito = async (clienteId: string) => {
     setUpdatingComission(clienteId)
     
     try {
       console.log('💰 [ClientesTable] Marcando pagamento como feito para cliente:', clienteId)
       
-      // Atualizar o cliente para marcar comissão como paga
       const success = await updateCliente(clienteId, 'comissao_paga', true)
       
       if (success) {
-        // Criar notificação na tabela solicitacoes_saque como "pago"
         const { error: updateSaqueError } = await supabase
           .from('solicitacoes_saque')
           .update({ 
@@ -228,7 +223,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
-      {/* Campo de descrição do problema */}
       {editandoProblema && (
         <ProblemaDescricao
           clienteId={editandoProblema}
@@ -274,6 +268,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     setComissionValueInput={setComissionValueInput}
                     getStatusColor={getStatusColor}
                     onStatusChange={handleStatusChange}
+                    onSiteStatusChange={handleSiteStatusChange}
                     onLinkEdit={handleLinkEdit}
                     onLinkSave={handleLinkSave}
                     onLinkCancel={handleLinkCancel}
@@ -320,7 +315,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         email_gestor: c.email_gestor 
       })))
       
-      // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se todos os clientes pertencem ao gestor
       if (!isAdmin) {
         const clientesInvalidos = clientes.filter(c => c.email_gestor !== emailToUse)
         if (clientesInvalidos.length > 0) {
@@ -341,7 +335,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }, [clientes, currentManager, emailToUse, selectedManager, isAdmin])
 
-  // Verificar permissões do gestor - REMOVENDO A VERIFICAÇÃO RESTRITIVA
   useEffect(() => {
     const verificarPermissoes = async () => {
       console.log('🔍 [ClientesTable] Verificando permissões para:', user?.email)
@@ -360,7 +353,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return
       }
 
-      // PARA GESTORES: SEMPRE PERMITIR ADICIONAR (removendo a verificação da tabela gestores por enquanto)
       console.log('✅ Usuário é gestor - permitindo adicionar clientes')
       setPodeAdicionarCliente(true)
       setLoadingPermissoes(false)
@@ -371,12 +363,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const handleLinkSave = async (clienteId: string, field: string) => {
     try {
-      // Para link_site, usar o valor do input interno da linha
       let valueToSave = linkValue
       
-      // Se for campo link_site e estamos editando internamente, pegar o valor do estado da linha
       if (field === 'link_site') {
-        // O valor já será passado corretamente pelo siteLinkInput via setLinkValue
         valueToSave = linkValue
       }
       
@@ -428,31 +417,21 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       return
     }
 
-    // Se o status é "Problema", abrir o campo de descrição
     if (newStatus === 'Problema') {
       setEditandoProblema(clienteId)
       setProblemaDescricao('')
       return
     }
 
-    // Determinar se é status de campanha ou status de site
-    const isSiteStatus = ['pendente', 'aguardando_link', 'nao_precisa', 'finalizado'].includes(newStatus)
-    const field = isSiteStatus ? 'site_status' : 'status_campanha'
-    
-    console.log(`📋 Campo a ser atualizado: ${field}`)
-
     setUpdatingStatus(clienteId)
     
     try {
-      const success = await updateCliente(clienteId, field, newStatus)
+      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
       
       if (success) {
-        const isSiteStatusMessage = isSiteStatus ? getDisplaySiteStatus(newStatus) : newStatus
         toast({
           title: "Sucesso",
-          description: isSiteStatus 
-            ? `Status do site alterado para: ${isSiteStatusMessage}`
-            : `Status da campanha alterado para: ${newStatus}`,
+          description: `Status da campanha alterado para: ${newStatus}`,
         })
       } else {
         toast({
@@ -475,7 +454,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
     try {
-      // Primeiro, atualizar o status para Problema
       const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
       if (!statusSuccess) {
         toast({
@@ -486,7 +464,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return false
       }
 
-      // Depois, salvar a descrição do problema
       const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
       if (!descricaoSuccess) {
         toast({
@@ -566,7 +543,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setUpdatingComission(clienteId)
     
     try {
-      // Toggle the current status - if it's paid, make it unpaid, and vice versa
       const newStatus = !currentStatus
       const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
       
@@ -656,7 +632,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     return (
       <div className="space-y-4 p-4 lg:p-0">
-        {/* Indicador de Segurança para Gestores */}
         {!isAdmin && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-green-600 text-sm">
@@ -682,7 +657,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 onExport={exportToCSV}
               />
               
-              {/* BOTÃO SEMPRE VISÍVEL PARA QUEM PODE ADICIONAR */}
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
                   selectedManager={currentManager || managerName}
@@ -727,7 +701,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  // CORREÇÃO: Filtrar clientes baseado no filterType - ATUALIZADO para incluir sites-pendentes
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
     clientesFiltrados = clientes.filter(cliente => 
@@ -756,7 +729,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.site_status === 'aguardando_link'
     )
   } else {
-    // Comportamento padrão (manter as abas existentes)
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Cliente Sumiu' && 
       cliente.status_campanha !== 'Reembolso' && 
@@ -798,7 +770,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  // Se não é um filterType específico, renderizar com abas
   if (!filterType) {
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Cliente Sumiu' && 
@@ -816,10 +787,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     return renderWithTabs(clientesAtivos, clientesInativos)
   }
 
-  // Renderizar tabela simples para filterType específico
   return (
     <div className="space-y-4 p-4 lg:p-0">
-      {/* Indicador de Segurança para Gestores */}
       {!isAdmin && (
         <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 text-green-600 text-sm">
@@ -838,7 +807,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           onExport={exportToCSV}
         />
         
-        {/* BOTÃO SEMPRE VISÍVEL PARA CLIENTES ATIVOS */}
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
             selectedManager={currentManager || managerName}

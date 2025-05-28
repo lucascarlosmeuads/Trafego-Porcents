@@ -173,7 +173,7 @@ export function ClienteRow({
 
       <TableCell>
         <StatusSelect
-          value={cliente.status_campanha || ''}
+          value={cliente.status_campanha || 'Cliente Novo'}
           onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus)}
           disabled={updatingStatus === cliente.id!.toString()}
           isUpdating={updatingStatus === cliente.id!.toString()}
