@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,7 +16,7 @@ interface GestorOption {
 }
 
 export function NewSellerAddClientForm() {
-  const { user } = useAuth()
+  const { user } = useSimpleAuth()
   const { addCliente, refetch } = useSimpleSellerData(user?.email || '')
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
@@ -289,40 +289,33 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           </div>
 
           {/* Mensagem personalizada para o cliente */}
-          {formData.nome_cliente && formData.email_cliente && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-green-800 text-sm">📱 Mensagem para enviar ao cliente:</h3>
-                <Button
-                  type="button"
-                  onClick={handleCopyWelcomeMessage}
-                  size="sm"
-                  variant={copied ? "default" : "outline"}
-                  className="text-xs"
-                >
-                  {copied ? (
-                    <>
-                      <Check className="w-3 h-3 mr-1" />
-                      Copiado!
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3 h-3 mr-1" />
-                      Copiar
-                    </>
-                  )}
-                </Button>
+          <Card className="bg-gray-50">
+            <CardHeader>
+              <CardTitle className="text-sm">💬 Mensagem para enviar ao cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-white p-3 rounded border text-sm whitespace-pre-line">
+                {generateClientWelcomeMessage()}
               </div>
-              <div className="bg-white border rounded p-3 text-sm">
-                <pre className="whitespace-pre-wrap font-sans text-gray-700">
-                  {generateClientWelcomeMessage()}
-                </pre>
-              </div>
-            </div>
-          )}
+              <Button
+                type="button"
+                onClick={handleCopyWelcomeMessage}
+                variant="outline"
+                size="sm"
+                className="mt-3 flex items-center gap-2"
+              >
+                {copied ? (
+                  <Check className="w-4 h-4 text-green-600" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+                {copied ? 'Copiado!' : 'Copiar mensagem'}
+              </Button>
+            </CardContent>
+          </Card>
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Criando Cliente..." : "Criar Cliente"}
+            {loading ? 'Criando cliente...' : 'Criar Cliente'}
           </Button>
         </form>
       </CardContent>

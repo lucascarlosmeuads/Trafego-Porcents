@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
@@ -17,13 +16,12 @@ import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 export function ClienteDashboard() {
-  const { user } = useAuth()
+  const { user } = useSimpleAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const [activeTab, setActiveTab] = useState('welcome')
   const [dataIntegrityChecked, setDataIntegrityChecked] = useState(false)
   const isMobile = useIsMobile()
 
-  // Check and ensure data integrity on mount
   useEffect(() => {
     const checkDataIntegrity = async () => {
       if (!user?.email || dataIntegrityChecked) return

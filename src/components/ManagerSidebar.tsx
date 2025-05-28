@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+import { useSimpleAuth } from '@/hooks/useSimpleAuth'
 import { supabase } from '@/lib/supabase'
 import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
@@ -18,7 +17,7 @@ export function ManagerSidebar({
   activeTab, 
   onTabChange 
 }: ManagerSidebarProps) {
-  const { isAdmin } = useAuth()
+  const { isAdmin } = useSimpleAuth()
   const [problemasPendentes, setProblemasPendentes] = useState(0)
   const [saquesPendentes, setSaquesPendentes] = useState(0)
 
