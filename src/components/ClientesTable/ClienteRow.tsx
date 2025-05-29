@@ -1,53 +1,57 @@
-import { useState } from 'react'
-import { TableRow, TableCell } from '@/components/ui/table'
+import React, { useState } from 'react'
+import { TableCell, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { 
-  Phone, 
-  Save, 
+  Check, 
   X, 
   Edit, 
-  ExternalLink, 
-  MessageCircle,
-  Eye
+  Phone, 
+  MessageCircle, 
+  FolderOpen, 
+  ExternalLink,
+  CheckCircle,
+  AlertCircle,
+  Clock,
+  Plus
 } from 'lucide-react'
+import { Cliente } from '@/lib/supabase'
 import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
+import { BriefingModal } from './BriefingModal'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
-import { Cliente, type StatusCampanha } from '@/lib/supabase'
-import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface ClienteRowProps {
   cliente: Cliente
   selectedManager: string
   index: number
-  isAdmin?: boolean
-  showEmailGestor?: boolean
+  isAdmin: boolean
+  showEmailGestor: boolean
   updatingStatus: string | null
   editingLink: { clienteId: string, field: string } | null
   linkValue: string
-  setLinkValue: (value: string) => void
+  setLinkValue: React.Dispatch<React.SetStateAction<string>>
   editingBM: string | null
   bmValue: string
-  setBmValue: (value: string) => void
+  setBmValue: React.Dispatch<React.SetStateAction<string>>
   updatingComission: string | null
   editingComissionValue: string | null
   comissionValueInput: string
-  setComissionValueInput: (value: string) => void
+  setComissionValueInput: React.Dispatch<React.SetStateAction<string>>
   getStatusColor: (status: string) => string
-  onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
-  onSiteStatusChange: (clienteId: string, newStatus: string) => void
+  onStatusChange: (clienteId: string, newStatus: string) => Promise<void>
+  onSiteStatusChange: (clienteId: string, newStatus: string) => Promise<void>
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
-  onBMSave: (clienteId: string) => void
+  onBMSave: (clienteId: string) => Promise<void>
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
-  onComissionValueSave: (clienteId: string, newValue: number) => void
+  onComissionValueSave: (clienteId: string, newValue: number) => Promise<void>
   onComissionValueCancel: () => void
 }
 
@@ -55,8 +59,8 @@ export function ClienteRow({
   cliente,
   selectedManager,
   index,
-  isAdmin = false,
-  showEmailGestor = false,
+  isAdmin,
+  showEmailGestor,
   updatingStatus,
   editingLink,
   linkValue,
@@ -80,314 +84,222 @@ export function ClienteRow({
   onComissionToggle,
   onComissionValueEdit,
   onComissionValueSave,
-  onComissionValueCancel
+  onComissionValueCancel,
 }: ClienteRowProps) {
-  const [siteLinkInput, setSiteLinkInput] = useState('')
+  const [isBriefingOpen, setIsBriefingOpen] = useState(false)
+  const [isMaterialsOpen, setIsMaterialsOpen] = useState(false)
 
   const formatDate = (dateString: string) => {
-    if (!dateString || dateString.trim() === '') return 'Não informado'
+    if (!dateString || dateString.trim() === '') {
+      return 'Data não disponível'
+    }
+    
     try {
       const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
-    } catch {
-      return dateString
+      if (isNaN(date.getTime())) {
+        return 'Data inválida'
+      }
+      return date.toLocaleDateString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric'
+      })
+    } catch (error) {
+      return 'Data inválida'
     }
-  }
-
-  const formatPhone = (phone: string) => {
-    if (!phone) return ''
-    const cleaned = phone.replace(/\D/g, '')
-    if (cleaned.length === 11) {
-      return `(${cleaned.slice(0, 2)}) ${cleaned.slice(2, 7)}-${cleaned.slice(7)}`
-    }
-    return phone
-  }
-
-  const openWhatsApp = (phone: string, name: string) => {
-    if (!phone) return
-    const cleanPhone = phone.replace(/\D/g, '')
-    const message = `Olá ${name}! Sou da equipe de tráfego pago. Como posso te ajudar?`
-    const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
-    window.open(whatsappUrl, '_blank')
-  }
-
-  const handleSiteLinkSave = async () => {
-    setLinkValue(siteLinkInput)
-    const success = await onLinkSave(cliente.id!.toString())
-    if (success) {
-      setSiteLinkInput('')
-    }
-  }
-
-  const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
-  
-  // Renderização da célula Data Limite - PADRONIZADA
-  const renderDataLimiteCell = () => {
-    console.log(`📅 [ClienteRow] Renderizando Data Limite para: ${cliente.nome_cliente}`)
-    console.log(`📅 [ClienteRow] Dados do cliente:`, {
-      selectedManager,
-      clienteId: cliente.id,
-      dataVenda: cliente.data_venda,
-      createdAt: cliente.created_at,
-      statusCampanha: cliente.status_campanha
-    })
-    
-    // Usar sempre a função padronizada para ambos os contextos
-    const dataLimiteDisplay = getDataLimiteDisplayForGestor(
-      cliente.data_venda || '', 
-      cliente.created_at, 
-      cliente.status_campanha || 'Cliente Novo'
-    )
-    
-    console.log(`📅 [ClienteRow] Resultado da visualização:`, dataLimiteDisplay)
-    
-    return (
-      <TableCell className="text-white text-sm">
-        <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
-          {dataLimiteDisplay.texto}
-        </Badge>
-      </TableCell>
-    )
   }
 
   return (
-    <TableRow 
-      className="border-border hover:bg-muted/20" 
-      style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
-    >
-      <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_venda || cliente.created_at)}
-      </TableCell>
-
-      <TableCell className="text-white text-sm max-w-[150px]">
-        <div className="truncate" title={cliente.nome_cliente || ''}>
-          {cliente.nome_cliente || 'Não informado'}
-        </div>
-      </TableCell>
-
-      <TableCell className="text-white text-sm">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-xs">
-            {formatPhone(cliente.telefone || '')}
-          </span>
-          {cliente.telefone && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700 border-green-600"
-              onClick={() => openWhatsApp(cliente.telefone!, cliente.nome_cliente || 'Cliente')}
-              title="Abrir WhatsApp"
-            >
-              <MessageCircle className="h-3 w-3 text-white" />
-            </Button>
-          )}
-        </div>
-      </TableCell>
-
-      <TableCell className="text-white text-sm max-w-[180px]">
-        <div className="truncate" title={cliente.email_cliente || ''}>
-          {cliente.email_cliente || 'Não informado'}
-        </div>
-      </TableCell>
-
-      {(isAdmin || showEmailGestor) && (
-        <TableCell className="text-white text-sm max-w-[180px]">
-          <div className="truncate" title={cliente.email_gestor || ''}>
-            {cliente.email_gestor || 'Não informado'}
-          </div>
-        </TableCell>
+    <TableRow key={cliente.id} className="border-border hover:bg-muted/20">
+      <TableCell className="font-medium p-2">{cliente.id}</TableCell>
+      <TableCell className="p-2">{formatDate(cliente.data_venda || '')}</TableCell>
+      <TableCell className="p-2">{cliente.nome_cliente}</TableCell>
+      <TableCell className="p-2">{cliente.telefone}</TableCell>
+      <TableCell className="p-2">{cliente.email_cliente}</TableCell>
+      {isAdmin && (
+        <TableCell className="p-2">{cliente.vendedor}</TableCell>
       )}
-
-      <TableCell>
-        <StatusSelect
-          value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
-          onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
-          disabled={updatingStatus === cliente.id!.toString()}
-          isUpdating={updatingStatus === cliente.id!.toString()}
-          getStatusColor={getStatusColor}
-        />
+      {showEmailGestor && (
+        <TableCell className="p-2">{cliente.email_gestor || 'Sem gestor'}</TableCell>
+      )}
+      <TableCell className="p-2">
+        <div className="space-y-2">
+          <StatusSelect
+            status={cliente.status_campanha || 'Preenchimento do Formulário'}
+            getStatusColor={getStatusColor}
+            onStatusChange={(newStatus) => onStatusChange(cliente.id?.toString() || '', newStatus)}
+            disabled={!cliente.id}
+            isUpdating={updatingStatus === cliente.id?.toString()}
+          />
+        </div>
+      </TableCell>
+      <TableCell className="p-2">{cliente.data_limite}</TableCell>
+      <TableCell className="p-2">
+        <div className="flex flex-col space-y-1">
+          <Button variant="ghost" size="sm" asChild>
+            <a href={cliente.link_grupo} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
+              <MessageCircle className="w-3 h-3" />
+              Grupo
+            </a>
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setIsBriefingOpen(true)} className="flex items-center gap-2">
+            <FolderOpen className="w-3 h-3" />
+            Briefing
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setIsMaterialsOpen(true)} className="flex items-center gap-2">
+            <FolderOpen className="w-3 h-3" />
+            Ver materiais
+          </Button>
+          <BriefingModal isOpen={isBriefingOpen} onClose={() => setIsBriefingOpen(false)} cliente={cliente} />
+          <BriefingMaterialsModal isOpen={isMaterialsOpen} onClose={() => setIsMaterialsOpen(false)} cliente={cliente} />
+          <Button variant="ghost" size="sm" asChild>
+            <a href={`https://wa.me/${cliente.telefone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-500">
+              <Phone className="w-3 h-3" />
+              WhatsApp
+            </a>
+          </Button>
+        </div>
       </TableCell>
 
-      <TableCell>
-        <SiteStatusSelect
-          value={cliente.site_status || 'pendente'}
-          onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
-          disabled={updatingStatus === cliente.id!.toString()}
-          isUpdating={updatingStatus === cliente.id!.toString()}
-        />
+      {/* Coluna Site - COM INDICADOR VISUAL MELHORADO */}
+      <TableCell className="p-2">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2">
+            <SiteStatusSelect
+              value={cliente.site_status || 'pendente'}
+              onValueChange={(newValue) => onSiteStatusChange(cliente.id?.toString() || '', newValue)}
+              disabled={!cliente.id}
+              isUpdating={updatingStatus === cliente.id?.toString()}
+            />
+          </div>
+          
+          {editingLink?.clienteId === cliente.id?.toString() && editingLink.field === 'link_site' ? (
+            <div className="flex gap-1">
+              <Input
+                value={linkValue}
+                onChange={(e) => setLinkValue(e.target.value)}
+                placeholder="https://seusite.com"
+                className="h-7 text-xs bg-background border-border text-foreground"
+              />
+              <Button
+                size="sm"
+                onClick={() => onLinkSave(cliente.id?.toString() || '')}
+                className="h-7 px-2"
+              >
+                <Check className="w-3 h-3" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={onLinkCancel}
+                className="h-7 px-2"
+              >
+                <X className="w-3 h-3" />
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-2">
+              {cliente.link_site && cliente.link_site.trim() !== '' ? (
+                <>
+                  <div className="flex items-center gap-1">
+                    <CheckCircle className="w-3 h-3 text-green-500" />
+                    <span className="text-xs text-green-600 font-medium">Link adicionado</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onLinkEdit(cliente.id?.toString() || '', 'link_site', cliente.link_site || '')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Edit className="w-3 h-3 mr-1" />
+                    Editar
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {cliente.site_status === 'finalizado' ? (
+                    <div className="flex items-center gap-1">
+                      <AlertCircle className="w-3 h-3 text-amber-500" />
+                      <span className="text-xs text-amber-600 font-medium">Adicionar link</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-1">
+                      <Clock className="w-3 h-3 text-gray-400" />
+                      <span className="text-xs text-gray-500">Aguardando</span>
+                    </div>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => onLinkEdit(cliente.id?.toString() || '', 'link_site', '')}
+                    className="h-6 px-2 text-xs"
+                  >
+                    <Plus className="w-3 h-3 mr-1" />
+                    Adicionar
+                  </Button>
+                </>
+              )}
+            </div>
+          )}
+          
+          {cliente.link_site && cliente.link_site.trim() !== '' && (
+            <a
+              href={cliente.link_site}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-500 hover:text-blue-700 flex items-center gap-1"
+            >
+              <ExternalLink className="w-3 h-3" />
+              Ver site
+            </a>
+          )}
+        </div>
       </TableCell>
 
-      {renderDataLimiteCell()}
-
-      <TableCell>
-        <BriefingMaterialsModal 
-          emailCliente={cliente.email_cliente || ''}
-          nomeCliente={cliente.nome_cliente || ''}
-          trigger={
+      <TableCell className="p-2">
+        {editingBM === cliente.id?.toString() ? (
+          <div className="flex gap-1">
+            <Input
+              value={bmValue}
+              onChange={(e) => setBmValue(e.target.value)}
+              placeholder="Número BM"
+              className="h-7 text-xs bg-background border-border text-foreground"
+            />
+            <Button
+              size="sm"
+              onClick={() => onBMSave(cliente.id?.toString() || '')}
+              className="h-7 px-2"
+            >
+              <Check className="w-3 h-3" />
+            </Button>
             <Button
               size="sm"
               variant="outline"
-              className="h-8 bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
+              onClick={onBMCancel}
+              className="h-7 px-2"
             >
-              <Eye className="h-3 w-3 mr-1" />
-              Ver materiais
+              <X className="w-3 h-3" />
             </Button>
-          }
-        />
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <span className="text-xs">{cliente.numero_bm || 'Não adicionado'}</span>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => onBMEdit(cliente.id?.toString() || '', cliente.numero_bm || '')}
+              className="h-6 px-2 text-xs"
+            >
+              <Edit className="w-3 h-3 mr-1" />
+              Editar
+            </Button>
+          </div>
+        )}
       </TableCell>
-
-      <TableCell>
-        <div className="flex items-center gap-2">
-          {isEditingSiteLink ? (
-            <>
-              <Input
-                value={siteLinkInput}
-                onChange={(e) => setSiteLinkInput(e.target.value)}
-                placeholder="https://exemplo.com"
-                className="h-8 w-48 bg-background text-white"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSiteLinkSave()
-                  }
-                  if (e.key === 'Escape') {
-                    onLinkCancel()
-                    setSiteLinkInput('')
-                  }
-                }}
-              />
-              <Button 
-                size="sm" 
-                onClick={handleSiteLinkSave}
-                className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
-              >
-                <Save className="h-3 w-3" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={() => {
-                  onLinkCancel()
-                  setSiteLinkInput('')
-                }}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </>
-          ) : (
-            <>
-              {cliente.link_site && cliente.link_site.trim() !== '' ? (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => window.open(cliente.link_site, '_blank')}
-                    className="h-8 bg-green-600 hover:bg-green-700 border-green-600 text-white"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Ver Site
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => {
-                      setSiteLinkInput(cliente.link_site || '')
-                      onLinkEdit(cliente.id!.toString(), 'link_site', cliente.link_site || '')
-                    }}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSiteLinkInput('')
-                    onLinkEdit(cliente.id!.toString(), 'link_site', '')
-                  }}
-                  className="h-8 text-white"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Adicionar Site
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </TableCell>
-
-      <TableCell>
-        <div className="flex items-center gap-2">
-          {editingBM === cliente.id!.toString() ? (
-            <>
-              <Input
-                value={bmValue}
-                onChange={(e) => setBmValue(e.target.value)}
-                placeholder="Número BM"
-                className="h-8 w-32 bg-background text-white"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    onBMSave(cliente.id!.toString())
-                  }
-                  if (e.key === 'Escape') {
-                    onBMCancel()
-                  }
-                }}
-              />
-              <Button 
-                size="sm" 
-                onClick={() => onBMSave(cliente.id!.toString())}
-                className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
-              >
-                <Save className="h-3 w-3" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={onBMCancel}
-                className="h-8 w-8 p-0"
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </>
-          ) : (
-            <>
-              {cliente.numero_bm && cliente.numero_bm.trim() !== '' ? (
-                <div className="flex items-center gap-2">
-                  <Badge variant="outline" className="text-white border-white">
-                    {cliente.numero_bm}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onBMEdit(cliente.id!.toString(), cliente.numero_bm || '')}
-                    className="h-8 w-8 p-0"
-                  >
-                    <Edit className="h-3 w-3" />
-                  </Button>
-                </div>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => onBMEdit(cliente.id!.toString(), '')}
-                  className="h-8 text-white"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Adicionar BM
-                </Button>
-              )}
-            </>
-          )}
-        </div>
-      </TableCell>
-
-      <TableCell>
-        <ComissaoButton
+      <TableCell className="p-2">
+        <ComissaoButton 
           cliente={cliente}
-          isGestorDashboard={selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
+          isAdmin={isAdmin}
           updatingComission={updatingComission}
           editingComissionValue={editingComissionValue}
           comissionValueInput={comissionValueInput}
