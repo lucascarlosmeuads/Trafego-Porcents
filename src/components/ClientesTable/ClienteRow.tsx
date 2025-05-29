@@ -81,24 +81,6 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
 
-  // Corrigir detecção do painel do gestor
-  const isGestorDashboard = selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
-  
-  console.log(`🔍 [ClienteRow] Detecção CORRIGIDA do painel:`, {
-    cliente: cliente.nome_cliente,
-    clienteId: cliente.id,
-    selectedManager,
-    selectedManagerType: typeof selectedManager,
-    selectedManagerIncludes: selectedManager?.includes?.('@'),
-    isNotTodosClientes: selectedManager !== 'Todos os Clientes',
-    isGestorDashboard,
-    dataVenda: cliente.data_venda,
-    dataVendaType: typeof cliente.data_venda,
-    createdAt: cliente.created_at,
-    createdAtType: typeof cliente.created_at,
-    statusCampanha: cliente.status_campanha
-  })
-
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'Não informado'
     try {
@@ -136,34 +118,31 @@ export function ClienteRow({
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
   
-  // Renderização condicional da célula Data Limite
+  // Renderização da célula Data Limite - PADRONIZADA
   const renderDataLimiteCell = () => {
-    // Para gestor: usar visualização dinâmica
-    if (isGestorDashboard) {
-      console.log(`👨‍💼 [ClienteRow] GESTOR - Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
-      
-      const dataLimiteDisplay = getDataLimiteDisplayForGestor(
-        cliente.data_venda || '', 
-        cliente.created_at, 
-        cliente.status_campanha || 'Cliente Novo'
-      )
-      
-      console.log(`👨‍💼 [ClienteRow] GESTOR - Resultado da visualização:`, dataLimiteDisplay)
-      
-      return (
-        <TableCell className="text-white text-sm">
-          <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
-            {dataLimiteDisplay.texto}
-          </Badge>
-        </TableCell>
-      )
-    }
+    console.log(`📅 [ClienteRow] Renderizando Data Limite para: ${cliente.nome_cliente}`)
+    console.log(`📅 [ClienteRow] Dados do cliente:`, {
+      selectedManager,
+      clienteId: cliente.id,
+      dataVenda: cliente.data_venda,
+      createdAt: cliente.created_at,
+      statusCampanha: cliente.status_campanha
+    })
     
-    // Para admin: usar visualização normal (data formatada)
-    console.log(`👨‍💼 [ClienteRow] ADMIN - Aplicando visualização normal para: ${cliente.nome_cliente}`)
+    // Usar sempre a função padronizada para ambos os contextos
+    const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+      cliente.data_venda || '', 
+      cliente.created_at, 
+      cliente.status_campanha || 'Cliente Novo'
+    )
+    
+    console.log(`📅 [ClienteRow] Resultado da visualização:`, dataLimiteDisplay)
+    
     return (
       <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_limite || '')}
+        <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+          {dataLimiteDisplay.texto}
+        </Badge>
       </TableCell>
     )
   }
@@ -397,7 +376,7 @@ export function ClienteRow({
       <TableCell>
         <ComissaoButton
           cliente={cliente}
-          isGestorDashboard={!selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
+          isGestorDashboard={selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
           updatingComission={updatingComission}
           editingComissionValue={editingComissionValue}
           comissionValueInput={comissionValueInput}
