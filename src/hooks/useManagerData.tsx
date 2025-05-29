@@ -43,25 +43,25 @@ export function useManagerData(
         .from('todos_clientes')
         .select('*')
 
-      // NOVO: Aplicar filtros específicos APENAS para contextos de sites
+      // CORREÇÃO: Para filtros de sites, aplicar busca GLOBAL quando necessário
       if (filterType === 'sites-pendentes') {
-        console.log('🌐 [useManagerData] Aplicando filtro ESPECÍFICO para sites pendentes')
+        console.log('🌐 [useManagerData] Aplicando filtro GLOBAL para sites pendentes')
         query = query.eq('site_status', 'aguardando_link')
       } else if (filterType === 'sites-finalizados') {
-        console.log('✅ [useManagerData] Aplicando filtro ESPECÍFICO para sites finalizados')
-        // CORREÇÃO: Remover filtros de link_site - mostrar todos os sites finalizados
+        console.log('✅ [useManagerData] Aplicando filtro GLOBAL para sites finalizados')
         query = query.eq('site_status', 'finalizado')
       } else {
-        // CORREÇÃO: Para painéis normais (Admin/Gestor), aplicar APENAS filtros de gestor
-        // NÃO aplicar filtros de site_status para não ocultar clientes
-        console.log('📊 [useManagerData] Modo painel normal - SEM filtros de site_status')
+        // CORREÇÃO: Para painéis normais, aplicar filtros de gestor apenas quando necessário
+        console.log('📊 [useManagerData] Modo painel normal')
         
         if (isAdminUser) {
-          if (selectedManager && selectedManager !== 'Todos os Clientes') {
+          // CORREÇÃO: Admin com gestor específico selecionado
+          if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== null) {
             console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
             query = query.eq('email_gestor', selectedManager)
           } else {
-            console.log('👑 [useManagerData] Admin buscando todos os clientes')
+            console.log('👑 [useManagerData] Admin buscando todos os clientes (sem filtro de gestor)')
+            // Para admin com "Todos os Gestores", não aplicar filtro de email_gestor
           }
         } else {
           console.log('👤 [useManagerData] Gestor buscando apenas seus clientes')
@@ -80,13 +80,15 @@ export function useManagerData(
       
       // Log adicional para debug da sincronização
       if (data && data.length > 0) {
-        const sitesData = data.filter(c => c.site_status && c.site_status !== 'pendente')
-        console.log('🌐 [useManagerData] Clientes com status de site:', sitesData.length, sitesData.map(c => ({
-          id: c.id,
-          nome: c.nome_cliente,
-          site_status: c.site_status,
-          link_site: c.link_site ? 'tem link' : 'sem link'
-        })))
+        if (filterType === 'sites-finalizados') {
+          console.log('🌐 [useManagerData] Sites finalizados encontrados:', data.length)
+          console.log('📋 [useManagerData] Lista de sites finalizados:', data.map(c => ({
+            id: c.id,
+            nome: c.nome_cliente,
+            email_gestor: c.email_gestor,
+            site_status: c.site_status
+          })))
+        }
       }
       
       setClientes(data || [])

@@ -39,6 +39,19 @@ export function TableFilters({
   showSiteStatusFilter = false,
   getStatusColor
 }: TableFiltersProps) {
+  
+  const handleSiteStatusChange = (value: string) => {
+    console.log('🎯 [TableFilters] Alterando filtro de site_status para:', value)
+    if (setSiteStatusFilter) {
+      setSiteStatusFilter(value)
+    }
+  }
+
+  const handleStatusChange = (value: string) => {
+    console.log('📊 [TableFilters] Alterando filtro de status_campanha para:', value)
+    setStatusFilter(value)
+  }
+
   return (
     <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
       <div className="relative flex-1">
@@ -51,7 +64,7 @@ export function TableFilters({
         />
       </div>
       
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
+      <Select value={statusFilter} onValueChange={handleStatusChange}>
         <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
           <Filter className="w-4 h-4 mr-2" />
           <SelectValue placeholder="Status da campanha" />
@@ -69,7 +82,7 @@ export function TableFilters({
       </Select>
 
       {showSiteStatusFilter && setSiteStatusFilter && (
-        <Select value={siteStatusFilter} onValueChange={setSiteStatusFilter}>
+        <Select value={siteStatusFilter} onValueChange={handleSiteStatusChange}>
           <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
             <Globe className="w-4 h-4 mr-2" />
             <SelectValue placeholder="Status do site" />

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -61,6 +62,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
+            {/* CORREÇÃO: Passar null para selectedManager para forçar busca global */}
             <ClientesTable selectedManager={null} filterType="sites-pendentes" />
           </div>
         )
