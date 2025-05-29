@@ -468,17 +468,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     verificarPermissoes()
   }, [user?.email, isAdmin])
 
-  const handleLinkSave = async (clienteId: string, field: string) => {
+  const handleLinkSave = async (clienteId: string) => {
     try {
       let valueToSave = linkValue
       
-      if (field === 'link_site') {
-        valueToSave = linkValue
-      }
+      console.log('💾 Salvando link_site com valor:', valueToSave)
       
-      console.log('💾 Salvando campo:', field, 'com valor:', valueToSave)
-      
-      const success = await updateCliente(clienteId, field, valueToSave)
+      const success = await updateCliente(clienteId, 'link_site', valueToSave)
       
       if (success) {
         toast({

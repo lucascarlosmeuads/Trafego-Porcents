@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -80,11 +81,10 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
 
-  // CORRIGIR: Melhorar a detecção do painel do gestor
-  // Gestor tem email específico, admin não tem @ no selectedManager ou é "Todos os Clientes"
+  // Corrigir detecção do painel do gestor
   const isGestorDashboard = selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
   
-  console.log(`🔍 [ClienteRow] Detecção detalhada do painel:`, {
+  console.log(`🔍 [ClienteRow] Detecção CORRIGIDA do painel:`, {
     cliente: cliente.nome_cliente,
     clienteId: cliente.id,
     selectedManager,
@@ -128,7 +128,7 @@ export function ClienteRow({
 
   const handleSiteLinkSave = async () => {
     setLinkValue(siteLinkInput)
-    const success = await onLinkSave(cliente.id!.toString(), 'link_site')
+    const success = await onLinkSave(cliente.id!.toString())
     if (success) {
       setSiteLinkInput('')
     }
