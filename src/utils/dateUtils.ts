@@ -183,7 +183,7 @@ const parseDate = (dateInput: string | Date | null | undefined): Date | null => 
 
 // Nova função para painel do gestor - calcula e formata exibição da data limite
 export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: string | null, statusCampanha: string): { texto: string, classeCor: string } => {
-  console.log(`🔍 [dateUtils] Analisando dados:`, {
+  console.log(`🔍 [ADMIN dateUtils] Analisando dados:`, {
     dataVenda,
     created_at,
     statusCampanha,
@@ -193,7 +193,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
   
   // Se status for "No Ar" ou "Otimização" - campanha cumprida
   if (isStatusEntregue(statusCampanha)) {
-    console.log(`✅ [dateUtils] Status entregue detectado: ${statusCampanha}`)
+    console.log(`✅ [ADMIN dateUtils] Status entregue detectado: ${statusCampanha}`)
     return {
       texto: '✅ Cumprido',
       classeCor: 'bg-green-100 text-green-800 border-green-300'
@@ -205,25 +205,28 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
   let fonteDados = ''
   
   // Tentar data_venda primeiro
-  if (dataVenda) {
+  if (dataVenda && dataVenda !== '' && dataVenda !== 'null' && dataVenda !== 'undefined') {
     dataBase = parseDate(dataVenda)
     if (dataBase) {
       fonteDados = 'data_venda'
-      console.log(`📅 [dateUtils] Usando data_venda: ${dataVenda} -> ${dataBase.toISOString()}`)
+      console.log(`📅 [ADMIN dateUtils] Usando data_venda: ${dataVenda} -> ${dataBase.toISOString()}`)
     }
   }
   
   // Fallback para created_at se data_venda não funcionou
-  if (!dataBase && created_at) {
+  if (!dataBase && created_at && created_at !== '' && created_at !== 'null' && created_at !== 'undefined') {
     dataBase = parseDate(created_at)
     if (dataBase) {
       fonteDados = 'created_at'
-      console.log(`📅 [dateUtils] Fallback para created_at: ${created_at} -> ${dataBase.toISOString()}`)
+      console.log(`📅 [ADMIN dateUtils] Fallback para created_at: ${created_at} -> ${dataBase.toISOString()}`)
     }
   }
   
   if (!dataBase) {
-    console.log('⚠️ [dateUtils] Nenhuma data base válida encontrada')
+    console.log('⚠️ [ADMIN dateUtils] Nenhuma data base válida encontrada', {
+      dataVenda_original: dataVenda,
+      created_at_original: created_at
+    })
     return {
       texto: 'Sem data base',
       classeCor: 'text-gray-400'
@@ -233,7 +236,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
   try {
     // Calcular data limite (15 dias úteis após a data base)
     const dataLimite = addBusinessDays(dataBase, 15)
-    console.log(`📅 [dateUtils] Data limite calculada (${fonteDados} + 15 dias úteis): ${dataLimite.toISOString()}`)
+    console.log(`📅 [ADMIN dateUtils] Data limite calculada (${fonteDados} + 15 dias úteis): ${dataLimite.toISOString()}`)
     
     // Data de hoje (sem horas)
     const hoje = new Date()
@@ -243,13 +246,13 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
     const limiteComparar = new Date(dataLimite)
     limiteComparar.setHours(0, 0, 0, 0)
     
-    console.log(`📊 [dateUtils] Comparação: hoje=${hoje.toISOString()} vs limite=${limiteComparar.toISOString()}`)
+    console.log(`📊 [ADMIN dateUtils] Comparação: hoje=${hoje.toISOString()} vs limite=${limiteComparar.toISOString()}`)
     
     // Verificar se já passou da data limite
     if (hoje > limiteComparar) {
       // Atrasado - calcular dias de atraso
       const diasAtraso = getBusinessDaysBetween(limiteComparar, hoje) - 1
-      console.log(`🚨 [dateUtils] Atrasado: ${diasAtraso} dias úteis`)
+      console.log(`🚨 [ADMIN dateUtils] Atrasado: ${diasAtraso} dias úteis`)
       
       return {
         texto: `🚨 Atrasado há ${diasAtraso} dias úteis`,
@@ -259,7 +262,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
     
     // Dentro do prazo - calcular dias restantes
     const diasRestantes = getBusinessDaysBetween(hoje, limiteComparar) - 1
-    console.log(`⏳ [dateUtils] Dias restantes: ${diasRestantes}`)
+    console.log(`⏳ [ADMIN dateUtils] Dias restantes: ${diasRestantes}`)
     
     // Formatação conforme regras
     if (diasRestantes > 5) {
@@ -280,7 +283,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
     }
     
   } catch (error) {
-    console.error('❌ [dateUtils] Erro ao calcular exibição da data limite:', error)
+    console.error('❌ [ADMIN dateUtils] Erro ao calcular exibição da data limite:', error)
     return {
       texto: 'Erro de cálculo',
       classeCor: 'text-gray-400'

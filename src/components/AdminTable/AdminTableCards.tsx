@@ -25,11 +25,20 @@ export function AdminTableCards({
   return (
     <div className="grid gap-4 p-4 md:grid-cols-2 lg:hidden">
       {clientes.map((cliente) => {
+        console.log(`🔍 [AdminTableCards] Cliente ${cliente.id}:`, {
+          data_venda: cliente.data_venda,
+          created_at: cliente.created_at,
+          status_campanha: cliente.status_campanha,
+          nome_cliente: cliente.nome_cliente
+        })
+        
         const dataLimiteDisplay = getDataLimiteDisplayForGestor(
           cliente.data_venda || '', 
           cliente.created_at, 
           cliente.status_campanha || ''
         )
+        
+        console.log(`📊 [AdminTableCards] Data limite display para cliente ${cliente.id}:`, dataLimiteDisplay)
         
         return (
           <Card key={cliente.id} className="w-full bg-card border-border">

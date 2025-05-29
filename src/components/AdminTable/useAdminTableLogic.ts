@@ -34,7 +34,7 @@ export function useAdminTableLogic() {
   }
 
   const fetchAllClientes = async () => {
-    console.log('Carregando todos os clientes da tabela unificada...')
+    console.log('🔍 [useAdminTableLogic] Carregando todos os clientes da tabela unificada...')
     try {
       const { data, error } = await supabase
         .from('todos_clientes')
@@ -42,18 +42,25 @@ export function useAdminTableLogic() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Erro ao buscar clientes:', error)
+        console.error('❌ [useAdminTableLogic] Erro ao buscar clientes:', error)
         toast({
           title: "Erro",
           description: `Erro ao carregar dados: ${error.message}`,
           variant: "destructive"
         })
       } else {
-        console.log('Dados carregados da tabela unificada:', data?.length || 0, 'registros')
+        console.log('✅ [useAdminTableLogic] Dados carregados da tabela unificada:', data?.length || 0, 'registros')
+        console.log('📊 [useAdminTableLogic] Primeiros 3 clientes para debug:', data?.slice(0, 3).map(cliente => ({
+          id: cliente.id,
+          nome: cliente.nome_cliente,
+          data_venda: cliente.data_venda,
+          created_at: cliente.created_at,
+          status_campanha: cliente.status_campanha
+        })))
         setClientes(data || [])
       }
     } catch (error) {
-      console.error('Erro na consulta:', error)
+      console.error('❌ [useAdminTableLogic] Erro na consulta:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao carregar dados",
@@ -66,7 +73,7 @@ export function useAdminTableLogic() {
 
   const updateField = async (id: string, field: keyof Cliente, value: string) => {
     try {
-      console.log(`Atualizando cliente admin ${id}: ${field} = ${value}`)
+      console.log(`🔄 [useAdminTableLogic] Atualizando cliente admin ${id}: ${field} = ${value}`)
       
       const { error } = await supabase
         .from('todos_clientes')
@@ -74,7 +81,7 @@ export function useAdminTableLogic() {
         .eq('id', id)
 
       if (error) {
-        console.error('Erro ao atualizar:', error)
+        console.error('❌ [useAdminTableLogic] Erro ao atualizar:', error)
         toast({
           title: "Erro",
           description: `Erro ao salvar: ${error.message}`,
@@ -84,14 +91,14 @@ export function useAdminTableLogic() {
         setClientes(prev => prev.map(cliente => 
           cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
-        console.log('Campo atualizado com sucesso na tabela unificada')
+        console.log('✅ [useAdminTableLogic] Campo atualizado com sucesso na tabela unificada')
         toast({
           title: "Sucesso",
           description: "Campo atualizado com sucesso"
         })
       }
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('❌ [useAdminTableLogic] Erro:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao salvar",
@@ -104,7 +111,7 @@ export function useAdminTableLogic() {
     setTransferindoCliente(clienteId)
     
     try {
-      console.log(`Transferindo cliente ${clienteId} para gestor: ${novoEmailGestor}`)
+      console.log(`🔄 [useAdminTableLogic] Transferindo cliente ${clienteId} para gestor: ${novoEmailGestor}`)
       
       const { error } = await supabase
         .from('todos_clientes')
@@ -112,7 +119,7 @@ export function useAdminTableLogic() {
         .eq('id', clienteId)
 
       if (error) {
-        console.error('Erro ao transferir cliente:', error)
+        console.error('❌ [useAdminTableLogic] Erro ao transferir cliente:', error)
         toast({
           title: "Erro",
           description: `Erro ao transferir cliente: ${error.message}`,
@@ -122,14 +129,14 @@ export function useAdminTableLogic() {
         setClientes(prev => prev.map(cliente => 
           cliente.id === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
         ))
-        console.log('Cliente transferido com sucesso')
+        console.log('✅ [useAdminTableLogic] Cliente transferido com sucesso')
         toast({
           title: "Sucesso",
           description: "Cliente transferido com sucesso"
         })
       }
     } catch (error) {
-      console.error('Erro:', error)
+      console.error('❌ [useAdminTableLogic] Erro:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao transferir cliente",
@@ -141,7 +148,7 @@ export function useAdminTableLogic() {
   }
 
   const handleStatusChange = (id: string, newStatus: string) => {
-    console.log(`Admin alterando status do cliente ${id} para: ${newStatus}`)
+    console.log(`🔄 [useAdminTableLogic] Admin alterando status do cliente ${id} para: ${newStatus}`)
     updateField(id, 'status_campanha', newStatus)
   }
 
