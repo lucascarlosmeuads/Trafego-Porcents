@@ -848,10 +848,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.site_status === 'aguardando_link'
     )
   } else if (filterType === 'sites-finalizados') {
-    // CORREÇÃO: Apenas verificar se site_status = 'finalizado'
-    // Não mais exigir que link_site esteja preenchido
     clientesFiltrados = clientes.filter(cliente => 
-      cliente.site_status === 'finalizado'
+      cliente.site_status === 'finalizado' && 
+      cliente.link_site && 
+      cliente.link_site.trim() !== ''
     )
   } else {
     const clientesAtivos = clientes.filter(cliente => 
