@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 
 export const normalizeEmail = (email: string): string => {
@@ -20,12 +19,15 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // Verificação específica para criadores de sites - PRIORIDADE ALTA
+    // Verificação específica para criadores de sites - PRIORIDADE ALTA E MAIS AMPLA
     if (normalizedEmail.includes('criador') || 
         normalizedEmail.includes('site') || 
         normalizedEmail.includes('webdesign') ||
-        normalizedEmail.includes('sites')) {
-      console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign/sites)')
+        normalizedEmail.includes('sites') ||
+        normalizedEmail.includes('web') ||
+        normalizedEmail.startsWith('sites') ||
+        normalizedEmail.endsWith('sites.com')) {
+      console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign/sites/web)')
       return 'sites'
     }
 
