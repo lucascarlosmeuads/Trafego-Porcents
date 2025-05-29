@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -122,10 +123,6 @@ export function ClienteRow({
       style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
     >
       <TableCell className="text-white text-sm">
-        {cliente.id}
-      </TableCell>
-
-      <TableCell className="text-white text-sm">
         {formatDate(cliente.data_venda || cliente.created_at)}
       </TableCell>
 
@@ -162,12 +159,6 @@ export function ClienteRow({
 
       <TableCell className="text-white text-sm">
         {cliente.vendedor || 'Não informado'}
-      </TableCell>
-
-      <TableCell className="text-white text-sm max-w-[150px]">
-        <div className="truncate" title={cliente.email_gestor || ''}>
-          {cliente.email_gestor || selectedManager}
-        </div>
       </TableCell>
 
       <TableCell>
