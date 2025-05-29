@@ -110,6 +110,9 @@ export function useSimpleSellerData(sellerEmail: string) {
       console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
       console.log('📧 [useSimpleSellerData] Email do cliente:', clienteData.email_cliente)
       
+      // Normalizar email para comparação case-insensitive
+      const normalizedEmail = clienteData.email_cliente.toLowerCase().trim()
+      
       // Preparar nome do vendedor
       const emailPrefix = sellerEmail.split('@')[0]
       let vendorName = emailPrefix.replace('vendedor', '')
@@ -120,44 +123,12 @@ export function useSimpleSellerData(sellerEmail: string) {
       // Usar senha customizada ou padrão
       const senhaParaUsar = clienteData.senha_cliente || SENHA_PADRAO_CLIENTE
 
-      // Step 1: PRIMEIRO criar conta no Supabase Auth
-      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
-      let senhaDefinida = false
-      
-      try {
-        // Criar conta usando signUp com a senha informada
-        const { data: authData, error: authError } = await supabase.auth.signUp({
-          email: clienteData.email_cliente,
-          password: senhaParaUsar,
-          options: {
-            data: {
-              full_name: clienteData.nome_cliente,
-              role: 'cliente'
-            }
-          }
-        })
-
-        if (authError) {
-          console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
-          // Não bloquear se a conta já existir
-          if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
-            console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
-          }
-        } else {
-          console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
-          senhaDefinida = true
-        }
-      } catch (authErr) {
-        console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
-        // Continuar mesmo se houver erro na criação da conta
-      }
-
-      // Step 2: Verificar se cliente já existe na tabela
+      // Step 1: Verificar se cliente já existe na tabela (CASE-INSENSITIVE)
       console.log('🔍 [useSimpleSellerData] Verificando se cliente já existe na tabela...')
       const { data: existingClient, error: checkError } = await supabase
         .from('todos_clientes')
         .select('id, email_cliente, nome_cliente')
-        .eq('email_cliente', clienteData.email_cliente)
+        .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
         .maybeSingle()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -193,13 +164,13 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
-        // Step 3: Cliente novo - inserir na tabela
+        // Step 2: Cliente novo - inserir na tabela primeiro
         console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
         
         const novoCliente = {
           nome_cliente: clienteData.nome_cliente,
           telefone: clienteData.telefone,
-          email_cliente: clienteData.email_cliente,
+          email_cliente: normalizedEmail, // Usar email normalizado
           email_gestor: clienteData.email_gestor,
           vendedor: vendorName,
           status_campanha: clienteData.status_campanha,
@@ -222,6 +193,40 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
         clientId = insertData.id
+      }
+
+      // Step 3: DEPOIS criar conta no Supabase Auth (apenas para clientes novos)
+      let senhaDefinida = false
+      if (!clienteJaExistia) {
+        console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
+        
+        try {
+          // Criar conta usando signUp com a senha informada e email normalizado
+          const { data: authData, error: authError } = await supabase.auth.signUp({
+            email: normalizedEmail, // Usar email normalizado
+            password: senhaParaUsar,
+            options: {
+              data: {
+                full_name: clienteData.nome_cliente,
+                role: 'cliente'
+              }
+            }
+          })
+
+          if (authError) {
+            console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
+            // Não bloquear se a conta já existir
+            if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
+              console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
+            }
+          } else {
+            console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
+            senhaDefinida = true
+          }
+        } catch (authErr) {
+          console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
+          // Continuar mesmo se houver erro na criação da conta
+        }
       }
 
       // Recarregar lista
@@ -252,7 +257,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         senhaDefinida,
         clientData: {
           id: clientId,
-          email_cliente: clienteData.email_cliente,
+          email_cliente: normalizedEmail,
           nome_cliente: clienteData.nome_cliente
         }
       }

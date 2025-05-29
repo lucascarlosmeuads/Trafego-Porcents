@@ -38,12 +38,12 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'gestor'
     }
 
-    // VERIFICAÇÃO PARA CLIENTES - Buscar na tabela todos_clientes
+    // VERIFICAÇÃO PARA CLIENTES - Buscar na tabela todos_clientes (CASE-INSENSITIVE)
     console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
     const { data: cliente, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('id, email_cliente, nome_cliente')
-      .eq('email_cliente', normalizedEmail)
+      .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
       .single()
 
     if (clienteError) {
@@ -88,11 +88,11 @@ export const getManagerName = async (email: string): Promise<string> => {
   }
   
   try {
-    // Tentar buscar nome do gestor primeiro
+    // Tentar buscar nome do gestor primeiro (CASE-INSENSITIVE)
     const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
       .select('nome')
-      .ilike('email', normalizedEmail)
+      .ilike('email', normalizedEmail) // Mudança: usando ilike para case-insensitive
       .eq('ativo', true)
       .single()
 
@@ -100,11 +100,11 @@ export const getManagerName = async (email: string): Promise<string> => {
       return gestorData.nome
     }
 
-    // Se não for gestor, tentar buscar nome do cliente
+    // Se não for gestor, tentar buscar nome do cliente (CASE-INSENSITIVE)
     const { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('nome_cliente')
-      .eq('email_cliente', normalizedEmail)
+      .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
       .single()
 
     if (!clienteError && clienteData) {
