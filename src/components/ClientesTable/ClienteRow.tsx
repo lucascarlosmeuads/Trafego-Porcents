@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
+import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -79,6 +81,17 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
 
+  // Determinar se está no painel do gestor
+  const isGestorDashboard = !selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
+  
+  console.log(`🔍 [ClienteRow] Detecção do painel:`, {
+    cliente: cliente.nome_cliente,
+    selectedManager,
+    isGestorDashboard,
+    dataVenda: cliente.data_venda,
+    createdAt: cliente.created_at
+  })
+
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'Não informado'
     try {
@@ -115,6 +128,36 @@ export function ClienteRow({
   }
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
+  
+  // Renderização condicional da célula Data Limite
+  const renderDataLimiteCell = () => {
+    // Para gestor: usar visualização dinâmica
+    if (isGestorDashboard) {
+      console.log(`👨‍💼 [ClienteRow] Aplicando visualização do gestor para: ${cliente.nome_cliente}`)
+      
+      const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+        cliente.data_venda || '', 
+        cliente.created_at, 
+        cliente.status_campanha || 'Cliente Novo'
+      )
+      
+      return (
+        <TableCell className="text-white text-sm">
+          <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+            {dataLimiteDisplay.texto}
+          </Badge>
+        </TableCell>
+      )
+    }
+    
+    // Para admin: usar visualização normal (data formatada)
+    console.log(`👨‍💼 [ClienteRow] Aplicando visualização do admin para: ${cliente.nome_cliente}`)
+    return (
+      <TableCell className="text-white text-sm">
+        {formatDate(cliente.data_limite || '')}
+      </TableCell>
+    )
+  }
 
   return (
     <TableRow 
@@ -175,9 +218,7 @@ export function ClienteRow({
         />
       </TableCell>
 
-      <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_limite || '')}
-      </TableCell>
+      {renderDataLimiteCell()}
 
       <TableCell>
         <BriefingMaterialsModal 

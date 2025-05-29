@@ -147,3 +147,96 @@ export const getDataLimiteStyle = (dataLimite: string, statusCampanha: string) =
   
   return 'text-foreground'
 }
+
+// Nova função para painel do gestor - calcula e formata exibição da data limite
+export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: string | null, statusCampanha: string): { texto: string, classeCor: string } => {
+  console.log(`🔍 Analisando data: venda=${dataVenda}, created=${created_at}, status=${statusCampanha}`);
+  
+  // Se status for "No Ar" ou "Otimização" - campanha cumprida
+  if (isStatusEntregue(statusCampanha)) {
+    return {
+      texto: '✅ Cumprido',
+      classeCor: 'bg-green-100 text-green-800 border-green-300'
+    }
+  }
+  
+  // Determinar a data base para cálculo (data_venda ou created_at como fallback)
+  let dataBase: string | null = null;
+  
+  if (dataVenda && dataVenda.trim() !== '') {
+    dataBase = dataVenda;
+  } else if (created_at && created_at.trim() !== '') {
+    dataBase = created_at;
+  }
+  
+  if (!dataBase) {
+    console.log('⚠️ Sem data base válida');
+    return {
+      texto: 'Não informado',
+      classeCor: 'text-gray-400'
+    }
+  }
+  
+  try {
+    // Converter para Date (tentando diferentes formatos)
+    const baseDate = new Date(dataBase);
+    
+    // Verificar se a data é válida
+    if (isNaN(baseDate.getTime())) {
+      console.log(`⚠️ Data inválida: ${dataBase}`);
+      return {
+        texto: 'Data inválida',
+        classeCor: 'text-gray-400'
+      }
+    }
+    
+    console.log(`✅ Data base válida: ${baseDate.toISOString()}`);
+    
+    // Calcular data limite (15 dias úteis após a data base)
+    const dataLimite = addBusinessDays(baseDate, 15);
+    console.log(`📅 Data limite calculada: ${dataLimite.toISOString()}`);
+    
+    // Data de hoje (sem horas)
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    // Verificar se já passou da data limite
+    if (hoje > dataLimite) {
+      // Atrasado - calcular dias de atraso
+      const diasAtraso = getBusinessDaysBetween(dataLimite, hoje) - 1;
+      
+      return {
+        texto: `🚨 Atrasado há ${diasAtraso} dias úteis`,
+        classeCor: 'text-red-600 font-bold'
+      }
+    }
+    
+    // Dentro do prazo - calcular dias restantes
+    const diasRestantes = getBusinessDaysBetween(hoje, dataLimite) - 1;
+    
+    // Formatação conforme regras
+    if (diasRestantes > 5) {
+      return {
+        texto: `🟢 Faltam ${diasRestantes} dias úteis`,
+        classeCor: 'text-green-600 font-medium'
+      }
+    } else if (diasRestantes >= 1) {
+      return {
+        texto: `🟠 Atenção: ${diasRestantes} dias úteis`,
+        classeCor: 'text-amber-600 font-bold'
+      }
+    } else {
+      return {
+        texto: '🔴 Último dia!',
+        classeCor: 'text-orange-600 font-bold'
+      }
+    }
+    
+  } catch (error) {
+    console.error('Erro ao calcular exibição da data limite:', error);
+    return {
+      texto: 'Erro de cálculo',
+      classeCor: 'text-gray-400'
+    }
+  }
+}
