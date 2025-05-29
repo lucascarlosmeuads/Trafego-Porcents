@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -15,7 +16,7 @@ interface ComissaoButtonProps {
   editingComissionValue: string | null
   comissionValueInput: string
   setComissionValueInput: (value: string) => void
-  onComissionToggle: (clienteId: string, currentStatus: boolean) => void
+  onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
   onComissionValueSave: (clienteId: string, newValue: number) => void
   onComissionValueCancel: () => void
@@ -127,12 +128,16 @@ export function ComissaoButton({
               console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
               
               // Atualizar comissão para "Solicitado"
-              const success = await onComissionToggle(cliente.id, false)
-              if (success) {
-                console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
-                setSaqueEnviado(true)
-              } else {
-                console.error('❌ [ComissaoButton] Falha ao atualizar comissão')
+              try {
+                const success = await onComissionToggle(cliente.id, false)
+                if (success) {
+                  console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
+                  setSaqueEnviado(true)
+                } else {
+                  console.error('❌ [ComissaoButton] Falha ao atualizar comissão')
+                }
+              } catch (error) {
+                console.error('❌ [ComissaoButton] Erro ao atualizar comissão:', error)
               }
             }}
             disabled={loadingSaque || updatingComission === cliente.id}
@@ -183,7 +188,13 @@ export function ComissaoButton({
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
         }`}
-        onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
+        onClick={async () => {
+          try {
+            await onComissionToggle(cliente.id, cliente.comissao_paga || false)
+          } catch (error) {
+            console.error('❌ [ComissaoButton] Erro ao toggle comissão:', error)
+          }
+        }}
         disabled={updatingComission === cliente.id}
       >
         {updatingComission === cliente.id ? (
@@ -207,3 +218,4 @@ export function ComissaoButton({
     </div>
   )
 }
+
