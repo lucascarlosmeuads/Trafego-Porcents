@@ -135,34 +135,28 @@ export function ClienteRow({
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
   
-  // Renderização condicional da célula Data Limite
+  // Renderização condicional da célula Data Limite - APENAS para painel do gestor
   const renderDataLimiteCell = () => {
-    // Para gestor: usar visualização dinâmica
-    if (isGestorDashboard) {
-      console.log(`👨‍💼 [ClienteRow] GESTOR - Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
-      
-      const dataLimiteDisplay = getDataLimiteDisplayForGestor(
-        cliente.data_venda || '', 
-        cliente.created_at, 
-        cliente.status_campanha || 'Cliente Novo'
-      )
-      
-      console.log(`👨‍💼 [ClienteRow] GESTOR - Resultado da visualização:`, dataLimiteDisplay)
-      
-      return (
-        <TableCell className="text-white text-sm">
-          <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
-            {dataLimiteDisplay.texto}
-          </Badge>
-        </TableCell>
-      )
+    // Só renderizar no painel do gestor
+    if (!isGestorDashboard) {
+      return null
     }
     
-    // Para admin: usar visualização normal (data formatada)
-    console.log(`👨‍💼 [ClienteRow] ADMIN - Aplicando visualização normal para: ${cliente.nome_cliente}`)
+    console.log(`👨‍💼 [ClienteRow] GESTOR - Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
+    
+    const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+      cliente.data_venda || '', 
+      cliente.created_at, 
+      (cliente.status_campanha || 'Cliente Novo') as StatusCampanha
+    )
+    
+    console.log(`👨‍💼 [ClienteRow] GESTOR - Resultado da visualização:`, dataLimiteDisplay)
+    
     return (
       <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_limite || '')}
+        <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+          {dataLimiteDisplay.texto}
+        </Badge>
       </TableCell>
     )
   }

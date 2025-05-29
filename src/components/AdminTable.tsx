@@ -8,7 +8,7 @@ import { useToast } from '@/hooks/use-toast'
 import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { STATUS_CAMPANHA, type StatusCampanha } from '@/lib/supabase'
 import { getDataLimiteDisplayForAdmin } from '@/utils/dateUtils'
 
 interface TransferirModalProps {
@@ -347,7 +347,7 @@ export function AdminTable() {
                         const dataLimiteDisplay = getDataLimiteDisplayForAdmin(
                           cliente.data_venda || '', 
                           cliente.created_at, 
-                          cliente.status_campanha || 'Cliente Novo'
+                          (cliente.status_campanha || 'Cliente Novo') as StatusCampanha
                         )
                         return (
                           <Badge className={`${dataLimiteDisplay.classeCor} rounded-md text-xs`}>
@@ -442,7 +442,7 @@ export function AdminTable() {
                       const dataLimiteDisplay = getDataLimiteDisplayForAdmin(
                         cliente.data_venda || '', 
                         cliente.created_at, 
-                        cliente.status_campanha || 'Cliente Novo'
+                        (cliente.status_campanha || 'Cliente Novo') as StatusCampanha
                       )
                       
                       console.log(`👨‍💼 [AdminTable] Resultado da visualização ADMIN:`, dataLimiteDisplay)

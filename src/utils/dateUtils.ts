@@ -12,9 +12,9 @@ export function getDataLimiteDisplayForGestor(
     statusCampanha
   })
 
-  // Se o status for "Entregue", mostrar "Entregue"
-  if (statusCampanha === 'Entregue') {
-    console.log(`📅 [getDataLimiteDisplayForGestor] Status Entregue - retornando verde`)
+  // Se o status for "Saque Pendente" (que é exibido como "Campanha no Ar"), mostrar "Entregue"
+  if (statusCampanha === 'Saque Pendente') {
+    console.log(`📅 [getDataLimiteDisplayForGestor] Status Campanha no Ar - retornando verde`)
     return {
       texto: 'Entregue',
       classeCor: 'bg-green-600 text-white'
@@ -96,9 +96,9 @@ export function getDataLimiteDisplayForAdmin(
     statusCampanha
   })
 
-  // Se o status for "Entregue", mostrar "Entregue"
-  if (statusCampanha === 'Entregue') {
-    console.log(`📅 [getDataLimiteDisplayForAdmin] Status Entregue - retornando verde`)
+  // Se o status for "Saque Pendente" (que é exibido como "Campanha no Ar"), mostrar "Entregue"
+  if (statusCampanha === 'Saque Pendente') {
+    console.log(`📅 [getDataLimiteDisplayForAdmin] Status Campanha no Ar - retornando verde`)
     return {
       texto: 'Entregue',
       classeCor: 'bg-green-600 text-white'
