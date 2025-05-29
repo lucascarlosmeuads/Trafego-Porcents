@@ -240,8 +240,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       if (success) {
         toast({
-          title: "Saque Solicitado!",
-          description: "Sua solicitação de saque foi enviada com sucesso.",
+          title: "Instruções para Saque",
+          description: "Mude o status para 'Campanha no Ar' para solicitar o saque",
         })
         return true
       } else {
