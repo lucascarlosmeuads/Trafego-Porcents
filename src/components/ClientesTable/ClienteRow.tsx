@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -39,7 +38,7 @@ interface ClienteRowProps {
   onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
   onSiteStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string, field: string) => Promise<boolean>
+  onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
@@ -81,15 +80,23 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
 
-  // Determinar se está no painel do gestor
-  const isGestorDashboard = !selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
+  // CORRIGIR: Melhorar a detecção do painel do gestor
+  // Gestor tem email específico, admin não tem @ no selectedManager ou é "Todos os Clientes"
+  const isGestorDashboard = selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
   
-  console.log(`🔍 [ClienteRow] Detecção do painel:`, {
+  console.log(`🔍 [ClienteRow] Detecção detalhada do painel:`, {
     cliente: cliente.nome_cliente,
+    clienteId: cliente.id,
     selectedManager,
+    selectedManagerType: typeof selectedManager,
+    selectedManagerIncludes: selectedManager?.includes?.('@'),
+    isNotTodosClientes: selectedManager !== 'Todos os Clientes',
     isGestorDashboard,
     dataVenda: cliente.data_venda,
-    createdAt: cliente.created_at
+    dataVendaType: typeof cliente.data_venda,
+    createdAt: cliente.created_at,
+    createdAtType: typeof cliente.created_at,
+    statusCampanha: cliente.status_campanha
   })
 
   const formatDate = (dateString: string) => {
@@ -133,13 +140,15 @@ export function ClienteRow({
   const renderDataLimiteCell = () => {
     // Para gestor: usar visualização dinâmica
     if (isGestorDashboard) {
-      console.log(`👨‍💼 [ClienteRow] Aplicando visualização do gestor para: ${cliente.nome_cliente}`)
+      console.log(`👨‍💼 [ClienteRow] GESTOR - Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
       
       const dataLimiteDisplay = getDataLimiteDisplayForGestor(
         cliente.data_venda || '', 
         cliente.created_at, 
         cliente.status_campanha || 'Cliente Novo'
       )
+      
+      console.log(`👨‍💼 [ClienteRow] GESTOR - Resultado da visualização:`, dataLimiteDisplay)
       
       return (
         <TableCell className="text-white text-sm">
@@ -151,7 +160,7 @@ export function ClienteRow({
     }
     
     // Para admin: usar visualização normal (data formatada)
-    console.log(`👨‍💼 [ClienteRow] Aplicando visualização do admin para: ${cliente.nome_cliente}`)
+    console.log(`👨‍💼 [ClienteRow] ADMIN - Aplicando visualização normal para: ${cliente.nome_cliente}`)
     return (
       <TableCell className="text-white text-sm">
         {formatDate(cliente.data_limite || '')}
