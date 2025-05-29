@@ -1,5 +1,3 @@
-
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -19,7 +17,6 @@ import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
-import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -118,20 +115,6 @@ export function ClienteRow({
   }
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
-  
-  // Corrigir detecção do painel do gestor - verificar se selectedManager é um nome (não email) e não é "Todos os Clientes"
-  const isGestorDashboard = selectedManager && 
-                           selectedManager !== 'Todos os Clientes' && 
-                           !selectedManager.includes('@') &&
-                           selectedManager.trim() !== ''
-
-  console.log('🔍 [ClienteRow] Detecção do painel:', {
-    cliente: cliente.nome_cliente,
-    selectedManager,
-    isGestorDashboard,
-    dataVenda: cliente.data_venda,
-    createdAt: cliente.created_at
-  })
 
   return (
     <TableRow 
@@ -193,21 +176,7 @@ export function ClienteRow({
       </TableCell>
 
       <TableCell className="text-white text-sm">
-        {isGestorDashboard ? (
-          // Visualização dinâmica para o painel do gestor
-          (() => {
-            console.log('🎯 [ClienteRow] Aplicando visualização do gestor para:', cliente.nome_cliente)
-            const dataParaCalculo = cliente.data_venda || cliente.created_at
-            const { texto, estilo } = getDataLimiteDisplayForGestor(dataParaCalculo)
-            return <span className={estilo}>{texto}</span>
-          })()
-        ) : (
-          // Visualização padrão para admin (data limite fixa)
-          (() => {
-            console.log('👨‍💼 [ClienteRow] Aplicando visualização do admin para:', cliente.nome_cliente)
-            return formatDate(cliente.data_limite || '')
-          })()
-        )}
+        {formatDate(cliente.data_limite || '')}
       </TableCell>
 
       <TableCell>
@@ -392,4 +361,3 @@ export function ClienteRow({
     </TableRow>
   )
 }
-
