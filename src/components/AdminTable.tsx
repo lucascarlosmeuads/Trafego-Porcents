@@ -9,7 +9,7 @@ import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, UserX } from 'lu
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
-import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
+import { getDataLimiteDisplayForAdmin } from '@/utils/dateUtils'
 
 interface TransferirModalProps {
   cliente: Cliente
@@ -344,7 +344,7 @@ export function AdminTable() {
                     <span className="font-medium text-muted-foreground">Data Limite:</span>
                     <div className="ml-2">
                       {(() => {
-                        const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+                        const dataLimiteDisplay = getDataLimiteDisplayForAdmin(
                           cliente.data_venda || '', 
                           cliente.created_at, 
                           cliente.status_campanha || 'Cliente Novo'
@@ -437,15 +437,15 @@ export function AdminTable() {
                   </TableCell>
                   <TableCell className="text-foreground text-sm">
                     {(() => {
-                      console.log(`👨‍💼 [AdminTable] Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
+                      console.log(`👨‍💼 [AdminTable] Aplicando visualização dinâmica ADMIN para: ${cliente.nome_cliente}`)
                       
-                      const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+                      const dataLimiteDisplay = getDataLimiteDisplayForAdmin(
                         cliente.data_venda || '', 
                         cliente.created_at, 
                         cliente.status_campanha || 'Cliente Novo'
                       )
                       
-                      console.log(`👨‍💼 [AdminTable] Resultado da visualização:`, dataLimiteDisplay)
+                      console.log(`👨‍💼 [AdminTable] Resultado da visualização ADMIN:`, dataLimiteDisplay)
                       
                       return (
                         <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
