@@ -60,9 +60,9 @@ export function AdminTableCards({
               </div>
               <div>
                 <span className="font-medium text-muted-foreground">Data Limite:</span>
-                <Badge className={`ml-2 ${dataLimiteDisplay.classeCor} rounded-md`}>
+                <span className={`ml-2 text-xs font-medium ${dataLimiteDisplay.classeCor}`}>
                   {dataLimiteDisplay.texto}
-                </Badge>
+                </span>
               </div>
               <div className="pt-2">
                 <TransferirModal

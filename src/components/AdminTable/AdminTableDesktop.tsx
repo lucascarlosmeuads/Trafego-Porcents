@@ -98,9 +98,9 @@ export function AdminTableDesktop({
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+                  <span className={`text-xs font-medium ${dataLimiteDisplay.classeCor}`}>
                     {dataLimiteDisplay.texto}
-                  </Badge>
+                  </span>
                 </TableCell>
                 <TableCell>
                   <TransferirModal
