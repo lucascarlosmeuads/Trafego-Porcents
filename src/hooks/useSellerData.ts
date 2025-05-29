@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -84,7 +83,8 @@ export function useSellerData(sellerEmail: string) {
           status_campanha,
           created_at,
           comissao_paga,
-          valor_comissao
+          valor_comissao,
+          comissao
         `)
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false, nullsFirst: false })
@@ -107,7 +107,8 @@ export function useSellerData(sellerEmail: string) {
             status_campanha,
             created_at,
             comissao_paga,
-            valor_comissao
+            valor_comissao,
+            comissao
           `)
           .ilike('vendedor', `%${sellerName}%`)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -135,7 +136,8 @@ export function useSellerData(sellerEmail: string) {
             status_campanha,
             created_at,
             comissao_paga,
-            valor_comissao
+            valor_comissao,
+            comissao
           `)
           .eq('vendedor', capitalizedName)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -184,7 +186,8 @@ export function useSellerData(sellerEmail: string) {
           created_at: item.created_at || '',
           site_status: 'pendente',
           descricao_problema: '',
-          saque_solicitado: false
+          saque_solicitado: false,
+          comissao: item.comissao || 'Pendente'
         }))
 
         console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
@@ -372,7 +375,8 @@ export function useSellerData(sellerEmail: string) {
           created_at: existingClient.created_at || '',
           site_status: existingClient.site_status || 'pendente',
           descricao_problema: existingClient.descricao_problema || '',
-          saque_solicitado: Boolean(existingClient.saque_solicitado || false)
+          saque_solicitado: Boolean(existingClient.saque_solicitado || false),
+          comissao: existingClient.comissao || 'Pendente'
         }
 
         return { exists: true, foundClient: formattedClient }
@@ -429,7 +433,8 @@ export function useSellerData(sellerEmail: string) {
         link_briefing: '',
         link_criativo: '',
         link_site: '',
-        numero_bm: ''
+        numero_bm: '',
+        comissao: 'Pendente'
       }
 
       console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)

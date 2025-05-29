@@ -42,7 +42,7 @@ interface ClienteRowProps {
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
   onBMCancel: () => void
-  onComissionToggle: (clienteId: string, currentStatus: boolean) => void
+  onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
   onComissionValueSave: (clienteId: string, newValue: number) => void
   onComissionValueCancel: () => void
