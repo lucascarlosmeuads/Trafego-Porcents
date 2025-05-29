@@ -3,11 +3,13 @@ import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface TransferirModalProps {
   cliente: Cliente
@@ -311,48 +313,62 @@ export function AdminTable() {
         {/* Visualização em cartões para mobile */}
         {viewMode === 'cards' && (
           <div className="grid gap-4 p-4 md:grid-cols-2 lg:hidden">
-            {clientes.map((cliente) => (
-              <Card key={cliente.id} className="w-full bg-card border-border">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center justify-between text-card-foreground">
-                    <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
-                    <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3 text-sm">
-                  <div>
-                    <span className="font-medium text-muted-foreground">Telefone:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Email Gestor:</span>
-                    <span className="ml-2 text-card-foreground">{cliente.email_gestor || '-'}</span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Status:</span>
-                    <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
-                      {cliente.status_campanha || 'Sem status'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="font-medium text-muted-foreground">Data Venda:</span>
-                    <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
-                  </div>
-                  <div className="pt-2">
-                    <TransferirModal
-                      cliente={cliente}
-                      onTransferirCliente={handleTransferirCliente}
-                      isLoading={transferindoCliente === cliente.id}
-                      gestores={gestores}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+            {clientes.map((cliente) => {
+              const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+                cliente.data_venda || '', 
+                cliente.created_at, 
+                cliente.status_campanha || ''
+              )
+              
+              return (
+                <Card key={cliente.id} className="w-full bg-card border-border">
+                  <CardHeader className="pb-3">
+                    <CardTitle className="text-base flex items-center justify-between text-card-foreground">
+                      <span className="truncate">{cliente.nome_cliente || 'Cliente sem nome'}</span>
+                      <span className="text-xs font-mono text-muted-foreground">#{cliente.id}</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3 text-sm">
+                    <div>
+                      <span className="font-medium text-muted-foreground">Telefone:</span>
+                      <span className="ml-2 text-card-foreground">{cliente.telefone || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Email Gestor:</span>
+                      <span className="ml-2 text-card-foreground">{cliente.email_gestor || '-'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Status:</span>
+                      <span className={`ml-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha)}`}>
+                        {cliente.status_campanha || 'Sem status'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Data Venda:</span>
+                      <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-muted-foreground">Data Limite:</span>
+                      <Badge className={`ml-2 ${dataLimiteDisplay.classeCor} rounded-md`}>
+                        {dataLimiteDisplay.texto}
+                      </Badge>
+                    </div>
+                    <div className="pt-2">
+                      <TransferirModal
+                        cliente={cliente}
+                        onTransferirCliente={handleTransferirCliente}
+                        isLoading={transferindoCliente === cliente.id}
+                        gestores={gestores}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
 
-        {/* Tabela para desktop - ADICIONADA coluna "Transferir" */}
+        {/* Tabela para desktop - COM coluna "Data Limite" adicionada */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
@@ -363,68 +379,82 @@ export function AdminTable() {
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="min-w-[180px] text-muted-foreground">Data Limite</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {clientes.map((cliente, index) => (
-                <TableRow 
-                  key={cliente.id} 
-                  className="border-border hover:bg-muted/20 transition-colors"
-                >
-                  <TableCell className="font-mono text-xs text-foreground">
-                    {String(index + 1).padStart(3, '0')}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="font-medium">
-                    <div className="max-w-[200px] truncate text-foreground">
-                      {cliente.nome_cliente}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground">{cliente.telefone}</TableCell>
-                  <TableCell>
-                    <div className="max-w-[180px] truncate text-foreground">
-                      {cliente.email_gestor}
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Select 
-                      value={cliente.status_campanha || ''}
-                      onValueChange={(value) => handleStatusChange(cliente.id, value)}
-                    >
-                      <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
-                        <SelectValue>
-                          <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
-                            {cliente.status_campanha || 'Sem status'}
-                          </span>
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent className="bg-card border-border z-50">
-                        {STATUS_CAMPANHA.map(status => (
-                          <SelectItem key={status} value={status}>
-                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-                              {status}
+              {clientes.map((cliente, index) => {
+                const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+                  cliente.data_venda || '', 
+                  cliente.created_at, 
+                  cliente.status_campanha || ''
+                )
+                
+                return (
+                  <TableRow 
+                    key={cliente.id} 
+                    className="border-border hover:bg-muted/20 transition-colors"
+                  >
+                    <TableCell className="font-mono text-xs text-foreground">
+                      {String(index + 1).padStart(3, '0')}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-3 h-3 text-muted-foreground" />
+                        <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      <div className="max-w-[200px] truncate text-foreground">
+                        {cliente.nome_cliente}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground">{cliente.telefone}</TableCell>
+                    <TableCell>
+                      <div className="max-w-[180px] truncate text-foreground">
+                        {cliente.email_gestor}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Select 
+                        value={cliente.status_campanha || ''}
+                        onValueChange={(value) => handleStatusChange(cliente.id, value)}
+                      >
+                        <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                          <SelectValue>
+                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
+                              {cliente.status_campanha || 'Sem status'}
                             </span>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <TransferirModal
-                      cliente={cliente}
-                      onTransferirCliente={handleTransferirCliente}
-                      isLoading={transferindoCliente === cliente.id}
-                      gestores={gestores}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent className="bg-card border-border z-50">
+                          {STATUS_CAMPANHA.map(status => (
+                            <SelectItem key={status} value={status}>
+                              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                                {status}
+                              </span>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+                        {dataLimiteDisplay.texto}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <TransferirModal
+                        cliente={cliente}
+                        onTransferirCliente={handleTransferirCliente}
+                        isLoading={transferindoCliente === cliente.id}
+                        gestores={gestores}
+                      />
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
             </TableBody>
           </Table>
         </div>
