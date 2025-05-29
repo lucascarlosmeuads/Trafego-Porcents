@@ -33,6 +33,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const emailToUse = userEmail || user?.email || ''
   const managerName = selectedManager || 'Próprios dados'
   
+  // ✅ CORREÇÃO: Contexto de sites SEMPRE usa busca global
   const isSitesContext = filterType === 'sites-pendentes' || 
                         filterType === 'sites-finalizados' ||
                         emailToUse.includes('criador') || 
@@ -48,11 +49,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     isSitesContext
   })
   
+  // ✅ CORREÇÃO: Para sites, passar o filterType específico
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
     emailToUse, 
     isAdmin, 
     selectedManager,
-    filterType === 'sites-pendentes' ? 'sites-pendentes' : filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
+    filterType === 'sites-pendentes' ? 'sites-pendentes' : 
+    filterType === 'sites-finalizados' ? 'sites-finalizados' : 
+    undefined
   )
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -295,10 +299,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       const success = await updateCliente(clienteId, 'site_status', newStatus)
       
       if (success) {
+        console.log(`✅ [ClientesTable] Status do site atualizado com sucesso: ${clienteId} -> ${newStatus}`)
         toast({
           title: "Sucesso",
           description: `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`,
         })
+        
+        // ✅ CORREÇÃO: Forçar refresh para garantir sincronização
+        setTimeout(() => {
+          refetch()
+        }, 500)
+        
       } else {
         toast({
           title: "Erro",
@@ -394,18 +405,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     </div>
   )
 
-  useEffect(() => {
-    const checkConnection = () => {
-      const connected = checkRealtimeConnection()
-      setRealtimeConnected(connected)
-    }
-
-    checkConnection()
-    const interval = setInterval(checkConnection, 5000)
-
-    return () => clearInterval(interval)
-  }, [])
-
+  // ✅ CORREÇÃO: Validação de segurança melhorada - não aplicar para contextos de sites
   useEffect(() => {
     console.log(`🔍 [ClientesTable] Validação de segurança:`, {
       totalClientes: clientes.length,
@@ -413,7 +413,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       emailToUse,
       selectedManager,
       isAdmin,
-      isSitesContext
+      isSitesContext,
+      filterType
     })
     
     if (clientes.length > 0) {
@@ -424,7 +425,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         site_status: c.site_status
       })))
       
-      if (!isAdmin && !isSitesContext) {
+      // ✅ CORREÇÃO: Pular validação de segurança para contextos de sites ou quando é busca global
+      if (!isAdmin && !isSitesContext && filterType !== 'sites-pendentes' && filterType !== 'sites-finalizados') {
         const clientesInvalidos = clientes.filter(c => c.email_gestor !== emailToUse)
         if (clientesInvalidos.length > 0) {
           console.error('🚨 [ClientesTable] ERRO DE SEGURANÇA: Clientes com email_gestor incorreto detectados!', {
@@ -443,13 +445,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           return
         }
         console.log('✅ [ClientesTable] Validação de segurança: todos os clientes pertencem ao gestor correto')
-      } else if (isSitesContext) {
-        console.log('🌐 [ClientesTable] Contexto de SITES: validação de email_gestor desabilitada')
+      } else if (isSitesContext || filterType === 'sites-pendentes' || filterType === 'sites-finalizados') {
+        console.log('🌐 [ClientesTable] Contexto de SITES: validação de email_gestor desabilitada (busca global)')
       } else if (isAdmin) {
         console.log('👑 [ClientesTable] Contexto de ADMIN: validação de email_gestor desabilitada')
       }
     }
-  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin, isSitesContext])
+  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin, isSitesContext, filterType])
 
   useEffect(() => {
     const verificarPermissoes = async () => {

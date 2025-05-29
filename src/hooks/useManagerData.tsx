@@ -43,7 +43,7 @@ export function useManagerData(
         .from('todos_clientes')
         .select('*')
 
-      // CORREÇÃO: Para filtros de sites, aplicar busca GLOBAL quando necessário
+      // ✅ CORREÇÃO: Para filtros de sites, SEMPRE aplicar busca GLOBAL
       if (filterType === 'sites-pendentes') {
         console.log('🌐 [useManagerData] Aplicando filtro GLOBAL para sites pendentes')
         query = query.eq('site_status', 'aguardando_link')
@@ -51,11 +51,11 @@ export function useManagerData(
         console.log('✅ [useManagerData] Aplicando filtro GLOBAL para sites finalizados')
         query = query.eq('site_status', 'finalizado')
       } else {
-        // CORREÇÃO: Para painéis normais, aplicar filtros de gestor apenas quando necessário
+        // Para painéis normais (não sites), aplicar filtros de gestor
         console.log('📊 [useManagerData] Modo painel normal')
         
         if (isAdminUser) {
-          // CORREÇÃO: Admin com gestor específico selecionado
+          // Admin com gestor específico selecionado
           if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== null) {
             console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
             query = query.eq('email_gestor', selectedManager)
@@ -78,16 +78,32 @@ export function useManagerData(
 
       console.log('✅ [useManagerData] Dados encontrados:', data?.length || 0, 'registros')
       
-      // Log adicional para debug da sincronização
+      // Log detalhado para debug da sincronização
       if (data && data.length > 0) {
         if (filterType === 'sites-finalizados') {
           console.log('🌐 [useManagerData] Sites finalizados encontrados:', data.length)
-          console.log('📋 [useManagerData] Lista de sites finalizados:', data.map(c => ({
+          console.log('📋 [useManagerData] Lista detalhada de sites finalizados:', data.map(c => ({
             id: c.id,
             nome: c.nome_cliente,
             email_gestor: c.email_gestor,
-            site_status: c.site_status
+            email_cliente: c.email_cliente,
+            site_status: c.site_status,
+            link_site: c.link_site
           })))
+        }
+        
+        if (!filterType && isAdminUser && (!selectedManager || selectedManager === 'Todos os Clientes')) {
+          const sitesFinalizados = data.filter(c => c.site_status === 'finalizado')
+          console.log('🔍 [useManagerData] Sites finalizados no painel Admin (sem filtro):', sitesFinalizados.length)
+          if (sitesFinalizados.length > 0) {
+            console.log('📊 [useManagerData] Detalhes dos sites finalizados no Admin:', sitesFinalizados.map(c => ({
+              id: c.id,
+              nome: c.nome_cliente,
+              email_gestor: c.email_gestor,
+              email_cliente: c.email_cliente,
+              site_status: c.site_status
+            })))
+          }
         }
       }
       
