@@ -1,4 +1,3 @@
-
 export const addBusinessDays = (startDate: Date, businessDays: number): Date => {
   const result = new Date(startDate)
   let daysAdded = 0
@@ -281,6 +280,113 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: str
     
   } catch (error) {
     console.error('❌ [dateUtils] Erro ao calcular exibição da data limite:', error)
+    return {
+      texto: 'Erro de cálculo',
+      classeCor: 'text-gray-400'
+    }
+  }
+}
+
+// Nova função para painel do admin - calcula e formata exibição da data limite
+export const getDataLimiteDisplayForAdmin = (dataVenda: string, created_at: string | null, statusCampanha: string): { texto: string, classeCor: string } => {
+  console.log(`🔍 [dateUtils] Admin - Analisando dados:`, {
+    dataVenda,
+    created_at,
+    statusCampanha,
+    dataVendaType: typeof dataVenda,
+    createdAtType: typeof created_at
+  })
+  
+  // Se status for "No Ar" ou "Otimização" - campanha cumprida
+  if (isStatusEntregue(statusCampanha)) {
+    console.log(`✅ [dateUtils] Admin - Status entregue detectado: ${statusCampanha}`)
+    return {
+      texto: '✅ Cumprido',
+      classeCor: 'bg-green-100 text-green-800 border-green-300'
+    }
+  }
+  
+  // Determinar a data base para cálculo (data_venda ou created_at como fallback)
+  let dataBase: Date | null = null
+  let fonteDados = ''
+  
+  // Tentar data_venda primeiro
+  if (dataVenda) {
+    dataBase = parseDate(dataVenda)
+    if (dataBase) {
+      fonteDados = 'data_venda'
+      console.log(`📅 [dateUtils] Admin - Usando data_venda: ${dataVenda} -> ${dataBase.toISOString()}`)
+    }
+  }
+  
+  // Fallback para created_at se data_venda não funcionou
+  if (!dataBase && created_at) {
+    dataBase = parseDate(created_at)
+    if (dataBase) {
+      fonteDados = 'created_at'
+      console.log(`📅 [dateUtils] Admin - Fallback para created_at: ${created_at} -> ${dataBase.toISOString()}`)
+    }
+  }
+  
+  if (!dataBase) {
+    console.log('⚠️ [dateUtils] Admin - Nenhuma data base válida encontrada')
+    return {
+      texto: 'Sem data base',
+      classeCor: 'text-gray-400'
+    }
+  }
+  
+  try {
+    // Calcular data limite (15 dias úteis após a data base)
+    const dataLimite = addBusinessDays(dataBase, 15)
+    console.log(`📅 [dateUtils] Admin - Data limite calculada (${fonteDados} + 15 dias úteis): ${dataLimite.toISOString()}`)
+    
+    // Data de hoje (sem horas)
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    // Data limite sem horas
+    const limiteComparar = new Date(dataLimite)
+    limiteComparar.setHours(0, 0, 0, 0)
+    
+    console.log(`📊 [dateUtils] Admin - Comparação: hoje=${hoje.toISOString()} vs limite=${limiteComparar.toISOString()}`)
+    
+    // Verificar se já passou da data limite
+    if (hoje > limiteComparar) {
+      // Atrasado - calcular dias de atraso
+      const diasAtraso = getBusinessDaysBetween(limiteComparar, hoje) - 1
+      console.log(`🚨 [dateUtils] Admin - Atrasado: ${diasAtraso} dias úteis`)
+      
+      return {
+        texto: `🚨 Atrasado há ${diasAtraso} dias úteis`,
+        classeCor: 'text-red-600 font-bold'
+      }
+    }
+    
+    // Dentro do prazo - calcular dias restantes
+    const diasRestantes = getBusinessDaysBetween(hoje, limiteComparar) - 1
+    console.log(`⏳ [dateUtils] Admin - Dias restantes: ${diasRestantes}`)
+    
+    // Formatação conforme regras
+    if (diasRestantes > 5) {
+      return {
+        texto: `🟢 Faltam ${diasRestantes} dias úteis`,
+        classeCor: 'text-green-600 font-medium'
+      }
+    } else if (diasRestantes >= 1) {
+      return {
+        texto: `🟠 Atenção: ${diasRestantes} dias úteis`,
+        classeCor: 'text-amber-600 font-bold'
+      }
+    } else {
+      return {
+        texto: '🔴 Último dia!',
+        classeCor: 'text-orange-600 font-bold'
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ [dateUtils] Admin - Erro ao calcular exibição da data limite:', error)
     return {
       texto: 'Erro de cálculo',
       classeCor: 'text-gray-400'
