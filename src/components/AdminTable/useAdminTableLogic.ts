@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -48,7 +47,18 @@ export function useAdminTableLogic() {
           variant: "destructive"
         })
       } else {
-        setClientes(data || [])
+        // Properly format the data to ensure consistent date handling
+        const formattedClientes = (data || []).map(cliente => ({
+          ...cliente,
+          // Ensure data_venda is properly formatted as string (YYYY-MM-DD)
+          data_venda: cliente.data_venda ? String(cliente.data_venda) : null,
+          // Ensure created_at is properly formatted as string
+          created_at: cliente.created_at ? String(cliente.created_at) : null,
+          // Ensure status_campanha is a string
+          status_campanha: cliente.status_campanha ? String(cliente.status_campanha) : ''
+        }))
+        
+        setClientes(formattedClientes)
       }
     } catch (error) {
       console.error('❌ Erro na consulta:', error)
