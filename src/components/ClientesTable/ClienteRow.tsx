@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -117,8 +118,16 @@ export function ClienteRow({
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
   
-  // Verificar se é painel do gestor
-  const isGestorDashboard = !selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
+  // Melhorar detecção do painel do gestor
+  const isGestorDashboard = selectedManager && selectedManager !== 'Todos os Clientes' && !selectedManager.includes('@')
+  
+  // Debug log temporário
+  console.log('🔍 [ClienteRow] Debug Data Limite:', {
+    cliente: cliente.nome_cliente,
+    selectedManager,
+    isGestorDashboard,
+    dataVenda: cliente.data_venda
+  })
 
   return (
     <TableRow 
@@ -183,12 +192,16 @@ export function ClienteRow({
         {isGestorDashboard ? (
           // Visualização específica para o painel do gestor
           (() => {
+            console.log('🎯 [ClienteRow] Aplicando visualização do gestor para:', cliente.nome_cliente)
             const { texto, estilo } = getDataLimiteDisplayForGestor(cliente.data_venda)
             return <span className={estilo}>{texto}</span>
           })()
         ) : (
           // Visualização padrão para admin
-          formatDate(cliente.data_limite || '')
+          (() => {
+            console.log('👨‍💼 [ClienteRow] Aplicando visualização do admin para:', cliente.nome_cliente)
+            return formatDate(cliente.data_limite || '')
+          })()
         )}
       </TableCell>
 

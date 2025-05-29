@@ -69,7 +69,10 @@ export const getBusinessDaysBetween = (startDate: Date, endDate: Date): number =
 
 // Nova função específica para o painel do gestor
 export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto: string; estilo: string } => {
+  console.log('📊 [getDataLimiteDisplayForGestor] Input:', dataVenda)
+  
   if (!dataVenda) {
+    console.log('❌ [getDataLimiteDisplayForGestor] Sem data de venda')
     return {
       texto: 'Não informado',
       estilo: 'text-gray-400'
@@ -85,9 +88,17 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
     const dataLimite = addBusinessDays(venda, 15)
     dataLimite.setHours(0, 0, 0, 0)
     
+    console.log('📅 [getDataLimiteDisplayForGestor] Cálculo:', {
+      dataVenda,
+      hoje: hoje.toISOString().split('T')[0],
+      dataLimite: dataLimite.toISOString().split('T')[0]
+    })
+    
     if (hoje <= dataLimite) {
       // Ainda dentro do prazo - calcular dias restantes
       const diasRestantes = getBusinessDaysBetween(hoje, dataLimite)
+      
+      console.log('✅ [getDataLimiteDisplayForGestor] Dentro do prazo, dias restantes:', diasRestantes)
       
       if (diasRestantes > 5) {
         return {
@@ -109,13 +120,15 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
       // Prazo vencido - calcular dias de atraso
       const diasAtraso = getBusinessDaysBetween(dataLimite, hoje)
       
+      console.log('❌ [getDataLimiteDisplayForGestor] Atrasado, dias de atraso:', diasAtraso)
+      
       return {
         texto: `Atrasado há ${diasAtraso} dias úteis`,
         estilo: 'text-red-600 font-bold'
       }
     }
   } catch (error) {
-    console.error('Erro ao calcular data limite para gestor:', error)
+    console.error('💥 [getDataLimiteDisplayForGestor] Erro ao calcular:', error)
     return {
       texto: 'Erro no cálculo',
       estilo: 'text-gray-400'
