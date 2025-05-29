@@ -848,11 +848,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.site_status === 'aguardando_link'
     )
   } else if (filterType === 'sites-finalizados') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.site_status === 'finalizado' && 
-      cliente.link_site && 
-      cliente.link_site.trim() !== ''
-    )
+    // CORREÇÃO: Usar EXATAMENTE a mesma lógica do useManagerData
+    // Não aplicar filtros adicionais de link_site aqui
+    console.log('🌐 [ClientesTable] Aplicando filtro de sites finalizados - usando dados já filtrados do useManagerData')
+    console.log('📊 [ClientesTable] Total de clientes recebidos do useManagerData:', clientes.length)
+    clientesFiltrados = clientes // Usar os dados já filtrados pelo useManagerData
   } else {
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Cliente Sumiu' && 
@@ -871,6 +871,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }
 
   const filteredClientes = getFilteredClientes(clientesFiltrados)
+
+  console.log('📋 [ClientesTable] Resultado final da filtragem:', {
+    filterType,
+    clientesOriginais: clientes.length,
+    clientesFiltrados: clientesFiltrados.length,
+    filteredClientes: filteredClientes.length
+  })
 
   if (loading) {
     return (
