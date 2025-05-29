@@ -22,9 +22,10 @@ interface GestorInfo {
 interface ManagerSelectorProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
+  isAdminContext?: boolean
 }
 
-export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSelectorProps) {
+export function ManagerSelector({ selectedManager, onManagerSelect, isAdminContext = true }: ManagerSelectorProps) {
   const [gestores, setGestores] = useState<GestorInfo[]>([])
   const [totalClientes, setTotalClientes] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -109,8 +110,10 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
   }
 
   const getSelectedManagerName = () => {
-    if (!selectedManager) return 'Todos os Clientes'
-    // CORREÇÃO: selectedManager agora é sempre o email, então buscar o nome pelo email
+    if (!selectedManager) {
+      return isAdminContext ? 'Todos os Gestores' : 'Todos os Clientes'
+    }
+    // selectedManager agora é sempre o email, então buscar o nome pelo email
     const gestor = gestores.find(g => g.email === selectedManager)
     return gestor ? gestor.nome : selectedManager
   }
@@ -119,6 +122,10 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
     if (!selectedManager) return totalClientes
     const gestor = gestores.find(g => g.email === selectedManager)
     return gestor ? gestor.total_clientes : totalClientes
+  }
+
+  const getAllLabel = () => {
+    return isAdminContext ? 'Todos os Gestores' : 'Todos os Clientes'
   }
 
   if (loading) {
@@ -132,7 +139,9 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
   return (
     <div className="flex items-center gap-4">
       <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="font-medium">Filtrar por gestor:</span>
+        <span className="font-medium">
+          {isAdminContext ? 'Filtrar por gestor:' : 'Filtrar por cliente:'}
+        </span>
       </div>
       
       <DropdownMenu>
@@ -147,7 +156,7 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
               ) : (
                 <>
                   <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span className="truncate">Todos os Clientes</span>
+                  <span className="truncate">{getAllLabel()}</span>
                 </>
               )}
             </div>
@@ -161,7 +170,9 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
         </DropdownMenuTrigger>
         
         <DropdownMenuContent align="start" className="min-w-[200px] max-w-[400px]">
-          <DropdownMenuLabel>Selecionar Gestor</DropdownMenuLabel>
+          <DropdownMenuLabel>
+            {isAdminContext ? 'Selecionar Gestor' : 'Selecionar Cliente'}
+          </DropdownMenuLabel>
           <DropdownMenuSeparator />
           
           <DropdownMenuItem
@@ -170,7 +181,7 @@ export function ManagerSelector({ selectedManager, onManagerSelect }: ManagerSel
           >
             <div className="flex items-center gap-2 min-w-0 flex-1">
               <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-              <span className="font-medium">Todos os Clientes</span>
+              <span className="font-medium">{getAllLabel()}</span>
             </div>
             <Badge variant="secondary" className="ml-2 flex-shrink-0">
               {totalClientes}

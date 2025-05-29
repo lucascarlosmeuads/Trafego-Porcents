@@ -57,6 +57,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [siteStatusFilter, setSiteStatusFilter] = useState('all')
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
   const [linkValue, setLinkValue] = useState('')
@@ -82,7 +83,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
       
-      return matchesSearch && matchesStatus
+      const matchesSiteStatus = siteStatusFilter === 'all' || cliente.site_status === siteStatusFilter
+      
+      return matchesSearch && matchesStatus && matchesSiteStatus
     })
   }
 
@@ -144,6 +147,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
     
     switch (status) {
+      case 'Cliente Novo':
+        return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
       case 'Preenchimento do Formulário':
         return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
       case 'Brief':
@@ -158,8 +163,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
       case 'Subindo Campanha':
         return 'bg-lime-500/20 text-lime-300 border border-lime-500/30'
-      case 'Campanha no Ar':
-        return 'bg-green-500/20 text-green-300 border border-green-500/30'
       case 'Otimização':
         return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
       case 'Problema':
@@ -170,6 +173,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-red-500/20 text-red-300 border border-red-500/30'
       case 'Saque Pendente':
         return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+      case 'Campanha Anual':
+        return 'bg-green-500/20 text-green-300 border border-green-500/30'
       default:
         return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
     }
@@ -790,6 +795,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setSearchTerm={setSearchTerm}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
+              siteStatusFilter={siteStatusFilter}
+              setSiteStatusFilter={setSiteStatusFilter}
+              showSiteStatusFilter={isAdmin}
               getStatusColor={getStatusColor}
             />
 
@@ -810,6 +818,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setSearchTerm={setSearchTerm}
               statusFilter={statusFilter}
               setStatusFilter={setStatusFilter}
+              siteStatusFilter={siteStatusFilter}
+              setSiteStatusFilter={setSiteStatusFilter}
+              showSiteStatusFilter={isAdmin}
               getStatusColor={getStatusColor}
             />
 
@@ -848,11 +859,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       cliente.site_status === 'aguardando_link'
     )
   } else if (filterType === 'sites-finalizados') {
-    // CORREÇÃO: Usar EXATAMENTE a mesma lógica do useManagerData
-    // Não aplicar filtros adicionais de link_site aqui
     console.log('🌐 [ClientesTable] Aplicando filtro de sites finalizados - usando dados já filtrados do useManagerData')
     console.log('📊 [ClientesTable] Total de clientes recebidos do useManagerData:', clientes.length)
-    clientesFiltrados = clientes // Usar os dados já filtrados pelo useManagerData
+    clientesFiltrados = clientes
   } else {
     const clientesAtivos = clientes.filter(cliente => 
       cliente.status_campanha !== 'Cliente Sumiu' && 
@@ -962,6 +971,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         setSearchTerm={setSearchTerm}
         statusFilter={statusFilter}
         setStatusFilter={setStatusFilter}
+        siteStatusFilter={siteStatusFilter}
+        setSiteStatusFilter={setSiteStatusFilter}
+        showSiteStatusFilter={isAdmin}
         getStatusColor={getStatusColor}
       />
 

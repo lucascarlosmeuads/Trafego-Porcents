@@ -54,7 +54,7 @@ export type SolicitacaoSaque = {
   updated_at: string
 }
 
-// Status operacionais disponíveis - Adicionando "Cliente Novo" como primeiro status
+// Status operacionais disponíveis - Status atualizados e organizados
 export const STATUS_CAMPANHA = [
   'Cliente Novo',
   'Preenchimento do Formulário',
@@ -74,7 +74,7 @@ export const STATUS_CAMPANHA = [
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
 
-// Mapeamento para exibição visual - apenas muda o rótulo, backend permanece igual
+// Mapeamento para exibição visual - labels atualizados
 export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
   'Cliente Novo': 'Cliente Novo',
   'Preenchimento do Formulário': 'Preenchimento do Formulário',

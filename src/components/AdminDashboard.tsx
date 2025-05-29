@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -84,6 +83,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
                 <ManagerSelector 
                   selectedManager={selectedManager}
                   onManagerSelect={onManagerSelect}
+                  isAdminContext={true}
                 />
               </div>
             )}
