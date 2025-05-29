@@ -37,9 +37,9 @@ export async function detectAndRecoverOrphanClients(): Promise<RecoveryResult[]>
 
     console.log(`📊 [OrphanRecovery] ${authUsers.users.length} usuários encontrados no auth`)
 
-    // 2. Filtrar apenas clientes (não gestores/admins)
+    // 2. Filtrar apenas clientes (não gestores/admins) - com verificação de tipo
     const clientEmails = authUsers.users
-      .filter(user => user.email && !user.email.includes('@trafegoporcents.com'))
+      .filter(user => user?.email && !user.email.includes('@trafegoporcents.com'))
       .map(user => ({
         email: user.email!.toLowerCase(),
         id: user.id,
@@ -159,8 +159,8 @@ export async function recoverSpecificOrphanClient(emailCliente: string): Promise
   try {
     // 1. Verificar se existe no auth
     const { data: authUsers } = await supabase.auth.admin.listUsers()
-    const authUser = authUsers.users.find(user => 
-      user.email?.toLowerCase() === emailCliente.toLowerCase()
+    const authUser = authUsers?.users?.find(user => 
+      user?.email?.toLowerCase() === emailCliente.toLowerCase()
     )
 
     if (!authUser) {

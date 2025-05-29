@@ -241,15 +241,15 @@ export function useSimpleSellerData(sellerEmail: string) {
       try {
         // Verificar se usuário já existe no auth
         const { data: existingUsers } = await supabase.auth.admin.listUsers()
-        const userAlreadyExists = existingUsers.users.some(user => 
-          user.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
+        const userAlreadyExists = existingUsers?.users?.some(user => 
+          user?.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
         )
 
         if (userAlreadyExists) {
           console.log('⚠️ [useSimpleSellerData] Usuário já existe no auth, atualizando senha...')
           // Se já existe, atualizar senha (requer admin)
-          const existingUser = existingUsers.users.find(user => 
-            user.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
+          const existingUser = existingUsers?.users?.find(user => 
+            user?.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
           )
           
           if (existingUser) {
