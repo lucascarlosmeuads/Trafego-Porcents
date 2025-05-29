@@ -23,8 +23,6 @@ export function useManagerData(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdminUser, fetchData)
-
   const fetchData = useCallback(async () => {
     if (!userEmail) {
       console.warn('⚠️ [useManagerData] userEmail não fornecido')
@@ -87,6 +85,8 @@ export function useManagerData(
       setLoading(false)
     }
   }, [userEmail, isAdminUser, selectedManager, filterType])
+
+  const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdminUser, fetchData)
 
   useEffect(() => {
     fetchData()
