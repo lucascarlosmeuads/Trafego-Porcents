@@ -17,6 +17,7 @@ import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
+import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -115,6 +116,9 @@ export function ClienteRow({
   }
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
+  
+  // Verificar se é painel do gestor
+  const isGestorDashboard = !selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'
 
   return (
     <TableRow 
@@ -176,7 +180,16 @@ export function ClienteRow({
       </TableCell>
 
       <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_limite || '')}
+        {isGestorDashboard ? (
+          // Visualização específica para o painel do gestor
+          (() => {
+            const { texto, estilo } = getDataLimiteDisplayForGestor(cliente.data_venda)
+            return <span className={estilo}>{texto}</span>
+          })()
+        ) : (
+          // Visualização padrão para admin
+          formatDate(cliente.data_limite || '')
+        )}
       </TableCell>
 
       <TableCell>

@@ -67,6 +67,62 @@ export const getBusinessDaysBetween = (startDate: Date, endDate: Date): number =
   return count
 }
 
+// Nova função específica para o painel do gestor
+export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto: string; estilo: string } => {
+  if (!dataVenda) {
+    return {
+      texto: 'Não informado',
+      estilo: 'text-gray-400'
+    }
+  }
+
+  try {
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    // Calcular data limite (data_venda + 15 dias úteis)
+    const venda = new Date(dataVenda)
+    const dataLimite = addBusinessDays(venda, 15)
+    dataLimite.setHours(0, 0, 0, 0)
+    
+    if (hoje <= dataLimite) {
+      // Ainda dentro do prazo - calcular dias restantes
+      const diasRestantes = getBusinessDaysBetween(hoje, dataLimite)
+      
+      if (diasRestantes > 5) {
+        return {
+          texto: `Faltam ${diasRestantes} dias úteis`,
+          estilo: 'text-green-600 font-medium'
+        }
+      } else if (diasRestantes >= 1) {
+        return {
+          texto: `Atenção: ${diasRestantes} dias úteis restantes`,
+          estilo: 'text-yellow-600 font-bold'
+        }
+      } else {
+        return {
+          texto: 'Atenção: último dia útil',
+          estilo: 'text-yellow-600 font-bold'
+        }
+      }
+    } else {
+      // Prazo vencido - calcular dias de atraso
+      const diasAtraso = getBusinessDaysBetween(dataLimite, hoje)
+      
+      return {
+        texto: `Atrasado há ${diasAtraso} dias úteis`,
+        estilo: 'text-red-600 font-bold'
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao calcular data limite para gestor:', error)
+    return {
+      texto: 'Erro no cálculo',
+      estilo: 'text-gray-400'
+    }
+  }
+}
+
 // Nova função para gerar mensagem dinâmica da data limite
 export const getDataLimiteMensagem = (dataLimite: string, statusCampanha: string) => {
   if (!dataLimite) return { texto: '-', estilo: 'text-muted-foreground' }
