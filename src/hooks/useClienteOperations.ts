@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -14,13 +15,15 @@ const generateRandomPassword = (): string => {
 // Senha padrão para novos clientes
 const SENHA_PADRAO_CLIENTE = 'parceriadesucesso'
 
-// Função para verificar se o usuário é criador de sites - CRITÉRIO AMPLIADO
+// Função para verificar se o usuário é criador de sites - SIMPLIFICADA E CONFIÁVEL
 const isSitesUser = (email: string): boolean => {
   const normalizedEmail = email.toLowerCase().trim()
-  console.log('🌐 [useClienteOperations] === VERIFICAÇÃO CRIADOR DE SITES ===')
+  console.log('🌐 [useClienteOperations] === VERIFICAÇÃO CRIADOR DE SITES (SIMPLIFICADA) ===')
   console.log('🌐 [useClienteOperations] Email sendo verificado:', normalizedEmail)
   
-  const isSites = normalizedEmail.includes('criador') || 
+  // Verificação PRIORITÁRIA e ESPECÍFICA
+  const isSites = normalizedEmail === 'criadordesite@trafegoporcents.com' ||
+         normalizedEmail.includes('criador') || 
          normalizedEmail.includes('site') || 
          normalizedEmail.includes('webdesign') ||
          normalizedEmail.includes('sites') ||
@@ -34,6 +37,7 @@ const isSitesUser = (email: string): boolean => {
   console.log('🌐 [useClienteOperations] ✅ É criador de sites?', isSites)
   if (isSites) {
     console.log('🌐 [useClienteOperations] 🎯 CONFIRMADO: Usuário é criador de sites!')
+    console.log('🌐 [useClienteOperations] 🔑 Email que passou no teste:', normalizedEmail)
   } else {
     console.log('🌐 [useClienteOperations] ❌ Usuário NÃO é criador de sites')
   }
@@ -43,7 +47,7 @@ const isSitesUser = (email: string): boolean => {
 
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
-    console.log(`🚀 [useClienteOperations] === INICIANDO ATUALIZAÇÃO ===`)
+    console.log(`🚀 [useClienteOperations] === INICIANDO ATUALIZAÇÃO (VERSÃO CORRIGIDA) ===`)
     console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
     console.log(`🎯 Campo: ${field}`)
     console.log(`💾 Valor: ${value}`)
@@ -76,22 +80,91 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         return false
       }
 
-      // Verificar se é criador de sites
+      // Verificar se é criador de sites - USANDO A NOVA FUNÇÃO SIMPLIFICADA
       const isSitesCreator = isSitesUser(userEmail)
       console.log(`🌐 [useClienteOperations] 🎯 É criador de sites: ${isSitesCreator}`)
 
+      // LÓGICA SIMPLIFICADA PARA CRIADORES DE SITES
+      if (isSitesCreator) {
+        console.log('🌐 [useClienteOperations] === MODO CRIADOR DE SITES ===')
+        console.log('🌐 [useClienteOperations] ✅ Acesso total para campos específicos')
+        
+        // VALIDAÇÃO DE CAMPOS PERMITIDOS para criadores de sites
+        if (!['site_status', 'link_site'].includes(field)) {
+          console.error('🚨 [useClienteOperations] ⛔ Criador de sites tentando editar campo não autorizado:', field)
+          console.error('🚨 [useClienteOperations] ✅ Campos permitidos para criadores de sites:', ['site_status', 'link_site'])
+          toast({
+            title: "Erro de Permissão",
+            description: `Criadores de sites só podem editar: Status do Site e Link do Site`,
+            variant: "destructive",
+          })
+          return false
+        }
+        console.log('🌐 [useClienteOperations] ✅ Campo autorizado para criador de sites:', field)
+        
+        // PARA CRIADORES DE SITES: SEM FILTRO DE VERIFICAÇÃO PRÉVIA
+        console.log('🌐 [useClienteOperations] 🚀 EXECUTANDO UPDATE DIRETO (SEM VERIFICAÇÃO PRÉVIA)')
+        
+        const { data: updateData, error: updateError } = await supabase
+          .from('todos_clientes')
+          .update({ [field]: value })
+          .eq('id', numericId)
+          .select()
+
+        if (updateError) {
+          console.error('❌ [useClienteOperations] ERRO NO UPDATE (CRIADOR DE SITES):', updateError)
+          console.error('❌ [useClienteOperations] Detalhes completos:', {
+            message: updateError.message,
+            code: updateError.code,
+            details: updateError.details,
+            hint: updateError.hint
+          })
+          
+          toast({
+            title: "Erro na Atualização",
+            description: `Falha ao atualizar ${field}: ${updateError.message}`,
+            variant: "destructive",
+          })
+          return false
+        }
+
+        console.log('✅ [useClienteOperations] UPDATE EXECUTADO COM SUCESSO (CRIADOR DE SITES)!')
+        console.log('✅ [useClienteOperations] Dados retornados:', updateData)
+        console.log('✅ [useClienteOperations] Registros atualizados:', updateData?.length || 0)
+        
+        if (!updateData || updateData.length === 0) {
+          console.error('❌ [useClienteOperations] ⚠️  NENHUM REGISTRO ATUALIZADO!')
+          toast({
+            title: "Erro de Atualização",
+            description: "Nenhum registro foi atualizado. Pode haver uma política RLS bloqueando.",
+            variant: "destructive",
+          })
+          return false
+        }
+        
+        console.log('🎉 [useClienteOperations] === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO (CRIADOR DE SITES) ===')
+        
+        // Forçar refresh dos dados com delay maior
+        console.log('🔄 [useClienteOperations] Agendando refresh dos dados...')
+        setTimeout(() => {
+          console.log('🔄 [useClienteOperations] Executando refresh...')
+          refetchData()
+        }, 1000) // Aumentei o delay para 1 segundo
+        
+        return true
+      }
+
+      // LÓGICA PARA NÃO-CRIADORES DE SITES (Gestores, Admins, etc.)
       console.log('🔍 [useClienteOperations] Verificando se o registro existe...')
       let checkQuery = supabase
         .from('todos_clientes')
         .select('id, status_campanha, nome_cliente, email_gestor, site_status')
         .eq('id', numericId)
 
-      // FILTRO CRÍTICO AJUSTADO: Para criadores de sites, permitir acesso a TODOS os registros
-      if (!isAdmin && !isSitesCreator) {
+      // FILTRO APENAS PARA NÃO-ADMINS E NÃO-CRIADORES
+      if (!isAdmin) {
         checkQuery = checkQuery.eq('email_gestor', userEmail)
         console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na verificação:', userEmail)
-      } else if (isSitesCreator) {
-        console.log('🌐 [useClienteOperations] 🎯 USUÁRIO CRIADOR DE SITES - Acesso total para verificação')
       }
 
       const { data: existingData, error: checkError } = await checkQuery.single()
@@ -113,23 +186,8 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
       console.log('✅ [useClienteOperations] Registro encontrado:', existingData)
 
-      // VALIDAÇÃO DE PERMISSÕES MELHORADA: Para criadores de sites
-      if (isSitesCreator) {
-        if (!['site_status', 'link_site'].includes(field)) {
-          console.error('🚨 [useClienteOperations] ⛔ Criador de sites tentando editar campo não autorizado:', field)
-          console.error('🚨 [useClienteOperations] ✅ Campos permitidos para criadores de sites:', ['site_status', 'link_site'])
-          toast({
-            title: "Erro de Permissão",
-            description: `Criadores de sites só podem editar: Status do Site e Link do Site`,
-            variant: "destructive",
-          })
-          return false
-        }
-        console.log('🌐 [useClienteOperations] ✅ Campo autorizado para criador de sites:', field)
-      }
-
-      // VALIDAÇÃO DE SEGURANÇA: Para não-admins e não-criadores de sites
-      if (!isAdmin && !isSitesCreator && existingData.email_gestor !== userEmail) {
+      // VALIDAÇÃO DE SEGURANÇA: Para não-admins
+      if (!isAdmin && existingData.email_gestor !== userEmail) {
         console.error('🚨 [useClienteOperations] TENTATIVA DE ACESSO NÃO AUTORIZADO:', {
           registroEmailGestor: existingData.email_gestor,
           userEmail,
@@ -148,12 +206,10 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         .update({ [field]: value })
         .eq('id', numericId)
 
-      // FILTRO NO UPDATE: Para criadores de sites, NÃO aplicar filtro por email_gestor
-      if (!isAdmin && !isSitesCreator) {
+      // FILTRO NO UPDATE: Para não-admins
+      if (!isAdmin) {
         updateQuery = updateQuery.eq('email_gestor', userEmail)
         console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na atualização:', userEmail)
-      } else if (isSitesCreator) {
-        console.log('🌐 [useClienteOperations] 🎯 CRIADOR DE SITES - UPDATE sem filtro email_gestor')
       }
 
       const { data: updateData, error: updateError } = await updateQuery.select()
@@ -201,7 +257,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       setTimeout(() => {
         console.log('🔄 [useClienteOperations] Executando refresh...')
         refetchData()
-      }, 800)
+      }, 1000) // Aumentei o delay para 1 segundo
       
       return true
     } catch (err) {

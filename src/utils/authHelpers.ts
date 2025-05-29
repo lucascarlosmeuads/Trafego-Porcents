@@ -20,8 +20,9 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // Verificação específica para criadores de sites - CRITÉRIO MAIS AMPLO E FLEXÍVEL
-    if (normalizedEmail.includes('criador') || 
+    // Verificação específica e PRIORITÁRIA para criadores de sites
+    if (normalizedEmail === 'criadordesite@trafegoporcents.com' ||
+        normalizedEmail.includes('criador') || 
         normalizedEmail.includes('site') || 
         normalizedEmail.includes('webdesign') ||
         normalizedEmail.includes('sites') ||
@@ -31,8 +32,8 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
         normalizedEmail.includes('design') ||
         normalizedEmail.includes('developer') ||
         normalizedEmail.includes('dev')) {
-      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (critério ampliado)')
-      console.log('🌐 [authHelpers] Email que passou no teste:', normalizedEmail)
+      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (confirmado)')
+      console.log('🌐 [authHelpers] 🎯 Email específico reconhecido:', normalizedEmail)
       return 'sites'
     }
 
@@ -85,7 +86,8 @@ export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
   
   // Para usuários de sites, retornar nome específico
-  if (normalizedEmail.includes('criador') || 
+  if (normalizedEmail === 'criadordesite@trafegoporcents.com' ||
+      normalizedEmail.includes('criador') || 
       normalizedEmail.includes('site') || 
       normalizedEmail.includes('webdesign') ||
       normalizedEmail.includes('sites') ||

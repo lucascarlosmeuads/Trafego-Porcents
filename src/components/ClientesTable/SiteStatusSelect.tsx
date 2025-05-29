@@ -28,22 +28,33 @@ export function SiteStatusSelect({
 
   const currentStatus = getStatusConfig(value)
 
-  console.log('🌐 [SiteStatusSelect] === RENDERIZAÇÃO ===')
+  console.log('🌐 [SiteStatusSelect] === RENDERIZAÇÃO (VERSÃO CORRIGIDA) ===')
   console.log('🌐 [SiteStatusSelect] Valor atual:', value)
   console.log('🌐 [SiteStatusSelect] Status config:', currentStatus)
   console.log('🌐 [SiteStatusSelect] Disabled:', disabled)
   console.log('🌐 [SiteStatusSelect] IsUpdating:', isUpdating)
 
+  const handleValueChange = async (newValue: string) => {
+    console.log('🌐 [SiteStatusSelect] === MUDANÇA DE STATUS (DETALHADA) ===')
+    console.log('🌐 [SiteStatusSelect] Status anterior:', value)
+    console.log('🌐 [SiteStatusSelect] Novo status solicitado:', newValue)
+    console.log('🌐 [SiteStatusSelect] Timestamp:', new Date().toISOString())
+    
+    try {
+      console.log('🌐 [SiteStatusSelect] Chamando onValueChange...')
+      await onValueChange(newValue)
+      console.log('🌐 [SiteStatusSelect] ✅ onValueChange executado com sucesso')
+    } catch (error) {
+      console.error('🌐 [SiteStatusSelect] ❌ ERRO no onValueChange:', error)
+      console.error('🌐 [SiteStatusSelect] Tipo do erro:', typeof error)
+      console.error('🌐 [SiteStatusSelect] Stack trace:', error instanceof Error ? error.stack : 'Sem stack trace')
+    }
+  }
+
   return (
     <Select 
       value={value}
-      onValueChange={(newValue) => {
-        console.log('🌐 [SiteStatusSelect] === MUDANÇA DE STATUS ===')
-        console.log('🌐 [SiteStatusSelect] Status anterior:', value)
-        console.log('🌐 [SiteStatusSelect] Novo status solicitado:', newValue)
-        console.log('🌐 [SiteStatusSelect] Chamando onValueChange...')
-        onValueChange(newValue)
-      }}
+      onValueChange={handleValueChange}
       disabled={disabled || isUpdating}
     >
       <SelectTrigger className="h-8 w-40 bg-background border-border text-foreground">
@@ -66,8 +77,9 @@ export function SiteStatusSelect({
             key={option.value} 
             value={option.value}
             onSelect={() => {
-              console.log('🌐 [SiteStatusSelect] Item clicado:', option.value)
-              console.log('🌐 [SiteStatusSelect] Label:', option.label)
+              console.log('🌐 [SiteStatusSelect] 🖱️ Item clicado:', option.value)
+              console.log('🌐 [SiteStatusSelect] 🏷️ Label:', option.label)
+              console.log('🌐 [SiteStatusSelect] ⏰ Horário do clique:', new Date().toLocaleTimeString())
             }}
           >
             <span className={`px-2 py-1 rounded text-xs font-medium ${option.color}`}>
