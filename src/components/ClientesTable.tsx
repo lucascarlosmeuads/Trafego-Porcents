@@ -183,7 +183,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  const marcarPagamentoFeito = async (clienteId: string) => {
+  const marcarPagamentoFeito = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
     setUpdatingComission(clienteId)
     
     try {
@@ -208,12 +208,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           title: "Pagamento Confirmado",
           description: "Pagamento marcado como feito. O gestor será notificado.",
         })
+        return true
       } else {
         toast({
           title: "Erro",
           description: "Falha ao confirmar pagamento",
           variant: "destructive",
         })
+        return false
       }
     } catch (error) {
       console.error('💥 Erro ao marcar pagamento:', error)
@@ -222,12 +224,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         description: "Erro inesperado ao confirmar pagamento",
         variant: "destructive",
       })
+      return false
     } finally {
       setUpdatingComission(null)
     }
   }
 
-  const handleGestorSaqueRequest = async (clienteId: string) => {
+  const handleGestorSaqueRequest = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
     setUpdatingComission(clienteId)
     
     try {
@@ -366,8 +369,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       filterType === 'saques-pendentes' 
                         ? marcarPagamentoFeito 
                         : !isAdmin 
-                          ? handleGestorSaqueRequest  // Usar função específica do gestor
-                          : handleComissionToggle     // Usar função original do admin
+                          ? handleGestorSaqueRequest  
+                          : handleComissionToggle     
                     }
                     onComissionValueEdit={handleComissionValueEdit}
                     onComissionValueSave={handleComissionValueSave}
