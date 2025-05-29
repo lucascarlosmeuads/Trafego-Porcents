@@ -49,10 +49,8 @@ export function useManagerData(
         query = query.eq('site_status', 'aguardando_link')
       } else if (filterType === 'sites-finalizados') {
         console.log('✅ [useManagerData] Aplicando filtro ESPECÍFICO para sites finalizados')
-        query = query
-          .eq('site_status', 'finalizado')
-          .not('link_site', 'is', null)
-          .neq('link_site', '')
+        // CORREÇÃO: Remover filtros de link_site - mostrar todos os sites finalizados
+        query = query.eq('site_status', 'finalizado')
       } else {
         // CORREÇÃO: Para painéis normais (Admin/Gestor), aplicar APENAS filtros de gestor
         // NÃO aplicar filtros de site_status para não ocultar clientes
