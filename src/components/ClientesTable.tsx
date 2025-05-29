@@ -227,7 +227,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // Nova função para o painel do gestor - atualiza comissão para "Solicitado"
   const handleGestorSaqueRequest = async (clienteId: string) => {
     setUpdatingComission(clienteId)
     
@@ -644,7 +643,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setBmValue('')
   }
 
-  const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
     setUpdatingComission(clienteId)
     
     try {
@@ -656,12 +655,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           title: "Sucesso",
           description: newStatus ? "Comissão marcada como paga" : "Comissão marcada como não paga",
         })
+        return true
       } else {
         toast({
           title: "Erro",
           description: "Falha ao atualizar comissão",
           variant: "destructive",
         })
+        return false
       }
     } catch (error) {
       console.error('Erro ao atualizar comissão:', error)
@@ -670,6 +671,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         description: "Erro inesperado ao atualizar comissão",
         variant: "destructive",
       })
+      return false
     } finally {
       setUpdatingComission(null)
     }
