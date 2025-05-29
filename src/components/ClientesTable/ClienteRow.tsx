@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -155,10 +154,6 @@ export function ClienteRow({
         <div className="truncate" title={cliente.email_cliente || ''}>
           {cliente.email_cliente || 'Não informado'}
         </div>
-      </TableCell>
-
-      <TableCell className="text-white text-sm">
-        {cliente.vendedor || 'Não informado'}
       </TableCell>
 
       <TableCell>

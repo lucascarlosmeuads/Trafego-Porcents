@@ -9,7 +9,6 @@ export function TableHeader() {
         <TableHead className="text-white font-semibold">Nome Cliente</TableHead>
         <TableHead className="text-white font-semibold">Telefone</TableHead>
         <TableHead className="text-white font-semibold">Email Cliente</TableHead>
-        <TableHead className="text-white font-semibold">Vendedor</TableHead>
         <TableHead className="text-white font-semibold">Status Campanha</TableHead>
         <TableHead className="text-white font-semibold">Status Site</TableHead>
         <TableHead className="text-white font-semibold">Data Limite</TableHead>
