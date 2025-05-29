@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -76,6 +77,160 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [addingClient, setAddingClient] = useState(false)
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Cliente Novo':
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+      case 'Preenchimento do Formulário':
+        return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
+      case 'Brief':
+        return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'
+      case 'Criativo':
+        return 'bg-purple-500/20 text-purple-700 border border-purple-500/30'
+      case 'Site':
+        return 'bg-orange-500/20 text-orange-700 border border-orange-500/30'
+      case 'Agendamento':
+        return 'bg-yellow-500/20 text-yellow-700 border border-yellow-500/30'
+      case 'Configurando BM':
+        return 'bg-cyan-500/20 text-cyan-700 border border-cyan-500/30'
+      case 'Subindo Campanha':
+        return 'bg-lime-500/20 text-lime-700 border border-lime-500/30'
+      case 'Campanha no Ar':
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
+      case 'Otimização':
+        return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+      case 'Cliente Sumiu':
+        return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
+      case 'Reembolso':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
+      case 'Problema':
+        return 'bg-red-500/20 text-red-700 border border-red-500/30'
+      case 'Saque Pendente':
+        return 'bg-green-500/20 text-green-700 border border-green-500/30'
+      case 'Campanha Anual':
+        return 'bg-indigo-500/20 text-indigo-700 border border-indigo-500/30'
+      default:
+        return 'bg-muted text-muted-foreground border border-border'
+    }
+  }
+
+  const renderClientesTable = (clientesList: typeof clientes, isInactiveTab = false) => {
+    if (clientesList.length === 0) {
+      return (
+        <div className="text-center py-12 px-4">
+          <p className="text-muted-foreground">Nenhum cliente encontrado</p>
+        </div>
+      )
+    }
+
+    return (
+      <div className="border rounded-lg overflow-hidden bg-card">
+        <Table>
+          <TableHeader isAdmin={isAdmin} showEmailGestor={isAdmin} />
+          <TableBody>
+            {clientesList.map((cliente) => (
+              <ClienteRow
+                key={cliente.id}
+                cliente={cliente}
+                selectedManager={currentManager || managerName}
+                onUpdate={updateCliente}
+                isAdmin={isAdmin}
+                showEmailGestor={isAdmin}
+                isInactiveTab={isInactiveTab}
+                getStatusColor={getStatusColor}
+                updatingStatus={updatingStatus}
+                setUpdatingStatus={setUpdatingStatus}
+                editingLink={editingLink}
+                setEditingLink={setEditingLink}
+                linkValue={linkValue}
+                setLinkValue={setLinkValue}
+                editingBM={editingBM}
+                setEditingBM={setEditingBM}
+                bmValue={bmValue}
+                setBmValue={setBmValue}
+                updatingComission={updatingComission}
+                setUpdatingComission={setUpdatingComission}
+                editingComissionValue={editingComissionValue}
+                setEditingComissionValue={setEditingComissionValue}
+                comissionValueInput={comissionValueInput}
+                setComissionValueInput={setComissionValueInput}
+                editandoProblema={editandoProblema}
+                setEditandoProblema={setEditandoProblema}
+                problemaDescricao={problemaDescricao}
+                setProblemaDescricao={setProblemaDescricao}
+              />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    )
+  }
+
+  const renderWithTabs = (clientesAtivos: typeof clientes, clientesInativos: typeof clientes) => {
+    return (
+      <div className="space-y-4 p-4 lg:p-0">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <TableActions
+            selectedManager={currentManager || managerName}
+            filteredClientesCount={clientes.length}
+            realtimeConnected={realtimeConnected}
+            onRefresh={refetch}
+            onExport={exportToCSV}
+          />
+          
+          {podeAdicionarCliente && !loadingPermissoes && (
+            <AddClientModal
+              selectedManager={currentManager || managerName}
+              onClienteAdicionado={refetch}
+              gestorMode={!isAdmin}
+            />
+          )}
+        </div>
+
+        <Tabs defaultValue="ativos" className="w-full">
+          <TabsList className="grid w-full grid-cols-2 bg-muted">
+            <TabsTrigger value="ativos" className="data-[state=active]:bg-background">
+              Clientes Ativos ({clientesAtivos.length})
+            </TabsTrigger>
+            <TabsTrigger value="inativos" className="data-[state=active]:bg-background">
+              Clientes Inativos ({clientesInativos.length})
+            </TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="ativos" className="space-y-4">
+            <TableFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              siteStatusFilter={siteStatusFilter}
+              setSiteStatusFilter={setSiteStatusFilter}
+              showSiteStatusFilter={isAdmin}
+              getStatusColor={getStatusColor}
+            />
+            
+            {renderClientesTable(getFilteredClientes(clientesAtivos))}
+          </TabsContent>
+          
+          <TabsContent value="inativos" className="space-y-4">
+            <TableFilters
+              searchTerm={searchTerm}
+              setSearchTerm={setSearchTerm}
+              statusFilter={statusFilter}
+              setStatusFilter={setStatusFilter}
+              siteStatusFilter={siteStatusFilter}
+              setSiteStatusFilter={setSiteStatusFilter}
+              showSiteStatusFilter={isAdmin}
+              getStatusColor={getStatusColor}
+            />
+            
+            {renderClientesTable(getFilteredClientes(clientesInativos), true)}
+          </TabsContent>
+        </Tabs>
+      </div>
+    )
+  }
 
   const getFilteredClientes = (clientesList: typeof clientes) => {
     return clientesList.filter(cliente => {
