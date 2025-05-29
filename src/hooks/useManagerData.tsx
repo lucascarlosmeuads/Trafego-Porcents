@@ -1,11 +1,16 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
 
 interface UseManagerDataResult {
   clientes: Cliente[]
   loading: boolean
   error: string | null
   refetch: () => void
+  updateCliente: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
+  addCliente: (clienteData: any) => Promise<any>
+  currentManager: string | null
 }
 
 export function useManagerData(
@@ -13,10 +18,12 @@ export function useManagerData(
   isAdminUser: boolean = false,
   selectedManager?: string,
   filterType?: 'sites-pendentes' | 'sites-finalizados'
-) {
+): UseManagerDataResult {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+
+  const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdminUser, fetchData)
 
   const fetchData = useCallback(async () => {
     if (!userEmail) {
@@ -90,5 +97,8 @@ export function useManagerData(
     loading,
     error,
     refetch: fetchData,
+    updateCliente,
+    addCliente,
+    currentManager: selectedManager || null,
   }
 }

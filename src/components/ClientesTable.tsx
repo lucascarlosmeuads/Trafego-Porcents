@@ -24,7 +24,7 @@ import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
-  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'sites-pendentes'
+  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'sites-pendentes' | 'sites-finalizados'
 }
 
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
@@ -34,6 +34,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const managerName = selectedManager || 'Próprios dados'
   
   const isSitesContext = filterType === 'sites-pendentes' || 
+                        filterType === 'sites-finalizados' ||
                         emailToUse.includes('criador') || 
                         emailToUse.includes('site') || 
                         emailToUse.includes('webdesign')
@@ -50,7 +51,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
     emailToUse, 
     isAdmin, 
-    selectedManager
+    selectedManager,
+    filterType === 'sites-pendentes' ? 'sites-pendentes' : filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
   )
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -843,6 +845,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   } else if (filterType === 'sites-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.site_status === 'aguardando_link'
+    )
+  } else if (filterType === 'sites-finalizados') {
+    clientesFiltrados = clientes.filter(cliente => 
+      cliente.site_status === 'finalizado' && 
+      cliente.link_site && 
+      cliente.link_site.trim() !== ''
     )
   } else {
     const clientesAtivos = clientes.filter(cliente => 
