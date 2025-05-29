@@ -1,5 +1,4 @@
 
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -63,8 +62,8 @@ export function ComissaoButton({
     return null
   }
 
-  // Para admin: manter comportamento de edição normal
-  if (!isGestorDashboard && isEditingValue) {
+  // Para admin: manter comportamento de edição normal (APENAS PARA ADMIN)
+  if (!isGestorDashboard && isAdmin && isEditingValue) {
     return (
       <div className="flex items-center gap-1">
         <div className="flex items-center">
@@ -98,7 +97,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Lógica específica
+  // PAINEL DO GESTOR - Lógica específica (SEM PODER DE EDITAR OU MARCAR COMO PAGO)
   if (isGestorDashboard) {
     // Se comissão foi paga pelo admin
     if (saqueFoiPago) {
@@ -177,7 +176,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO ADMIN - Comportamento original mantido
+  // PAINEL DO ADMIN - Comportamento original mantido COM TODAS AS PERMISSÕES
   return (
     <div className="flex items-center gap-1">
       <Button
@@ -207,15 +206,17 @@ export function ComissaoButton({
         {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
       </Button>
       
-      <Button
-        size="sm"
-        variant="ghost"
-        className="h-6 w-6 p-0"
-        onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-      >
-        <Edit2 className="w-3 h-3 text-muted-foreground" />
-      </Button>
+      {/* Botão de editar valor - APENAS PARA ADMIN */}
+      {isAdmin && (
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0"
+          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+        >
+          <Edit2 className="w-3 h-3 text-muted-foreground" />
+        </Button>
+      )}
     </div>
   )
 }
-
