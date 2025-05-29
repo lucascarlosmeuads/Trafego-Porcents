@@ -96,43 +96,6 @@ export function useSimpleSellerData(sellerEmail: string) {
     }
   }
 
-  // Função para recuperar clientes órfãos
-  const recuperarClienteOrfao = async (emailCliente: string, nomeCliente: string, vendorName: string, clienteData: any) => {
-    console.log('🔧 [recuperarClienteOrfao] Tentando recuperar cliente órfão:', emailCliente)
-    
-    try {
-      const novoCliente = {
-        nome_cliente: nomeCliente,
-        telefone: clienteData.telefone,
-        email_cliente: emailCliente,
-        email_gestor: clienteData.email_gestor,
-        vendedor: vendorName,
-        status_campanha: clienteData.status_campanha,
-        data_venda: clienteData.data_venda,
-        valor_comissao: 20.00,
-        comissao_paga: false,
-        site_status: 'pendente'
-      }
-
-      const { data: insertData, error: insertError } = await supabase
-        .from('todos_clientes')
-        .insert([novoCliente])
-        .select()
-        .single()
-
-      if (insertError) {
-        console.error('❌ [recuperarClienteOrfao] Erro ao inserir:', insertError)
-        return false
-      }
-
-      console.log('✅ [recuperarClienteOrfao] Cliente órfão recuperado com sucesso!')
-      return true
-    } catch (error) {
-      console.error('💥 [recuperarClienteOrfao] Erro:', error)
-      return false
-    }
-  }
-
   const addCliente = async (clienteData: {
     nome_cliente: string
     telefone: string
@@ -144,7 +107,7 @@ export function useSimpleSellerData(sellerEmail: string) {
     senha_cliente?: string
   }) => {
     try {
-      console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE (PROCESSO CORRIGIDO) ===')
+      console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
       console.log('📧 [useSimpleSellerData] Email do cliente:', clienteData.email_cliente)
       
       // Preparar nome do vendedor
@@ -157,9 +120,39 @@ export function useSimpleSellerData(sellerEmail: string) {
       // Usar senha customizada ou padrão
       const senhaParaUsar = clienteData.senha_cliente || SENHA_PADRAO_CLIENTE
 
-      // === NOVA ABORDAGEM: PRIMEIRO A TABELA, DEPOIS O AUTH ===
+      // Step 1: PRIMEIRO criar conta no Supabase Auth
+      console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
+      let senhaDefinida = false
       
-      // Step 1: Verificar se cliente já existe na tabela
+      try {
+        // Criar conta usando signUp com a senha informada
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email: clienteData.email_cliente,
+          password: senhaParaUsar,
+          options: {
+            data: {
+              full_name: clienteData.nome_cliente,
+              role: 'cliente'
+            }
+          }
+        })
+
+        if (authError) {
+          console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
+          // Não bloquear se a conta já existir
+          if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
+            console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
+          }
+        } else {
+          console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
+          senhaDefinida = true
+        }
+      } catch (authErr) {
+        console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
+        // Continuar mesmo se houver erro na criação da conta
+      }
+
+      // Step 2: Verificar se cliente já existe na tabela
       console.log('🔍 [useSimpleSellerData] Verificando se cliente já existe na tabela...')
       const { data: existingClient, error: checkError } = await supabase
         .from('todos_clientes')
@@ -174,13 +167,11 @@ export function useSimpleSellerData(sellerEmail: string) {
 
       let clienteJaExistia = false
       let clientId: string | number
-      let registroNaTabelaCriado = false
 
       if (existingClient) {
-        console.log('⚠️ [useSimpleSellerData] Cliente já existe na tabela, fazendo update...')
+        console.log('⚠️ [useSimpleSellerData] Cliente já existe, fazendo update dos dados...')
         clienteJaExistia = true
         clientId = existingClient.id
-        registroNaTabelaCriado = true
         
         const { error: updateError } = await supabase
           .from('todos_clientes')
@@ -202,8 +193,8 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         console.log('✅ [useSimpleSellerData] Cliente existente atualizado com sucesso')
       } else {
-        // Step 2: PRIMEIRO - Inserir na tabela todos_clientes
-        console.log('📋 [useSimpleSellerData] === PASSO 1: INSERINDO NA TABELA PRIMEIRO ===')
+        // Step 3: Cliente novo - inserir na tabela
+        console.log('📋 [useSimpleSellerData] Inserindo cliente na tabela todos_clientes...')
         
         const novoCliente = {
           nome_cliente: clienteData.nome_cliente,
@@ -226,79 +217,12 @@ export function useSimpleSellerData(sellerEmail: string) {
 
         if (insertError) {
           console.error('❌ [useSimpleSellerData] Erro ao inserir na tabela:', insertError)
-          throw new Error(`Erro ao adicionar cliente na tabela: ${insertError.message}`)
+          throw new Error(`Erro ao adicionar cliente: ${insertError.message}`)
         }
 
-        console.log('✅ [useSimpleSellerData] === PASSO 1 CONCLUÍDO: CLIENTE INSERIDO NA TABELA ===')
+        console.log('✅ [useSimpleSellerData] Cliente inserido na tabela com sucesso!')
         clientId = insertData.id
-        registroNaTabelaCriado = true
       }
-
-      // Step 3: SEGUNDO - Criar conta no Supabase Auth
-      console.log('🔐 [useSimpleSellerData] === PASSO 2: CRIANDO CONTA NO AUTH ===')
-      let senhaDefinida = false
-      
-      try {
-        // Verificar se usuário já existe no auth
-        const { data: existingUsers } = await supabase.auth.admin.listUsers()
-        const userAlreadyExists = existingUsers?.users?.some(user => 
-          user?.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
-        )
-
-        if (userAlreadyExists) {
-          console.log('⚠️ [useSimpleSellerData] Usuário já existe no auth, atualizando senha...')
-          // Se já existe, atualizar senha (requer admin)
-          const existingUser = existingUsers?.users?.find(user => 
-            user?.email?.toLowerCase() === clienteData.email_cliente.toLowerCase()
-          )
-          
-          if (existingUser) {
-            // Não conseguimos atualizar senha sem privilégios de admin
-            // Mas pelo menos sabemos que a conta existe
-            senhaDefinida = true
-            console.log('⚠️ [useSimpleSellerData] Conta já existe no auth - senha não alterada')
-          }
-        } else {
-          // Criar nova conta
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: clienteData.email_cliente,
-            password: senhaParaUsar,
-            options: {
-              data: {
-                full_name: clienteData.nome_cliente,
-                role: 'cliente'
-              }
-            }
-          })
-
-          if (authError) {
-            console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
-            
-            // Se falhar na criação do auth, NÃO é crítico
-            // O cliente já está na tabela e pode fazer login mais tarde
-            if (authError.message.includes('already registered') || authError.message.includes('User already registered')) {
-              console.log('⚠️ [useSimpleSellerData] Usuário já existe - conta não criada mas cliente está na tabela')
-              senhaDefinida = true
-            } else {
-              console.log('⚠️ [useSimpleSellerData] Falha no auth mas cliente está salvo na tabela - pode ser corrigido depois')
-              senhaDefinida = false
-            }
-          } else {
-            console.log('✅ [useSimpleSellerData] === PASSO 2 CONCLUÍDO: CONTA CRIADA NO AUTH ===')
-            senhaDefinida = true
-          }
-        }
-      } catch (authErr) {
-        console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
-        // Não é crítico - cliente está na tabela
-        console.log('⚠️ [useSimpleSellerData] Auth falhou mas cliente está salvo - pode ser corrigido depois')
-        senhaDefinida = false
-      }
-
-      // Step 4: Verificação final e logs
-      console.log('🔍 [useSimpleSellerData] === VERIFICAÇÃO FINAL ===')
-      console.log('✅ [useSimpleSellerData] Registro na tabela:', registroNaTabelaCriado ? 'OK' : 'FALHOU')
-      console.log('🔐 [useSimpleSellerData] Conta no auth:', senhaDefinida ? 'OK' : 'FALHOU/JÁ EXISTIA')
 
       // Recarregar lista
       await fetchClientes()
@@ -308,9 +232,9 @@ export function useSimpleSellerData(sellerEmail: string) {
         toast({
           title: "✅ Cliente cadastrado com sucesso!",
           description: senhaDefinida 
-            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha: ${senhaParaUsar}\n✅ Ambos registros criados (tabela + auth)`
-            : `Cliente ${clienteData.nome_cliente} foi adicionado.\n⚠️ Registro na tabela OK, auth pode precisar de correção`,
-          duration: 8000
+            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha: ${senhaParaUsar}`
+            : `Cliente ${clienteData.nome_cliente} foi adicionado.`,
+          duration: 5000
         })
       } else {
         toast({
@@ -319,7 +243,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         })
       }
       
-      console.log('🎉 [useSimpleSellerData] Processo concluído - cliente garantido na tabela')
+      console.log('🎉 [useSimpleSellerData] Processo concluído com sucesso')
       
       // Retornar estrutura IDÊNTICA ao useClienteOperations
       return { 
@@ -334,7 +258,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       }
 
     } catch (error) {
-      console.error('💥 [useSimpleSellerData] Erro crítico:', error)
+      console.error('💥 [useSimpleSellerData] Erro inesperado:', error)
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro inesperado ao criar cliente",
