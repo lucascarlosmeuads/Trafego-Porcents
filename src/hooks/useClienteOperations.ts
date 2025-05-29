@@ -1,4 +1,3 @@
-
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -15,84 +14,60 @@ const generateRandomPassword = (): string => {
 // Senha padrão para novos clientes
 const SENHA_PADRAO_CLIENTE = 'parceriadesucesso'
 
-// Função para verificar se o usuário é criador de sites - SIMPLIFICADA E CONFIÁVEL
+// Função para verificar se o usuário é criador de sites - OTIMIZADA
 const isSitesUser = (email: string): boolean => {
   const normalizedEmail = email.toLowerCase().trim()
-  console.log('🌐 [useClienteOperations] === VERIFICAÇÃO CRIADOR DE SITES (SIMPLIFICADA) ===')
-  console.log('🌐 [useClienteOperations] Email sendo verificado:', normalizedEmail)
+  console.log('🌐 [useClienteOperations] Verificando criador de sites:', normalizedEmail)
   
-  // Verificação PRIORITÁRIA e ESPECÍFICA
   const isSites = normalizedEmail === 'criadordesite@trafegoporcents.com' ||
          normalizedEmail.includes('criador') || 
          normalizedEmail.includes('site') || 
          normalizedEmail.includes('webdesign') ||
          normalizedEmail.includes('sites') ||
          normalizedEmail.includes('web') ||
-         normalizedEmail.startsWith('sites') ||
-         normalizedEmail.endsWith('sites.com') ||
          normalizedEmail.includes('design') ||
          normalizedEmail.includes('developer') ||
          normalizedEmail.includes('dev')
   
-  console.log('🌐 [useClienteOperations] ✅ É criador de sites?', isSites)
-  if (isSites) {
-    console.log('🌐 [useClienteOperations] 🎯 CONFIRMADO: Usuário é criador de sites!')
-    console.log('🌐 [useClienteOperations] 🔑 Email que passou no teste:', normalizedEmail)
-  } else {
-    console.log('🌐 [useClienteOperations] ❌ Usuário NÃO é criador de sites')
-  }
-  
+  console.log('🌐 [useClienteOperations] É criador de sites:', isSites)
   return isSites
 }
 
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
-    console.log(`🚀 [useClienteOperations] === INICIANDO ATUALIZAÇÃO (VERSÃO CORRIGIDA) ===`)
-    console.log(`🆔 ID recebido: "${id}" (tipo: ${typeof id})`)
-    console.log(`🎯 Campo: ${field}`)
-    console.log(`💾 Valor: ${value}`)
-    console.log(`👤 User Email: ${userEmail}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
+    console.log(`🚀 [useClienteOperations] === ATUALIZAÇÃO INICIADA ===`)
+    console.log(`🆔 ID: ${id} | Campo: ${field} | Valor: ${value}`)
+    console.log(`👤 Email: ${userEmail} | Admin: ${isAdmin}`)
 
     if (!id || id.trim() === '') {
-      console.error('❌ [useClienteOperations] ID do cliente está vazio ou inválido:', id)
+      console.error('❌ [useClienteOperations] ID inválido:', id)
       return false
     }
 
-    if (!userEmail) {
-      console.error('❌ [useClienteOperations] Email do usuário não fornecido')
-      return false
-    }
-
-    if (!field || field.trim() === '') {
-      console.error('❌ [useClienteOperations] Campo está vazio ou inválido:', field)
+    if (!userEmail || !field) {
+      console.error('❌ [useClienteOperations] Parâmetros obrigatórios em falta')
       return false
     }
 
     try {
       const numericId = parseInt(id)
       
-      console.log(`📋 [useClienteOperations] Tabela: todos_clientes`)
-      console.log(`🔢 ID convertido: ${numericId} (tipo: ${typeof numericId})`)
-      
       if (isNaN(numericId) || numericId <= 0) {
         console.error('❌ [useClienteOperations] ID inválido após conversão:', { original: id, converted: numericId })
         return false
       }
 
-      // Verificar se é criador de sites - USANDO A NOVA FUNÇÃO SIMPLIFICADA
+      // Verificar se é criador de sites
       const isSitesCreator = isSitesUser(userEmail)
-      console.log(`🌐 [useClienteOperations] 🎯 É criador de sites: ${isSitesCreator}`)
+      console.log(`🌐 [useClienteOperations] É criador de sites: ${isSitesCreator}`)
 
-      // LÓGICA SIMPLIFICADA PARA CRIADORES DE SITES
+      // LÓGICA PARA CRIADORES DE SITES
       if (isSitesCreator) {
         console.log('🌐 [useClienteOperations] === MODO CRIADOR DE SITES ===')
-        console.log('🌐 [useClienteOperations] ✅ Acesso total para campos específicos')
         
-        // VALIDAÇÃO DE CAMPOS PERMITIDOS para criadores de sites
+        // Validar campos permitidos para criadores de sites
         if (!['site_status', 'link_site'].includes(field)) {
-          console.error('🚨 [useClienteOperations] ⛔ Criador de sites tentando editar campo não autorizado:', field)
-          console.error('🚨 [useClienteOperations] ✅ Campos permitidos para criadores de sites:', ['site_status', 'link_site'])
+          console.error('🚨 [useClienteOperations] Campo não autorizado para criador de sites:', field)
           toast({
             title: "Erro de Permissão",
             description: `Criadores de sites só podem editar: Status do Site e Link do Site`,
@@ -100,11 +75,10 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
           })
           return false
         }
-        console.log('🌐 [useClienteOperations] ✅ Campo autorizado para criador de sites:', field)
         
-        // PARA CRIADORES DE SITES: SEM FILTRO DE VERIFICAÇÃO PRÉVIA
-        console.log('🌐 [useClienteOperations] 🚀 EXECUTANDO UPDATE DIRETO (SEM VERIFICAÇÃO PRÉVIA)')
+        console.log('🌐 [useClienteOperations] ✅ Campo autorizado, executando update...')
         
+        // UPDATE DIRETO para criadores de sites (agora com RLS adequada)
         const { data: updateData, error: updateError } = await supabase
           .from('todos_clientes')
           .update({ [field]: value })
@@ -112,14 +86,7 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
           .select()
 
         if (updateError) {
-          console.error('❌ [useClienteOperations] ERRO NO UPDATE (CRIADOR DE SITES):', updateError)
-          console.error('❌ [useClienteOperations] Detalhes completos:', {
-            message: updateError.message,
-            code: updateError.code,
-            details: updateError.details,
-            hint: updateError.hint
-          })
-          
+          console.error('❌ [useClienteOperations] ERRO NO UPDATE:', updateError)
           toast({
             title: "Erro na Atualização",
             description: `Falha ao atualizar ${field}: ${updateError.message}`,
@@ -128,101 +95,82 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
           return false
         }
 
-        console.log('✅ [useClienteOperations] UPDATE EXECUTADO COM SUCESSO (CRIADOR DE SITES)!')
-        console.log('✅ [useClienteOperations] Dados retornados:', updateData)
+        console.log('✅ [useClienteOperations] UPDATE EXECUTADO COM SUCESSO!')
         console.log('✅ [useClienteOperations] Registros atualizados:', updateData?.length || 0)
         
         if (!updateData || updateData.length === 0) {
-          console.error('❌ [useClienteOperations] ⚠️  NENHUM REGISTRO ATUALIZADO!')
+          console.error('❌ [useClienteOperations] Nenhum registro foi atualizado')
           toast({
             title: "Erro de Atualização",
-            description: "Nenhum registro foi atualizado. Pode haver uma política RLS bloqueando.",
+            description: "Nenhum registro foi atualizado. Verifique suas permissões.",
             variant: "destructive",
           })
           return false
         }
         
-        console.log('🎉 [useClienteOperations] === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO (CRIADOR DE SITES) ===')
+        console.log('🎉 [useClienteOperations] === SUCESSO CRIADOR DE SITES ===')
         
-        // Forçar refresh dos dados com delay maior
-        console.log('🔄 [useClienteOperations] Agendando refresh dos dados...')
+        // Toast de sucesso para criadores de sites
+        toast({
+          title: "Sucesso!",
+          description: `${field === 'site_status' ? 'Status do site' : 'Link do site'} atualizado com sucesso!`,
+        })
+        
+        // Refresh com delay otimizado
         setTimeout(() => {
           console.log('🔄 [useClienteOperations] Executando refresh...')
           refetchData()
-        }, 1000) // Aumentei o delay para 1 segundo
+        }, 500)
         
         return true
       }
 
-      // LÓGICA PARA NÃO-CRIADORES DE SITES (Gestores, Admins, etc.)
-      console.log('🔍 [useClienteOperations] Verificando se o registro existe...')
+      // LÓGICA PARA GESTORES/ADMINS (código existente)
+      console.log('🔍 [useClienteOperations] Verificando existência do registro...')
       let checkQuery = supabase
         .from('todos_clientes')
         .select('id, status_campanha, nome_cliente, email_gestor, site_status')
         .eq('id', numericId)
 
-      // FILTRO APENAS PARA NÃO-ADMINS E NÃO-CRIADORES
       if (!isAdmin) {
         checkQuery = checkQuery.eq('email_gestor', userEmail)
-        console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na verificação:', userEmail)
+        console.log('🔒 [useClienteOperations] Aplicando filtro de segurança:', userEmail)
       }
 
       const { data: existingData, error: checkError } = await checkQuery.single()
 
       if (checkError) {
-        console.error('❌ [useClienteOperations] Erro ao verificar existência do registro:', checkError)
-        console.error('❌ [useClienteOperations] Detalhes do erro:', {
-          message: checkError.message,
-          code: checkError.code,
-          details: checkError.details
-        })
+        console.error('❌ [useClienteOperations] Erro na verificação:', checkError)
         return false
       }
 
       if (!existingData) {
-        console.error('❌ [useClienteOperations] Nenhum registro encontrado com ID:', numericId)
+        console.error('❌ [useClienteOperations] Registro não encontrado:', numericId)
         return false
       }
 
       console.log('✅ [useClienteOperations] Registro encontrado:', existingData)
 
-      // VALIDAÇÃO DE SEGURANÇA: Para não-admins
       if (!isAdmin && existingData.email_gestor !== userEmail) {
-        console.error('🚨 [useClienteOperations] TENTATIVA DE ACESSO NÃO AUTORIZADO:', {
-          registroEmailGestor: existingData.email_gestor,
-          userEmail,
-          registroId: numericId
-        })
+        console.error('🚨 [useClienteOperations] Acesso não autorizado')
         return false
       }
       
-      console.log('🔄 [useClienteOperations] === EXECUTANDO UPDATE ===')
-      console.log('🔄 [useClienteOperations] Campo:', field)
-      console.log('🔄 [useClienteOperations] Valor:', value)
-      console.log('🔄 [useClienteOperations] ID:', numericId)
+      console.log('🔄 [useClienteOperations] Executando UPDATE...')
       
       let updateQuery = supabase
         .from('todos_clientes')
         .update({ [field]: value })
         .eq('id', numericId)
 
-      // FILTRO NO UPDATE: Para não-admins
       if (!isAdmin) {
         updateQuery = updateQuery.eq('email_gestor', userEmail)
-        console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na atualização:', userEmail)
       }
 
       const { data: updateData, error: updateError } = await updateQuery.select()
 
       if (updateError) {
         console.error('❌ [useClienteOperations] ERRO NO UPDATE:', updateError)
-        console.error('❌ [useClienteOperations] Detalhes completos:', {
-          message: updateError.message,
-          code: updateError.code,
-          details: updateError.details,
-          hint: updateError.hint
-        })
-        
         toast({
           title: "Erro na Atualização",
           description: `Falha ao atualizar ${field}: ${updateError.message}`,
@@ -233,15 +181,9 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
 
       console.log('✅ [useClienteOperations] UPDATE EXECUTADO COM SUCESSO!')
       console.log('✅ [useClienteOperations] Dados retornados:', updateData)
-      console.log('✅ [useClienteOperations] Registros atualizados:', updateData?.length || 0)
       
       if (!updateData || updateData.length === 0) {
-        console.error('❌ [useClienteOperations] ⚠️  NENHUM REGISTRO ATUALIZADO!')
-        console.error('❌ [useClienteOperations] Possíveis causas:')
-        console.error('   - Filtros de segurança bloquearam a atualização')
-        console.error('   - ID não existe ou não pertence ao usuário')
-        console.error('   - Erro de permissão no RLS do Supabase')
-        
+        console.error('❌ [useClienteOperations] Nenhum registro atualizado')
         toast({
           title: "Erro de Atualização",
           description: "Nenhum registro foi atualizado. Verifique suas permissões.",
@@ -252,16 +194,15 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
       
       console.log('🎉 [useClienteOperations] === ATUALIZAÇÃO CONCLUÍDA COM SUCESSO ===')
       
-      // Forçar refresh dos dados com delay maior
-      console.log('🔄 [useClienteOperations] Agendando refresh dos dados...')
+      // Refresh dos dados
       setTimeout(() => {
         console.log('🔄 [useClienteOperations] Executando refresh...')
         refetchData()
-      }, 1000) // Aumentei o delay para 1 segundo
+      }, 500)
       
       return true
     } catch (err) {
-      console.error('💥 [useClienteOperations] ERRO CRÍTICO (catch):', err)
+      console.error('💥 [useClienteOperations] ERRO CRÍTICO:', err)
       toast({
         title: "Erro Crítico",
         description: "Erro inesperado durante a atualização",
