@@ -15,6 +15,14 @@ const generateRandomPassword = (): string => {
 // Senha padrão para novos clientes
 const SENHA_PADRAO_CLIENTE = 'parceriadesucesso'
 
+// Função para verificar se o usuário é criador de sites
+const isSitesUser = (email: string): boolean => {
+  const normalizedEmail = email.toLowerCase().trim()
+  return normalizedEmail.includes('criador') || 
+         normalizedEmail.includes('site') || 
+         normalizedEmail.includes('webdesign')
+}
+
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const updateCliente = async (id: string, field: string, value: string | boolean | number) => {
     console.log(`🚀 [useClienteOperations] === INICIANDO ATUALIZAÇÃO ===`)
@@ -50,14 +58,18 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         return false
       }
 
+      // Verificar se é criador de sites
+      const isSitesCreator = isSitesUser(userEmail)
+      console.log(`🌐 [useClienteOperations] É criador de sites: ${isSitesCreator}`)
+
       console.log('🔍 [useClienteOperations] Verificando se o registro existe...')
       let checkQuery = supabase
         .from('todos_clientes')
-        .select('id, status_campanha, nome_cliente, email_gestor')
+        .select('id, status_campanha, nome_cliente, email_gestor, site_status')
         .eq('id', numericId)
 
-      // FILTRO CRÍTICO: Se não for admin, aplicar filtro por email_gestor SEMPRE
-      if (!isAdmin) {
+      // FILTRO CRÍTICO: Se não for admin nem criador de sites, aplicar filtro por email_gestor
+      if (!isAdmin && !isSitesCreator) {
         checkQuery = checkQuery.eq('email_gestor', userEmail)
         console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na verificação:', userEmail)
       }
@@ -74,8 +86,14 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         return false
       }
 
-      // VALIDAÇÃO DE SEGURANÇA: Para não-admins, verificar se o email_gestor confere
-      if (!isAdmin && existingData.email_gestor !== userEmail) {
+      // VALIDAÇÃO DE SEGURANÇA: Para criadores de sites, só permitir edição de campos relacionados a sites
+      if (isSitesCreator && !['site_status', 'link_site'].includes(field)) {
+        console.error('🚨 [useClienteOperations] Criador de sites tentando editar campo não autorizado:', field)
+        return false
+      }
+
+      // VALIDAÇÃO DE SEGURANÇA: Para não-admins e não-criadores de sites, verificar se o email_gestor confere
+      if (!isAdmin && !isSitesCreator && existingData.email_gestor !== userEmail) {
         console.error('🚨 [useClienteOperations] TENTATIVA DE ACESSO NÃO AUTORIZADO:', {
           registroEmailGestor: existingData.email_gestor,
           userEmail,
@@ -92,8 +110,8 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         .update({ [field]: value })
         .eq('id', numericId)
 
-      // FILTRO CRÍTICO: Se não for admin, aplicar filtro por email_gestor SEMPRE
-      if (!isAdmin) {
+      // FILTRO CRÍTICO: Se não for admin nem criador de sites, aplicar filtro por email_gestor
+      if (!isAdmin && !isSitesCreator) {
         updateQuery = updateQuery.eq('email_gestor', userEmail)
         console.log('🔒 [useClienteOperations] APLICANDO FILTRO DE SEGURANÇA na atualização:', userEmail)
       }

@@ -21,8 +21,11 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     }
 
     // Verificação específica para criadores de sites - PRIORIDADE ALTA
-    if (normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')) {
-      console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign)')
+    if (normalizedEmail.includes('criador') || 
+        normalizedEmail.includes('site') || 
+        normalizedEmail.includes('webdesign') ||
+        normalizedEmail.includes('sites')) {
+      console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign/sites)')
       return 'sites'
     }
 
