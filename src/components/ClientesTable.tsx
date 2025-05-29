@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -13,7 +12,7 @@ import {
 } from '@/components/ui/table'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/use-toast'
-import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { STATUS_CAMPANHA, type StatusCampanha } from '@/lib/supabase'
 import { checkRealtimeConnection } from '@/utils/realtimeUtils'
 import { TableHeader } from './ClientesTable/TableHeader'
 import { TableFilters } from './ClientesTable/TableFilters'
@@ -115,6 +114,99 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // Handler functions for ClienteRow
+  const handleStatusChange = async (clienteId: string, newStatus: StatusCampanha) => {
+    setUpdatingStatus(clienteId)
+    try {
+      await updateCliente(clienteId, 'status_campanha', newStatus)
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
+    setUpdatingStatus(clienteId)
+    try {
+      await updateCliente(clienteId, 'site_status', newStatus)
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue)
+  }
+
+  const handleLinkSave = async (clienteId: string) => {
+    if (!editingLink) return false
+    try {
+      await updateCliente(clienteId, editingLink.field, linkValue)
+      setEditingLink(null)
+      setLinkValue('')
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue)
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    try {
+      await updateCliente(clienteId, 'numero_bm', bmValue)
+      setEditingBM(null)
+      setBmValue('')
+    } catch {
+      // Error handled by updateCliente
+    }
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
+    setUpdatingComission(clienteId)
+    try {
+      await updateCliente(clienteId, 'comissao_paga', !currentStatus)
+      return true
+    } catch {
+      return false
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toString())
+  }
+
+  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
+    try {
+      await updateCliente(clienteId, 'valor_comissao', newValue)
+      setEditingComissionValue(null)
+      setComissionValueInput('')
+    } catch {
+      // Error handled by updateCliente
+    }
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
   const renderClientesTable = (clientesList: typeof clientes, isInactiveTab = false) => {
     if (clientesList.length === 0) {
       return (
@@ -129,36 +221,38 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         <Table>
           <TableHeader isAdmin={isAdmin} showEmailGestor={isAdmin} />
           <TableBody>
-            {clientesList.map((cliente) => (
+            {clientesList.map((cliente, index) => (
               <ClienteRow
                 key={cliente.id}
                 cliente={cliente}
                 selectedManager={currentManager || managerName}
-                onUpdate={updateCliente}
+                index={index}
                 isAdmin={isAdmin}
                 showEmailGestor={isAdmin}
-                isInactiveTab={isInactiveTab}
-                getStatusColor={getStatusColor}
                 updatingStatus={updatingStatus}
-                setUpdatingStatus={setUpdatingStatus}
                 editingLink={editingLink}
-                setEditingLink={setEditingLink}
                 linkValue={linkValue}
                 setLinkValue={setLinkValue}
                 editingBM={editingBM}
-                setEditingBM={setEditingBM}
                 bmValue={bmValue}
                 setBmValue={setBmValue}
                 updatingComission={updatingComission}
-                setUpdatingComission={setUpdatingComission}
                 editingComissionValue={editingComissionValue}
-                setEditingComissionValue={setEditingComissionValue}
                 comissionValueInput={comissionValueInput}
                 setComissionValueInput={setComissionValueInput}
-                editandoProblema={editandoProblema}
-                setEditandoProblema={setEditandoProblema}
-                problemaDescricao={problemaDescricao}
-                setProblemaDescricao={setProblemaDescricao}
+                getStatusColor={getStatusColor}
+                onStatusChange={handleStatusChange}
+                onSiteStatusChange={handleSiteStatusChange}
+                onLinkEdit={handleLinkEdit}
+                onLinkSave={handleLinkSave}
+                onLinkCancel={handleLinkCancel}
+                onBMEdit={handleBMEdit}
+                onBMSave={handleBMSave}
+                onBMCancel={handleBMCancel}
+                onComissionToggle={handleComissionToggle}
+                onComissionValueEdit={handleComissionValueEdit}
+                onComissionValueSave={handleComissionValueSave}
+                onComissionValueCancel={handleComissionValueCancel}
               />
             ))}
           </TableBody>
