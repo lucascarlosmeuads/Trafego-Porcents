@@ -48,7 +48,8 @@ export const isStatusEntregue = (status: string): boolean => {
   if (!status) return false
   
   const statusLower = status.toLowerCase().trim()
-  return statusLower === 'no ar' || statusLower === 'otimização'
+  return statusLower === 'no ar' || statusLower === 'otimização' || 
+         statusLower === 'campanha no ar'
 }
 
 // Nova função para calcular dias úteis entre duas datas
@@ -67,7 +68,130 @@ export const getBusinessDaysBetween = (startDate: Date, endDate: Date): number =
   return count
 }
 
-// Nova função para gerar mensagem dinâmica da data limite
+// Função auxiliar para converter diferentes formatos de data para Date object
+const parseDate = (dateInput: string | Date | null | undefined): Date | null => {
+  if (!dateInput) return null
+  
+  try {
+    // Se já é um objeto Date
+    if (dateInput instanceof Date) {
+      return isNaN(dateInput.getTime()) ? null : dateInput
+    }
+    
+    // Se é string, tentar diferentes formatos
+    if (typeof dateInput === 'string') {
+      const trimmed = dateInput.trim()
+      if (trimmed === '' || trimmed === 'null' || trimmed === 'undefined') return null
+      
+      // Formato YYYY-MM-DD (mais comum do banco)
+      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+        const date = new Date(trimmed + 'T00:00:00.000Z')
+        return isNaN(date.getTime()) ? null : date
+      }
+      
+      // Tentar parse normal
+      const date = new Date(trimmed)
+      return isNaN(date.getTime()) ? null : date
+    }
+    
+    return null
+  } catch (error) {
+    console.error('Erro ao fazer parse da data:', error, 'Input:', dateInput)
+    return null
+  }
+}
+
+// Função principal para painel do gestor e admin - funciona para ambos
+export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: string | null, statusCampanha: string): { texto: string, classeCor: string } => {
+  // Se status for "No Ar", "Otimização" ou "Campanha no Ar" - campanha cumprida
+  if (isStatusEntregue(statusCampanha)) {
+    return {
+      texto: '✅ Cumprido',
+      classeCor: 'bg-green-100 text-green-800 border-green-300'
+    }
+  }
+  
+  // Determinar a data base para cálculo (data_venda ou created_at como fallback)
+  let dataBase: Date | null = null
+  let fonteDados = ''
+  
+  // Tentar data_venda primeiro
+  if (dataVenda && dataVenda !== '' && dataVenda !== 'null' && dataVenda !== 'undefined') {
+    dataBase = parseDate(dataVenda)
+    if (dataBase) {
+      fonteDados = 'data_venda'
+    }
+  }
+  
+  // Fallback para created_at se data_venda não funcionou
+  if (!dataBase && created_at && created_at !== '' && created_at !== 'null' && created_at !== 'undefined') {
+    dataBase = parseDate(created_at)
+    if (dataBase) {
+      fonteDados = 'created_at'
+    }
+  }
+  
+  if (!dataBase) {
+    return {
+      texto: 'Sem data base',
+      classeCor: 'text-gray-400'
+    }
+  }
+  
+  try {
+    // Calcular data limite (15 dias úteis após a data base)
+    const dataLimite = addBusinessDays(dataBase, 15)
+    
+    // Data de hoje (sem horas)
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    
+    // Data limite sem horas
+    const limiteComparar = new Date(dataLimite)
+    limiteComparar.setHours(0, 0, 0, 0)
+    
+    // Verificar se já passou da data limite
+    if (hoje > limiteComparar) {
+      // Atrasado - calcular dias de atraso
+      const diasAtraso = getBusinessDaysBetween(limiteComparar, hoje) - 1
+      
+      return {
+        texto: `🚨 Atrasado há ${diasAtraso} dias úteis`,
+        classeCor: 'text-red-600 font-bold'
+      }
+    }
+    
+    // Dentro do prazo - calcular dias restantes
+    const diasRestantes = getBusinessDaysBetween(hoje, limiteComparar) - 1
+    
+    // Formatação conforme regras
+    if (diasRestantes > 5) {
+      return {
+        texto: `🟢 Faltam ${diasRestantes} dias úteis`,
+        classeCor: 'text-green-600 font-medium'
+      }
+    } else if (diasRestantes >= 1) {
+      return {
+        texto: `🟠 Atenção: ${diasRestantes} dias úteis`,
+        classeCor: 'text-amber-600 font-bold'
+      }
+    } else {
+      return {
+        texto: '🔴 Último dia!',
+        classeCor: 'text-orange-600 font-bold'
+      }
+    }
+    
+  } catch (error) {
+    console.error('❌ Erro ao calcular exibição da data limite:', error)
+    return {
+      texto: 'Erro de cálculo',
+      classeCor: 'text-gray-400'
+    }
+  }
+}
+
+// Funções de compatibilidade (mantidas para não quebrar código existente)
 export const getDataLimiteMensagem = (dataLimite: string, statusCampanha: string) => {
   if (!dataLimite) return { texto: '-', estilo: 'text-muted-foreground' }
   
@@ -123,7 +247,6 @@ export const getDataLimiteMensagem = (dataLimite: string, statusCampanha: string
   }
 }
 
-// Manter função antiga para compatibilidade (deprecated)
 export const getDataLimiteStyle = (dataLimite: string, statusCampanha: string) => {
   if (!dataLimite) return 'text-muted-foreground'
   
@@ -146,147 +269,4 @@ export const getDataLimiteStyle = (dataLimite: string, statusCampanha: string) =
   }
   
   return 'text-foreground'
-}
-
-// Função auxiliar para converter diferentes formatos de data para Date object
-const parseDate = (dateInput: string | Date | null | undefined): Date | null => {
-  if (!dateInput) return null
-  
-  try {
-    // Se já é um objeto Date
-    if (dateInput instanceof Date) {
-      return isNaN(dateInput.getTime()) ? null : dateInput
-    }
-    
-    // Se é string, tentar diferentes formatos
-    if (typeof dateInput === 'string') {
-      const trimmed = dateInput.trim()
-      if (trimmed === '') return null
-      
-      // Formato YYYY-MM-DD (mais comum do banco)
-      if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
-        const date = new Date(trimmed + 'T00:00:00.000Z')
-        return isNaN(date.getTime()) ? null : date
-      }
-      
-      // Tentar parse normal
-      const date = new Date(trimmed)
-      return isNaN(date.getTime()) ? null : date
-    }
-    
-    return null
-  } catch (error) {
-    console.error('Erro ao fazer parse da data:', error, 'Input:', dateInput)
-    return null
-  }
-}
-
-// Nova função para painel do gestor - calcula e formata exibição da data limite
-export const getDataLimiteDisplayForGestor = (dataVenda: string, created_at: string | null, statusCampanha: string): { texto: string, classeCor: string } => {
-  console.log(`🔍 [ADMIN dateUtils] Analisando dados:`, {
-    dataVenda,
-    created_at,
-    statusCampanha,
-    dataVendaType: typeof dataVenda,
-    createdAtType: typeof created_at
-  })
-  
-  // Se status for "No Ar" ou "Otimização" - campanha cumprida
-  if (isStatusEntregue(statusCampanha)) {
-    console.log(`✅ [ADMIN dateUtils] Status entregue detectado: ${statusCampanha}`)
-    return {
-      texto: '✅ Cumprido',
-      classeCor: 'bg-green-100 text-green-800 border-green-300'
-    }
-  }
-  
-  // Determinar a data base para cálculo (data_venda ou created_at como fallback)
-  let dataBase: Date | null = null
-  let fonteDados = ''
-  
-  // Tentar data_venda primeiro
-  if (dataVenda && dataVenda !== '' && dataVenda !== 'null' && dataVenda !== 'undefined') {
-    dataBase = parseDate(dataVenda)
-    if (dataBase) {
-      fonteDados = 'data_venda'
-      console.log(`📅 [ADMIN dateUtils] Usando data_venda: ${dataVenda} -> ${dataBase.toISOString()}`)
-    }
-  }
-  
-  // Fallback para created_at se data_venda não funcionou
-  if (!dataBase && created_at && created_at !== '' && created_at !== 'null' && created_at !== 'undefined') {
-    dataBase = parseDate(created_at)
-    if (dataBase) {
-      fonteDados = 'created_at'
-      console.log(`📅 [ADMIN dateUtils] Fallback para created_at: ${created_at} -> ${dataBase.toISOString()}`)
-    }
-  }
-  
-  if (!dataBase) {
-    console.log('⚠️ [ADMIN dateUtils] Nenhuma data base válida encontrada', {
-      dataVenda_original: dataVenda,
-      created_at_original: created_at
-    })
-    return {
-      texto: 'Sem data base',
-      classeCor: 'text-gray-400'
-    }
-  }
-  
-  try {
-    // Calcular data limite (15 dias úteis após a data base)
-    const dataLimite = addBusinessDays(dataBase, 15)
-    console.log(`📅 [ADMIN dateUtils] Data limite calculada (${fonteDados} + 15 dias úteis): ${dataLimite.toISOString()}`)
-    
-    // Data de hoje (sem horas)
-    const hoje = new Date()
-    hoje.setHours(0, 0, 0, 0)
-    
-    // Data limite sem horas
-    const limiteComparar = new Date(dataLimite)
-    limiteComparar.setHours(0, 0, 0, 0)
-    
-    console.log(`📊 [ADMIN dateUtils] Comparação: hoje=${hoje.toISOString()} vs limite=${limiteComparar.toISOString()}`)
-    
-    // Verificar se já passou da data limite
-    if (hoje > limiteComparar) {
-      // Atrasado - calcular dias de atraso
-      const diasAtraso = getBusinessDaysBetween(limiteComparar, hoje) - 1
-      console.log(`🚨 [ADMIN dateUtils] Atrasado: ${diasAtraso} dias úteis`)
-      
-      return {
-        texto: `🚨 Atrasado há ${diasAtraso} dias úteis`,
-        classeCor: 'text-red-600 font-bold'
-      }
-    }
-    
-    // Dentro do prazo - calcular dias restantes
-    const diasRestantes = getBusinessDaysBetween(hoje, limiteComparar) - 1
-    console.log(`⏳ [ADMIN dateUtils] Dias restantes: ${diasRestantes}`)
-    
-    // Formatação conforme regras
-    if (diasRestantes > 5) {
-      return {
-        texto: `🟢 Faltam ${diasRestantes} dias úteis`,
-        classeCor: 'text-green-600 font-medium'
-      }
-    } else if (diasRestantes >= 1) {
-      return {
-        texto: `🟠 Atenção: ${diasRestantes} dias úteis`,
-        classeCor: 'text-amber-600 font-bold'
-      }
-    } else {
-      return {
-        texto: '🔴 Último dia!',
-        classeCor: 'text-orange-600 font-bold'
-      }
-    }
-    
-  } catch (error) {
-    console.error('❌ [ADMIN dateUtils] Erro ao calcular exibição da data limite:', error)
-    return {
-      texto: 'Erro de cálculo',
-      classeCor: 'text-gray-400'
-    }
-  }
 }
