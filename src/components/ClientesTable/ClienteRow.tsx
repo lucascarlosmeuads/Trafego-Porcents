@@ -17,7 +17,7 @@ import {
   Clock,
   Plus
 } from 'lucide-react'
-import { Cliente } from '@/lib/supabase'
+import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
@@ -87,9 +87,6 @@ export function ClienteRow({
   onComissionValueSave,
   onComissionValueCancel,
 }: ClienteRowProps) {
-  const [isBriefingOpen, setIsBriefingOpen] = useState(false)
-  const [isMaterialsOpen, setIsMaterialsOpen] = useState(false)
-
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') {
       return 'Data não disponível'
@@ -126,7 +123,7 @@ export function ClienteRow({
       <TableCell className="p-2">
         <div className="space-y-2">
           <StatusSelect
-            value={cliente.status_campanha || 'Preenchimento do Formulário'}
+            value={(cliente.status_campanha || 'Preenchimento do Formulário') as StatusCampanha}
             getStatusColor={getStatusColor}
             onValueChange={(newStatus) => onStatusChange(cliente.id?.toString() || '', newStatus)}
             disabled={!cliente.id}
@@ -153,11 +150,16 @@ export function ClienteRow({
               </Button>
             }
           />
-          <Button variant="ghost" size="sm" onClick={() => setIsMaterialsOpen(true)} className="flex items-center gap-2">
-            <FolderOpen className="w-3 h-3" />
-            Ver materiais
-          </Button>
-          <BriefingMaterialsModal isOpen={isMaterialsOpen} onClose={() => setIsMaterialsOpen(false)} cliente={cliente} />
+          <BriefingMaterialsModal 
+            emailCliente={cliente.email_cliente || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+            trigger={
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <FolderOpen className="w-3 h-3" />
+                Ver materiais
+              </Button>
+            }
+          />
           <Button variant="ghost" size="sm" asChild>
             <a href={`https://wa.me/${cliente.telefone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-500">
               <Phone className="w-3 h-3" />
