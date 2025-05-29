@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -125,9 +126,9 @@ export function ClienteRow({
       <TableCell className="p-2">
         <div className="space-y-2">
           <StatusSelect
-            status={cliente.status_campanha || 'Preenchimento do Formulário'}
+            value={cliente.status_campanha || 'Preenchimento do Formulário'}
             getStatusColor={getStatusColor}
-            onStatusChange={(newStatus) => onStatusChange(cliente.id?.toString() || '', newStatus)}
+            onValueChange={(newStatus) => onStatusChange(cliente.id?.toString() || '', newStatus)}
             disabled={!cliente.id}
             isUpdating={updatingStatus === cliente.id?.toString()}
           />
@@ -142,15 +143,20 @@ export function ClienteRow({
               Grupo
             </a>
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setIsBriefingOpen(true)} className="flex items-center gap-2">
-            <FolderOpen className="w-3 h-3" />
-            Briefing
-          </Button>
+          <BriefingModal 
+            emailCliente={cliente.email_cliente || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+            trigger={
+              <Button variant="ghost" size="sm" className="flex items-center gap-2">
+                <FolderOpen className="w-3 h-3" />
+                Briefing
+              </Button>
+            }
+          />
           <Button variant="ghost" size="sm" onClick={() => setIsMaterialsOpen(true)} className="flex items-center gap-2">
             <FolderOpen className="w-3 h-3" />
             Ver materiais
           </Button>
-          <BriefingModal isOpen={isBriefingOpen} onClose={() => setIsBriefingOpen(false)} cliente={cliente} />
           <BriefingMaterialsModal isOpen={isMaterialsOpen} onClose={() => setIsMaterialsOpen(false)} cliente={cliente} />
           <Button variant="ghost" size="sm" asChild>
             <a href={`https://wa.me/${cliente.telefone}`} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-green-500">
@@ -299,7 +305,7 @@ export function ClienteRow({
       <TableCell className="p-2">
         <ComissaoButton 
           cliente={cliente}
-          isAdmin={isAdmin}
+          isGestorDashboard={!isAdmin}
           updatingComission={updatingComission}
           editingComissionValue={editingComissionValue}
           comissionValueInput={comissionValueInput}
