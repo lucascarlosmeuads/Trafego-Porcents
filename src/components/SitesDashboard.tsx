@@ -12,27 +12,36 @@ export function SitesDashboard() {
   const { user } = useAuth()
   const [activeView, setActiveView] = useState<'pendentes' | 'finalizados'>('pendentes')
   
-  // Dados para sites pendentes
+  console.log('🌐 [SitesDashboard] Iniciando dashboard de sites para:', user?.email)
+  
+  // Dados para sites pendentes - FORÇAR filterType específico
   const { clientes: clientesPendentes, loading: loadingPendentes, error: errorPendentes, refetch: refetchPendentes } = useManagerData(
     user?.email || '',
     false, // isAdminUser = false para criadores de sites
     undefined, // selectedManager não é usado para criadores de sites
-    'sites-pendentes'
+    'sites-pendentes' // EXPLÍCITO: forçar filtro de sites pendentes
   )
 
-  // Dados para sites finalizados
+  // Dados para sites finalizados - FORÇAR filterType específico
   const { clientes: clientesFinalizados, loading: loadingFinalizados, error: errorFinalizados, refetch: refetchFinalizados } = useManagerData(
     user?.email || '',
     false,
     undefined,
-    'sites-finalizados'
+    'sites-finalizados' // EXPLÍCITO: forçar filtro de sites finalizados
   )
+
+  console.log('📊 [SitesDashboard] Resultados:', {
+    pendentes: clientesPendentes.length,
+    finalizados: clientesFinalizados.length,
+    activeView
+  })
 
   const loading = activeView === 'pendentes' ? loadingPendentes : loadingFinalizados
   const error = activeView === 'pendentes' ? errorPendentes : errorFinalizados
   const clientes = activeView === 'pendentes' ? clientesPendentes : clientesFinalizados
 
   const refetch = () => {
+    console.log('🔄 [SitesDashboard] Refetch solicitado')
     refetchPendentes()
     refetchFinalizados()
   }
@@ -182,6 +191,7 @@ export function SitesDashboard() {
             <div className="text-gray-600">
               <p>Esta seção mostra todos os sites que você já finalizou e entregou aos clientes.</p>
               <p className="mt-2">Você pode revisar, editar links ou fazer ajustes conforme necessário.</p>
+              <p className="mt-2 font-medium text-blue-600">💰 Em breve: botão para solicitar pagamento pelos sites finalizados!</p>
             </div>
           )}
         </CardContent>

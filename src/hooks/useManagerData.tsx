@@ -43,18 +43,21 @@ export function useManagerData(
         .from('todos_clientes')
         .select('*')
 
-      // Aplicar filtros específicos baseados no filterType
+      // NOVO: Aplicar filtros específicos APENAS para contextos de sites
       if (filterType === 'sites-pendentes') {
-        console.log('🌐 [useManagerData] Aplicando filtro para sites pendentes')
+        console.log('🌐 [useManagerData] Aplicando filtro ESPECÍFICO para sites pendentes')
         query = query.eq('site_status', 'aguardando_link')
       } else if (filterType === 'sites-finalizados') {
-        console.log('✅ [useManagerData] Aplicando filtro para sites finalizados')
+        console.log('✅ [useManagerData] Aplicando filtro ESPECÍFICO para sites finalizados')
         query = query
           .eq('site_status', 'finalizado')
           .not('link_site', 'is', null)
           .neq('link_site', '')
       } else {
-        // Lógica original para outros casos
+        // CORREÇÃO: Para painéis normais (Admin/Gestor), aplicar APENAS filtros de gestor
+        // NÃO aplicar filtros de site_status para não ocultar clientes
+        console.log('📊 [useManagerData] Modo painel normal - SEM filtros de site_status')
+        
         if (isAdminUser) {
           if (selectedManager && selectedManager !== 'Todos os Clientes') {
             console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
@@ -76,6 +79,18 @@ export function useManagerData(
       }
 
       console.log('✅ [useManagerData] Dados encontrados:', data?.length || 0, 'registros')
+      
+      // Log adicional para debug da sincronização
+      if (data && data.length > 0) {
+        const sitesData = data.filter(c => c.site_status && c.site_status !== 'pendente')
+        console.log('🌐 [useManagerData] Clientes com status de site:', sitesData.length, sitesData.map(c => ({
+          id: c.id,
+          nome: c.nome_cliente,
+          site_status: c.site_status,
+          link_site: c.link_site ? 'tem link' : 'sem link'
+        })))
+      }
+      
       setClientes(data || [])
 
     } catch (err: any) {
