@@ -361,6 +361,7 @@ export function ClienteRow({
       <TableCell>
         <ComissaoButton
           cliente={cliente}
+          isGestorDashboard={!selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
           updatingComission={updatingComission}
           editingComissionValue={editingComissionValue}
           comissionValueInput={comissionValueInput}

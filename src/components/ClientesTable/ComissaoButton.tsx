@@ -40,8 +40,7 @@ export function ComissaoButton({
 
   const isEditingValue = editingComissionValue === cliente.id
   const valorComissao = cliente.valor_comissao || 0
-  const isSaquePendente = cliente.status_campanha === 'Saque Pendente' || cliente.status_campanha === 'Campanha Anual'
-  const jaFoiSolicitado = cliente.saque_solicitado || false
+  const isCampanhaNoAr = cliente.status_campanha === 'Campanha no Ar'
   
   // Verificar se a solicitação foi paga pelo admin
   const saqueFoiPago = solicitacoesPagas.includes(cliente.id.toString())
@@ -49,8 +48,8 @@ export function ComissaoButton({
   // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
     status: cliente.status_campanha,
-    isSaquePendente,
-    jaFoiSolicitado,
+    isCampanhaNoAr,
+    comissao: cliente.comissao,
     saqueFoiPago,
     saqueEnviado,
     isGestorDashboard
@@ -98,73 +97,71 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Saque foi pago pelo admin
-  if (isGestorDashboard && saqueFoiPago) {
-    console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
-          <span className="flex items-center gap-1">
-            <Check className="w-3 h-3" />
-            Saque Realizado - R$ {valorComissao.toFixed(2)}
-          </span>
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Status "Saque Pendente" + Saque disponível
-  if (isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
-    console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="default"
-          size="sm"
-          className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
-          onClick={async () => {
-            console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
-            const success = await criarSolicitacaoSaque(
-              cliente.id,
-              cliente.email_gestor || '',
-              currentManagerName || '',
-              valorComissao
-            )
-            if (success) {
-              console.log('✅ [ComissaoButton] Saque criado com sucesso!')
-              setSaqueEnviado(true)
-            } else {
-              console.error('❌ [ComissaoButton] Falha ao criar saque')
-            }
-          }}
-          disabled={loadingSaque}
-        >
-          {loadingSaque ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : (
-            <span>💸</span>
-          )}
-          <span>Sacar Agora!</span>
-          <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
-        </Button>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Saque já solicitado ou enviado (mas ainda não pago)
-  if (isGestorDashboard && (jaFoiSolicitado || saqueEnviado) && !saqueFoiPago) {
-    console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
-          Solicitação enviada - Aguardando processamento
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Saque Pendente"/"Campanha Anual" ou comissão paga)
+  // PAINEL DO GESTOR - Lógica específica
   if (isGestorDashboard) {
+    // Se comissão foi paga pelo admin
+    if (saqueFoiPago) {
+      console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
+      return (
+        <div className="flex items-center gap-1">
+          <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
+            <span className="flex items-center gap-1">
+              <Check className="w-3 h-3" />
+              Saque Realizado - R$ {valorComissao.toFixed(2)}
+            </span>
+          </div>
+        </div>
+      )
+    }
+
+    // Se campanha está no ar E comissão ainda é "Pendente"
+    if (isCampanhaNoAr && cliente.comissao === 'Pendente') {
+      console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
+      return (
+        <div className="flex items-center gap-1">
+          <Button
+            variant="default"
+            size="sm"
+            className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
+            onClick={async () => {
+              console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
+              
+              // Atualizar comissão para "Solicitado"
+              const success = await onComissionToggle(cliente.id, false)
+              if (success) {
+                console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
+                setSaqueEnviado(true)
+              } else {
+                console.error('❌ [ComissaoButton] Falha ao atualizar comissão')
+              }
+            }}
+            disabled={loadingSaque || updatingComission === cliente.id}
+          >
+            {(loadingSaque || updatingComission === cliente.id) ? (
+              <Loader2 className="w-3 h-3 animate-spin mr-1" />
+            ) : (
+              <span>💸</span>
+            )}
+            <span>Sacar Agora!</span>
+            <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
+          </Button>
+        </div>
+      )
+    }
+
+    // Se comissão já foi solicitada (mas ainda não paga)
+    if (cliente.comissao === 'Solicitado' || saqueEnviado) {
+      console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
+      return (
+        <div className="flex items-center gap-1">
+          <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
+            Solicitação enviada - Aguardando processamento
+          </div>
+        </div>
+      )
+    }
+
+    // Qualquer outro caso (status diferente de "Campanha no Ar" ou comissão paga)
     console.log('🔒 [ComissaoButton] Status travado para gestor')
     return (
       <div className="flex items-center gap-1">
@@ -175,58 +172,7 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO ADMIN - NOVA LÓGICA: Aguardando gestor solicitar saque
-  if (!isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueFoiPago) {
-    console.log('⏳ [ComissaoButton] Admin - Aguardando gestor solicitar saque')
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
-          Aguardando gestor solicitar saque
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO ADMIN - Saque solicitado pelo gestor, aguardando pagamento
-  if (!isGestorDashboard && isSaquePendente && jaFoiSolicitado && !saqueFoiPago) {
-    console.log('💰 [ComissaoButton] Admin - Saque solicitado, mostrando botão pagar')
-    return (
-      <div className="flex items-center gap-1">
-        <Button
-          variant="default"
-          size="sm"
-          className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
-          onClick={() => onComissionToggle(cliente.id, false)}
-          disabled={updatingComission === cliente.id}
-        >
-          {updatingComission === cliente.id ? (
-            <Loader2 className="w-3 h-3 animate-spin mr-1" />
-          ) : (
-            <Check className="w-3 h-3 mr-1" />
-          )}
-          <span>Pagar Agora!</span>
-          <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
-        </Button>
-      </div>
-    )
-  }
-
-  // PAINEL DO ADMIN - Saque já foi pago
-  if (!isGestorDashboard && saqueFoiPago) {
-    console.log('✅ [ComissaoButton] Admin - Saque já foi pago')
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
-          <span className="flex items-center gap-1">
-            <Check className="w-3 h-3" />
-            Saque Realizado - R$ {valorComissao.toFixed(2)}
-          </span>
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO ADMIN - Comportamento padrão para outros status
+  // PAINEL DO ADMIN - Comportamento original mantido
   return (
     <div className="flex items-center gap-1">
       <Button

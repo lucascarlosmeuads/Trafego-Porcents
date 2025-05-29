@@ -227,6 +227,42 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // Nova função para o painel do gestor - atualiza comissão para "Solicitado"
+  const handleGestorSaqueRequest = async (clienteId: string) => {
+    setUpdatingComission(clienteId)
+    
+    try {
+      console.log('💸 [ClientesTable] Gestor solicitando saque para cliente:', clienteId)
+      
+      const success = await updateCliente(clienteId, 'comissao', 'Solicitado')
+      
+      if (success) {
+        toast({
+          title: "Saque Solicitado!",
+          description: "Sua solicitação de saque foi enviada com sucesso.",
+        })
+        return true
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao solicitar saque",
+          variant: "destructive",
+        })
+        return false
+      }
+    } catch (error) {
+      console.error('💥 Erro ao solicitar saque:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao solicitar saque",
+        variant: "destructive",
+      })
+      return false
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
   const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS DO SITE ===`)
     console.log(`🆔 Cliente ID: "${clienteId}"`)
@@ -327,7 +363,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     onBMEdit={handleBMEdit}
                     onBMSave={handleBMSave}
                     onBMCancel={handleBMCancel}
-                    onComissionToggle={filterType === 'saques-pendentes' ? marcarPagamentoFeito : handleComissionToggle}
+                    onComissionToggle={
+                      filterType === 'saques-pendentes' 
+                        ? marcarPagamentoFeito 
+                        : !isAdmin 
+                          ? handleGestorSaqueRequest  // Usar função específica do gestor
+                          : handleComissionToggle     // Usar função original do admin
+                    }
                     onComissionValueEdit={handleComissionValueEdit}
                     onComissionValueSave={handleComissionValueSave}
                     onComissionValueCancel={handleComissionValueCancel}
