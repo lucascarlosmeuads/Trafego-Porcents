@@ -1,3 +1,4 @@
+
 export const addBusinessDays = (startDate: Date, businessDays: number): Date => {
   const result = new Date(startDate)
   let daysAdded = 0
@@ -60,7 +61,7 @@ export const getBusinessDaysBetween = (startDate: Date, endDate: Date): number =
     if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
       count++
     }
-    currentDate.setDate(currentDate.setDate() + 1)
+    currentDate.setDate(currentDate.getDate() + 1)
   }
   
   return count
@@ -74,7 +75,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
     console.log('❌ [getDataLimiteDisplayForGestor] Sem data de venda')
     return {
       texto: '⚠️ Sem data de venda',
-      estilo: 'text-orange-500 font-medium'
+      estilo: 'bg-orange-100 text-orange-800 px-2 py-1 rounded font-medium border border-orange-300'
     }
   }
 
@@ -103,7 +104,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
       console.log('❌ [getDataLimiteDisplayForGestor] Data inválida:', dataVenda)
       return {
         texto: '❌ Data inválida',
-        estilo: 'text-red-500 font-medium'
+        estilo: 'bg-red-100 text-red-800 px-2 py-1 rounded font-medium border border-red-300'
       }
     }
     
@@ -128,7 +129,7 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
       if (diasRestantes === 0) {
         return {
           texto: '🚨 ÚLTIMO DIA!',
-          estilo: 'bg-red-100 text-red-800 px-2 py-1 rounded font-bold border border-red-300'
+          estilo: 'bg-red-100 text-red-800 px-2 py-1 rounded font-bold border border-red-300 animate-pulse'
         }
       } else if (diasRestantes <= 2) {
         return {
@@ -154,14 +155,14 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
       
       return {
         texto: `🔴 ATRASADO ${diasAtraso} dias`,
-        estilo: 'bg-red-200 text-red-900 px-2 py-1 rounded font-bold border-2 border-red-500'
+        estilo: 'bg-red-200 text-red-900 px-2 py-1 rounded font-bold border-2 border-red-500 animate-pulse'
       }
     }
   } catch (error) {
     console.error('💥 [getDataLimiteDisplayForGestor] Erro ao calcular:', error)
     return {
       texto: '❌ Erro no cálculo',
-      estilo: 'text-red-500 font-medium'
+      estilo: 'bg-red-100 text-red-800 px-2 py-1 rounded font-medium border border-red-300'
     }
   }
 }
