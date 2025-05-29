@@ -24,6 +24,7 @@ interface ClienteRowProps {
   selectedManager: string
   index: number
   isAdmin?: boolean
+  showEmailGestor?: boolean
   updatingStatus: string | null
   editingLink: { clienteId: string, field: string } | null
   linkValue: string
@@ -55,6 +56,7 @@ export function ClienteRow({
   selectedManager,
   index,
   isAdmin = false,
+  showEmailGestor = false,
   updatingStatus,
   editingLink,
   linkValue,
@@ -188,7 +190,7 @@ export function ClienteRow({
         </div>
       </TableCell>
 
-      {isAdmin && (
+      {(isAdmin || showEmailGestor) && (
         <TableCell className="text-white text-sm max-w-[180px]">
           <div className="truncate" title={cliente.email_gestor || ''}>
             {cliente.email_gestor || 'Não informado'}

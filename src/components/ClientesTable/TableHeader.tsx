@@ -3,9 +3,10 @@ import { TableHead, TableHeader as TableHeaderComponent, TableRow } from '@/comp
 
 interface TableHeaderProps {
   isAdmin?: boolean
+  showEmailGestor?: boolean
 }
 
-export function TableHeader({ isAdmin = false }: TableHeaderProps) {
+export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableHeaderProps) {
   return (
     <TableHeaderComponent>
       <TableRow className="border-border hover:bg-transparent">
@@ -13,7 +14,7 @@ export function TableHeader({ isAdmin = false }: TableHeaderProps) {
         <TableHead className="text-white font-semibold">Nome Cliente</TableHead>
         <TableHead className="text-white font-semibold">Telefone</TableHead>
         <TableHead className="text-white font-semibold">Email Cliente</TableHead>
-        {isAdmin && (
+        {(isAdmin || showEmailGestor) && (
           <TableHead className="text-white font-semibold">Email Gestor</TableHead>
         )}
         <TableHead className="text-white font-semibold">Status Campanha</TableHead>
