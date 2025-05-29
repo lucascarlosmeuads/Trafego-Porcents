@@ -28,8 +28,9 @@ export function SiteStatusSelect({
 
   const currentStatus = getStatusConfig(value)
 
-  console.log('🌐 [SiteStatusSelect] Renderizando com valor:', value)
-  console.log('🌐 [SiteStatusSelect] Status atual:', currentStatus)
+  console.log('🌐 [SiteStatusSelect] === RENDERIZAÇÃO ===')
+  console.log('🌐 [SiteStatusSelect] Valor atual:', value)
+  console.log('🌐 [SiteStatusSelect] Status config:', currentStatus)
   console.log('🌐 [SiteStatusSelect] Disabled:', disabled)
   console.log('🌐 [SiteStatusSelect] IsUpdating:', isUpdating)
 
@@ -37,7 +38,10 @@ export function SiteStatusSelect({
     <Select 
       value={value}
       onValueChange={(newValue) => {
-        console.log('🌐 [SiteStatusSelect] Mudança solicitada de', value, 'para', newValue)
+        console.log('🌐 [SiteStatusSelect] === MUDANÇA DE STATUS ===')
+        console.log('🌐 [SiteStatusSelect] Status anterior:', value)
+        console.log('🌐 [SiteStatusSelect] Novo status solicitado:', newValue)
+        console.log('🌐 [SiteStatusSelect] Chamando onValueChange...')
         onValueChange(newValue)
       }}
       disabled={disabled || isUpdating}
@@ -62,7 +66,8 @@ export function SiteStatusSelect({
             key={option.value} 
             value={option.value}
             onSelect={() => {
-              console.log('🌐 [SiteStatusSelect] Item selecionado:', option.value)
+              console.log('🌐 [SiteStatusSelect] Item clicado:', option.value)
+              console.log('🌐 [SiteStatusSelect] Label:', option.label)
             }}
           >
             <span className={`px-2 py-1 rounded text-xs font-medium ${option.color}`}>

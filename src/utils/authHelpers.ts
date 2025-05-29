@@ -1,3 +1,4 @@
+
 import { supabase } from '@/lib/supabase'
 
 export const normalizeEmail = (email: string): string => {
@@ -19,15 +20,19 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // Verificação específica para criadores de sites - PRIORIDADE ALTA E MAIS AMPLA
+    // Verificação específica para criadores de sites - CRITÉRIO MAIS AMPLO E FLEXÍVEL
     if (normalizedEmail.includes('criador') || 
         normalizedEmail.includes('site') || 
         normalizedEmail.includes('webdesign') ||
         normalizedEmail.includes('sites') ||
         normalizedEmail.includes('web') ||
         normalizedEmail.startsWith('sites') ||
-        normalizedEmail.endsWith('sites.com')) {
-      console.log('🌐 [authHelpers] Usuário é SITES (criador/site/webdesign/sites/web)')
+        normalizedEmail.endsWith('sites.com') ||
+        normalizedEmail.includes('design') ||
+        normalizedEmail.includes('developer') ||
+        normalizedEmail.includes('dev')) {
+      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (critério ampliado)')
+      console.log('🌐 [authHelpers] Email que passou no teste:', normalizedEmail)
       return 'sites'
     }
 
@@ -48,14 +53,13 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     const { data: cliente, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('id, email_cliente, nome_cliente')
-      .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
+      .ilike('email_cliente', normalizedEmail)
       .single()
 
     if (clienteError) {
       console.log('⚠️ [authHelpers] Erro ao buscar cliente ou cliente não encontrado:', clienteError.message)
       console.log('⚠️ [authHelpers] Código do erro:', clienteError.code)
       
-      // Se o erro for PGRST116 (nenhum resultado encontrado), é normal
       if (clienteError.code === 'PGRST116') {
         console.log('❌ [authHelpers] Cliente não encontrado na tabela todos_clientes')
       }
@@ -67,19 +71,12 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'cliente'
     }
 
-    // Se chegou até aqui, o usuário não foi encontrado em nenhuma categoria
     console.log('❌ [authHelpers] USUÁRIO NÃO AUTORIZADO')
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
-    console.log('❌ [authHelpers] Possíveis soluções:')
-    console.log('   1. Verificar se o email está cadastrado na tabela todos_clientes')
-    console.log('   2. Verificar se o email está cadastrado na tabela gestores')
-    console.log('   3. Solicitar ao admin para adicionar o usuário ao sistema')
-    
     return 'unauthorized'
 
   } catch (error) {
     console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
-    console.log('🔧 [authHelpers] Retornando erro para investigação')
     return 'error'
   }
 }
@@ -88,7 +85,14 @@ export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
   
   // Para usuários de sites, retornar nome específico
-  if (normalizedEmail.includes('criador') || normalizedEmail.includes('site') || normalizedEmail.includes('webdesign')) {
+  if (normalizedEmail.includes('criador') || 
+      normalizedEmail.includes('site') || 
+      normalizedEmail.includes('webdesign') ||
+      normalizedEmail.includes('sites') ||
+      normalizedEmail.includes('web') ||
+      normalizedEmail.includes('design') ||
+      normalizedEmail.includes('developer') ||
+      normalizedEmail.includes('dev')) {
     return 'Criador de Sites'
   }
   
@@ -97,7 +101,7 @@ export const getManagerName = async (email: string): Promise<string> => {
     const { data: gestorData, error: gestorError } = await supabase
       .from('gestores')
       .select('nome')
-      .ilike('email', normalizedEmail) // Mudança: usando ilike para case-insensitive
+      .ilike('email', normalizedEmail)
       .eq('ativo', true)
       .single()
 
@@ -109,7 +113,7 @@ export const getManagerName = async (email: string): Promise<string> => {
     const { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('nome_cliente')
-      .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
+      .ilike('email_cliente', normalizedEmail)
       .single()
 
     if (!clienteError && clienteData) {
