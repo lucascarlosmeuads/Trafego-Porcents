@@ -37,7 +37,7 @@ export function useSaqueOperations() {
       const { data: solicitacao, error: errorSolicitacao } = await supabase
         .from('solicitacoes_saque')
         .insert({
-          cliente_id: Number(clienteId),
+          cliente_id: Number(clienteId), // Garantir que seja número
           email_gestor: emailGestor,
           nome_gestor: nomeGestor,
           valor_comissao: valorComissao,
@@ -52,21 +52,20 @@ export function useSaqueOperations() {
 
       console.log('✅ [useSaqueOperations] Solicitação criada:', solicitacao)
 
-      // 2. Atualizar o cliente para marcar comissao = "Solicitado" e saque_solicitado = true
+      // 2. Atualizar o cliente para marcar saque_solicitado = true
       const { error: errorUpdate } = await supabase
         .from('todos_clientes')
         .update({ 
-          comissao: 'Solicitado',
           saque_solicitado: true 
         })
-        .eq('id', Number(clienteId))
+        .eq('id', Number(clienteId)) // Garantir que seja número
 
       if (errorUpdate) {
         console.error('❌ [useSaqueOperations] Erro ao atualizar cliente:', errorUpdate)
         throw errorUpdate
       }
 
-      console.log('✅ [useSaqueOperations] Cliente atualizado com comissao = "Solicitado"')
+      console.log('✅ [useSaqueOperations] Cliente atualizado com saque_solicitado = true')
 
       toast({
         title: "Saque solicitado!",

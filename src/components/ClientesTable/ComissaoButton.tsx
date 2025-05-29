@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Check, X, Edit2, Loader2 } from 'lucide-react'
 import { useSaqueOperations } from '@/hooks/useSaqueOperations'
 import { useAuth } from '@/hooks/useAuth'
+import { useSolicitacoesPagas } from '@/hooks/useSolicitacoesPagas'
 import type { Cliente } from '@/lib/supabase'
 
 interface ComissaoButtonProps {
@@ -34,22 +35,35 @@ export function ComissaoButton({
 }: ComissaoButtonProps) {
   const { currentManagerName, isAdmin } = useAuth()
   const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
+  const { solicitacoesPagas } = useSolicitacoesPagas()
   const [saqueEnviado, setSaqueEnviado] = useState(false)
 
   const isEditingValue = editingComissionValue === cliente.id
   const valorComissao = cliente.valor_comissao || 0
-  const isCampanhaNoAr = cliente.status_campanha === 'Campanha no Ar'
-  const comissaoStatus = cliente.comissao || 'Pendente'
+  const isSaquePendente = cliente.status_campanha === 'Saque Pendente' || cliente.status_campanha === 'Campanha Anual'
+  const jaFoiSolicitado = cliente.saque_solicitado || false
+  
+  // Verificar se a solicitação foi paga pelo admin
+  const saqueFoiPago = solicitacoesPagas.includes(cliente.id.toString())
 
+  // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
     status: cliente.status_campanha,
-    comissaoStatus,
-    isCampanhaNoAr,
-    isGestorDashboard,
-    valorComissao
+    isSaquePendente,
+    jaFoiSolicitado,
+    saqueFoiPago,
+    saqueEnviado,
+    isGestorDashboard
   })
 
-  // PAINEL DO ADMIN - Modo de edição de valor
+  // NOVA REGRA: Gestores não podem editar comissão em nenhuma situação
+  if (isGestorDashboard && isEditingValue) {
+    // Se for painel do gestor e estiver tentando editar, cancelar automaticamente
+    onComissionValueCancel()
+    return null
+  }
+
+  // Para admin: manter comportamento de edição normal
   if (!isGestorDashboard && isEditingValue) {
     return (
       <div className="flex items-center gap-1">
@@ -84,36 +98,24 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Comissão já foi paga
-  if (isGestorDashboard && comissaoStatus === 'Pago') {
-    console.log('✅ [ComissaoButton] Gestor - Comissão paga')
+  // PAINEL DO GESTOR - Saque foi pago pelo admin
+  if (isGestorDashboard && saqueFoiPago) {
+    console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
           <span className="flex items-center gap-1">
             <Check className="w-3 h-3" />
-            ✅ Pago - R$ {valorComissao.toFixed(2)}
+            Saque Realizado - R$ {valorComissao.toFixed(2)}
           </span>
         </div>
       </div>
     )
   }
 
-  // PAINEL DO GESTOR - Saque já foi solicitado
-  if (isGestorDashboard && comissaoStatus === 'Solicitado') {
-    console.log('⏳ [ComissaoButton] Gestor - Saque já solicitado')
-    return (
-      <div className="flex items-center gap-1">
-        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
-          Solicitação enviada - Aguardando processamento
-        </div>
-      </div>
-    )
-  }
-
-  // PAINEL DO GESTOR - Campanha no ar + Pode solicitar saque
-  if (isGestorDashboard && isCampanhaNoAr && comissaoStatus === 'Pendente') {
-    console.log('🎯 [ComissaoButton] Gestor - Campanha no ar, pode solicitar saque!')
+  // PAINEL DO GESTOR - Status "Saque Pendente" + Saque disponível
+  if (isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueEnviado && !saqueFoiPago) {
+    console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
     return (
       <div className="flex items-center gap-1">
         <Button
@@ -121,7 +123,7 @@ export function ComissaoButton({
           size="sm"
           className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
           onClick={async () => {
-            console.log('💸 [ComissaoButton] Gestor solicitando saque para cliente:', cliente.nome_cliente)
+            console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
             const success = await criarSolicitacaoSaque(
               cliente.id,
               cliente.email_gestor || '',
@@ -129,10 +131,10 @@ export function ComissaoButton({
               valorComissao
             )
             if (success) {
-              console.log('✅ [ComissaoButton] Solicitação de saque criada com sucesso!')
+              console.log('✅ [ComissaoButton] Saque criado com sucesso!')
               setSaqueEnviado(true)
             } else {
-              console.error('❌ [ComissaoButton] Falha ao criar solicitação de saque')
+              console.error('❌ [ComissaoButton] Falha ao criar saque')
             }
           }}
           disabled={loadingSaque}
@@ -149,21 +151,45 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Aguardando campanha no ar
-  if (isGestorDashboard) {
-    console.log('🔒 [ComissaoButton] Gestor - Aguardando campanha no ar')
+  // PAINEL DO GESTOR - Saque já solicitado ou enviado (mas ainda não pago)
+  if (isGestorDashboard && (jaFoiSolicitado || saqueEnviado) && !saqueFoiPago) {
+    console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
     return (
       <div className="flex items-center gap-1">
-        <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
-          R$ {valorComissao.toFixed(2)} - Aguardando campanha no ar
+        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
+          Solicitação enviada - Aguardando processamento
         </div>
       </div>
     )
   }
 
-  // PAINEL DO ADMIN - Comissão não foi paga (pode pagar a qualquer momento)
-  if (!isGestorDashboard && comissaoStatus !== 'Pago') {
-    console.log('💰 [ComissaoButton] Admin - Pode pagar agora')
+  // PAINEL DO GESTOR - Qualquer outro caso (status diferente de "Saque Pendente"/"Campanha Anual" ou comissão paga)
+  if (isGestorDashboard) {
+    console.log('🔒 [ComissaoButton] Status travado para gestor')
+    return (
+      <div className="flex items-center gap-1">
+        <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
+          R$ {valorComissao.toFixed(2)} - Travado
+        </div>
+      </div>
+    )
+  }
+
+  // PAINEL DO ADMIN - NOVA LÓGICA: Aguardando gestor solicitar saque
+  if (!isGestorDashboard && isSaquePendente && !jaFoiSolicitado && !saqueFoiPago) {
+    console.log('⏳ [ComissaoButton] Admin - Aguardando gestor solicitar saque')
+    return (
+      <div className="flex items-center gap-1">
+        <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
+          Aguardando gestor solicitar saque
+        </div>
+      </div>
+    )
+  }
+
+  // PAINEL DO ADMIN - Saque solicitado pelo gestor, aguardando pagamento
+  if (!isGestorDashboard && isSaquePendente && jaFoiSolicitado && !saqueFoiPago) {
+    console.log('💰 [ComissaoButton] Admin - Saque solicitado, mostrando botão pagar')
     return (
       <div className="flex items-center gap-1">
         <Button
@@ -178,52 +204,60 @@ export function ComissaoButton({
           ) : (
             <Check className="w-3 h-3 mr-1" />
           )}
-          <span>Pagar agora</span>
+          <span>Pagar Agora!</span>
           <span className="ml-1">R$ {valorComissao.toFixed(2)}</span>
-        </Button>
-        
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
       </div>
     )
   }
 
-  // PAINEL DO ADMIN - Comissão já foi paga
-  if (!isGestorDashboard && comissaoStatus === 'Pago') {
-    console.log('✅ [ComissaoButton] Admin - Comissão já foi paga')
+  // PAINEL DO ADMIN - Saque já foi pago
+  if (!isGestorDashboard && saqueFoiPago) {
+    console.log('✅ [ComissaoButton] Admin - Saque já foi pago')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
           <span className="flex items-center gap-1">
             <Check className="w-3 h-3" />
-            ✅ Pago - R$ {valorComissao.toFixed(2)}
+            Saque Realizado - R$ {valorComissao.toFixed(2)}
           </span>
         </div>
-        
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
-        >
-          <Edit2 className="w-3 h-3 text-muted-foreground" />
-        </Button>
       </div>
     )
   }
 
-  // Fallback
+  // PAINEL DO ADMIN - Comportamento padrão para outros status
   return (
     <div className="flex items-center gap-1">
-      <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
-        R$ {valorComissao.toFixed(2)} - Status: {comissaoStatus}
-      </div>
+      <Button
+        variant={cliente.comissao_paga ? "default" : "outline"}
+        size="sm"
+        className={`h-7 text-xs flex items-center gap-1 ${
+          cliente.comissao_paga 
+            ? 'bg-green-600 hover:bg-green-700 text-white' 
+            : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
+        }`}
+        onClick={() => onComissionToggle(cliente.id, cliente.comissao_paga || false)}
+        disabled={updatingComission === cliente.id}
+      >
+        {updatingComission === cliente.id ? (
+          <Loader2 className="w-3 h-3 animate-spin mr-1" />
+        ) : cliente.comissao_paga ? (
+          <Check className="w-3 h-3 mr-1" />
+        ) : null}
+        <span>R$ {valorComissao.toFixed(2)}</span>
+        {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
+        {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
+      </Button>
+      
+      <Button
+        size="sm"
+        variant="ghost"
+        className="h-6 w-6 p-0"
+        onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+      >
+        <Edit2 className="w-3 h-3 text-muted-foreground" />
+      </Button>
     </div>
   )
 }

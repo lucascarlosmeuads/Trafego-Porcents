@@ -22,7 +22,6 @@ export type Cliente = {
   link_site: string
   numero_bm: string
   comissao_paga: boolean
-  comissao: string
   valor_comissao: number
   created_at: string
   site_status: string

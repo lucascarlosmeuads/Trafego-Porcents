@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -83,7 +84,6 @@ export function useSellerData(sellerEmail: string) {
           status_campanha,
           created_at,
           comissao_paga,
-          comissao,
           valor_comissao
         `)
         .eq('vendedor', sellerEmail)
@@ -107,7 +107,6 @@ export function useSellerData(sellerEmail: string) {
             status_campanha,
             created_at,
             comissao_paga,
-            comissao,
             valor_comissao
           `)
           .ilike('vendedor', `%${sellerName}%`)
@@ -136,7 +135,6 @@ export function useSellerData(sellerEmail: string) {
             status_campanha,
             created_at,
             comissao_paga,
-            comissao,
             valor_comissao
           `)
           .eq('vendedor', capitalizedName)
@@ -182,7 +180,6 @@ export function useSellerData(sellerEmail: string) {
           link_site: '',
           numero_bm: '',
           comissao_paga: Boolean(item.comissao_paga),
-          comissao: item.comissao || 'Pendente',
           valor_comissao: Number(item.valor_comissao || 20),
           created_at: item.created_at || '',
           site_status: 'pendente',
@@ -371,7 +368,6 @@ export function useSellerData(sellerEmail: string) {
           link_site: existingClient.link_site || '',
           numero_bm: existingClient.numero_bm || '',
           comissao_paga: Boolean(existingClient.comissao_paga),
-          comissao: existingClient.comissao || 'Pendente',
           valor_comissao: Number(existingClient.valor_comissao || 20),
           created_at: existingClient.created_at || '',
           site_status: existingClient.site_status || 'pendente',
@@ -426,7 +422,6 @@ export function useSellerData(sellerEmail: string) {
         status_campanha: String(clienteData.status_campanha || 'Brief'),
         email_gestor: String(clienteData.email_gestor || ''),
         comissao_paga: false,
-        comissao: 'Pendente',
         valor_comissao: 20.00,
         site_status: 'pendente',
         data_limite: '',

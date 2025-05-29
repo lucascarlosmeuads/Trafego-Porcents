@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 
@@ -62,7 +63,6 @@ export function useManagerData(email: string, isAdminUser: boolean, selectedMana
         link_site: item.link_site || '',
         numero_bm: item.numero_bm || '',
         comissao_paga: Boolean(item.comissao_paga),
-        comissao: item.comissao || 'Pendente',
         valor_comissao: Number(item.valor_comissao || 60),
         created_at: item.created_at || '',
         site_status: item.site_status || 'pendente',
