@@ -1,4 +1,5 @@
 
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -118,15 +119,18 @@ export function ClienteRow({
 
   const isEditingSiteLink = editingLink?.clienteId === cliente.id!.toString() && editingLink?.field === 'link_site'
   
-  // Melhorar detecção do painel do gestor
-  const isGestorDashboard = selectedManager && selectedManager !== 'Todos os Clientes' && !selectedManager.includes('@')
-  
-  // Debug log temporário
-  console.log('🔍 [ClienteRow] Debug Data Limite:', {
+  // Corrigir detecção do painel do gestor - verificar se selectedManager é um nome (não email) e não é "Todos os Clientes"
+  const isGestorDashboard = selectedManager && 
+                           selectedManager !== 'Todos os Clientes' && 
+                           !selectedManager.includes('@') &&
+                           selectedManager.trim() !== ''
+
+  console.log('🔍 [ClienteRow] Detecção do painel:', {
     cliente: cliente.nome_cliente,
     selectedManager,
     isGestorDashboard,
-    dataVenda: cliente.data_venda
+    dataVenda: cliente.data_venda,
+    createdAt: cliente.created_at
   })
 
   return (
@@ -190,14 +194,15 @@ export function ClienteRow({
 
       <TableCell className="text-white text-sm">
         {isGestorDashboard ? (
-          // Visualização específica para o painel do gestor
+          // Visualização dinâmica para o painel do gestor
           (() => {
             console.log('🎯 [ClienteRow] Aplicando visualização do gestor para:', cliente.nome_cliente)
-            const { texto, estilo } = getDataLimiteDisplayForGestor(cliente.data_venda)
+            const dataParaCalculo = cliente.data_venda || cliente.created_at
+            const { texto, estilo } = getDataLimiteDisplayForGestor(dataParaCalculo)
             return <span className={estilo}>{texto}</span>
           })()
         ) : (
-          // Visualização padrão para admin
+          // Visualização padrão para admin (data limite fixa)
           (() => {
             console.log('👨‍💼 [ClienteRow] Aplicando visualização do admin para:', cliente.nome_cliente)
             return formatDate(cliente.data_limite || '')
@@ -387,3 +392,4 @@ export function ClienteRow({
     </TableRow>
   )
 }
+

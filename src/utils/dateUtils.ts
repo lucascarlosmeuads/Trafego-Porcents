@@ -1,4 +1,3 @@
-
 export const addBusinessDays = (startDate: Date, businessDays: number): Date => {
   const result = new Date(startDate)
   let daysAdded = 0
@@ -61,21 +60,21 @@ export const getBusinessDaysBetween = (startDate: Date, endDate: Date): number =
     if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
       count++
     }
-    currentDate.setDate(currentDate.getDate() + 1)
+    currentDate.setDate(currentDate.setDate() + 1)
   }
   
   return count
 }
 
-// Nova função específica para o painel do gestor
+// Função melhorada para o painel do gestor
 export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto: string; estilo: string } => {
   console.log('📊 [getDataLimiteDisplayForGestor] Input:', dataVenda)
   
-  if (!dataVenda) {
+  if (!dataVenda || dataVenda.trim() === '') {
     console.log('❌ [getDataLimiteDisplayForGestor] Sem data de venda')
     return {
-      texto: 'Não informado',
-      estilo: 'text-gray-400'
+      texto: '⚠️ Sem data de venda',
+      estilo: 'text-orange-500 font-medium'
     }
   }
 
@@ -83,55 +82,86 @@ export const getDataLimiteDisplayForGestor = (dataVenda: string | null): { texto
     const hoje = new Date()
     hoje.setHours(0, 0, 0, 0)
     
+    // Melhorar parsing da data - aceitar diferentes formatos
+    let venda: Date
+    
+    // Se for timestamp com timezone
+    if (dataVenda.includes('T') || dataVenda.includes('+')) {
+      venda = new Date(dataVenda)
+    } 
+    // Se for apenas data (YYYY-MM-DD)
+    else if (dataVenda.includes('-')) {
+      venda = new Date(dataVenda + 'T00:00:00')
+    }
+    // Fallback genérico
+    else {
+      venda = new Date(dataVenda)
+    }
+    
+    // Verificar se a data é válida
+    if (isNaN(venda.getTime())) {
+      console.log('❌ [getDataLimiteDisplayForGestor] Data inválida:', dataVenda)
+      return {
+        texto: '❌ Data inválida',
+        estilo: 'text-red-500 font-medium'
+      }
+    }
+    
     // Calcular data limite (data_venda + 15 dias úteis)
-    const venda = new Date(dataVenda)
     const dataLimite = addBusinessDays(venda, 15)
     dataLimite.setHours(0, 0, 0, 0)
     
     console.log('📅 [getDataLimiteDisplayForGestor] Cálculo:', {
       dataVenda,
+      vendaParsed: venda.toISOString().split('T')[0],
       hoje: hoje.toISOString().split('T')[0],
       dataLimite: dataLimite.toISOString().split('T')[0]
     })
     
+    // Calcular diferença em dias úteis
     if (hoje <= dataLimite) {
-      // Ainda dentro do prazo - calcular dias restantes
+      // Ainda dentro do prazo
       const diasRestantes = getBusinessDaysBetween(hoje, dataLimite)
       
       console.log('✅ [getDataLimiteDisplayForGestor] Dentro do prazo, dias restantes:', diasRestantes)
       
-      if (diasRestantes > 5) {
+      if (diasRestantes === 0) {
         return {
-          texto: `Faltam ${diasRestantes} dias úteis`,
-          estilo: 'text-green-600 font-medium'
+          texto: '🚨 ÚLTIMO DIA!',
+          estilo: 'bg-red-100 text-red-800 px-2 py-1 rounded font-bold border border-red-300'
         }
-      } else if (diasRestantes >= 1) {
+      } else if (diasRestantes <= 2) {
         return {
-          texto: `Atenção: ${diasRestantes} dias úteis restantes`,
-          estilo: 'text-yellow-600 font-bold'
+          texto: `⚠️ ${diasRestantes} dias restantes`,
+          estilo: 'bg-orange-100 text-orange-800 px-2 py-1 rounded font-bold border border-orange-300'
+        }
+      } else if (diasRestantes <= 5) {
+        return {
+          texto: `⏰ ${diasRestantes} dias úteis`,
+          estilo: 'bg-yellow-100 text-yellow-800 px-2 py-1 rounded font-medium border border-yellow-300'
         }
       } else {
         return {
-          texto: 'Atenção: último dia útil',
-          estilo: 'text-yellow-600 font-bold'
+          texto: `✅ ${diasRestantes} dias úteis`,
+          estilo: 'bg-green-100 text-green-800 px-2 py-1 rounded font-medium border border-green-300'
         }
       }
     } else {
-      // Prazo vencido - calcular dias de atraso
+      // Prazo vencido
       const diasAtraso = getBusinessDaysBetween(dataLimite, hoje)
       
       console.log('❌ [getDataLimiteDisplayForGestor] Atrasado, dias de atraso:', diasAtraso)
       
       return {
-        texto: `Atrasado há ${diasAtraso} dias úteis`,
-        estilo: 'text-red-600 font-bold'
+        texto: `🔴 ATRASADO ${diasAtraso} dias`,
+        estilo: 'bg-red-200 text-red-900 px-2 py-1 rounded font-bold border-2 border-red-500'
       }
     }
   } catch (error) {
     console.error('💥 [getDataLimiteDisplayForGestor] Erro ao calcular:', error)
     return {
-      texto: 'Erro no cálculo',
-      estilo: 'text-gray-400'
+      texto: '❌ Erro no cálculo',
+      estilo: 'text-red-500 font-medium'
     }
   }
 }
