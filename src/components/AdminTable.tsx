@@ -3,11 +3,13 @@ import { supabase, type Cliente } from '@/lib/supabase'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { Loader2, Smartphone, Monitor, Calendar, AlertTriangle, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 
 interface TransferirModalProps {
   cliente: Cliente
@@ -276,6 +278,27 @@ export function AdminTable() {
     }
   }
 
+  // Função para renderizar a célula Data Limite com visualização dinâmica
+  const renderDataLimiteCell = (cliente: Cliente) => {
+    console.log(`👨‍💼 [AdminTable] Aplicando visualização dinâmica para: ${cliente.nome_cliente}`)
+    
+    const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+      cliente.data_venda || '', 
+      cliente.created_at, 
+      cliente.status_campanha || 'Cliente Novo'
+    )
+    
+    console.log(`👨‍💼 [AdminTable] Resultado da visualização:`, dataLimiteDisplay)
+    
+    return (
+      <TableCell className="text-foreground text-sm">
+        <Badge className={`${dataLimiteDisplay.classeCor} rounded-md`}>
+          {dataLimiteDisplay.texto}
+        </Badge>
+      </TableCell>
+    )
+  }
+
   if (loading) {
     return (
       <Card className="bg-card border-border">
@@ -338,6 +361,23 @@ export function AdminTable() {
                     <span className="font-medium text-muted-foreground">Data Venda:</span>
                     <span className="ml-2 text-card-foreground">{formatDate(cliente.data_venda)}</span>
                   </div>
+                  <div>
+                    <span className="font-medium text-muted-foreground">Data Limite:</span>
+                    <div className="ml-2">
+                      {(() => {
+                        const dataLimiteDisplay = getDataLimiteDisplayForGestor(
+                          cliente.data_venda || '', 
+                          cliente.created_at, 
+                          cliente.status_campanha || 'Cliente Novo'
+                        )
+                        return (
+                          <Badge className={`${dataLimiteDisplay.classeCor} rounded-md text-xs`}>
+                            {dataLimiteDisplay.texto}
+                          </Badge>
+                        )
+                      })()}
+                    </div>
+                  </div>
                   <div className="pt-2">
                     <TransferirModal
                       cliente={cliente}
@@ -352,7 +392,7 @@ export function AdminTable() {
           </div>
         )}
 
-        {/* Tabela para desktop - ADICIONADA coluna "Transferir" */}
+        {/* Tabela para desktop - ADICIONADA coluna "Data Limite" */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'} overflow-x-auto`}>
           <Table className="table-dark">
             <TableHeader>
@@ -363,6 +403,7 @@ export function AdminTable() {
                 <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
                 <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
+                <TableHead className="min-w-[150px] text-muted-foreground">Data Limite</TableHead>
                 <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
               </TableRow>
             </TableHeader>
@@ -415,6 +456,7 @@ export function AdminTable() {
                       </SelectContent>
                     </Select>
                   </TableCell>
+                  {renderDataLimiteCell(cliente)}
                   <TableCell>
                     <TransferirModal
                       cliente={cliente}
