@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -24,6 +23,7 @@ interface ClienteRowProps {
   cliente: Cliente
   selectedManager: string
   index: number
+  isAdmin?: boolean
   updatingStatus: string | null
   editingLink: { clienteId: string, field: string } | null
   linkValue: string
@@ -54,6 +54,7 @@ export function ClienteRow({
   cliente,
   selectedManager,
   index,
+  isAdmin = false,
   updatingStatus,
   editingLink,
   linkValue,
@@ -186,6 +187,14 @@ export function ClienteRow({
           {cliente.email_cliente || 'Não informado'}
         </div>
       </TableCell>
+
+      {isAdmin && (
+        <TableCell className="text-white text-sm max-w-[180px]">
+          <div className="truncate" title={cliente.email_gestor || ''}>
+            {cliente.email_gestor || 'Não informado'}
+          </div>
+        </TableCell>
+      )}
 
       <TableCell>
         <StatusSelect

@@ -325,11 +325,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
           <Table className="table-dark">
-            <TableHeader />
+            <TableHeader isAdmin={isAdmin} />
             <TableBody>
               {clientesList.length === 0 ? (
                 <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={14} className="text-center py-8 text-white">
+                  <TableCell colSpan={isAdmin ? 12 : 11} className="text-center py-8 text-white">
                     {isInactive 
                       ? `Nenhum cliente inativo encontrado`
                       : clientes.length === 0 
@@ -345,6 +345,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     cliente={cliente}
                     selectedManager={currentManager || managerName}
                     index={index}
+                    isAdmin={isAdmin}
                     updatingStatus={updatingStatus}
                     editingLink={editingLink}
                     linkValue={linkValue}
