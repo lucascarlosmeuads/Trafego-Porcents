@@ -32,7 +32,8 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
     clientes, 
     loading, 
     error, 
-    refetch: refetchData
+    refetch: refetchData,
+    isConnected
   } = useManagerData(userEmail, isAdmin, selectedManager, filterType)
   
   const { updateCliente } = useClienteOperations(userEmail, isAdmin, refetchData)
@@ -45,7 +46,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
   const [showAddRow, setShowAddRow] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
-  const [managerFilter, setManagerFilter] = useState('all')
 
   // Estados para comissão
   const [updatingComission, setUpdatingComission] = useState<string | null>(null)
@@ -223,11 +223,10 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
                            cliente.telefone?.includes(searchTerm)
       
       const matchesStatus = statusFilter === 'all' || cliente.status_campanha === statusFilter
-      const matchesManager = managerFilter === 'all' || cliente.email_gestor === managerFilter
       
-      return matchesSearch && matchesStatus && matchesManager
+      return matchesSearch && matchesStatus
     })
-  }, [clientes, searchTerm, statusFilter, managerFilter])
+  }, [clientes, searchTerm, statusFilter])
 
   if (loading) {
     return (
@@ -264,7 +263,7 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
               Lista de Clientes ({filteredClientes.length})
             </CardTitle>
             <div className="flex items-center gap-2">
-              <RealtimeStatus isConnected={true} />
+              <RealtimeStatus isConnected={isConnected} />
             </div>
           </div>
         </CardHeader>
@@ -274,7 +273,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
             setSearchTerm={setSearchTerm}
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
-            clientes={clientes}
             onAddClient={() => setIsAddModalOpen(true)}
             onAddClientRow={() => setShowAddRow(true)}
             isAdmin={isAdmin}
@@ -352,15 +350,18 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
 
       {selectedMaterialsCliente && (
         <BriefingMaterialsModal
-          email={selectedMaterialsCliente}
-          onClose={() => setSelectedMaterialsCliente(null)}
+          emailCliente={selectedMaterialsCliente}
+          nomeCliente="Cliente"
+          trigger={<></>}
         />
       )}
 
       {selectedComentariosCliente && (
         <ClienteComentariosModal
+          open={true}
+          onOpenChange={() => setSelectedComentariosCliente(null)}
           clienteId={selectedComentariosCliente.id}
-          onClose={() => setSelectedComentariosCliente(null)}
+          nomeCliente={selectedComentariosCliente.nome}
         />
       )}
     </div>

@@ -106,7 +106,12 @@ export function GestorDashboard() {
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-semibold">Clientes Ativos</h2>
           </div>
-          <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
+          <ClientesTable 
+            userEmail={user?.email || ''} 
+            isAdmin={isAdmin} 
+            selectedManager={currentManagerName} 
+            filterType="ativos" 
+          />
         </TabsContent>
 
         <TabsContent value="problemas" className="space-y-6">
@@ -114,11 +119,21 @@ export function GestorDashboard() {
         </TabsContent>
 
         <TabsContent value="saques-solicitados" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="saques-pendentes" />
+          <ClientesTable 
+            userEmail={user?.email || ''} 
+            isAdmin={isAdmin} 
+            selectedManager={currentManagerName} 
+            filterType="saques-pendentes" 
+          />
         </TabsContent>
 
         <TabsContent value="inativos" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="inativos" />
+          <ClientesTable 
+            userEmail={user?.email || ''} 
+            isAdmin={isAdmin} 
+            selectedManager={currentManagerName} 
+            filterType="inativos" 
+          />
         </TabsContent>
       </Tabs>
     </div>
