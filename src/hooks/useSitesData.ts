@@ -7,9 +7,12 @@ interface Cliente {
   nome_cliente: string
   telefone: string
   email_cliente: string
+  email_gestor: string
   link_site: string
   site_status: string
+  site_pago: boolean
   data_venda: string
+  created_at: string
   // adicione outros campos conforme sua tabela
 }
 
