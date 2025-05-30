@@ -305,32 +305,25 @@ export function useClienteOperations(userEmail: string, isAdmin: boolean, refetc
         finalClientData = { ...clienteData, ...data }
         console.log('✅ [useClienteOperations] Cliente adicionado com sucesso:', data)
 
-        // Step 3: Create user account with default password for new clients
-        console.log('🔐 [useClienteOperations] Criando conta de usuário com senha padrão...')
+        // Step 3: ✅ NOVA IMPLEMENTAÇÃO - Usar Edge Function para criar conta sem redirecionamento
+        console.log('🔐 [useClienteOperations] Criando conta de usuário via Edge Function...')
         try {
-          const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: clienteData.email_cliente,
-            password: SENHA_PADRAO_CLIENTE,
-            options: {
-              data: {
-                full_name: clienteData.nome_cliente,
-                role: 'cliente'
-              }
+          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-client-users', {
+            body: { 
+              email_cliente: clienteData.email_cliente,
+              nome_cliente: clienteData.nome_cliente,
+              senha: SENHA_PADRAO_CLIENTE 
             }
           })
 
-          if (authError) {
-            console.error('⚠️ [useClienteOperations] Erro ao criar conta de usuário:', authError)
-            // Não falhar a operação se a conta já existir
-            if (!authError.message.includes('already registered')) {
-              console.error('❌ [useClienteOperations] Erro crítico na criação da conta:', authError)
-            }
+          if (functionError) {
+            console.error('⚠️ [useClienteOperations] Erro na Edge Function:', functionError)
           } else {
-            console.log('✅ [useClienteOperations] Conta de usuário criada com sucesso')
+            console.log('✅ [useClienteOperations] Conta criada via Edge Function:', functionData)
             senhaDefinida = true
           }
-        } catch (authErr) {
-          console.error('⚠️ [useClienteOperations] Erro na criação da conta (catch):', authErr)
+        } catch (edgeFunctionErr) {
+          console.error('⚠️ [useClienteOperations] Erro na Edge Function (catch):', edgeFunctionErr)
           // Continuar mesmo se houver erro na criação da conta
         }
       }
