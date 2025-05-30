@@ -4,13 +4,15 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
-import { AuditoriaClientes } from './AuditoriaClientes'
-import { BriefingsPanel } from './BriefingsPanel'
-import { ManagerSelector } from './ManagerSelector'
-import { ImportarVendasManuais } from './ImportarVendasManuais'
-import { ClientUserCreation } from './ClientUserCreation'
 import { DocumentationViewer } from './Documentation'
+import { ManagerSelector } from './ManagerSelector'
 import { supabase } from '@/lib/supabase'
+
+// Imports comentados para componentes não utilizados:
+// import { AuditoriaClientes } from './AuditoriaClientes'
+// import { BriefingsPanel } from './BriefingsPanel'
+// import { ImportarVendasManuais } from './ImportarVendasManuais'
+// import { ClientUserCreation } from './ClientUserCreation'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -43,6 +45,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'dashboard':
         return <StatusFunnelDashboard />
 
+      case 'documentacao':
+        return <DocumentationViewer />
+
+      // Cases comentados para menus ocultos (mantidos para não quebrar funcionalidade):
+      /*
       case 'auditoria':
         return <AuditoriaClientes />
 
@@ -55,17 +62,14 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'criar-usuarios-clientes':
         return <ClientUserCreation />
 
-      case 'documentacao':
-        return <DocumentationViewer />
-
       case 'sites':
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            {/* Site Creator panel: Show only aguardando_link clients */}
             <ClientesTable filterType="sites-pendentes" />
           </div>
         )
+      */
       
       case 'clientes':
       default:

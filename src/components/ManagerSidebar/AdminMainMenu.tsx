@@ -4,10 +4,6 @@ import {
   BarChart3, 
   Users, 
   Settings, 
-  FileText, 
-  Upload, 
-  Globe,
-  UserPlus,
   Book
 } from 'lucide-react'
 
@@ -27,6 +23,7 @@ export function AdminMainMenu({
   problemasPendentes 
 }: AdminMainMenuProps) {
 
+  // Menus ativos no painel Admin
   const menuItems = [
     {
       id: 'dashboard',
@@ -41,42 +38,19 @@ export function AdminMainMenu({
       onClick: () => onTabChange('clientes')
     },
     {
-      id: 'auditoria',
-      label: 'Auditoria',
-      icon: FileText,
-      onClick: () => onTabChange('auditoria')
-    },
-    {
-      id: 'briefings',
-      label: 'Briefings',
-      icon: FileText,
-      onClick: () => onTabChange('briefings')
-    },
-    {
-      id: 'importar-vendas',
-      label: 'Importar Vendas',
-      icon: Upload,
-      onClick: () => onTabChange('importar-vendas')
-    },
-    {
-      id: 'criar-usuarios-clientes',
-      label: 'Criar Usuários',
-      icon: UserPlus,
-      onClick: () => onTabChange('criar-usuarios-clientes')
-    },
-    {
-      id: 'sites',
-      label: 'Sites',
-      icon: Globe,
-      onClick: () => onTabChange('sites')
-    },
-    {
       id: 'documentacao',
       label: 'Documentação',
       icon: Book,
       onClick: () => onTabChange('documentacao')
     }
   ]
+
+  // Menus ocultos (removidos temporariamente):
+  // - auditoria (Auditoria)
+  // - briefings (Briefings) 
+  // - importar-vendas (Importar Vendas)
+  // - criar-usuarios-clientes (Criar Usuários)
+  // - sites (Sites)
 
   return (
     <nav className="space-y-2">
