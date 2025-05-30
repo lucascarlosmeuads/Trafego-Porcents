@@ -597,13 +597,32 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setUpdatingComission(clienteId)
     
     try {
-      const newStatus = !currentStatus
-      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
+      // Find the current client to check the comissao field
+      const cliente = clientes.find(c => c.id.toString() === clienteId)
+      if (!cliente) {
+        toast({
+          title: "Erro",
+          description: "Cliente não encontrado",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      // Toggle between "Pendente" and "Pago" based on current comissao value
+      const newComissaoStatus = cliente.comissao === 'Pago' ? 'Pendente' : 'Pago'
+      
+      console.log('💰 [ClientesTable] Alterando comissão:', {
+        clienteId,
+        currentComissao: cliente.comissao,
+        newComissaoStatus
+      })
+      
+      const success = await updateCliente(clienteId, 'comissao', newComissaoStatus)
       
       if (success) {
         toast({
           title: "Sucesso",
-          description: newStatus ? "Comissão marcada como paga" : "Comissão marcada como não paga",
+          description: `Comissão alterada para: ${newComissaoStatus}`,
         })
         return true
       } else {

@@ -44,12 +44,16 @@ export function ComissaoButton({
   
   // Verificar se a solicitação foi paga pelo admin
   const saqueFoiPago = solicitacoesPagas.includes(cliente.id.toString())
+  
+  // Check if comissao is "Pago" (using the comissao field)
+  const isComissaoPaga = cliente.comissao === 'Pago'
 
   // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
     status: cliente.status_campanha,
     isCampanhaNoAr,
     comissao: cliente.comissao,
+    isComissaoPaga,
     saqueFoiPago,
     saqueEnviado,
     isGestorDashboard
@@ -180,16 +184,16 @@ export function ComissaoButton({
   return (
     <div className="flex items-center gap-1">
       <Button
-        variant={cliente.comissao_paga ? "default" : "outline"}
+        variant={isComissaoPaga ? "default" : "outline"}
         size="sm"
         className={`h-7 text-xs flex items-center gap-1 ${
-          cliente.comissao_paga 
+          isComissaoPaga 
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
         }`}
         onClick={async () => {
           try {
-            await onComissionToggle(cliente.id, cliente.comissao_paga || false)
+            await onComissionToggle(cliente.id, isComissaoPaga)
           } catch (error) {
             console.error('❌ [ComissaoButton] Erro ao toggle comissão:', error)
           }
@@ -198,12 +202,12 @@ export function ComissaoButton({
       >
         {updatingComission === cliente.id ? (
           <Loader2 className="w-3 h-3 animate-spin mr-1" />
-        ) : cliente.comissao_paga ? (
+        ) : isComissaoPaga ? (
           <Check className="w-3 h-3 mr-1" />
         ) : null}
         <span>R$ {valorComissao.toFixed(2)}</span>
-        {cliente.comissao_paga && <span className="ml-1">✓ Pago</span>}
-        {!cliente.comissao_paga && <span className="ml-1">Pendente</span>}
+        {isComissaoPaga && <span className="ml-1">✓ Pago</span>}
+        {!isComissaoPaga && <span className="ml-1">Pendente</span>}
       </Button>
       
       {/* Botão de editar valor - APENAS PARA ADMIN */}
