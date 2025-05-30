@@ -10,11 +10,18 @@ interface PaginationState {
   totalItems: number
 }
 
-export function useAdminTableLogic() {
+export function useAdminTableLogic(selectedManager?: string | null, filterType?: string) {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [gestores, setGestores] = useState<Array<{ email: string, nome: string }>>([])
   const [transferindoCliente, setTransferindoCliente] = useState<string | null>(null)
+  const [updatingComission, setUpdatingComission] = useState<string | null>(null)
+  const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
+  const [editingBM, setEditingBM] = useState<string | null>(null)
+  const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
+  const [comissionValueInput, setComissionValueInput] = useState('')
+  const [bmValue, setBmValue] = useState('')
+  const [linkValue, setLinkValue] = useState('')
   const [pagination, setPagination] = useState<PaginationState>({
     currentPage: 1,
     totalPages: 0,
@@ -29,7 +36,7 @@ export function useAdminTableLogic() {
 
   useEffect(() => {
     fetchAllClientes()
-  }, [pagination.currentPage, pagination.itemsPerPage])
+  }, [pagination.currentPage, pagination.itemsPerPage, selectedManager, filterType])
 
   const fetchGestores = async () => {
     try {
@@ -49,11 +56,32 @@ export function useAdminTableLogic() {
     }
   }
 
+  const buildQuery = () => {
+    let query = supabase.from('todos_clientes').select('*')
+
+    // Aplicar filtros
+    if (selectedManager && selectedManager !== '__GESTORES__') {
+      query = query.eq('email_gestor', selectedManager)
+    }
+
+    if (filterType) {
+      switch (filterType) {
+        case 'sites-pendentes':
+          query = query.eq('status_campanha', 'aguardando_link')
+          break
+        case 'saques-pendentes':
+          query = query.eq('comissao', 'Solicitado')
+          break
+      }
+    }
+
+    return query
+  }
+
   const fetchTotalCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact', head: true })
+      const query = buildQuery()
+      const { count, error } = await query.select('*', { count: 'exact', head: true })
 
       if (error) {
         console.error('❌ Erro ao buscar contagem:', error)
@@ -78,9 +106,8 @@ export function useAdminTableLogic() {
       // Calcular offset
       const offset = (pagination.currentPage - 1) * pagination.itemsPerPage
 
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .select('*')
+      const query = buildQuery()
+      const { data, error } = await query
         .order('created_at', { ascending: false })
         .range(offset, offset + pagination.itemsPerPage - 1)
 
@@ -92,20 +119,15 @@ export function useAdminTableLogic() {
           variant: "destructive"
         })
       } else {
-        // Properly format the data to ensure consistent date handling
         const formattedClientes = (data || []).map(cliente => ({
           ...cliente,
-          // Ensure data_venda is properly formatted as string (YYYY-MM-DD)
           data_venda: cliente.data_venda ? String(cliente.data_venda) : null,
-          // Ensure created_at is properly formatted as string
           created_at: cliente.created_at ? String(cliente.created_at) : null,
-          // Ensure status_campanha is a string
           status_campanha: cliente.status_campanha ? String(cliente.status_campanha) : ''
         }))
         
         setClientes(formattedClientes)
         
-        // Atualizar estado de paginação
         setPagination(prev => ({
           ...prev,
           totalPages,
@@ -124,7 +146,7 @@ export function useAdminTableLogic() {
     }
   }
 
-  const updateField = async (id: string, field: keyof Cliente, value: string) => {
+  const updateField = async (id: string, field: keyof Cliente, value: string | boolean) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
@@ -198,6 +220,84 @@ export function useAdminTableLogic() {
     updateField(id, 'status_campanha', newStatus)
   }
 
+  const handleSiteStatusChange = (id: string, newStatus: string) => {
+    updateField(id, 'site_status', newStatus)
+  }
+
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
+    setUpdatingComission(clienteId)
+    try {
+      const newStatus = !currentStatus
+      await updateField(clienteId, 'comissao_paga', newStatus)
+      return true
+    } catch (error) {
+      console.error('❌ Erro ao toggle comissão:', error)
+      return false
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toString())
+  }
+
+  const handleComissionValueSave = (clienteId: string, newValue: number) => {
+    updateField(clienteId, 'valor_comissao', newValue)
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue)
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    await updateField(clienteId, 'numero_bm', bmValue)
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue)
+  }
+
+  const handleLinkSave = async (clienteId: string): Promise<boolean> => {
+    if (!editingLink) return false
+    
+    try {
+      await updateField(clienteId, editingLink.field as keyof Cliente, linkValue)
+      setEditingLink(null)
+      setLinkValue('')
+      return true
+    } catch (error) {
+      console.error('❌ Erro ao salvar link:', error)
+      return false
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const handleSitePagoChange = (clienteId: string, newValue: boolean) => {
+    updateField(clienteId, 'site_pago', newValue)
+  }
+
   // Funções de paginação
   const goToPage = (page: number) => {
     if (page >= 1 && page <= pagination.totalPages) {
@@ -221,7 +321,7 @@ export function useAdminTableLogic() {
     setPagination(prev => ({
       ...prev,
       itemsPerPage: newItemsPerPage,
-      currentPage: 1 // Voltar para primeira página
+      currentPage: 1
     }))
   }
 
@@ -230,9 +330,31 @@ export function useAdminTableLogic() {
     loading,
     gestores,
     transferindoCliente,
+    updatingComission,
+    editingComissionValue,
+    editingBM,
+    editingLink,
+    comissionValueInput,
+    bmValue,
+    linkValue,
     pagination,
+    setComissionValueInput,
+    setBmValue,
+    setLinkValue,
     handleTransferirCliente,
     handleStatusChange,
+    handleSiteStatusChange,
+    handleComissionToggle,
+    handleComissionValueEdit,
+    handleComissionValueSave,
+    handleComissionValueCancel,
+    handleBMEdit,
+    handleBMSave,
+    handleBMCancel,
+    handleLinkEdit,
+    handleLinkSave,
+    handleLinkCancel,
+    handleSitePagoChange,
     goToPage,
     nextPage,
     prevPage,

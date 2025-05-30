@@ -10,7 +10,12 @@ import { AdminTablePagination } from './AdminTable/AdminTablePagination'
 import { useAdminTableLogic } from './AdminTable/useAdminTableLogic'
 import { formatDate, getStatusColor } from './AdminTable/adminTableUtils'
 
-export function AdminTable() {
+interface AdminTableProps {
+  selectedManager?: string | null
+  filterType?: string
+}
+
+export function AdminTable({ selectedManager, filterType }: AdminTableProps) {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   
   const {
@@ -18,14 +23,36 @@ export function AdminTable() {
     loading,
     gestores,
     transferindoCliente,
+    updatingComission,
+    editingComissionValue,
+    editingBM,
+    editingLink,
+    comissionValueInput,
+    bmValue,
+    linkValue,
     pagination,
+    setComissionValueInput,
+    setBmValue,
+    setLinkValue,
     handleTransferirCliente,
     handleStatusChange,
+    handleSiteStatusChange,
+    handleComissionToggle,
+    handleComissionValueEdit,
+    handleComissionValueSave,
+    handleComissionValueCancel,
+    handleBMEdit,
+    handleBMSave,
+    handleBMCancel,
+    handleLinkEdit,
+    handleLinkSave,
+    handleLinkCancel,
+    handleSitePagoChange,
     goToPage,
     nextPage,
     prevPage,
     changeItemsPerPage
-  } = useAdminTableLogic()
+  } = useAdminTableLogic(selectedManager, filterType)
 
   if (loading) {
     return (
@@ -96,9 +123,31 @@ export function AdminTable() {
             clientes={clientes}
             gestores={gestores}
             transferindoCliente={transferindoCliente}
+            updatingComission={updatingComission}
+            editingComissionValue={editingComissionValue}
+            editingBM={editingBM}
+            editingLink={editingLink}
+            comissionValueInput={comissionValueInput}
+            bmValue={bmValue}
+            linkValue={linkValue}
             onTransferirCliente={handleTransferirCliente}
+            onStatusChange={handleStatusChange}
+            onSiteStatusChange={handleSiteStatusChange}
+            onComissionToggle={handleComissionToggle}
+            onComissionValueEdit={handleComissionValueEdit}
+            onComissionValueSave={handleComissionValueSave}
+            onComissionValueCancel={handleComissionValueCancel}
+            onBMEdit={handleBMEdit}
+            onBMSave={handleBMSave}
+            onBMCancel={handleBMCancel}
+            onLinkEdit={handleLinkEdit}
+            onLinkSave={handleLinkSave}
+            onLinkCancel={handleLinkCancel}
+            onSitePagoChange={handleSitePagoChange}
+            setComissionValueInput={setComissionValueInput}
+            setBmValue={setBmValue}
+            setLinkValue={setLinkValue}
             formatDate={formatDate}
-            getStatusColor={getStatusColor}
           />
         )}
 
@@ -108,10 +157,31 @@ export function AdminTable() {
             clientes={clientes}
             gestores={gestores}
             transferindoCliente={transferindoCliente}
+            updatingComission={updatingComission}
+            editingComissionValue={editingComissionValue}
+            editingBM={editingBM}
+            editingLink={editingLink}
+            comissionValueInput={comissionValueInput}
+            bmValue={bmValue}
+            linkValue={linkValue}
             onTransferirCliente={handleTransferirCliente}
             onStatusChange={handleStatusChange}
+            onSiteStatusChange={handleSiteStatusChange}
+            onComissionToggle={handleComissionToggle}
+            onComissionValueEdit={handleComissionValueEdit}
+            onComissionValueSave={handleComissionValueSave}
+            onComissionValueCancel={handleComissionValueCancel}
+            onBMEdit={handleBMEdit}
+            onBMSave={handleBMSave}
+            onBMCancel={handleBMCancel}
+            onLinkEdit={handleLinkEdit}
+            onLinkSave={handleLinkSave}
+            onLinkCancel={handleLinkCancel}
+            onSitePagoChange={handleSitePagoChange}
+            setComissionValueInput={setComissionValueInput}
+            setBmValue={setBmValue}
+            setLinkValue={setLinkValue}
             formatDate={formatDate}
-            getStatusColor={getStatusColor}
           />
         </div>
         
