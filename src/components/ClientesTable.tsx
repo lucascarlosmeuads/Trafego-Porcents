@@ -20,7 +20,6 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
-import { ProblemaDescricao } from './ClientesTable/ProblemaDescricao'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -82,8 +81,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
-  const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
-  const [problemaDescricao, setProblemaDescricao] = useState('')
 
   const categorizarClientes = (clientesList: typeof clientes) => {
     console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO CORRIGIDA) ===')
@@ -344,12 +341,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         description: "ID do cliente não encontrado",
         variant: "destructive",
       })
-      return
-    }
-
-    if (newStatus === 'Problema') {
-      setEditandoProblema(clienteId)
-      setProblemaDescricao('')
       return
     }
 
@@ -695,50 +686,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setComissionValueInput('')
   }
 
-  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
-    try {
-      const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
-      if (!statusSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao alterar status para Problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
-      if (!descricaoSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao salvar descrição do problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Problema registrado com sucesso",
-      })
-      
-      return true
-    } catch (error) {
-      console.error('Erro ao salvar problema:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao registrar problema",
-        variant: "destructive",
-      })
-      return false
-    }
-  }
-
-  const handleProblemaDescricaoCancel = () => {
-    setEditandoProblema(null)
-    setProblemaDescricao('')
-  }
-
   const handleAddClient = async (clienteData: any) => {
     setAddingClient(true)
     try {
@@ -754,15 +701,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
-      {editandoProblema && (
-        <ProblemaDescricao
-          clienteId={editandoProblema}
-          descricaoAtual={problemaDescricao}
-          onSave={handleProblemaDescricaoSave}
-          onCancel={handleProblemaDescricaoCancel}
-        />
-      )}
-      
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
           <Table className="table-dark">
