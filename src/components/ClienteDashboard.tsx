@@ -14,7 +14,7 @@ import { ClienteChat } from './Chat/ClienteChat'
 export function ClienteDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
-  const { cliente, briefing, vendas, arquivos, loading, recarregarDados } = useClienteData(user?.email || '')
+  const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
 
   const renderContent = () => {
     if (loading) {
@@ -43,7 +43,7 @@ export function ClienteDashboard() {
           <BriefingForm 
             briefing={briefing}
             emailCliente={user?.email || ''}
-            onBriefingUpdated={recarregarDados}
+            onBriefingUpdated={refetch}
           />
         )
       case 'arquivos':
@@ -51,7 +51,7 @@ export function ClienteDashboard() {
           <ArquivosUpload 
             emailCliente={user?.email || ''}
             arquivos={arquivos}
-            onArquivosUpdated={recarregarDados}
+            onArquivosUpdated={refetch}
           />
         )
       case 'vendas':
@@ -59,7 +59,7 @@ export function ClienteDashboard() {
           <VendasManager 
             emailCliente={user?.email || ''}
             vendas={vendas}
-            onVendasUpdated={recarregarDados}
+            onVendasUpdated={refetch}
           />
         )
       case 'tutoriais':

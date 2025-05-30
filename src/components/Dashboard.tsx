@@ -83,7 +83,6 @@ export function Dashboard() {
             <AdminDashboard
               selectedManager={selectedManager}
               activeTab={activeTab}
-              onTabChange={setActiveTab}
             />
           )}
           

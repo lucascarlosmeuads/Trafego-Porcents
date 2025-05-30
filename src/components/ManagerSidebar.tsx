@@ -60,9 +60,9 @@ export function ManagerSidebar({
           />
         ) : (
           <GestorMenu
-            selectedManager={selectedManager}
             activeTab={activeTab}
-            onManagerSelect={onManagerSelect}
+            onTabChange={onTabChange}
+            problemasPendentes={problemasPendentes}
           />
         )}
       </div>
