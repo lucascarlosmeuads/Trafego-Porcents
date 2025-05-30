@@ -12,7 +12,7 @@ import { BriefingMaterialsModal } from './ClientesTable/BriefingMaterialsModal'
 import { ClienteComentariosModal } from './ClientesTable/ClienteComentariosModal'
 import { ComissaoButton } from './ClientesTable/ComissaoButton'
 import { useToast } from '@/hooks/use-toast'
-import { useClienteData } from '@/hooks/useClienteData'
+import { useManagerData } from '@/hooks/useManagerData'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { RealtimeStatus } from './ClientesTable/RealtimeStatus'
 
@@ -24,14 +24,15 @@ interface ClientesTableProps {
 
 export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }: ClientesTableProps) {
   const { toast } = useToast()
+  
+  // USAR O HOOK CORRETO - useManagerData para lista de clientes
   const { 
     clientes, 
     loading, 
     error, 
-    refetchData, 
-    totalClientes,
+    refetch: refetchData,
     isConnected 
-  } = useClienteData(userEmail, isAdmin, isGestorDashboard)
+  } = useManagerData(userEmail, isAdmin, undefined, undefined)
   
   const { updateCliente } = useClienteOperations(userEmail, isAdmin, refetchData)
 
