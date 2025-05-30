@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
+import { useSitePagoUpdate } from '@/hooks/useSitePagoUpdate'
 import { supabase } from '@/lib/supabase'
 import { RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -51,13 +52,16 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   // For Site Creator panels, don't pass selectedManager to avoid conflicts
   const managerForQuery = isSitesContext ? undefined : selectedManager
   
-  const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
+  const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager, setClientes } = useManagerData(
     emailToUse, 
     isAdmin, 
     managerForQuery,
     filterType === 'sites-pendentes' ? 'sites-pendentes' : 
     filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
   )
+
+  // Add the site pago update hook
+  const { handleSitePagoChange } = useSitePagoUpdate(clientes, setClientes)
   
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -777,6 +781,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     onComissionValueEdit={handleComissionValueEdit}
                     onComissionValueSave={handleComissionValueSave}
                     onComissionValueCancel={handleComissionValueCancel}
+                    onSitePagoChange={handleSitePagoChange}
                   />
                 ))
               )}

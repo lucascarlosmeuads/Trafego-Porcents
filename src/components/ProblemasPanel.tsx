@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { useSitePagoUpdate } from '@/hooks/useSitePagoUpdate'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -50,6 +51,10 @@ interface ProblemasPanelProps {
 export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
   const { user, isAdmin } = useAuth()
   const [clientesComProblema, setClientesComProblema] = useState<ClienteComProblema[]>([])
+  
+  // Add the site pago update hook
+  const { handleSitePagoChange } = useSitePagoUpdate(clientesComProblema, setClientesComProblema)
+  
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -634,6 +639,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
                           onComissionValueEdit={handleComissionValueEdit}
                           onComissionValueSave={handleComissionValueSave}
                           onComissionValueCancel={handleComissionValueCancel}
+                          onSitePagoChange={handleSitePagoChange}
                         />
                       ))
                     )}
