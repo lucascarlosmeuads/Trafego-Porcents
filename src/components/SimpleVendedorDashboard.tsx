@@ -8,11 +8,11 @@ import { Users, TrendingUp, DollarSign, LogOut } from 'lucide-react'
 
 export function SimpleVendedorDashboard() {
   const { user, signOut } = useAuth()
-  const { vendas, loading } = useSimpleSellerData(user?.email || '')
+  const { clientes, loading } = useSimpleSellerData(user?.email || '')
   const [isSigningOut, setIsSigningOut] = useState(false)
 
-  const totalVendas = vendas.length
-  const totalComissao = vendas.reduce((acc, venda) => acc + (venda.valor_comissao || 0), 0)
+  const totalVendas = clientes.length
+  const totalComissao = clientes.reduce((acc, cliente) => acc + 60, 0) // Assuming fixed commission of 60
 
   const handleSignOut = async () => {
     setIsSigningOut(true)
@@ -95,24 +95,24 @@ export function SimpleVendedorDashboard() {
             <CardTitle>Suas Vendas</CardTitle>
           </CardHeader>
           <CardContent>
-            {vendas.length === 0 ? (
+            {clientes.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">Nenhuma venda registrada ainda.</p>
               </div>
             ) : (
               <div className="space-y-4">
-                {vendas.map((venda, index) => (
+                {clientes.map((cliente, index) => (
                   <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
                     <div>
-                      <p className="font-medium">{venda.nome_cliente}</p>
-                      <p className="text-sm text-gray-600">{venda.email_cliente}</p>
+                      <p className="font-medium">{cliente.nome_cliente}</p>
+                      <p className="text-sm text-gray-600">{cliente.email_cliente}</p>
                     </div>
                     <div className="text-right">
                       <p className="font-semibold">
-                        R$ {(venda.valor_comissao || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                        R$ 60,00
                       </p>
                       <p className="text-sm text-gray-600">
-                        {venda.data_venda ? new Date(venda.data_venda).toLocaleDateString('pt-BR') : '-'}
+                        {cliente.created_at ? new Date(cliente.created_at).toLocaleDateString('pt-BR') : '-'}
                       </p>
                     </div>
                   </div>
