@@ -62,8 +62,8 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            {/* CORREÇÃO: Passar null para selectedManager para forçar busca global */}
-            <ClientesTable selectedManager={null} filterType="sites-pendentes" />
+            {/* Site Creator panel: Show only aguardando_link clients */}
+            <ClientesTable filterType="sites-pendentes" />
           </div>
         )
 
@@ -71,7 +71,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Saques Pendentes</h2>
-            <ClientesTable selectedManager={null} filterType="saques-pendentes" />
+            <ClientesTable filterType="saques-pendentes" />
           </div>
         )
       
@@ -90,7 +90,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* Tabela de clientes - passando selectedManager diretamente */}
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
             <ClientesTable selectedManager={selectedManager} />
           </div>
         )

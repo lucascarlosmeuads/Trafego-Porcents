@@ -43,27 +43,31 @@ export function useManagerData(
         .from('todos_clientes')
         .select('*')
 
-      // CORREÇÃO: Para filtros de sites, aplicar busca GLOBAL quando necessário
+      // PRIORITY 1: Handle Site Creator panel filters first
       if (filterType === 'sites-pendentes') {
-        console.log('🌐 [useManagerData] Aplicando filtro GLOBAL para sites pendentes')
+        console.log('🌐 [useManagerData] Site Creator: Aplicando filtro para sites pendentes (aguardando_link)')
         query = query.eq('site_status', 'aguardando_link')
       } else if (filterType === 'sites-finalizados') {
-        console.log('✅ [useManagerData] Aplicando filtro GLOBAL para sites finalizados')
+        console.log('✅ [useManagerData] Site Creator: Aplicando filtro para sites finalizados')
         query = query.eq('site_status', 'finalizado')
       } else {
-        // CORREÇÃO: Para painéis normais, aplicar filtros de gestor apenas quando necessário
-        console.log('📊 [useManagerData] Modo painel normal')
+        // PRIORITY 2: Handle Admin panel logic
+        console.log('📊 [useManagerData] Admin panel mode')
         
         if (isAdminUser) {
-          // CORREÇÃO: Admin com gestor específico selecionado
-          if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== null) {
+          // Admin user logic
+          if (selectedManager && 
+              selectedManager !== 'Todos os Clientes' && 
+              selectedManager !== 'Todos os Gestores' && 
+              selectedManager !== null) {
             console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
             query = query.eq('email_gestor', selectedManager)
           } else {
-            console.log('👑 [useManagerData] Admin buscando todos os clientes (sem filtro de gestor)')
-            // Para admin com "Todos os Gestores", não aplicar filtro de email_gestor
+            console.log('👑 [useManagerData] Admin buscando TODOS os clientes (sem filtro de gestor)')
+            // For admin with "Todos os Gestores" or null, NO email_gestor filter is applied
           }
         } else {
+          // Regular manager/gestor - only their clients
           console.log('👤 [useManagerData] Gestor buscando apenas seus clientes')
           query = query.eq('email_gestor', userEmail)
         }
@@ -78,16 +82,32 @@ export function useManagerData(
 
       console.log('✅ [useManagerData] Dados encontrados:', data?.length || 0, 'registros')
       
-      // Log adicional para debug da sincronização
+      // Enhanced logging for verification
       if (data && data.length > 0) {
-        if (filterType === 'sites-finalizados') {
-          console.log('🌐 [useManagerData] Sites finalizados encontrados:', data.length)
-          console.log('📋 [useManagerData] Lista de sites finalizados:', data.map(c => ({
+        if (filterType === 'sites-pendentes') {
+          console.log('🌐 [useManagerData] Sites pendentes (aguardando_link):', data.length)
+          console.log('📋 [useManagerData] Amostra de sites pendentes:', data.slice(0, 3).map(c => ({
             id: c.id,
             nome: c.nome_cliente,
-            email_gestor: c.email_gestor,
-            site_status: c.site_status
+            site_status: c.site_status,
+            email_gestor: c.email_gestor
           })))
+        } else if (filterType === 'sites-finalizados') {
+          console.log('✅ [useManagerData] Sites finalizados:', data.length)
+          console.log('📋 [useManagerData] Amostra de sites finalizados:', data.slice(0, 3).map(c => ({
+            id: c.id,
+            nome: c.nome_cliente,
+            site_status: c.site_status,
+            email_gestor: c.email_gestor
+          })))
+        } else if (isAdminUser && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes')) {
+          console.log('👑 [useManagerData] Admin - TODOS os clientes:', data.length)
+          console.log('📊 [useManagerData] Distribuição por site_status:', {
+            pendente: data.filter(c => c.site_status === 'pendente').length,
+            aguardando_link: data.filter(c => c.site_status === 'aguardando_link').length,
+            finalizado: data.filter(c => c.site_status === 'finalizado').length,
+            outros: data.filter(c => !['pendente', 'aguardando_link', 'finalizado'].includes(c.site_status)).length
+          })
         }
       }
       

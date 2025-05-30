@@ -31,8 +31,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const { isAdmin, user } = useAuth()
   
   const emailToUse = userEmail || user?.email || ''
-  const managerName = selectedManager || 'Próprios dados'
   
+  // Site Creator context detection
   const isSitesContext = filterType === 'sites-pendentes' || 
                         filterType === 'sites-finalizados' ||
                         emailToUse.includes('criador') || 
@@ -48,11 +48,15 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     isSitesContext
   })
   
+  // For Site Creator panels, don't pass selectedManager to avoid conflicts
+  const managerForQuery = isSitesContext ? undefined : selectedManager
+  
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager } = useManagerData(
     emailToUse, 
     isAdmin, 
-    selectedManager,
-    filterType === 'sites-pendentes' ? 'sites-pendentes' : filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
+    managerForQuery,
+    filterType === 'sites-pendentes' ? 'sites-pendentes' : 
+    filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
   )
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -615,7 +619,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                   <ClienteRow
                     key={`${emailToUse}-${cliente.id}-${index}`}
                     cliente={cliente}
-                    selectedManager={currentManager || managerName}
+                    selectedManager={currentManager || selectedManager || 'Próprios dados'}
                     index={index}
                     isAdmin={isAdmin}
                     showEmailGestor={isSitesContext}
@@ -672,13 +676,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }, [])
 
   useEffect(() => {
-    console.log(`🔍 [ClientesTable] Validação de segurança:`, {
+    console.log(`🔍 [ClientesTable] Validação de resultados:`, {
       totalClientes: clientes.length,
       currentManager,
       emailToUse,
       selectedManager,
       isAdmin,
-      isSitesContext
+      isSitesContext,
+      filterType
     })
     
     if (clientes.length > 0) {
@@ -689,6 +694,37 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         site_status: c.site_status
       })))
       
+      // Validation for Admin panel - should show ALL clients when "Todos os Gestores"
+      if (isAdmin && !isSitesContext && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes')) {
+        console.log('👑 [ClientesTable] ADMIN GLOBAL VIEW - Verificando se mostra todos os clientes:')
+        console.log('📈 [ClientesTable] Total de clientes exibidos:', clientes.length)
+        console.log('🎯 [ClientesTable] Esperado: 552 clientes (total no Supabase)')
+        
+        if (clientes.length < 500) {
+          console.warn('⚠️ [ClientesTable] POSSÍVEL PROBLEMA: Menos clientes que o esperado no painel Admin!')
+        }
+      }
+      
+      // Validation for Site Creator panels
+      if (filterType === 'sites-pendentes') {
+        console.log('🌐 [ClientesTable] SITE CREATOR - Sites pendentes:')
+        console.log('📈 [ClientesTable] Total de sites aguardando_link:', clientes.length)
+        console.log('🎯 [ClientesTable] Todos devem ter site_status = "aguardando_link"')
+        
+        const statusDistribution = clientes.reduce((acc, c) => {
+          acc[c.site_status] = (acc[c.site_status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>)
+        console.log('📊 [ClientesTable] Distribuição por site_status:', statusDistribution)
+      }
+      
+      if (filterType === 'sites-finalizados') {
+        console.log('✅ [ClientesTable] SITE CREATOR - Sites finalizados:')
+        console.log('📈 [ClientesTable] Total de sites finalizados:', clientes.length)
+        console.log('🎯 [ClientesTable] Esperado: ~14 clientes (confirmado no Supabase)')
+      }
+      
+      // Security validation for non-admin users
       if (!isAdmin && !isSitesContext) {
         const clientesInvalidos = clientes.filter(c => c.email_gestor !== emailToUse)
         if (clientesInvalidos.length > 0) {
@@ -708,13 +744,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           return
         }
         console.log('✅ [ClientesTable] Validação de segurança: todos os clientes pertencem ao gestor correto')
-      } else if (isSitesContext) {
-        console.log('🌐 [ClientesTable] Contexto de SITES: validação de email_gestor desabilitada')
-      } else if (isAdmin) {
-        console.log('👑 [ClientesTable] Contexto de ADMIN: validação de email_gestor desabilitada')
       }
     }
-  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin, isSitesContext])
+  }, [clientes, currentManager, emailToUse, selectedManager, isAdmin, isSitesContext, filterType])
 
   useEffect(() => {
     const verificarPermissoes = async () => {
@@ -775,7 +807,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           <TabsContent value="ativos" className="space-y-4">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <TableActions
-                selectedManager={currentManager || managerName}
+                selectedManager={currentManager || selectedManager || 'Próprios dados'}
                 filteredClientesCount={filteredClientesAtivos.length}
                 realtimeConnected={realtimeConnected}
                 onRefresh={refetch}
@@ -784,7 +816,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
-                  selectedManager={currentManager || managerName}
+                  selectedManager={currentManager || selectedManager || 'Próprios dados'}
                   onClienteAdicionado={refetch}
                   gestorMode={!isAdmin}
                 />
@@ -807,7 +839,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
           <TabsContent value="inativos" className="space-y-4">
             <TableActions
-              selectedManager={currentManager || managerName}
+              selectedManager={currentManager || selectedManager || 'Próprios dados'}
               filteredClientesCount={filteredClientesInativos.length}
               realtimeConnected={realtimeConnected}
               onRefresh={refetch}
@@ -951,7 +983,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <TableActions
-          selectedManager={currentManager || managerName}
+          selectedManager={currentManager || selectedManager || 'Próprios dados'}
           filteredClientesCount={filteredClientes.length}
           realtimeConnected={realtimeConnected}
           onRefresh={refetch}
@@ -960,7 +992,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
-            selectedManager={currentManager || managerName}
+            selectedManager={currentManager || selectedManager || 'Próprios dados'}
             onClienteAdicionado={refetch}
             gestorMode={!isAdmin}
           />
