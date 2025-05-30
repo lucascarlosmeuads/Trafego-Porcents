@@ -117,6 +117,41 @@ export function ClienteRow({
     window.open(whatsappUrl, '_blank')
   }
 
+  const openSiteLink = (link: string) => {
+    if (!link || link.trim() === '') {
+      toast({
+        title: "Erro",
+        description: "Link do site não encontrado",
+        variant: "destructive"
+      })
+      return
+    }
+
+    let formattedLink = link.trim()
+    
+    // Verificar se o link tem protocolo (http:// ou https://)
+    if (!formattedLink.startsWith('http://') && !formattedLink.startsWith('https://')) {
+      formattedLink = 'https://' + formattedLink
+    }
+
+    console.log('🌐 [ClienteRow] Abrindo link do site:', {
+      linkOriginal: link,
+      linkFormatado: formattedLink,
+      cliente: cliente.nome_cliente
+    })
+
+    try {
+      window.open(formattedLink, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      console.error('❌ [ClienteRow] Erro ao abrir link:', error)
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir o link do site",
+        variant: "destructive"
+      })
+    }
+  }
+
   const handleSiteLinkSave = async () => {
     setLinkValue(siteLinkInput)
     const success = await onLinkSave(cliente.id!.toString())
@@ -327,7 +362,7 @@ export function ClienteRow({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => window.open(cliente.link_site, '_blank')}
+                    onClick={() => openSiteLink(cliente.link_site!)}
                     className="h-8 bg-green-600 hover:bg-green-700 border-green-600 text-white"
                   >
                     <ExternalLink className="h-3 w-3 mr-1" />
