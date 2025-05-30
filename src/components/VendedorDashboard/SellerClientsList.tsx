@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -117,8 +116,8 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     }
   }
 
-  // Calcular comissões (R$ 20,00 por cliente)
-  const comissaoPorCliente = 20.00
+  // Calcular comissões (R$ 60,00 por cliente)
+  const comissaoPorCliente = 60.00
 
   const renderClienteCard = (cliente: Cliente, isToday = false) => (
     <div key={cliente.id} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors ${isToday ? 'border-2 border-green-200 bg-green-50' : ''}`}>
@@ -138,7 +137,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             )}
             <Badge className="bg-blue-100 text-blue-800 border-blue-200">
               <DollarSign className="h-3 w-3 mr-1" />
-              R$ 20,00
+              R$ 60,00
             </Badge>
           </div>
           
@@ -180,7 +179,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             💰 Resumo de Comissões
           </CardTitle>
           <CardDescription>
-            Cada cliente cadastrado gera R$ 20,00 de comissão
+            Cada cliente cadastrado gera R$ 60,00 de comissão
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,7 +272,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   {organizedClientes.total.length} cliente{organizedClientes.total.length !== 1 ? 's' : ''} encontrado{organizedClientes.total.length !== 1 ? 's' : ''}
                 </span>
                 <Badge className="bg-green-100 text-green-800">
-                  R$ 20,00 por cliente
+                  R$ 60,00 por cliente
                 </Badge>
               </div>
             </CardDescription>

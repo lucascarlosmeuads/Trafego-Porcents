@@ -55,7 +55,7 @@ export function ImportarVendasManuais() {
           status_campanha: 'Preenchimento do Formulário',
           status_envio: 'Enviado',
           comissao: '20',
-          valor_comissao: 20.00,
+          valor_comissao: 60.00,
           comissao_paga: false,
           site_status: 'pendente'
         }
@@ -142,7 +142,7 @@ export function ImportarVendasManuais() {
               <li>• <strong>9 primeiros</strong> → Felipe Almeida</li>
               <li>• <strong>9 últimos</strong> → Gabriel Izodoro</li>
               <li>• <strong>Status:</strong> Preenchimento do Formulário</li>
-              <li>• <strong>Comissão:</strong> R$ 20,00 cada</li>
+              <li>• <strong>Comissão:</strong> R$ 60,00 cada</li>
             </ul>
           </div>
 

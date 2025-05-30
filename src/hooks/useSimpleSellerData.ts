@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -153,7 +152,7 @@ export function useSimpleSellerData(sellerEmail: string) {
             vendedor: vendorName,
             status_campanha: clienteData.status_campanha,
             data_venda: clienteData.data_venda,
-            valor_comissao: 20.00
+            valor_comissao: 60.00
           })
           .eq('id', existingClient.id)
 
@@ -175,7 +174,7 @@ export function useSimpleSellerData(sellerEmail: string) {
           vendedor: vendorName,
           status_campanha: clienteData.status_campanha,
           data_venda: clienteData.data_venda,
-          valor_comissao: 20.00,
+          valor_comissao: 60.00,
           comissao_paga: false,
           site_status: 'pendente'
         }

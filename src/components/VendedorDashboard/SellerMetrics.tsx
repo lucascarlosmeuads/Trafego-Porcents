@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp, DollarSign, Calendar } from 'lucide-react'
 import { SellerMetrics as SellerMetricsType } from '@/hooks/useSellerData'
@@ -26,8 +25,8 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
     )
   }
 
-  // Comissão fixa de R$ 20,00 por cliente cadastrado
-  const comissaoPorCliente = 20.00
+  // Comissão fixa de R$ 60,00 por cliente cadastrado
+  const comissaoPorCliente = 60.00
 
   return (
     <div className="space-y-6">
@@ -96,7 +95,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <DollarSign className="h-5 w-5 mr-2" />
-          💰 Relatório de Comissões (R$ 20,00 por cliente)
+          💰 Relatório de Comissões (R$ 60,00 por cliente)
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
