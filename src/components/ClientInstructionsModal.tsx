@@ -15,15 +15,20 @@ interface ClientInstructionsModalProps {
 export function ClientInstructionsModal({ isOpen, onClose, clientEmail, clientName }: ClientInstructionsModalProps) {
   const [copied, setCopied] = useState(false)
 
-  const instructions = `Olá ${clientName},
+  const instructions = `Olá ${clientName}! 🎉
 
-1. Acesse o link: https://login.trafegoporcents.com
-2. Clique em "Criar Conta"
-3. Use este mesmo e-mail: ${clientEmail}
-4. Escolha uma senha segura (ex: cliente123)
-5. Após o cadastro, você verá o painel com os materiais e campanhas atribuídas
+Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
-Qualquer dúvida, entre em contato conosco!`
+📧 Email: ${clientEmail}
+🔐 Senha: parceriadesucesso
+
+🔗 Acesse: https://login.trafegoporcents.com
+
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+
+🚨 Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo!
+
+Qualquer dúvida, estamos aqui para ajudar! 💪`
 
   const handleCopy = async () => {
     try {
@@ -54,12 +59,12 @@ Qualquer dúvida, entre em contato conosco!`
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
             <h3 className="font-semibold text-yellow-800 mb-2">⚠️ Próximos Passos</h3>
             <p className="text-yellow-700 text-sm">
-              Agora, envie para o cliente as seguintes instruções no WhatsApp do cliente.
+              Agora, envie para o cliente a seguinte mensagem no WhatsApp do cliente.
             </p>
           </div>
 
           <div className="bg-gray-50 border rounded-lg p-4 relative">
-            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+            <pre className="whitespace-pre-wrap text-sm text-gray-800 font-sans">
               {instructions}
             </pre>
             
