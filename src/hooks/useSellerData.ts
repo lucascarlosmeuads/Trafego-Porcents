@@ -84,7 +84,8 @@ export function useSellerData(sellerEmail: string) {
           created_at,
           comissao_paga,
           valor_comissao,
-          comissao
+          comissao,
+          site_pago
         `)
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false, nullsFirst: false })
@@ -108,7 +109,8 @@ export function useSellerData(sellerEmail: string) {
             created_at,
             comissao_paga,
             valor_comissao,
-            comissao
+            comissao,
+            site_pago
           `)
           .ilike('vendedor', `%${sellerName}%`)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -137,7 +139,8 @@ export function useSellerData(sellerEmail: string) {
             created_at,
             comissao_paga,
             valor_comissao,
-            comissao
+            comissao,
+            site_pago
           `)
           .eq('vendedor', capitalizedName)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -187,7 +190,8 @@ export function useSellerData(sellerEmail: string) {
           site_status: 'pendente',
           descricao_problema: '',
           saque_solicitado: false,
-          comissao: item.comissao || 'Pendente'
+          comissao: item.comissao || 'Pendente',
+          site_pago: Boolean(item.site_pago || false)
         }))
 
         console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
@@ -376,7 +380,8 @@ export function useSellerData(sellerEmail: string) {
           site_status: existingClient.site_status || 'pendente',
           descricao_problema: existingClient.descricao_problema || '',
           saque_solicitado: Boolean(existingClient.saque_solicitado || false),
-          comissao: existingClient.comissao || 'Pendente'
+          comissao: existingClient.comissao || 'Pendente',
+          site_pago: Boolean(existingClient.site_pago || false)
         }
 
         return { exists: true, foundClient: formattedClient }
@@ -434,7 +439,8 @@ export function useSellerData(sellerEmail: string) {
         link_criativo: '',
         link_site: '',
         numero_bm: '',
-        comissao: 'Pendente'
+        comissao: 'Pendente',
+        site_pago: false
       }
 
       console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)

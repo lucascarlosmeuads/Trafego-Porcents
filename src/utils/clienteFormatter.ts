@@ -1,5 +1,4 @@
 
-
 import { Cliente } from '@/lib/supabase'
 
 export function validateSecurityForNonAdmin(data: any[], userEmail: string, isAdmin: boolean): boolean {
@@ -44,11 +43,11 @@ export function formatCliente(item: any): Cliente | null {
       site_status: item.site_status || 'pendente',
       descricao_problema: item.descricao_problema || '',
       saque_solicitado: Boolean(item.saque_solicitado || false),
-      comissao: item.comissao || 'Pendente'
+      comissao: item.comissao || 'Pendente',
+      site_pago: Boolean(item.site_pago || false)
     }
   } catch (error) {
     console.error('❌ [formatCliente] Erro ao formatar cliente:', error, item)
     return null
   }
 }
-
