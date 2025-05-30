@@ -2,7 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
-import { ClienteDashboardOverview } from './ClienteDashboard/ClienteDashboardOverview'
+import { ClienteWelcome } from './ClienteDashboard/ClienteWelcome'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
@@ -73,13 +73,10 @@ export function ClienteDashboard() {
 
     switch (activeTab) {
       case 'overview':
-        console.log('✅ [ClienteDashboard] Renderizando ClienteDashboardOverview')
+        console.log('✅ [ClienteDashboard] Renderizando ClienteWelcome')
         return (
-          <ClienteDashboardOverview 
-            cliente={cliente}
-            briefing={briefing}
-            vendas={vendas}
-            arquivos={arquivos}
+          <ClienteWelcome 
+            onTabChange={setActiveTab}
           />
         )
       case 'briefing':
@@ -116,20 +113,17 @@ export function ClienteDashboard() {
         console.log('✅ [ClienteDashboard] Renderizando ClienteChat')
         return <ClienteChat />
       default:
-        console.log('✅ [ClienteDashboard] Renderizando ClienteDashboardOverview (default)')
+        console.log('✅ [ClienteDashboard] Renderizando ClienteWelcome (default)')
         return (
-          <ClienteDashboardOverview 
-            cliente={cliente}
-            briefing={briefing}
-            vendas={vendas}
-            arquivos={arquivos}
+          <ClienteWelcome 
+            onTabChange={setActiveTab}
           />
         )
     }
   }
 
   console.log('✅ [ClienteDashboard] Renderizando dashboard principal para:', user.email)
-  console.log('🎯 [ClienteDashboard] Componente que será renderizado:', activeTab === 'overview' ? 'ClienteDashboardOverview' : activeTab)
+  console.log('🎯 [ClienteDashboard] Componente que será renderizado:', activeTab === 'overview' ? 'ClienteWelcome' : activeTab)
 
   return (
     <div className="flex h-screen bg-gray-50">

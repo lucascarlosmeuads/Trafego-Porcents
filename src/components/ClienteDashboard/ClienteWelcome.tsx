@@ -39,7 +39,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       title: 'Enviar Materiais',
       description: 'Você pode anexar imagens, vídeos ou textos no menu "Criativos".',
       icon: Folder,
-      menuAction: () => onTabChange('materiais'),
+      menuAction: () => onTabChange('arquivos'),
       actionLabel: 'Ir para Criativos'
     },
     {
