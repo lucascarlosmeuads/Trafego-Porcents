@@ -122,7 +122,7 @@ export function AdminTableCards({
                   <span className="font-medium text-muted-foreground">Status Campanha:</span>
                   <div className="mt-1">
                     <StatusSelect
-                      clienteId={cliente.id}
+                      id={cliente.id}
                       currentStatus={cliente.status_campanha || ''}
                       onStatusChange={onStatusChange}
                     />
@@ -132,7 +132,7 @@ export function AdminTableCards({
                   <span className="font-medium text-muted-foreground">Status Site:</span>
                   <div className="mt-1">
                     <SiteStatusSelect
-                      clienteId={cliente.id}
+                      id={cliente.id}
                       currentStatus={cliente.site_status || 'pendente'}
                       onStatusChange={onSiteStatusChange}
                     />

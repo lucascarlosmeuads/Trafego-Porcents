@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -146,7 +145,7 @@ export function useAdminTableLogic(selectedManager?: string | null, filterType?:
     }
   }
 
-  const updateField = async (id: string, field: keyof Cliente, value: string | boolean) => {
+  const updateField = async (id: string, field: keyof Cliente, value: string | boolean | number) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
