@@ -199,6 +199,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  console.log('🔍 [useAuth] === ESTADO ATUAL ===')
+  console.log('🔍 [useAuth] Usuário:', user?.email)
+  console.log('🔍 [useAuth] Loading:', loading)
+  console.log('🔍 [useAuth] Tipos de usuário:', {
+    isAdmin,
+    isGestor,
+    isCliente,
+    isVendedor,
+    isSites
+  })
+
   return (
     <AuthContext.Provider value={{ 
       user, 

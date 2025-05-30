@@ -15,14 +15,24 @@ export function ClienteDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
   const { cliente, briefing, vendas, arquivos, loading: dataLoading, refetch } = useClienteData(user?.email || '')
 
+  console.log('🔍 [ClienteDashboard] === DEBUGGING PAINEL DO CLIENTE ===')
   console.log('🔍 [ClienteDashboard] Estado da autenticação:', { 
     user: user?.email, 
     authLoading, 
-    dataLoading 
+    dataLoading,
+    activeTab
+  })
+  console.log('🔍 [ClienteDashboard] Dados do cliente:', {
+    cliente: cliente?.nome_cliente,
+    clienteStatus: cliente?.status_campanha,
+    briefingExists: !!briefing,
+    vendasCount: vendas?.length,
+    arquivosCount: arquivos?.length
   })
 
   // Show loading while authentication is being checked
   if (authLoading) {
+    console.log('⏳ [ClienteDashboard] Mostrando loading de autenticação')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -47,7 +57,10 @@ export function ClienteDashboard() {
   }
 
   const renderContent = () => {
+    console.log('🎯 [ClienteDashboard] renderContent() chamado com activeTab:', activeTab)
+    
     if (dataLoading) {
+      console.log('⏳ [ClienteDashboard] Mostrando loading de dados')
       return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
@@ -60,6 +73,7 @@ export function ClienteDashboard() {
 
     switch (activeTab) {
       case 'overview':
+        console.log('✅ [ClienteDashboard] Renderizando ClienteDashboardOverview')
         return (
           <ClienteDashboardOverview 
             cliente={cliente}
@@ -69,6 +83,7 @@ export function ClienteDashboard() {
           />
         )
       case 'briefing':
+        console.log('✅ [ClienteDashboard] Renderizando BriefingForm')
         return (
           <BriefingForm 
             briefing={briefing}
@@ -77,6 +92,7 @@ export function ClienteDashboard() {
           />
         )
       case 'arquivos':
+        console.log('✅ [ClienteDashboard] Renderizando ArquivosUpload')
         return (
           <ArquivosUpload 
             emailCliente={user?.email || ''}
@@ -85,6 +101,7 @@ export function ClienteDashboard() {
           />
         )
       case 'vendas':
+        console.log('✅ [ClienteDashboard] Renderizando VendasManager')
         return (
           <VendasManager 
             emailCliente={user?.email || ''}
@@ -93,10 +110,13 @@ export function ClienteDashboard() {
           />
         )
       case 'tutoriais':
+        console.log('✅ [ClienteDashboard] Renderizando TutorialVideos')
         return <TutorialVideos />
       case 'chat':
+        console.log('✅ [ClienteDashboard] Renderizando ClienteChat')
         return <ClienteChat />
       default:
+        console.log('✅ [ClienteDashboard] Renderizando ClienteDashboardOverview (default)')
         return (
           <ClienteDashboardOverview 
             cliente={cliente}
@@ -109,6 +129,7 @@ export function ClienteDashboard() {
   }
 
   console.log('✅ [ClienteDashboard] Renderizando dashboard principal para:', user.email)
+  console.log('🎯 [ClienteDashboard] Componente que será renderizado:', activeTab === 'overview' ? 'ClienteDashboardOverview' : activeTab)
 
   return (
     <div className="flex h-screen bg-gray-50">

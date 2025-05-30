@@ -23,6 +23,17 @@ export function Dashboard() {
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('dashboard')
 
+  console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
+  console.log('🔍 [Dashboard] Estado de autenticação:', {
+    userEmail: user?.email,
+    loading,
+    isAdmin,
+    isGestor,
+    isCliente,
+    isVendedor,
+    isSites
+  })
+
   // Reset tab when user type changes
   useEffect(() => {
     setActiveTab('dashboard')
@@ -30,6 +41,7 @@ export function Dashboard() {
   }, [isAdmin, isGestor, isCliente, isVendedor, isSites])
 
   if (loading) {
+    console.log('⏳ [Dashboard] Mostrando loading geral')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando...</div>
@@ -38,6 +50,7 @@ export function Dashboard() {
   }
 
   if (!user) {
+    console.log('❌ [Dashboard] Usuário não autenticado')
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Usuário não autenticado</div>
@@ -47,27 +60,34 @@ export function Dashboard() {
 
   // Cliente Dashboard
   if (isCliente) {
+    console.log('✅ [Dashboard] Direcionando para ClienteDashboard')
+    console.log('🎯 [Dashboard] Usuário identificado como CLIENTE:', user.email)
     return <ClienteDashboard />
   }
 
   // Vendedor Dashboards
   if (isVendedor) {
+    console.log('✅ [Dashboard] Direcionando para VendedorDashboard')
     const isSimpleVendedor = user.email?.includes('simple') || false
     
     if (isSimpleVendedor) {
+      console.log('🎯 [Dashboard] Usuário é vendedor simples')
       return <SimpleVendedorDashboard />
     }
     
+    console.log('🎯 [Dashboard] Usuário é vendedor padrão')
     return <VendedorDashboard />
   }
 
   // Sites Dashboard
   if (isSites) {
+    console.log('✅ [Dashboard] Direcionando para SitesDashboard')
     return <SitesDashboard />
   }
 
   // Admin/Gestor Dashboards
   if (isAdmin || isGestor) {
+    console.log('✅ [Dashboard] Direcionando para Admin/Gestor Dashboard')
     return (
       <div className="min-h-screen flex w-full">
         <ManagerSidebar
@@ -96,6 +116,7 @@ export function Dashboard() {
     )
   }
 
+  console.log('❌ [Dashboard] Tipo de usuário não autorizado')
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-lg text-red-600">
