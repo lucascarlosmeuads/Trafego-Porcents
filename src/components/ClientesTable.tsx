@@ -190,6 +190,188 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // Handler functions
+  const handleStatusChange = async (clienteId: string, newStatus: string) => {
+    console.log(`🚀 === ALTERANDO STATUS ===`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🎯 Novo Status: "${newStatus}"`)
+    console.log(`👤 User Email: ${emailToUse}`)
+    console.log(`🔒 IsAdmin: ${isAdmin}`)
+    
+    if (!clienteId || clienteId.trim() === '') {
+      console.error('❌ ID do cliente inválido:', clienteId)
+      toast({
+        title: "Erro",
+        description: "ID do cliente não encontrado",
+        variant: "destructive",
+      })
+      return
+    }
+
+    if (newStatus === 'Problema') {
+      setEditandoProblema(clienteId)
+      setProblemaDescricao('')
+      return
+    }
+
+    setUpdatingStatus(clienteId)
+    
+    try {
+      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: `Status da campanha alterado para: ${newStatus}`,
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro na atualização:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar status",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
+    console.log(`🚀 === ALTERANDO STATUS DO SITE ===`)
+    console.log(`🆔 Cliente ID: "${clienteId}"`)
+    console.log(`🎯 Novo Status Site: "${newStatus}"`)
+    console.log(`👤 User Email: ${emailToUse}`)
+    console.log(`🔒 IsAdmin: ${isAdmin}`)
+    
+    if (!clienteId || clienteId.trim() === '') {
+      console.error('❌ ID do cliente inválido:', clienteId)
+      toast({
+        title: "Erro",
+        description: "ID do cliente não encontrado",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setUpdatingStatus(clienteId)
+    
+    try {
+      const success = await updateCliente(clienteId, 'site_status', newStatus)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`,
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status do site",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro na atualização do status do site:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar status do site",
+        variant: "destructive",
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue || '')
+  }
+
+  const handleLinkSave = async (clienteId: string) => {
+    try {
+      let valueToSave = linkValue
+      
+      console.log('💾 Salvando link_site com valor:', valueToSave)
+      
+      const success = await updateCliente(clienteId, 'link_site', valueToSave)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Link atualizado com sucesso",
+        })
+        setEditingLink(null)
+        setLinkValue('')
+        return true
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar link",
+          variant: "destructive",
+        })
+        return false
+      }
+    } catch (error) {
+      console.error('Erro ao salvar link:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar link",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue || '')
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    try {
+      const success = await updateCliente(clienteId, 'numero_bm', bmValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Número BM atualizado com sucesso",
+        })
+        setEditingBM(null)
+        setBmValue('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar número BM",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao salvar BM:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar número BM",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
   const marcarPagamentoFeito = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
     setUpdatingComission(clienteId)
     
@@ -272,49 +454,132 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
-    console.log(`🚀 === ALTERANDO STATUS DO SITE ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
-    console.log(`🎯 Novo Status Site: "${newStatus}"`)
-    console.log(`👤 User Email: ${emailToUse}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
-    
-    if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ID do cliente inválido:', clienteId)
-      toast({
-        title: "Erro",
-        description: "ID do cliente não encontrado",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setUpdatingStatus(clienteId)
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
+    setUpdatingComission(clienteId)
     
     try {
-      const success = await updateCliente(clienteId, 'site_status', newStatus)
+      const newStatus = !currentStatus
+      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
       
       if (success) {
         toast({
           title: "Sucesso",
-          description: `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`,
+          description: newStatus ? "Comissão marcada como paga" : "Comissão marcada como não paga",
         })
+        return true
       } else {
         toast({
           title: "Erro",
-          description: "Falha ao atualizar status do site",
+          description: "Falha ao atualizar comissão",
+          variant: "destructive",
+        })
+        return false
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar comissão:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar comissão",
+        variant: "destructive",
+      })
+      return false
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toFixed(2))
+  }
+
+  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
+    try {
+      const success = await updateCliente(clienteId, 'valor_comissao', newValue)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Valor da comissão atualizado com sucesso",
+        })
+        setEditingComissionValue(null)
+        setComissionValueInput('')
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar valor da comissão",
           variant: "destructive",
         })
       }
     } catch (error) {
-      console.error('Erro na atualização do status do site:', error)
+      console.error('Erro ao salvar valor da comissão:', error)
       toast({
         title: "Erro",
-        description: "Erro inesperado ao atualizar status do site",
+        description: "Erro inesperado ao atualizar valor da comissão",
         variant: "destructive",
       })
+    }
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
+  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
+    try {
+      const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
+      if (!statusSuccess) {
+        toast({
+          title: "Erro",
+          description: "Falha ao alterar status para Problema",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
+      if (!descricaoSuccess) {
+        toast({
+          title: "Erro",
+          description: "Falha ao salvar descrição do problema",
+          variant: "destructive",
+        })
+        return false
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Problema registrado com sucesso",
+      })
+      
+      return true
+    } catch (error) {
+      console.error('Erro ao salvar problema:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao registrar problema",
+        variant: "destructive",
+      })
+      return false
+    }
+  }
+
+  const handleProblemaDescricaoCancel = () => {
+    setEditandoProblema(null)
+    setProblemaDescricao('')
+  }
+
+  const handleAddClient = async (clienteData: any) => {
+    setAddingClient(true)
+    try {
+      const success = await addCliente(clienteData)
+      return success
+    } catch (error) {
+      console.error('Erro ao adicionar cliente:', error)
+      return false
     } finally {
-      setUpdatingStatus(null)
+      setAddingClient(false)
     }
   }
 
@@ -476,270 +741,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     verificarPermissoes()
   }, [user?.email, isAdmin])
-
-  const handleLinkSave = async (clienteId: string) => {
-    try {
-      let valueToSave = linkValue
-      
-      console.log('💾 Salvando link_site com valor:', valueToSave)
-      
-      const success = await updateCliente(clienteId, 'link_site', valueToSave)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Link atualizado com sucesso",
-        })
-        setEditingLink(null)
-        setLinkValue('')
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar link",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('Erro ao salvar link:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar link",
-        variant: "destructive",
-      })
-      return false
-    }
-  }
-
-  const handleStatusChange = async (clienteId: string, newStatus: string) => {
-    console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
-    console.log(`🎯 Novo Status: "${newStatus}"`)
-    console.log(`👤 User Email: ${emailToUse}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
-    
-    if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ID do cliente inválido:', clienteId)
-      toast({
-        title: "Erro",
-        description: "ID do cliente não encontrado",
-        variant: "destructive",
-      })
-      return
-    }
-
-    if (newStatus === 'Problema') {
-      setEditandoProblema(clienteId)
-      setProblemaDescricao('')
-      return
-    }
-
-    setUpdatingStatus(clienteId)
-    
-    try {
-      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: `Status da campanha alterado para: ${newStatus}`,
-        })
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar status",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro na atualização:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar status",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingStatus(null)
-    }
-  }
-
-  const handleProblemaDescricaoSave = async (clienteId: string, descricao: string) => {
-    try {
-      const statusSuccess = await updateCliente(clienteId, 'status_campanha', 'Problema')
-      if (!statusSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao alterar status para Problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      const descricaoSuccess = await updateCliente(clienteId, 'descricao_problema', descricao)
-      if (!descricaoSuccess) {
-        toast({
-          title: "Erro",
-          description: "Falha ao salvar descrição do problema",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      toast({
-        title: "Sucesso",
-        description: "Problema registrado com sucesso",
-      })
-      
-      return true
-    } catch (error) {
-      console.error('Erro ao salvar problema:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao registrar problema",
-        variant: "destructive",
-      })
-      return false
-    }
-  }
-
-  const handleProblemaDescricaoCancel = () => {
-    setEditandoProblema(null)
-    setProblemaDescricao('')
-  }
-
-  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
-    setEditingLink({ clienteId, field })
-    setLinkValue(currentValue || '')
-  }
-
-  const handleBMEdit = (clienteId: string, currentValue: string) => {
-    setEditingBM(clienteId)
-    setBmValue(currentValue || '')
-  }
-
-  const handleBMSave = async (clienteId: string) => {
-    try {
-      const success = await updateCliente(clienteId, 'numero_bm', bmValue)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Número BM atualizado com sucesso",
-        })
-        setEditingBM(null)
-        setBmValue('')
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar número BM",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao salvar BM:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar número BM",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleBMCancel = () => {
-    setEditingBM(null)
-    setBmValue('')
-  }
-
-  const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
-    setUpdatingComission(clienteId)
-    
-    try {
-      const newStatus = !currentStatus
-      const success = await updateCliente(clienteId, 'comissao_paga', newStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: newStatus ? "Comissão marcada como paga" : "Comissão marcada como não paga",
-        })
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar comissão",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar comissão:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar comissão",
-        variant: "destructive",
-      })
-      return false
-    } finally {
-      setUpdatingComission(null)
-    }
-  }
-
-  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
-    setEditingComissionValue(clienteId)
-    setComissionValueInput(currentValue.toFixed(2))
-  }
-
-  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
-    try {
-      const success = await updateCliente(clienteId, 'valor_comissao', newValue)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Valor da comissão atualizado com sucesso",
-        })
-        setEditingComissionValue(null)
-        setComissionValueInput('')
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar valor da comissão",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao salvar valor da comissão:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar valor da comissão",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleComissionValueCancel = () => {
-    setEditingComissionValue(null)
-    setComissionValueInput('')
-  }
-
-  const handleLinkCancel = () => {
-    setEditingLink(null)
-    setLinkValue('')
-  }
-
-  const handleAddClient = async (clienteData: any) => {
-    setAddingClient(true)
-    try {
-      const success = await addCliente(clienteData)
-      return success
-    } catch (error) {
-      console.error('Erro ao adicionar cliente:', error)
-      return false
-    } finally {
-      setAddingClient(false)
-    }
-  }
 
   function renderWithTabs(clientesAtivos: typeof clientes, clientesInativos: typeof clientes) {
     const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
