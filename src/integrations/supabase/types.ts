@@ -87,6 +87,48 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_mensagens: {
+        Row: {
+          cliente_id: string
+          conteudo: string
+          created_at: string
+          email_cliente: string
+          email_gestor: string
+          id: string
+          lida: boolean | null
+          remetente: string
+          status_campanha: string | null
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          cliente_id: string
+          conteudo: string
+          created_at?: string
+          email_cliente: string
+          email_gestor: string
+          id?: string
+          lida?: boolean | null
+          remetente: string
+          status_campanha?: string | null
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          cliente_id?: string
+          conteudo?: string
+          created_at?: string
+          email_cliente?: string
+          email_gestor?: string
+          id?: string
+          lida?: boolean | null
+          remetente?: string
+          status_campanha?: string | null
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       client_user_creation_log: {
         Row: {
           created_at: string | null

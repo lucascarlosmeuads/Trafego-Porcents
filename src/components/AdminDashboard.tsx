@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -7,6 +6,7 @@ import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { DocumentationViewer } from './Documentation'
 import { ManagerSelector } from './ManagerSelector'
 import { supabase } from '@/lib/supabase'
+import { AdminChatOverview } from './Chat/AdminChatOverview'
 
 // Imports comentados para componentes não utilizados:
 // import { AuditoriaClientes } from './AuditoriaClientes'
@@ -47,6 +47,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'documentacao':
         return <DocumentationViewer />
+
+      case 'chat':
+        return <AdminChatOverview />
 
       // Cases comentados para menus ocultos (mantidos para não quebrar funcionalidade):
       /*

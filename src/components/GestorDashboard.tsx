@@ -1,110 +1,37 @@
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
-import { useManagerData } from '@/hooks/useManagerData'
-import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { SolicitacoesSaque } from './SolicitacoesSaque'
+import { ManagerSidebar } from './ManagerSidebar'
+import { GestorChatList } from './Chat/GestorChatList'
 
-export function GestorDashboard() {
-  const { user, currentManagerName, isAdmin } = useAuth()
-  const { clientes, loading, refetch } = useManagerData(user?.email || '', false)
-  const { inicializarClientesTravados } = useGestorStatusRestrictions()
-  const [clientesTravadosInicializados, setClientesTravadosInicializados] = useState(false)
+interface GestorDashboardProps {
+  activeTab: string
+}
 
-  // Separar clientes por status - REMOVIDO "Saques Pendentes"
-  const clientesAtivos = clientes.filter(cliente => 
-    cliente.status_campanha !== 'Off' && 
-    cliente.status_campanha !== 'Reembolso' && 
-    cliente.status_campanha !== 'Problema'
-  )
-  
-  const clientesInativos = clientes.filter(cliente => 
-    cliente.status_campanha === 'Off' || 
-    cliente.status_campanha === 'Reembolso'
-  )
+export function GestorDashboard({ activeTab }: GestorDashboardProps) {
+  const { user } = useAuth()
 
-  const clientesProblemas = clientes.filter(cliente => 
-    cliente.status_campanha === 'Problema'
-  )
-
-  // Inicializar controle de status travados - CORRIGIDO para evitar loop infinito
-  useEffect(() => {
-    if (clientes.length > 0 && !clientesTravadosInicializados) {
-      console.log('🔧 [GestorDashboard] Inicializando clientes travados...')
-      inicializarClientesTravados(clientes)
-      setClientesTravadosInicializados(true)
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return <DashboardMetrics />
+      case 'clientes':
+        return <ClientesTable />
+      case 'saques':
+        return <SolicitacoesSaque />
+      case 'chat':
+        return <GestorChatList />
+      default:
+        return <DashboardMetrics />
     }
-  }, [clientes.length, clientesTravadosInicializados, inicializarClientesTravados])
-
-  // Log de segurança para verificar se o filtro está funcionando
-  useEffect(() => {
-    if (clientes.length > 0 && user?.email && !isAdmin) {
-      console.log('🔍 [GestorDashboard] Verificação de segurança:')
-      console.log('👤 Email do usuário logado:', user.email)
-      console.log('📊 Total de clientes carregados:', clientes.length)
-      
-      const clientesComEmailIncorreto = clientes.filter(c => c.email_gestor !== user.email)
-      if (clientesComEmailIncorreto.length > 0) {
-        console.error('🚨 [GestorDashboard] ERRO DE SEGURANÇA: Clientes com email_gestor incorreto!', clientesComEmailIncorreto)
-      } else {
-        console.log('✅ [GestorDashboard] Todos os clientes pertencem ao gestor correto')
-      }
-      
-      // Verificar distribuição de emails
-      const emailDistribution = clientes.reduce((acc, cliente) => {
-        acc[cliente.email_gestor] = (acc[cliente.email_gestor] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-      console.log('📈 [GestorDashboard] Distribuição por email_gestor:', emailDistribution)
-    }
-  }, [clientes, user?.email, isAdmin])
-
-  if (loading) {
-    return <div className="flex items-center justify-center py-8 text-contrast">Carregando...</div>
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold header-title">Dashboard - {currentManagerName}</h1>
-          {!isAdmin && (
-            <div className="flex items-center gap-2 text-sm text-green-600 mt-2">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              <span className="header-subtitle">🔒 Filtro de Segurança Ativo - Dados filtrados por: {user?.email}</span>
-            </div>
-          )}
-          <div className="flex items-center gap-2 text-xs text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
-            <span>⚠️</span>
-            <span>Comissões gerenciadas pela coluna Comissão. Status travado após "No Ar".</span>
-          </div>
-        </div>
-      </div>
-
-      <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 bg-muted">
-          <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
-          <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="dashboard" className="space-y-6">
-          <DashboardMetrics clientes={clientes} />
-        </TabsContent>
-        
-        <TabsContent value="clientes" className="space-y-6">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">Clientes Ativos</h2>
-          </div>
-          <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
-        </TabsContent>
-
-        <TabsContent value="inativos" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="inativos" />
-        </TabsContent>
-      </Tabs>
+      {renderContent()}
     </div>
   )
 }

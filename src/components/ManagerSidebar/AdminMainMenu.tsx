@@ -1,10 +1,10 @@
-
 import { Button } from '@/components/ui/button'
 import { 
   BarChart3, 
   Users, 
   Settings, 
-  Book
+  Book,
+  MessageCircle
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -36,6 +36,12 @@ export function AdminMainMenu({
       label: 'Clientes',
       icon: Users,
       onClick: () => onTabChange('clientes')
+    },
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageCircle,
+      onClick: () => onTabChange('chat')
     },
     {
       id: 'documentacao',
