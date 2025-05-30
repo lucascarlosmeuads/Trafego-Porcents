@@ -34,10 +34,10 @@ export function ClienteDashboard() {
   if (authLoading) {
     console.log('⏳ [ClienteDashboard] Mostrando loading de autenticação')
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-          <p className="text-gray-600">Verificando autenticação...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Verificando autenticação...</p>
         </div>
       </div>
     )
@@ -48,9 +48,9 @@ export function ClienteDashboard() {
   if (!user) {
     console.log('❌ [ClienteDashboard] Usuário não autenticado, redirecionando...')
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <p className="text-gray-600">Redirecionando para login...</p>
+          <p className="text-muted-foreground">Redirecionando para login...</p>
         </div>
       </div>
     )
@@ -64,8 +64,8 @@ export function ClienteDashboard() {
       return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Carregando dados...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-muted-foreground">Carregando dados...</p>
           </div>
         </div>
       )
@@ -126,11 +126,11 @@ export function ClienteDashboard() {
   console.log('🎯 [ClienteDashboard] Componente que será renderizado:', activeTab === 'overview' ? 'ClienteWelcome' : activeTab)
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <ClienteSidebar activeTab={activeTab} onTabChange={setActiveTab} />
       
       <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-6 bg-background">
           {renderContent()}
         </main>
       </div>
