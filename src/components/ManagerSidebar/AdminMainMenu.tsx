@@ -7,15 +7,13 @@ import {
   Settings, 
   FileText, 
   Upload, 
-  Globe, 
-  DollarSign, 
+  Globe,
   UserPlus 
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
   selectedManager: string | null
-  saquesPendentes: number
   onTabChange: (tab: string) => void
   onManagerSelect: (manager: string | null) => void
   problemasPendentes: number
@@ -24,7 +22,6 @@ interface AdminMainMenuProps {
 export function AdminMainMenu({ 
   activeTab, 
   selectedManager, 
-  saquesPendentes, 
   onTabChange, 
   onManagerSelect,
   problemasPendentes 
@@ -72,13 +69,6 @@ export function AdminMainMenu({
       label: 'Sites',
       icon: Globe,
       onClick: () => onTabChange('sites')
-    },
-    {
-      id: 'saques-pendentes',
-      label: 'Saques Pendentes',
-      icon: DollarSign,
-      badge: saquesPendentes,
-      onClick: () => onTabChange('saques-pendentes')
     }
   ]
 

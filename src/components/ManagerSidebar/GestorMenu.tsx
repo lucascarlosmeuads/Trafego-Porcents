@@ -6,8 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { 
   LayoutDashboard, 
   Users, 
-  AlertTriangle,
-  Wallet
+  AlertTriangle
 } from 'lucide-react'
 
 interface GestorMenuProps {
@@ -23,12 +22,10 @@ export function GestorMenu({
 }: GestorMenuProps) {
   const { user } = useAuth()
   const [problemasPendentes, setProblemasPendentes] = useState(0)
-  const [saquesPendentes, setSaquesPendentes] = useState(0)
 
   useEffect(() => {
     if (user?.email) {
       fetchProblemasPendentes()
-      fetchSaquesPendentes()
     }
   }, [user?.email])
 
@@ -46,22 +43,6 @@ export function GestorMenu({
       }
     } catch (error) {
       console.error('Erro ao buscar problemas pendentes:', error)
-    }
-  }
-
-  const fetchSaquesPendentes = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .select('id')
-        .eq('email_gestor', user?.email)
-        .eq('status_campanha', 'Saque Pendente')
-
-      if (!error && data) {
-        setSaquesPendentes(data.length)
-      }
-    } catch (error) {
-      console.error('Erro ao buscar saques pendentes:', error)
     }
   }
 
@@ -93,25 +74,6 @@ export function GestorMenu({
       >
         <Users size={16} />
         <span>Clientes Ativos</span>
-      </button>
-
-      <button
-        onClick={() => handleTabChange('saques-pendentes')}
-        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors flex items-center justify-between ${
-          activeTab === 'saques-pendentes'
-            ? 'bg-primary text-primary-foreground'
-            : 'text-card-foreground hover:bg-muted'
-        }`}
-      >
-        <div className="flex items-center gap-2">
-          <Wallet size={16} />
-          <span>Saques Solicitados</span>
-        </div>
-        {saquesPendentes > 0 && (
-          <Badge variant="destructive" className="text-xs">
-            {saquesPendentes}
-          </Badge>
-        )}
       </button>
 
       <button

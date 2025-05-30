@@ -24,7 +24,7 @@ import { AddClientModal } from './ClientesTable/AddClientModal'
 interface ClientesTableProps {
   selectedManager?: string
   userEmail?: string
-  filterType?: 'ativos' | 'inativos' | 'problemas' | 'saques-pendentes' | 'sites-pendentes' | 'sites-finalizados'
+  filterType?: 'ativos' | 'inativos' | 'problemas' | 'sites-pendentes' | 'sites-finalizados'
 }
 
 export function ClientesTable({ selectedManager, userEmail, filterType }: ClientesTableProps) {
@@ -83,7 +83,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [addingClient, setAddingClient] = useState(false)
 
   const categorizarClientes = (clientesList: typeof clientes) => {
-    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO ATUALIZADA - PROBLEMAS INCLUÍDOS NOS ATIVOS) ===')
+    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO FINAL - SEM SAQUES PENDENTES) ===')
     console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
     
     // Complete list of INACTIVE statuses - clients not actively progressing
@@ -100,18 +100,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       'Encerrado'
     ]
     
-    // Complete list of SAQUE PENDENTE statuses
-    const statusSaquesPendentes = [
-      'Saque Pendente',
-      'Campanha Anual'
-    ]
+    // REMOVED: statusSaquesPendentes array completely
+    // All clients now go to either ACTIVE or INACTIVE
     
     // ACTIVE statuses - all statuses that represent clients actively progressing
-    // NOW INCLUDING "Problema" - they are active clients that need attention
+    // NOW INCLUDING "Saque Pendente" and "Campanha Anual" as ACTIVE clients
     const clientesAtivos = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
-      return !statusInativos.includes(status) && 
-             !statusSaquesPendentes.includes(status)
+      return !statusInativos.includes(status)
     })
     
     const clientesInativos = clientesList.filter(cliente => {
@@ -123,11 +119,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     const clientesProblemas = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
       return status === 'Problema'
-    })
-    
-    const clientesSaquesPendentes = clientesList.filter(cliente => {
-      const status = cliente.status_campanha || ''
-      return statusSaquesPendentes.includes(status)
     })
     
     // Enhanced logging to identify all unique statuses
@@ -142,33 +133,28 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     
     console.log('📊 [ClientesTable] Todos os status únicos encontrados (', uniqueStatuses.length, '):', uniqueStatuses)
     console.log('📊 [ClientesTable] Distribuição completa por status:', statusDistribution)
-    console.log('📊 [ClientesTable] Contagem após categorização atualizada:')
-    console.log('   ✅ Ativos (incluindo Problemas):', clientesAtivos.length)
+    console.log('📊 [ClientesTable] Contagem após categorização FINAL (sem saques pendentes):')
+    console.log('   ✅ Ativos (INCLUINDO "Saque Pendente" e "Campanha Anual"):', clientesAtivos.length)
     console.log('   ❌ Inativos:', clientesInativos.length)
     console.log('   ⚠️ Problemas (dentro dos ativos):', clientesProblemas.length)
-    console.log('   💰 Saques Pendentes:', clientesSaquesPendentes.length)
-    console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length + clientesSaquesPendentes.length)
+    console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length)
     console.log('   🎯 Total esperado:', clientesList.length)
     
     // Status categorization breakdown for debugging
     console.log('📋 [ClientesTable] Status por categoria:')
-    console.log('   ✅ Status ATIVOS (incluindo Problema):', 
-      uniqueStatuses.filter(s => 
-        !statusInativos.includes(s) && 
-        !statusSaquesPendentes.includes(s)
-      )
+    console.log('   ✅ Status ATIVOS (incluindo Saque Pendente e Campanha Anual):', 
+      uniqueStatuses.filter(s => !statusInativos.includes(s))
     )
     console.log('   ❌ Status INATIVOS:', statusInativos.filter(s => uniqueStatuses.includes(s)))
-    console.log('   💰 Status SAQUES:', statusSaquesPendentes.filter(s => uniqueStatuses.includes(s)))
     
     // Validation: Check if all clients are accounted for
-    const totalCategorizado = clientesAtivos.length + clientesInativos.length + clientesSaquesPendentes.length
+    const totalCategorizado = clientesAtivos.length + clientesInativos.length
     if (totalCategorizado !== clientesList.length) {
       console.error('🚨 [ClientesTable] ERRO CRÍTICO: Clientes não categorizados encontrados!')
       console.error('🚨 [ClientesTable] Diferença:', clientesList.length - totalCategorizado, 'clientes')
       
-      // Find uncategorized clients - this should never happen with the new logic
-      const clientesCategorizados = [...clientesAtivos, ...clientesInativos, ...clientesSaquesPendentes]
+      // Find uncategorized clients
+      const clientesCategorizados = [...clientesAtivos, ...clientesInativos]
       const idsCategorizados = new Set(clientesCategorizados.map(c => c.id))
       const clientesOrfaos = clientesList.filter(c => !idsCategorizados.has(c.id))
       
@@ -185,8 +171,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       })
     } else {
       console.log('✅ [ClientesTable] SUCESSO: Todos os', clientesList.length, 'clientes foram categorizados corretamente!')
-      console.log('🎯 [ClientesTable] Resultado da atualização:')
-      console.log('   - Agora: Clientes com status "Problema" estão incluídos na aba "Ativos"')
+      console.log('🎯 [ClientesTable] ALTERAÇÃO IMPLEMENTADA:')
+      console.log('   - "Saque Pendente" e "Campanha Anual" agora são ATIVOS')
+      console.log('   - Não existe mais categoria "Saques Pendentes"')
       console.log('   - Total ativos:', clientesAtivos.length, '(incluindo', clientesProblemas.length, 'com problemas)')
     }
     
@@ -194,7 +181,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       clientesAtivos,
       clientesInativos,
       clientesProblemas,
-      clientesSaquesPendentes,
       statusDistribution
     }
   }
@@ -298,7 +284,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       case 'Reembolso':
         return 'bg-red-500/20 text-red-300 border border-red-500/30'
       case 'Saque Pendente':
-        return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
+        return 'bg-green-500/20 text-green-300 border border-green-500/30'
       case 'Campanha Anual':
         return 'bg-green-500/20 text-green-300 border border-green-500/30'
       case 'Urgente':
@@ -740,13 +726,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     onBMEdit={handleBMEdit}
                     onBMSave={handleBMSave}
                     onBMCancel={handleBMCancel}
-                    onComissionToggle={
-                      filterType === 'saques-pendentes' 
-                        ? marcarPagamentoFeito 
-                        : !isAdmin 
-                          ? handleGestorSaqueRequest  
-                          : handleComissionToggle     
-                    }
+                    onComissionToggle={handleComissionToggle}
                     onComissionValueEdit={handleComissionValueEdit}
                     onComissionValueSave={handleComissionValueSave}
                     onComissionValueCancel={handleComissionValueCancel}
@@ -918,11 +898,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           </div>
         )}
         
-        {/* Info banner about problems now being included in Active clients */}
-        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-4">
-          <div className="flex items-center gap-2 text-amber-600 text-sm">
-            <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
-            <span>⚠️ Atualização: Clientes com status "Problema" agora aparecem na aba "Clientes Ativos" para facilitar o gerenciamento</span>
+        {/* SUCCESS banner about removing Saques Pendentes */}
+        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-green-600 text-sm">
+            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+            <span>✅ ATUALIZAÇÃO: Funcionalidade "Saques Pendentes" removida! Clientes "Saque Pendente" e "Campanha Anual" agora estão na aba "Clientes Ativos"</span>
           </div>
         </div>
         
@@ -1003,9 +983,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   } else if (filterType === 'problemas') {
     const { clientesProblemas } = categorizarClientes(clientes)
     clientesFiltrados = clientesProblemas
-  } else if (filterType === 'saques-pendentes') {
-    const { clientesSaquesPendentes } = categorizarClientes(clientes)
-    clientesFiltrados = clientesSaquesPendentes
   } else if (filterType === 'sites-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.site_status === 'aguardando_link'
