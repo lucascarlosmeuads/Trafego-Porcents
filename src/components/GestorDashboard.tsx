@@ -1,9 +1,7 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
-import { ProblemasPanel } from './ProblemasPanel'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useGestorStatusRestrictions } from '@/hooks/useGestorStatusRestrictions'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -90,10 +88,9 @@ export function GestorDashboard() {
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-5 bg-muted">
+        <TabsList className="grid w-full grid-cols-4 bg-muted">
           <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
           <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="problemas" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">⚠️ Problemas ({clientesProblemas.length})</TabsTrigger>
           <TabsTrigger value="saques-solicitados" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">💰 Saques Solicitados ({clientesSaquesPendentes.length})</TabsTrigger>
           <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
         </TabsList>
@@ -107,10 +104,6 @@ export function GestorDashboard() {
             <h2 className="text-xl font-semibold">Clientes Ativos</h2>
           </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
-        </TabsContent>
-
-        <TabsContent value="problemas" className="space-y-6">
-          <ProblemasPanel gestorMode={true} />
         </TabsContent>
 
         <TabsContent value="saques-solicitados" className="space-y-6">
