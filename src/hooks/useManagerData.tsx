@@ -10,6 +10,7 @@ interface UseManagerDataResult {
   updateCliente: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
   addCliente: (clienteData: any) => Promise<any>
   currentManager: string | null
+  setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
 }
 
 export function useManagerData(
@@ -134,5 +135,6 @@ export function useManagerData(
     updateCliente,
     addCliente,
     currentManager: selectedManager || null,
+    setClientes,
   }
 }
