@@ -13,23 +13,24 @@ export function useSolicitacoesPagas() {
 
     const fetchSolicitacoesPagas = async () => {
       try {
-        console.log('🔍 [useSolicitacoesPagas] Buscando solicitações pagas...')
+        console.log('🔍 [useSolicitacoesPagas] Buscando clientes com comissão paga...')
         
+        // SIMPLIFICADO: buscar diretamente pela coluna comissao = 'Pago'
         const { data, error } = await supabase
-          .from('solicitacoes_saque')
-          .select('cliente_id')
-          .eq('status_saque', 'pago')
+          .from('todos_clientes')
+          .select('id')
+          .eq('comissao', 'Pago')
 
         if (error) {
-          console.error('❌ [useSolicitacoesPagas] Erro ao buscar solicitações pagas:', error)
+          console.error('❌ [useSolicitacoesPagas] Erro ao buscar comissões pagas:', error)
           setSolicitacoesPagas([])
         } else {
-          const clienteIds = data?.map(item => item.cliente_id.toString()) || []
-          console.log('✅ [useSolicitacoesPagas] Clientes com saque pago:', clienteIds)
+          const clienteIds = data?.map(item => item.id.toString()) || []
+          console.log('✅ [useSolicitacoesPagas] Clientes com comissão paga:', clienteIds)
           setSolicitacoesPagas(clienteIds)
         }
       } catch (error) {
-        console.error('💥 [useSolicitacoesPagas] Erro ao verificar solicitações pagas:', error)
+        console.error('💥 [useSolicitacoesPagas] Erro ao verificar comissões pagas:', error)
         setSolicitacoesPagas([])
       } finally {
         setLoading(false)
@@ -38,15 +39,15 @@ export function useSolicitacoesPagas() {
 
     fetchSolicitacoesPagas()
 
-    // Configurar realtime para atualizações
+    // Configurar realtime para atualizações na tabela todos_clientes
     const channel = supabase
-      .channel(`solicitacoes-pagas-${user.email}`)
+      .channel(`comissoes-pagas-${user.email}`)
       .on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
-          table: 'solicitacoes_saque'
+          table: 'todos_clientes'
         },
         (payload) => {
           console.log('🔄 [useSolicitacoesPagas] Mudança detectada:', payload)

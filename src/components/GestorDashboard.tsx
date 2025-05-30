@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -12,12 +13,11 @@ export function GestorDashboard() {
   const { inicializarClientesTravados } = useGestorStatusRestrictions()
   const [clientesTravadosInicializados, setClientesTravadosInicializados] = useState(false)
 
-  // Separar clientes por status - ATUALIZADO para incluir nova aba de Saques Solicitados
+  // Separar clientes por status - REMOVIDO "Saques Pendentes"
   const clientesAtivos = clientes.filter(cliente => 
     cliente.status_campanha !== 'Off' && 
     cliente.status_campanha !== 'Reembolso' && 
-    cliente.status_campanha !== 'Problema' &&
-    cliente.status_campanha !== 'Saque Pendente'
+    cliente.status_campanha !== 'Problema'
   )
   
   const clientesInativos = clientes.filter(cliente => 
@@ -27,10 +27,6 @@ export function GestorDashboard() {
 
   const clientesProblemas = clientes.filter(cliente => 
     cliente.status_campanha === 'Problema'
-  )
-
-  const clientesSaquesPendentes = clientes.filter(cliente => 
-    cliente.status_campanha === 'Saque Pendente'
   )
 
   // Inicializar controle de status travados - CORRIGIDO para evitar loop infinito
@@ -82,16 +78,15 @@ export function GestorDashboard() {
           )}
           <div className="flex items-center gap-2 text-xs text-amber-600 mt-1 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">
             <span>⚠️</span>
-            <span>Comissões travadas para edição. Status travado após "No Ar".</span>
+            <span>Comissões gerenciadas pela coluna Comissão. Status travado após "No Ar".</span>
           </div>
         </div>
       </div>
 
       <Tabs defaultValue="dashboard" className="w-full">
-        <TabsList className="grid w-full grid-cols-4 bg-muted">
+        <TabsList className="grid w-full grid-cols-3 bg-muted">
           <TabsTrigger value="dashboard" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📊 Dashboard</TabsTrigger>
           <TabsTrigger value="clientes" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-          <TabsTrigger value="saques-solicitados" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">💰 Saques Solicitados ({clientesSaquesPendentes.length})</TabsTrigger>
           <TabsTrigger value="inativos" className="text-contrast-secondary data-[state=active]:text-contrast data-[state=active]:bg-background">📋 Inativos ({clientesInativos.length})</TabsTrigger>
         </TabsList>
         
@@ -104,10 +99,6 @@ export function GestorDashboard() {
             <h2 className="text-xl font-semibold">Clientes Ativos</h2>
           </div>
           <ClientesTable selectedManager={currentManagerName} filterType="ativos" />
-        </TabsContent>
-
-        <TabsContent value="saques-solicitados" className="space-y-6">
-          <ClientesTable selectedManager={currentManagerName} filterType="saques-pendentes" />
         </TabsContent>
 
         <TabsContent value="inativos" className="space-y-6">

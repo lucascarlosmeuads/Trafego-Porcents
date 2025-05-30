@@ -7,69 +7,36 @@ export function useSaqueOperations() {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  const criarSolicitacaoSaque = async (
+  const atualizarComissao = async (
     clienteId: string | number,
-    emailGestor: string,
-    nomeGestor: string,
-    valorComissao: number
+    novoStatusComissao: string
   ) => {
-    console.log('🚀 [useSaqueOperations] Iniciando criação de saque:', {
+    console.log('🚀 [useSaqueOperations] Atualizando comissão:', {
       clienteId,
-      emailGestor,
-      nomeGestor,
-      valorComissao
+      novoStatusComissao
     })
-
-    if (!emailGestor || !nomeGestor) {
-      console.error('❌ [useSaqueOperations] Dados incompletos do gestor')
-      toast({
-        title: "Erro",
-        description: "Dados do gestor incompletos. Faça login novamente.",
-        variant: "destructive"
-      })
-      return false
-    }
 
     setLoading(true)
     
     try {
-      // 1. Criar solicitação na tabela solicitacoes_saque
-      const { data: solicitacao, error: errorSolicitacao } = await supabase
-        .from('solicitacoes_saque')
-        .insert({
-          cliente_id: Number(clienteId), // Garantir que seja número
-          email_gestor: emailGestor,
-          nome_gestor: nomeGestor,
-          valor_comissao: valorComissao,
-          status_saque: 'pendente'
-        })
-        .select()
-
-      if (errorSolicitacao) {
-        console.error('❌ [useSaqueOperations] Erro ao criar solicitação:', errorSolicitacao)
-        throw errorSolicitacao
-      }
-
-      console.log('✅ [useSaqueOperations] Solicitação criada:', solicitacao)
-
-      // 2. Atualizar o cliente para marcar saque_solicitado = true
-      const { error: errorUpdate } = await supabase
+      // Atualizar apenas a coluna comissao na tabela todos_clientes
+      const { error } = await supabase
         .from('todos_clientes')
         .update({ 
-          saque_solicitado: true 
+          comissao: novoStatusComissao
         })
-        .eq('id', Number(clienteId)) // Garantir que seja número
+        .eq('id', Number(clienteId))
 
-      if (errorUpdate) {
-        console.error('❌ [useSaqueOperations] Erro ao atualizar cliente:', errorUpdate)
-        throw errorUpdate
+      if (error) {
+        console.error('❌ [useSaqueOperations] Erro ao atualizar comissão:', error)
+        throw error
       }
 
-      console.log('✅ [useSaqueOperations] Cliente atualizado com saque_solicitado = true')
+      console.log('✅ [useSaqueOperations] Comissão atualizada com sucesso')
 
       toast({
-        title: "Saque solicitado!",
-        description: `Solicitação de R$ ${valorComissao.toFixed(2)} enviada com sucesso.`,
+        title: "Comissão atualizada!",
+        description: `Status alterado para: ${novoStatusComissao}`,
       })
 
       return true
@@ -77,7 +44,7 @@ export function useSaqueOperations() {
     } catch (error) {
       console.error('💥 [useSaqueOperations] Erro geral:', error)
       toast({
-        title: "Erro ao solicitar saque",
+        title: "Erro ao atualizar comissão",
         description: "Tente novamente em alguns instantes.",
         variant: "destructive"
       })
@@ -88,7 +55,7 @@ export function useSaqueOperations() {
   }
 
   return {
-    criarSolicitacaoSaque,
+    atualizarComissao,
     loading
   }
 }

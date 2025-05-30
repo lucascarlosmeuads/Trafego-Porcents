@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input'
 import { Check, X, Edit2, Loader2 } from 'lucide-react'
 import { useSaqueOperations } from '@/hooks/useSaqueOperations'
 import { useAuth } from '@/hooks/useAuth'
-import { useSolicitacoesPagas } from '@/hooks/useSolicitacoesPagas'
 import type { Cliente } from '@/lib/supabase'
 
 interface ComissaoButtonProps {
@@ -34,16 +33,11 @@ export function ComissaoButton({
   onComissionValueCancel
 }: ComissaoButtonProps) {
   const { currentManagerName, isAdmin } = useAuth()
-  const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
-  const { solicitacoesPagas } = useSolicitacoesPagas()
-  const [saqueEnviado, setSaqueEnviado] = useState(false)
+  const { atualizarComissao, loading: loadingSaque } = useSaqueOperations()
 
   const isEditingValue = editingComissionValue === cliente.id.toString()
   const valorComissao = cliente.valor_comissao || 0
   const isCampanhaNoAr = cliente.status_campanha === 'Campanha no Ar'
-  
-  // Verificar se a solicitação foi paga pelo admin
-  const saqueFoiPago = solicitacoesPagas.includes(cliente.id.toString())
   
   // Check if comissao is "Pago" (using the comissao field)
   const isComissaoPaga = cliente.comissao === 'Pago'
@@ -51,13 +45,10 @@ export function ComissaoButton({
   // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
     id: cliente.id,
-    idType: typeof cliente.id,
     status: cliente.status_campanha,
     isCampanhaNoAr,
     comissao: cliente.comissao,
     isComissaoPaga,
-    saqueFoiPago,
-    saqueEnviado,
     isGestorDashboard
   })
 
@@ -103,17 +94,17 @@ export function ComissaoButton({
     )
   }
 
-  // PAINEL DO GESTOR - Lógica específica (SEM PODER DE EDITAR OU MARCAR COMO PAGO)
+  // PAINEL DO GESTOR - Lógica simplificada
   if (isGestorDashboard) {
     // Se comissão foi paga pelo admin
-    if (saqueFoiPago) {
-      console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
+    if (isComissaoPaga) {
+      console.log('✅ [ComissaoButton] Comissão paga - mostrando estado final')
       return (
         <div className="flex items-center gap-1">
           <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
             <span className="flex items-center gap-1">
               <Check className="w-3 h-3" />
-              Saque Realizado - R$ {valorComissao.toFixed(2)}
+              Pago - R$ {valorComissao.toFixed(2)}
             </span>
           </div>
         </div>
@@ -134,10 +125,9 @@ export function ComissaoButton({
               
               // Atualizar comissão para "Solicitado"
               try {
-                const success = await onComissionToggle(cliente.id.toString(), false)
+                const success = await atualizarComissao(cliente.id.toString(), 'Solicitado')
                 if (success) {
                   console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
-                  setSaqueEnviado(true)
                 } else {
                   console.error('❌ [ComissaoButton] Falha ao atualizar comissão')
                 }
@@ -160,7 +150,7 @@ export function ComissaoButton({
     }
 
     // Se comissão já foi solicitada (mas ainda não paga)
-    if (cliente.comissao === 'Solicitado' || saqueEnviado) {
+    if (cliente.comissao === 'Solicitado') {
       console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
       return (
         <div className="flex items-center gap-1">
