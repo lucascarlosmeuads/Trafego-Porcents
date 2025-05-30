@@ -76,7 +76,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       <div className="text-center space-y-3 sm:space-y-4 px-2">
         <h1 className={`${
           isMobile ? 'text-2xl' : 'text-3xl'
-        } font-bold text-foreground flex items-center justify-center gap-2 sm:gap-3`}>
+        } font-bold text-card-foreground flex items-center justify-center gap-2 sm:gap-3`}>
           🧭 Bem-vindo!
         </h1>
         <p className={`${
@@ -87,7 +87,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       </div>
 
       {/* Progress Summary Card */}
-      <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-900/20 dark:to-green-900/20 border-primary/20">
+      <Card className="bg-card border-primary/20">
         <CardContent className={`${isMobile ? 'p-4' : 'p-6'} text-center`}>
           <div className="space-y-3">
             <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-primary`}>
@@ -96,7 +96,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
             <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-primary`}>
               {completedSteps.size} / {steps.length}
             </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 sm:h-3">
+            <div className="w-full bg-muted rounded-full h-2 sm:h-3">
               <div 
                 className="bg-gradient-to-r from-blue-500 to-green-500 h-2 sm:h-3 rounded-full transition-all duration-300" 
                 style={{ width: `${progressPercentage}%` }}
@@ -121,8 +121,8 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           return (
             <Card key={step.id} className={`transition-all duration-200 ${
               isCompleted 
-                ? 'bg-green-50 border-green-200 dark:bg-green-900/20 dark:border-green-800 shadow-md' 
-                : 'hover:shadow-md border-border'
+                ? 'bg-accent border-primary/40 shadow-md' 
+                : 'bg-card hover:shadow-md border-border hover:bg-accent/50'
             }`}>
               <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
                 <div className="flex items-start gap-3 sm:gap-4">
@@ -153,8 +153,8 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                         isMobile ? 'text-base' : 'text-lg'
                       } font-semibold ${
                         isCompleted 
-                          ? 'text-green-700 dark:text-green-300' 
-                          : 'text-foreground'
+                          ? 'text-primary' 
+                          : 'text-card-foreground'
                       } break-words`}>
                         {step.title}
                       </h3>
@@ -174,7 +174,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                             variant="outline"
                             size={isMobile ? "sm" : "default"}
                             onClick={step.menuAction}
-                            className="w-full sm:w-auto flex items-center gap-2 text-blue-600 border-blue-200 hover:bg-blue-50 hover:border-blue-300"
+                            className="w-full sm:w-auto flex items-center gap-2 text-primary border-primary/20 hover:bg-accent hover:border-primary/30"
                           >
                             {step.actionLabel}
                             <ArrowRight className="w-4 h-4" />
@@ -194,7 +194,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                           htmlFor={`step-${step.id}`}
                           className={`${
                             isMobile ? 'text-sm' : 'text-base'
-                          } font-medium cursor-pointer whitespace-nowrap`}
+                          } font-medium cursor-pointer whitespace-nowrap text-card-foreground`}
                         >
                           Marcar como feito
                         </label>
@@ -209,16 +209,16 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       </div>
 
       {/* Observação */}
-      <Card className="bg-blue-50 border-blue-200 dark:bg-blue-900/20 dark:border-blue-800">
+      <Card className="bg-card border-primary/20">
         <CardHeader className={isMobile ? 'pb-3' : ''}>
           <CardTitle className={`${
             isMobile ? 'text-base' : 'text-lg'
-          } text-blue-800 dark:text-blue-200 flex items-center gap-2`}>
+          } text-primary flex items-center gap-2`}>
             📌 Observação
           </CardTitle>
         </CardHeader>
         <CardContent className={isMobile ? 'pt-0' : ''}>
-          <div className={`space-y-2 text-blue-700 dark:text-blue-300 ${
+          <div className={`space-y-2 text-card-foreground ${
             isMobile ? 'text-sm' : 'text-base'
           }`}>
             <p>
