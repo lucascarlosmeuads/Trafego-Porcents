@@ -77,6 +77,104 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
 
+  // Improved categorization logic to handle ALL possible status values
+  const categorizarClientes = (clientesList: typeof clientes) => {
+    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES ===')
+    console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
+    
+    // Define all INACTIVE statuses explicitly
+    const statusInativos = [
+      'Cliente Sumiu',
+      'Reembolso',
+      'Cancelado',
+      'Cancelamento',
+      'Inativo'
+    ]
+    
+    // Define specific PROBLEM statuses that should be handled separately
+    const statusProblemas = [
+      'Problema'
+    ]
+    
+    // Define SAQUE PENDENTE statuses
+    const statusSaquesPendentes = [
+      'Saque Pendente',
+      'Campanha Anual'
+    ]
+    
+    const clientesAtivos = clientesList.filter(cliente => {
+      const status = cliente.status_campanha || ''
+      return !statusInativos.includes(status) && 
+             !statusProblemas.includes(status) && 
+             !statusSaquesPendentes.includes(status)
+    })
+    
+    const clientesInativos = clientesList.filter(cliente => {
+      const status = cliente.status_campanha || ''
+      return statusInativos.includes(status)
+    })
+    
+    const clientesProblemas = clientesList.filter(cliente => {
+      const status = cliente.status_campanha || ''
+      return statusProblemas.includes(status)
+    })
+    
+    const clientesSaquesPendentes = clientesList.filter(cliente => {
+      const status = cliente.status_campanha || ''
+      return statusSaquesPendentes.includes(status)
+    })
+    
+    // Detailed logging of all status distributions
+    const statusDistribution = clientesList.reduce((acc, cliente) => {
+      const status = cliente.status_campanha || 'SEM_STATUS'
+      acc[status] = (acc[status] || 0) + 1
+      return acc
+    }, {} as Record<string, number>)
+    
+    console.log('📊 [ClientesTable] Distribuição completa por status:', statusDistribution)
+    console.log('📊 [ClientesTable] Contagem após categorização:')
+    console.log('   ✅ Ativos:', clientesAtivos.length)
+    console.log('   ❌ Inativos:', clientesInativos.length)
+    console.log('   ⚠️ Problemas:', clientesProblemas.length)
+    console.log('   💰 Saques Pendentes:', clientesSaquesPendentes.length)
+    console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length)
+    console.log('   🎯 Total esperado:', clientesList.length)
+    
+    // Validation: Check if all clients are accounted for
+    const totalCategorizado = clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length
+    if (totalCategorizado !== clientesList.length) {
+      console.error('🚨 [ClientesTable] ERRO: Clientes não categorizados encontrados!')
+      console.error('🚨 [ClientesTable] Diferença:', clientesList.length - totalCategorizado, 'clientes')
+      
+      // Find uncategorized clients
+      const clientesCategorizados = [...clientesAtivos, ...clientesInativos, ...clientesProblemas, ...clientesSaquesPendentes]
+      const idsCategorizados = new Set(clientesCategorizados.map(c => c.id))
+      const clientesOrfaos = clientesList.filter(c => !idsCategorizados.has(c.id))
+      
+      console.error('🚨 [ClientesTable] Clientes órfãos (não categorizados):')
+      clientesOrfaos.forEach(cliente => {
+        console.error(`   - ID: ${cliente.id}, Nome: ${cliente.nome_cliente}, Status: "${cliente.status_campanha}"`)
+      })
+      
+      // Show toast warning to user
+      toast({
+        title: "⚠️ Aviso de Categorização",
+        description: `${clientesOrfaos.length} clientes não foram categorizados. Verifique os logs.`,
+        variant: "destructive"
+      })
+    } else {
+      console.log('✅ [ClientesTable] Todos os clientes foram categorizados corretamente!')
+    }
+    
+    return {
+      clientesAtivos,
+      clientesInativos,
+      clientesProblemas,
+      clientesSaquesPendentes,
+      statusDistribution
+    }
+  }
+
   const getFilteredClientes = (clientesList: typeof clientes) => {
     return clientesList.filter(cliente => {
       const matchesSearch = 
@@ -194,7 +292,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // Handler functions
   const handleStatusChange = async (clienteId: string, newStatus: string) => {
     console.log(`🚀 === ALTERANDO STATUS ===`)
     console.log(`🆔 Cliente ID: "${clienteId}"`)
@@ -774,7 +871,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     verificarPermissoes()
   }, [user?.email, isAdmin])
 
-  function renderWithTabs(clientesAtivos: typeof clientes, clientesInativos: typeof clientes) {
+  function renderWithTabs(clientesOriginais: typeof clientes) {
+    const { clientesAtivos, clientesInativos, statusDistribution } = categorizarClientes(clientesOriginais)
+    
     const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
     const filteredClientesInativos = getFilteredClientes(clientesInativos)
 
@@ -795,6 +894,26 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
               <span>🌐 Painel de Criação de Sites - Visualizando clientes aguardando sites</span>
             </div>
+          </div>
+        )}
+        
+        {/* Enhanced validation panel for Admin */}
+        {isAdmin && !isSitesContext && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2 text-blue-600 text-sm">
+                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                <span>👑 Painel Admin - Visualização Global de Todos os Clientes</span>
+              </div>
+              <div className="text-sm text-blue-600">
+                Total: {clientesOriginais.length} | Ativos: {clientesAtivos.length} | Inativos: {clientesInativos.length}
+              </div>
+            </div>
+            {clientesOriginais.length !== 552 && (
+              <div className="mt-2 text-amber-600 text-xs">
+                ⚠️ Atenção: Esperado 552 clientes, encontrados {clientesOriginais.length}
+              </div>
+            )}
           </div>
         )}
         
@@ -866,27 +985,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   let clientesFiltrados = clientes
   if (filterType === 'ativos') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Cliente Sumiu' && 
-      cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema' &&
-      cliente.status_campanha !== 'Saque Pendente' &&
-      cliente.status_campanha !== 'Campanha Anual'
-    )
+    const { clientesAtivos } = categorizarClientes(clientes)
+    clientesFiltrados = clientesAtivos
   } else if (filterType === 'inativos') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Cliente Sumiu' || 
-      cliente.status_campanha === 'Reembolso'
-    )
+    const { clientesInativos } = categorizarClientes(clientes)
+    clientesFiltrados = clientesInativos
   } else if (filterType === 'problemas') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Problema'
-    )
+    const { clientesProblemas } = categorizarClientes(clientes)
+    clientesFiltrados = clientesProblemas
   } else if (filterType === 'saques-pendentes') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.status_campanha === 'Saque Pendente' ||
-      cliente.status_campanha === 'Campanha Anual'
-    )
+    const { clientesSaquesPendentes } = categorizarClientes(clientes)
+    clientesFiltrados = clientesSaquesPendentes
   } else if (filterType === 'sites-pendentes') {
     clientesFiltrados = clientes.filter(cliente => 
       cliente.site_status === 'aguardando_link'
@@ -896,20 +1005,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     console.log('📊 [ClientesTable] Total de clientes recebidos do useManagerData:', clientes.length)
     clientesFiltrados = clientes
   } else {
-    const clientesAtivos = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Cliente Sumiu' && 
-      cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema' &&
-      cliente.status_campanha !== 'Saque Pendente' &&
-      cliente.status_campanha !== 'Campanha Anual'
-    )
-    
-    const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Cliente Sumiu' || 
-      cliente.status_campanha === 'Reembolso'
-    )
-
-    return renderWithTabs(clientesAtivos, clientesInativos)
+    return renderWithTabs(clientes)
   }
 
   const filteredClientes = getFilteredClientes(clientesFiltrados)
@@ -945,20 +1041,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }
 
   if (!filterType) {
-    const clientesAtivos = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Cliente Sumiu' && 
-      cliente.status_campanha !== 'Reembolso' && 
-      cliente.status_campanha !== 'Problema' &&
-      cliente.status_campanha !== 'Saque Pendente' &&
-      cliente.status_campanha !== 'Campanha Anual'
-    )
-    
-    const clientesInativos = clientes.filter(cliente => 
-      cliente.status_campanha === 'Cliente Sumiu' || 
-      cliente.status_campanha === 'Reembolso'
-    )
-
-    return renderWithTabs(clientesAtivos, clientesInativos)
+    return renderWithTabs(clientes)
   }
 
   return (
