@@ -4,6 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
+import { Button } from '@/components/ui/button'
+import { LogOut } from 'lucide-react'
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -18,8 +20,9 @@ export function ManagerSidebar({
   activeTab, 
   onTabChange 
 }: ManagerSidebarProps) {
-  const { isAdmin } = useAuth()
+  const { isAdmin, signOut } = useAuth()
   const [problemasPendentes, setProblemasPendentes] = useState(0)
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   useEffect(() => {
     if (isAdmin) {
@@ -43,9 +46,20 @@ export function ManagerSidebar({
     }
   }
 
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
   return (
-    <div className="w-64 bg-card border-r border-border h-full overflow-y-auto">
-      <div className="p-4">
+    <div className="w-64 bg-card border-r border-border h-full overflow-y-auto flex flex-col">
+      <div className="p-4 flex-1">
         <h2 className="text-lg font-semibold text-card-foreground mb-4">
           {isAdmin ? 'Painel Admin' : 'Gestores'}
         </h2>
@@ -65,6 +79,19 @@ export function ManagerSidebar({
             problemasPendentes={problemasPendentes}
           />
         )}
+      </div>
+      
+      {/* Logout Button */}
+      <div className="p-4 border-t border-border">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {isSigningOut ? 'Saindo...' : 'Sair do Sistema'}
+        </Button>
       </div>
     </div>
   )

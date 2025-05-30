@@ -1,4 +1,6 @@
 
+import { useState } from 'react'
+import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { 
   BarChart3, 
@@ -6,7 +8,8 @@ import {
   Upload, 
   TrendingUp, 
   PlayCircle,
-  MessageCircle 
+  MessageCircle,
+  LogOut
 } from 'lucide-react'
 
 interface ClienteSidebarProps {
@@ -15,6 +18,9 @@ interface ClienteSidebarProps {
 }
 
 export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) {
+  const { signOut } = useAuth()
+  const [isSigningOut, setIsSigningOut] = useState(false)
+
   const menuItems = [
     {
       id: 'overview',
@@ -54,6 +60,17 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
     }
   ]
 
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
+
   return (
     <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-6 border-b">
@@ -78,6 +95,19 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
           </Button>
         ))}
       </nav>
+
+      {/* Logout Button */}
+      <div className="p-4 border-t border-gray-200">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+        >
+          <LogOut className="mr-3 h-5 w-5" />
+          {isSigningOut ? 'Saindo...' : 'Sair do Sistema'}
+        </Button>
+      </div>
     </aside>
   )
 }

@@ -1,4 +1,6 @@
 
+import { useState } from 'react'
+import { useAuth } from "@/hooks/useAuth"
 import {
   Sidebar,
   SidebarContent,
@@ -9,9 +11,10 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarHeader,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
-import { BarChart3, Users, UserPlus } from "lucide-react"
-import { useAuth } from "@/hooks/useAuth"
+import { Button } from "@/components/ui/button"
+import { BarChart3, Users, UserPlus, LogOut } from "lucide-react"
 
 interface VendedorSidebarProps {
   activeTab: string
@@ -19,7 +22,8 @@ interface VendedorSidebarProps {
 }
 
 export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps) {
-  const { currentManagerName } = useAuth()
+  const { currentManagerName, signOut } = useAuth()
+  const [isSigningOut, setIsSigningOut] = useState(false)
 
   const menuItems = [
     {
@@ -38,6 +42,17 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
       id: "adicionar-cliente"
     }
   ]
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
   return (
     <Sidebar>
@@ -74,6 +89,18 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
+      <SidebarFooter className="border-t px-2 py-2">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          {isSigningOut ? 'Saindo...' : 'Sair do Sistema'}
+        </Button>
+      </SidebarFooter>
     </Sidebar>
   )
 }
