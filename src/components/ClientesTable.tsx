@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -86,7 +85,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
 
-  // FIXED: Comprehensive categorization logic to handle ALL possible status values
   const categorizarClientes = (clientesList: typeof clientes) => {
     console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO CORRIGIDA) ===')
     console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
@@ -898,15 +896,15 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return
       }
 
+      // NEW LOGIC: Only admins can add clients
       if (isAdmin) {
-        console.log('✅ Usuário é admin - pode adicionar')
+        console.log('✅ Usuário é admin - pode adicionar clientes')
         setPodeAdicionarCliente(true)
-        setLoadingPermissoes(false)
-        return
+      } else {
+        console.log('❌ Usuário é gestor - NÃO pode adicionar clientes (nova política)')
+        setPodeAdicionarCliente(false)
       }
-
-      console.log('✅ Usuário é gestor - permitindo adicionar clientes')
-      setPodeAdicionarCliente(true)
+      
       setLoadingPermissoes(false)
     }
 
@@ -975,6 +973,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 onExport={exportToCSV}
               />
               
+              {/* ONLY SHOW ADD CLIENT BUTTON FOR ADMINS */}
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
                   selectedManager={currentManager || selectedManager || 'Próprios dados'}
@@ -1115,6 +1114,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           onExport={exportToCSV}
         />
         
+        {/* ONLY SHOW ADD CLIENT BUTTON FOR ADMINS */}
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
             selectedManager={currentManager || selectedManager || 'Próprios dados'}
