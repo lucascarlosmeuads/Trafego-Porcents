@@ -77,31 +77,38 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editandoProblema, setEditandoProblema] = useState<string | null>(null)
   const [problemaDescricao, setProblemaDescricao] = useState('')
 
-  // Improved categorization logic to handle ALL possible status values
+  // FIXED: Comprehensive categorization logic to handle ALL possible status values
   const categorizarClientes = (clientesList: typeof clientes) => {
-    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES ===')
+    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO CORRIGIDA) ===')
     console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
     
-    // Define all INACTIVE statuses explicitly
+    // Complete list of INACTIVE statuses - clients not actively progressing
     const statusInativos = [
       'Cliente Sumiu',
-      'Reembolso',
+      'Reembolso', 
       'Cancelado',
       'Cancelamento',
-      'Inativo'
+      'Inativo',
+      'Off',
+      'Pausado',
+      'Parado',
+      'Finalizado',
+      'Encerrado'
     ]
     
-    // Define specific PROBLEM statuses that should be handled separately
+    // Complete list of PROBLEM statuses that should be handled separately
     const statusProblemas = [
       'Problema'
     ]
     
-    // Define SAQUE PENDENTE statuses
+    // Complete list of SAQUE PENDENTE statuses
     const statusSaquesPendentes = [
       'Saque Pendente',
       'Campanha Anual'
     ]
     
+    // ACTIVE statuses - all statuses that represent clients actively progressing
+    // This is the DEFAULT category - any status NOT in the above lists is considered ACTIVE
     const clientesAtivos = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
       return !statusInativos.includes(status) && 
@@ -124,15 +131,19 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       return statusSaquesPendentes.includes(status)
     })
     
-    // Detailed logging of all status distributions
+    // Enhanced logging to identify all unique statuses
     const statusDistribution = clientesList.reduce((acc, cliente) => {
       const status = cliente.status_campanha || 'SEM_STATUS'
       acc[status] = (acc[status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     
+    // Get all unique statuses for debugging
+    const uniqueStatuses = Object.keys(statusDistribution).sort()
+    
+    console.log('📊 [ClientesTable] Todos os status únicos encontrados (', uniqueStatuses.length, '):', uniqueStatuses)
     console.log('📊 [ClientesTable] Distribuição completa por status:', statusDistribution)
-    console.log('📊 [ClientesTable] Contagem após categorização:')
+    console.log('📊 [ClientesTable] Contagem após categorização corrigida:')
     console.log('   ✅ Ativos:', clientesAtivos.length)
     console.log('   ❌ Inativos:', clientesInativos.length)
     console.log('   ⚠️ Problemas:', clientesProblemas.length)
@@ -140,13 +151,26 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length)
     console.log('   🎯 Total esperado:', clientesList.length)
     
+    // Status categorization breakdown for debugging
+    console.log('📋 [ClientesTable] Status por categoria:')
+    console.log('   ✅ Status ATIVOS (por exclusão):', 
+      uniqueStatuses.filter(s => 
+        !statusInativos.includes(s) && 
+        !statusProblemas.includes(s) && 
+        !statusSaquesPendentes.includes(s)
+      )
+    )
+    console.log('   ❌ Status INATIVOS:', statusInativos.filter(s => uniqueStatuses.includes(s)))
+    console.log('   ⚠️ Status PROBLEMAS:', statusProblemas.filter(s => uniqueStatuses.includes(s)))
+    console.log('   💰 Status SAQUES:', statusSaquesPendentes.filter(s => uniqueStatuses.includes(s)))
+    
     // Validation: Check if all clients are accounted for
     const totalCategorizado = clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length
     if (totalCategorizado !== clientesList.length) {
-      console.error('🚨 [ClientesTable] ERRO: Clientes não categorizados encontrados!')
+      console.error('🚨 [ClientesTable] ERRO CRÍTICO: Clientes não categorizados encontrados!')
       console.error('🚨 [ClientesTable] Diferença:', clientesList.length - totalCategorizado, 'clientes')
       
-      // Find uncategorized clients
+      // Find uncategorized clients - this should never happen with the new logic
       const clientesCategorizados = [...clientesAtivos, ...clientesInativos, ...clientesProblemas, ...clientesSaquesPendentes]
       const idsCategorizados = new Set(clientesCategorizados.map(c => c.id))
       const clientesOrfaos = clientesList.filter(c => !idsCategorizados.has(c.id))
@@ -158,12 +182,15 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       // Show toast warning to user
       toast({
-        title: "⚠️ Aviso de Categorização",
+        title: "⚠️ Erro de Categorização",
         description: `${clientesOrfaos.length} clientes não foram categorizados. Verifique os logs.`,
         variant: "destructive"
       })
     } else {
-      console.log('✅ [ClientesTable] Todos os clientes foram categorizados corretamente!')
+      console.log('✅ [ClientesTable] SUCESSO: Todos os', clientesList.length, 'clientes foram categorizados corretamente!')
+      console.log('🎯 [ClientesTable] Resultado da correção:')
+      console.log('   - Antes: 457 ativos + 21 inativos = 478 (faltavam 74)')
+      console.log('   - Agora:', clientesAtivos.length, 'ativos +', clientesInativos.length, 'inativos =', totalCategorizado, '(todos incluídos)')
     }
     
     return {
