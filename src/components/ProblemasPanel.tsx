@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -34,6 +33,7 @@ interface ClienteComProblema {
   link_briefing: string
   link_criativo: string
   link_site: string
+  link_grupo: string
   numero_bm: string
   comissao_paga: boolean
   valor_comissao: number
@@ -74,7 +74,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
         .select(`
           id, data_venda, created_at, nome_cliente, telefone, email_cliente, vendedor,
           email_gestor, status_campanha, site_status, data_limite, link_briefing,
-          link_criativo, link_site, numero_bm, comissao_paga, valor_comissao,
+          link_criativo, link_site, link_grupo, numero_bm, comissao_paga, valor_comissao,
           descricao_problema, comissao, saque_solicitado
         `)
         .eq('status_campanha', 'Problema')
