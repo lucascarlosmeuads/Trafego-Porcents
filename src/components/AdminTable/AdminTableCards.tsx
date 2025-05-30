@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Cliente } from '@/lib/supabase'
@@ -122,7 +121,7 @@ export function AdminTableCards({
                   <span className="font-medium text-muted-foreground">Status Campanha:</span>
                   <div className="mt-1">
                     <StatusSelect
-                      id={cliente.id}
+                      clienteId={cliente.id}
                       currentStatus={cliente.status_campanha || ''}
                       onStatusChange={onStatusChange}
                     />
@@ -132,13 +131,15 @@ export function AdminTableCards({
                   <span className="font-medium text-muted-foreground">Status Site:</span>
                   <div className="mt-1">
                     <SiteStatusSelect
-                      id={cliente.id}
+                      clienteId={cliente.id}
                       currentStatus={cliente.site_status || 'pendente'}
                       onStatusChange={onSiteStatusChange}
                     />
                   </div>
                 </div>
               </div>
+              
+              
               
               <div>
                 <span className="font-medium text-muted-foreground">Data Venda:</span>

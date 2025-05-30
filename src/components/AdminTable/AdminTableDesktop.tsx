@@ -147,7 +147,7 @@ export function AdminTableDesktop({
                 
                 <TableCell>
                   <StatusSelect
-                    id={cliente.id}
+                    clienteId={cliente.id}
                     currentStatus={cliente.status_campanha || ''}
                     onStatusChange={onStatusChange}
                   />
@@ -155,7 +155,7 @@ export function AdminTableDesktop({
                 
                 <TableCell>
                   <SiteStatusSelect
-                    id={cliente.id}
+                    clienteId={cliente.id}
                     currentStatus={cliente.site_status || 'pendente'}
                     onStatusChange={onSiteStatusChange}
                   />
