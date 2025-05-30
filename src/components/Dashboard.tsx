@@ -82,6 +82,7 @@ export function Dashboard() {
           {isAdmin && (
             <AdminDashboard
               selectedManager={selectedManager}
+              onManagerSelect={setSelectedManager}
               activeTab={activeTab}
             />
           )}
