@@ -597,9 +597,21 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setUpdatingComission(clienteId)
     
     try {
+      // Convert clienteId to number for proper comparison
+      const clienteIdNum = parseInt(clienteId)
+      console.log('🔍 [ClientesTable] Buscando cliente:', {
+        clienteId,
+        clienteIdNum,
+        totalClientes: clientes.length
+      })
+      
       // Find the current client to check the comissao field
-      const cliente = clientes.find(c => c.id.toString() === clienteId)
+      const cliente = clientes.find(c => c.id === clienteIdNum)
       if (!cliente) {
+        console.error('❌ [ClientesTable] Cliente não encontrado:', {
+          clienteIdBuscado: clienteIdNum,
+          idsDisponiveis: clientes.map(c => ({ id: c.id, nome: c.nome_cliente })).slice(0, 5)
+        })
         toast({
           title: "Erro",
           description: "Cliente não encontrado",
@@ -613,6 +625,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       console.log('💰 [ClientesTable] Alterando comissão:', {
         clienteId,
+        clienteNome: cliente.nome_cliente,
         currentComissao: cliente.comissao,
         newComissaoStatus
       })

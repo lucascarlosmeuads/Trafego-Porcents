@@ -38,7 +38,7 @@ export function ComissaoButton({
   const { solicitacoesPagas } = useSolicitacoesPagas()
   const [saqueEnviado, setSaqueEnviado] = useState(false)
 
-  const isEditingValue = editingComissionValue === cliente.id
+  const isEditingValue = editingComissionValue === cliente.id.toString()
   const valorComissao = cliente.valor_comissao || 0
   const isCampanhaNoAr = cliente.status_campanha === 'Campanha no Ar'
   
@@ -50,6 +50,8 @@ export function ComissaoButton({
 
   // Debug logs para verificar o estado
   console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
+    id: cliente.id,
+    idType: typeof cliente.id,
     status: cliente.status_campanha,
     isCampanhaNoAr,
     comissao: cliente.comissao,
@@ -85,7 +87,7 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onComissionValueSave(cliente.id, parseFloat(comissionValueInput) || 0)}
+          onClick={() => onComissionValueSave(cliente.id.toString(), parseFloat(comissionValueInput) || 0)}
         >
           <Check className="w-3 h-3 text-green-600" />
         </Button>
@@ -132,7 +134,7 @@ export function ComissaoButton({
               
               // Atualizar comissão para "Solicitado"
               try {
-                const success = await onComissionToggle(cliente.id, false)
+                const success = await onComissionToggle(cliente.id.toString(), false)
                 if (success) {
                   console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
                   setSaqueEnviado(true)
@@ -143,9 +145,9 @@ export function ComissaoButton({
                 console.error('❌ [ComissaoButton] Erro ao atualizar comissão:', error)
               }
             }}
-            disabled={loadingSaque || updatingComission === cliente.id}
+            disabled={loadingSaque || updatingComission === cliente.id.toString()}
           >
-            {(loadingSaque || updatingComission === cliente.id) ? (
+            {(loadingSaque || updatingComission === cliente.id.toString()) ? (
               <Loader2 className="w-3 h-3 animate-spin mr-1" />
             ) : (
               <span>💸</span>
@@ -193,14 +195,19 @@ export function ComissaoButton({
         }`}
         onClick={async () => {
           try {
-            await onComissionToggle(cliente.id, isComissaoPaga)
+            console.log('🎯 [ComissaoButton] Admin clicou no botão de comissão:', {
+              clienteId: cliente.id,
+              clienteIdString: cliente.id.toString(),
+              isComissaoPaga
+            })
+            await onComissionToggle(cliente.id.toString(), isComissaoPaga)
           } catch (error) {
             console.error('❌ [ComissaoButton] Erro ao toggle comissão:', error)
           }
         }}
-        disabled={updatingComission === cliente.id}
+        disabled={updatingComission === cliente.id.toString()}
       >
-        {updatingComission === cliente.id ? (
+        {updatingComission === cliente.id.toString() ? (
           <Loader2 className="w-3 h-3 animate-spin mr-1" />
         ) : isComissaoPaga ? (
           <Check className="w-3 h-3 mr-1" />
@@ -216,7 +223,7 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id, valorComissao)}
+          onClick={() => onComissionValueEdit(cliente.id.toString(), valorComissao)}
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
