@@ -62,7 +62,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            {/* ✅ CORREÇÃO: Usar busca global para sites pendentes */}
+            {/* CORREÇÃO: Passar null para selectedManager para forçar busca global */}
             <ClientesTable selectedManager={null} filterType="sites-pendentes" />
           </div>
         )
@@ -90,7 +90,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* ✅ CORREÇÃO: Tabela de clientes com filtragem corrigida */}
+            {/* Tabela de clientes - passando selectedManager diretamente */}
             <ClientesTable selectedManager={selectedManager} />
           </div>
         )
