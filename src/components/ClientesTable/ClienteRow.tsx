@@ -357,52 +357,57 @@ export function ClienteRow({
             </>
           ) : (
             <>
-              {cliente.link_site && cliente.link_site.trim() !== '' ? (
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => openSiteLink(cliente.link_site!)}
-                    className="h-8 bg-green-600 hover:bg-green-700 border-green-600 text-white"
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Ver Site
-                  </Button>
+              {/* Botões de site */}
+              <div className="flex items-center gap-2">
+                {cliente.link_site && cliente.link_site.trim() !== '' ? (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openSiteLink(cliente.link_site!)}
+                      className="h-8 bg-green-600 hover:bg-green-700 border-green-600 text-white"
+                    >
+                      <ExternalLink className="h-3 w-3 mr-1" />
+                      Ver Site
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSiteLinkInput(cliente.link_site || '')
+                        onLinkEdit(cliente.id!.toString(), 'link_site', cliente.link_site || '')
+                      }}
+                      className="h-8 w-8 p-0"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     size="sm"
                     variant="outline"
                     onClick={() => {
-                      setSiteLinkInput(cliente.link_site || '')
-                      onLinkEdit(cliente.id!.toString(), 'link_site', cliente.link_site || '')
+                      setSiteLinkInput('')
+                      onLinkEdit(cliente.id!.toString(), 'link_site', '')
                     }}
-                    className="h-8 w-8 p-0"
+                    className="h-8 text-white"
                   >
-                    <Edit className="h-3 w-3" />
+                    <Edit className="h-3 w-3 mr-1" />
+                    Adicionar Site
                   </Button>
-                  <div className="flex items-center gap-1">
-                    <Checkbox
-                      checked={cliente.site_pago || false}
-                      onCheckedChange={handleSitePagoToggle}
-                      disabled={updatingSitePago}
-                      className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                    />
-                    <span className="text-xs text-white">Pago</span>
-                  </div>
+                )}
+                
+                {/* Checkbox "Pago" - SEMPRE VISÍVEL */}
+                <div className="flex items-center gap-1 ml-2">
+                  <Checkbox
+                    checked={cliente.site_pago || false}
+                    onCheckedChange={handleSitePagoToggle}
+                    disabled={updatingSitePago}
+                    className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                  />
+                  <span className="text-xs text-white">Pago</span>
                 </div>
-              ) : (
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setSiteLinkInput('')
-                    onLinkEdit(cliente.id!.toString(), 'link_site', '')
-                  }}
-                  className="h-8 text-white"
-                >
-                  <Edit className="h-3 w-3 mr-1" />
-                  Adicionar Site
-                </Button>
-              )}
+              </div>
             </>
           )}
         </div>
