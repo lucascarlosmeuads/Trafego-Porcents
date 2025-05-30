@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
-import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
 import { AuditoriaClientes } from './AuditoriaClientes'
@@ -42,9 +41,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     switch (activeTab) {
       case 'dashboard':
         return <StatusFunnelDashboard />
-      
-      case 'problemas':
-        return <ProblemasPanel />
 
       case 'auditoria':
         return <AuditoriaClientes />
