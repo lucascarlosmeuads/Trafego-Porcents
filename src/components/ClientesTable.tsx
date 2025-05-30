@@ -605,7 +605,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         totalClientes: clientes.length
       })
       
-      // Find the current client to check the comissao field
+      // Find the current client to check the comissao field - FIX: Compare numbers with numbers
       const cliente = clientes.find(c => c.id === clienteIdNum)
       if (!cliente) {
         console.error('❌ [ClientesTable] Cliente não encontrado:', {
