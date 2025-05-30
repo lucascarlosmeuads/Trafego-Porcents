@@ -37,6 +37,7 @@ export function ComissaoButton({
   const { criarSolicitacaoSaque, loading: loadingSaque } = useSaqueOperations()
   const { solicitacoesPagas } = useSolicitacoesPagas()
   const [saqueEnviado, setSaqueEnviado] = useState(false)
+  const [isProcessing, setIsProcessing] = useState(false)
 
   const isEditingValue = editingComissionValue === cliente.id.toString()
   const valorComissao = cliente.valor_comissao || 0
@@ -48,17 +49,126 @@ export function ComissaoButton({
   // Check if comissao is "Pago" (using the comissao field)
   const isComissaoPaga = cliente.comissao === 'Pago'
 
+  // FUNÇÃO AUXILIAR PARA LOGS DETALHADOS
+  const logClienteAction = (action: string, extraData?: any) => {
+    console.log(`🔍 [ComissaoButton] ${action}:`, {
+      clienteId: cliente.id,
+      clienteIdType: typeof cliente.id,
+      clienteIdString: cliente.id.toString(),
+      clienteNome: cliente.nome_cliente,
+      clienteEmail: cliente.email_cliente,
+      action,
+      timestamp: new Date().toISOString(),
+      ...extraData
+    })
+  }
+
+  // FUNÇÃO PARA VALIDAR SE É O CLIENTE CORRETO
+  const validateClienteConsistency = (expectedClienteId: string, actionName: string): boolean => {
+    const clienteIdStr = cliente.id.toString()
+    if (clienteIdStr !== expectedClienteId) {
+      console.error(`❌ [ComissaoButton] INCONSISTÊNCIA DETECTADA em ${actionName}:`, {
+        expectedClienteId,
+        actualClienteId: clienteIdStr,
+        clienteNome: cliente.nome_cliente,
+        clienteEmail: cliente.email_cliente
+      })
+      return false
+    }
+    return true
+  }
+
+  // FUNÇÃO COM DEBOUNCE PARA EVITAR CLIQUES MÚLTIPLOS
+  const handleComissionToggleWithDebounce = async (currentStatus: boolean) => {
+    if (isProcessing) {
+      logClienteAction('BLOQUEADO - Já processando', { currentStatus })
+      return
+    }
+
+    setIsProcessing(true)
+    logClienteAction('INICIANDO toggle comissão', { 
+      currentStatus, 
+      newStatus: !currentStatus,
+      isComissaoPaga,
+      comissaoAtual: cliente.comissao
+    })
+
+    try {
+      // VALIDAÇÃO DUPLA
+      if (!validateClienteConsistency(cliente.id.toString(), 'toggle comissão')) {
+        return
+      }
+
+      const success = await onComissionToggle(cliente.id.toString(), currentStatus)
+      
+      logClienteAction('RESULTADO toggle comissão', { 
+        success,
+        currentStatus,
+        newStatus: !currentStatus 
+      })
+      
+      return success
+    } catch (error) {
+      console.error('❌ [ComissaoButton] Erro ao toggle comissão:', error)
+      logClienteAction('ERRO toggle comissão', { error: error.message })
+    } finally {
+      // Pequeno delay para evitar cliques múltiplos
+      setTimeout(() => {
+        setIsProcessing(false)
+      }, 1000)
+    }
+  }
+
+  // FUNÇÃO PARA SAQUE COM VALIDAÇÃO
+  const handleSaqueWithValidation = async () => {
+    if (isProcessing) {
+      logClienteAction('BLOQUEADO - Já processando saque')
+      return
+    }
+
+    setIsProcessing(true)
+    logClienteAction('INICIANDO saque', { 
+      isCampanhaNoAr,
+      comissao: cliente.comissao,
+      valorComissao
+    })
+
+    try {
+      // VALIDAÇÃO DUPLA
+      if (!validateClienteConsistency(cliente.id.toString(), 'saque')) {
+        return
+      }
+
+      // Atualizar comissão para "Solicitado"
+      const success = await onComissionToggle(cliente.id.toString(), false)
+      if (success) {
+        logClienteAction('SUCESSO - Saque solicitado')
+        setSaqueEnviado(true)
+      } else {
+        logClienteAction('FALHA - Erro ao solicitar saque')
+      }
+    } catch (error) {
+      console.error('❌ [ComissaoButton] Erro ao solicitar saque:', error)
+      logClienteAction('ERRO saque', { error: error.message })
+    } finally {
+      // Pequeno delay para evitar cliques múltiplos
+      setTimeout(() => {
+        setIsProcessing(false)
+      }, 1000)
+    }
+  }
+
   // Debug logs para verificar o estado
-  console.log('🔍 [ComissaoButton] Cliente:', cliente.nome_cliente, {
-    id: cliente.id,
-    idType: typeof cliente.id,
+  logClienteAction('RENDERIZAÇÃO', {
     status: cliente.status_campanha,
     isCampanhaNoAr,
     comissao: cliente.comissao,
     isComissaoPaga,
     saqueFoiPago,
     saqueEnviado,
-    isGestorDashboard
+    isGestorDashboard,
+    isProcessing,
+    updatingComission
   })
 
   // NOVA REGRA: Gestores não podem editar comissão em nenhuma situação
@@ -87,7 +197,12 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onComissionValueSave(cliente.id.toString(), parseFloat(comissionValueInput) || 0)}
+          onClick={() => {
+            logClienteAction('SALVANDO valor comissão', { 
+              novoValor: parseFloat(comissionValueInput) || 0 
+            })
+            onComissionValueSave(cliente.id.toString(), parseFloat(comissionValueInput) || 0)
+          }}
         >
           <Check className="w-3 h-3 text-green-600" />
         </Button>
@@ -95,7 +210,10 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={onComissionValueCancel}
+          onClick={() => {
+            logClienteAction('CANCELANDO edição valor comissão')
+            onComissionValueCancel()
+          }}
         >
           <X className="w-3 h-3 text-red-600" />
         </Button>
@@ -107,7 +225,7 @@ export function ComissaoButton({
   if (isGestorDashboard) {
     // Se comissão foi paga pelo admin
     if (saqueFoiPago) {
-      console.log('✅ [ComissaoButton] Saque pago - mostrando estado final')
+      logClienteAction('EXIBINDO - Saque pago')
       return (
         <div className="flex items-center gap-1">
           <div className="text-xs text-green-700 bg-green-100 dark:bg-green-900/30 px-2 py-1 rounded border border-green-200 dark:border-green-800">
@@ -122,32 +240,17 @@ export function ComissaoButton({
 
     // Se campanha está no ar E comissão ainda é "Pendente"
     if (isCampanhaNoAr && cliente.comissao === 'Pendente') {
-      console.log('🎯 [ComissaoButton] Mostrando botão SACAR AGORA!')
+      logClienteAction('EXIBINDO - Botão SACAR AGORA')
       return (
         <div className="flex items-center gap-1">
           <Button
             variant="default"
             size="sm"
             className="h-7 text-xs bg-green-600 hover:bg-green-700 text-white flex items-center gap-1 px-3"
-            onClick={async () => {
-              console.log('💸 [ComissaoButton] Clicou em SACAR AGORA para cliente:', cliente.nome_cliente)
-              
-              // Atualizar comissão para "Solicitado"
-              try {
-                const success = await onComissionToggle(cliente.id.toString(), false)
-                if (success) {
-                  console.log('✅ [ComissaoButton] Comissão atualizada para Solicitado!')
-                  setSaqueEnviado(true)
-                } else {
-                  console.error('❌ [ComissaoButton] Falha ao atualizar comissão')
-                }
-              } catch (error) {
-                console.error('❌ [ComissaoButton] Erro ao atualizar comissão:', error)
-              }
-            }}
-            disabled={loadingSaque || updatingComission === cliente.id.toString()}
+            onClick={handleSaqueWithValidation}
+            disabled={loadingSaque || updatingComission === cliente.id.toString() || isProcessing}
           >
-            {(loadingSaque || updatingComission === cliente.id.toString()) ? (
+            {(loadingSaque || updatingComission === cliente.id.toString() || isProcessing) ? (
               <Loader2 className="w-3 h-3 animate-spin mr-1" />
             ) : (
               <span>💸</span>
@@ -161,7 +264,7 @@ export function ComissaoButton({
 
     // Se comissão já foi solicitada (mas ainda não paga)
     if (cliente.comissao === 'Solicitado' || saqueEnviado) {
-      console.log('⏳ [ComissaoButton] Saque já solicitado - aguardando')
+      logClienteAction('EXIBINDO - Saque solicitado, aguardando')
       return (
         <div className="flex items-center gap-1">
           <div className="text-xs text-amber-700 bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded border border-amber-300">
@@ -172,7 +275,7 @@ export function ComissaoButton({
     }
 
     // Qualquer outro caso (status diferente de "Campanha no Ar" ou comissão paga)
-    console.log('🔒 [ComissaoButton] Status travado para gestor')
+    logClienteAction('EXIBINDO - Status travado para gestor')
     return (
       <div className="flex items-center gap-1">
         <div className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded border">
@@ -193,21 +296,10 @@ export function ComissaoButton({
             ? 'bg-green-600 hover:bg-green-700 text-white' 
             : 'border-red-600 bg-red-800 text-red-100 hover:bg-red-700'
         }`}
-        onClick={async () => {
-          try {
-            console.log('🎯 [ComissaoButton] Admin clicou no botão de comissão:', {
-              clienteId: cliente.id,
-              clienteIdString: cliente.id.toString(),
-              isComissaoPaga
-            })
-            await onComissionToggle(cliente.id.toString(), isComissaoPaga)
-          } catch (error) {
-            console.error('❌ [ComissaoButton] Erro ao toggle comissão:', error)
-          }
-        }}
-        disabled={updatingComission === cliente.id.toString()}
+        onClick={() => handleComissionToggleWithDebounce(isComissaoPaga)}
+        disabled={updatingComission === cliente.id.toString() || isProcessing}
       >
-        {updatingComission === cliente.id.toString() ? (
+        {(updatingComission === cliente.id.toString() || isProcessing) ? (
           <Loader2 className="w-3 h-3 animate-spin mr-1" />
         ) : isComissaoPaga ? (
           <Check className="w-3 h-3 mr-1" />
@@ -223,7 +315,10 @@ export function ComissaoButton({
           size="sm"
           variant="ghost"
           className="h-6 w-6 p-0"
-          onClick={() => onComissionValueEdit(cliente.id.toString(), valorComissao)}
+          onClick={() => {
+            logClienteAction('EDITANDO valor comissão', { valorAtual: valorComissao })
+            onComissionValueEdit(cliente.id.toString(), valorComissao)
+          }}
         >
           <Edit2 className="w-3 h-3 text-muted-foreground" />
         </Button>
