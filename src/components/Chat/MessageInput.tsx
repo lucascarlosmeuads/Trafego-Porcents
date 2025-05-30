@@ -53,7 +53,7 @@ export function MessageInput({ onSendMessage, disabled, placeholder = "Digite su
 
   if (showAudioRecorder) {
     return (
-      <div className="border-t bg-white p-4">
+      <div className="border-t border-border bg-background p-4">
         <AudioRecorder
           onAudioReady={handleSendAudio}
           disabled={disabled || sending}
@@ -62,7 +62,8 @@ export function MessageInput({ onSendMessage, disabled, placeholder = "Digite su
           variant="ghost"
           size="sm"
           onClick={() => setShowAudioRecorder(false)}
-          className="mt-2 w-full"
+          className="mt-2 w-full text-muted-foreground hover:text-foreground"
+          disabled={sending}
         >
           Cancelar gravação
         </Button>
@@ -71,7 +72,7 @@ export function MessageInput({ onSendMessage, disabled, placeholder = "Digite su
   }
 
   return (
-    <div className="border-t bg-white p-4">
+    <div className="border-t border-border bg-background p-4">
       <div className="flex gap-2">
         <Textarea
           value={message}
@@ -79,7 +80,7 @@ export function MessageInput({ onSendMessage, disabled, placeholder = "Digite su
           onKeyDown={handleKeyPress}
           placeholder={placeholder}
           disabled={disabled || sending}
-          className="flex-1 min-h-[44px] max-h-32 resize-none rounded-full px-4 py-3"
+          className="flex-1 min-h-[44px] max-h-32 resize-none rounded-full px-4 py-3 bg-background border-border text-foreground placeholder:text-muted-foreground"
           rows={1}
         />
         
@@ -88,7 +89,7 @@ export function MessageInput({ onSendMessage, disabled, placeholder = "Digite su
           disabled={disabled || sending}
           variant="outline"
           size="icon"
-          className="h-11 w-11 rounded-full"
+          className="h-11 w-11 rounded-full border-border hover:bg-accent"
         >
           <Mic className="h-4 w-4" />
         </Button>

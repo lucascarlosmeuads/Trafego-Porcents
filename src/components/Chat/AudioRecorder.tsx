@@ -15,6 +15,7 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
   const [audioBlob, setAudioBlob] = useState<Blob | null>(null)
   const [audioUrl, setAudioUrl] = useState<string | null>(null)
   const [duration, setDuration] = useState(0)
+  const [uploading, setUploading] = useState(false)
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null)
   const audioRef = useRef<HTMLAudioElement | null>(null)
@@ -96,24 +97,44 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
     if (!audioBlob) return
 
     try {
+      setUploading(true)
+      
+      // Verificar se o usuário está autenticado
+      const { data: { user }, error: userError } = await supabase.auth.getUser()
+      
+      if (userError || !user?.email) {
+        console.error('Usuário não autenticado:', userError)
+        alert('Você precisa estar logado para enviar áudios.')
+        return
+      }
+
       const fileName = `audio_${Date.now()}.webm`
-      const filePath = `${supabase.auth.getUser().then(u => u.data.user?.email)}/${fileName}`
+      const filePath = `${user.email}/${fileName}`
+
+      console.log('📤 [AudioRecorder] Enviando áudio:', { fileName, filePath, userEmail: user.email })
 
       const { error: uploadError } = await supabase.storage
         .from('chat-audios')
         .upload(filePath, audioBlob)
 
-      if (uploadError) throw uploadError
+      if (uploadError) {
+        console.error('❌ [AudioRecorder] Erro no upload:', uploadError)
+        throw uploadError
+      }
 
       const { data: { publicUrl } } = supabase.storage
         .from('chat-audios')
         .getPublicUrl(filePath)
 
+      console.log('✅ [AudioRecorder] Áudio enviado com sucesso:', publicUrl)
+
       onAudioReady(publicUrl)
       deleteAudio()
     } catch (error) {
-      console.error('Erro ao enviar áudio:', error)
+      console.error('💥 [AudioRecorder] Erro ao enviar áudio:', error)
       alert('Erro ao enviar áudio. Tente novamente.')
+    } finally {
+      setUploading(false)
     }
   }, [audioBlob, onAudioReady, deleteAudio])
 
@@ -124,7 +145,7 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 p-2 bg-gray-50 rounded-lg">
+    <div className="flex items-center gap-2 p-2 bg-accent/50 rounded-lg border border-border">
       {!audioBlob ? (
         <div className="flex items-center gap-2">
           <Button
@@ -139,27 +160,33 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
           </Button>
           
           {isRecording && (
-            <span className="text-sm text-red-600 font-mono">
-              🔴 {formatDuration(duration)}
+            <span className="text-sm text-red-500 font-mono flex items-center gap-1">
+              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></div>
+              {formatDuration(duration)}
             </span>
           )}
         </div>
       ) : (
         <div className="flex items-center gap-2 w-full">
-          <Button size="sm" variant="ghost" onClick={playAudio}>
+          <Button size="sm" variant="ghost" onClick={playAudio} disabled={uploading}>
             {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
           </Button>
           
-          <span className="text-sm font-mono flex-1">
+          <span className="text-sm font-mono flex-1 text-foreground">
             Áudio gravado ({formatDuration(duration)})
           </span>
           
-          <Button size="sm" variant="ghost" onClick={deleteAudio}>
+          <Button size="sm" variant="ghost" onClick={deleteAudio} disabled={uploading}>
             <Trash2 className="h-4 w-4" />
           </Button>
           
-          <Button size="sm" onClick={uploadAndSend} className="bg-green-600 hover:bg-green-700">
-            Enviar
+          <Button 
+            size="sm" 
+            onClick={uploadAndSend} 
+            disabled={uploading}
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
+            {uploading ? 'Enviando...' : 'Enviar'}
           </Button>
         </div>
       )}
