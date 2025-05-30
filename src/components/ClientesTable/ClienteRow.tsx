@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ interface ClienteRowProps {
   index: number
   isAdmin?: boolean
   showEmailGestor?: boolean
+  showSitePagoCheckbox?: boolean
   updatingStatus: string | null
   editingLink: { clienteId: string, field: string } | null
   linkValue: string
@@ -61,6 +63,7 @@ export function ClienteRow({
   index,
   isAdmin = false,
   showEmailGestor = false,
+  showSitePagoCheckbox = false,
   updatingStatus,
   editingLink,
   linkValue,
@@ -397,16 +400,18 @@ export function ClienteRow({
                   </Button>
                 )}
                 
-                {/* Checkbox "Pago" - SEMPRE VISÍVEL */}
-                <div className="flex items-center gap-1 ml-2">
-                  <Checkbox
-                    checked={cliente.site_pago || false}
-                    onCheckedChange={handleSitePagoToggle}
-                    disabled={updatingSitePago}
-                    className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                  />
-                  <span className="text-xs text-white">Pago</span>
-                </div>
+                {/* Checkbox "Pago" - CONDICIONAL baseada em showSitePagoCheckbox */}
+                {showSitePagoCheckbox && (
+                  <div className="flex items-center gap-1 ml-2">
+                    <Checkbox
+                      checked={cliente.site_pago || false}
+                      onCheckedChange={handleSitePagoToggle}
+                      disabled={updatingSitePago}
+                      className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                    <span className="text-xs text-white">Pago</span>
+                  </div>
+                )}
               </div>
             </>
           )}

@@ -55,6 +55,9 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
   // Add the site pago update hook
   const { handleSitePagoChange } = useSitePagoUpdate(clientesComProblema, setClientesComProblema)
   
+  // Determine if the "Pago" checkbox should be shown (only for Admin in problems panel)
+  const showSitePagoCheckbox = isAdmin && !gestorMode
+  
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
@@ -615,6 +618,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
                           index={index}
                           isAdmin={isAdmin}
                           showEmailGestor={true}
+                          showSitePagoCheckbox={showSitePagoCheckbox}
                           updatingStatus={updatingStatus}
                           editingLink={editingLink}
                           linkValue={linkValue}

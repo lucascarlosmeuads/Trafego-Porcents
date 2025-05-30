@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -40,13 +41,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                         emailToUse.includes('site') || 
                         emailToUse.includes('webdesign')
   
+  // Determine if the "Pago" checkbox should be shown
+  const showSitePagoCheckbox = isAdmin || isSitesContext
+  
   console.log('🔍 [ClientesTable] Configuração de acesso:', {
     isAdmin,
     emailToUse,
     selectedManager,
     userEmail: user?.email,
     filterType,
-    isSitesContext
+    isSitesContext,
+    showSitePagoCheckbox
   })
   
   // For Site Creator panels, don't pass selectedManager to avoid conflicts
@@ -751,6 +756,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                     index={index}
                     isAdmin={isAdmin}
                     showEmailGestor={isSitesContext}
+                    showSitePagoCheckbox={showSitePagoCheckbox}
                     updatingStatus={updatingStatus}
                     editingLink={editingLink}
                     linkValue={linkValue}
