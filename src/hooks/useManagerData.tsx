@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
