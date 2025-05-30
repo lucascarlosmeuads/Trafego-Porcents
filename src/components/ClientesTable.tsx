@@ -597,19 +597,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setUpdatingComission(clienteId)
     
     try {
-      // Convert clienteId to number for proper comparison
-      const clienteIdNum = parseInt(clienteId)
       console.log('🔍 [ClientesTable] Buscando cliente:', {
         clienteId,
-        clienteIdNum,
+        clienteIdType: typeof clienteId,
         totalClientes: clientes.length
       })
       
-      // Find the current client to check the comissao field - FIX: Compare numbers with numbers
-      const cliente = clientes.find(c => c.id === clienteIdNum)
+      // Find the current client to check the comissao field - FIX: Keep clienteId as string for consistent comparison
+      const cliente = clientes.find(c => c.id?.toString() === clienteId)
       if (!cliente) {
         console.error('❌ [ClientesTable] Cliente não encontrado:', {
-          clienteIdBuscado: clienteIdNum,
+          clienteIdBuscado: clienteId,
           idsDisponiveis: clientes.map(c => ({ id: c.id, nome: c.nome_cliente })).slice(0, 5)
         })
         toast({
