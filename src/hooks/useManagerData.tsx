@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
@@ -11,17 +12,19 @@ interface UseManagerDataResult {
   addCliente: (clienteData: any) => Promise<any>
   currentManager: string | null
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
+  isConnected: boolean
 }
 
 export function useManagerData(
   userEmail: string, 
   isAdminUser: boolean = false,
   selectedManager?: string,
-  filterType?: 'sites-pendentes' | 'sites-finalizados'
+  filterType?: 'sites-pendentes' | 'sites-finalizados' | 'saques-pendentes' | 'ativos' | 'inativos'
 ): UseManagerDataResult {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [isConnected, setIsConnected] = useState(true)
 
   const fetchData = useCallback(async () => {
     if (!userEmail) {
@@ -50,6 +53,15 @@ export function useManagerData(
       } else if (filterType === 'sites-finalizados') {
         console.log('✅ [useManagerData] Site Creator: Aplicando filtro para sites finalizados')
         query = query.eq('site_status', 'finalizado')
+      } else if (filterType === 'saques-pendentes') {
+        console.log('💰 [useManagerData] Aplicando filtro para saques pendentes')
+        query = query.eq('comissao', 'Solicitado')
+      } else if (filterType === 'ativos') {
+        console.log('✅ [useManagerData] Aplicando filtro para clientes ativos')
+        query = query.not('status_campanha', 'in', '(Off,Reembolso,Problema,Saque Pendente)')
+      } else if (filterType === 'inativos') {
+        console.log('❌ [useManagerData] Aplicando filtro para clientes inativos')
+        query = query.in('status_campanha', ['Off', 'Reembolso'])
       } else {
         // PRIORITY 2: Handle Admin panel logic
         console.log('📊 [useManagerData] Admin panel mode')
@@ -77,10 +89,12 @@ export function useManagerData(
 
       if (error) {
         console.error('❌ [useManagerData] Erro ao buscar dados:', error)
+        setIsConnected(false)
         throw error
       }
 
       console.log('✅ [useManagerData] Dados encontrados:', data?.length || 0, 'registros')
+      setIsConnected(true)
       
       // Enhanced logging for verification
       if (data && data.length > 0) {
@@ -116,6 +130,7 @@ export function useManagerData(
     } catch (err: any) {
       console.error('💥 [useManagerData] Erro na busca:', err)
       setError(err.message || 'Erro desconhecido')
+      setIsConnected(false)
     } finally {
       setLoading(false)
     }
@@ -136,5 +151,6 @@ export function useManagerData(
     addCliente,
     currentManager: selectedManager || null,
     setClientes,
+    isConnected,
   }
 }

@@ -20,9 +20,11 @@ interface ClientesTableProps {
   userEmail: string
   isAdmin: boolean
   isGestorDashboard?: boolean
+  selectedManager?: string | null
+  filterType?: 'sites-pendentes' | 'sites-finalizados' | 'saques-pendentes' | 'ativos' | 'inativos'
 }
 
-export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }: ClientesTableProps) {
+export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, selectedManager, filterType }: ClientesTableProps) {
   const { toast } = useToast()
   
   // USAR O HOOK CORRETO - useManagerData para lista de clientes
@@ -30,9 +32,8 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
     clientes, 
     loading, 
     error, 
-    refetch: refetchData,
-    isConnected 
-  } = useManagerData(userEmail, isAdmin, undefined, undefined)
+    refetch: refetchData
+  } = useManagerData(userEmail, isAdmin, selectedManager, filterType)
   
   const { updateCliente } = useClienteOperations(userEmail, isAdmin, refetchData)
 
@@ -263,7 +264,7 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
               Lista de Clientes ({filteredClientes.length})
             </CardTitle>
             <div className="flex items-center gap-2">
-              <RealtimeStatus isConnected={isConnected} />
+              <RealtimeStatus isConnected={true} />
             </div>
           </div>
         </CardHeader>
@@ -273,8 +274,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
             setSearchTerm={setSearchTerm}
             statusFilter={statusFilter}
             setStatusFilter={setStatusFilter}
-            managerFilter={managerFilter}
-            setManagerFilter={setManagerFilter}
             clientes={clientes}
             onAddClient={() => setIsAddModalOpen(true)}
             onAddClientRow={() => setShowAddRow(true)}
@@ -288,8 +287,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
             <div className="divide-y divide-border">
               {showAddRow && (
                 <AddClientRow 
-                  userEmail={userEmail} 
-                  isAdmin={isAdmin}
                   onCancel={() => setShowAddRow(false)}
                   onSuccess={() => {
                     setShowAddRow(false)
@@ -303,7 +300,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
                   key={cliente.id}
                   cliente={cliente}
                   isAdmin={isAdmin}
-                  isGestorDashboard={isGestorDashboard}
                   onBriefingClick={(clienteEmail) => setSelectedBriefingCliente(clienteEmail)}
                   onMaterialsClick={(clienteEmail) => setSelectedMaterialsCliente(clienteEmail)}
                   onComentariosClick={(clienteId, clienteNome) => 
@@ -340,8 +336,8 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
 
       {/* Modais */}
       <AddClientModal
-        isOpen={isAddModalOpen}
-        onClose={() => setIsAddModalOpen(false)}
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
         userEmail={userEmail}
         isAdmin={isAdmin}
         onSuccess={refetchData}
@@ -349,14 +345,14 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
 
       {selectedBriefingCliente && (
         <BriefingModal
-          clienteEmail={selectedBriefingCliente}
+          email={selectedBriefingCliente}
           onClose={() => setSelectedBriefingCliente(null)}
         />
       )}
 
       {selectedMaterialsCliente && (
         <BriefingMaterialsModal
-          clienteEmail={selectedMaterialsCliente}
+          email={selectedMaterialsCliente}
           onClose={() => setSelectedMaterialsCliente(null)}
         />
       )}
@@ -364,7 +360,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false }:
       {selectedComentariosCliente && (
         <ClienteComentariosModal
           clienteId={selectedComentariosCliente.id}
-          clienteNome={selectedComentariosCliente.nome}
           onClose={() => setSelectedComentariosCliente(null)}
         />
       )}
