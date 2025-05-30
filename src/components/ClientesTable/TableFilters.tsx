@@ -15,6 +15,11 @@ interface TableFiltersProps {
   onAddClientRow: () => void
   isAdmin: boolean
   isGestorDashboard: boolean
+  // Props específicas para ProblemasPanel
+  siteStatusFilter?: string
+  setSiteStatusFilter?: (status: string) => void
+  showSiteStatusFilter?: boolean
+  getStatusColor?: (status: string) => string
 }
 
 export function TableFilters({
@@ -25,7 +30,11 @@ export function TableFilters({
   onAddClient,
   onAddClientRow,
   isAdmin,
-  isGestorDashboard
+  isGestorDashboard,
+  siteStatusFilter,
+  setSiteStatusFilter,
+  showSiteStatusFilter = false,
+  getStatusColor
 }: TableFiltersProps) {
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
@@ -52,6 +61,21 @@ export function TableFilters({
           ))}
         </SelectContent>
       </Select>
+
+      {showSiteStatusFilter && setSiteStatusFilter && (
+        <Select value={siteStatusFilter} onValueChange={setSiteStatusFilter}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <SelectValue placeholder="Filtrar por status do site" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os status</SelectItem>
+            <SelectItem value="pendente">Pendente</SelectItem>
+            <SelectItem value="em_desenvolvimento">Em Desenvolvimento</SelectItem>
+            <SelectItem value="revisao">Em Revisão</SelectItem>
+            <SelectItem value="finalizado">Finalizado</SelectItem>
+          </SelectContent>
+        </Select>
+      )}
 
       <div className="flex gap-2">
         <Button onClick={onAddClient} className="flex items-center gap-2">

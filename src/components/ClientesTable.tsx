@@ -85,7 +85,7 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
       }))
     })
     
-    // BUSCA SEGURA DO CLIENTE
+    // BUSCA SEGURA DO CLIENTE - corrigindo comparação string vs number
     const cliente = clientes.find(c => c.id === clienteIdNum)
     if (!cliente) {
       console.error('❌ [ClientesTable] Cliente não encontrado na lista:', {
@@ -298,11 +298,6 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
                   key={cliente.id}
                   cliente={cliente}
                   isAdmin={isAdmin}
-                  onBriefingClick={(clienteEmail) => setSelectedBriefingCliente(clienteEmail)}
-                  onMaterialsClick={(clienteEmail) => setSelectedMaterialsCliente(clienteEmail)}
-                  onComentariosClick={(clienteId, clienteNome) => 
-                    setSelectedComentariosCliente({ id: clienteId, nome: clienteNome })
-                  }
                   userEmail={userEmail}
                   refetchData={refetchData}
                   comissaoButton={
@@ -319,6 +314,11 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
                       onComissionValueCancel={handleComissionValueCancel}
                     />
                   }
+                  onBriefingClick={(clienteEmail) => setSelectedBriefingCliente(clienteEmail)}
+                  onMaterialsClick={(clienteEmail) => setSelectedMaterialsCliente(clienteEmail)}
+                  onComentariosClick={(clienteId, clienteNome) => 
+                    setSelectedComentariosCliente({ id: clienteId, nome: clienteNome })
+                  }
                 />
               ))}
               
@@ -334,7 +334,7 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
 
       {/* Modais */}
       <AddClientModal
-        open={isAddModalOpen}
+        isOpen={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         userEmail={userEmail}
         isAdmin={isAdmin}
@@ -343,8 +343,9 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
 
       {selectedBriefingCliente && (
         <BriefingModal
-          email={selectedBriefingCliente}
-          onClose={() => setSelectedBriefingCliente(null)}
+          emailCliente={selectedBriefingCliente}
+          nomeCliente="Cliente"
+          trigger={<></>}
         />
       )}
 
