@@ -72,9 +72,9 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
   }
 
   return (
-    <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-6 border-b">
-        <h2 className="text-xl font-bold text-gray-900">Painel do Cliente</h2>
+    <aside className="w-64 bg-card border-r border-border flex flex-col">
+      <div className="p-6 border-b border-border">
+        <h2 className="text-xl font-bold text-card-foreground">Painel do Cliente</h2>
       </div>
       
       <nav className="flex-1 p-4 space-y-2">
@@ -82,14 +82,18 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
           <Button
             key={item.id}
             variant={activeTab === item.id ? 'default' : 'ghost'}
-            className="w-full justify-start text-left h-auto py-3"
+            className={`w-full justify-start text-left h-auto py-3 ${
+              activeTab === item.id 
+                ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
+                : 'text-card-foreground hover:bg-accent hover:text-accent-foreground'
+            }`}
             onClick={() => onTabChange(item.id)}
           >
             <div className="flex items-center">
               <item.icon className="mr-3 h-5 w-5" />
               <div>
                 <div className="font-medium">{item.label}</div>
-                <div className="text-xs text-muted-foreground">{item.description}</div>
+                <div className="text-xs opacity-70">{item.description}</div>
               </div>
             </div>
           </Button>
@@ -97,10 +101,10 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
       </nav>
 
       {/* Logout Button */}
-      <div className="p-4 border-t border-gray-200">
+      <div className="p-4 border-t border-border">
         <Button
           variant="ghost"
-          className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+          className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
           onClick={handleSignOut}
           disabled={isSigningOut}
         >
