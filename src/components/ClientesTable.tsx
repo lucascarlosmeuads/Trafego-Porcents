@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -732,7 +731,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       )}
       
       <div className="border rounded-lg overflow-hidden bg-card border-border">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-w-full">
           <Table className="table-dark">
             <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
             <TableBody>
