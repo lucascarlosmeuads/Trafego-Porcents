@@ -1,96 +1,100 @@
 
-import { useState, useEffect } from 'react'
+import { Search, Filter, Globe } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Plus, UserPlus, Search } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface TableFiltersProps {
   searchTerm: string
-  setSearchTerm: (term: string) => void
+  setSearchTerm: (value: string) => void
   statusFilter: string
-  setStatusFilter: (status: string) => void
-  onAddClient?: () => void
-  onAddClientRow?: () => void
-  isAdmin?: boolean
-  isGestorDashboard?: boolean
-  // Props específicas para ProblemasPanel
+  setStatusFilter: (value: string) => void
   siteStatusFilter?: string
-  setSiteStatusFilter?: (status: string) => void
+  setSiteStatusFilter?: (value: string) => void
   showSiteStatusFilter?: boolean
-  getStatusColor?: (status: string) => string
+  getStatusColor: (status: string) => string
 }
+
+const SITE_STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos os Status de Site' },
+  { value: 'pendente', label: 'Pendente' },
+  { value: 'aguardando_link', label: 'Aguardando Site' },
+  { value: 'nao_precisa', label: 'Não Precisa' },
+  { value: 'finalizado', label: 'Finalizado' }
+]
 
 export function TableFilters({
   searchTerm,
   setSearchTerm,
   statusFilter,
   setStatusFilter,
-  onAddClient,
-  onAddClientRow,
-  isAdmin = false,
-  isGestorDashboard = false,
-  siteStatusFilter,
+  siteStatusFilter = 'all',
   setSiteStatusFilter,
   showSiteStatusFilter = false,
   getStatusColor
 }: TableFiltersProps) {
+  
+  const handleSiteStatusChange = (value: string) => {
+    console.log('🎯 [TableFilters] Alterando filtro de site_status para:', value)
+    if (setSiteStatusFilter) {
+      setSiteStatusFilter(value)
+    }
+  }
+
+  const handleStatusChange = (value: string) => {
+    console.log('📊 [TableFilters] Alterando filtro de status_campanha para:', value)
+    setStatusFilter(value)
+  }
+
   return (
-    <div className="flex flex-col sm:flex-row gap-4 mb-6">
-      <div className="flex-1 relative">
+    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
+      <div className="relative flex-1">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4" />
         <Input
-          placeholder="Buscar por nome, email ou telefone..."
+          placeholder="Pesquisar por nome, email, telefone, vendedor..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
+          className="pl-10 bg-background border-border text-white"
         />
       </div>
       
-      <Select value={statusFilter} onValueChange={setStatusFilter}>
-        <SelectTrigger className="w-full sm:w-[200px]">
-          <SelectValue placeholder="Filtrar por status" />
+      <Select value={statusFilter} onValueChange={handleStatusChange}>
+        <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
+          <Filter className="w-4 h-4 mr-2" />
+          <SelectValue placeholder="Status da campanha" />
         </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">Todos os status</SelectItem>
-          {STATUS_CAMPANHA.map((status) => (
+        <SelectContent className="bg-card border-border">
+          <SelectItem value="all">Todos os Status</SelectItem>
+          {STATUS_CAMPANHA.map(status => (
             <SelectItem key={status} value={status}>
-              {status}
+              <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+                {status}
+              </span>
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
 
       {showSiteStatusFilter && setSiteStatusFilter && (
-        <Select value={siteStatusFilter} onValueChange={setSiteStatusFilter}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <SelectValue placeholder="Filtrar por status do site" />
+        <Select value={siteStatusFilter} onValueChange={handleSiteStatusChange}>
+          <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
+            <Globe className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Status do site" />
           </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os status</SelectItem>
-            <SelectItem value="pendente">Pendente</SelectItem>
-            <SelectItem value="em_desenvolvimento">Em Desenvolvimento</SelectItem>
-            <SelectItem value="revisao">Em Revisão</SelectItem>
-            <SelectItem value="finalizado">Finalizado</SelectItem>
+          <SelectContent className="bg-card border-border">
+            {SITE_STATUS_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
-      )}
-
-      {onAddClient && onAddClientRow && (
-        <div className="flex gap-2">
-          <Button onClick={onAddClient} className="flex items-center gap-2">
-            <Plus className="w-4 h-4" />
-            Adicionar Cliente
-          </Button>
-          
-          {isAdmin && (
-            <Button onClick={onAddClientRow} variant="outline" className="flex items-center gap-2">
-              <UserPlus className="w-4 h-4" />
-              Linha Rápida
-            </Button>
-          )}
-        </div>
       )}
     </div>
   )

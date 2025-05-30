@@ -14,19 +14,17 @@ import {
 } from '@/components/ui/select'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
-import { useClienteOperations } from '@/hooks/useClienteOperations'
-import { useAuth } from '@/hooks/useAuth'
 
 interface AddClientRowProps {
-  onCancel: () => void
-  onSuccess: () => void
+  onAddClient: (clientData: any) => Promise<any>
+  isLoading: boolean
+  getStatusColor: (status: string) => string
 }
 
-export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
-  const { user, isAdmin } = useAuth()
+export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClientRowProps) {
+  const [isEditing, setIsEditing] = useState(false)
   const [showInstructions, setShowInstructions] = useState(false)
   const [newClientData, setNewClientData] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -35,21 +33,6 @@ export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
     vendedor: '',
     status_campanha: ''
   })
-
-  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onSuccess)
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      'Cliente Novo': 'bg-blue-100 text-blue-800 border-blue-200',
-      'Brief': 'bg-orange-100 text-orange-800 border-orange-200',
-      'Material': 'bg-purple-100 text-purple-800 border-purple-200',
-      'No Ar': 'bg-green-100 text-green-800 border-green-200',
-      'Off': 'bg-red-100 text-red-800 border-red-200',
-      'Reembolso': 'bg-gray-100 text-gray-800 border-gray-200',
-      'Problema': 'bg-yellow-100 text-yellow-800 border-yellow-200'
-    }
-    return colors[status] || 'bg-gray-100 text-gray-800 border-gray-200'
-  }
 
   const handleSave = async () => {
     // Validar campos obrigatórios
@@ -89,15 +72,11 @@ export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
       return
     }
 
-    setIsLoading(true)
-
-    const result = await addCliente({
+    const result = await onAddClient({
       ...formData,
       comissao_paga: false,
       valor_comissao: 60.00
     })
-
-    setIsLoading(false)
 
     // Type guard to check if result is not false
     if (result && typeof result === 'object' && result.success) {
@@ -110,6 +89,7 @@ export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
         vendedor: '',
         status_campanha: ''
       })
+      setIsEditing(false)
       
       toast({
         title: "Sucesso",
@@ -132,9 +112,37 @@ export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
         setNewClientData(result.clientData)
         setShowInstructions(true)
       }
-
-      onSuccess()
     }
+  }
+
+  const handleCancel = () => {
+    setFormData({
+      nome_cliente: '',
+      telefone: '',
+      email_cliente: '',
+      data_venda: '',
+      vendedor: '',
+      status_campanha: ''
+    })
+    setIsEditing(false)
+  }
+
+  if (!isEditing) {
+    return (
+      <TableRow className="border-dashed border-2 border-muted hover:bg-muted/10">
+        <TableCell colSpan={15} className="text-center py-4">
+          <Button
+            onClick={() => setIsEditing(true)}
+            variant="outline"
+            size="sm"
+            className="text-muted-foreground"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Adicionar Novo Cliente
+          </Button>
+        </TableCell>
+      </TableRow>
+    )
   }
 
   return (
@@ -231,7 +239,7 @@ export function AddClientRow({ onCancel, onSuccess }: AddClientRowProps) {
             <Button
               size="sm"
               variant="outline"
-              onClick={onCancel}
+              onClick={handleCancel}
               disabled={isLoading}
               className="h-7 px-2"
             >

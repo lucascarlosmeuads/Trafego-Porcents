@@ -62,11 +62,8 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            <ClientesTable 
-              userEmail={user?.email || ''} 
-              isAdmin={isAdmin} 
-              filterType="sites-pendentes" 
-            />
+            {/* Site Creator panel: Show only aguardando_link clients */}
+            <ClientesTable filterType="sites-pendentes" />
           </div>
         )
 
@@ -74,11 +71,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Saques Pendentes</h2>
-            <ClientesTable 
-              userEmail={user?.email || ''} 
-              isAdmin={isAdmin} 
-              filterType="saques-pendentes" 
-            />
+            <ClientesTable filterType="saques-pendentes" />
           </div>
         )
       
@@ -97,11 +90,8 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            <ClientesTable 
-              userEmail={user?.email || ''} 
-              isAdmin={isAdmin} 
-              selectedManager={selectedManager} 
-            />
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
+            <ClientesTable selectedManager={selectedManager} />
           </div>
         )
     }
