@@ -1,6 +1,5 @@
 
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { 
   BarChart3, 
   Users, 
@@ -83,11 +82,6 @@ export function AdminMainMenu({
         >
           <item.icon className="mr-2 h-4 w-4" />
           {item.label}
-          {item.badge !== undefined && item.badge > 0 && (
-            <Badge variant="destructive" className="ml-auto">
-              {item.badge}
-            </Badge>
-          )}
         </Button>
       ))}
 
