@@ -2,9 +2,11 @@
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Loader2, Smartphone, Monitor } from 'lucide-react'
 import { AdminTableCards } from './AdminTable/AdminTableCards'
 import { AdminTableDesktop } from './AdminTable/AdminTableDesktop'
+import { AdminTablePagination } from './AdminTable/AdminTablePagination'
 import { useAdminTableLogic } from './AdminTable/useAdminTableLogic'
 import { formatDate, getStatusColor } from './AdminTable/adminTableUtils'
 
@@ -16,8 +18,13 @@ export function AdminTable() {
     loading,
     gestores,
     transferindoCliente,
+    pagination,
     handleTransferirCliente,
-    handleStatusChange
+    handleStatusChange,
+    goToPage,
+    nextPage,
+    prevPage,
+    changeItemsPerPage
   } = useAdminTableLogic()
 
   if (loading) {
@@ -33,24 +40,55 @@ export function AdminTable() {
     )
   }
 
+  const startItem = (pagination.currentPage - 1) * pagination.itemsPerPage + 1
+  const endItem = Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
+
   return (
     <Card className="w-full bg-card border-border">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg sm:text-xl text-card-foreground">
-            Todos os Clientes ({clientes.length})
-          </CardTitle>
-          <Button
-            onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-          >
-            {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
-            {viewMode === 'table' ? 'Cartões' : 'Tabela'}
-          </Button>
+          <div className="flex flex-col gap-2">
+            <CardTitle className="text-lg sm:text-xl text-card-foreground">
+              Todos os Clientes ({pagination.totalItems})
+            </CardTitle>
+            <div className="text-sm text-muted-foreground">
+              Mostrando {startItem} a {endItem} de {pagination.totalItems} clientes
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {/* Seletor de itens por página */}
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-muted-foreground">Itens:</span>
+              <Select 
+                value={pagination.itemsPerPage.toString()} 
+                onValueChange={(value) => changeItemsPerPage(Number(value))}
+              >
+                <SelectTrigger className="w-20 h-8">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="20">20</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* Botão de mudança de visualização */}
+            <Button
+              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
+              variant="outline"
+              size="sm"
+              className="lg:hidden"
+            >
+              {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
+              {viewMode === 'table' ? 'Cartões' : 'Tabela'}
+            </Button>
+          </div>
         </div>
       </CardHeader>
+      
       <CardContent className="p-0 sm:p-6">
         {/* Visualização em cartões para mobile */}
         {viewMode === 'cards' && (
@@ -77,10 +115,22 @@ export function AdminTable() {
           />
         </div>
         
-        {clientes.length === 0 && (
+        {clientes.length === 0 && !loading && (
           <div className="text-center py-12 text-muted-foreground">
             Nenhum cliente encontrado
           </div>
+        )}
+        
+        {/* Controles de paginação */}
+        {pagination.totalPages > 1 && (
+          <AdminTablePagination
+            currentPage={pagination.currentPage}
+            totalPages={pagination.totalPages}
+            onPageChange={goToPage}
+            onPrevious={prevPage}
+            onNext={nextPage}
+            className="mt-6"
+          />
         )}
       </CardContent>
     </Card>
