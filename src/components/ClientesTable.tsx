@@ -83,7 +83,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [addingClient, setAddingClient] = useState(false)
 
   const categorizarClientes = (clientesList: typeof clientes) => {
-    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO CORRIGIDA) ===')
+    console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO ATUALIZADA - PROBLEMAS INCLUÍDOS NOS ATIVOS) ===')
     console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
     
     // Complete list of INACTIVE statuses - clients not actively progressing
@@ -100,11 +100,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       'Encerrado'
     ]
     
-    // Complete list of PROBLEM statuses that should be handled separately
-    const statusProblemas = [
-      'Problema'
-    ]
-    
     // Complete list of SAQUE PENDENTE statuses
     const statusSaquesPendentes = [
       'Saque Pendente',
@@ -112,11 +107,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     ]
     
     // ACTIVE statuses - all statuses that represent clients actively progressing
-    // This is the DEFAULT category - any status NOT in the above lists is considered ACTIVE
+    // NOW INCLUDING "Problema" - they are active clients that need attention
     const clientesAtivos = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
       return !statusInativos.includes(status) && 
-             !statusProblemas.includes(status) && 
              !statusSaquesPendentes.includes(status)
     })
     
@@ -125,9 +119,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       return statusInativos.includes(status)
     })
     
+    // Keep problemas as a separate category for filtering purposes only
     const clientesProblemas = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
-      return statusProblemas.includes(status)
+      return status === 'Problema'
     })
     
     const clientesSaquesPendentes = clientesList.filter(cliente => {
@@ -147,35 +142,33 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     
     console.log('📊 [ClientesTable] Todos os status únicos encontrados (', uniqueStatuses.length, '):', uniqueStatuses)
     console.log('📊 [ClientesTable] Distribuição completa por status:', statusDistribution)
-    console.log('📊 [ClientesTable] Contagem após categorização corrigida:')
-    console.log('   ✅ Ativos:', clientesAtivos.length)
+    console.log('📊 [ClientesTable] Contagem após categorização atualizada:')
+    console.log('   ✅ Ativos (incluindo Problemas):', clientesAtivos.length)
     console.log('   ❌ Inativos:', clientesInativos.length)
-    console.log('   ⚠️ Problemas:', clientesProblemas.length)
+    console.log('   ⚠️ Problemas (dentro dos ativos):', clientesProblemas.length)
     console.log('   💰 Saques Pendentes:', clientesSaquesPendentes.length)
-    console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length)
+    console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length + clientesSaquesPendentes.length)
     console.log('   🎯 Total esperado:', clientesList.length)
     
     // Status categorization breakdown for debugging
     console.log('📋 [ClientesTable] Status por categoria:')
-    console.log('   ✅ Status ATIVOS (por exclusão):', 
+    console.log('   ✅ Status ATIVOS (incluindo Problema):', 
       uniqueStatuses.filter(s => 
         !statusInativos.includes(s) && 
-        !statusProblemas.includes(s) && 
         !statusSaquesPendentes.includes(s)
       )
     )
     console.log('   ❌ Status INATIVOS:', statusInativos.filter(s => uniqueStatuses.includes(s)))
-    console.log('   ⚠️ Status PROBLEMAS:', statusProblemas.filter(s => uniqueStatuses.includes(s)))
     console.log('   💰 Status SAQUES:', statusSaquesPendentes.filter(s => uniqueStatuses.includes(s)))
     
     // Validation: Check if all clients are accounted for
-    const totalCategorizado = clientesAtivos.length + clientesInativos.length + clientesProblemas.length + clientesSaquesPendentes.length
+    const totalCategorizado = clientesAtivos.length + clientesInativos.length + clientesSaquesPendentes.length
     if (totalCategorizado !== clientesList.length) {
       console.error('🚨 [ClientesTable] ERRO CRÍTICO: Clientes não categorizados encontrados!')
       console.error('🚨 [ClientesTable] Diferença:', clientesList.length - totalCategorizado, 'clientes')
       
       // Find uncategorized clients - this should never happen with the new logic
-      const clientesCategorizados = [...clientesAtivos, ...clientesInativos, ...clientesProblemas, ...clientesSaquesPendentes]
+      const clientesCategorizados = [...clientesAtivos, ...clientesInativos, ...clientesSaquesPendentes]
       const idsCategorizados = new Set(clientesCategorizados.map(c => c.id))
       const clientesOrfaos = clientesList.filter(c => !idsCategorizados.has(c.id))
       
@@ -192,9 +185,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       })
     } else {
       console.log('✅ [ClientesTable] SUCESSO: Todos os', clientesList.length, 'clientes foram categorizados corretamente!')
-      console.log('🎯 [ClientesTable] Resultado da correção:')
-      console.log('   - Antes: 457 ativos + 21 inativos = 478 (faltavam 74)')
-      console.log('   - Agora:', clientesAtivos.length, 'ativos +', clientesInativos.length, 'inativos =', totalCategorizado, '(todos incluídos)')
+      console.log('🎯 [ClientesTable] Resultado da atualização:')
+      console.log('   - Agora: Clientes com status "Problema" estão incluídos na aba "Ativos"')
+      console.log('   - Total ativos:', clientesAtivos.length, '(incluindo', clientesProblemas.length, 'com problemas)')
     }
     
     return {
@@ -924,6 +917,14 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             )}
           </div>
         )}
+        
+        {/* Info banner about problems now being included in Active clients */}
+        <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 mb-4">
+          <div className="flex items-center gap-2 text-amber-600 text-sm">
+            <span className="w-2 h-2 bg-amber-500 rounded-full"></span>
+            <span>⚠️ Atualização: Clientes com status "Problema" agora aparecem na aba "Clientes Ativos" para facilitar o gerenciamento</span>
+          </div>
+        </div>
         
         <Tabs defaultValue="ativos" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
