@@ -111,6 +111,44 @@ export type Database = {
         }
         Relationships: []
       }
+      comentarios_cliente: {
+        Row: {
+          autor: string
+          cliente_id: number
+          comentario: string
+          created_at: string | null
+          id: string
+          lido: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          autor: string
+          cliente_id: number
+          comentario: string
+          created_at?: string | null
+          id?: string
+          lido?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          autor?: string
+          cliente_id?: number
+          comentario?: string
+          created_at?: string | null
+          id?: string
+          lido?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comentarios_cliente_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "todos_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gestores: {
         Row: {
           ativo: boolean | null

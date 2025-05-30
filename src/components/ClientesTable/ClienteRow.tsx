@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
@@ -18,10 +17,12 @@ import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { ClienteComentariosModal } from './ClienteComentariosModal'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { useComentariosCliente } from '@/hooks/useComentariosCliente'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -92,6 +93,10 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
   const [updatingSitePago, setUpdatingSitePago] = useState(false)
+  const [comentariosModalOpen, setComentariosModalOpen] = useState(false)
+
+  // Hook para comentários
+  const { comentariosNaoLidos } = useComentariosCliente(cliente.id!.toString())
 
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'Não informado'
@@ -244,10 +249,40 @@ export function ClienteRow({
       </TableCell>
 
       <TableCell className="text-white text-sm max-w-[150px]">
-        <div className="truncate" title={cliente.nome_cliente || ''}>
-          {cliente.nome_cliente || 'Não informado'}
+        <div className="flex items-center gap-2">
+          <div className="truncate" title={cliente.nome_cliente || ''}>
+            {cliente.nome_cliente || 'Não informado'}
+          </div>
+          {/* Ícone de comentários com badge */}
+          <div className="relative">
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-6 w-6 p-0 hover:bg-blue-600/20"
+              onClick={() => setComentariosModalOpen(true)}
+              title="Ver comentários"
+            >
+              <MessageCircle className="h-4 w-4 text-blue-400" />
+            </Button>
+            {comentariosNaoLidos > 0 && (
+              <Badge 
+                variant="destructive" 
+                className="absolute -top-2 -right-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs"
+              >
+                {comentariosNaoLidos}
+              </Badge>
+            )}
+          </div>
         </div>
       </TableCell>
+
+      {/* Modal de comentários */}
+      <ClienteComentariosModal
+        open={comentariosModalOpen}
+        onOpenChange={setComentariosModalOpen}
+        clienteId={cliente.id!.toString()}
+        nomeCliente={cliente.nome_cliente || 'Cliente'}
+      />
 
       <TableCell className="text-white text-sm">
         <div className="flex items-center gap-2">
