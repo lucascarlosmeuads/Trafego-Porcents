@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -55,7 +56,7 @@ export type SolicitacaoSaque = {
   updated_at: string
 }
 
-// Status operacionais disponíveis - Status atualizados e organizados
+// Status operacionais disponíveis - Status atualizados e organizados com os novos status
 export const STATUS_CAMPANHA = [
   'Cliente Novo',
   'Preenchimento do Formulário',
@@ -70,12 +71,14 @@ export const STATUS_CAMPANHA = [
   'Cliente Sumiu',
   'Reembolso',
   'Saque Pendente',
-  'Campanha Anual'
+  'Campanha Anual',
+  'Urgente',
+  'Cliente Antigo'
 ] as const
 
 export type StatusCampanha = typeof STATUS_CAMPANHA[number]
 
-// Mapeamento para exibição visual - labels atualizados
+// Mapeamento para exibição visual - labels atualizados com os novos status
 export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
   'Cliente Novo': 'Cliente Novo',
   'Preenchimento do Formulário': 'Preenchimento do Formulário',
@@ -90,7 +93,9 @@ export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
   'Cliente Sumiu': 'Cliente Sumiu',
   'Reembolso': 'Reembolso',
   'Saque Pendente': 'Campanha no Ar',  // ✅ Apenas mudança visual
-  'Campanha Anual': 'Campanha Anual'
+  'Campanha Anual': 'Campanha Anual',
+  'Urgente': 'Urgente',
+  'Cliente Antigo': 'Cliente Antigo'
 }
 
 // Função para obter o rótulo visual do status

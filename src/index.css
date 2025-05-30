@@ -407,3 +407,28 @@
   color: hsl(0 84% 90%) !important;
   border: 1px solid hsl(0 84% 40%);
 }
+
+/* Novos status adicionados */
+.status-urgente {
+  background-color: hsl(0 70% 91% / 0.3);
+  color: hsl(0 70% 30%) !important;
+  border: 1px solid hsl(0 70% 60%);
+}
+
+.dark .status-urgente {
+  background-color: hsl(0 70% 25% / 0.3);
+  color: hsl(0 70% 85%) !important;
+  border: 1px solid hsl(0 70% 45%);
+}
+
+.status-cliente-antigo {
+  background-color: hsl(0 90% 91% / 0.3);
+  color: hsl(0 90% 25%) !important;
+  border: 1px solid hsl(0 90% 55%);
+}
+
+.dark .status-cliente-antigo {
+  background-color: hsl(0 90% 20% / 0.3);
+  color: hsl(0 90% 80%) !important;
+  border: 1px solid hsl(0 90% 40%);
+}

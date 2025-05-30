@@ -313,6 +313,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
       case 'Campanha Anual':
         return 'bg-green-500/20 text-green-300 border border-green-500/30'
+      case 'Urgente':
+        return 'bg-red-600/30 text-red-200 border border-red-600/50'
+      case 'Cliente Antigo':
+        return 'bg-red-700/30 text-red-100 border border-red-700/50'
       default:
         return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
     }
