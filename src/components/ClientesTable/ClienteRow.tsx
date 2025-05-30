@@ -3,6 +3,7 @@ import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
+import { Checkbox } from '@/components/ui/checkbox'
 import { 
   Phone, 
   Save, 
@@ -18,6 +19,8 @@ import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
+import { supabase } from '@/lib/supabase'
+import { toast } from '@/hooks/use-toast'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -83,6 +86,7 @@ export function ClienteRow({
   onComissionValueCancel
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
+  const [updatingSitePago, setUpdatingSitePago] = useState(false)
 
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'Não informado'
@@ -116,6 +120,41 @@ export function ClienteRow({
     const success = await onLinkSave(cliente.id!.toString())
     if (success) {
       setSiteLinkInput('')
+    }
+  }
+
+  const handleSitePagoToggle = async () => {
+    setUpdatingSitePago(true)
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ site_pago: !cliente.site_pago })
+        .eq('id', parseInt(cliente.id!.toString()))
+
+      if (error) {
+        console.error('❌ Erro ao atualizar site_pago:', error)
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar status de pagamento do site",
+          variant: "destructive"
+        })
+      } else {
+        toast({
+          title: "Sucesso",
+          description: cliente.site_pago ? "Site marcado como não pago" : "Site marcado como pago"
+        })
+        // Force a page refresh to update the data
+        window.location.reload()
+      }
+    } catch (error) {
+      console.error('💥 Erro ao atualizar site_pago:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar status de pagamento",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingSitePago(false)
     }
   }
 
@@ -298,6 +337,15 @@ export function ClienteRow({
                   >
                     <Edit className="h-3 w-3" />
                   </Button>
+                  <div className="flex items-center gap-1">
+                    <Checkbox
+                      checked={cliente.site_pago || false}
+                      onCheckedChange={handleSitePagoToggle}
+                      disabled={updatingSitePago}
+                      className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                    <span className="text-xs text-white">Pago</span>
+                  </div>
                 </div>
               ) : (
                 <Button

@@ -40,6 +40,7 @@ interface ClienteComProblema {
   descricao_problema: string
   comissao: string
   saque_solicitado: boolean
+  site_pago: boolean
 }
 
 interface ProblemasPanelProps {
@@ -75,7 +76,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
           id, data_venda, created_at, nome_cliente, telefone, email_cliente, vendedor,
           email_gestor, status_campanha, site_status, data_limite, link_briefing,
           link_criativo, link_site, link_grupo, numero_bm, comissao_paga, valor_comissao,
-          descricao_problema, comissao, saque_solicitado
+          descricao_problema, comissao, saque_solicitado, site_pago
         `)
         .eq('status_campanha', 'Problema')
         .order('id', { ascending: true })
@@ -444,7 +445,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
       'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
       'Email Gestor', 'Status Campanha', 'Status Site', 'Data Limite',
       'Link Briefing', 'Link Criativo', 'Link Site', 
-      'Número BM', 'Comissão Paga', 'Descrição Problema'
+      'Número BM', 'Comissão Paga', 'Site Pago', 'Descrição Problema'
     ]
     
     const csvContent = [
@@ -465,6 +466,7 @@ export function ProblemasPanel({ gestorMode = false }: ProblemasPanelProps) {
         cliente.link_site || '', 
         cliente.numero_bm || '',
         cliente.comissao_paga ? 'Pago' : 'Não Pago',
+        cliente.site_pago ? 'Pago' : 'Não Pago',
         cliente.descricao_problema || ''
       ].map(field => `"${field}"`).join(','))
     ].join('\n')

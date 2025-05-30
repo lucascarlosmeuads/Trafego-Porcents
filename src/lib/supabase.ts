@@ -28,6 +28,7 @@ export type Cliente = {
   descricao_problema: string
   saque_solicitado: boolean
   comissao: string
+  site_pago: boolean
 }
 
 export type Gestor = {

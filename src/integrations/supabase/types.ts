@@ -212,6 +212,7 @@ export type Database = {
           nome_cliente: string | null
           numero_bm: string | null
           saque_solicitado: boolean | null
+          site_pago: boolean | null
           site_status: string | null
           status_campanha: string | null
           status_envio: string | null
@@ -239,6 +240,7 @@ export type Database = {
           nome_cliente?: string | null
           numero_bm?: string | null
           saque_solicitado?: boolean | null
+          site_pago?: boolean | null
           site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null
@@ -266,6 +268,7 @@ export type Database = {
           nome_cliente?: string | null
           numero_bm?: string | null
           saque_solicitado?: boolean | null
+          site_pago?: boolean | null
           site_status?: string | null
           status_campanha?: string | null
           status_envio?: string | null

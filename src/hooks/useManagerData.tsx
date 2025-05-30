@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
@@ -41,7 +40,7 @@ export function useManagerData(
 
       let query = supabase
         .from('todos_clientes')
-        .select('*')
+        .select('*, site_pago')
 
       // PRIORITY 1: Handle Site Creator panel filters first
       if (filterType === 'sites-pendentes') {
