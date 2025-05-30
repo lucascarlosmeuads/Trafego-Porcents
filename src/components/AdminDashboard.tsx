@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ClientesTable } from './ClientesTable'
+import { AdminTable } from './AdminTable'
 import { ProblemasPanel } from './ProblemasPanel'
 import { GestoresManagement } from './GestoresManagement'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
@@ -62,8 +62,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            {/* Site Creator panel: Show only aguardando_link clients */}
-            <ClientesTable filterType="sites-pendentes" />
+            <AdminTable selectedManager={selectedManager} filterType="sites-pendentes" />
           </div>
         )
 
@@ -71,7 +70,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold">Saques Pendentes</h2>
-            <ClientesTable filterType="saques-pendentes" />
+            <AdminTable selectedManager={selectedManager} filterType="saques-pendentes" />
           </div>
         )
       
@@ -90,8 +89,8 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <ClientesTable selectedManager={selectedManager} />
+            {/* Admin panel com paginação */}
+            <AdminTable selectedManager={selectedManager} />
           </div>
         )
     }

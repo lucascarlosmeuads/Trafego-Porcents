@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -10,7 +9,13 @@ interface PaginationState {
   totalItems: number
 }
 
-export function useAdminTableLogic() {
+interface UseAdminTableLogicProps {
+  selectedManager?: string | null
+  filterType?: 'sites-pendentes' | 'saques-pendentes' | string
+}
+
+export function useAdminTableLogic(props: UseAdminTableLogicProps = {}) {
+  const { selectedManager, filterType } = props
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [gestores, setGestores] = useState<Array<{ email: string, nome: string }>>([])
@@ -29,7 +34,7 @@ export function useAdminTableLogic() {
 
   useEffect(() => {
     fetchAllClientes()
-  }, [pagination.currentPage, pagination.itemsPerPage])
+  }, [pagination.currentPage, pagination.itemsPerPage, selectedManager, filterType])
 
   const fetchGestores = async () => {
     try {
@@ -51,9 +56,20 @@ export function useAdminTableLogic() {
 
   const fetchTotalCount = async () => {
     try {
-      const { count, error } = await supabase
+      let query = supabase
         .from('todos_clientes')
         .select('*', { count: 'exact', head: true })
+
+      // Aplicar filtros para contagem
+      if (filterType === 'sites-pendentes') {
+        query = query.eq('site_status', 'aguardando_link')
+      } else if (filterType === 'saques-pendentes') {
+        query = query.eq('saque_solicitado', true).eq('comissao_paga', false)
+      } else if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== 'Todos os Gestores') {
+        query = query.eq('email_gestor', selectedManager)
+      }
+
+      const { count, error } = await query
 
       if (error) {
         console.error('❌ Erro ao buscar contagem:', error)
@@ -71,18 +87,29 @@ export function useAdminTableLogic() {
     try {
       setLoading(true)
       
-      // Buscar contagem total
+      // Buscar contagem total com filtros
       const totalCount = await fetchTotalCount()
       const totalPages = Math.ceil(totalCount / pagination.itemsPerPage)
       
       // Calcular offset
       const offset = (pagination.currentPage - 1) * pagination.itemsPerPage
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('todos_clientes')
         .select('*')
         .order('created_at', { ascending: false })
         .range(offset, offset + pagination.itemsPerPage - 1)
+
+      // Aplicar filtros específicos
+      if (filterType === 'sites-pendentes') {
+        query = query.eq('site_status', 'aguardando_link')
+      } else if (filterType === 'saques-pendentes') {
+        query = query.eq('saque_solicitado', true).eq('comissao_paga', false)
+      } else if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== 'Todos os Gestores') {
+        query = query.eq('email_gestor', selectedManager)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)

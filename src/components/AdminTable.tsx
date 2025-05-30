@@ -10,7 +10,12 @@ import { AdminTablePagination } from './AdminTable/AdminTablePagination'
 import { useAdminTableLogic } from './AdminTable/useAdminTableLogic'
 import { formatDate, getStatusColor } from './AdminTable/adminTableUtils'
 
-export function AdminTable() {
+interface AdminTableProps {
+  selectedManager?: string | null
+  filterType?: 'sites-pendentes' | 'saques-pendentes' | string
+}
+
+export function AdminTable({ selectedManager, filterType }: AdminTableProps) {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   
   const {
@@ -25,7 +30,7 @@ export function AdminTable() {
     nextPage,
     prevPage,
     changeItemsPerPage
-  } = useAdminTableLogic()
+  } = useAdminTableLogic({ selectedManager, filterType })
 
   if (loading) {
     return (
@@ -43,13 +48,27 @@ export function AdminTable() {
   const startItem = (pagination.currentPage - 1) * pagination.itemsPerPage + 1
   const endItem = Math.min(pagination.currentPage * pagination.itemsPerPage, pagination.totalItems)
 
+  // Determinar título baseado no filtro
+  const getTitle = () => {
+    if (filterType === 'sites-pendentes') {
+      return `Sites Pendentes (${pagination.totalItems})`
+    }
+    if (filterType === 'saques-pendentes') {
+      return `Saques Pendentes (${pagination.totalItems})`
+    }
+    if (selectedManager && selectedManager !== 'Todos os Clientes' && selectedManager !== 'Todos os Gestores') {
+      return `Clientes - ${selectedManager} (${pagination.totalItems})`
+    }
+    return `Todos os Clientes (${pagination.totalItems})`
+  }
+
   return (
     <Card className="w-full bg-card border-border">
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div className="flex flex-col gap-2">
             <CardTitle className="text-lg sm:text-xl text-card-foreground">
-              Todos os Clientes ({pagination.totalItems})
+              {getTitle()}
             </CardTitle>
             <div className="text-sm text-muted-foreground">
               Mostrando {startItem} a {endItem} de {pagination.totalItems} clientes
