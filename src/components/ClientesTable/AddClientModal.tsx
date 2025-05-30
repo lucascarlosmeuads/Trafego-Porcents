@@ -15,11 +15,15 @@ interface AddClientModalProps {
   selectedManager?: string
   onClienteAdicionado: () => void
   gestorMode?: boolean
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  userEmail?: string
+  isAdmin?: boolean
+  onSuccess?: () => void
 }
 
-export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMode = false }: AddClientModalProps) {
-  const { user, currentManagerName, isAdmin } = useAuth()
-  const [open, setOpen] = useState(false)
+export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMode = false, open, onOpenChange, userEmail, isAdmin, onSuccess }: AddClientModalProps) {
+  const { user, currentManagerName, isAdmin: authIsAdmin } = useAuth()
   const [loading, setLoading] = useState(false)
   const [selectedGestor, setSelectedGestor] = useState<string>('')
   const [showInstructions, setShowInstructions] = useState(false)
@@ -30,10 +34,10 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Cliente Novo', // ✅ Mudando de 'Brief' para 'Cliente Novo'
+    status_campanha: 'Cliente Novo',
     data_venda: new Date().toISOString().split('T')[0]
   })
-  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
+  const { addCliente } = useClienteOperations(user?.email || '', authIsAdmin, onClienteAdicionado)
 
   const managerOptions = [
     { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
@@ -114,7 +118,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       return
     }
 
-    // Para usuários em modo não-gestor: require gestor selection
     if (!gestorMode && !selectedGestor) {
       toast({
         title: "Erro",
@@ -127,21 +130,11 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
     setLoading(true)
 
     try {
-      console.log("🔵 [AddClientModal] === INICIANDO PROCESSO DE ADIÇÃO ===")
-      console.log("🔵 [AddClientModal] Modo Gestor:", gestorMode)
-      console.log("🔵 [AddClientModal] É Admin:", isAdmin)
-      console.log("🔵 [AddClientModal] Email do usuário:", user?.email)
-      
-      // Determine final email_gestor based on mode
       let emailGestorFinal
       if (gestorMode) {
-        // Em modo gestor, sempre usar o email do usuário logado
         emailGestorFinal = user?.email
-        console.log("🔵 [AddClientModal] Usando email do gestor logado:", emailGestorFinal)
       } else {
-        // Em modo admin normal, usar o gestor selecionado ou o email do usuário
-        emailGestorFinal = isAdmin ? selectedGestor : user?.email
-        console.log("🔵 [AddClientModal] Usando email selecionado/admin:", emailGestorFinal)
+        emailGestorFinal = authIsAdmin ? selectedGestor : user?.email
       }
       
       const vendedor = formData.vendedor || currentManagerName
@@ -158,16 +151,9 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         comissao_paga: false
       }
 
-      console.log("🔵 [AddClientModal] Dados completos para adicionar:", clienteData)
-
       const result = await addCliente(clienteData)
       
-      console.log("🔵 [AddClientModal] Resultado da operação:", result)
-      
       if (result && result.success) {
-        console.log("🟢 [AddClientModal] === CLIENTE CRIADO COM SUCESSO ===")
-        
-        // Limpar formulário
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -177,12 +163,11 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           data_venda: new Date().toISOString().split('T')[0]
         })
         setSelectedGestor('')
-        setOpen(false)
+        onOpenChange?.(false)
         
-        // Atualizar dados
         onClienteAdicionado()
+        onSuccess?.()
 
-        // Mostrar aviso sobre senha padrão se foi definida
         if (result.senhaDefinida) {
           setTimeout(() => {
             toast({
@@ -193,26 +178,19 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           }, 1000)
         }
 
-        // SEMPRE exibir o modal de instruções após criação bem-sucedida
-        console.log("🔵 [AddClientModal] Preparando dados para o modal de instruções...")
-        
         const dadosCliente = {
           email_cliente: clienteData.email_cliente,
           nome_cliente: clienteData.nome_cliente,
           id: result.clientData?.id || Math.random()
         }
         
-        console.log("🔵 [AddClientModal] Dados do cliente para instruções:", dadosCliente)
         setNewClientData(dadosCliente)
         
-        // Pequeno delay para garantir que o modal anterior feche
         setTimeout(() => {
-          console.log("🟢 [AddClientModal] === ABRINDO MODAL DE INSTRUÇÕES ===")
           setShowInstructions(true)
         }, 300)
         
       } else {
-        console.error("🔴 [AddClientModal] Falha na criação do cliente:", result)
         toast({
           title: "Erro",
           description: "Falha ao criar cliente",
@@ -220,7 +198,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         })
       }
     } catch (error: any) {
-      console.error('💥 [AddClientModal] Erro ao adicionar cliente:', error)
       toast({
         title: "Erro",
         description: error.message || "Erro ao adicionar cliente",
@@ -233,7 +210,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
 
   return (
     <>
-      <Dialog open={open} onOpenChange={setOpen}>
+      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogTrigger asChild>
           <Button>
             <Plus className="h-4 w-4 mr-2" />
@@ -245,7 +222,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
           
-          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE - POSICIONADAS AQUI CONFORME SOLICITADO */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
@@ -277,7 +253,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
             </p>
             
-            {/* Nota sobre senha padrão */}
             <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
               <p className="text-blue-800 text-xs">
                 A senha padrão será definida automaticamente como <strong>parceriadesucesso</strong>.
@@ -327,7 +302,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               />
             </div>
 
-            {/* Mostrar campo de gestor para qualquer usuário em modo não-gestor */}
             {!gestorMode && (
               <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
@@ -377,7 +351,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </div>
           </div>
           <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
+            <Button variant="outline" onClick={() => onOpenChange?.(false)}>
               Cancelar
             </Button>
             <Button onClick={handleSubmit} disabled={loading}>
@@ -390,7 +364,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => {
-          console.log("🔵 [AddClientModal] === FECHANDO MODAL DE INSTRUÇÕES ===")
           setShowInstructions(false)
           setNewClientData(null)
         }}

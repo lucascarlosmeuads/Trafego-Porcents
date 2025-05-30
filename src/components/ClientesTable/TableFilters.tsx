@@ -11,10 +11,10 @@ interface TableFiltersProps {
   setSearchTerm: (term: string) => void
   statusFilter: string
   setStatusFilter: (status: string) => void
-  onAddClient: () => void
-  onAddClientRow: () => void
-  isAdmin: boolean
-  isGestorDashboard: boolean
+  onAddClient?: () => void
+  onAddClientRow?: () => void
+  isAdmin?: boolean
+  isGestorDashboard?: boolean
   // Props específicas para ProblemasPanel
   siteStatusFilter?: string
   setSiteStatusFilter?: (status: string) => void
@@ -29,8 +29,8 @@ export function TableFilters({
   setStatusFilter,
   onAddClient,
   onAddClientRow,
-  isAdmin,
-  isGestorDashboard,
+  isAdmin = false,
+  isGestorDashboard = false,
   siteStatusFilter,
   setSiteStatusFilter,
   showSiteStatusFilter = false,
@@ -77,19 +77,21 @@ export function TableFilters({
         </Select>
       )}
 
-      <div className="flex gap-2">
-        <Button onClick={onAddClient} className="flex items-center gap-2">
-          <Plus className="w-4 h-4" />
-          Adicionar Cliente
-        </Button>
-        
-        {isAdmin && (
-          <Button onClick={onAddClientRow} variant="outline" className="flex items-center gap-2">
-            <UserPlus className="w-4 h-4" />
-            Linha Rápida
+      {onAddClient && onAddClientRow && (
+        <div className="flex gap-2">
+          <Button onClick={onAddClient} className="flex items-center gap-2">
+            <Plus className="w-4 h-4" />
+            Adicionar Cliente
           </Button>
-        )}
-      </div>
+          
+          {isAdmin && (
+            <Button onClick={onAddClientRow} variant="outline" className="flex items-center gap-2">
+              <UserPlus className="w-4 h-4" />
+              Linha Rápida
+            </Button>
+          )}
+        </div>
+      )}
     </div>
   )
 }

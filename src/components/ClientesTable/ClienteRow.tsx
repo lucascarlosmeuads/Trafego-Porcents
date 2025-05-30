@@ -86,7 +86,6 @@ export function ClienteRow({
         <StatusSelect
           value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
           onValueChange={(newStatus) => {
-            // Handle status change logic here
             console.log('Status change:', newStatus)
           }}
           disabled={false}
@@ -99,7 +98,6 @@ export function ClienteRow({
         <SiteStatusSelect
           value={cliente.site_status || 'pendente'}
           onValueChange={(newStatus) => {
-            // Handle site status change logic here
             console.log('Site status change:', newStatus)
           }}
           disabled={false}

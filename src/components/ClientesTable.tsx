@@ -86,10 +86,10 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
     })
     
     // BUSCA SEGURA DO CLIENTE - corrigindo comparação string vs number
-    const cliente = clientes.find(c => c.id === clienteIdNum)
+    const cliente = clientes.find(c => c.id?.toString() === clienteId)
     if (!cliente) {
       console.error('❌ [ClientesTable] Cliente não encontrado na lista:', {
-        clienteIdBuscado: clienteIdNum,
+        clienteIdBuscado: clienteId,
         idsDisponiveis: clientes.map(c => ({ id: c.id, nome: c.nome_cliente }))
       })
       toast({
@@ -334,11 +334,11 @@ export function ClientesTable({ userEmail, isAdmin, isGestorDashboard = false, s
 
       {/* Modais */}
       <AddClientModal
-        isOpen={isAddModalOpen}
+        open={isAddModalOpen}
         onOpenChange={setIsAddModalOpen}
         userEmail={userEmail}
         isAdmin={isAdmin}
-        onSuccess={refetchData}
+        onClienteAdicionado={refetchData}
       />
 
       {selectedBriefingCliente && (
