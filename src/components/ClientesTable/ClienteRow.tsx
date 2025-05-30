@@ -52,6 +52,7 @@ interface ClienteRowProps {
   onComissionValueEdit: (clienteId: string, currentValue: number) => void
   onComissionValueSave: (clienteId: string, newValue: number) => void
   onComissionValueCancel: () => void
+  onSitePagoChange?: (clienteId: string, newValue: boolean) => void
 }
 
 export function ClienteRow({
@@ -83,7 +84,8 @@ export function ClienteRow({
   onComissionToggle,
   onComissionValueEdit,
   onComissionValueSave,
-  onComissionValueCancel
+  onComissionValueCancel,
+  onSitePagoChange
 }: ClienteRowProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
   const [updatingSitePago, setUpdatingSitePago] = useState(false)
@@ -126,9 +128,11 @@ export function ClienteRow({
   const handleSitePagoToggle = async () => {
     setUpdatingSitePago(true)
     try {
+      const newSitePagoValue = !cliente.site_pago
+      
       const { error } = await supabase
         .from('todos_clientes')
-        .update({ site_pago: !cliente.site_pago })
+        .update({ site_pago: newSitePagoValue })
         .eq('id', parseInt(cliente.id!.toString()))
 
       if (error) {
@@ -141,10 +145,13 @@ export function ClienteRow({
       } else {
         toast({
           title: "Sucesso",
-          description: cliente.site_pago ? "Site marcado como não pago" : "Site marcado como pago"
+          description: newSitePagoValue ? "Site marcado como pago" : "Site marcado como não pago"
         })
-        // Force a page refresh to update the data
-        window.location.reload()
+        
+        // Atualizar o estado local via callback
+        if (onSitePagoChange) {
+          onSitePagoChange(cliente.id!.toString(), newSitePagoValue)
+        }
       }
     } catch (error) {
       console.error('💥 Erro ao atualizar site_pago:', error)
