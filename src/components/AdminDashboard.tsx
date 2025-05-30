@@ -9,6 +9,7 @@ import { BriefingsPanel } from './BriefingsPanel'
 import { ManagerSelector } from './ManagerSelector'
 import { ImportarVendasManuais } from './ImportarVendasManuais'
 import { ClientUserCreation } from './ClientUserCreation'
+import { DocumentationViewer } from './Documentation'
 import { supabase } from '@/lib/supabase'
 
 interface AdminDashboardProps {
@@ -53,6 +54,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'criar-usuarios-clientes':
         return <ClientUserCreation />
+
+      case 'documentacao':
+        return <DocumentationViewer />
 
       case 'sites':
         return (

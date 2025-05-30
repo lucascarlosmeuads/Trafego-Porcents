@@ -7,7 +7,8 @@ import {
   FileText, 
   Upload, 
   Globe,
-  UserPlus 
+  UserPlus,
+  Book
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -68,6 +69,12 @@ export function AdminMainMenu({
       label: 'Sites',
       icon: Globe,
       onClick: () => onTabChange('sites')
+    },
+    {
+      id: 'documentacao',
+      label: 'Documentação',
+      icon: Book,
+      onClick: () => onTabChange('documentacao')
     }
   ]
 
