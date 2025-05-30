@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useClienteData } from '@/hooks/useClienteData'
 import { ClienteDashboardOverview } from './ClienteDashboard/ClienteDashboardOverview'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
@@ -13,28 +14,72 @@ import { ClienteChat } from './Chat/ClienteChat'
 export function ClienteDashboard() {
   const { user } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
+  const { cliente, briefing, vendas, arquivos, loading, recarregarDados } = useClienteData(user?.email || '')
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Carregando dados...</p>
+          </div>
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'overview':
-        return <ClienteDashboardOverview />
+        return (
+          <ClienteDashboardOverview 
+            cliente={cliente}
+            briefing={briefing}
+            vendas={vendas}
+            arquivos={arquivos}
+          />
+        )
       case 'briefing':
-        return <BriefingForm />
+        return (
+          <BriefingForm 
+            briefing={briefing}
+            emailCliente={user?.email || ''}
+            onBriefingUpdated={recarregarDados}
+          />
+        )
       case 'arquivos':
-        return <ArquivosUpload />
+        return (
+          <ArquivosUpload 
+            emailCliente={user?.email || ''}
+            arquivos={arquivos}
+            onArquivosUpdated={recarregarDados}
+          />
+        )
       case 'vendas':
-        return <VendasManager />
+        return (
+          <VendasManager 
+            emailCliente={user?.email || ''}
+            vendas={vendas}
+            onVendasUpdated={recarregarDados}
+          />
+        )
       case 'tutoriais':
         return <TutorialVideos />
       case 'chat':
         return <ClienteChat />
       default:
-        return <ClienteDashboardOverview />
+        return (
+          <ClienteDashboardOverview 
+            cliente={cliente}
+            briefing={briefing}
+            vendas={vendas}
+            arquivos={arquivos}
+          />
+        )
     }
   }
 
   if (!user) {
-    return <ClienteWelcome />
+    return <ClienteWelcome onTabChange={setActiveTab} />
   }
 
   return (

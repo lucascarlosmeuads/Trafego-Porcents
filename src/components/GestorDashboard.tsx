@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useManagerData } from '@/hooks/useManagerData'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { SolicitacoesSaque } from './SolicitacoesSaque'
@@ -13,11 +14,23 @@ interface GestorDashboardProps {
 
 export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   const { user } = useAuth()
+  const { clientes, loading } = useManagerData(user?.email || '')
 
   const renderContent = () => {
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Carregando dados...</p>
+          </div>
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'dashboard':
-        return <DashboardMetrics />
+        return <DashboardMetrics clientes={clientes} />
       case 'clientes':
         return <ClientesTable />
       case 'saques':
@@ -25,7 +38,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
       case 'chat':
         return <GestorChatList />
       default:
-        return <DashboardMetrics />
+        return <DashboardMetrics clientes={clientes} />
     }
   }
 
