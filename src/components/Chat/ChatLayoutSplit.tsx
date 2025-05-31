@@ -120,3 +120,6 @@ export function ChatLayoutSplit() {
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default ChatLayoutSplit

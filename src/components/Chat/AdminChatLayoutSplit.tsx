@@ -241,3 +241,6 @@ export function AdminChatLayoutSplit() {
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default AdminChatLayoutSplit

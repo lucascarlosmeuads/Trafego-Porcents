@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -48,3 +47,6 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default GestorDashboard

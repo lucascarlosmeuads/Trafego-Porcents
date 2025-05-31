@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -84,3 +83,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default AdminDashboard

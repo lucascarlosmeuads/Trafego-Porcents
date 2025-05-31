@@ -137,3 +137,6 @@ export function ClienteDashboard() {
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default ClienteDashboard

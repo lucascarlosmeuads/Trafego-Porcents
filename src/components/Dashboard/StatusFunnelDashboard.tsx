@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -281,3 +280,6 @@ export function StatusFunnelDashboard() {
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default StatusFunnelDashboard
