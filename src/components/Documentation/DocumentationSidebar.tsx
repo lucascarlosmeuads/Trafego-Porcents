@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Search, File, Book } from 'lucide-react'
+import { DocumentationDownloader } from './DocumentationDownloader'
 
 interface DocumentationItem {
   id: string
@@ -23,7 +24,13 @@ const documentationItems: DocumentationItem[] = [
   { id: 'perfis-usuario', title: '2. Perfis de Usuário', path: '02-perfis-usuario.md', category: 'Documentação' },
   { id: 'modulos-sistema', title: '3. Módulos do Sistema', path: '03-modulos-sistema.md', category: 'Documentação' },
   { id: 'base-dados', title: '4. Base de Dados', path: '04-base-dados.md', category: 'Documentação' },
-  { id: 'fluxo-trabalho', title: '5. Fluxo de Trabalho', path: '05-fluxo-trabalho.md', category: 'Documentação' }
+  { id: 'fluxo-trabalho', title: '5. Fluxo de Trabalho', path: '05-fluxo-trabalho.md', category: 'Documentação' },
+  { id: 'sistema-chat', title: '6. Sistema de Chat', path: '06-sistema-chat.md', category: 'Funcionalidades' },
+  { id: 'sistema-audio', title: '7. Sistema de Áudio', path: '07-sistema-audio.md', category: 'Funcionalidades' },
+  { id: 'supabase-storage', title: '8. Supabase Storage', path: '08-supabase-storage.md', category: 'Funcionalidades' },
+  { id: 'troubleshooting', title: '9. Troubleshooting', path: '09-troubleshooting.md', category: 'Suporte' },
+  { id: 'manual-usuario', title: 'Manual do Usuário', path: '06-manual-usuario.md', category: 'Manuais' },
+  { id: 'guia-tecnico', title: 'Guia Técnico', path: '07-guia-tecnico.md', category: 'Manuais' }
 ]
 
 export function DocumentationSidebar({ selectedDoc, onDocSelect }: DocumentationSidebarProps) {
@@ -83,6 +90,10 @@ export function DocumentationSidebar({ selectedDoc, onDocSelect }: Documentation
           ))}
         </div>
       </ScrollArea>
+
+      <div className="p-4 border-t">
+        <DocumentationDownloader />
+      </div>
     </div>
   )
 }

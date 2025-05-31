@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react'
 import { DocumentationSidebar } from './DocumentationSidebar'
 import { Card } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
-import { Book, Clock, FileText } from 'lucide-react'
+import { Clock, FileText } from 'lucide-react'
 
 interface DocumentationContent {
   id: string
@@ -14,7 +12,7 @@ interface DocumentationContent {
   lastModified?: string
 }
 
-// Simulação do conteúdo dos arquivos de documentação
+// Conteúdo atualizado da documentação
 const documentationContent: Record<string, DocumentationContent> = {
   'readme': {
     id: 'readme',
@@ -23,11 +21,22 @@ const documentationContent: Record<string, DocumentationContent> = {
 
 ## 📋 Índice da Documentação
 
-- **Visão Geral** - Introdução e arquitetura do sistema
-- **Perfis de Usuário** - Tipos de usuário e permissões
-- **Módulos do Sistema** - Funcionalidades principais
-- **Base de Dados** - Estrutura do banco de dados
-- **Fluxo de Trabalho** - Processos e estados
+### 📚 Documentação Principal
+- **1. Visão Geral** - Introdução e arquitetura do sistema
+- **2. Perfis de Usuário** - Tipos de usuário e permissões
+- **3. Módulos do Sistema** - Funcionalidades principais
+- **4. Base de Dados** - Estrutura do banco de dados
+- **5. Fluxo de Trabalho** - Processos e estados
+
+### 🆕 Funcionalidades Avançadas
+- **6. Sistema de Chat** - Comunicação em tempo real
+- **7. Sistema de Áudio** - Gravação e reprodução de áudios
+- **8. Supabase Storage** - Gestão de arquivos
+- **9. Troubleshooting** - Problemas comuns e soluções
+
+### 📖 Manuais de Usuário
+- **Manual Completo** - Guias detalhados por perfil
+- **Guia Técnico** - Desenvolvimento e manutenção
 
 ## 🚀 Acesso Rápido
 
@@ -36,13 +45,49 @@ const documentationContent: Record<string, DocumentationContent> = {
 - Cadastrar um cliente
 - Preencher briefing
 - Gerenciar campanhas
+- **🆕 Usar o sistema de chat**
+- **🆕 Gravar mensagens de áudio**
 
 ### Para Desenvolvedores
 - Configuração do ambiente
 - Estrutura do código
 - Deploy e produção
+- **🆕 Configuração do Storage**
+- **🆕 Troubleshooting avançado**
 
----
+## 🎯 Principais Funcionalidades
+
+### ✅ Funcionalidades Implementadas
+- **Gestão Completa de Clientes** - CRUD completo com filtros avançados
+- **Sistema de Campanhas** - 15+ status diferentes e workflow completo
+- **Controle de Comissões** - Gestão financeira transparente
+- **Dashboard Multi-perfil** - Visões específicas por tipo de usuário
+- **Briefings Detalhados** - Formulários estruturados para coleta de dados
+- **Upload de Materiais** - Sistema de arquivos integrado
+- **🆕 Chat em Tempo Real** - Comunicação instantânea gestor-cliente
+- **🆕 Mensagens de Áudio** - Gravação e reprodução de áudios
+- **🆕 Supabase Storage** - Armazenamento seguro de arquivos
+- **🆕 Realtime Updates** - Atualizações instantâneas via WebSocket
+
+## 🏗️ Arquitetura Técnica
+
+### Frontend
+- **React 18** com TypeScript
+- **Vite** para build e desenvolvimento
+- **Tailwind CSS** + **shadcn/ui** para interface
+- **TanStack Query** para estado e cache
+- **React Router** para navegação
+
+### Backend
+- **Supabase** (PostgreSQL + Auth + Realtime + Storage)
+- **Row Level Security (RLS)** para segurança
+- **Edge Functions** para lógicas serverless
+- **Realtime** para comunicação instantânea
+
+### Integrações
+- **WebRTC** para gravação de áudio
+- **Supabase Storage** para arquivos
+- **Real-time subscriptions** para chat
 
 **Sistema desenvolvido para gestão completa de clientes, campanhas publicitárias e processos de vendas.**`
   },
@@ -53,7 +98,7 @@ const documentationContent: Record<string, DocumentationContent> = {
 
 ## 🎯 Propósito
 
-O **Sistema de Gestão de Clientes e Campanhas** é uma plataforma completa para gerenciar todo o ciclo de vida de campanhas publicitárias, desde a captação de clientes até a entrega final e controle de comissões.
+O **Sistema de Gestão de Clientes e Campanhas** é uma plataforma completa para gerenciar todo o ciclo de vida de campanhas publicitárias, desde a captação de clientes até a entrega final e controle de comissões, incluindo comunicação em tempo real via chat integrado.
 
 ## 🏗️ Arquitetura
 
@@ -63,16 +108,26 @@ O **Sistema de Gestão de Clientes e Campanhas** é uma plataforma completa para
 - **Tailwind CSS** + **shadcn/ui** para interface
 - **React Router** para navegação
 - **TanStack Query** para gerenciamento de estado
+- **Realtime subscriptions** para atualizações em tempo real
 
 ### Backend
-- **Supabase** (PostgreSQL + Auth + Realtime)
+- **Supabase** (PostgreSQL + Auth + Realtime + Storage)
 - **Row Level Security (RLS)** para segurança
 - **Edge Functions** para lógicas específicas
+- **Storage** para arquivos e materiais de áudio
+- **Realtime** para chat e atualizações instantâneas
 
 ### Autenticação
 - Sistema baseado em **email/senha**
 - Controle de acesso por **domínio de email**
 - Permissões granulares por **tipo de usuário**
+- **Session management** com refresh automático
+
+### Comunicação
+- **Sistema de Chat Integrado** com mensagens em tempo real
+- **Mensagens de Áudio** com gravação e reprodução
+- **Upload de Materiais** via Supabase Storage
+- **Notificações** em tempo real
 
 ## 🎯 Objetivos Principais
 
@@ -80,7 +135,8 @@ O **Sistema de Gestão de Clientes e Campanhas** é uma plataforma completa para
 2. **Automatizar Fluxos**: Reduzir trabalho manual e erros humanos
 3. **Controlar Qualidade**: Acompanhar status e prazos das campanhas
 4. **Gerenciar Comissões**: Controle transparente de pagamentos
-5. **Facilitar Comunicação**: Canal direto entre todos os envolvidos
+5. **Facilitar Comunicação**: Canal direto entre todos os envolvidos via chat
+6. **Armazenar Materiais**: Gestão centralizada de arquivos e áudios
 
 ## 🔄 Fluxo Principal
 
@@ -89,461 +145,439 @@ Cliente Novo → Briefing → Criativo → Site → Agendamento →
 Configuração BM → Subida Campanha → Otimização → Saque
 \`\`\`
 
+**Com Comunicação Integrada:**
+- Chat em tempo real entre gestores e clientes
+- Mensagens de áudio para explicações detalhadas
+- Upload de materiais diretamente no chat
+- Histórico completo de comunicações
+
 ## 📊 Métricas Importantes
 
 - **Funil de Conversão**: Acompanhamento por etapa
 - **Tempo por Status**: Controle de prazos
 - **Performance por Gestor**: Análise de resultados
 - **Comissões**: Controle financeiro completo
+- **Engajamento**: Métricas de comunicação via chat
 
 ## 🛡️ Segurança
 
 - **Autenticação obrigatória** para todos os acessos
 - **Isolamento de dados** por gestor/cliente
 - **Logs de auditoria** para todas as ações
-- **Backup automático** dos dados críticos`
+- **Backup automático** dos dados críticos
+- **Storage seguro** para arquivos sensíveis
+- **RLS policies** para controle granular de acesso
+
+## 🚀 Funcionalidades Avançadas
+
+### Sistema de Chat
+- Mensagens em tempo real
+- Suporte a texto e áudio
+- Histórico completo de conversas
+- Indicadores de mensagens não lidas
+
+### Sistema de Áudio
+- Gravação direta no navegador
+- Upload automático para Supabase Storage
+- Reprodução com controles avançados
+- Tratamento de erros robusto
+
+### Storage e Materiais
+- Upload de múltiplos formatos
+- Organização automática por usuário
+- URLs públicas seguras
+- Controle de tamanho e tipo`
   },
-  'perfis-usuario': {
-    id: 'perfis-usuario',
-    title: '2. Perfis de Usuário e Permissões',
-    content: `# 2. Perfis de Usuário e Permissões
+  'sistema-chat': {
+    id: 'sistema-chat',
+    title: '6. Sistema de Chat',
+    content: `# 6. Sistema de Chat
 
-## 👑 Admin (@admin)
-**Acesso Total ao Sistema**
+## 💬 Visão Geral
 
-### Permissões
-- ✅ Visualizar todos os clientes e campanhas
-- ✅ Gerenciar gestores (criar, editar, desativar)
-- ✅ Acessar dashboard completo com métricas globais
-- ✅ Realizar auditoria e relatórios
-- ✅ Importar vendas manuais
-- ✅ Criar usuários para clientes
-- ✅ Gerenciar sites e domínios
+O Sistema de Chat é uma funcionalidade integrada que permite comunicação em tempo real entre gestores e clientes, incluindo suporte a mensagens de texto e áudio, com todas as mensagens salvas no banco de dados.
 
-### Funcionalidades Exclusivas
-- Dashboard administrativo
-- Gestão de gestores
-- Auditoria completa
-- Importação de dados
-- Configurações globais
+## 🏗️ Arquitetura do Chat
 
----
+### Componentes Principais
+- **ChatInterface**: Interface principal do chat
+- **MessageInput**: Campo de entrada de mensagens
+- **MessageItem**: Exibição individual de mensagens
+- **AudioRecorder**: Gravação de mensagens de áudio
+- **AdminChatOverview**: Visão geral para administradores
 
-## 👨‍💼 Gestor (@trafegoporcents.com)
-**Gerenciamento de Equipe e Clientes**
+### Tecnologias Utilizadas
+- **Supabase Realtime**: Para mensagens instantâneas
+- **Supabase Storage**: Para armazenamento de áudios
+- **WebRTC**: Para gravação de áudio no navegador
+- **TanStack Query**: Para cache e sincronização
 
-### Permissões
-- ✅ Visualizar clientes da sua gestoria
-- ✅ Editar status e informações dos clientes
-- ✅ Acessar métricas da equipe
-- ✅ Gerenciar problemas e comentários
-- ✅ Controlar comissões da equipe
-- ❌ Não pode ver clientes de outros gestores
+## 👥 Permissões e Acesso
 
-### Funcionalidades Principais
-- Dashboard de gestão
-- Lista de clientes ativos
-- Gerenciamento de problemas
-- Controle de comissões
-- Métricas de performance
+### Perfis com Acesso ao Chat
 
----
+#### 🔴 Admin
+- **Acesso**: Visão geral de todas as conversas
+- **Funcionalidades**:
+  - Monitorar todas as conversas ativas
+  - Ver estatísticas de uso do chat
+  - Identificar conversas com problemas
+  - Acessar histórico completo
 
-## 💼 Vendedor (vendedor*@trafegoporcents.com)
-**Captação e Cadastro de Clientes**
+#### 🟡 Gestor
+- **Acesso**: Chat com clientes da sua gestoria
+- **Funcionalidades**:
+  - Conversar diretamente com clientes
+  - Enviar/receber mensagens de áudio
+  - Ver histórico completo da conversa
+  - Indicadores de mensagens não lidas
 
-### Permissões
-- ✅ Cadastrar novos clientes
-- ✅ Visualizar suas vendas
-- ✅ Acompanhar métricas pessoais
-- ✅ Criar login para clientes
-- ❌ Não pode editar clientes existentes
+#### 🟢 Cliente
+- **Acesso**: Chat apenas com seu gestor designado
+- **Funcionalidades**:
+  - Conversar com o gestor responsável
+  - Enviar mensagens de áudio
+  - Receber orientações em tempo real
+  - Acompanhar status via chat
 
-### Funcionalidades Principais
-- Formulário de cadastro de clientes
-- Dashboard de vendas pessoais
-- Lista de clientes cadastrados
-- Métricas de performance
+## 📱 Interface do Chat
 
----
+### Funcionalidades do Chat
+- **Mensagens de Texto**: Comunicação escrita básica
+- **Mensagens de Áudio**: Gravação e reprodução de áudios
+- **Indicadores de Status**: Lida/não lida, online/offline
+- **Notificações**: Alertas para novas mensagens
 
-## 👤 Cliente (email individual)
-**Participação no Processo de Campanha**
-
-### Permissões
-- ✅ Preencher briefing da campanha
-- ✅ Fazer upload de materiais
-- ✅ Acompanhar status da campanha
-- ✅ Registrar vendas realizadas
-- ❌ Não pode ver dados de outros clientes
-
-### Funcionalidades Principais
-- Painel de boas-vindas
-- Formulário de briefing
-- Upload de arquivos/materiais
-- Registro de vendas
-- Tutoriais em vídeo
-
----
-
-## 🌐 Sites (sites*/criador*/design*)
-**Criação e Gestão de Sites**
-
-### Permissões
-- ✅ Visualizar clientes que precisam de site
-- ✅ Atualizar status de criação de sites
-- ✅ Gerenciar links de sites
-- ✅ Controlar pagamentos de sites
-- ❌ Acesso limitado a dados de campanha
-
-### Funcionalidades Principais
-- Lista de sites pendentes
-- Gerenciamento de status de sites
-- Controle de pagamentos
-- Upload de links finalizados`
+### Indicadores Visuais
+- **✅ Mensagem lida**: Cor diferenciada
+- **⚪ Mensagem não lida**: Destaque visual
+- **🎵 Ícone de áudio**: Para mensagens de áudio
+- **⏰ Timestamp**: Horário de envio
+- **👤 Avatar**: Identificação do remetente`
   },
-  'modulos-sistema': {
-    id: 'modulos-sistema',
-    title: '3. Módulos do Sistema',
-    content: `# 3. Módulos do Sistema
+  'sistema-audio': {
+    id: 'sistema-audio',
+    title: '7. Sistema de Áudio',
+    content: `# 7. Sistema de Áudio
 
-## 📊 Dashboard e Métricas
+## 🎵 Visão Geral
 
-### Dashboard Admin
-- **Funil de Status**: Visualização dos clientes por etapa
-- **Métricas Globais**: Total de clientes, campanhas ativas, receita
-- **Performance por Gestor**: Ranking e estatísticas
-- **Problemas Pendentes**: Alertas de clientes com issues
+O Sistema de Áudio permite gravação, upload, armazenamento e reprodução de mensagens de áudio dentro do sistema de chat, proporcionando uma comunicação mais rica e eficiente entre gestores e clientes.
 
-### Dashboard Gestor
-- **Clientes Ativos**: Lista filtrada por gestor
-- **Problemas da Equipe**: Clientes com problemas para resolver
-- **Métricas da Gestoria**: Performance específica
-- **Comissões Pendentes**: Controle financeiro
+## 🎙️ Gravação de Áudio
 
-### Dashboard Vendedor
-- **Vendas Pessoais**: Clientes cadastrados pelo vendedor
-- **Métricas de Conversão**: Taxa de sucesso
-- **Metas e Objetivos**: Acompanhamento de performance
-- **Clientes Recentes**: Últimos cadastros
+### Tecnologia Utilizada
+- **WebRTC**: API nativa do navegador para captura de áudio
+- **MediaRecorder**: Interface para gravação de mídia
+- **getUserMedia**: Acesso ao microfone do usuário
 
----
+### Configurações de Gravação
+\`\`\`typescript
+const audioConstraints = {
+  audio: {
+    echoCancellation: true,      // Cancelamento de eco
+    noiseSuppression: true,      // Supressão de ruído
+    sampleRate: 44100,          // Taxa de amostragem
+    channelCount: 1,            // Mono (economia de espaço)
+    autoGainControl: true       // Controle automático de ganho
+  }
+}
 
-## 👥 Gestão de Clientes
-
-### CRUD Completo
-- **Criar**: Formulário completo de cadastro
-- **Visualizar**: Lista paginada com filtros
-- **Editar**: Atualização de dados em tempo real
-- **Status**: Controle de estados da campanha
-
-### Funcionalidades Avançadas
-- **Filtros Inteligentes**: Por status, gestor, data, problema
-- **Busca Rápida**: Por nome, email, telefone
-- **Exportação**: Relatórios em diversos formatos
-- **Comentários**: Sistema de comunicação interna
-
-### Estados do Cliente
-\`\`\`
-Cliente Novo → Preenchimento Formulário → Brief → 
-Criativo → Site → Agendamento → Configurando BM → 
-Subindo Campanha → Otimização → Saque Pendente
+const mediaRecorderOptions = {
+  mimeType: 'audio/webm;codecs=opus',  // Formato preferido
+  audioBitsPerSecond: 128000           // Qualidade balanceada
+}
 \`\`\`
 
----
+### Formatos Suportados
+1. **Preferido**: \`audio/webm;codecs=opus\`
+2. **Fallback**: \`audio/webm\`
+3. **Alternativo**: \`audio/mp4\`
+4. **Último recurso**: Formato padrão do navegador
 
-## 🎯 Sistema de Campanhas
-
-### Controle de Status
-- **15 Estados Diferentes**: Desde "Cliente Novo" até "Saque Pendente"
-- **Transições Controladas**: Validação de mudanças de estado
-- **Prazos Automáticos**: Cálculo de data limite (15 dias da venda)
-- **Alertas**: Notificações para atrasos
-
-### Status Especiais
-- **Problema**: Clientes com issues específicas
-- **Cliente Sumiu**: Quando não há resposta
-- **Reembolso**: Processo de devolução
-- **Urgente**: Prioridade alta
-- **Campanha Anual**: Contratos longos
-
----
-
-## 📝 Briefings e Materiais
-
-### Sistema de Briefing
-- **Formulário Estruturado**: Campos obrigatórios e opcionais
-- **Edição Controlada**: Liberação pelo gestor
-- **Versionamento**: Histórico de alterações
-- **Validação**: Campos obrigatórios antes da aprovação
-
-### Upload de Materiais
-- **Múltiplos Formatos**: Imagens, vídeos, documentos
-- **Organização**: Por cliente e tipo de material
-- **Controle de Acesso**: Apenas cliente e gestor veem
-- **Histórico**: Log de todos os uploads
-
----
-
-## 💰 Sistema de Comissões
-
-### Controle Financeiro
-- **Status de Pagamento**: Pendente, Pago, Cancelado
-- **Valores Personalizados**: Por cliente ou padrão (R$ 60)
-- **Solicitações de Saque**: Workflow de aprovação
-- **Relatórios**: Comissões por período e gestor
-
-### Workflow de Pagamento
+### Processo de Gravação
 \`\`\`
-Campanha no Ar → Solicitação Saque → 
-Aprovação Admin → Pagamento → Confirmação
-\`\`\``
+1. Solicitar Permissão → 2. Configurar MediaRecorder → 3. Iniciar Gravação
+         ↓                         ↓                         ↓
+4. Capturar Chunks → 5. Parar Gravação → 6. Processar Blob → 7. Preview/Upload
+\`\`\`
+
+## 💾 Armazenamento
+
+### Supabase Storage
+- **Bucket**: \`chat-audios\`
+- **Público**: Sim (necessário para reprodução)
+- **Organização**: \`{user_id}/audio_{timestamp}.webm\`
+- **Tamanho Máximo**: 10MB por arquivo
+
+## 🔊 Reprodução de Áudio
+
+### Interface de Reprodução
+- **Play/Pause**: Controles básicos de reprodução
+- **Duração**: Exibição do tempo total
+- **Tratamento de Erros**: Fallbacks para problemas de rede
+- **Cache Inteligente**: Otimização de carregamento
+
+### Estados da Interface
+- **Idle**: Botão "Gravar" disponível
+- **Recording**: Indicador visual + timer + botão "Parar"
+- **Recorded**: Preview do áudio + opções (Play/Delete/Send)
+- **Uploading**: Indicador de progresso
+- **Error**: Mensagem de erro + opção de retry`
   },
-  'base-dados': {
-    id: 'base-dados',
-    title: '4. Base de Dados',
-    content: `# 4. Base de Dados
+  'supabase-storage': {
+    id: 'supabase-storage',
+    title: '8. Supabase Storage',
+    content: `# 8. Supabase Storage
 
-## 🗄️ Estrutura do Banco de Dados
+## 📁 Visão Geral
 
-O sistema utiliza **PostgreSQL** via **Supabase** com **Row Level Security (RLS)** para garantir isolamento de dados.
+O Supabase Storage é utilizado para armazenar e gerenciar todos os arquivos do sistema, incluindo mensagens de áudio, materiais de clientes, assets de campanhas e outros documentos importantes.
 
----
+## 🗂️ Buckets Configurados
 
-## 📋 Tabelas Principais
+### \`chat-audios\` (Ativo)
+**Armazenamento de mensagens de áudio do chat**
 
-### \`todos_clientes\` - Tabela Central
-**Armazena todas as informações dos clientes e campanhas**
-
-| Campo | Tipo | Descrição | Obrigatório |
-|-------|------|-----------|-------------|
-| \`id\` | bigint | Chave primária auto-incremento | ✅ |
-| \`nome_cliente\` | text | Nome completo do cliente | ✅ |
-| \`email_cliente\` | text | Email para login e contato | ✅ |
-| \`telefone\` | text | Telefone com formatação | ✅ |
-| \`vendedor\` | text | Nome do vendedor responsável | ✅ |
-| \`email_gestor\` | text | Email do gestor responsável | ✅ |
-| \`status_campanha\` | text | Estado atual da campanha | ✅ |
-| \`data_venda\` | date | Data da venda inicial | ✅ |
-| \`data_limite\` | text | Prazo calculado (15 dias) | Auto |
-| \`valor_comissao\` | numeric | Valor da comissão (padrão R$ 60) | ✅ |
-| \`comissao\` | text | Status: 'Pendente', 'Pago', 'Cancelado' | ✅ |
-| \`site_status\` | text | Status de criação do site | ✅ |
-| \`site_pago\` | boolean | Se o site foi pago | ✅ |
-| \`descricao_problema\` | text | Descrição de problemas | ❌ |
-| \`link_briefing\` | text | URL do briefing | ❌ |
-| \`link_criativo\` | text | URL dos criativos | ❌ |
-| \`link_site\` | text | URL do site finalizado | ❌ |
-| \`numero_bm\` | text | Número do Business Manager | ❌ |
-| \`created_at\` | timestamp | Data de criação (timezone BR) | Auto |
-
-### \`briefings_cliente\` - Briefings Detalhados
-**Informações específicas do briefing de cada cliente**
-
-| Campo | Tipo | Descrição |
-|-------|------|-----------|
-| \`id\` | uuid | Chave primária |
-| \`email_cliente\` | text | Referência ao cliente |
-| \`nome_produto\` | text | Nome do produto/serviço |
-| \`descricao_resumida\` | text | Descrição do negócio |
-| \`publico_alvo\` | text | Definição do público |
-| \`diferencial\` | text | Diferenciais competitivos |
-| \`investimento_diario\` | numeric | Valor de investimento diário |
-| \`comissao_aceita\` | text | Aceite da comissão |
-| \`observacoes_finais\` | text | Observações adicionais |
-| \`liberar_edicao\` | boolean | Se permite edição |
-
----
-
-## 🔐 Segurança e RLS
-
-### Row Level Security
-**Todas as tabelas possuem RLS ativado com políticas específicas:**
-
-- **Isolamento por Gestor**: Gestores só veem seus clientes
-- **Isolamento por Cliente**: Clientes só veem seus próprios dados
-- **Admin Full Access**: Admins têm acesso total
-- **Auditoria Completa**: Logs de todas as operações
-
-### Políticas Principais
 \`\`\`sql
--- Exemplo: Clientes só veem seus próprios dados
-CREATE POLICY "cliente_acesso_proprio" ON todos_clientes
-FOR ALL USING (email_cliente = auth.email());
-
--- Exemplo: Gestores veem apenas sua gestoria
-CREATE POLICY "gestor_acesso_gestoria" ON todos_clientes
-FOR ALL USING (email_gestor = auth.email());
+-- Configuração do bucket
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('chat-audios', 'chat-audios', true);
 \`\`\`
 
----
+**Características:**
+- **Público**: ✅ Sim (necessário para reprodução direta)
+- **Tamanho Máximo**: 10MB por arquivo
+- **Formatos Aceitos**: WebM, MP4, WAV, OGG
+- **Organização**: \`{user_id}/audio_{timestamp}.webm\`
+- **Retenção**: Indefinida (pode ser configurada limpeza automática)
 
-## 🔗 Relacionamentos
+### \`client-materials\` (Planejado)
+**Materiais enviados pelos clientes**
 
-### Relacionamentos Principais
+**Características:**
+- **Público**: ❌ Não (acesso controlado)
+- **Tamanho Máximo**: 50MB por arquivo
+- **Formatos Aceitos**: PNG, JPG, PDF, MP4, ZIP, etc.
+- **Organização**: \`{cliente_id}/{categoria}/{arquivo}\`
+- **Retenção**: Permanente
+
+## 🔐 Políticas de Segurança (RLS)
+
+### Políticas para \`chat-audios\`
+
+#### Upload de Áudios
+\`\`\`sql
+CREATE POLICY "Allow authenticated users to upload audio files"
+ON storage.objects FOR INSERT
+TO authenticated
+WITH CHECK (
+  bucket_id = 'chat-audios' AND
+  (storage.foldername(name))[1] = auth.uid()::text
+);
 \`\`\`
-gestores (1) ←→ (N) todos_clientes [email_gestor]
-todos_clientes (1) ←→ (1) briefings_cliente [email_cliente]
-todos_clientes (1) ←→ (N) vendas_cliente [email_cliente]
-todos_clientes (1) ←→ (N) arquivos_cliente [email_cliente]
-todos_clientes (1) ←→ (N) comentarios_cliente [cliente_id]
-todos_clientes (1) ←→ (N) solicitacoes_saque [cliente_id]
-\`\`\``
+
+#### Leitura Pública
+\`\`\`sql
+CREATE POLICY "Allow public read access to audio files"
+ON storage.objects FOR SELECT
+TO public
+USING (bucket_id = 'chat-audios');
+\`\`\`
+
+## 📤 Upload de Arquivos
+
+### Implementação Básica
+\`\`\`typescript
+const uploadFile = async (
+  file: File, 
+  bucket: string, 
+  path: string
+): Promise<string> => {
+  // Validar arquivo
+  validateFile(file);
+  
+  // Upload para o Supabase Storage
+  const { data, error } = await supabase.storage
+    .from(bucket)
+    .upload(path, file, {
+      cacheControl: '3600',
+      upsert: false, // Não sobrescrever arquivos existentes
+      contentType: file.type
+    });
+    
+  if (error) {
+    throw new Error(\`Erro no upload: \${error.message}\`);
+  }
+  
+  // Retornar URL pública (se bucket for público)
+  const { data: { publicUrl } } = supabase.storage
+    .from(bucket)
+    .getPublicUrl(path);
+    
+  return publicUrl;
+};
+\`\`\`
+
+## 🧹 Gestão de Arquivos
+
+### Listagem de Arquivos
+- Listar arquivos de um bucket específico
+- Filtrar por pasta/usuário
+- Ordenação por data/tamanho
+- Paginação para performance
+
+### Deletar Arquivos
+- Remoção individual ou em lote
+- Verificação de permissões
+- Cleanup automático de arquivos antigos`
   },
-  'fluxo-trabalho': {
-    id: 'fluxo-trabalho',
-    title: '5. Fluxo de Trabalho',
-    content: `# 5. Fluxo de Trabalho
+  'troubleshooting': {
+    id: 'troubleshooting',
+    title: '9. Troubleshooting',
+    content: `# 9. Troubleshooting
 
-## 🔄 Jornada Completa do Cliente
+## 🚨 Problemas Comuns e Soluções
 
-### 1. **Captação e Cadastro**
-**Responsável: Vendedor**
+### **Problemas de Login e Autenticação**
 
-\`\`\`
-Contato Inicial → Negociação → Fechamento → Cadastro no Sistema
-\`\`\`
+#### ❌ "Email ou senha incorretos"
+**Possíveis Causas:**
+- Credenciais digitadas incorretamente
+- Usuário não existe no sistema
+- Senha foi alterada recentemente
 
-**Ações Realizadas:**
-- Vendedor cadastra cliente com dados básicos
-- Sistema gera login automático para o cliente
-- Cliente recebe credenciais por email/WhatsApp
-- Status inicial: **"Cliente Novo"**
+**Soluções:**
+1. Verificar se email está escrito corretamente
+2. Usar "Esqueci minha senha" para redefinir
+3. Verificar se usuário foi criado no sistema
+4. Para admins: verificar na tabela \`auth.users\` do Supabase
 
-**Dados Obrigatórios:**
-- Nome completo
-- Email válido
-- Telefone com DDD
-- Produto/Nicho
-- Valor da comissão
-- Gestor responsável
+#### ❌ "Usuário não autorizado"
+**Possíveis Causas:**
+- Email não está cadastrado em nenhuma tabela
+- Domínio do email não é reconhecido pelo sistema
+- Usuário foi desativado
 
----
+**Soluções:**
+1. **Para Gestores**: Verificar se está cadastrado na tabela \`gestores\` com \`ativo = true\`
+2. **Para Clientes**: Verificar se está na tabela \`todos_clientes\`
+3. **Para Vendedores**: Email deve seguir padrão \`vendedor*@trafegoporcents.com\`
+4. **Para Sites**: Email deve conter palavras-chave como 'criador', 'site', 'design'
 
-### 2. **Preenchimento do Briefing**
-**Responsável: Cliente**
+### **Problemas com Chat e Mensagens**
 
-\`\`\`
-Login do Cliente → Formulário de Briefing → Submissão → Aprovação
-\`\`\`
+#### ❌ "Mensagens não aparecem em tempo real"
+**Possíveis Causas:**
+- Problemas com Supabase Realtime
+- Subscription não configurada corretamente
+- RLS bloqueando acesso às mensagens
 
-**Status: "Preenchimento do Formulário" → "Brief"**
-
-**Informações Coletadas:**
-- Nome do produto/serviço
-- Descrição detalhada do negócio
-- Público-alvo específico
-- Diferenciais competitivos
-- Investimento diário pretendido
-- Aceite da comissão
-- Observações finais
-
-**Validações:**
-- Campos obrigatórios preenchidos
-- Aprovação do gestor responsável
-- Possibilidade de edição liberada pelo gestor
-
----
-
-### 3. **Upload de Materiais**
-**Responsável: Cliente**
-
-\`\`\`
-Acesso ao Painel → Upload de Arquivos → Organização → Aprovação
+**Soluções:**
+\`\`\`typescript
+// 1. Verificar se realtime está habilitado
+const subscription = supabase
+  .channel('chat-mensagens')
+  .on('postgres_changes', {
+    event: 'INSERT',
+    schema: 'public',
+    table: 'chat_mensagens',
+    filter: \`email_gestor=eq.\${email}\`
+  }, (payload) => {
+    console.log('📥 Nova mensagem recebida:', payload);
+  })
+  .subscribe((status) => {
+    console.log('🔗 Status da subscription:', status);
+  });
 \`\`\`
 
-**Materiais Aceitos:**
-- **Imagens**: Logo, fotos de produtos, materiais gráficos
-- **Vídeos**: Depoimentos, demonstrações, conteúdo promocional
-- **Documentos**: Contratos, certificados, materiais informativos
-- **Outros**: Qualquer material relevante para a campanha
+#### ❌ "Erro ao enviar mensagem"
+**Possíveis Causas:**
+- RLS impedindo inserção
+- Campos obrigatórios não preenchidos
+- Problema de conectividade
 
-**Controles:**
-- Limite de tamanho por arquivo
-- Tipos de arquivo permitidos
-- Histórico completo de uploads
-- Acesso restrito (cliente + gestor)
+### **Problemas com Áudio**
 
----
+#### ❌ "Não consegue gravar áudio"
+**Possíveis Causas:**
+- Permissão de microfone negada
+- Microfone não encontrado
+- Navegador não suporta WebRTC
 
-### 4. **Criação do Criativo**
-**Responsável: Equipe de Criativos**
-
+**Soluções:**
+\`\`\`typescript
+const startRecording = async () => {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ 
+      audio: {
+        echoCancellation: true,
+        noiseSuppression: true,
+        sampleRate: 44100
+      } 
+    });
+    console.log('✅ Microfone acessado com sucesso');
+  } catch (error) {
+    switch (error.name) {
+      case 'NotAllowedError':
+        alert('Permita o acesso ao microfone nas configurações do navegador');
+        break;
+      case 'NotFoundError':
+        alert('Nenhum microfone foi encontrado no dispositivo');
+        break;
+    }
+  }
+};
 \`\`\`
-Análise do Briefing → Criação dos Materiais → Aprovação → Entrega
+
+#### ❌ "Áudio não reproduz"
+**Possíveis Causas:**
+- URL do áudio inválida
+- Arquivo corrompido
+- Problemas de CORS
+- Bucket não público
+
+### **Problemas com Storage**
+
+#### ❌ "Upload de áudio falha"
+**Possíveis Causas:**
+- Arquivo muito grande
+- RLS impedindo upload
+- Problema de conectividade
+- Bucket não configurado
+
+## 📊 Monitoramento e Logs
+
+### Como Ativar Logs Detalhados
+\`\`\`typescript
+// Adicionar logs nos hooks
+console.log('🔍 [useAuth] Verificando tipo de usuário:', email);
+console.log('💬 [useChatMessages] Nova mensagem:', mensagem);
+console.log('🎵 [AudioRecorder] Upload de áudio:', audioUrl);
 \`\`\`
 
-**Status: "Brief" → "Criativo"**
+### Verificar Logs do Supabase
+1. Acessar Dashboard do Supabase
+2. Ir em **Logs** > **API**
+3. Filtrar por timestamp do problema
+4. Procurar por status 400, 401, 403, 500
 
-**Deliverables:**
-- Peças gráficas para anúncios
-- Textos publicitários (headlines, descrições)
-- Vídeos promocionais (se aplicável)
-- Materiais para landing page
-- Configurações de segmentação
+## 📞 Contatos para Suporte
 
-**Processo:**
-1. Equipe analisa briefing e materiais
-2. Criação dos criativos
-3. Revisão interna
-4. Upload no sistema (link_criativo)
-5. Mudança de status pelo gestor
+### Suporte Técnico
+- **Email**: suporte.tecnico@empresa.com
+- **WhatsApp**: (11) 99999-9999
+- **Horário**: Segunda a Sexta, 8h às 18h
 
----
-
-## ⚠️ Estados Especiais
-
-### **Problema**
-**Quando:** Qualquer issue que impeça a progressão normal
-
-**Ações:**
-- Documentação detalhada do problema
-- Notificação para gestor e admin
-- Prazo para resolução
-- Acompanhamento específico
-
-### **Cliente Sumiu**
-**Quando:** Cliente não responde por período prolongado
-
-**Ações:**
-- Tentativas de contato documentadas
-- Prazo para retorno
-- Possível reagendamento ou cancelamento
-
-### **Reembolso**
-**Quando:** Solicitação de devolução do investimento
-
-**Ações:**
-- Análise do caso
-- Aprovação da diretoria
-- Processamento do reembolso
-- Documentação completa
-
-### **Urgente**
-**Quando:** Casos que precisam de prioridade máxima
-
-**Ações:**
-- Atendimento prioritário
-- Recursos dedicados
-- Acompanhamento intensivo
-- Relatórios específicos
-
----
-
-## 📊 Controle de Prazos
-
-### **Cálculo Automático**
-- **Data Limite**: Sempre 15 dias corridos da data de venda
-- **Alertas**: Sistema notifica quando se aproxima do prazo
-- **Semáforo**: Verde (no prazo), Amarelo (próximo), Vermelho (atrasado)
-
-### **Gestão de SLA**
-- **Briefing**: 3 dias para preenchimento
-- **Criativo**: 5 dias para entrega
-- **Site**: 7 dias para finalização
-- **Agendamento**: 2 dias para contato
-- **BM**: 3 dias para configuração
-- **Subida**: 2 dias para publicação`
+### Informações para Reportar Problemas
+Sempre incluir:
+- **URL da página** onde ocorreu o problema
+- **Email do usuário** afetado
+- **Horário exato** do problema
+- **Screenshots** da tela e console (F12)
+- **Mensagem de erro** completa
+- **Tipo de dispositivo** (desktop/mobile)
+- **Navegador** e versão`
   }
 }
 
@@ -590,13 +624,13 @@ export function DocumentationViewer() {
                   <FileText className="h-5 w-5 text-primary" />
                   <h1 className="text-xl font-semibold">{currentDoc.title}</h1>
                 </div>
-                <Badge variant="secondary">Documentação</Badge>
+                <Badge variant="secondary">Documentação v2.0.0</Badge>
               </div>
               
               <div className="flex items-center gap-4 mt-2 text-sm text-muted-foreground">
                 <div className="flex items-center gap-1">
                   <Clock className="h-4 w-4" />
-                  <span>Atualizado automaticamente</span>
+                  <span>Atualizado: Dezembro 2024</span>
                 </div>
               </div>
             </div>

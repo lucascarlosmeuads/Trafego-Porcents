@@ -12,6 +12,8 @@
 - ✅ Importar vendas manuais
 - ✅ Criar usuários para clientes
 - ✅ Gerenciar sites e domínios
+- ✅ **Monitorar todas as conversas de chat**
+- ✅ **Acessar visão geral de comunicações**
 
 ### Funcionalidades Exclusivas
 - Dashboard administrativo
@@ -19,6 +21,7 @@
 - Auditoria completa
 - Importação de dados
 - Configurações globais
+- **Visão geral do sistema de chat**
 
 ---
 
@@ -31,6 +34,9 @@
 - ✅ Acessar métricas da equipe
 - ✅ Gerenciar problemas e comentários
 - ✅ Controlar comissões da equipe
+- ✅ **Chat direto com clientes da gestoria**
+- ✅ **Enviar/receber mensagens de áudio**
+- ✅ **Visualizar materiais enviados pelos clientes**
 - ❌ Não pode ver clientes de outros gestores
 
 ### Funcionalidades Principais
@@ -39,6 +45,8 @@
 - Gerenciamento de problemas
 - Controle de comissões
 - Métricas de performance
+- **Sistema de chat integrado**
+- **Gravação e reprodução de áudios**
 
 ---
 
@@ -51,6 +59,7 @@
 - ✅ Acompanhar métricas pessoais
 - ✅ Criar login para clientes
 - ❌ Não pode editar clientes existentes
+- ❌ **Não tem acesso ao sistema de chat**
 
 ### Funcionalidades Principais
 - Formulário de cadastro de clientes
@@ -68,6 +77,9 @@
 - ✅ Fazer upload de materiais
 - ✅ Acompanhar status da campanha
 - ✅ Registrar vendas realizadas
+- ✅ **Chat direto com seu gestor**
+- ✅ **Enviar mensagens de áudio**
+- ✅ **Receber orientações via áudio**
 - ❌ Não pode ver dados de outros clientes
 
 ### Funcionalidades Principais
@@ -76,6 +88,8 @@
 - Upload de arquivos/materiais
 - Registro de vendas
 - Tutoriais em vídeo
+- **Chat integrado com gestor**
+- **Sistema de mensagens de áudio**
 
 ---
 
@@ -88,6 +102,7 @@
 - ✅ Gerenciar links de sites
 - ✅ Controlar pagamentos de sites
 - ❌ Acesso limitado a dados de campanha
+- ❌ **Sem acesso ao sistema de chat**
 
 ### Funcionalidades Principais
 - Lista de sites pendentes
@@ -115,10 +130,35 @@
 | Briefings | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Upload Materiais | ✅ | ✅ | ❌ | ✅ | ❌ |
 | Comissões | ✅ | ✅ | ✅** | ❌ | ❌ |
+| **Chat Sistema** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Mensagens Áudio** | ✅ | ✅ | ❌ | ✅ | ❌ |
+| **Chat Overview** | ✅ | ❌ | ❌ | ❌ | ❌ |
 
 *Apenas da própria gestoria  
 **Apenas visualização  
 ***Apenas clientes que precisam de site
+
+---
+
+## 💬 Sistema de Comunicação
+
+### **Chat em Tempo Real**
+- **Conexão Direta**: Gestor ↔ Cliente
+- **Mensagens Instantâneas**: Realtime via Supabase
+- **Histórico Completo**: Todas as conversas salvas
+- **Indicadores Visuais**: Status de leitura e mensagens novas
+
+### **Mensagens de Áudio**
+- **Gravação Direta**: Pelo navegador
+- **Qualidade Otimizada**: Formato WebM/Opus
+- **Upload Automático**: Para Supabase Storage
+- **Reprodução Controlada**: Play/pause, duração
+
+### **Permissões de Chat**
+- **Admin**: Pode ver overview de todas as conversas
+- **Gestor**: Chat apenas com clientes da sua gestoria
+- **Cliente**: Chat apenas com seu gestor designado
+- **Vendedor/Sites**: Sem acesso ao chat
 
 ---
 
