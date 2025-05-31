@@ -1,8 +1,8 @@
 
 import { ChatMensagem } from '@/hooks/useChatMessages'
 import { Button } from '@/components/ui/button'
-import { Play, Pause } from 'lucide-react'
-import { useState, useRef } from 'react'
+import { Play, Pause, AlertCircle } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -13,22 +13,90 @@ interface MessageItemProps {
 
 export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [hasError, setHasError] = useState(false)
+  const [duration, setDuration] = useState<string>('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  const toggleAudio = () => {
-    if (audioRef.current) {
+  // Debug da URL do áudio
+  useEffect(() => {
+    if (mensagem.tipo === 'audio') {
+      console.log('🎵 [MessageItem] URL do áudio recebida:', mensagem.conteudo)
+      
+      // Verificar se a URL é válida
+      try {
+        new URL(mensagem.conteudo)
+        console.log('✅ [MessageItem] URL válida')
+      } catch (error) {
+        console.error('❌ [MessageItem] URL inválida:', error)
+        setHasError(true)
+      }
+    }
+  }, [mensagem])
+
+  const toggleAudio = async () => {
+    if (!audioRef.current) return
+
+    try {
       if (isPlaying) {
+        console.log('⏸️ [MessageItem] Pausando áudio')
         audioRef.current.pause()
         setIsPlaying(false)
       } else {
-        audioRef.current.play()
+        console.log('▶️ [MessageItem] Tentando reproduzir áudio:', mensagem.conteudo)
+        setIsLoading(true)
+        setHasError(false)
+        
+        // Verificar se o áudio pode ser carregado
+        await audioRef.current.load()
+        await audioRef.current.play()
         setIsPlaying(true)
+        console.log('✅ [MessageItem] Áudio reproduzindo com sucesso')
       }
+    } catch (error) {
+      console.error('❌ [MessageItem] Erro ao reproduzir áudio:', error)
+      setHasError(true)
+      setIsPlaying(false)
+    } finally {
+      setIsLoading(false)
     }
+  }
+
+  const handleAudioLoadedMetadata = () => {
+    if (audioRef.current && audioRef.current.duration) {
+      const mins = Math.floor(audioRef.current.duration / 60)
+      const secs = Math.floor(audioRef.current.duration % 60)
+      setDuration(`${mins}:${secs.toString().padStart(2, '0')}`)
+      console.log('📊 [MessageItem] Duração do áudio carregada:', `${mins}:${secs}`)
+    }
+  }
+
+  const handleAudioError = (e: React.SyntheticEvent<HTMLAudioElement, Event>) => {
+    console.error('💥 [MessageItem] Erro no elemento de áudio:', e.currentTarget.error)
+    setHasError(true)
+    setIsPlaying(false)
+    setIsLoading(false)
+  }
+
+  const handleAudioEnded = () => {
+    console.log('🏁 [MessageItem] Áudio terminou de tocar')
+    setIsPlaying(false)
   }
 
   const formatTime = (dateString: string) => {
     return format(new Date(dateString), 'HH:mm', { locale: ptBR })
+  }
+
+  const retryAudio = () => {
+    console.log('🔄 [MessageItem] Tentando novamente carregar o áudio')
+    setHasError(false)
+    setIsLoading(true)
+    
+    if (audioRef.current) {
+      audioRef.current.load()
+    }
+    
+    setTimeout(() => setIsLoading(false), 2000)
   }
 
   return (
@@ -58,20 +126,42 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={toggleAudio}
+              onClick={hasError ? retryAudio : toggleAudio}
+              disabled={isLoading}
               className={`p-1 h-8 w-8 rounded-full ${
                 isOwn ? 'hover:bg-blue-700' : 'hover:bg-gray-300'
               }`}
             >
-              {isPlaying ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+              {isLoading ? (
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent" />
+              ) : hasError ? (
+                <AlertCircle className="h-4 w-4 text-red-500" />
+              ) : isPlaying ? (
+                <Pause className="h-4 w-4" />
+              ) : (
+                <Play className="h-4 w-4" />
+              )}
             </Button>
             
-            <span className="text-sm">🎤 Mensagem de áudio</span>
+            <div className="flex-1 min-w-0">
+              <span className="text-sm">🎤 Mensagem de áudio</span>
+              {duration && (
+                <span className="text-xs opacity-75 ml-2">({duration})</span>
+              )}
+              {hasError && (
+                <div className="text-xs text-red-500 mt-1">
+                  Erro ao carregar áudio. Toque para tentar novamente.
+                </div>
+              )}
+            </div>
             
             <audio
               ref={audioRef}
               src={mensagem.conteudo}
-              onEnded={() => setIsPlaying(false)}
+              onEnded={handleAudioEnded}
+              onError={handleAudioError}
+              onLoadedMetadata={handleAudioLoadedMetadata}
+              preload="metadata"
               className="hidden"
             />
           </div>
