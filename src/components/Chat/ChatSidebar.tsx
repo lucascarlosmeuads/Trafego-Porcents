@@ -1,5 +1,6 @@
+
 import { useState } from 'react'
-import { ChatConversaPreview, useChatMessages } from '@/hooks/useChatMessages'
+import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, MessageCircle, User, Filter, FilterX, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { supabase } from '@/lib/supabase'
 
 interface ChatSidebarProps {
   conversas: ChatConversaPreview[]
@@ -21,11 +23,29 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Hook para marcar mensagens como lidas
-  const { marcarTodasComoLidas } = useChatMessages(
-    selectedChat?.email_cliente,
-    selectedChat?.email_gestor
-  )
+  // Função específica para marcar mensagens como lidas
+  const marcarMensagensComoLidas = async (emailCliente: string, emailGestor: string) => {
+    try {
+      console.log('📖 [ChatSidebar] Marcando mensagens como lidas:', {
+        emailCliente,
+        emailGestor
+      })
+
+      const { error } = await supabase
+        .from('chat_mensagens')
+        .update({ lida: true })
+        .eq('lida', false)
+        .eq('remetente', 'cliente')
+        .eq('email_cliente', emailCliente)
+        .eq('email_gestor', emailGestor)
+
+      if (error) throw error
+      
+      console.log('✅ [ChatSidebar] Mensagens marcadas como lidas com sucesso')
+    } catch (err) {
+      console.error('❌ [ChatSidebar] Erro ao marcar mensagens como lidas:', err)
+    }
+  }
 
   // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
@@ -81,7 +101,9 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   }
 
   const isSelected = (conversa: ChatConversaPreview) => {
-    return selectedChat?.email_cliente === conversa.email_cliente
+    const isSelectedChat = selectedChat?.email_cliente === conversa.email_cliente
+    console.log(`🔍 [ChatSidebar] Verificando seleção para ${conversa.email_cliente}:`, isSelectedChat)
+    return isSelectedChat
   }
 
   const clearAllFilters = () => {
@@ -93,44 +115,55 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = async (conversa: ChatConversaPreview) => {
-    console.log('🎯 [ChatSidebar] Selecionando chat:', {
+    console.log('🎯 [ChatSidebar] === SELECIONANDO CHAT ===')
+    console.log('🎯 [ChatSidebar] Chat clicado:', {
       cliente: conversa.email_cliente,
+      gestor: conversa.email_gestor,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       mensagensNaoLidas: conversa.mensagens_nao_lidas,
       jaEstaSelecionado: isSelected(conversa)
     })
+    console.log('🎯 [ChatSidebar] Chat atualmente selecionado:', {
+      emailCliente: selectedChat?.email_cliente || 'nenhum',
+      emailGestor: selectedChat?.email_gestor || 'nenhum'
+    })
 
-    // CORREÇÃO ETAPA 3: Marcar como lidas ANTES de selecionar
+    // CORREÇÃO: Marcar como lidas as mensagens do chat QUE ESTÁ SENDO CLICADO
     if (conversa.tem_mensagens_nao_lidas && !isSelected(conversa)) {
-      console.log('📖 [ChatSidebar] Marcando mensagens como lidas para:', conversa.email_cliente)
-      try {
-        await marcarTodasComoLidas()
-      } catch (error) {
-        console.error('❌ [ChatSidebar] Erro ao marcar como lidas:', error)
-      }
+      console.log('📖 [ChatSidebar] Chat tem mensagens não lidas, marcando como lidas...')
+      await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
     }
 
+    console.log('✅ [ChatSidebar] Chamando onSelectChat para:', conversa.email_cliente)
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO ETAPA 3: Lógica de classes CSS corrigida com hierarquia adequada
+  // CORREÇÃO: Lógica de classes CSS com hierarquia mais específica e logs
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
+    const selecionado = isSelected(conversa)
+    const naoLido = conversa.tem_mensagens_nao_lidas
+    
+    console.log(`🎨 [ChatSidebar] Classes para ${conversa.email_cliente}:`, {
+      selecionado,
+      naoLido,
+      selectedChatEmail: selectedChat?.email_cliente
+    })
     
     // 1. PRIMEIRO: Verificar se está selecionado (AZUL) - PRIORIDADE MÁXIMA
-    if (isSelected(conversa)) {
-      console.log('🔵 [ChatSidebar] Card SELECIONADO (AZUL):', conversa.email_cliente)
+    if (selecionado) {
+      console.log(`🔵 [ChatSidebar] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-blue-900 !border-blue-400 shadow-lg ring-2 ring-blue-400/50`
     }
     
     // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
-    if (conversa.tem_mensagens_nao_lidas) {
-      console.log('🔴 [ChatSidebar] Card NÃO LIDO (VERMELHO):', conversa.email_cliente)
+    if (naoLido) {
+      console.log(`🔴 [ChatSidebar] Card NÃO LIDO (VERMELHO): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-red-900/40 hover:!bg-red-900/50 !border-red-500 shadow-red-500/20`
     }
     
     // 3. TERCEIRO: Estado padrão (CINZA) - conversas já lidas
-    console.log('⚪ [ChatSidebar] Card PADRÃO (CINZA):', conversa.email_cliente)
+    console.log(`⚪ [ChatSidebar] Card PADRÃO (CINZA): ${conversa.email_cliente}`)
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
 
