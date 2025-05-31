@@ -6,7 +6,7 @@ import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { SolicitacoesSaque } from './SolicitacoesSaque'
 import { ManagerSidebar } from './ManagerSidebar'
-import { GestorChatList } from './Chat/GestorChatList'
+import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 
 interface GestorDashboardProps {
   activeTab: string
@@ -36,7 +36,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
       case 'saques':
         return <SolicitacoesSaque />
       case 'chat':
-        return <GestorChatList />
+        return <ChatLayoutSplit />
       default:
         return <DashboardMetrics clientes={clientes} />
     }

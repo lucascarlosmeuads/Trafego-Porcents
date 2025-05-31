@@ -19,6 +19,7 @@ export interface ChatMensagem {
 
 export interface ChatConversaPreview {
   email_cliente: string
+  email_gestor?: string
   nome_cliente: string
   status_campanha: string
   ultima_mensagem: string
@@ -199,6 +200,7 @@ export function useChatConversas() {
 
           return {
             email_cliente: cliente.email_cliente,
+            email_gestor: cliente.email_gestor,
             nome_cliente: cliente.nome_cliente,
             status_campanha: cliente.status_campanha,
             ultima_mensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem',
