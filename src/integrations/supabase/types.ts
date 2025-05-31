@@ -153,6 +153,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_progresso: {
+        Row: {
+          completado: boolean
+          created_at: string
+          data_completado: string | null
+          email_cliente: string
+          id: string
+          passo_id: number
+          updated_at: string
+        }
+        Insert: {
+          completado?: boolean
+          created_at?: string
+          data_completado?: string | null
+          email_cliente: string
+          id?: string
+          passo_id: number
+          updated_at?: string
+        }
+        Update: {
+          completado?: boolean
+          created_at?: string
+          data_completado?: string | null
+          email_cliente?: string
+          id?: string
+          passo_id?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       comentarios_cliente: {
         Row: {
           autor: string
