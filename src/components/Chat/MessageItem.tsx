@@ -27,12 +27,28 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
       try {
         new URL(mensagem.conteudo)
         console.log('✅ [MessageItem] URL válida')
+        setHasError(false) // Reset error state when URL is valid
       } catch (error) {
         console.error('❌ [MessageItem] URL inválida:', error)
         setHasError(true)
       }
     }
   }, [mensagem])
+
+  // Preload do áudio quando a URL estiver disponível
+  useEffect(() => {
+    if (mensagem.tipo === 'audio' && audioRef.current && mensagem.conteudo) {
+      const audio = audioRef.current
+      
+      // Reset error state before loading
+      setHasError(false)
+      
+      // Force reload of the audio element
+      audio.load()
+      
+      console.log('🔄 [MessageItem] Carregando áudio:', mensagem.conteudo)
+    }
+  }, [mensagem.conteudo, mensagem.tipo])
 
   const toggleAudio = async () => {
     if (!audioRef.current) return
@@ -47,8 +63,12 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
         setIsLoading(true)
         setHasError(false)
         
-        // Verificar se o áudio pode ser carregado
-        await audioRef.current.load()
+        // Force reload before playing to ensure fresh content
+        audioRef.current.load()
+        
+        // Wait a bit for the load to complete
+        await new Promise(resolve => setTimeout(resolve, 100))
+        
         await audioRef.current.play()
         setIsPlaying(true)
         console.log('✅ [MessageItem] Áudio reproduzindo com sucesso')
@@ -63,16 +83,33 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
   }
 
   const handleAudioLoadedMetadata = () => {
-    if (audioRef.current && audioRef.current.duration) {
+    if (audioRef.current && audioRef.current.duration && isFinite(audioRef.current.duration)) {
       const mins = Math.floor(audioRef.current.duration / 60)
       const secs = Math.floor(audioRef.current.duration % 60)
       setDuration(`${mins}:${secs.toString().padStart(2, '0')}`)
       console.log('📊 [MessageItem] Duração do áudio carregada:', `${mins}:${secs}`)
+      setHasError(false) // Clear error if metadata loads successfully
     }
   }
 
+  const handleAudioCanPlay = () => {
+    console.log('✅ [MessageItem] Áudio pode ser reproduzido')
+    setHasError(false)
+    setIsLoading(false)
+  }
+
   const handleAudioError = (e: React.SyntheticEvent<HTMLAudioElement, Event>) => {
-    console.error('💥 [MessageItem] Erro no elemento de áudio:', e.currentTarget.error)
+    const audio = e.currentTarget
+    const error = audio.error
+    
+    console.error('💥 [MessageItem] Erro no elemento de áudio:', {
+      error: error?.message,
+      code: error?.code,
+      src: audio.src,
+      networkState: audio.networkState,
+      readyState: audio.readyState
+    })
+    
     setHasError(true)
     setIsPlaying(false)
     setIsLoading(false)
@@ -93,6 +130,11 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
     setIsLoading(true)
     
     if (audioRef.current) {
+      // Force complete reload
+      const currentSrc = audioRef.current.src
+      audioRef.current.src = ''
+      audioRef.current.load()
+      audioRef.current.src = currentSrc
       audioRef.current.load()
     }
     
@@ -161,8 +203,12 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
               onEnded={handleAudioEnded}
               onError={handleAudioError}
               onLoadedMetadata={handleAudioLoadedMetadata}
+              onCanPlay={handleAudioCanPlay}
+              onLoadStart={() => console.log('🔄 [MessageItem] Iniciando carregamento do áudio')}
+              onLoadedData={() => console.log('📊 [MessageItem] Dados do áudio carregados')}
               preload="metadata"
               className="hidden"
+              crossOrigin="anonymous"
             />
           </div>
         )}

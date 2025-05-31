@@ -23,27 +23,53 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
 
   const startRecording = useCallback(async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      const mediaRecorder = new MediaRecorder(stream)
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          sampleRate: 44100
+        } 
+      })
+      
+      // Use a more compatible audio format
+      const options = {
+        mimeType: 'audio/webm;codecs=opus'
+      }
+      
+      // Fallback to default if the preferred format isn't supported
+      if (!MediaRecorder.isTypeSupported(options.mimeType)) {
+        console.warn('⚠️ [AudioRecorder] Formato preferido não suportado, usando padrão')
+        delete options.mimeType
+      }
+      
+      const mediaRecorder = new MediaRecorder(stream, options)
       
       const chunks: BlobPart[] = []
       
       mediaRecorder.ondataavailable = (event) => {
-        chunks.push(event.data)
+        if (event.data.size > 0) {
+          chunks.push(event.data)
+        }
       }
       
       mediaRecorder.onstop = () => {
-        const blob = new Blob(chunks, { type: 'audio/webm' })
+        const blob = new Blob(chunks, { type: mediaRecorder.mimeType || 'audio/webm' })
         setAudioBlob(blob)
         const url = URL.createObjectURL(blob)
         setAudioUrl(url)
+        
+        console.log('📊 [AudioRecorder] Gravação finalizada:', {
+          tamanho: blob.size,
+          tipo: blob.type,
+          chunks: chunks.length
+        })
         
         // Parar todas as tracks
         stream.getTracks().forEach(track => track.stop())
       }
       
       mediaRecorderRef.current = mediaRecorder
-      mediaRecorder.start()
+      mediaRecorder.start(100) // Capturar dados a cada 100ms
       setIsRecording(true)
       
       // Contar duração
@@ -108,27 +134,58 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
         return
       }
 
-      const fileName = `audio_${Date.now()}.webm`
-      const filePath = `${user.email}/${fileName}`
+      // Sanitizar email para usar no path
+      const sanitizedEmail = user.email.replace(/[@.]/g, '_')
+      const timestamp = Date.now()
+      const fileName = `audio_${timestamp}.webm`
+      const filePath = `${sanitizedEmail}/${fileName}`
 
-      console.log('📤 [AudioRecorder] Enviando áudio:', { fileName, filePath, userEmail: user.email })
+      console.log('📤 [AudioRecorder] Enviando áudio:', { 
+        fileName, 
+        filePath, 
+        userEmail: user.email,
+        blobSize: audioBlob.size,
+        blobType: audioBlob.type
+      })
 
-      const { error: uploadError } = await supabase.storage
+      // Upload para o Supabase Storage
+      const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat-audios')
-        .upload(filePath, audioBlob)
+        .upload(filePath, audioBlob, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: audioBlob.type
+        })
 
       if (uploadError) {
         console.error('❌ [AudioRecorder] Erro no upload:', uploadError)
         throw uploadError
       }
 
+      console.log('✅ [AudioRecorder] Upload concluído:', uploadData.path)
+
+      // Obter URL pública do áudio
       const { data: { publicUrl } } = supabase.storage
         .from('chat-audios')
         .getPublicUrl(filePath)
 
-      console.log('✅ [AudioRecorder] Áudio enviado com sucesso:', publicUrl)
+      // Adicionar timestamp para evitar cache
+      const finalUrl = `${publicUrl}?t=${timestamp}`
 
-      onAudioReady(publicUrl)
+      console.log('🔗 [AudioRecorder] URL pública gerada:', finalUrl)
+
+      // Verificar se o arquivo está acessível
+      try {
+        const response = await fetch(finalUrl, { method: 'HEAD' })
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+        }
+        console.log('✅ [AudioRecorder] Arquivo acessível via URL pública')
+      } catch (fetchError) {
+        console.warn('⚠️ [AudioRecorder] Arquivo pode não estar imediatamente acessível:', fetchError)
+      }
+
+      onAudioReady(finalUrl)
       deleteAudio()
     } catch (error) {
       console.error('💥 [AudioRecorder] Erro ao enviar áudio:', error)
