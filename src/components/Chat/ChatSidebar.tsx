@@ -96,7 +96,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Hierarquia correta e específica dos estados visuais
+  // CORREÇÃO ETAPA 3: Lógica de classes CSS corrigida com hierarquia adequada
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
     
@@ -112,7 +112,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       return `${baseClasses} !bg-red-900/40 hover:!bg-red-900/50 !border-red-500 shadow-red-500/20`
     }
     
-    // 3. TERCEIRO: Estado padrão (CINZA)
+    // 3. TERCEIRO: Estado padrão (CINZA) - conversas já lidas
     console.log('⚪ [ChatSidebar] Card PADRÃO (CINZA):', conversa.email_cliente)
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }

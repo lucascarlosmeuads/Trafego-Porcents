@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -190,17 +189,17 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     }
   }, [carregarMensagens, user?.email])
 
-  // Auto-marcar como lidas quando entrar na conversa
-  useEffect(() => {
-    if (mensagens.length > 0 && !isCliente) {
-      // Pequeno delay para garantir que a conversa foi carregada
-      const timer = setTimeout(() => {
-        marcarTodasComoLidas()
-      }, 1000)
+  // CORREÇÃO ETAPA 3: Remover auto-marcação como lidas - isso será feito manualmente quando o gestor abrir o chat
+  // useEffect(() => {
+  //   if (mensagens.length > 0 && !isCliente) {
+  //     // Pequeno delay para garantir que a conversa foi carregada
+  //     const timer = setTimeout(() => {
+  //       marcarTodasComoLidas()
+  //     }, 1000)
       
-      return () => clearTimeout(timer)
-    }
-  }, [emailCliente, emailGestor, marcarTodasComoLidas, isCliente])
+  //     return () => clearTimeout(timer)
+  //   }
+  // }, [emailCliente, emailGestor, marcarTodasComoLidas, isCliente])
 
   return {
     mensagens,
