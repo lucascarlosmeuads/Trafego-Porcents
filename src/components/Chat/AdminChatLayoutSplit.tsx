@@ -4,10 +4,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
+import { ManagerSelector } from '@/components/ManagerSelector'
 import { MessageCircle, Shield } from 'lucide-react'
 
 export function AdminChatLayoutSplit() {
-  const { conversas, loading } = useChatConversas()
+  const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
+  const { conversas, loading } = useChatConversas(selectedGestor)
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -29,12 +31,21 @@ export function AdminChatLayoutSplit() {
     }
   }, [conversas, selectedChat, isMobile])
 
+  // Reset selected chat when changing manager filter
+  useEffect(() => {
+    setSelectedChat(null)
+  }, [selectedGestor])
+
   const handleSelectChat = (conversa: ChatConversaPreview) => {
     setSelectedChat(conversa)
   }
 
   const handleBackToList = () => {
     setSelectedChat(null)
+  }
+
+  const handleManagerSelect = (manager: string | null) => {
+    setSelectedGestor(manager)
   }
 
   if (loading) {
@@ -68,9 +79,18 @@ export function AdminChatLayoutSplit() {
     return (
       <div className="h-full">
         <div className="bg-gray-800 border-b border-gray-700 p-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 mb-4">
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-xl font-bold text-white">Admin - Monitoramento de Chat</h2>
+          </div>
+          
+          {/* Manager Selector - Mobile */}
+          <div className="bg-gray-700 rounded-lg p-3">
+            <ManagerSelector 
+              selectedManager={selectedGestor}
+              onManagerSelect={handleManagerSelect}
+              isAdminContext={true}
+            />
           </div>
         </div>
         <ChatSidebar
@@ -93,10 +113,19 @@ export function AdminChatLayoutSplit() {
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-bold text-white">Admin - Chat Monitor</h2>
           </div>
-          <p className="text-xs text-gray-400">Monitoramento de todas as conversas</p>
+          <p className="text-xs text-gray-400 mb-4">Monitoramento de todas as conversas</p>
+          
+          {/* Manager Selector - Desktop */}
+          <div className="bg-gray-700 rounded-lg p-3">
+            <ManagerSelector 
+              selectedManager={selectedGestor}
+              onManagerSelect={handleManagerSelect}
+              isAdminContext={true}
+            />
+          </div>
         </div>
         
-        <div className="h-[calc(100%-80px)]">
+        <div className="h-[calc(100%-140px)]">
           <ChatSidebar
             conversas={conversas}
             selectedChat={selectedChat}
@@ -126,8 +155,16 @@ export function AdminChatLayoutSplit() {
                 Modo Administrador
               </h3>
               <p className="text-gray-600 max-w-sm">
-                Selecione uma conversa da lista à esquerda para monitorar a comunicação entre gestores e clientes
+                {selectedGestor 
+                  ? 'Selecione uma conversa da lista à esquerda para monitorar a comunicação do gestor selecionado'
+                  : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação entre gestores e clientes'
+                }
               </p>
+              {conversas.length === 0 && selectedGestor && (
+                <p className="text-gray-500 text-sm mt-2">
+                  Nenhuma conversa encontrada para o gestor selecionado
+                </p>
+              )}
             </div>
           </div>
         )}

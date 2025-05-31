@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -153,7 +152,7 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
   }
 }
 
-export function useChatConversas() {
+export function useChatConversas(gestorFiltro?: string | null) {
   const [conversas, setConversas] = useState<ChatConversaPreview[]>([])
   const [loading, setLoading] = useState(true)
   const { user, isGestor, isAdmin } = useAuth()
@@ -171,6 +170,9 @@ export function useChatConversas() {
 
       if (isGestor) {
         clientesQuery = clientesQuery.eq('email_gestor', user.email)
+      } else if (isAdmin && gestorFiltro) {
+        // Admin filtrando por gestor específico
+        clientesQuery = clientesQuery.eq('email_gestor', gestorFiltro)
       }
 
       const { data: clientes, error: clientesError } = await clientesQuery
@@ -216,7 +218,7 @@ export function useChatConversas() {
     } finally {
       setLoading(false)
     }
-  }, [user?.email, isGestor, isAdmin])
+  }, [user?.email, isGestor, isAdmin, gestorFiltro])
 
   useEffect(() => {
     carregarConversas()
