@@ -1,42 +1,42 @@
 
-import { useState } from 'react'
+import { Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
-import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
 import { SolicitacoesSaque } from './SolicitacoesSaque'
-import { ManagerSidebar } from './ManagerSidebar'
-import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
+import { LoadingFallback } from './LoadingFallback'
+import * as LazyComponents from './LazyComponents'
 
 interface GestorDashboardProps {
   activeTab: string
 }
 
-export function GestorDashboard({ activeTab }: GestorDashboardProps) {
+export default function GestorDashboard({ activeTab }: GestorDashboardProps) {
   const { user } = useAuth()
   const { clientes, loading } = useManagerData(user?.email || '')
 
   const renderContent = () => {
     if (loading) {
-      return (
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
-            <p className="text-gray-600">Carregando dados...</p>
-          </div>
-        </div>
-      )
+      return <LoadingFallback message="Carregando dados..." />
     }
 
     switch (activeTab) {
       case 'dashboard':
         return <DashboardMetrics clientes={clientes} />
       case 'clientes':
-        return <ClientesTable />
+        return (
+          <Suspense fallback={<LoadingFallback message="Carregando tabela de clientes..." />}>
+            <LazyComponents.ClientesTable />
+          </Suspense>
+        )
       case 'saques':
         return <SolicitacoesSaque />
       case 'chat':
-        return <ChatLayoutSplit />
+        return (
+          <Suspense fallback={<LoadingFallback message="Carregando chat..." />}>
+            <LazyComponents.ChatLayoutSplit />
+          </Suspense>
+        )
       default:
         return <DashboardMetrics clientes={clientes} />
     }

@@ -1,19 +1,10 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ClientesTable } from './ClientesTable'
-import { GestoresManagement } from './GestoresManagement'
 import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
-import { DocumentationViewer } from './Documentation'
 import { ManagerSelector } from './ManagerSelector'
-import { supabase } from '@/lib/supabase'
-import { AdminChatLayoutSplit } from './Chat/AdminChatLayoutSplit'
-
-// Imports comentados para componentes não utilizados:
-// import { AuditoriaClientes } from './AuditoriaClientes'
-// import { BriefingsPanel } from './BriefingsPanel'
-// import { ImportarVendasManuais } from './ImportarVendasManuais'
-// import { ClientUserCreation } from './ClientUserCreation'
+import { LoadingFallback } from './LoadingFallback'
+import * as LazyComponents from './LazyComponents'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -21,7 +12,7 @@ interface AdminDashboardProps {
   activeTab: string
 }
 
-export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
+export default function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
 
@@ -32,13 +23,17 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }, [user, isAdmin])
 
   if (loading) {
-    return <div className="flex items-center justify-center py-8">Carregando...</div>
+    return <LoadingFallback message="Carregando..." />
   }
 
   const renderContent = () => {
     // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
+      return (
+        <Suspense fallback={<LoadingFallback message="Carregando gestão de gestores..." />}>
+          <LazyComponents.GestoresManagement />
+        </Suspense>
+      )
     }
     
     // Navegação por abas
@@ -47,33 +42,18 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return <StatusFunnelDashboard />
 
       case 'documentacao':
-        return <DocumentationViewer />
+        return (
+          <Suspense fallback={<LoadingFallback message="Carregando documentação..." />}>
+            <LazyComponents.DocumentationViewer />
+          </Suspense>
+        )
 
       case 'chat':
-        return <AdminChatLayoutSplit />
-
-      // Cases comentados para menus ocultos (mantidos para não quebrar funcionalidade):
-      /*
-      case 'auditoria':
-        return <AuditoriaClientes />
-
-      case 'briefings':
-        return <BriefingsPanel />
-
-      case 'importar-vendas':
-        return <ImportarVendasManuais />
-
-      case 'criar-usuarios-clientes':
-        return <ClientUserCreation />
-
-      case 'sites':
         return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            <ClientesTable filterType="sites-pendentes" />
-          </div>
+          <Suspense fallback={<LoadingFallback message="Carregando chat..." />}>
+            <LazyComponents.AdminChatLayoutSplit />
+          </Suspense>
         )
-      */
       
       case 'clientes':
       default:
@@ -91,7 +71,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
             
             {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <ClientesTable selectedManager={selectedManager} />
+            <Suspense fallback={<LoadingFallback message="Carregando tabela de clientes..." />}>
+              <LazyComponents.ClientesTable selectedManager={selectedManager} />
+            </Suspense>
           </div>
         )
     }

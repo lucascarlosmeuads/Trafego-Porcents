@@ -93,6 +93,7 @@ export const AdminTableVirtualized = memo(function AdminTableVirtualized({
       <div className="relative">
         <List
           height={Math.min(filteredClientes.length * ROW_HEIGHT, 600)}
+          width="100%"
           itemCount={filteredClientes.length}
           itemSize={ROW_HEIGHT}
           overscanCount={5}

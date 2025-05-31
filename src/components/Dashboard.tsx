@@ -1,13 +1,9 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { AdminDashboard } from './AdminDashboard'
-import { ClienteDashboard } from './ClienteDashboard'
-import { VendedorDashboard } from './VendedorDashboard'
-import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
-import { SitesDashboard } from './SitesDashboard'
-import { GestorDashboard } from './GestorDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
+import { LoadingFallback } from './LoadingFallback'
+import * as LazyComponents from './LazyComponents'
 
 export function Dashboard() {
   const { 
@@ -44,7 +40,7 @@ export function Dashboard() {
     console.log('⏳ [Dashboard] Mostrando loading geral')
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+        <LoadingFallback message="Carregando..." size="lg" />
       </div>
     )
   }
@@ -62,7 +58,11 @@ export function Dashboard() {
   if (isCliente) {
     console.log('✅ [Dashboard] Direcionando para ClienteDashboard')
     console.log('🎯 [Dashboard] Usuário identificado como CLIENTE:', user.email)
-    return <ClienteDashboard />
+    return (
+      <Suspense fallback={<LoadingFallback message="Carregando painel do cliente..." size="lg" />}>
+        <LazyComponents.ClienteDashboard />
+      </Suspense>
+    )
   }
 
   // Vendedor Dashboards
@@ -72,17 +72,29 @@ export function Dashboard() {
     
     if (isSimpleVendedor) {
       console.log('🎯 [Dashboard] Usuário é vendedor simples')
-      return <SimpleVendedorDashboard />
+      return (
+        <Suspense fallback={<LoadingFallback message="Carregando painel do vendedor..." size="lg" />}>
+          <LazyComponents.SimpleVendedorDashboard />
+        </Suspense>
+      )
     }
     
     console.log('🎯 [Dashboard] Usuário é vendedor padrão')
-    return <VendedorDashboard />
+    return (
+      <Suspense fallback={<LoadingFallback message="Carregando painel do vendedor..." size="lg" />}>
+        <LazyComponents.VendedorDashboard />
+      </Suspense>
+    )
   }
 
   // Sites Dashboard
   if (isSites) {
     console.log('✅ [Dashboard] Direcionando para SitesDashboard')
-    return <SitesDashboard />
+    return (
+      <Suspense fallback={<LoadingFallback message="Carregando painel de sites..." size="lg" />}>
+        <LazyComponents.SitesDashboard />
+      </Suspense>
+    )
   }
 
   // Admin/Gestor Dashboards
@@ -100,16 +112,20 @@ export function Dashboard() {
         <div className="flex-1 p-6 overflow-auto">
           {/* Admin Dashboard */}
           {isAdmin && (
-            <AdminDashboard
-              selectedManager={selectedManager}
-              onManagerSelect={setSelectedManager}
-              activeTab={activeTab}
-            />
+            <Suspense fallback={<LoadingFallback message="Carregando painel admin..." />}>
+              <LazyComponents.AdminDashboard
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                activeTab={activeTab}
+              />
+            </Suspense>
           )}
           
           {/* Gestor Dashboard */}
           {isGestor && (
-            <GestorDashboard activeTab={activeTab} />
+            <Suspense fallback={<LoadingFallback message="Carregando painel do gestor..." />}>
+              <LazyComponents.GestorDashboard activeTab={activeTab} />
+            </Suspense>
           )}
         </div>
       </div>
