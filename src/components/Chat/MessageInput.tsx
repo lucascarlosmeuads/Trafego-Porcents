@@ -52,7 +52,7 @@ export function MessageInput({
     }
   }, [onSendMessage])
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
+  const handleKeyDown = (e: React.KeyboardEvent) => {
     // No mobile, não enviar com Enter para permitir quebras de linha
     if (e.key === 'Enter' && !e.shiftKey && window.innerWidth >= 768) {
       e.preventDefault()
@@ -79,7 +79,7 @@ export function MessageInput({
               setMessage(e.target.value)
               adjustTextareaHeight()
             }}
-            onKeyPress={handleKeyPress}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             disabled={disabled || isSending || isRecording}
             className={cn(
