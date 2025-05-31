@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSitesData } from '@/hooks/useSitesData'
@@ -123,8 +122,8 @@ export function SitesDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-lg text-foreground">Carregando...</div>
       </div>
     )
   }
@@ -140,18 +139,18 @@ export function SitesDashboard() {
   })
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       {/* Header */}
-      <div className="bg-white shadow-sm border-b px-6 py-4 flex items-center justify-between">
+      <div className="bg-card border-b border-border px-6 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Sites</h1>
-          <p className="text-sm text-gray-600">{user?.email}</p>
+          <h1 className="text-2xl font-bold text-foreground">Dashboard Sites</h1>
+          <p className="text-sm text-muted-foreground">{user?.email}</p>
         </div>
         <Button
           variant="outline"
           onClick={handleSignOut}
           disabled={isSigningOut}
-          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+          className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 dark:hover:bg-red-950 dark:border-red-800"
         >
           <LogOut className="mr-2 h-4 w-4" />
           {isSigningOut ? 'Saindo...' : 'Sair'}
@@ -164,31 +163,31 @@ export function SitesDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Sites</CardTitle>
+              <CardTitle className="text-sm font-medium text-card-foreground">Total de Sites</CardTitle>
               <Globe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{clientes.length}</div>
+              <div className="text-2xl font-bold text-card-foreground">{clientes.length}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sites Pendentes</CardTitle>
-              <Clock className="h-4 w-4 text-yellow-600" />
+              <CardTitle className="text-sm font-medium text-card-foreground">Sites Pendentes</CardTitle>
+              <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-yellow-600">{sitesPendentes}</div>
+              <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{sitesPendentes}</div>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Sites Finalizados</CardTitle>
-              <CheckCircle className="h-4 w-4 text-green-600" />
+              <CardTitle className="text-sm font-medium text-card-foreground">Sites Finalizados</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{sitesFinalizados}</div>
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{sitesFinalizados}</div>
             </CardContent>
           </Card>
         </div>
@@ -196,12 +195,12 @@ export function SitesDashboard() {
         {/* Lista de Sites */}
         <Card>
           <CardHeader>
-            <CardTitle>Gerenciar Sites</CardTitle>
+            <CardTitle className="text-card-foreground">Gerenciar Sites</CardTitle>
           </CardHeader>
           <CardContent>
             {clientes.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-gray-500">Nenhum site encontrado.</p>
+                <p className="text-muted-foreground">Nenhum site encontrado.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -211,16 +210,16 @@ export function SitesDashboard() {
                   const linkValue = linkInputs[cliente.id] || cliente.link_site || ''
                   
                   return (
-                    <div key={cliente.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                    <div key={cliente.id} className="flex items-center justify-between p-4 bg-muted/20 border border-border rounded-lg">
                       <div className="flex-1">
                         <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-semibold">{cliente.nome_cliente}</h3>
+                          <h3 className="font-semibold text-foreground">{cliente.nome_cliente}</h3>
                           <Badge variant={cliente.site_status === 'finalizado' ? "default" : "secondary"}>
                             {cliente.site_status === 'finalizado' ? "Finalizado" : "Pendente"}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600">{cliente.email_cliente}</p>
-                        <p className="text-sm text-gray-500">
+                        <p className="text-sm text-muted-foreground">{cliente.email_cliente}</p>
+                        <p className="text-sm text-muted-foreground">
                           Gestor: {cliente.email_gestor || 'Não definido'}
                         </p>
                         
@@ -231,7 +230,7 @@ export function SitesDashboard() {
                               placeholder="Cole o link do site aqui..."
                               value={linkValue}
                               onChange={(e) => handleLinkChange(cliente.id, e.target.value)}
-                              className="text-sm"
+                              className="text-sm bg-background border-input text-foreground placeholder:text-muted-foreground"
                             />
                           </div>
                         )}
@@ -243,7 +242,7 @@ export function SitesDashboard() {
                               href={cliente.link_site} 
                               target="_blank" 
                               rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 underline"
+                              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
                             >
                               {cliente.link_site}
                             </a>
