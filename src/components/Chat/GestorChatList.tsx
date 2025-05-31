@@ -6,7 +6,8 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, MessageCircle, User, ArrowRight, Filter, FilterX } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Search, MessageCircle, User, ArrowRight, Filter, FilterX, X } from 'lucide-react'
 import { ChatInterface } from './ChatInterface'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -16,7 +17,11 @@ export function GestorChatList() {
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('')
   const { user } = useAuth()
+
+  // Obter lista única de status das conversas
+  const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversas
     .filter(conversa =>
@@ -24,8 +29,11 @@ export function GestorChatList() {
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
+    .filter(conversa => statusFilter ? conversa.status_campanha === statusFilter : true)
 
   const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
+  const totalFiltradas = conversasFiltradas.length
+  const totalConversas = conversas.length
 
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
@@ -64,6 +72,14 @@ export function GestorChatList() {
         return 'bg-gray-600 text-white hover:bg-gray-700'
     }
   }
+
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setShowOnlyUnread(false)
+    setStatusFilter('')
+  }
+
+  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter
 
   if (selectedChat) {
     return (
@@ -104,6 +120,22 @@ export function GestorChatList() {
           )}
         </div>
         
+        {/* Contador de resultados */}
+        <div className="mb-4 text-sm text-gray-400">
+          Mostrando {totalFiltradas} de {totalConversas} conversas
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="ml-3 h-7 px-3 text-sm text-gray-400 hover:text-white"
+            >
+              <X className="h-4 w-4 mr-1" />
+              Limpar filtros
+            </Button>
+          )}
+        </div>
+        
         {/* Busca */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -115,20 +147,43 @@ export function GestorChatList() {
           />
         </div>
 
-        {/* Filtro de não lidas */}
-        <Button
-          variant={showOnlyUnread ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-          className={`justify-start ${
-            showOnlyUnread 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-              : 'text-gray-300 hover:text-white hover:bg-gray-700'
-          }`}
-        >
-          {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-          {showOnlyUnread ? 'Mostrar todas as conversas' : 'Apenas não lidas'}
-        </Button>
+        {/* Filtros */}
+        <div className="flex gap-3">
+          {/* Filtro de não lidas */}
+          <Button
+            variant={showOnlyUnread ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+            className={`justify-start ${
+              showOnlyUnread 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
+          </Button>
+
+          {/* Filtro por status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-48 h-9 bg-gray-700 border-gray-600 text-white">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-700 border-gray-600">
+              <SelectItem value="" className="text-white hover:bg-gray-600">
+                Todos os status
+              </SelectItem>
+              {availableStatus.map((status) => (
+                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${getStatusBadgeVariant(status).split(' ')[0]}`} />
+                    {status}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Lista de conversas */}
@@ -139,12 +194,10 @@ export function GestorChatList() {
               <MessageCircle className="h-10 w-10 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              {searchTerm || showOnlyUnread ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
+              {hasActiveFilters ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
             </h3>
             <p className="text-gray-400">
-              {searchTerm ? 'Tente buscar por outro termo' : 
-               showOnlyUnread ? 'Nenhuma conversa com mensagens não lidas' :
-               'Aguarde seus clientes iniciarem conversas'}
+              {hasActiveFilters ? 'Tente ajustar os filtros' : 'Aguarde seus clientes iniciarem conversas'}
             </p>
           </div>
         ) : (

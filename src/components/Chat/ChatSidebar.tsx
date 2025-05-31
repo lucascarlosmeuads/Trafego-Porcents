@@ -5,7 +5,8 @@ import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, MessageCircle, User, Filter, FilterX } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Search, MessageCircle, User, Filter, FilterX, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
@@ -19,6 +20,10 @@ interface ChatSidebarProps {
 export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
+  const [statusFilter, setStatusFilter] = useState<string>('')
+
+  // Obter lista única de status das conversas
+  const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversas
     .filter(conversa =>
@@ -26,8 +31,11 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
+    .filter(conversa => statusFilter ? conversa.status_campanha === statusFilter : true)
 
   const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
+  const totalFiltradas = conversasFiltradas.length
+  const totalConversas = conversas.length
 
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
@@ -71,6 +79,14 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     return selectedChat?.email_cliente === conversa.email_cliente
   }
 
+  const clearAllFilters = () => {
+    setSearchTerm('')
+    setShowOnlyUnread(false)
+    setStatusFilter('')
+  }
+
+  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter
+
   return (
     <div className="h-full flex flex-col bg-gray-900">
       {/* Header - fixo */}
@@ -81,6 +97,22 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
             <Badge variant="destructive" className="bg-red-600 text-white">
               {totalNaoLidas} não lidas
             </Badge>
+          )}
+        </div>
+        
+        {/* Contador de resultados */}
+        <div className="mb-3 text-xs text-gray-400">
+          Mostrando {totalFiltradas} de {totalConversas} conversas
+          {hasActiveFilters && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={clearAllFilters}
+              className="ml-2 h-6 px-2 text-xs text-gray-400 hover:text-white"
+            >
+              <X className="h-3 w-3 mr-1" />
+              Limpar filtros
+            </Button>
           )}
         </div>
         
@@ -95,20 +127,43 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
           />
         </div>
 
-        {/* Filtro de não lidas */}
-        <Button
-          variant={showOnlyUnread ? "default" : "ghost"}
-          size="sm"
-          onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-          className={`w-full justify-start ${
-            showOnlyUnread 
-              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-              : 'text-gray-300 hover:text-white hover:bg-gray-700'
-          }`}
-        >
-          {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-          {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
-        </Button>
+        {/* Filtros */}
+        <div className="space-y-2">
+          {/* Filtro de não lidas */}
+          <Button
+            variant={showOnlyUnread ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+            className={`w-full justify-start ${
+              showOnlyUnread 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
+          </Button>
+
+          {/* Filtro por status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full h-9 bg-gray-700 border-gray-600 text-white">
+              <SelectValue placeholder="Filtrar por status" />
+            </SelectTrigger>
+            <SelectContent className="bg-gray-700 border-gray-600">
+              <SelectItem value="" className="text-white hover:bg-gray-600">
+                Todos os status
+              </SelectItem>
+              {availableStatus.map((status) => (
+                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
+                  <div className="flex items-center gap-2">
+                    <div className={`w-3 h-3 rounded-full ${getStatusBadgeVariant(status).split(' ')[0]}`} />
+                    {status}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Lista de conversas - scrollável */}
@@ -119,12 +174,10 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
               <MessageCircle className="h-8 w-8 text-gray-400" />
             </div>
             <h3 className="text-sm font-semibold text-white mb-1">
-              {searchTerm || showOnlyUnread ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
+              {hasActiveFilters ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
             </h3>
             <p className="text-xs text-gray-400">
-              {searchTerm ? 'Tente buscar por outro termo' : 
-               showOnlyUnread ? 'Nenhuma conversa com mensagens não lidas' :
-               'Aguarde seus clientes iniciarem conversas'}
+              {hasActiveFilters ? 'Tente ajustar os filtros' : 'Aguarde seus clientes iniciarem conversas'}
             </p>
           </div>
         ) : (
@@ -133,11 +186,11 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
               key={conversa.email_cliente}
               className={`
                 cursor-pointer transition-all duration-200 hover:shadow-lg
-                ${conversa.tem_mensagens_nao_lidas 
-                  ? 'border-l-4 border-l-red-500 bg-red-900/20 hover:bg-red-900/30 shadow-red-500/20' 
-                  : isSelected(conversa)
-                    ? 'bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400 border-l-4 border-l-blue-400' 
-                    : 'bg-gray-800 border-gray-600 hover:bg-gray-750 border-l-4 border-l-blue-500 hover:border-l-blue-400'
+                ${isSelected(conversa)
+                  ? 'bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400 border-l-4 border-l-blue-400' 
+                  : conversa.tem_mensagens_nao_lidas 
+                    ? 'border-l-4 border-l-red-500 bg-red-900/20 hover:bg-red-900/30 shadow-red-500/20 border-red-500' 
+                    : 'bg-gray-800 border-gray-600 hover:bg-gray-750 border-l-4 border-l-gray-500 hover:border-l-blue-400'
                 }
               `}
               onClick={() => onSelectChat(conversa)}
@@ -146,12 +199,16 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
                   <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-                    conversa.tem_mensagens_nao_lidas 
-                      ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
-                      : 'bg-gradient-to-br from-blue-800 to-blue-900'
+                    isSelected(conversa)
+                      ? 'bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400'
+                      : conversa.tem_mensagens_nao_lidas 
+                        ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
+                        : 'bg-gradient-to-br from-blue-800 to-blue-900'
                   }`}>
                     <User className={`h-6 w-6 ${
-                      conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
+                      isSelected(conversa)
+                        ? 'text-blue-200'
+                        : conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
                     }`} />
                   </div>
                   
@@ -160,10 +217,12 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
                     {/* Nome e timestamp */}
                     <div className="flex items-center justify-between mb-1">
                       <h3 className={`text-sm font-bold truncate pr-2 ${
-                        conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
+                        isSelected(conversa)
+                          ? 'text-blue-100'
+                          : conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
                       }`}>
                         {conversa.nome_cliente}
-                        {conversa.tem_mensagens_nao_lidas && (
+                        {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
                           <span className="ml-1 text-red-400">●</span>
                         )}
                       </h3>
@@ -183,14 +242,16 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
                     
                     {/* Última mensagem */}
                     <p className={`text-xs line-clamp-1 leading-relaxed ${
-                      conversa.tem_mensagens_nao_lidas ? 'text-gray-300 font-medium' : 'text-gray-400'
+                      isSelected(conversa)
+                        ? 'text-blue-200'
+                        : conversa.tem_mensagens_nao_lidas ? 'text-gray-300 font-medium' : 'text-gray-400'
                     }`}>
                       {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                     </p>
                   </div>
                   
                   {/* Badge de mensagens não lidas */}
-                  {conversa.mensagens_nao_lidas > 0 && (
+                  {conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && (
                     <Badge variant="destructive" className="text-xs font-bold px-2 py-1 min-w-[24px] h-6 flex items-center justify-center bg-red-600 text-white animate-pulse">
                       {conversa.mensagens_nao_lidas > 99 ? '99+' : conversa.mensagens_nao_lidas}
                     </Badge>
