@@ -1,14 +1,16 @@
 
-import { useState, Suspense } from 'react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { ClienteWelcome } from './ClienteDashboard/ClienteWelcome'
+import { BriefingForm } from './ClienteDashboard/BriefingForm'
+import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
+import { VendasManager } from './ClienteDashboard/VendasManager'
 import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
-import { LoadingFallback } from './LoadingFallback'
-import * as LazyComponents from './LazyComponents'
+import { ClienteChat } from './Chat/ClienteChat'
 
-export default function ClienteDashboard() {
+export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
   const { cliente, briefing, vendas, arquivos, loading: dataLoading, refetch } = useClienteData(user?.email || '')
@@ -33,7 +35,10 @@ export default function ClienteDashboard() {
     console.log('⏳ [ClienteDashboard] Mostrando loading de autenticação')
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <LoadingFallback message="Verificando autenticação..." size="lg" />
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Verificando autenticação...</p>
+        </div>
       </div>
     )
   }
@@ -56,7 +61,14 @@ export default function ClienteDashboard() {
     
     if (dataLoading) {
       console.log('⏳ [ClienteDashboard] Mostrando loading de dados')
-      return <LoadingFallback message="Carregando dados..." />
+      return (
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+            <p className="text-muted-foreground">Carregando dados...</p>
+          </div>
+        </div>
+      )
     }
 
     switch (activeTab) {
@@ -70,46 +82,36 @@ export default function ClienteDashboard() {
       case 'briefing':
         console.log('✅ [ClienteDashboard] Renderizando BriefingForm')
         return (
-          <Suspense fallback={<LoadingFallback message="Carregando formulário de briefing..." />}>
-            <LazyComponents.BriefingForm 
-              briefing={briefing}
-              emailCliente={user?.email || ''}
-              onBriefingUpdated={refetch}
-            />
-          </Suspense>
+          <BriefingForm 
+            briefing={briefing}
+            emailCliente={user?.email || ''}
+            onBriefingUpdated={refetch}
+          />
         )
       case 'arquivos':
         console.log('✅ [ClienteDashboard] Renderizando ArquivosUpload')
         return (
-          <Suspense fallback={<LoadingFallback message="Carregando gerenciador de arquivos..." />}>
-            <LazyComponents.ArquivosUpload 
-              emailCliente={user?.email || ''}
-              arquivos={arquivos}
-              onArquivosUpdated={refetch}
-            />
-          </Suspense>
+          <ArquivosUpload 
+            emailCliente={user?.email || ''}
+            arquivos={arquivos}
+            onArquivosUpdated={refetch}
+          />
         )
       case 'vendas':
         console.log('✅ [ClienteDashboard] Renderizando VendasManager')
         return (
-          <Suspense fallback={<LoadingFallback message="Carregando gerenciador de vendas..." />}>
-            <LazyComponents.VendasManager 
-              emailCliente={user?.email || ''}
-              vendas={vendas}
-              onVendasUpdated={refetch}
-            />
-          </Suspense>
+          <VendasManager 
+            emailCliente={user?.email || ''}
+            vendas={vendas}
+            onVendasUpdated={refetch}
+          />
         )
       case 'tutoriais':
         console.log('✅ [ClienteDashboard] Renderizando TutorialVideos')
         return <TutorialVideos />
       case 'chat':
         console.log('✅ [ClienteDashboard] Renderizando ClienteChat')
-        return (
-          <Suspense fallback={<LoadingFallback message="Carregando chat..." />}>
-            <LazyComponents.ClienteChat />
-          </Suspense>
-        )
+        return <ClienteChat />
       default:
         console.log('✅ [ClienteDashboard] Renderizando ClienteWelcome (default)')
         return (

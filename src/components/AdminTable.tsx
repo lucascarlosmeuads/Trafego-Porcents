@@ -5,20 +5,11 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Smartphone, Monitor } from 'lucide-react'
 import { AdminTableCards } from './AdminTable/AdminTableCards'
 import { AdminTableDesktop } from './AdminTable/AdminTableDesktop'
-import { AdminTableFilters } from './AdminTable/AdminTableFilters'
 import { useAdminTableLogic } from './AdminTable/useAdminTableLogic'
 import { formatDate, getStatusColor } from './AdminTable/adminTableUtils'
-import { useDebounce } from '@/hooks/utils/useDebounce'
-import { useMemo } from 'react'
 
 export function AdminTable() {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
-  const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [gestorFilter, setGestorFilter] = useState('')
-  
-  // Debounce search for better performance
-  const debouncedSearchTerm = useDebounce(searchTerm, 300)
   
   const {
     clientes,
@@ -28,21 +19,6 @@ export function AdminTable() {
     handleTransferirCliente,
     handleStatusChange
   } = useAdminTableLogic()
-
-  // Memoize filtered clients
-  const filteredClientes = useMemo(() => {
-    return clientes.filter(cliente => {
-      const matchesSearch = !debouncedSearchTerm || 
-        cliente.nome_cliente?.toLowerCase().includes(debouncedSearchTerm.toLowerCase()) ||
-        cliente.telefone?.includes(debouncedSearchTerm) ||
-        cliente.email_cliente?.toLowerCase().includes(debouncedSearchTerm.toLowerCase())
-      
-      const matchesStatus = !statusFilter || cliente.status_campanha === statusFilter
-      const matchesGestor = !gestorFilter || cliente.email_gestor === gestorFilter
-      
-      return matchesSearch && matchesStatus && matchesGestor
-    })
-  }, [clientes, debouncedSearchTerm, statusFilter, gestorFilter])
 
   if (loading) {
     return (
@@ -62,7 +38,7 @@ export function AdminTable() {
       <CardHeader>
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <CardTitle className="text-lg sm:text-xl text-card-foreground">
-            Todos os Clientes ({filteredClientes.length} de {clientes.length})
+            Todos os Clientes ({clientes.length})
           </CardTitle>
           <Button
             onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
@@ -74,22 +50,12 @@ export function AdminTable() {
             {viewMode === 'table' ? 'Cartões' : 'Tabela'}
           </Button>
         </div>
-        
-        <AdminTableFilters
-          searchTerm={searchTerm}
-          onSearchChange={setSearchTerm}
-          statusFilter={statusFilter}
-          onStatusFilterChange={setStatusFilter}
-          gestorFilter={gestorFilter}
-          onGestorFilterChange={setGestorFilter}
-          gestores={gestores}
-        />
       </CardHeader>
       <CardContent className="p-0 sm:p-6">
         {/* Visualização em cartões para mobile */}
         {viewMode === 'cards' && (
           <AdminTableCards
-            clientes={filteredClientes}
+            clientes={clientes}
             gestores={gestores}
             transferindoCliente={transferindoCliente}
             onTransferirCliente={handleTransferirCliente}
@@ -101,7 +67,7 @@ export function AdminTable() {
         {/* Tabela para desktop */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
           <AdminTableDesktop
-            clientes={filteredClientes}
+            clientes={clientes}
             gestores={gestores}
             transferindoCliente={transferindoCliente}
             onTransferirCliente={handleTransferirCliente}
@@ -110,12 +76,6 @@ export function AdminTable() {
             getStatusColor={getStatusColor}
           />
         </div>
-        
-        {filteredClientes.length === 0 && clientes.length > 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            Nenhum cliente encontrado com os filtros aplicados
-          </div>
-        )}
         
         {clientes.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
