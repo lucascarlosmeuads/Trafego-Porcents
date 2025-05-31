@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -212,6 +213,8 @@ export function useChatConversas(gestorFiltro?: string | null) {
     try {
       setLoading(true)
       
+      console.log('Carregando conversas para:', user.email, 'Tipo:', isGestor ? 'Gestor' : 'Admin')
+      
       // Buscar clientes do gestor
       let clientesQuery = supabase
         .from('todos_clientes')
@@ -228,9 +231,13 @@ export function useChatConversas(gestorFiltro?: string | null) {
 
       if (clientesError) throw clientesError
 
+      console.log('Clientes encontrados:', clientes?.length || 0)
+
       const conversasComMensagens = await Promise.all(
         (clientes || []).map(async (cliente) => {
-          // Buscar última mensagem
+          console.log(`Processando cliente: ${cliente.nome_cliente} (${cliente.email_cliente})`)
+          
+          // Buscar última mensagem específica para este cliente e gestor
           const { data: ultimaMensagem } = await supabase
             .from('chat_mensagens')
             .select('conteudo, created_at')
@@ -240,14 +247,18 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .limit(1)
             .single()
 
-          // Contar mensagens não lidas
+          console.log(`Última mensagem para ${cliente.nome_cliente}:`, ultimaMensagem?.conteudo || 'Nenhuma')
+
+          // Contar mensagens não lidas específicas para este cliente e gestor
           const { count: naoLidas } = await supabase
             .from('chat_mensagens')
             .select('*', { count: 'exact', head: true })
             .eq('email_cliente', cliente.email_cliente)
             .eq('email_gestor', cliente.email_gestor)
             .eq('lida', false)
-            .neq('remetente', isGestor ? 'gestor' : 'cliente')
+            .eq('remetente', 'cliente') // Sempre mensagens do cliente para o gestor
+
+          console.log(`Mensagens não lidas para ${cliente.nome_cliente}:`, naoLidas || 0)
 
           return {
             email_cliente: cliente.email_cliente,
@@ -274,6 +285,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
         return dataB - dataA
       })
 
+      console.log('Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
     } catch (err) {
       console.error('Erro ao carregar conversas:', err)
@@ -295,6 +307,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
           table: 'chat_mensagens'
         },
         () => {
+          console.log('Realtime: mudança nas mensagens, recarregando conversas')
           carregarConversas()
         }
       )

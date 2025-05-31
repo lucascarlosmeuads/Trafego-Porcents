@@ -20,6 +20,12 @@ export function GestorChatList() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const { user } = useAuth()
 
+  // Debug: log das conversas carregadas
+  console.log('Conversas carregadas:', conversas.length)
+  conversas.forEach(c => {
+    console.log(`Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}`)
+  })
+
   // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
 
@@ -80,6 +86,24 @@ export function GestorChatList() {
   }
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
+
+  const handleSelectChat = (conversa: ChatConversaPreview) => {
+    console.log('Selecionando chat:', conversa.email_cliente, 'Mensagens não lidas:', conversa.tem_mensagens_nao_lidas)
+    setSelectedChat(conversa)
+  }
+
+  // Função para determinar as classes CSS baseadas no estado
+  const getCardClasses = (conversa: ChatConversaPreview) => {
+    const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
+    
+    // A lógica de seleção não se aplica aqui pois ao clicar já navega para o chat
+    // Apenas verificar se tem mensagens não lidas
+    if (conversa.tem_mensagens_nao_lidas) {
+      return `${baseClasses} bg-red-900/20 border-red-500 hover:bg-red-900/30 shadow-red-500/20 border-l-red-500`
+    }
+    
+    return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
+  }
 
   if (selectedChat) {
     return (
@@ -204,12 +228,8 @@ export function GestorChatList() {
           conversasFiltradas.map((conversa) => (
             <Card 
               key={conversa.email_cliente}
-              className={`transition-all duration-200 cursor-pointer hover:shadow-xl ${
-                conversa.tem_mensagens_nao_lidas 
-                  ? 'bg-red-900/20 border-red-500 hover:bg-red-900/30 shadow-red-500/20 border-l-4 border-l-red-500' 
-                  : 'bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-4 border-l-blue-500 hover:border-l-blue-400'
-              }`}
-              onClick={() => setSelectedChat(conversa)}
+              className={getCardClasses(conversa)}
+              onClick={() => handleSelectChat(conversa)}
             >
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">

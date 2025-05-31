@@ -87,6 +87,70 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
+  const handleSelectChat = (conversa: ChatConversaPreview) => {
+    console.log('Selecionando chat:', conversa.email_cliente, 'Mensagens não lidas:', conversa.tem_mensagens_nao_lidas)
+    onSelectChat(conversa)
+  }
+
+  // Função para determinar as classes CSS baseadas no estado
+  const getCardClasses = (conversa: ChatConversaPreview) => {
+    const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
+    
+    // Primeiro: verificar se está selecionado
+    if (isSelected(conversa)) {
+      return `${baseClasses} bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400 border-l-blue-400`
+    }
+    
+    // Segundo: verificar se tem mensagens não lidas (apenas se não estiver selecionado)
+    if (conversa.tem_mensagens_nao_lidas) {
+      return `${baseClasses} bg-red-900/20 hover:bg-red-900/30 shadow-red-500/20 border-red-500`
+    }
+    
+    // Terceiro: estado normal (cinza)
+    return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750 border-l-gray-500 hover:border-l-blue-400`
+  }
+
+  // Função para determinar as classes do avatar
+  const getAvatarClasses = (conversa: ChatConversaPreview) => {
+    const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
+    
+    if (isSelected(conversa)) {
+      return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
+      return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
+    }
+    
+    return `${baseClasses} bg-gradient-to-br from-blue-800 to-blue-900`
+  }
+
+  // Função para determinar as classes do texto
+  const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
+    if (isSelected(conversa)) {
+      return isTitle ? 'text-blue-100' : 'text-blue-200'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
+      return isTitle ? 'text-red-100' : 'text-gray-300 font-medium'
+    }
+    
+    return isTitle ? 'text-white' : 'text-gray-400'
+  }
+
+  // Função para determinar as classes do ícone do usuário
+  const getUserIconClasses = (conversa: ChatConversaPreview) => {
+    if (isSelected(conversa)) {
+      return 'text-blue-200'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
+      return 'text-red-200'
+    }
+    
+    return 'text-blue-300'
+  }
+
   return (
     <div className="h-full flex flex-col bg-gray-900">
       {/* Header - fixo */}
@@ -184,43 +248,21 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
           conversasFiltradas.map((conversa) => (
             <Card 
               key={conversa.email_cliente}
-              className={`
-                cursor-pointer transition-all duration-200 hover:shadow-lg
-                ${isSelected(conversa)
-                  ? 'bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400 border-l-4 border-l-blue-400' 
-                  : conversa.tem_mensagens_nao_lidas 
-                    ? 'border-l-4 border-l-red-500 bg-red-900/20 hover:bg-red-900/30 shadow-red-500/20 border-red-500' 
-                    : 'bg-gray-800 border-gray-600 hover:bg-gray-750 border-l-4 border-l-gray-500 hover:border-l-blue-400'
-                }
-              `}
-              onClick={() => onSelectChat(conversa)}
+              className={getCardClasses(conversa)}
+              onClick={() => handleSelectChat(conversa)}
             >
               <CardContent className="p-3">
                 <div className="flex items-start gap-3">
                   {/* Avatar */}
-                  <div className={`h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg ${
-                    isSelected(conversa)
-                      ? 'bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400'
-                      : conversa.tem_mensagens_nao_lidas 
-                        ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
-                        : 'bg-gradient-to-br from-blue-800 to-blue-900'
-                  }`}>
-                    <User className={`h-6 w-6 ${
-                      isSelected(conversa)
-                        ? 'text-blue-200'
-                        : conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
-                    }`} />
+                  <div className={getAvatarClasses(conversa)}>
+                    <User className={`h-6 w-6 ${getUserIconClasses(conversa)}`} />
                   </div>
                   
                   {/* Informações */}
                   <div className="flex-1 min-w-0">
                     {/* Nome e timestamp */}
                     <div className="flex items-center justify-between mb-1">
-                      <h3 className={`text-sm font-bold truncate pr-2 ${
-                        isSelected(conversa)
-                          ? 'text-blue-100'
-                          : conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
-                      }`}>
+                      <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
                         {conversa.nome_cliente}
                         {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
                           <span className="ml-1 text-red-400">●</span>
@@ -241,11 +283,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
                     </div>
                     
                     {/* Última mensagem */}
-                    <p className={`text-xs line-clamp-1 leading-relaxed ${
-                      isSelected(conversa)
-                        ? 'text-blue-200'
-                        : conversa.tem_mensagens_nao_lidas ? 'text-gray-300 font-medium' : 'text-gray-400'
-                    }`}>
+                    <p className={`text-xs line-clamp-1 leading-relaxed ${getTextClasses(conversa)}`}>
                       {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                     </p>
                   </div>
