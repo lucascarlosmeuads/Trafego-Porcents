@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
   BarChart3, 
   FileText, 
@@ -9,7 +10,8 @@ import {
   TrendingUp, 
   PlayCircle,
   MessageCircle,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react'
 
 interface ClienteSidebarProps {
@@ -18,7 +20,7 @@ interface ClienteSidebarProps {
 }
 
 export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) {
-  const { signOut } = useAuth()
+  const { user, currentManagerName, signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const menuItems = [
@@ -71,12 +73,42 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
     }
   }
 
+  // Função para gerar iniciais do nome
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
   return (
     <aside className="w-64 bg-card border-r border-border flex flex-col">
+      {/* Header com informações do usuário */}
       <div className="p-6 border-b border-border">
-        <h2 className="text-xl font-bold text-card-foreground">Painel do Cliente</h2>
+        <h2 className="text-xl font-bold text-card-foreground mb-4">Painel do Cliente</h2>
+        
+        {/* Perfil do usuário */}
+        <div className="flex items-center space-x-3 p-3 rounded-lg bg-accent/50">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {currentManagerName ? getInitials(currentManagerName) : <User className="h-5 w-5" />}
+            </AvatarFallback>
+          </Avatar>
+          
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-card-foreground truncate">
+              {currentManagerName || 'Usuário'}
+            </p>
+            <p className="text-xs text-muted-foreground truncate">
+              {user?.email || 'Carregando...'}
+            </p>
+          </div>
+        </div>
       </div>
       
+      {/* Menu de navegação */}
       <nav className="flex-1 p-4 space-y-2">
         {menuItems.map((item) => (
           <Button
