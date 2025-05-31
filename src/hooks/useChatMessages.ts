@@ -189,18 +189,6 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     }
   }, [carregarMensagens, user?.email])
 
-  // CORREÇÃO ETAPA 3: Remover auto-marcação como lidas - isso será feito manualmente quando o gestor abrir o chat
-  // useEffect(() => {
-  //   if (mensagens.length > 0 && !isCliente) {
-  //     // Pequeno delay para garantir que a conversa foi carregada
-  //     const timer = setTimeout(() => {
-  //       marcarTodasComoLidas()
-  //     }, 1000)
-      
-  //     return () => clearTimeout(timer)
-  //   }
-  // }, [emailCliente, emailGestor, marcarTodasComoLidas, isCliente])
-
   return {
     mensagens,
     loading,
@@ -229,6 +217,8 @@ export function useChatConversas(gestorFiltro?: string | null) {
       let clientesQuery = supabase
         .from('todos_clientes')
         .select('email_cliente, nome_cliente, status_campanha, email_gestor')
+        .not('email_cliente', 'is', null)
+        .not('nome_cliente', 'is', null)
 
       if (isGestor) {
         clientesQuery = clientesQuery.eq('email_gestor', user.email)
@@ -311,6 +301,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
   useEffect(() => {
     carregarConversas()
 
+    // CORREÇÃO: Configurar realtime com menor delay para atualizações mais rápidas
     const channel = supabase
       .channel('conversas-changes')
       .on(
@@ -322,7 +313,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
         },
         () => {
           console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens, recarregando conversas')
-          carregarConversas()
+          // Debounce para evitar múltiplas chamadas
+          setTimeout(() => {
+            carregarConversas()
+          }, 300)
         }
       )
       .subscribe()

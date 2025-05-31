@@ -47,10 +47,18 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     }
   }
 
-  // Obter lista única de status das conversas
-  const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
+  // CORREÇÃO: Filtrar conversas válidas primeiro
+  const conversasValidas = conversas.filter(c => 
+    c.email_cliente && 
+    c.email_cliente.trim() !== '' && 
+    c.nome_cliente && 
+    c.nome_cliente.trim() !== ''
+  )
 
-  const conversasFiltradas = conversas
+  // Obter lista única de status das conversas
+  const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
+
+  const conversasFiltradas = conversasValidas
     .filter(conversa =>
       conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -58,9 +66,9 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
+  const totalNaoLidas = conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
   const totalFiltradas = conversasFiltradas.length
-  const totalConversas = conversas.length
+  const totalConversas = conversasValidas.length
 
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
@@ -100,9 +108,16 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     }
   }
 
+  // CORREÇÃO: Função isSelected mais rigorosa
   const isSelected = (conversa: ChatConversaPreview) => {
-    const isSelectedChat = selectedChat?.email_cliente === conversa.email_cliente
-    console.log(`🔍 [ChatSidebar] Verificando seleção para ${conversa.email_cliente}:`, isSelectedChat)
+    if (!selectedChat || !conversa) return false
+    const isSelectedChat = selectedChat.email_cliente === conversa.email_cliente && 
+                          selectedChat.email_gestor === conversa.email_gestor
+    console.log(`🔍 [ChatSidebar] Verificando seleção para ${conversa.email_cliente}:`, {
+      isSelectedChat,
+      selectedEmail: selectedChat?.email_cliente,
+      conversaEmail: conversa.email_cliente
+    })
     return isSelectedChat
   }
 
@@ -115,7 +130,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = async (conversa: ChatConversaPreview) => {
-    console.log('🎯 [ChatSidebar] === SELECIONANDO CHAT ===')
+    console.log('🎯 [ChatSidebar] === INÍCIO SELEÇÃO CHAT ===')
     console.log('🎯 [ChatSidebar] Chat clicado:', {
       cliente: conversa.email_cliente,
       gestor: conversa.email_gestor,
@@ -123,24 +138,26 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       mensagensNaoLidas: conversa.mensagens_nao_lidas,
       jaEstaSelecionado: isSelected(conversa)
     })
-    console.log('🎯 [ChatSidebar] Chat atualmente selecionado:', {
-      emailCliente: selectedChat?.email_cliente || 'nenhum',
-      emailGestor: selectedChat?.email_gestor || 'nenhum'
-    })
 
-    // CORREÇÃO: Marcar como lidas as mensagens do chat QUE ESTÁ SENDO CLICADO
-    if (conversa.tem_mensagens_nao_lidas && !isSelected(conversa)) {
-      console.log('📖 [ChatSidebar] Chat tem mensagens não lidas, marcando como lidas...')
+    // CORREÇÃO: Verificar se já está selecionado ANTES de marcar como lidas
+    const jaEstaSelecionado = isSelected(conversa)
+    
+    // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
+    if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
+      console.log('📖 [ChatSidebar] Marcando mensagens como lidas...')
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
+      
+      // AGUARDAR um pouco para a atualização do banco
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
 
     console.log('✅ [ChatSidebar] Chamando onSelectChat para:', conversa.email_cliente)
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS com hierarquia mais específica e logs
+  // CORREÇÃO: Lógica de classes CSS mais específica e hierárquica
   const getCardClasses = (conversa: ChatConversaPreview) => {
-    const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
+    const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
     const naoLido = conversa.tem_mensagens_nao_lidas
     
@@ -150,19 +167,17 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       selectedChatEmail: selectedChat?.email_cliente
     })
     
-    // 1. PRIMEIRO: Verificar se está selecionado (AZUL) - PRIORIDADE MÁXIMA
+    // HIERARQUIA CORRETA: 1º Selecionado (AZUL), 2º Não Lido (VERMELHO), 3º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [ChatSidebar] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
-      return `${baseClasses} !bg-blue-900 !border-blue-400 shadow-lg ring-2 ring-blue-400/50`
+      return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
     }
     
-    // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
     if (naoLido) {
       console.log(`🔴 [ChatSidebar] Card NÃO LIDO (VERMELHO): ${conversa.email_cliente}`)
-      return `${baseClasses} !bg-red-900/40 hover:!bg-red-900/50 !border-red-500 shadow-red-500/20`
+      return `${baseClasses} !bg-red-900/50 hover:!bg-red-900/60 !border-red-500 shadow-red-500/30`
     }
     
-    // 3. TERCEIRO: Estado padrão (CINZA) - conversas já lidas
     console.log(`⚪ [ChatSidebar] Card PADRÃO (CINZA): ${conversa.email_cliente}`)
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
@@ -302,9 +317,9 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
             </p>
           </div>
         ) : (
-          conversasFiltradas.map((conversa) => (
+          conversasFiltradas.map((conversa, index) => (
             <Card 
-              key={`conversa-${conversa.email_cliente}-${conversa.email_gestor}`}
+              key={`conversa-${conversa.email_cliente}-${conversa.email_gestor}-${index}`}
               className={getCardClasses(conversa)}
               onClick={() => handleSelectChat(conversa)}
             >

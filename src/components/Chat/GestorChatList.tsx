@@ -45,16 +45,24 @@ export function GestorChatList() {
     }
   }
 
+  // CORREÇÃO: Filtrar conversas válidas primeiro
+  const conversasValidas = conversas.filter(c => 
+    c.email_cliente && 
+    c.email_cliente.trim() !== '' && 
+    c.nome_cliente && 
+    c.nome_cliente.trim() !== ''
+  )
+
   // Debug: log das conversas carregadas
-  console.log('📋 [GestorChatList] Conversas carregadas:', conversas.length)
-  conversas.forEach(c => {
+  console.log('📋 [GestorChatList] Conversas válidas carregadas:', conversasValidas.length)
+  conversasValidas.forEach(c => {
     console.log(`📝 [GestorChatList] Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}, Não lidas: ${c.mensagens_nao_lidas}`)
   })
 
   // Obter lista única de status das conversas
-  const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
+  const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
-  const conversasFiltradas = conversas
+  const conversasFiltradas = conversasValidas
     .filter(conversa =>
       conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
@@ -62,9 +70,9 @@ export function GestorChatList() {
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
+  const totalNaoLidas = conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
   const totalFiltradas = conversasFiltradas.length
-  const totalConversas = conversas.length
+  const totalConversas = conversasValidas.length
 
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
@@ -112,8 +120,21 @@ export function GestorChatList() {
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
+  // CORREÇÃO: Função isSelected mais rigorosa
+  const isSelected = (conversa: ChatConversaPreview) => {
+    if (!selectedChat || !conversa) return false
+    const isSelectedChat = selectedChat.email_cliente === conversa.email_cliente && 
+                          selectedChat.email_gestor === conversa.email_gestor
+    console.log(`🔍 [GestorChatList] Verificando seleção para ${conversa.email_cliente}:`, {
+      isSelectedChat,
+      selectedEmail: selectedChat?.email_cliente,
+      conversaEmail: conversa.email_cliente
+    })
+    return isSelectedChat
+  }
+
   const handleSelectChat = async (conversa: ChatConversaPreview) => {
-    console.log('🎯 [GestorChatList] === SELECIONANDO CHAT ===')
+    console.log('🎯 [GestorChatList] === INÍCIO SELEÇÃO CHAT ===')
     console.log('🎯 [GestorChatList] Chat clicado:', {
       cliente: conversa.email_cliente,
       gestor: conversa.email_gestor,
@@ -121,31 +142,26 @@ export function GestorChatList() {
       mensagensNaoLidas: conversa.mensagens_nao_lidas,
       jaEstaSelecionado: isSelected(conversa)
     })
-    console.log('🎯 [GestorChatList] Chat atualmente selecionado:', {
-      emailCliente: selectedChat?.email_cliente || 'nenhum',
-      emailGestor: selectedChat?.email_gestor || 'nenhum'
-    })
 
-    // CORREÇÃO: Marcar como lidas as mensagens do chat QUE ESTÁ SENDO CLICADO
-    if (conversa.tem_mensagens_nao_lidas && selectedChat?.email_cliente !== conversa.email_cliente) {
-      console.log('📖 [GestorChatList] Chat tem mensagens não lidas, marcando como lidas...')
+    // CORREÇÃO: Verificar se já está selecionado ANTES de marcar como lidas
+    const jaEstaSelecionado = isSelected(conversa)
+    
+    // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
+    if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
+      console.log('📖 [GestorChatList] Marcando mensagens como lidas...')
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
+      
+      // AGUARDAR um pouco para a atualização do banco
+      await new Promise(resolve => setTimeout(resolve, 500))
     }
 
     console.log('✅ [GestorChatList] Definindo chat selecionado para:', conversa.email_cliente)
     setSelectedChat(conversa)
   }
 
-  // CORREÇÃO: Verificar se conversa está selecionada 
-  const isSelected = (conversa: ChatConversaPreview) => {
-    const isSelectedChat = selectedChat?.email_cliente === conversa.email_cliente
-    console.log(`🔍 [GestorChatList] Verificando seleção para ${conversa.email_cliente}:`, isSelectedChat)
-    return isSelectedChat
-  }
-
-  // CORREÇÃO: Lógica de classes CSS com hierarquia mais específica e logs
+  // CORREÇÃO: Lógica de classes CSS mais específica e hierárquica
   const getCardClasses = (conversa: ChatConversaPreview) => {
-    const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
+    const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
     const naoLido = conversa.tem_mensagens_nao_lidas
     
@@ -155,19 +171,17 @@ export function GestorChatList() {
       selectedChatEmail: selectedChat?.email_cliente
     })
     
-    // 1. PRIMEIRO: Verificar se está selecionado (AZUL) - PRIORIDADE MÁXIMA
+    // HIERARQUIA CORRETA: 1º Selecionado (AZUL), 2º Não Lido (VERMELHO), 3º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [GestorChatList] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
-      return `${baseClasses} !bg-blue-900 !border-blue-400 shadow-lg ring-2 ring-blue-400/50`
+      return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
     }
     
-    // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
     if (naoLido) {
       console.log(`🔴 [GestorChatList] Card NÃO LIDO (VERMELHO): ${conversa.email_cliente}`)
-      return `${baseClasses} !bg-red-900/30 !border-red-500 hover:!bg-red-900/40 shadow-red-500/20`
+      return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
     }
     
-    // 3. TERCEIRO: Estado padrão (CINZA)
     console.log(`⚪ [GestorChatList] Card PADRÃO (CINZA): ${conversa.email_cliente}`)
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
@@ -292,9 +306,9 @@ export function GestorChatList() {
             </p>
           </div>
         ) : (
-          conversasFiltradas.map((conversa) => (
+          conversasFiltradas.map((conversa, index) => (
             <Card 
-              key={`gestor-conversa-${conversa.email_cliente}-${conversa.email_gestor}`}
+              key={`gestor-conversa-${conversa.email_cliente}-${conversa.email_gestor}-${index}`}
               className={getCardClasses(conversa)}
               onClick={() => handleSelectChat(conversa)}
             >
