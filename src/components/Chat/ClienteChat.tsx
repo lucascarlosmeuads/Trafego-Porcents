@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react'
 import { ChatInterface } from './ChatInterface'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
+import { ArrowLeft, MessageCircle } from 'lucide-react'
 
 export function ClienteChat() {
   const { user } = useAuth()
@@ -12,6 +14,7 @@ export function ClienteChat() {
     status_campanha: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
+  const [showChat, setShowChat] = useState(false)
 
   useEffect(() => {
     const carregarDadosCliente = async () => {
@@ -55,14 +58,81 @@ export function ClienteChat() {
     )
   }
 
+  // Mobile: mostrar lista de chats ou chat específico
+  if (!showChat) {
+    return (
+      <div className="h-full flex flex-col">
+        {/* Header mobile */}
+        <div className="bg-card border-b p-4 md:hidden">
+          <h2 className="text-xl font-bold text-card-foreground">Conversas</h2>
+          <p className="text-sm text-muted-foreground">
+            Converse com seu gestor sobre sua campanha
+          </p>
+        </div>
+
+        {/* Lista de conversas (por enquanto só uma) */}
+        <div className="flex-1 p-4">
+          <Button
+            onClick={() => setShowChat(true)}
+            className="w-full justify-start h-auto p-4 bg-card hover:bg-accent border border-border"
+            variant="outline"
+          >
+            <div className="flex items-center gap-3 w-full">
+              <div className="h-12 w-12 bg-primary/10 rounded-full flex items-center justify-center">
+                <MessageCircle className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 text-left">
+                <h3 className="font-semibold text-card-foreground">
+                  Conversa com Gestor
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  Status: {clienteData.status_campanha}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Toque para abrir o chat
+                </p>
+              </div>
+            </div>
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  // Chat específico
   return (
-    <div className="h-full">
-      <ChatInterface
-        emailCliente={user?.email || ''}
-        emailGestor={clienteData.email_gestor}
-        nomeCliente={clienteData.nome_cliente}
-        statusCampanha={clienteData.status_campanha}
-      />
+    <div className="h-full flex flex-col">
+      {/* Header com botão voltar - mobile */}
+      <div className="bg-card border-b p-3 flex items-center gap-3 md:hidden">
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setShowChat(false)}
+          className="flex-shrink-0"
+        >
+          <ArrowLeft className="h-4 w-4" />
+        </Button>
+        <div className="flex-1 min-w-0">
+          <h2 className="font-semibold text-card-foreground truncate">
+            Chat com Gestor
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            {clienteData.status_campanha}
+          </p>
+        </div>
+      </div>
+
+      {/* Chat interface */}
+      <div className="flex-1 min-h-0">
+        <ChatInterface
+          emailCliente={user?.email || ''}
+          emailGestor={clienteData.email_gestor}
+          nomeCliente={clienteData.nome_cliente}
+          statusCampanha={clienteData.status_campanha}
+          onBack={() => setShowChat(false)}
+          showBackButton={false} // Já temos o header customizado
+        />
+      </div>
     </div>
   )
 }

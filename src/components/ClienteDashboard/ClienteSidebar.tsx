@@ -19,6 +19,8 @@ interface ClienteSidebarProps {
   onTabChange: (tab: string) => void
 }
 
+// DEPRECATED: Use ClienteSidebarResponsive instead
+// This component is kept for backward compatibility
 export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) {
   const { user, currentManagerName, signOut } = useAuth()
   const [isSigningOut, setIsSigningOut] = useState(false)
@@ -84,7 +86,7 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
   }
 
   return (
-    <aside className="w-64 bg-card border-r border-border flex flex-col">
+    <aside className="w-64 bg-card border-r border-border flex-col hidden lg:flex">
       {/* Header com informações do usuário */}
       <div className="p-6 border-b border-border">
         <h2 className="text-xl font-bold text-card-foreground mb-4">Painel do Cliente</h2>

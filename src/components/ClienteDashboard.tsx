@@ -6,9 +6,11 @@ import { ClienteWelcome } from './ClienteDashboard/ClienteWelcome'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
-import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { ClienteChat } from './Chat/ClienteChat'
+import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
+import { MobileHeader } from './ClienteDashboard/MobileHeader'
 
 export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
@@ -21,13 +23,6 @@ export function ClienteDashboard() {
     authLoading, 
     dataLoading,
     activeTab
-  })
-  console.log('🔍 [ClienteDashboard] Dados do cliente:', {
-    cliente: cliente?.nome_cliente,
-    clienteStatus: cliente?.status_campanha,
-    briefingExists: !!briefing,
-    vendasCount: vendas?.length,
-    arquivosCount: arquivos?.length
   })
 
   // Show loading while authentication is being checked
@@ -44,7 +39,6 @@ export function ClienteDashboard() {
   }
 
   // If user is not authenticated, this should be handled by the parent component
-  // but we'll add a fallback just in case
   if (!user) {
     console.log('❌ [ClienteDashboard] Usuário não autenticado, redirecionando...')
     return (
@@ -73,14 +67,12 @@ export function ClienteDashboard() {
 
     switch (activeTab) {
       case 'overview':
-        console.log('✅ [ClienteDashboard] Renderizando ClienteWelcome')
         return (
           <ClienteWelcome 
             onTabChange={setActiveTab}
           />
         )
       case 'briefing':
-        console.log('✅ [ClienteDashboard] Renderizando BriefingForm')
         return (
           <BriefingForm 
             briefing={briefing}
@@ -89,7 +81,6 @@ export function ClienteDashboard() {
           />
         )
       case 'arquivos':
-        console.log('✅ [ClienteDashboard] Renderizando ArquivosUpload')
         return (
           <ArquivosUpload 
             emailCliente={user?.email || ''}
@@ -98,7 +89,6 @@ export function ClienteDashboard() {
           />
         )
       case 'vendas':
-        console.log('✅ [ClienteDashboard] Renderizando VendasManager')
         return (
           <VendasManager 
             emailCliente={user?.email || ''}
@@ -107,13 +97,10 @@ export function ClienteDashboard() {
           />
         )
       case 'tutoriais':
-        console.log('✅ [ClienteDashboard] Renderizando TutorialVideos')
         return <TutorialVideos />
       case 'chat':
-        console.log('✅ [ClienteDashboard] Renderizando ClienteChat')
         return <ClienteChat />
       default:
-        console.log('✅ [ClienteDashboard] Renderizando ClienteWelcome (default)')
         return (
           <ClienteWelcome 
             onTabChange={setActiveTab}
@@ -122,19 +109,20 @@ export function ClienteDashboard() {
     }
   }
 
-  console.log('✅ [ClienteDashboard] Renderizando dashboard principal para:', user.email)
-  console.log('🎯 [ClienteDashboard] Componente que será renderizado:', activeTab === 'overview' ? 'ClienteWelcome' : activeTab)
-
   return (
-    <div className="flex h-screen bg-background">
-      <ClienteSidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <main className="flex-1 overflow-auto p-6 bg-background">
-          {renderContent()}
-        </main>
+    <SidebarProvider defaultOpen={false}>
+      <div className="min-h-screen flex w-full bg-background">
+        <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <SidebarInset className="flex-1">
+          <MobileHeader activeTab={activeTab} />
+          
+          <main className="flex-1 p-4 md:p-6">
+            {renderContent()}
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   )
 }
 

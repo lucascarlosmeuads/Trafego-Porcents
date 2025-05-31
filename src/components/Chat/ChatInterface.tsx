@@ -61,56 +61,59 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
-      {/* Header do chat */}
-      <div className="border-b bg-gray-50 p-4 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          {showBackButton && (
-            <Button variant="ghost" size="icon" onClick={onBack}>
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          )}
-          
-          <div className="flex items-center gap-2 flex-1">
-            <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="h-5 w-5 text-blue-600" />
-            </div>
+    <div className="flex flex-col h-full bg-background">
+      {/* Header do chat - apenas para desktop ou quando showBackButton = true */}
+      {(showBackButton || window.innerWidth >= 768) && (
+        <div className="border-b bg-card p-4 flex-shrink-0">
+          <div className="flex items-center gap-3">
+            {showBackButton && (
+              <Button variant="ghost" size="icon" onClick={onBack}>
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            )}
             
-            <div className="flex-1">
-              <h3 className="font-semibold text-gray-900">{nomeCliente}</h3>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{emailCliente}</span>
-                {statusCampanha && (
-                  <Badge variant="secondary" className="text-xs">
-                    {statusCampanha}
-                  </Badge>
-                )}
+            <div className="flex items-center gap-2 flex-1">
+              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              
+              <div className="flex-1">
+                <h3 className="font-semibold text-card-foreground">{nomeCliente}</h3>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">{emailCliente}</span>
+                  {statusCampanha && (
+                    <Badge variant="secondary" className="text-xs">
+                      {statusCampanha}
+                    </Badge>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Botão marcar como lida */}
-          {mensagensNaoLidas > 0 && !isCliente && (
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={handleMarcarTodasLidas}
-              className="flex items-center gap-2"
-            >
-              <CheckCheck className="h-4 w-4" />
-              Marcar como lida ({mensagensNaoLidas})
-            </Button>
-          )}
+            {/* Botão marcar como lida */}
+            {mensagensNaoLidas > 0 && !isCliente && (
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleMarcarTodasLidas}
+                className="flex items-center gap-2"
+              >
+                <CheckCheck className="h-4 w-4" />
+                <span className="hidden sm:inline">Marcar como lida</span>
+                <span className="sm:hidden">({mensagensNaoLidas})</span>
+              </Button>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Área de mensagens - ocupa todo espaço disponível */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
+      <div className="flex-1 overflow-y-auto p-3 md:p-4 space-y-2 min-h-0">
         {mensagens.length === 0 ? (
           <div className="text-center py-8">
-            <div className="text-gray-400 mb-2">💬</div>
-            <p className="text-gray-600">Nenhuma mensagem ainda</p>
-            <p className="text-sm text-gray-500">
+            <div className="text-muted-foreground mb-2">💬</div>
+            <p className="text-muted-foreground">Nenhuma mensagem ainda</p>
+            <p className="text-sm text-muted-foreground">
               {isCliente ? 'Inicie uma conversa com seu gestor!' : 'Aguardando mensagem do cliente'}
             </p>
           </div>
@@ -129,8 +132,8 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input de mensagem - sempre visível */}
-      <div className="flex-shrink-0">
+      {/* Input de mensagem - sempre visível, otimizado para mobile */}
+      <div className="flex-shrink-0 bg-card border-t">
         <MessageInput
           onSendMessage={handleSendMessage}
           placeholder={
