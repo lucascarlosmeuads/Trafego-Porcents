@@ -4,7 +4,6 @@ import { Badge } from '@/components/ui/badge'
 import { 
   BarChart3, 
   Users, 
-  DollarSign,
   MessageCircle 
 } from 'lucide-react'
 
@@ -33,12 +32,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes }: Gesto
       label: 'Chat',
       icon: MessageCircle,
       onClick: () => onTabChange('chat')
-    },
-    {
-      id: 'saques',
-      label: 'Saques',
-      icon: DollarSign,
-      onClick: () => onTabChange('saques')
     }
   ]
 
