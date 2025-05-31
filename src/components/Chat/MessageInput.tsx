@@ -104,7 +104,7 @@ export function MessageInput({
           )}
         </div>
 
-        {/* Audio Recording */}
+        {/* Audio Recording - SEMPRE APARECE quando não há texto */}
         {!message.trim() && (
           <div className="flex-shrink-0">
             {isRecording ? (
@@ -113,6 +113,7 @@ export function MessageInput({
                 size="icon"
                 variant="destructive"
                 className="h-11 w-11 rounded-full"
+                disabled={disabled || isSending}
               >
                 <MicOff className="h-5 w-5" />
               </Button>
