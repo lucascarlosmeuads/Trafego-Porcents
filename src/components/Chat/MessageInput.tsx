@@ -40,16 +40,10 @@ export function MessageInput({
     }
   }, [message, onSendMessage, isSending])
 
-  const handleSendAudio = useCallback(async (audioBlob: Blob) => {
+  const handleSendAudio = useCallback(async (audioUrl: string) => {
     setIsSending(true)
     try {
-      // Convert blob to base64 for now (you might want to upload to storage later)
-      const reader = new FileReader()
-      reader.onloadend = async () => {
-        const base64Audio = reader.result as string
-        await onSendMessage(base64Audio, 'audio')
-      }
-      reader.readAsDataURL(audioBlob)
+      await onSendMessage(audioUrl, 'audio')
     } catch (error) {
       console.error('Erro ao enviar áudio:', error)
     } finally {
@@ -142,8 +136,7 @@ export function MessageInput({
         <div className="mt-3 p-3 bg-accent/50 rounded-lg">
           <AudioRecorder
             onAudioReady={handleSendAudio}
-            onCancel={() => setIsRecording(false)}
-            isRecording={isRecording}
+            disabled={disabled || isSending}
           />
         </div>
       )}
