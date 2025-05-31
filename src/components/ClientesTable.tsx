@@ -7,7 +7,6 @@ import { AddClientModal } from './ClientesTable/AddClientModal'
 import { ClientesTableCards } from './ClientesTable/ClientesTableCards'
 import { ClientesTableDesktop } from './ClientesTable/ClientesTableDesktop'
 import { TableFilters } from './ClientesTable/TableFilters'
-import { ClienteRow } from './ClientesTable/ClienteRow'
 import { LoadingFallback } from '@/components/LoadingFallback'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -70,14 +69,13 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleStatusChange = async (clienteId: string, newStatus: any) => {
     setUpdatingStatus(clienteId)
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { status_campanha: newStatus })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { status_campanha: newStatus }, () => {
         toast({
           title: "Status atualizado",
           description: "Status da campanha foi atualizado com sucesso"
         })
         refetch()
-      }
+      })
     } catch (error) {
       toast({
         title: "Erro",
@@ -92,14 +90,13 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
     setUpdatingStatus(clienteId)
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { site_status: newStatus })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { site_status: newStatus }, () => {
         toast({
           title: "Status do site atualizado",
           description: "Status do site foi atualizado com sucesso"
         })
         refetch()
-      }
+      })
     } catch (error) {
       toast({
         title: "Erro",
@@ -118,8 +115,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleLinkSave = async (clienteId: string) => {
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { link_site: linkValue })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { link_site: linkValue }, () => {
         toast({
           title: "Link atualizado",
           description: "Link do site foi atualizado com sucesso"
@@ -127,9 +123,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingLink(null)
         setLinkValue('')
         refetch()
-        return true
-      }
-      return false
+      })
+      return !!success
     } catch (error) {
       toast({
         title: "Erro",
@@ -152,8 +147,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleBMSave = async (clienteId: string) => {
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { numero_bm: bmValue })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { numero_bm: bmValue }, () => {
         toast({
           title: "BM atualizada",
           description: "Número da BM foi atualizado com sucesso"
@@ -161,7 +155,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingBM(null)
         setBmValue('')
         refetch()
-      }
+      })
     } catch (error) {
       toast({
         title: "Erro",
@@ -179,16 +173,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
     setUpdatingComission(clienteId)
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { comissao_paga: !currentStatus })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { comissao_paga: !currentStatus }, () => {
         toast({
           title: "Comissão atualizada",
           description: `Comissão marcada como ${!currentStatus ? 'paga' : 'não paga'}`
         })
         refetch()
-        return true
-      }
-      return false
+      })
+      return !!success
     } catch (error) {
       toast({
         title: "Erro",
@@ -208,8 +200,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleComissionValueSave = async (clienteId: string, newValue: number) => {
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { valor_comissao: newValue })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { valor_comissao: newValue }, () => {
         toast({
           title: "Valor da comissão atualizado",
           description: "Valor da comissão foi atualizado com sucesso"
@@ -217,7 +208,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingComissionValue(null)
         setComissionValueInput('')
         refetch()
-      }
+      })
     } catch (error) {
       toast({
         title: "Erro",
@@ -234,10 +225,9 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleSitePagoChange = async (clienteId: string, newValue: boolean) => {
     try {
-      const success = await updateClienteOperation(parseInt(clienteId), { site_pago: newValue })
-      if (success) {
+      const success = await updateClienteOperation(parseInt(clienteId), { site_pago: newValue }, () => {
         refetch()
-      }
+      })
     } catch (error) {
       toast({
         title: "Erro",
@@ -365,7 +355,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
               </Button>
               
               {canAddClients && (
-                <AddClientModal onClientAdded={refetch} />
+                <AddClientModal onClienteAdicionado={refetch} />
               )}
             </div>
           </div>
