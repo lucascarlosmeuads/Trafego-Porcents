@@ -20,7 +20,7 @@ interface ChatSidebarProps {
 export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
 
   // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
@@ -31,7 +31,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
-    .filter(conversa => statusFilter ? conversa.status_campanha === statusFilter : true)
+    .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
   const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
   const totalFiltradas = conversasFiltradas.length
@@ -82,10 +82,10 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const clearAllFilters = () => {
     setSearchTerm('')
     setShowOnlyUnread(false)
-    setStatusFilter('')
+    setStatusFilter('all')
   }
 
-  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter
+  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   return (
     <div className="h-full flex flex-col bg-gray-900">
@@ -150,7 +150,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="" className="text-white hover:bg-gray-600">
+              <SelectItem value="all" className="text-white hover:bg-gray-600">
                 Todos os status
               </SelectItem>
               {availableStatus.map((status) => (

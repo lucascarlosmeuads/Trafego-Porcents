@@ -17,7 +17,7 @@ export function GestorChatList() {
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
-  const [statusFilter, setStatusFilter] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState<string>('all')
   const { user } = useAuth()
 
   // Obter lista única de status das conversas
@@ -29,7 +29,7 @@ export function GestorChatList() {
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
-    .filter(conversa => statusFilter ? conversa.status_campanha === statusFilter : true)
+    .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
   const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
   const totalFiltradas = conversasFiltradas.length
@@ -76,10 +76,10 @@ export function GestorChatList() {
   const clearAllFilters = () => {
     setSearchTerm('')
     setShowOnlyUnread(false)
-    setStatusFilter('')
+    setStatusFilter('all')
   }
 
-  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter
+  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   if (selectedChat) {
     return (
@@ -170,7 +170,7 @@ export function GestorChatList() {
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
             <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="" className="text-white hover:bg-gray-600">
+              <SelectItem value="all" className="text-white hover:bg-gray-600">
                 Todos os status
               </SelectItem>
               {availableStatus.map((status) => (
