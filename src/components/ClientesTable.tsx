@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -68,13 +69,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleStatusChange = async (clienteId: string, newStatus: any) => {
     setUpdatingStatus(clienteId)
     try {
-      const success = await updateClienteOperation(clienteId, 'status_campanha', newStatus, () => {
+      const success = await updateClienteOperation(clienteId, 'status_campanha', newStatus)
+      if (success) {
         toast({
           title: "Status atualizado",
           description: "Status da campanha foi atualizado com sucesso"
         })
         refetch()
-      })
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -89,13 +91,14 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
     setUpdatingStatus(clienteId)
     try {
-      const success = await updateClienteOperation(clienteId, 'site_status', newStatus, () => {
+      const success = await updateClienteOperation(clienteId, 'site_status', newStatus)
+      if (success) {
         toast({
           title: "Status do site atualizado",
           description: "Status do site foi atualizado com sucesso"
         })
         refetch()
-      })
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -114,7 +117,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleLinkSave = async (clienteId: string) => {
     try {
-      const success = await updateClienteOperation(clienteId, 'link_site', linkValue, () => {
+      const success = await updateClienteOperation(clienteId, 'link_site', linkValue)
+      if (success) {
         toast({
           title: "Link atualizado",
           description: "Link do site foi atualizado com sucesso"
@@ -122,8 +126,9 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingLink(null)
         setLinkValue('')
         refetch()
-      })
-      return !!success
+        return true
+      }
+      return false
     } catch (error) {
       toast({
         title: "Erro",
@@ -146,7 +151,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleBMSave = async (clienteId: string) => {
     try {
-      const success = await updateClienteOperation(clienteId, 'numero_bm', bmValue, () => {
+      const success = await updateClienteOperation(clienteId, 'numero_bm', bmValue)
+      if (success) {
         toast({
           title: "BM atualizada",
           description: "Número da BM foi atualizado com sucesso"
@@ -154,7 +160,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingBM(null)
         setBmValue('')
         refetch()
-      })
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -172,14 +178,16 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
     setUpdatingComission(clienteId)
     try {
-      const success = await updateClienteOperation(clienteId, 'comissao_paga', !currentStatus, () => {
+      const success = await updateClienteOperation(clienteId, 'comissao_paga', !currentStatus)
+      if (success) {
         toast({
           title: "Comissão atualizada",
           description: `Comissão marcada como ${!currentStatus ? 'paga' : 'não paga'}`
         })
         refetch()
-      })
-      return !!success
+        return true
+      }
+      return false
     } catch (error) {
       toast({
         title: "Erro",
@@ -199,7 +207,8 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleComissionValueSave = async (clienteId: string, newValue: number) => {
     try {
-      const success = await updateClienteOperation(clienteId, 'valor_comissao', newValue, () => {
+      const success = await updateClienteOperation(clienteId, 'valor_comissao', newValue)
+      if (success) {
         toast({
           title: "Valor da comissão atualizado",
           description: "Valor da comissão foi atualizado com sucesso"
@@ -207,7 +216,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         setEditingComissionValue(null)
         setComissionValueInput('')
         refetch()
-      })
+      }
     } catch (error) {
       toast({
         title: "Erro",
@@ -224,9 +233,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   const handleSitePagoChange = async (clienteId: string, newValue: boolean) => {
     try {
-      const success = await updateClienteOperation(clienteId, 'site_pago', newValue, () => {
+      const success = await updateClienteOperation(clienteId, 'site_pago', newValue)
+      if (success) {
         refetch()
-      })
+      }
     } catch (error) {
       toast({
         title: "Erro",
