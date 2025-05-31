@@ -1,29 +1,21 @@
 
-import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CheckCircle, Circle, FileText, Folder, BarChart3, DollarSign, Users, ArrowRight } from 'lucide-react'
+import { CheckCircle, Circle, FileText, Folder, BarChart3, DollarSign, Users, ArrowRight, Loader2 } from 'lucide-react'
 import { useIsMobile } from '@/hooks/use-mobile'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
+import { useAuth } from '@/hooks/useAuth'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
 }
 
 export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
-  const [completedSteps, setCompletedSteps] = useState<Set<number>>(new Set())
+  const { user } = useAuth()
+  const { progresso, loading, saving, togglePasso } = useClienteProgresso(user?.email || '')
   const isMobile = useIsMobile()
-
-  const toggleStep = (stepNumber: number) => {
-    const newCompleted = new Set(completedSteps)
-    if (newCompleted.has(stepNumber)) {
-      newCompleted.delete(stepNumber)
-    } else {
-      newCompleted.add(stepNumber)
-    }
-    setCompletedSteps(newCompleted)
-  }
 
   const steps = [
     {
@@ -68,7 +60,26 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
     }
   ]
 
-  const progressPercentage = Math.round((completedSteps.size / steps.length) * 100)
+  const handleToggleStep = async (stepId: number) => {
+    const success = await togglePasso(stepId)
+    if (!success) {
+      // Opcional: mostrar toast de erro
+      console.error('Erro ao salvar progresso')
+    }
+  }
+
+  const progressPercentage = Math.round((progresso.size / steps.length) * 100)
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Carregando progresso...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full max-w-4xl mx-auto">
@@ -94,7 +105,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
               Progresso Atual
             </h3>
             <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-primary`}>
-              {completedSteps.size} / {steps.length}
+              {progresso.size} / {steps.length}
             </div>
             <div className="w-full bg-muted rounded-full h-2 sm:h-3">
               <div 
@@ -103,11 +114,17 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
               ></div>
             </div>
             <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>
-              {completedSteps.size === steps.length 
+              {progresso.size === steps.length 
                 ? '🎉 Parabéns! Você completou todos os passos!'
                 : `${progressPercentage}% concluído`
               }
             </p>
+            {saving && (
+              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="w-4 h-4 animate-spin" />
+                Salvando progresso...
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
@@ -115,7 +132,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       {/* Steps */}
       <div className="space-y-3 sm:space-y-4">
         {steps.map((step) => {
-          const isCompleted = completedSteps.has(step.id)
+          const isCompleted = progresso.has(step.id)
           const StepIcon = step.icon
           
           return (
@@ -187,14 +204,17 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                         <Checkbox
                           id={`step-${step.id}`}
                           checked={isCompleted}
-                          onCheckedChange={() => toggleStep(step.id)}
+                          onCheckedChange={() => handleToggleStep(step.id)}
+                          disabled={saving}
                           className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
                         />
                         <label 
                           htmlFor={`step-${step.id}`}
                           className={`${
                             isMobile ? 'text-sm' : 'text-base'
-                          } font-medium cursor-pointer whitespace-nowrap text-card-foreground`}
+                          } font-medium cursor-pointer whitespace-nowrap text-card-foreground ${
+                            saving ? 'opacity-50' : ''
+                          }`}
                         >
                           Marcar como feito
                         </label>
