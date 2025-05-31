@@ -5,15 +5,26 @@ import { useSitesData } from '@/hooks/useSitesData'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { Globe, CheckCircle, Clock, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
 export function SitesDashboard() {
   const { user, signOut } = useAuth()
-  const { clientes, loading } = useSitesData()
+  const { clientes, loading, refetch } = useSitesData()
   const [isSigningOut, setIsSigningOut] = useState(false)
+  const [updatingClientes, setUpdatingClientes] = useState<Set<number>>(new Set())
+  const [linkInputs, setLinkInputs] = useState<Record<number, string>>({})
   const { toast } = useToast()
+
+  console.log('🌐 [SitesDashboard] === DEBUGGING PAINEL DE SITES ===')
+  console.log('🌐 [SitesDashboard] Dados recebidos:', {
+    loading,
+    totalClientes: clientes.length,
+    aguardandoLink: clientes.filter(c => c.site_status === 'aguardando_link').length,
+    finalizados: clientes.filter(c => c.site_status === 'finalizado').length
+  })
 
   const handleSignOut = async () => {
     setIsSigningOut(true)
@@ -26,30 +37,86 @@ export function SitesDashboard() {
     }
   }
 
+  const handleLinkChange = (clienteId: number, link: string) => {
+    setLinkInputs(prev => ({
+      ...prev,
+      [clienteId]: link
+    }))
+  }
+
   const handleToggleSitePago = async (clienteId: number, sitePago: boolean) => {
+    console.log('🌐 [SitesDashboard] === ATUALIZANDO STATUS DO SITE ===')
+    console.log('🌐 [SitesDashboard] Cliente ID:', clienteId)
+    console.log('🌐 [SitesDashboard] Novo status pago:', sitePago)
+    
+    if (sitePago && !linkInputs[clienteId]?.trim()) {
+      toast({
+        title: "Link obrigatório",
+        description: "Por favor, insira o link do site antes de marcar como finalizado",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setUpdatingClientes(prev => new Set([...prev, clienteId]))
+    
     try {
+      const updateData: any = {
+        site_pago: sitePago
+      }
+
+      // Se está marcando como finalizado, atualizar também o site_status e o link
+      if (sitePago) {
+        updateData.site_status = 'finalizado'
+        if (linkInputs[clienteId]?.trim()) {
+          updateData.link_site = linkInputs[clienteId].trim()
+        }
+      } else {
+        // Se está desmarcando, volta para aguardando_link
+        updateData.site_status = 'aguardando_link'
+      }
+
+      console.log('🌐 [SitesDashboard] Dados a serem atualizados:', updateData)
+
       const { error } = await supabase
         .from('todos_clientes')
-        .update({ site_pago: sitePago })
+        .update(updateData)
         .eq('id', clienteId)
 
       if (error) {
         throw error
       }
 
+      console.log('✅ [SitesDashboard] Status atualizado com sucesso!')
+
       toast({
         title: "Sucesso",
-        description: `Site marcado como ${sitePago ? 'finalizado' : 'pendente'}`
+        description: `Site ${sitePago ? 'finalizado' : 'marcado como pendente'} com sucesso`
       })
 
-      // Reload data
-      window.location.reload()
+      // Limpar o input se foi finalizado
+      if (sitePago) {
+        setLinkInputs(prev => {
+          const newInputs = { ...prev }
+          delete newInputs[clienteId]
+          return newInputs
+        })
+      }
+
+      // Recarregar dados
+      await refetch()
     } catch (error) {
-      console.error('Erro ao atualizar status do site:', error)
+      console.error('❌ [SitesDashboard] Erro ao atualizar status:', error)
       toast({
         title: "Erro",
         description: "Erro ao atualizar status do site",
         variant: "destructive"
+      })
+    } finally {
+      setUpdatingClientes(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(clienteId)
+        return newSet
       })
     }
   }
@@ -62,8 +129,15 @@ export function SitesDashboard() {
     )
   }
 
-  const sitesPendentes = clientes.filter(cliente => !cliente.site_pago).length
-  const sitesFinalizados = clientes.filter(cliente => cliente.site_pago).length
+  // Calcular métricas corretas baseadas no site_status
+  const sitesPendentes = clientes.filter(cliente => cliente.site_status === 'aguardando_link').length
+  const sitesFinalizados = clientes.filter(cliente => cliente.site_status === 'finalizado').length
+
+  console.log('🌐 [SitesDashboard] Métricas calculadas:', {
+    sitesPendentes,
+    sitesFinalizados,
+    total: clientes.length
+  })
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -131,29 +205,64 @@ export function SitesDashboard() {
               </div>
             ) : (
               <div className="space-y-4">
-                {clientes.map((cliente) => (
-                  <div key={cliente.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-semibold">{cliente.nome_cliente}</h3>
-                        <Badge variant={cliente.site_pago ? "default" : "secondary"}>
-                          {cliente.site_pago ? "Finalizado" : "Pendente"}
-                        </Badge>
+                {clientes.map((cliente) => {
+                  const isUpdating = updatingClientes.has(Number(cliente.id))
+                  const isPendente = cliente.site_status === 'aguardando_link'
+                  const linkValue = linkInputs[cliente.id] || cliente.link_site || ''
+                  
+                  return (
+                    <div key={cliente.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="font-semibold">{cliente.nome_cliente}</h3>
+                          <Badge variant={cliente.site_status === 'finalizado' ? "default" : "secondary"}>
+                            {cliente.site_status === 'finalizado' ? "Finalizado" : "Pendente"}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-gray-600">{cliente.email_cliente}</p>
+                        <p className="text-sm text-gray-500">
+                          Gestor: {cliente.email_gestor || 'Não definido'}
+                        </p>
+                        
+                        {/* Input de link para sites pendentes */}
+                        {isPendente && (
+                          <div className="mt-2">
+                            <Input
+                              placeholder="Cole o link do site aqui..."
+                              value={linkValue}
+                              onChange={(e) => handleLinkChange(cliente.id, e.target.value)}
+                              className="text-sm"
+                            />
+                          </div>
+                        )}
+                        
+                        {/* Exibir link para sites finalizados */}
+                        {!isPendente && cliente.link_site && (
+                          <div className="mt-2">
+                            <a 
+                              href={cliente.link_site} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 underline"
+                            >
+                              {cliente.link_site}
+                            </a>
+                          </div>
+                        )}
                       </div>
-                      <p className="text-sm text-gray-600">{cliente.email_cliente}</p>
-                      <p className="text-sm text-gray-500">
-                        Gestor: {cliente.email_gestor || 'Não definido'}
-                      </p>
+                      
+                      <Button
+                        variant={cliente.site_status === 'finalizado' ? "outline" : "default"}
+                        onClick={() => handleToggleSitePago(Number(cliente.id), cliente.site_status !== 'finalizado')}
+                        disabled={isUpdating}
+                        className="ml-4"
+                      >
+                        {isUpdating ? "Atualizando..." : 
+                         cliente.site_status === 'finalizado' ? "Marcar como Pendente" : "Marcar como Finalizado"}
+                      </Button>
                     </div>
-                    <Button
-                      variant={cliente.site_pago ? "outline" : "default"}
-                      onClick={() => handleToggleSitePago(Number(cliente.id), !cliente.site_pago)}
-                      className="ml-4"
-                    >
-                      {cliente.site_pago ? "Marcar como Pendente" : "Marcar como Finalizado"}
-                    </Button>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </CardContent>

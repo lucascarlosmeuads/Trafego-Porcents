@@ -25,16 +25,23 @@ export function useSitesData() {
     setLoading(true)
     setError(null)
 
+    console.log('🌐 [useSitesData] === BUSCANDO DADOS DOS SITES ===')
+
     const { data, error } = await supabase
       .from('todos_clientes')
       .select('*')
-      .eq('site_status', 'aguardando_link')
+      .in('site_status', ['aguardando_link', 'finalizado'])
       .order('data_venda', { ascending: false })
 
     if (error) {
-      console.error('Erro ao buscar clientes aguardando site:', error)
+      console.error('❌ [useSitesData] Erro ao buscar clientes:', error)
       setError(error.message)
     } else {
+      console.log('✅ [useSitesData] Dados encontrados:', {
+        total: data?.length || 0,
+        aguardandoLink: data?.filter(c => c.site_status === 'aguardando_link').length || 0,
+        finalizados: data?.filter(c => c.site_status === 'finalizado').length || 0
+      })
       setClientes(data || [])
     }
 
