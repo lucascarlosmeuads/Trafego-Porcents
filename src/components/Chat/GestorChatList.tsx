@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
+import { useChatConversas, useChatMessages, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -18,6 +18,12 @@ export function GestorChatList() {
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const { user } = useAuth()
+
+  // Hook para marcar mensagens como lidas
+  const { marcarTodasComoLidas } = useChatMessages(
+    selectedChat?.email_cliente,
+    selectedChat?.email_gestor
+  )
 
   // Debug: log das conversas carregadas
   console.log('📋 [GestorChatList] Conversas carregadas:', conversas.length)
@@ -86,12 +92,23 @@ export function GestorChatList() {
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
-  const handleSelectChat = (conversa: ChatConversaPreview) => {
+  const handleSelectChat = async (conversa: ChatConversaPreview) => {
     console.log('🎯 [GestorChatList] Selecionando chat:', {
       cliente: conversa.email_cliente,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       mensagensNaoLidas: conversa.mensagens_nao_lidas
     })
+
+    // CORREÇÃO ETAPA 3: Marcar como lidas ANTES de selecionar
+    if (conversa.tem_mensagens_nao_lidas && selectedChat?.email_cliente !== conversa.email_cliente) {
+      console.log('📖 [GestorChatList] Marcando mensagens como lidas para:', conversa.email_cliente)
+      try {
+        await marcarTodasComoLidas()
+      } catch (error) {
+        console.error('❌ [GestorChatList] Erro ao marcar como lidas:', error)
+      }
+    }
+
     setSelectedChat(conversa)
   }
 
@@ -100,7 +117,7 @@ export function GestorChatList() {
     return selectedChat?.email_cliente === conversa.email_cliente
   }
 
-  // CORREÇÃO: Lógica de classes CSS corrigida com hierarquia adequada
+  // CORREÇÃO ETAPA 3: Lógica de classes CSS corrigida com hierarquia adequada
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
     

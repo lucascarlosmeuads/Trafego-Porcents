@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ChatConversaPreview } from '@/hooks/useChatMessages'
+import { ChatConversaPreview, useChatMessages } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,12 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+
+  // Hook para marcar mensagens como lidas
+  const { marcarTodasComoLidas } = useChatMessages(
+    selectedChat?.email_cliente,
+    selectedChat?.email_gestor
+  )
 
   // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversas.map(c => c.status_campanha).filter(Boolean)))
@@ -86,13 +92,24 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
-  const handleSelectChat = (conversa: ChatConversaPreview) => {
+  const handleSelectChat = async (conversa: ChatConversaPreview) => {
     console.log('🎯 [ChatSidebar] Selecionando chat:', {
       cliente: conversa.email_cliente,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       mensagensNaoLidas: conversa.mensagens_nao_lidas,
       jaEstaSelecionado: isSelected(conversa)
     })
+
+    // CORREÇÃO ETAPA 3: Marcar como lidas ANTES de selecionar
+    if (conversa.tem_mensagens_nao_lidas && !isSelected(conversa)) {
+      console.log('📖 [ChatSidebar] Marcando mensagens como lidas para:', conversa.email_cliente)
+      try {
+        await marcarTodasComoLidas()
+      } catch (error) {
+        console.error('❌ [ChatSidebar] Erro ao marcar como lidas:', error)
+      }
+    }
+
     onSelectChat(conversa)
   }
 
