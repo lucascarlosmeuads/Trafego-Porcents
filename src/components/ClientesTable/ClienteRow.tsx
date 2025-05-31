@@ -1,4 +1,3 @@
-
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Eye } from 'lucide-react'
@@ -6,10 +5,11 @@ import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { CreativeMaterialsButton } from './CreativeMaterialsButton'
 import { ClienteRowName } from './ClienteRowName'
 import { ClienteRowPhone } from './ClienteRowPhone'
 import { ClienteRowDataLimite } from './ClienteRowDataLimite'
-import { ClienteRowBM } from './ClienteRowBM'
+import { ClienteRowBM } from './ClienteRowSite'
 import { ClienteRowSite } from './ClienteRowSite'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 
@@ -158,14 +158,11 @@ export function ClienteRow({
           emailCliente={cliente.email_cliente || ''}
           nomeCliente={cliente.nome_cliente || ''}
           trigger={
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              Ver materiais
-            </Button>
+            <CreativeMaterialsButton
+              emailCliente={cliente.email_cliente || ''}
+              nomeCliente={cliente.nome_cliente || ''}
+              trigger={null}
+            />
           }
         />
       </TableCell>

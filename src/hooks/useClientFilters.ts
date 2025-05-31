@@ -10,8 +10,10 @@ export interface OrganizedClientes {
   total: Cliente[]
 }
 
-export function useClientFilters(clientes: Cliente[]) {
+export function useClientFilters(clientes: Cliente[], clientesWithCreatives?: Record<string, boolean>) {
   const [dateFilter, setDateFilter] = useState<string>('all')
+  const [creativeFilter, setCreativeFilter] = useState<string>('all')
+  const [bmFilter, setBmFilter] = useState<string>('all')
 
   const organizedClientes = useMemo(() => {
     // Função para converter UTC para UTC-3 (Brasil)
@@ -62,22 +64,22 @@ export function useClientFilters(clientes: Cliente[]) {
       return dayStart < ultimos7DiasInicio
     })
 
-    // Aplicar filtro selecionado
-    let filteredClientes: Cliente[] = []
+    // Aplicar filtro de data selecionado
+    let filteredByDate: Cliente[] = []
     switch (dateFilter) {
       case 'today': 
-        filteredClientes = clientesHoje
+        filteredByDate = clientesHoje
         break
       case 'yesterday': 
-        filteredClientes = clientesOntem
+        filteredByDate = clientesOntem
         break
       case 'last7days': 
-        filteredClientes = [...clientesHoje, ...clientesOntem, ...clientesUltimos7Dias]
+        filteredByDate = [...clientesHoje, ...clientesOntem, ...clientesUltimos7Dias]
         break
       case 'thisMonth':
         const startMonth = new Date(today.getFullYear(), today.getMonth(), 1)
         const endMonth = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999)
-        filteredClientes = clientes.filter(c => {
+        filteredByDate = clientes.filter(c => {
           const clientDate = convertUTCToBrazil(c.created_at)
           return isBetween(clientDate, startMonth, endMonth)
         })
@@ -85,13 +87,39 @@ export function useClientFilters(clientes: Cliente[]) {
       case 'thisYear':
         const startYear = new Date(today.getFullYear(), 0, 1)
         const endYear = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999)
-        filteredClientes = clientes.filter(c => {
+        filteredByDate = clientes.filter(c => {
           const clientDate = convertUTCToBrazil(c.created_at)
           return isBetween(clientDate, startYear, endYear)
         })
         break
       default: 
-        filteredClientes = clientes
+        filteredByDate = clientes
+    }
+
+    // Aplicar filtro de criativos
+    let filteredByCreative = filteredByDate
+    if (creativeFilter !== 'all' && clientesWithCreatives) {
+      switch (creativeFilter) {
+        case 'falta_fazer':
+          filteredByCreative = filteredByDate.filter(c => !clientesWithCreatives[c.email_cliente || ''])
+          break
+        case 'criativo_feito':
+          filteredByCreative = filteredByDate.filter(c => clientesWithCreatives[c.email_cliente || ''])
+          break
+      }
+    }
+
+    // Aplicar filtro de BM
+    let filteredByBM = filteredByCreative
+    if (bmFilter !== 'all') {
+      switch (bmFilter) {
+        case 'bm_configurada':
+          filteredByBM = filteredByCreative.filter(c => c.numero_bm && c.numero_bm.trim() !== '')
+          break
+        case 'bm_nao_configurada':
+          filteredByBM = filteredByCreative.filter(c => !c.numero_bm || c.numero_bm.trim() === '')
+          break
+      }
     }
 
     return {
@@ -99,13 +127,17 @@ export function useClientFilters(clientes: Cliente[]) {
       ontem: clientesOntem,
       ultimos7Dias: clientesUltimos7Dias,
       anteriores: clientesAnteriores,
-      total: filteredClientes
+      total: filteredByBM
     }
-  }, [clientes, dateFilter])
+  }, [clientes, dateFilter, creativeFilter, bmFilter, clientesWithCreatives])
 
   return {
     dateFilter,
     setDateFilter,
+    creativeFilter,
+    setCreativeFilter,
+    bmFilter,
+    setBmFilter,
     organizedClientes
   }
 }
