@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
@@ -88,32 +87,33 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🎯 Selecionando chat:', {
+    console.log('🎯 [ChatSidebar] Selecionando chat:', {
       cliente: conversa.email_cliente,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
-      mensagensNaoLidas: conversa.mensagens_nao_lidas
+      mensagensNaoLidas: conversa.mensagens_nao_lidas,
+      jaEstaSelecionado: isSelected(conversa)
     })
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Hierarquia correta dos estados visuais
+  // CORREÇÃO: Hierarquia correta e específica dos estados visuais
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
     
-    // 1. PRIMEIRO: Verificar se está selecionado (AZUL)
+    // 1. PRIMEIRO: Verificar se está selecionado (AZUL) - PRIORIDADE MÁXIMA
     if (isSelected(conversa)) {
-      console.log('🔵 Card selecionado:', conversa.email_cliente)
-      return `${baseClasses} bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400`
+      console.log('🔵 [ChatSidebar] Card SELECIONADO (AZUL):', conversa.email_cliente)
+      return `${baseClasses} !bg-blue-900 !border-blue-400 shadow-lg ring-2 ring-blue-400/50`
     }
     
     // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
     if (conversa.tem_mensagens_nao_lidas) {
-      console.log('🔴 Card com mensagens não lidas:', conversa.email_cliente)
-      return `${baseClasses} bg-red-900/30 hover:bg-red-900/40 border-red-500 shadow-red-500/20`
+      console.log('🔴 [ChatSidebar] Card NÃO LIDO (VERMELHO):', conversa.email_cliente)
+      return `${baseClasses} !bg-red-900/40 hover:!bg-red-900/50 !border-red-500 shadow-red-500/20`
     }
     
     // 3. TERCEIRO: Estado padrão (CINZA)
-    console.log('⚪ Card padrão (cinza):', conversa.email_cliente)
+    console.log('⚪ [ChatSidebar] Card PADRÃO (CINZA):', conversa.email_cliente)
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
 

@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -21,9 +20,9 @@ export function GestorChatList() {
   const { user } = useAuth()
 
   // Debug: log das conversas carregadas
-  console.log('📋 Conversas carregadas no GestorChatList:', conversas.length)
+  console.log('📋 [GestorChatList] Conversas carregadas:', conversas.length)
   conversas.forEach(c => {
-    console.log(`📝 Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}, Não lidas: ${c.mensagens_nao_lidas}`)
+    console.log(`📝 [GestorChatList] Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}, Não lidas: ${c.mensagens_nao_lidas}`)
   })
 
   // Obter lista única de status das conversas
@@ -88,7 +87,7 @@ export function GestorChatList() {
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🎯 Selecionando chat no GestorChatList:', {
+    console.log('🎯 [GestorChatList] Selecionando chat:', {
       cliente: conversa.email_cliente,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       mensagensNaoLidas: conversa.mensagens_nao_lidas
@@ -96,18 +95,29 @@ export function GestorChatList() {
     setSelectedChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS alinhada com ChatSidebar
+  // CORREÇÃO: Verificar se conversa está selecionada 
+  const isSelected = (conversa: ChatConversaPreview) => {
+    return selectedChat?.email_cliente === conversa.email_cliente
+  }
+
+  // CORREÇÃO: Lógica de classes CSS corrigida com hierarquia adequada
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
     
-    // Se tem mensagens não lidas (VERMELHO)
-    if (conversa.tem_mensagens_nao_lidas) {
-      console.log('🔴 Card com mensagens não lidas (Lista):', conversa.email_cliente)
-      return `${baseClasses} bg-red-900/30 border-red-500 hover:bg-red-900/40 shadow-red-500/20`
+    // 1. PRIMEIRO: Verificar se está selecionado (AZUL) - PRIORIDADE MÁXIMA
+    if (isSelected(conversa)) {
+      console.log('🔵 [GestorChatList] Card SELECIONADO (AZUL):', conversa.email_cliente)
+      return `${baseClasses} !bg-blue-900 !border-blue-400 shadow-lg ring-2 ring-blue-400/50`
     }
     
-    // Estado padrão (CINZA)
-    console.log('⚪ Card padrão (Lista):', conversa.email_cliente)
+    // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
+    if (conversa.tem_mensagens_nao_lidas) {
+      console.log('🔴 [GestorChatList] Card NÃO LIDO (VERMELHO):', conversa.email_cliente)
+      return `${baseClasses} !bg-red-900/30 !border-red-500 hover:!bg-red-900/40 shadow-red-500/20`
+    }
+    
+    // 3. TERCEIRO: Estado padrão (CINZA)
+    console.log('⚪ [GestorChatList] Card PADRÃO (CINZA):', conversa.email_cliente)
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
 
@@ -243,12 +253,16 @@ export function GestorChatList() {
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Avatar */}
                     <div className={`h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14 ${
-                      conversa.tem_mensagens_nao_lidas 
-                        ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
-                        : 'bg-gradient-to-br from-blue-800 to-blue-900'
+                      isSelected(conversa) 
+                        ? 'bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400'
+                        : conversa.tem_mensagens_nao_lidas 
+                          ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
+                          : 'bg-gradient-to-br from-blue-800 to-blue-900'
                     }`}>
                       <User className={`h-8 w-8 md:h-7 md:w-7 ${
-                        conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
+                        isSelected(conversa)
+                          ? 'text-blue-200'
+                          : conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
                       }`} />
                     </div>
                     
@@ -257,10 +271,12 @@ export function GestorChatList() {
                       {/* Nome e timestamp */}
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
                         <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${
-                          conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
+                          isSelected(conversa)
+                            ? 'text-blue-100'
+                            : conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
                         }`}>
                           {conversa.nome_cliente}
-                          {conversa.tem_mensagens_nao_lidas && (
+                          {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
                             <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
                           )}
                         </h3>
@@ -280,7 +296,9 @@ export function GestorChatList() {
                       
                       {/* Última mensagem */}
                       <p className={`text-sm line-clamp-2 leading-relaxed ${
-                        conversa.tem_mensagens_nao_lidas ? 'text-gray-200 font-medium' : 'text-gray-400'
+                        isSelected(conversa)
+                          ? 'text-blue-200'
+                          : conversa.tem_mensagens_nao_lidas ? 'text-gray-200 font-medium' : 'text-gray-400'
                       }`}>
                         {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                       </p>
@@ -290,7 +308,7 @@ export function GestorChatList() {
                   {/* Lado direito - Indicadores */}
                   <div className="flex flex-col items-end gap-3 ml-4 flex-shrink-0">
                     {/* Badge de mensagens não lidas */}
-                    {conversa.mensagens_nao_lidas > 0 && (
+                    {conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && (
                       <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white animate-pulse">
                         {conversa.mensagens_nao_lidas}
                       </Badge>
@@ -298,9 +316,11 @@ export function GestorChatList() {
                     
                     {/* Botão de chat */}
                     <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
-                      conversa.tem_mensagens_nao_lidas 
-                        ? 'bg-red-600 hover:bg-red-700' 
-                        : 'bg-blue-600 hover:bg-blue-700'
+                      isSelected(conversa)
+                        ? 'bg-blue-600 hover:bg-blue-700'
+                        : conversa.tem_mensagens_nao_lidas 
+                          ? 'bg-red-600 hover:bg-red-700' 
+                          : 'bg-blue-600 hover:bg-blue-700'
                     }`}>
                       <ArrowRight className="h-6 w-6 text-white" />
                     </div>
