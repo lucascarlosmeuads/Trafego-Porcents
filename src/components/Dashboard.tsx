@@ -1,12 +1,15 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { AdminDashboard } from './AdminDashboard'
-import { ClienteDashboard } from './ClienteDashboard'
+import { 
+  LazyAdminDashboard, 
+  LazyGestorDashboard, 
+  LazyClienteDashboard 
+} from './LazyComponents'
+import { LoadingFallback } from './LoadingFallback'
 import { VendedorDashboard } from './VendedorDashboard'
 import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
 import { SitesDashboard } from './SitesDashboard'
-import { GestorDashboard } from './GestorDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
 
 export function Dashboard() {
@@ -42,11 +45,7 @@ export function Dashboard() {
 
   if (loading) {
     console.log('⏳ [Dashboard] Mostrando loading geral')
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Carregando...</div>
-      </div>
-    )
+    return <LoadingFallback />
   }
 
   if (!user) {
@@ -61,11 +60,14 @@ export function Dashboard() {
   // Cliente Dashboard
   if (isCliente) {
     console.log('✅ [Dashboard] Direcionando para ClienteDashboard')
-    console.log('🎯 [Dashboard] Usuário identificado como CLIENTE:', user.email)
-    return <ClienteDashboard />
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LazyClienteDashboard />
+      </Suspense>
+    )
   }
 
-  // Vendedor Dashboards
+  // Vendedor Dashboards (não lazy por enquanto para evitar erros)
   if (isVendedor) {
     console.log('✅ [Dashboard] Direcionando para VendedorDashboard')
     const isSimpleVendedor = user.email?.includes('simple') || false
@@ -79,7 +81,7 @@ export function Dashboard() {
     return <VendedorDashboard />
   }
 
-  // Sites Dashboard
+  // Sites Dashboard (não lazy por enquanto)
   if (isSites) {
     console.log('✅ [Dashboard] Direcionando para SitesDashboard')
     return <SitesDashboard />
@@ -98,19 +100,21 @@ export function Dashboard() {
         />
         
         <div className="flex-1 p-6 overflow-auto">
-          {/* Admin Dashboard */}
-          {isAdmin && (
-            <AdminDashboard
-              selectedManager={selectedManager}
-              onManagerSelect={setSelectedManager}
-              activeTab={activeTab}
-            />
-          )}
-          
-          {/* Gestor Dashboard */}
-          {isGestor && (
-            <GestorDashboard activeTab={activeTab} />
-          )}
+          <Suspense fallback={<LoadingFallback />}>
+            {/* Admin Dashboard */}
+            {isAdmin && (
+              <LazyAdminDashboard
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                activeTab={activeTab}
+              />
+            )}
+            
+            {/* Gestor Dashboard */}
+            {isGestor && (
+              <LazyGestorDashboard activeTab={activeTab} />
+            )}
+          </Suspense>
         </div>
       </div>
     )

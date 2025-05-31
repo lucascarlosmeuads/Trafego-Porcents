@@ -5,13 +5,16 @@ import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
 import { ManagerSelector } from '@/components/ManagerSelector'
-import { MessageCircle, Shield } from 'lucide-react'
+import { MessageCircle, Shield, Filter, FilterX } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 
 export function AdminChatLayoutSplit() {
   const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
   const { conversas, loading } = useChatConversas(selectedGestor)
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const [showOnlyUnread, setShowOnlyUnread] = useState(false)
 
   // Detectar se é mobile
   useEffect(() => {
@@ -48,9 +51,17 @@ export function AdminChatLayoutSplit() {
     setSelectedGestor(manager)
   }
 
+  // Filtrar conversas
+  const conversasFiltradas = conversas.filter(conversa => 
+    showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true
+  )
+
+  // Contador de não lidas
+  const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-900">
+      <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
           <p className="text-gray-300">Carregando conversas...</p>
@@ -63,7 +74,7 @@ export function AdminChatLayoutSplit() {
   if (isMobile) {
     if (selectedChat) {
       return (
-        <div className="h-full">
+        <div className="h-screen">
           <ChatInterface
             emailCliente={selectedChat.email_cliente}
             emailGestor={selectedChat.email_gestor || ''}
@@ -77,24 +88,49 @@ export function AdminChatLayoutSplit() {
     }
 
     return (
-      <div className="h-full">
+      <div className="h-screen">
         <div className="bg-gray-800 border-b border-gray-700 p-4">
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-xl font-bold text-white">Admin - Monitoramento de Chat</h2>
+            {totalNaoLidas > 0 && (
+              <Badge variant="destructive" className="bg-red-600 text-white ml-auto">
+                {totalNaoLidas} não lidas
+              </Badge>
+            )}
           </div>
           
           {/* Manager Selector - Mobile */}
-          <div className="bg-gray-700 rounded-lg p-3">
+          <div className="bg-gray-700 rounded-lg p-3 mb-3">
             <ManagerSelector 
               selectedManager={selectedGestor}
               onManagerSelect={handleManagerSelect}
               isAdminContext={true}
             />
           </div>
+
+          {/* Filtro de não lidas - Mobile */}
+          <Button
+            variant={showOnlyUnread ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+            className={`w-full justify-start ${
+              showOnlyUnread 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
+            {showOnlyUnread && totalNaoLidas > 0 && (
+              <Badge variant="secondary" className="ml-auto">
+                {totalNaoLidas}
+              </Badge>
+            )}
+          </Button>
         </div>
         <ChatSidebar
-          conversas={conversas}
+          conversas={conversasFiltradas}
           selectedChat={selectedChat}
           onSelectChat={handleSelectChat}
           loading={loading}
@@ -103,31 +139,56 @@ export function AdminChatLayoutSplit() {
     )
   }
 
-  // Layout desktop: split view
+  // Layout desktop: split view otimizado para tela cheia
   return (
-    <div className="h-full flex bg-gray-900">
+    <div className="h-screen flex bg-gray-900">
       {/* Sidebar esquerda - Lista de conversas */}
-      <div className="w-80 border-r border-gray-700 flex-shrink-0">
-        <div className="bg-gray-800 border-b border-gray-700 p-4">
+      <div className="w-80 border-r border-gray-700 flex-shrink-0 h-full flex flex-col">
+        <div className="bg-gray-800 border-b border-gray-700 p-4 flex-shrink-0">
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-bold text-white">Admin - Chat Monitor</h2>
+            {totalNaoLidas > 0 && (
+              <Badge variant="destructive" className="bg-red-600 text-white ml-auto">
+                {totalNaoLidas}
+              </Badge>
+            )}
           </div>
           <p className="text-xs text-gray-400 mb-4">Monitoramento de todas as conversas</p>
           
           {/* Manager Selector - Desktop */}
-          <div className="bg-gray-700 rounded-lg p-3">
+          <div className="bg-gray-700 rounded-lg p-3 mb-3">
             <ManagerSelector 
               selectedManager={selectedGestor}
               onManagerSelect={handleManagerSelect}
               isAdminContext={true}
             />
           </div>
+
+          {/* Filtro de não lidas - Desktop */}
+          <Button
+            variant={showOnlyUnread ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+            className={`w-full justify-start ${
+              showOnlyUnread 
+                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-700'
+            }`}
+          >
+            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
+            {showOnlyUnread && totalNaoLidas > 0 && (
+              <Badge variant="secondary" className="ml-auto">
+                {totalNaoLidas}
+              </Badge>
+            )}
+          </Button>
         </div>
         
-        <div className="h-[calc(100%-140px)]">
+        <div className="flex-1 overflow-hidden">
           <ChatSidebar
-            conversas={conversas}
+            conversas={conversasFiltradas}
             selectedChat={selectedChat}
             onSelectChat={handleSelectChat}
             loading={loading}
@@ -135,8 +196,8 @@ export function AdminChatLayoutSplit() {
         </div>
       </div>
 
-      {/* Área principal - Chat ativo */}
-      <div className="flex-1 bg-white">
+      {/* Área principal - Chat ativo ocupando altura total */}
+      <div className="flex-1 bg-white flex flex-col h-full">
         {selectedChat ? (
           <ChatInterface
             emailCliente={selectedChat.email_cliente}
@@ -160,9 +221,17 @@ export function AdminChatLayoutSplit() {
                   : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação entre gestores e clientes'
                 }
               </p>
-              {conversas.length === 0 && selectedGestor && (
+              {conversasFiltradas.length === 0 && selectedGestor && (
                 <p className="text-gray-500 text-sm mt-2">
-                  Nenhuma conversa encontrada para o gestor selecionado
+                  {showOnlyUnread 
+                    ? 'Nenhuma conversa não lida encontrada para o gestor selecionado'
+                    : 'Nenhuma conversa encontrada para o gestor selecionado'
+                  }
+                </p>
+              )}
+              {conversasFiltradas.length === 0 && showOnlyUnread && !selectedGestor && (
+                <p className="text-gray-500 text-sm mt-2">
+                  Nenhuma conversa não lida encontrada
                 </p>
               )}
             </div>

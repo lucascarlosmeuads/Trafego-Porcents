@@ -1,19 +1,11 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
-import { StatusFunnelDashboard } from './Dashboard/StatusFunnelDashboard'
-import { DocumentationViewer } from './Documentation'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
+import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
-import { supabase } from '@/lib/supabase'
-import { AdminChatLayoutSplit } from './Chat/AdminChatLayoutSplit'
-
-// Imports comentados para componentes não utilizados:
-// import { AuditoriaClientes } from './AuditoriaClientes'
-// import { BriefingsPanel } from './BriefingsPanel'
-// import { ImportarVendasManuais } from './ImportarVendasManuais'
-// import { ClientUserCreation } from './ClientUserCreation'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -32,7 +24,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }, [user, isAdmin])
 
   if (loading) {
-    return <div className="flex items-center justify-center py-8">Carregando...</div>
+    return <LoadingFallback />
   }
 
   const renderContent = () => {
@@ -44,36 +36,25 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     // Navegação por abas
     switch (activeTab) {
       case 'dashboard':
-        return <StatusFunnelDashboard />
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyStatusFunnelDashboard />
+          </Suspense>
+        )
 
       case 'documentacao':
-        return <DocumentationViewer />
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyDocumentationViewer />
+          </Suspense>
+        )
 
       case 'chat':
-        return <AdminChatLayoutSplit />
-
-      // Cases comentados para menus ocultos (mantidos para não quebrar funcionalidade):
-      /*
-      case 'auditoria':
-        return <AuditoriaClientes />
-
-      case 'briefings':
-        return <BriefingsPanel />
-
-      case 'importar-vendas':
-        return <ImportarVendasManuais />
-
-      case 'criar-usuarios-clientes':
-        return <ClientUserCreation />
-
-      case 'sites':
         return (
-          <div className="space-y-4">
-            <h2 className="text-2xl font-bold">Painel de Criação de Sites</h2>
-            <ClientesTable filterType="sites-pendentes" />
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyAdminChatLayoutSplit />
+          </Suspense>
         )
-      */
       
       case 'clientes':
       default:

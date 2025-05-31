@@ -40,7 +40,7 @@ export function ChatLayoutSplit() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64 bg-gray-900">
+      <div className="flex items-center justify-center h-screen bg-gray-900">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-400 mx-auto mb-2"></div>
           <p className="text-gray-300">Carregando conversas...</p>
@@ -81,7 +81,7 @@ export function ChatLayoutSplit() {
   // Layout desktop: split view otimizado para usar toda a altura da tela
   return (
     <div className="h-screen flex bg-gray-900">
-      {/* Sidebar esquerda - Lista de conversas - pode ter scroll livre */}
+      {/* Sidebar esquerda - Lista de conversas - altura total */}
       <div className="w-80 border-r border-gray-700 flex-shrink-0 h-full overflow-hidden">
         <ChatSidebar
           conversas={conversas}
