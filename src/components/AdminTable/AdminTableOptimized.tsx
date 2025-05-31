@@ -1,23 +1,22 @@
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Smartphone, Monitor } from 'lucide-react'
-import { AdminTableCards } from './AdminTable/AdminTableCards'
-import { AdminTableDesktop } from './AdminTable/AdminTableDesktop'
-import { AdminTableFilters } from './AdminTable/AdminTableFilters'
-import { useAdminTableLogic } from './AdminTable/useAdminTableLogic'
-import { formatDate, getStatusColor } from './AdminTable/adminTableUtils'
+import { AdminTableCards } from './AdminTableCards'
+import { AdminTableVirtualized } from './AdminTableVirtualized'
+import { AdminTableFilters } from './AdminTableFilters'
+import { useAdminTableLogic } from './useAdminTableLogic'
+import { formatDate, getStatusColor } from './adminTableUtils'
 import { useDebounce } from '@/hooks/utils/useDebounce'
-import { useMemo } from 'react'
 
-export function AdminTable() {
+export function AdminTableOptimized() {
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [gestorFilter, setGestorFilter] = useState('')
   
-  // Debounce search for better performance
+  // Debounce search term to avoid excessive filtering
   const debouncedSearchTerm = useDebounce(searchTerm, 300)
   
   const {
@@ -29,7 +28,7 @@ export function AdminTable() {
     handleStatusChange
   } = useAdminTableLogic()
 
-  // Memoize filtered clients
+  // Memoize filtered clients to avoid recalculation
   const filteredClientes = useMemo(() => {
     return clientes.filter(cliente => {
       const matchesSearch = !debouncedSearchTerm || 
@@ -85,6 +84,7 @@ export function AdminTable() {
           gestores={gestores}
         />
       </CardHeader>
+      
       <CardContent className="p-0 sm:p-6">
         {/* Visualização em cartões para mobile */}
         {viewMode === 'cards' && (
@@ -98,17 +98,29 @@ export function AdminTable() {
           />
         )}
 
-        {/* Tabela para desktop */}
+        {/* Tabela virtualizada para desktop */}
         <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
-          <AdminTableDesktop
-            clientes={filteredClientes}
-            gestores={gestores}
-            transferindoCliente={transferindoCliente}
-            onTransferirCliente={handleTransferirCliente}
-            onStatusChange={handleStatusChange}
-            formatDate={formatDate}
-            getStatusColor={getStatusColor}
-          />
+          {filteredClientes.length > 100 ? (
+            <AdminTableVirtualized
+              clientes={filteredClientes}
+              gestores={gestores}
+              transferindoCliente={transferindoCliente}
+              onTransferirCliente={handleTransferirCliente}
+              onStatusChange={handleStatusChange}
+              formatDate={formatDate}
+              getStatusColor={getStatusColor}
+            />
+          ) : (
+            <AdminTableVirtualized
+              clientes={filteredClientes}
+              gestores={gestores}
+              transferindoCliente={transferindoCliente}
+              onTransferirCliente={handleTransferirCliente}
+              onStatusChange={handleStatusChange}
+              formatDate={formatDate}
+              getStatusColor={getStatusColor}
+            />
+          )}
         </div>
         
         {filteredClientes.length === 0 && clientes.length > 0 && (
@@ -125,4 +137,4 @@ export function AdminTable() {
       </CardContent>
     </Card>
   )
-}
+})
