@@ -1,3 +1,4 @@
+
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Eye } from 'lucide-react'
@@ -9,7 +10,7 @@ import { CreativeMaterialsButton } from './CreativeMaterialsButton'
 import { ClienteRowName } from './ClienteRowName'
 import { ClienteRowPhone } from './ClienteRowPhone'
 import { ClienteRowDataLimite } from './ClienteRowDataLimite'
-import { ClienteRowBM } from './ClienteRowSite'
+import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 

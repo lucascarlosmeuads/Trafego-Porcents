@@ -1,8 +1,9 @@
+
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useClientFilters } from '@/hooks/useClientFilters'
-import { AddClientModal } from './AddClientModal'
+import { AddClientModal } from './ClientesTable/AddClientModal'
 import { ClientesTableCards } from './ClientesTable/ClientesTableCards'
 import { ClientesTableDesktop } from './ClientesTable/ClientesTableDesktop'
 import { TableFilters } from './ClientesTable/TableFilters'
@@ -12,7 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Smartphone, Monitor } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { useClienteActions } from '@/hooks/useClienteActions'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { useMultipleCreativeFiles } from '@/hooks/useMultipleCreativeFiles'
 
 interface ClientesTableProps {
@@ -43,8 +44,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   } = useManagerData(
     user?.email || '',
     isAdmin,
-    selectedManager,
-    isAdmin ? undefined : 'all'
+    selectedManager
   )
 
   const { clientesWithCreatives, loading: creativesLoading } = useMultipleCreativeFiles(clientes)
@@ -64,42 +64,188 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
   const [comissionValueInput, setComissionValueInput] = useState<string>('')
 
-  const {
-    handleStatusChange,
-    handleSiteStatusChange,
-    handleLinkEdit,
-    handleLinkSave,
-    handleLinkCancel,
-    handleBMEdit,
-    handleBMSave,
-    handleBMCancel,
-    handleComissionToggle,
-    handleComissionValueEdit,
-    handleComissionValueSave,
-    handleComissionValueCancel,
-    handleSitePagoChange
-  } = useClienteActions({
-    clientes,
-    setClientes: (updatedClientes) => {
-      // Update the local state with the updated clients
-      // This assumes that `clientes` state is managed locally in this component
-      // If `clientes` is managed in a parent component, you'll need to adjust this accordingly
-      // For example, if you're using a context or Zustand/Redux store, you'd dispatch an action to update the state there
-      // Here's a simple example of updating the local state:
-      // setClientes(updatedClientes);
-    },
-    updateCliente,
-    setUpdatingStatus,
-    setEditingLink,
-    setLinkValue,
-    setEditingBM,
-    setBmValue,
-    setUpdatingComission,
-    setEditingComissionValue,
-    setComissionValueInput,
-    toast,
-    refetch
-  })
+  const { updateCliente: updateClienteOperation } = useClienteOperations(user?.email || '', isAdmin, refetch)
+
+  // Handlers for cliente actions
+  const handleStatusChange = async (clienteId: string, newStatus: any) => {
+    setUpdatingStatus(clienteId)
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { status_campanha: newStatus })
+      if (success) {
+        toast({
+          title: "Status atualizado",
+          description: "Status da campanha foi atualizado com sucesso"
+        })
+        refetch()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
+    setUpdatingStatus(clienteId)
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { site_status: newStatus })
+      if (success) {
+        toast({
+          title: "Status do site atualizado",
+          description: "Status do site foi atualizado com sucesso"
+        })
+        refetch()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status do site",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingStatus(null)
+    }
+  }
+
+  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
+    setEditingLink({ clienteId, field })
+    setLinkValue(currentValue)
+  }
+
+  const handleLinkSave = async (clienteId: string) => {
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { link_site: linkValue })
+      if (success) {
+        toast({
+          title: "Link atualizado",
+          description: "Link do site foi atualizado com sucesso"
+        })
+        setEditingLink(null)
+        setLinkValue('')
+        refetch()
+        return true
+      }
+      return false
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar link",
+        variant: "destructive"
+      })
+      return false
+    }
+  }
+
+  const handleLinkCancel = () => {
+    setEditingLink(null)
+    setLinkValue('')
+  }
+
+  const handleBMEdit = (clienteId: string, currentValue: string) => {
+    setEditingBM(clienteId)
+    setBmValue(currentValue)
+  }
+
+  const handleBMSave = async (clienteId: string) => {
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { numero_bm: bmValue })
+      if (success) {
+        toast({
+          title: "BM atualizada",
+          description: "Número da BM foi atualizado com sucesso"
+        })
+        setEditingBM(null)
+        setBmValue('')
+        refetch()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar BM",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleBMCancel = () => {
+    setEditingBM(null)
+    setBmValue('')
+  }
+
+  const handleComissionToggle = async (clienteId: string, currentStatus: boolean) => {
+    setUpdatingComission(clienteId)
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { comissao_paga: !currentStatus })
+      if (success) {
+        toast({
+          title: "Comissão atualizada",
+          description: `Comissão marcada como ${!currentStatus ? 'paga' : 'não paga'}`
+        })
+        refetch()
+        return true
+      }
+      return false
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar comissão",
+        variant: "destructive"
+      })
+      return false
+    } finally {
+      setUpdatingComission(null)
+    }
+  }
+
+  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
+    setEditingComissionValue(clienteId)
+    setComissionValueInput(currentValue.toString())
+  }
+
+  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { valor_comissao: newValue })
+      if (success) {
+        toast({
+          title: "Valor da comissão atualizado",
+          description: "Valor da comissão foi atualizado com sucesso"
+        })
+        setEditingComissionValue(null)
+        setComissionValueInput('')
+        refetch()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar valor da comissão",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleComissionValueCancel = () => {
+    setEditingComissionValue(null)
+    setComissionValueInput('')
+  }
+
+  const handleSitePagoChange = async (clienteId: string, newValue: boolean) => {
+    try {
+      const success = await updateClienteOperation(parseInt(clienteId), { site_pago: newValue })
+      if (success) {
+        refetch()
+      }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status de pagamento do site",
+        variant: "destructive"
+      })
+    }
+  }
 
   // Apply all filters including the new ones
   const filteredClientes = useMemo(() => {
