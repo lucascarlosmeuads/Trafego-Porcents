@@ -61,7 +61,7 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-full max-h-[80vh] bg-white">
+    <div className="flex flex-col h-full bg-white">
       {/* Header do chat */}
       <div className="border-b bg-gray-50 p-4 flex-shrink-0">
         <div className="flex items-center gap-3">
@@ -104,8 +104,8 @@ export function ChatInterface({
         </div>
       </div>
 
-      {/* Área de mensagens - altura controlada */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0 max-h-[50vh]">
+      {/* Área de mensagens - ocupa todo espaço disponível */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0">
         {mensagens.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-400 mb-2">💬</div>

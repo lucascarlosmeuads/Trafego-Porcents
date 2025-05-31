@@ -53,7 +53,7 @@ export function ChatLayoutSplit() {
   if (isMobile) {
     if (selectedChat) {
       return (
-        <div className="h-full">
+        <div className="h-screen">
           <ChatInterface
             emailCliente={selectedChat.email_cliente}
             emailGestor={user?.email || ''}
@@ -67,7 +67,7 @@ export function ChatLayoutSplit() {
     }
 
     return (
-      <div className="h-full">
+      <div className="h-screen">
         <ChatSidebar
           conversas={conversas}
           selectedChat={selectedChat}
@@ -78,7 +78,7 @@ export function ChatLayoutSplit() {
     )
   }
 
-  // Layout desktop: split view com proporções melhoradas
+  // Layout desktop: split view otimizado para usar toda a altura da tela
   return (
     <div className="h-screen flex bg-gray-900">
       {/* Sidebar esquerda - Lista de conversas - pode ter scroll livre */}
@@ -91,7 +91,7 @@ export function ChatLayoutSplit() {
         />
       </div>
 
-      {/* Área principal - Chat ativo com altura controlada */}
+      {/* Área principal - Chat ativo ocupando toda altura disponível */}
       <div className="flex-1 bg-white flex flex-col h-full">
         {selectedChat ? (
           <ChatInterface
