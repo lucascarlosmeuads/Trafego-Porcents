@@ -21,9 +21,9 @@ export function GestorChatList() {
   const { user } = useAuth()
 
   // Debug: log das conversas carregadas
-  console.log('Conversas carregadas:', conversas.length)
+  console.log('📋 Conversas carregadas no GestorChatList:', conversas.length)
   conversas.forEach(c => {
-    console.log(`Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}`)
+    console.log(`📝 Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}, Não lidas: ${c.mensagens_nao_lidas}`)
   })
 
   // Obter lista única de status das conversas
@@ -88,20 +88,26 @@ export function GestorChatList() {
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('Selecionando chat:', conversa.email_cliente, 'Mensagens não lidas:', conversa.tem_mensagens_nao_lidas)
+    console.log('🎯 Selecionando chat no GestorChatList:', {
+      cliente: conversa.email_cliente,
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
+      mensagensNaoLidas: conversa.mensagens_nao_lidas
+    })
     setSelectedChat(conversa)
   }
 
-  // Função para determinar as classes CSS baseadas no estado
+  // CORREÇÃO: Lógica de classes CSS alinhada com ChatSidebar
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
     
-    // A lógica de seleção não se aplica aqui pois ao clicar já navega para o chat
-    // Apenas verificar se tem mensagens não lidas
+    // Se tem mensagens não lidas (VERMELHO)
     if (conversa.tem_mensagens_nao_lidas) {
-      return `${baseClasses} bg-red-900/20 border-red-500 hover:bg-red-900/30 shadow-red-500/20 border-l-red-500`
+      console.log('🔴 Card com mensagens não lidas (Lista):', conversa.email_cliente)
+      return `${baseClasses} bg-red-900/30 border-red-500 hover:bg-red-900/40 shadow-red-500/20`
     }
     
+    // Estado padrão (CINZA)
+    console.log('⚪ Card padrão (Lista):', conversa.email_cliente)
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
 
@@ -227,7 +233,7 @@ export function GestorChatList() {
         ) : (
           conversasFiltradas.map((conversa) => (
             <Card 
-              key={conversa.email_cliente}
+              key={`gestor-conversa-${conversa.email_cliente}-${conversa.email_gestor}`}
               className={getCardClasses(conversa)}
               onClick={() => handleSelectChat(conversa)}
             >
@@ -255,7 +261,7 @@ export function GestorChatList() {
                         }`}>
                           {conversa.nome_cliente}
                           {conversa.tem_mensagens_nao_lidas && (
-                            <span className="ml-2 text-red-400 text-xl">●</span>
+                            <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
                           )}
                         </h3>
                         <span className="text-sm text-gray-400 flex-shrink-0">
@@ -274,7 +280,7 @@ export function GestorChatList() {
                       
                       {/* Última mensagem */}
                       <p className={`text-sm line-clamp-2 leading-relaxed ${
-                        conversa.tem_mensagens_nao_lidas ? 'text-gray-300 font-medium' : 'text-gray-400'
+                        conversa.tem_mensagens_nao_lidas ? 'text-gray-200 font-medium' : 'text-gray-400'
                       }`}>
                         {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                       </p>

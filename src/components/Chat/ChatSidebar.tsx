@@ -88,26 +88,33 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('Selecionando chat:', conversa.email_cliente, 'Mensagens não lidas:', conversa.tem_mensagens_nao_lidas)
+    console.log('🎯 Selecionando chat:', {
+      cliente: conversa.email_cliente,
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
+      mensagensNaoLidas: conversa.mensagens_nao_lidas
+    })
     onSelectChat(conversa)
   }
 
-  // Função para determinar as classes CSS baseadas no estado
+  // CORREÇÃO: Hierarquia correta dos estados visuais
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-200 hover:shadow-lg border-l-4"
     
-    // Primeiro: verificar se está selecionado
+    // 1. PRIMEIRO: Verificar se está selecionado (AZUL)
     if (isSelected(conversa)) {
-      return `${baseClasses} bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400 border-l-blue-400`
+      console.log('🔵 Card selecionado:', conversa.email_cliente)
+      return `${baseClasses} bg-blue-900 border-blue-400 shadow-lg ring-2 ring-blue-400`
     }
     
-    // Segundo: verificar se tem mensagens não lidas (apenas se não estiver selecionado)
+    // 2. SEGUNDO: Se não selecionado E tem mensagens não lidas (VERMELHO)
     if (conversa.tem_mensagens_nao_lidas) {
-      return `${baseClasses} bg-red-900/20 hover:bg-red-900/30 shadow-red-500/20 border-red-500`
+      console.log('🔴 Card com mensagens não lidas:', conversa.email_cliente)
+      return `${baseClasses} bg-red-900/30 hover:bg-red-900/40 border-red-500 shadow-red-500/20`
     }
     
-    // Terceiro: estado normal (cinza)
-    return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750 border-l-gray-500 hover:border-l-blue-400`
+    // 3. TERCEIRO: Estado padrão (CINZA)
+    console.log('⚪ Card padrão (cinza):', conversa.email_cliente)
+    return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
 
   // Função para determinar as classes do avatar
@@ -132,7 +139,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     }
     
     if (conversa.tem_mensagens_nao_lidas) {
-      return isTitle ? 'text-red-100' : 'text-gray-300 font-medium'
+      return isTitle ? 'text-red-100 font-semibold' : 'text-gray-200 font-medium'
     }
     
     return isTitle ? 'text-white' : 'text-gray-400'
@@ -247,7 +254,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
         ) : (
           conversasFiltradas.map((conversa) => (
             <Card 
-              key={conversa.email_cliente}
+              key={`conversa-${conversa.email_cliente}-${conversa.email_gestor}`}
               className={getCardClasses(conversa)}
               onClick={() => handleSelectChat(conversa)}
             >
@@ -265,7 +272,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
                       <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
                         {conversa.nome_cliente}
                         {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
-                          <span className="ml-1 text-red-400">●</span>
+                          <span className="ml-1 text-red-400 animate-pulse">●</span>
                         )}
                       </h3>
                       <span className="text-xs text-gray-400 flex-shrink-0">

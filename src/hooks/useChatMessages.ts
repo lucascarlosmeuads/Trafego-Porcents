@@ -89,7 +89,7 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       .from('todos_clientes')
       .select('status_campanha, id')
       .eq('email_cliente', emailClienteFinal)
-      .single()
+      .maybeSingle()
 
     const novaMensagem = {
       cliente_id: clienteData?.id?.toString() || '',
@@ -213,9 +213,9 @@ export function useChatConversas(gestorFiltro?: string | null) {
     try {
       setLoading(true)
       
-      console.log('Carregando conversas para:', user.email, 'Tipo:', isGestor ? 'Gestor' : 'Admin')
+      console.log('🔍 Carregando conversas para:', user.email, 'Tipo:', isGestor ? 'Gestor' : 'Admin')
       
-      // Buscar clientes do gestor
+      // CORREÇÃO: Query otimizada para buscar clientes e suas últimas mensagens
       let clientesQuery = supabase
         .from('todos_clientes')
         .select('email_cliente, nome_cliente, status_campanha, email_gestor')
@@ -223,7 +223,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
       if (isGestor) {
         clientesQuery = clientesQuery.eq('email_gestor', user.email)
       } else if (isAdmin && gestorFiltro) {
-        // Admin filtrando por gestor específico
         clientesQuery = clientesQuery.eq('email_gestor', gestorFiltro)
       }
 
@@ -231,47 +230,63 @@ export function useChatConversas(gestorFiltro?: string | null) {
 
       if (clientesError) throw clientesError
 
-      console.log('Clientes encontrados:', clientes?.length || 0)
+      console.log('👥 Clientes encontrados:', clientes?.length || 0)
 
-      const conversasComMensagens = await Promise.all(
-        (clientes || []).map(async (cliente) => {
-          console.log(`Processando cliente: ${cliente.nome_cliente} (${cliente.email_cliente})`)
-          
-          // Buscar última mensagem específica para este cliente e gestor
-          const { data: ultimaMensagem } = await supabase
-            .from('chat_mensagens')
-            .select('conteudo, created_at')
-            .eq('email_cliente', cliente.email_cliente)
-            .eq('email_gestor', cliente.email_gestor)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
+      if (!clientes || clientes.length === 0) {
+        setConversas([])
+        return
+      }
 
-          console.log(`Última mensagem para ${cliente.nome_cliente}:`, ultimaMensagem?.conteudo || 'Nenhuma')
+      // CORREÇÃO: Query única para buscar todas as últimas mensagens
+      const { data: ultimasMensagens } = await supabase
+        .from('chat_mensagens')
+        .select('email_cliente, email_gestor, conteudo, created_at')
+        .in('email_cliente', clientes.map(c => c.email_cliente))
+        .order('created_at', { ascending: false })
 
-          // Contar mensagens não lidas específicas para este cliente e gestor
-          const { count: naoLidas } = await supabase
-            .from('chat_mensagens')
-            .select('*', { count: 'exact', head: true })
-            .eq('email_cliente', cliente.email_cliente)
-            .eq('email_gestor', cliente.email_gestor)
-            .eq('lida', false)
-            .eq('remetente', 'cliente') // Sempre mensagens do cliente para o gestor
+      console.log('💬 Total de mensagens encontradas:', ultimasMensagens?.length || 0)
 
-          console.log(`Mensagens não lidas para ${cliente.nome_cliente}:`, naoLidas || 0)
+      // CORREÇÃO: Query única para contar mensagens não lidas por cliente
+      const { data: mensagensNaoLidas } = await supabase
+        .from('chat_mensagens')
+        .select('email_cliente, email_gestor')
+        .in('email_cliente', clientes.map(c => c.email_cliente))
+        .eq('lida', false)
+        .eq('remetente', 'cliente')
 
-          return {
-            email_cliente: cliente.email_cliente,
-            email_gestor: cliente.email_gestor,
-            nome_cliente: cliente.nome_cliente,
-            status_campanha: cliente.status_campanha,
-            ultima_mensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem',
-            ultima_mensagem_data: ultimaMensagem?.created_at || '',
-            mensagens_nao_lidas: naoLidas || 0,
-            tem_mensagens_nao_lidas: (naoLidas || 0) > 0
-          }
+      console.log('🔴 Mensagens não lidas encontradas:', mensagensNaoLidas?.length || 0)
+
+      const conversasComMensagens = clientes.map(cliente => {
+        console.log(`📝 Processando cliente: ${cliente.nome_cliente} (${cliente.email_cliente})`)
+        
+        // CORREÇÃO: Buscar última mensagem específica para este cliente/gestor
+        const ultimaMensagemCliente = ultimasMensagens?.find(m => 
+          m.email_cliente === cliente.email_cliente && 
+          m.email_gestor === cliente.email_gestor
+        )
+
+        // CORREÇÃO: Contar mensagens não lidas específicas para este cliente/gestor
+        const naoLidasCount = mensagensNaoLidas?.filter(m => 
+          m.email_cliente === cliente.email_cliente && 
+          m.email_gestor === cliente.email_gestor
+        ).length || 0
+
+        console.log(`📊 Cliente: ${cliente.nome_cliente}`, {
+          ultimaMensagem: ultimaMensagemCliente?.conteudo || 'Nenhuma',
+          mensagensNaoLidas: naoLidasCount
         })
-      )
+
+        return {
+          email_cliente: cliente.email_cliente,
+          email_gestor: cliente.email_gestor,
+          nome_cliente: cliente.nome_cliente,
+          status_campanha: cliente.status_campanha,
+          ultima_mensagem: ultimaMensagemCliente?.conteudo || 'Nenhuma mensagem',
+          ultima_mensagem_data: ultimaMensagemCliente?.created_at || '',
+          mensagens_nao_lidas: naoLidasCount,
+          tem_mensagens_nao_lidas: naoLidasCount > 0
+        }
+      })
 
       // Ordenar: primeiro as com mensagens não lidas, depois por última atividade
       const conversasOrdenadas = conversasComMensagens.sort((a, b) => {
@@ -285,10 +300,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
         return dataB - dataA
       })
 
-      console.log('Conversas processadas:', conversasOrdenadas.length)
+      console.log('✅ Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
     } catch (err) {
-      console.error('Erro ao carregar conversas:', err)
+      console.error('❌ Erro ao carregar conversas:', err)
     } finally {
       setLoading(false)
     }
@@ -307,7 +322,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
           table: 'chat_mensagens'
         },
         () => {
-          console.log('Realtime: mudança nas mensagens, recarregando conversas')
+          console.log('🔄 Realtime: mudança nas mensagens, recarregando conversas')
           carregarConversas()
         }
       )
