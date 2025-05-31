@@ -4,7 +4,7 @@ import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
-import { MessageCircle, Users } from 'lucide-react'
+import { MessageCircle } from 'lucide-react'
 
 export function ChatLayoutSplit() {
   const { conversas, loading } = useChatConversas()
@@ -78,11 +78,11 @@ export function ChatLayoutSplit() {
     )
   }
 
-  // Layout desktop: split view
+  // Layout desktop: split view com proporções melhoradas
   return (
-    <div className="h-full flex bg-gray-900">
-      {/* Sidebar esquerda - Lista de conversas */}
-      <div className="w-80 border-r border-gray-700 flex-shrink-0">
+    <div className="h-screen flex bg-gray-900">
+      {/* Sidebar esquerda - Lista de conversas - pode ter scroll livre */}
+      <div className="w-80 border-r border-gray-700 flex-shrink-0 h-full overflow-hidden">
         <ChatSidebar
           conversas={conversas}
           selectedChat={selectedChat}
@@ -91,8 +91,8 @@ export function ChatLayoutSplit() {
         />
       </div>
 
-      {/* Área principal - Chat ativo */}
-      <div className="flex-1 bg-white">
+      {/* Área principal - Chat ativo com altura controlada */}
+      <div className="flex-1 bg-white flex flex-col h-full">
         {selectedChat ? (
           <ChatInterface
             emailCliente={selectedChat.email_cliente}

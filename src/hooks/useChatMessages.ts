@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -118,6 +117,41 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     if (error) throw error
   }, [])
 
+  const marcarTodasComoLidas = useCallback(async () => {
+    if (!user?.email || !emailCliente) return
+
+    try {
+      const remetenteOposto = isCliente ? 'gestor' : 'cliente'
+      
+      let query = supabase
+        .from('chat_mensagens')
+        .update({ lida: true })
+        .eq('lida', false)
+        .eq('remetente', remetenteOposto)
+
+      if (isCliente) {
+        query = query.eq('email_cliente', user.email)
+      } else if (isGestor) {
+        query = query
+          .eq('email_cliente', emailCliente)
+          .eq('email_gestor', user.email)
+      } else if (isAdmin && emailGestor) {
+        query = query
+          .eq('email_cliente', emailCliente)
+          .eq('email_gestor', emailGestor)
+      }
+
+      const { error } = await query
+
+      if (error) throw error
+      
+      // Recarregar mensagens para atualizar estado
+      carregarMensagens()
+    } catch (err) {
+      console.error('Erro ao marcar mensagens como lidas:', err)
+    }
+  }, [user?.email, isCliente, isGestor, isAdmin, emailCliente, emailGestor, carregarMensagens])
+
   // Configurar realtime
   useEffect(() => {
     if (!user?.email) return
@@ -144,12 +178,25 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     }
   }, [carregarMensagens, user?.email])
 
+  // Auto-marcar como lidas quando entrar na conversa
+  useEffect(() => {
+    if (mensagens.length > 0 && !isCliente) {
+      // Pequeno delay para garantir que a conversa foi carregada
+      const timer = setTimeout(() => {
+        marcarTodasComoLidas()
+      }, 1000)
+      
+      return () => clearTimeout(timer)
+    }
+  }, [emailCliente, emailGestor, marcarTodasComoLidas, isCliente])
+
   return {
     mensagens,
     loading,
     error,
     enviarMensagem,
     marcarComoLida,
+    marcarTodasComoLidas,
     recarregar: carregarMensagens
   }
 }

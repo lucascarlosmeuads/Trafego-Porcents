@@ -4,8 +4,8 @@ import { MessageItem } from './MessageItem'
 import { MessageInput } from './MessageInput'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, User } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { ArrowLeft, User, CheckCheck } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 interface ChatInterfaceProps {
@@ -26,7 +26,7 @@ export function ChatInterface({
   showBackButton = false
 }: ChatInterfaceProps) {
   const { user, isCliente, isGestor } = useAuth()
-  const { mensagens, loading, enviarMensagem } = useChatMessages(emailCliente, emailGestor)
+  const { mensagens, loading, enviarMensagem, marcarTodasComoLidas } = useChatMessages(emailCliente, emailGestor)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   // Auto scroll para a última mensagem
@@ -37,6 +37,17 @@ export function ChatInterface({
   const handleSendMessage = async (content: string, type: 'texto' | 'audio' = 'texto') => {
     await enviarMensagem(content, type, emailCliente)
   }
+
+  const handleMarcarTodasLidas = async () => {
+    await marcarTodasComoLidas()
+  }
+
+  // Verificar se há mensagens não lidas do outro usuário
+  const mensagensNaoLidas = mensagens.filter(msg => 
+    !msg.lida && 
+    ((isCliente && msg.remetente === 'gestor') || 
+     (isGestor && msg.remetente === 'cliente'))
+  ).length
 
   if (loading) {
     return (
@@ -50,9 +61,9 @@ export function ChatInterface({
   }
 
   return (
-    <div className="flex flex-col h-full bg-white">
+    <div className="flex flex-col h-full max-h-[80vh] bg-white">
       {/* Header do chat */}
-      <div className="border-b bg-gray-50 p-4">
+      <div className="border-b bg-gray-50 p-4 flex-shrink-0">
         <div className="flex items-center gap-3">
           {showBackButton && (
             <Button variant="ghost" size="icon" onClick={onBack}>
@@ -77,11 +88,24 @@ export function ChatInterface({
               </div>
             </div>
           </div>
+
+          {/* Botão marcar como lida */}
+          {mensagensNaoLidas > 0 && !isCliente && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleMarcarTodasLidas}
+              className="flex items-center gap-2"
+            >
+              <CheckCheck className="h-4 w-4" />
+              Marcar como lida ({mensagensNaoLidas})
+            </Button>
+          )}
         </div>
       </div>
 
-      {/* Área de mensagens */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-2">
+      {/* Área de mensagens - altura controlada */}
+      <div className="flex-1 overflow-y-auto p-4 space-y-2 min-h-0 max-h-[50vh]">
         {mensagens.length === 0 ? (
           <div className="text-center py-8">
             <div className="text-gray-400 mb-2">💬</div>
@@ -105,15 +129,17 @@ export function ChatInterface({
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Input de mensagem */}
-      <MessageInput
-        onSendMessage={handleSendMessage}
-        placeholder={
-          isCliente 
-            ? "Digite sua mensagem para o gestor..." 
-            : `Digite sua mensagem para ${nomeCliente}...`
-        }
-      />
+      {/* Input de mensagem - sempre visível */}
+      <div className="flex-shrink-0">
+        <MessageInput
+          onSendMessage={handleSendMessage}
+          placeholder={
+            isCliente 
+              ? "Digite sua mensagem para o gestor..." 
+              : `Digite sua mensagem para ${nomeCliente}...`
+          }
+        />
+      </div>
     </div>
   )
 }
