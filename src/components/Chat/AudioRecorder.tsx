@@ -3,6 +3,7 @@ import { useState, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { Mic, Square, Play, Pause, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
+import { toast } from '@/components/ui/sonner'
 
 interface AudioRecorderProps {
   onAudioReady: (audioUrl: string) => void
@@ -31,19 +32,16 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
         } 
       })
       
-      // Use a more compatible audio format
       const options = {
         mimeType: 'audio/webm;codecs=opus'
       }
       
-      // Fallback to default if the preferred format isn't supported
       if (!MediaRecorder.isTypeSupported(options.mimeType)) {
         console.warn('⚠️ [AudioRecorder] Formato preferido não suportado, usando padrão')
         delete options.mimeType
       }
       
       const mediaRecorder = new MediaRecorder(stream, options)
-      
       const chunks: BlobPart[] = []
       
       mediaRecorder.ondataavailable = (event) => {
@@ -64,15 +62,13 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
           chunks: chunks.length
         })
         
-        // Parar todas as tracks
         stream.getTracks().forEach(track => track.stop())
       }
       
       mediaRecorderRef.current = mediaRecorder
-      mediaRecorder.start(100) // Capturar dados a cada 100ms
+      mediaRecorder.start(100)
       setIsRecording(true)
       
-      // Contar duração
       let seconds = 0
       intervalRef.current = setInterval(() => {
         seconds++
@@ -80,8 +76,8 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
       }, 1000)
       
     } catch (error) {
-      console.error('Erro ao iniciar gravação:', error)
-      alert('Erro ao acessar o microfone. Verifique as permissões.')
+      console.error('❌ [AudioRecorder] Erro ao iniciar gravação:', error)
+      toast.error('Erro ao acessar o microfone. Verifique as permissões.')
     }
   }, [])
 
@@ -125,30 +121,26 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
     try {
       setUploading(true)
       
-      // Verificar se o usuário está autenticado
       const { data: { user }, error: userError } = await supabase.auth.getUser()
       
-      if (userError || !user?.email) {
-        console.error('Usuário não autenticado:', userError)
-        alert('Você precisa estar logado para enviar áudios.')
+      if (userError || !user?.id) {
+        console.error('❌ [AudioRecorder] Usuário não autenticado:', userError)
+        toast.error('Você precisa estar logado para enviar áudios.')
         return
       }
 
-      // Sanitizar email para usar no path
-      const sanitizedEmail = user.email.replace(/[@.]/g, '_')
       const timestamp = Date.now()
       const fileName = `audio_${timestamp}.webm`
-      const filePath = `${sanitizedEmail}/${fileName}`
+      const filePath = `${user.id}/${fileName}`
 
       console.log('📤 [AudioRecorder] Enviando áudio:', { 
         fileName, 
         filePath, 
-        userEmail: user.email,
+        userId: user.id,
         blobSize: audioBlob.size,
         blobType: audioBlob.type
       })
 
-      // Upload para o Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('chat-audios')
         .upload(filePath, audioBlob, {
@@ -159,17 +151,16 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
 
       if (uploadError) {
         console.error('❌ [AudioRecorder] Erro no upload:', uploadError)
+        toast.error('Erro ao enviar áudio. Tente novamente.')
         throw uploadError
       }
 
       console.log('✅ [AudioRecorder] Upload concluído:', uploadData.path)
 
-      // Obter URL pública do áudio
       const { data: { publicUrl } } = supabase.storage
         .from('chat-audios')
         .getPublicUrl(filePath)
 
-      // Adicionar timestamp para evitar cache
       const finalUrl = `${publicUrl}?t=${timestamp}`
 
       console.log('🔗 [AudioRecorder] URL pública gerada:', finalUrl)
@@ -187,9 +178,11 @@ export function AudioRecorder({ onAudioReady, disabled }: AudioRecorderProps) {
 
       onAudioReady(finalUrl)
       deleteAudio()
+      toast.success('Áudio enviado com sucesso!')
+      
     } catch (error) {
       console.error('💥 [AudioRecorder] Erro ao enviar áudio:', error)
-      alert('Erro ao enviar áudio. Tente novamente.')
+      toast.error('Erro ao enviar áudio. Tente novamente.')
     } finally {
       setUploading(false)
     }

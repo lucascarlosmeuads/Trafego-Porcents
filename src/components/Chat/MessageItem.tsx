@@ -5,6 +5,7 @@ import { Play, Pause, AlertCircle } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { toast } from '@/components/ui/sonner'
 
 interface MessageItemProps {
   mensagem: ChatMensagem
@@ -18,16 +19,14 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
   const [duration, setDuration] = useState<string>('')
   const audioRef = useRef<HTMLAudioElement | null>(null)
 
-  // Debug da URL do áudio
   useEffect(() => {
     if (mensagem.tipo === 'audio') {
       console.log('🎵 [MessageItem] URL do áudio recebida:', mensagem.conteudo)
       
-      // Verificar se a URL é válida
       try {
         new URL(mensagem.conteudo)
         console.log('✅ [MessageItem] URL válida')
-        setHasError(false) // Reset error state when URL is valid
+        setHasError(false)
       } catch (error) {
         console.error('❌ [MessageItem] URL inválida:', error)
         setHasError(true)
@@ -35,17 +34,11 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
     }
   }, [mensagem])
 
-  // Preload do áudio quando a URL estiver disponível
   useEffect(() => {
     if (mensagem.tipo === 'audio' && audioRef.current && mensagem.conteudo) {
       const audio = audioRef.current
-      
-      // Reset error state before loading
       setHasError(false)
-      
-      // Force reload of the audio element
       audio.load()
-      
       console.log('🔄 [MessageItem] Carregando áudio:', mensagem.conteudo)
     }
   }, [mensagem.conteudo, mensagem.tipo])
@@ -63,10 +56,7 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
         setIsLoading(true)
         setHasError(false)
         
-        // Force reload before playing to ensure fresh content
         audioRef.current.load()
-        
-        // Wait a bit for the load to complete
         await new Promise(resolve => setTimeout(resolve, 100))
         
         await audioRef.current.play()
@@ -77,6 +67,7 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
       console.error('❌ [MessageItem] Erro ao reproduzir áudio:', error)
       setHasError(true)
       setIsPlaying(false)
+      toast.error('Erro ao reproduzir áudio')
     } finally {
       setIsLoading(false)
     }
@@ -88,7 +79,7 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
       const secs = Math.floor(audioRef.current.duration % 60)
       setDuration(`${mins}:${secs.toString().padStart(2, '0')}`)
       console.log('📊 [MessageItem] Duração do áudio carregada:', `${mins}:${secs}`)
-      setHasError(false) // Clear error if metadata loads successfully
+      setHasError(false)
     }
   }
 
@@ -113,6 +104,7 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
     setHasError(true)
     setIsPlaying(false)
     setIsLoading(false)
+    toast.error('Erro ao carregar áudio')
   }
 
   const handleAudioEnded = () => {
@@ -130,7 +122,6 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
     setIsLoading(true)
     
     if (audioRef.current) {
-      // Force complete reload
       const currentSrc = audioRef.current.src
       audioRef.current.src = ''
       audioRef.current.load()
@@ -150,7 +141,6 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
             : 'bg-gray-200 text-gray-800 rounded-bl-sm'
         }`}
       >
-        {/* Cabeçalho da mensagem */}
         <div className="flex items-center justify-between text-xs opacity-75 mb-1">
           <span className="font-medium">
             {mensagem.remetente === 'cliente' ? 'Cliente' : 'Gestor'}
@@ -158,7 +148,6 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
           <span>{formatTime(mensagem.created_at)}</span>
         </div>
 
-        {/* Conteúdo da mensagem */}
         {mensagem.tipo === 'texto' ? (
           <p className="text-sm whitespace-pre-wrap break-words">
             {mensagem.conteudo}
@@ -213,7 +202,6 @@ export function MessageItem({ mensagem, isOwn }: MessageItemProps) {
           </div>
         )}
 
-        {/* Status da campanha (se disponível) */}
         {mensagem.status_campanha && (
           <div className="text-xs opacity-75 mt-1 pt-1 border-t border-opacity-30">
             Status: {mensagem.status_campanha}
