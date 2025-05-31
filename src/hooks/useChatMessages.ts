@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -24,6 +25,7 @@ export interface ChatConversaPreview {
   ultima_mensagem: string
   ultima_mensagem_data: string
   mensagens_nao_lidas: number
+  tem_mensagens_nao_lidas: boolean
 }
 
 export function useChatMessages(emailCliente?: string, emailGestor?: string) {
@@ -207,12 +209,25 @@ export function useChatConversas(gestorFiltro?: string | null) {
             status_campanha: cliente.status_campanha,
             ultima_mensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem',
             ultima_mensagem_data: ultimaMensagem?.created_at || '',
-            mensagens_nao_lidas: naoLidas || 0
+            mensagens_nao_lidas: naoLidas || 0,
+            tem_mensagens_nao_lidas: (naoLidas || 0) > 0
           }
         })
       )
 
-      setConversas(conversasComMensagens)
+      // Ordenar: primeiro as com mensagens não lidas, depois por última atividade
+      const conversasOrdenadas = conversasComMensagens.sort((a, b) => {
+        // Primeiro critério: mensagens não lidas
+        if (a.tem_mensagens_nao_lidas && !b.tem_mensagens_nao_lidas) return -1
+        if (!a.tem_mensagens_nao_lidas && b.tem_mensagens_nao_lidas) return 1
+        
+        // Segundo critério: última atividade
+        const dataA = new Date(a.ultima_mensagem_data).getTime()
+        const dataB = new Date(b.ultima_mensagem_data).getTime()
+        return dataB - dataA
+      })
+
+      setConversas(conversasOrdenadas)
     } catch (err) {
       console.error('Erro ao carregar conversas:', err)
     } finally {

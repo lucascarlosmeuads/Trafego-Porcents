@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
-import { Search, MessageCircle, User, ArrowRight } from 'lucide-react'
+import { Search, MessageCircle, User, ArrowRight, Filter, FilterX } from 'lucide-react'
 import { ChatInterface } from './ChatInterface'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -15,12 +15,17 @@ export function GestorChatList() {
   const { conversas, loading } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
+  const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const { user } = useAuth()
 
-  const conversasFiltradas = conversas.filter(conversa =>
-    conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
-  )
+  const conversasFiltradas = conversas
+    .filter(conversa =>
+      conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
+    )
+    .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
+
+  const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
 
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
@@ -90,10 +95,17 @@ export function GestorChatList() {
     <div className="h-full flex flex-col bg-gray-900">
       {/* Header */}
       <div className="bg-gray-800 border-b border-gray-700 p-6 shadow-lg">
-        <h2 className="text-2xl font-bold text-white mb-4">Mensagens dos Clientes</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-2xl font-bold text-white">Mensagens dos Clientes</h2>
+          {totalNaoLidas > 0 && (
+            <Badge variant="destructive" className="bg-red-600 text-white text-sm px-3 py-1">
+              {totalNaoLidas} não lidas
+            </Badge>
+          )}
+        </div>
         
         {/* Busca */}
-        <div className="relative">
+        <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
             placeholder="Buscar cliente..."
@@ -102,6 +114,21 @@ export function GestorChatList() {
             className="pl-10 h-12 text-base bg-gray-700 border-gray-600 text-white placeholder-gray-400"
           />
         </div>
+
+        {/* Filtro de não lidas */}
+        <Button
+          variant={showOnlyUnread ? "default" : "ghost"}
+          size="sm"
+          onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+          className={`justify-start ${
+            showOnlyUnread 
+              ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+              : 'text-gray-300 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
+          {showOnlyUnread ? 'Mostrar todas as conversas' : 'Apenas não lidas'}
+        </Button>
       </div>
 
       {/* Lista de conversas */}
@@ -112,17 +139,23 @@ export function GestorChatList() {
               <MessageCircle className="h-10 w-10 text-gray-400" />
             </div>
             <h3 className="text-lg font-semibold text-white mb-2">
-              {searchTerm ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
+              {searchTerm || showOnlyUnread ? 'Nenhuma conversa encontrada' : 'Nenhuma conversa ainda'}
             </h3>
             <p className="text-gray-400">
-              {searchTerm ? 'Tente buscar por outro termo' : 'Aguarde seus clientes iniciarem conversas'}
+              {searchTerm ? 'Tente buscar por outro termo' : 
+               showOnlyUnread ? 'Nenhuma conversa com mensagens não lidas' :
+               'Aguarde seus clientes iniciarem conversas'}
             </p>
           </div>
         ) : (
           conversasFiltradas.map((conversa) => (
             <Card 
               key={conversa.email_cliente}
-              className="bg-gray-800 border-gray-700 hover:bg-gray-750 hover:shadow-xl transition-all duration-200 cursor-pointer border-l-4 border-l-blue-500 hover:border-l-blue-400"
+              className={`transition-all duration-200 cursor-pointer hover:shadow-xl ${
+                conversa.tem_mensagens_nao_lidas 
+                  ? 'bg-red-900/20 border-red-500 hover:bg-red-900/30 shadow-red-500/20 border-l-4 border-l-red-500' 
+                  : 'bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-4 border-l-blue-500 hover:border-l-blue-400'
+              }`}
               onClick={() => setSelectedChat(conversa)}
             >
               <CardContent className="p-6">
@@ -130,16 +163,27 @@ export function GestorChatList() {
                   {/* Lado esquerdo - Informações do cliente */}
                   <div className="flex items-start gap-4 flex-1 min-w-0">
                     {/* Avatar */}
-                    <div className="h-16 w-16 bg-gradient-to-br from-blue-800 to-blue-900 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14">
-                      <User className="h-8 w-8 text-blue-300 md:h-7 md:w-7" />
+                    <div className={`h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14 ${
+                      conversa.tem_mensagens_nao_lidas 
+                        ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
+                        : 'bg-gradient-to-br from-blue-800 to-blue-900'
+                    }`}>
+                      <User className={`h-8 w-8 md:h-7 md:w-7 ${
+                        conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
+                      }`} />
                     </div>
                     
                     {/* Informações */}
                     <div className="flex-1 min-w-0">
                       {/* Nome e timestamp */}
                       <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-                        <h3 className="text-xl font-bold text-white truncate pr-2 mb-1 md:mb-0">
+                        <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${
+                          conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
+                        }`}>
                           {conversa.nome_cliente}
+                          {conversa.tem_mensagens_nao_lidas && (
+                            <span className="ml-2 text-red-400 text-xl">●</span>
+                          )}
                         </h3>
                         <span className="text-sm text-gray-400 flex-shrink-0">
                           {formatLastMessageTime(conversa.ultima_mensagem_data)}
@@ -156,7 +200,9 @@ export function GestorChatList() {
                       </div>
                       
                       {/* Última mensagem */}
-                      <p className="text-sm text-gray-400 line-clamp-2 leading-relaxed">
+                      <p className={`text-sm line-clamp-2 leading-relaxed ${
+                        conversa.tem_mensagens_nao_lidas ? 'text-gray-300 font-medium' : 'text-gray-400'
+                      }`}>
                         {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                       </p>
                     </div>
@@ -166,13 +212,17 @@ export function GestorChatList() {
                   <div className="flex flex-col items-end gap-3 ml-4 flex-shrink-0">
                     {/* Badge de mensagens não lidas */}
                     {conversa.mensagens_nao_lidas > 0 && (
-                      <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white">
+                      <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white animate-pulse">
                         {conversa.mensagens_nao_lidas}
                       </Badge>
                     )}
                     
                     {/* Botão de chat */}
-                    <div className="bg-blue-600 hover:bg-blue-700 hover:scale-105 rounded-full p-4 transition-all duration-200 shadow-lg">
+                    <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
+                      conversa.tem_mensagens_nao_lidas 
+                        ? 'bg-red-600 hover:bg-red-700' 
+                        : 'bg-blue-600 hover:bg-blue-700'
+                    }`}>
                       <ArrowRight className="h-6 w-6 text-white" />
                     </div>
                   </div>
