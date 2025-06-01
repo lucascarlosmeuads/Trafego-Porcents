@@ -15,6 +15,7 @@ interface ChatInterfaceProps {
   statusCampanha?: string
   onBack?: () => void
   showBackButton?: boolean
+  onMarcarComoLida?: (emailCliente: string, emailGestor: string) => void // NOVA PROP
 }
 
 export function ChatInterface({
@@ -23,7 +24,8 @@ export function ChatInterface({
   nomeCliente,
   statusCampanha,
   onBack,
-  showBackButton = false
+  showBackButton = false,
+  onMarcarComoLida // NOVA PROP
 }: ChatInterfaceProps) {
   const { user, isCliente, isGestor } = useAuth()
   const { mensagens, loading, enviarMensagem, marcarTodasComoLidas } = useChatMessages(emailCliente, emailGestor)
@@ -38,8 +40,17 @@ export function ChatInterface({
     await enviarMensagem(content, type, emailCliente)
   }
 
+  // NOVA FUNÇÃO: Marcar como lida com callback para GestorChatList
   const handleMarcarTodasLidas = async () => {
+    console.log('🎯 [ChatInterface] Marcando todas como lidas')
+    
+    // 1. Marcar no banco de dados
     await marcarTodasComoLidas()
+    
+    // 2. Atualizar lista de conversas via callback (se disponível)
+    if (onMarcarComoLida) {
+      onMarcarComoLida(emailCliente, emailGestor)
+    }
   }
 
   // Verificar se há mensagens não lidas do outro usuário
@@ -90,13 +101,13 @@ export function ChatInterface({
               </div>
             </div>
 
-            {/* Botão marcar como lida */}
+            {/* Botão marcar como lida - AGORA FUNCIONAL */}
             {mensagensNaoLidas > 0 && !isCliente && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={handleMarcarTodasLidas}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-500"
               >
                 <CheckCheck className="h-4 w-4" />
                 <span className="hidden sm:inline">Marcar como lida</span>

@@ -18,7 +18,8 @@ export function GestorChatList() {
     recarregar, 
     marcarChatComoLidoEstaSecao,
     chatFoiLidoEstaSecao,
-    getTotalNaoLidas
+    getTotalNaoLidas,
+    atualizarConversaComoLida // NOVA FUNÇÃO
   } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -109,7 +110,7 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
-  // NOVA LÓGICA DE CLIQUE SIMPLIFICADA
+  // NOVA LÓGICA DE CLIQUE COM ATUALIZAÇÃO IMEDIATA
   const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente)
 
@@ -121,6 +122,15 @@ export function GestorChatList() {
 
     // Selecionar o chat
     setSelectedChat(conversa)
+  }
+
+  // NOVA FUNÇÃO: Marcar como lida via botão (será passada para ChatInterface)
+  const handleMarcarComoLida = (emailCliente: string, emailGestor: string) => {
+    console.log('🎯 [GestorChatList] Marcando como lida via botão:', emailCliente)
+    
+    if (marcarChatComoLidoEstaSecao) {
+      marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
+    }
   }
 
   const getCardClasses = (conversa: ChatConversaPreview) => {
@@ -204,6 +214,7 @@ export function GestorChatList() {
           statusCampanha={selectedChat.status_campanha}
           onBack={() => setSelectedChat(null)}
           showBackButton={true}
+          onMarcarComoLida={handleMarcarComoLida} // NOVA PROP
         />
       </div>
     )

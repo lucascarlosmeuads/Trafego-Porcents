@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -208,18 +207,38 @@ export function useChatConversas(gestorFiltro?: string | null) {
   const [chatsLidosEstaSecao, setChatsLidosEstaSecao] = useState<Set<string>>(new Set())
   const { user, isGestor, isAdmin } = useAuth()
 
+  // NOVA FUNÇÃO: Forçar atualização imediata do estado das conversas
+  const atualizarConversaComoLida = useCallback((emailCliente: string, emailGestor: string) => {
+    console.log('🔄 [useChatConversas] Atualizando conversa como lida IMEDIATAMENTE:', emailCliente)
+    
+    setConversas(prev => prev.map(conversa => {
+      if (conversa.email_cliente === emailCliente && conversa.email_gestor === emailGestor) {
+        return {
+          ...conversa,
+          tem_mensagens_nao_lidas: false,
+          mensagens_nao_lidas: 0
+        }
+      }
+      return conversa
+    }))
+  }, [])
+
   // Marcar um chat como lido desta sessão COM FEEDBACK IMEDIATO
   const marcarChatComoLidoEstaSecao = useCallback((emailCliente: string, emailGestor: string) => {
     const chaveChat = `${emailCliente}-${emailGestor}`
     console.log('✅ [useChatConversas] Marcando chat como lido desta sessão:', chaveChat)
     
+    // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
     setChatsLidosEstaSecao(prev => {
       const newSet = new Set(prev)
       newSet.add(chaveChat)
       return newSet
     })
 
-    // MARCAÇÃO AUTOMÁTICA NO BANCO DE DADOS
+    // 2. FORÇAR ATUALIZAÇÃO VISUAL IMEDIATA
+    atualizarConversaComoLida(emailCliente, emailGestor)
+
+    // 3. MARCAÇÃO AUTOMÁTICA NO BANCO DE DADOS (em background)
     const marcarNoBanco = async () => {
       try {
         console.log('🔄 [useChatConversas] Marcando mensagens como lidas no banco')
@@ -236,10 +255,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
         
         console.log('✅ [useChatConversas] Mensagens marcadas no banco com sucesso')
         
-        // Recarregar conversas após 500ms para refletir mudanças
+        // Recarregar conversas após 1s para sincronizar com banco
         setTimeout(() => {
           carregarConversas()
-        }, 500)
+        }, 1000)
         
       } catch (err) {
         console.error('❌ [useChatConversas] Erro ao marcar no banco:', err)
@@ -248,7 +267,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
 
     // Executar marcação no banco imediatamente
     marcarNoBanco()
-  }, [])
+  }, [atualizarConversaComoLida])
 
   // Remover um chat do estado lido (quando nova mensagem chegar)
   const removerChatDoEstadoLido = useCallback((emailCliente: string, emailGestor: string) => {
@@ -401,6 +420,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
     recarregar: carregarConversas,
     marcarChatComoLidoEstaSecao,
     chatFoiLidoEstaSecao,
+    atualizarConversaComoLida, // NOVA FUNÇÃO EXPORTADA
     // NOVA FUNÇÃO: Calcular total não lidas considerando estado local
     getTotalNaoLidas: useCallback(() => {
       return conversas.filter(c => {
