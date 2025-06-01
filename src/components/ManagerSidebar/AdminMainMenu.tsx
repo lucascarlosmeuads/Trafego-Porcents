@@ -1,3 +1,4 @@
+
 import { Button } from '@/components/ui/button'
 import { 
   BarChart3, 
@@ -13,6 +14,7 @@ interface AdminMainMenuProps {
   onTabChange: (tab: string) => void
   onManagerSelect: (manager: string | null) => void
   problemasPendentes: number
+  isCollapsed?: boolean
 }
 
 export function AdminMainMenu({ 
@@ -20,7 +22,8 @@ export function AdminMainMenu({
   selectedManager, 
   onTabChange, 
   onManagerSelect,
-  problemasPendentes 
+  problemasPendentes,
+  isCollapsed = false
 }: AdminMainMenuProps) {
 
   // Menus ativos no painel Admin
@@ -51,35 +54,34 @@ export function AdminMainMenu({
     }
   ]
 
-  // Menus ocultos (removidos temporariamente):
-  // - auditoria (Auditoria)
-  // - briefings (Briefings) 
-  // - importar-vendas (Importar Vendas)
-  // - criar-usuarios-clientes (Criar Usuários)
-  // - sites (Sites)
-
   return (
     <nav className="space-y-2">
       {menuItems.map((item) => (
         <Button
           key={item.id}
           variant={activeTab === item.id ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={`
+            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+          `}
           onClick={item.onClick}
+          title={isCollapsed ? item.label : ''}
         >
-          <item.icon className="mr-2 h-4 w-4" />
-          {item.label}
+          <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+          {!isCollapsed && item.label}
         </Button>
       ))}
 
       <div className="pt-4 border-t">
         <Button
           variant={selectedManager === '__GESTORES__' ? 'default' : 'ghost'}
-          className="w-full justify-start"
+          className={`
+            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+          `}
           onClick={() => onManagerSelect('__GESTORES__')}
+          title={isCollapsed ? 'Gestores' : ''}
         >
-          <Settings className="mr-2 h-4 w-4" />
-          Gestores
+          <Settings className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+          {!isCollapsed && 'Gestores'}
         </Button>
       </div>
     </nav>

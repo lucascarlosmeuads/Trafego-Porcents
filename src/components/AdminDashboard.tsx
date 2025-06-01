@@ -1,3 +1,4 @@
+
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -58,7 +59,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'clientes':
       default:
         return (
-          <div className="space-y-4">
+          <div className="space-y-4 max-w-full overflow-hidden">
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
             {selectedManager !== '__GESTORES__' && (
               <div className="bg-card border rounded-lg p-4">
@@ -71,14 +72,16 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
             
             {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <ClientesTable selectedManager={selectedManager} />
+            <div className="w-full overflow-auto">
+              <ClientesTable selectedManager={selectedManager} />
+            </div>
           </div>
         )
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 w-full max-w-full">
       {renderContent()}
     </div>
   )
