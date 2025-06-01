@@ -34,13 +34,13 @@ const SITE_STATUS_OPTIONS = [
 ]
 
 const CRIATIVO_STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos os Status' },
+  { value: 'all', label: 'Status Criativo' },
   { value: 'pendente', label: 'Pendente Criativo' },
   { value: 'feito', label: 'Criativo Feito' }
 ]
 
 const BM_STATUS_OPTIONS = [
-  { value: 'all', label: 'Todos os Status' },
+  { value: 'all', label: 'Status das BMs' },
   { value: 'com_bm', label: 'Com BM' },
   { value: 'sem_bm', label: 'Sem BM' }
 ]
@@ -104,7 +104,7 @@ export function TableFilters({
           <SelectValue placeholder="Status da campanha" />
         </SelectTrigger>
         <SelectContent className="bg-card border-border">
-          <SelectItem value="all">Todos os Status</SelectItem>
+          <SelectItem value="all">Status Campanha</SelectItem>
           {STATUS_CAMPANHA.map(status => (
             <SelectItem key={status} value={status}>
               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
