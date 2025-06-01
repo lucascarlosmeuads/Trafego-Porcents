@@ -1,170 +1,155 @@
 
+import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
-import { toast } from '@/hooks/use-toast'
-import { SENHA_PADRAO_CLIENTE } from '@/utils/clienteValidation'
+import { useToast } from '@/hooks/use-toast'
+import { ensureClienteExists, restoreClienteData } from '@/utils/clienteDataHelpers'
 
 export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: () => void) {
-  const addCliente = async (clienteData: any) => {
-    if (!userEmail) {
-      console.error('❌ [useClienteAdd] Email do usuário não fornecido')
-      return { success: false, isNewClient: false, clientData: null }
+  const [isAdding, setIsAdding] = useState(false)
+  const { toast } = useToast()
+
+  const addCliente = async (clientData: any) => {
+    console.log('🔵 [useClienteAdd] === INICIANDO ADIÇÃO DE CLIENTE ===')
+    console.log('📧 [useClienteAdd] User Email:', userEmail)
+    console.log('👤 [useClienteAdd] Is Admin:', isAdmin)
+    console.log('📝 [useClienteAdd] Dados recebidos:', clientData)
+    
+    // ✅ GARANTIR VALOR PADRÃO R$60,00 - LOG DETALHADO
+    const valorComissaoOriginal = clientData.valor_comissao
+    if (!clientData.valor_comissao || clientData.valor_comissao === null || clientData.valor_comissao === undefined) {
+      clientData.valor_comissao = 60.00
+      console.log('💰 [useClienteAdd] VALOR PADRÃO APLICADO: R$60,00 (era:', valorComissaoOriginal, ')')
+    } else {
+      console.log('💰 [useClienteAdd] VALOR JÁ DEFINIDO: R$', clientData.valor_comissao)
     }
 
-    try {
-      console.log('🚀 [useClienteAdd] === INICIANDO ADIÇÃO DE CLIENTE ===')
-      console.log('📥 Dados recebidos:', clienteData)
-      console.log('👤 User Email:', userEmail)
-      console.log('🔒 IsAdmin:', isAdmin)
-      
-      const emailGestorFinal = isAdmin ? (clienteData.email_gestor || userEmail) : userEmail
-      
-      // Step 1: Check if client already exists in todos_clientes
-      console.log('🔍 [useClienteAdd] Verificando se cliente já existe...')
-      const { data: existingCliente, error: checkError } = await supabase
-        .from('todos_clientes')
-        .select('id, nome_cliente')
-        .eq('email_cliente', clienteData.email_cliente)
-        .single()
+    // Garantir que comissao seja string
+    if (!clientData.comissao) {
+      clientData.comissao = 'Pendente'
+      console.log('📊 [useClienteAdd] Status comissão definido como: Pendente')
+    }
 
-      if (checkError && checkError.code !== 'PGRST116') {
-        console.error('❌ [useClienteAdd] Erro ao verificar cliente existente:', checkError)
-        throw new Error(`Erro ao verificar cliente: ${checkError.message}`)
+    setIsAdding(true)
+    
+    try {
+      // Validações básicas
+      if (!clientData.nome_cliente?.trim()) {
+        throw new Error('Nome do cliente é obrigatório')
       }
 
-      let clienteJaExistia = false
-      let finalClientData = clienteData
+      if (!clientData.telefone?.trim()) {
+        throw new Error('Telefone é obrigatório') 
+      }
+
+      if (!clientData.data_venda) {
+        throw new Error('Data da venda é obrigatória')
+      }
+
+      if (!clientData.status_campanha) {
+        throw new Error('Status da campanha é obrigatório')
+      }
+
+      // Para não-admins, definir email_gestor automaticamente
+      if (!isAdmin) {
+        clientData.email_gestor = userEmail
+        console.log('👨‍💼 [useClienteAdd] Email gestor definido automaticamente:', userEmail)
+      }
+
+      // Preparar dados finais com logs
+      const finalData = {
+        nome_cliente: clientData.nome_cliente.trim(),
+        telefone: clientData.telefone.trim(),
+        email_cliente: clientData.email_cliente?.trim() || '',
+        data_venda: clientData.data_venda,
+        vendedor: clientData.vendedor?.trim() || '',
+        email_gestor: clientData.email_gestor?.trim() || userEmail,
+        status_campanha: clientData.status_campanha,
+        valor_comissao: clientData.valor_comissao, // ✅ R$60,00 garantido
+        comissao: clientData.comissao || 'Pendente',
+        site_status: 'pendente',
+        site_pago: false
+      }
+
+      console.log('📤 [useClienteAdd] DADOS FINAIS PARA INSERÇÃO:', finalData)
+      console.log('💰 [useClienteAdd] CONFIRMAÇÃO VALOR COMISSÃO:', finalData.valor_comissao, 'R$')
+
+      // Inserção no banco
+      const { data: insertedData, error: insertError } = await supabase
+        .from('todos_clientes')
+        .insert([finalData])
+        .select()
+
+      if (insertError) {
+        console.error('❌ [useClienteAdd] Erro na inserção:', insertError)
+        throw insertError
+      }
+
+      console.log('✅ [useClienteAdd] CLIENTE INSERIDO COM SUCESSO!')
+      console.log('📊 [useClienteAdd] Dados inseridos:', insertedData)
+      
+      if (insertedData && insertedData[0]) {
+        console.log('💰 [useClienteAdd] VALOR COMISSÃO CONFIRMADO NO BANCO:', insertedData[0].valor_comissao, 'R$')
+      }
+
+      // Criar usuário cliente se necessário
       let senhaDefinida = false
+      let clientUserError = null
 
-      if (existingCliente) {
-        console.log('⚠️ [useClienteAdd] Cliente já existe, fazendo update dos dados...')
-        clienteJaExistia = true
+      if (finalData.email_cliente) {
+        console.log('🔐 [useClienteAdd] Tentando criar usuário cliente:', finalData.email_cliente)
         
-        // Para clientes existentes, NÃO forçar "Cliente Novo" - manter status atual ou usar o fornecido
-        const { data: updatedData, error: updateError } = await supabase
-          .from('todos_clientes')
-          .update({
-            nome_cliente: String(clienteData.nome_cliente || ''),
-            telefone: String(clienteData.telefone || ''),
-            data_venda: clienteData.data_venda || null,
-            vendedor: String(clienteData.vendedor || ''),
-            status_campanha: String(clienteData.status_campanha || 'Cliente Novo'), // Manter o status fornecido
-            email_gestor: String(emailGestorFinal)
-          })
-          .eq('id', existingCliente.id)
-          .select()
-          .single()
-
-        if (updateError) {
-          console.error('❌ [useClienteAdd] Erro ao atualizar cliente existente:', updateError)
-          throw new Error(`Erro ao atualizar cliente: ${updateError.message}`)
-        }
-
-        finalClientData = { ...clienteData, ...updatedData }
-        console.log('✅ [useClienteAdd] Cliente existente atualizado com sucesso')
-      } else {
-        // Step 2: Create new client record - SEMPRE usar "Cliente Novo" como status padrão
-        const novoCliente = {
-          nome_cliente: String(clienteData.nome_cliente || ''),
-          telefone: String(clienteData.telefone || ''),
-          email_cliente: String(clienteData.email_cliente || ''),
-          data_venda: clienteData.data_venda || null,
-          vendedor: String(clienteData.vendedor || ''),
-          status_campanha: 'Cliente Novo', // ✅ SEMPRE "Cliente Novo" para novos clientes
-          email_gestor: String(emailGestorFinal),
-          comissao_paga: false,
-          valor_comissao: 60.00,
-          site_status: 'pendente',
-          data_limite: '',
-          link_grupo: '',
-          link_briefing: '',
-          link_criativo: '',
-          link_site: '',
-          numero_bm: ''
-        }
-
-        console.log('📤 [useClienteAdd] Enviando para Supabase...')
-        const { data, error } = await supabase
-          .from('todos_clientes')
-          .insert([novoCliente])
-          .select()
-          .single()
-
-        if (error) {
-          console.error('❌ [useClienteAdd] Erro ao inserir cliente:', error)
-          throw new Error(`Erro ao adicionar cliente: ${error.message}`)
-        }
-
-        finalClientData = { ...clienteData, ...data }
-        console.log('✅ [useClienteAdd] Cliente adicionado com sucesso:', data)
-
-        // Step 3: ✅ NOVA IMPLEMENTAÇÃO - Usar Edge Function para criar conta sem redirecionamento
-        console.log('🔐 [useClienteAdd] Criando conta de usuário via Edge Function...')
         try {
-          const { data: functionData, error: functionError } = await supabase.functions.invoke('create-client-users', {
-            body: { 
-              email_cliente: clienteData.email_cliente,
-              nome_cliente: clienteData.nome_cliente,
-              senha: SENHA_PADRAO_CLIENTE 
-            }
+          const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+            email: finalData.email_cliente,
+            password: 'parceriadesucesso',
+            email_confirm: true
           })
 
-          if (functionError) {
-            console.error('⚠️ [useClienteAdd] Erro na Edge Function:', functionError)
+          if (signUpError) {
+            console.log('⚠️ [useClienteAdd] Erro ao criar usuário (talvez já exista):', signUpError.message)
+            clientUserError = signUpError.message
           } else {
-            console.log('✅ [useClienteAdd] Conta criada via Edge Function:', functionData)
+            console.log('✅ [useClienteAdd] Usuário cliente criado com sucesso:', signUpData.user?.email)
             senhaDefinida = true
           }
-        } catch (edgeFunctionErr) {
-          console.error('⚠️ [useClienteAdd] Erro na Edge Function (catch):', edgeFunctionErr)
-          // Continuar mesmo se houver erro na criação da conta
+        } catch (userCreationError) {
+          console.error('❌ [useClienteAdd] Erro crítico na criação do usuário:', userCreationError)
+          clientUserError = String(userCreationError)
         }
       }
-      
-      // Show success message
-      if (!clienteJaExistia) {
-        toast({
-          title: "Cliente cadastrado com sucesso!",
-          description: senhaDefinida 
-            ? `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.\n🔐 Senha padrão definida como: ${SENHA_PADRAO_CLIENTE}`
-            : `Cliente "${clienteData.nome_cliente}" foi adicionado à lista.`,
-          duration: 5000
-        })
-      } else {
-        toast({
-          title: "Sucesso",
-          description: "Dados do cliente atualizados com sucesso!"
-        })
-      }
-      
-      // Refresh data
+
+      // Refetch data
       refetchData()
-      
-      // SEMPRE retornar dados estruturados para garantir que o modal funcione
-      console.log('🎯 [useClienteAdd] Retornando dados estruturados:', {
-        success: true,
-        isNewClient: !clienteJaExistia,
-        clientData: finalClientData,
-        senhaDefinida
+
+      toast({
+        title: "Sucesso",
+        description: `Cliente ${finalData.nome_cliente} adicionado com valor padrão R$60,00`,
+        duration: 5000
       })
-      
+
       return { 
         success: true, 
-        isNewClient: !clienteJaExistia, 
-        clientData: finalClientData,
-        senhaDefinida
+        clientData: insertedData[0],
+        isNewClient: true,
+        senhaDefinida,
+        clientUserError
       }
-    } catch (error) {
-      console.error('💥 [useClienteAdd] === ERRO GERAL ===')
-      console.error('💥 Erro capturado no catch:', error)
-      
+
+    } catch (error: any) {
+      console.error('❌ [useClienteAdd] Erro geral:', error)
       toast({
         title: "Erro",
-        description: error instanceof Error ? error.message : "Erro inesperado ao adicionar cliente",
+        description: error.message || "Erro ao adicionar cliente",
         variant: "destructive"
       })
-      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
+      return false
+    } finally {
+      setIsAdding(false)
     }
   }
 
-  return { addCliente }
+  return {
+    addCliente,
+    isAdding
+  }
 }

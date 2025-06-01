@@ -34,7 +34,12 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
     status_campanha: ''
   })
 
+  console.log('🎯 [AddClientRow] Componente renderizado - Valor padrão R$60,00 será aplicado automaticamente')
+
   const handleSave = async () => {
+    console.log('📝 [AddClientRow] === SUBMISSÃO DO FORMULÁRIO ===')
+    console.log('📋 [AddClientRow] Dados do formulário:', formData)
+
     // Validar campos obrigatórios
     if (!formData.nome_cliente.trim()) {
       toast({
@@ -72,14 +77,22 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       return
     }
 
-    const result = await onAddClient({
+    // ✅ GARANTIR VALOR PADRÃO R$60,00 - LOG ESPECÍFICO
+    const clientDataWithDefaults = {
       ...formData,
-      comissao_paga: false,
-      valor_comissao: 60.00
-    })
+      valor_comissao: 60.00, // ✅ VALOR PADRÃO FORÇADO
+      comissao: 'Pendente'
+    }
+
+    console.log('💰 [AddClientRow] VALOR COMISSÃO DEFINIDO: R$60,00')
+    console.log('📤 [AddClientRow] Dados finais enviados:', clientDataWithDefaults)
+
+    const result = await onAddClient(clientDataWithDefaults)
 
     // Type guard to check if result is not false
     if (result && typeof result === 'object' && result.success) {
+      console.log('✅ [AddClientRow] Cliente adicionado com sucesso!')
+      
       // Clear form and exit edit mode
       setFormData({
         nome_cliente: '',
@@ -93,7 +106,7 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       
       toast({
         title: "Sucesso",
-        description: "Cliente adicionado com sucesso"
+        description: `Cliente ${formData.nome_cliente} adicionado com valor padrão R$60,00`
       })
 
       // Mostrar aviso sobre senha padrão se foi definida
@@ -138,7 +151,7 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
             className="text-muted-foreground"
           >
             <Plus className="w-4 h-4 mr-2" />
-            Adicionar Novo Cliente
+            Adicionar Novo Cliente (R$60,00 padrão)
           </Button>
         </TableCell>
       </TableRow>
@@ -219,7 +232,9 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
             </SelectContent>
           </Select>
         </TableCell>
-        <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>
+        <TableCell className="text-center">
+          <span className="text-xs text-green-600 font-medium">R$ 60,00</span>
+        </TableCell>
         <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>
         <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>
         <TableCell className="text-center text-xs text-muted-foreground">-</TableCell>

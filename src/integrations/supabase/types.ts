@@ -87,8 +87,45 @@ export type Database = {
         }
         Relationships: []
       }
+      chat_atendentes: {
+        Row: {
+          ativo: boolean | null
+          cliente_id: string
+          created_at: string | null
+          designado_em: string | null
+          email_atendente: string
+          email_cliente: string
+          id: string
+          pode_atender: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          cliente_id: string
+          created_at?: string | null
+          designado_em?: string | null
+          email_atendente: string
+          email_cliente: string
+          id?: string
+          pode_atender?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          cliente_id?: string
+          created_at?: string | null
+          designado_em?: string | null
+          email_atendente?: string
+          email_cliente?: string
+          id?: string
+          pode_atender?: boolean | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       chat_mensagens: {
         Row: {
+          atendente_atual: string | null
           cliente_id: string
           conteudo: string
           created_at: string
@@ -99,9 +136,11 @@ export type Database = {
           remetente: string
           status_campanha: string | null
           tipo: string
+          transferido_para: string | null
           updated_at: string
         }
         Insert: {
+          atendente_atual?: string | null
           cliente_id: string
           conteudo: string
           created_at?: string
@@ -112,9 +151,11 @@ export type Database = {
           remetente: string
           status_campanha?: string | null
           tipo: string
+          transferido_para?: string | null
           updated_at?: string
         }
         Update: {
+          atendente_atual?: string | null
           cliente_id?: string
           conteudo?: string
           created_at?: string
@@ -125,7 +166,38 @@ export type Database = {
           remetente?: string
           status_campanha?: string | null
           tipo?: string
+          transferido_para?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      chat_transferencias: {
+        Row: {
+          atendente_anterior: string
+          atendente_novo: string
+          email_cliente: string
+          id: string
+          motivo: string | null
+          transferido_em: string | null
+          transferido_por: string
+        }
+        Insert: {
+          atendente_anterior: string
+          atendente_novo: string
+          email_cliente: string
+          id?: string
+          motivo?: string | null
+          transferido_em?: string | null
+          transferido_por: string
+        }
+        Update: {
+          atendente_anterior?: string
+          atendente_novo?: string
+          email_cliente?: string
+          id?: string
+          motivo?: string | null
+          transferido_em?: string | null
+          transferido_por?: string
         }
         Relationships: []
       }
