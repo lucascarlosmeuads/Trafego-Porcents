@@ -9,19 +9,19 @@ interface GamifiedMetricsProps {
   clientes: Cliente[]
 }
 
-// Componente Progress motivacional com cores escuras e destaques roxos
-const MotivationalProgress = ({ value, className }: { value: number; className?: string }) => {
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-gradient-to-r from-purple-500 to-violet-600'
-    if (progress >= 50) return 'bg-gradient-to-r from-purple-600 to-purple-700'
-    if (progress >= 25) return 'bg-gradient-to-r from-purple-700 to-purple-800'
-    return 'bg-gradient-to-r from-purple-800 to-purple-900'
+// Componente Progress com design suave e produtivo
+const ProductivityProgress = ({ value, className }: { value: number; className?: string }) => {
+  const getProgressGradient = (progress: number) => {
+    if (progress >= 80) return 'from-success-green to-tech-purple'
+    if (progress >= 50) return 'from-tech-purple to-success-green'
+    if (progress >= 25) return 'from-tech-purple/80 to-tech-purple'
+    return 'from-tech-purple/60 to-tech-purple/80'
   }
   
   return (
-    <div className={`w-full bg-gray-800 rounded-full h-4 ${className}`}>
+    <div className={`progress-bar ${className}`}>
       <div 
-        className={`h-4 rounded-full transition-all duration-500 ${getProgressColor(value)}`}
+        className={`h-3 rounded-full transition-all duration-500 bg-gradient-to-r ${getProgressGradient(value)}`}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
     </div>
@@ -76,23 +76,23 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   // Cálculo de vendas necessárias por dia
   const vendasPorDia = Math.ceil(metaDiaria / TICKET_MEDIO)
   
-  // Sistema de conquistas motivacionais (sem repetir informações já mostradas)
+  // Sistema de conquistas com design suave
   const conquistas = []
   
   if (progressoMeta >= 80) {
-    conquistas.push({ icon: '👑', texto: 'Quase lá! Meta 10K quase batida!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
+    conquistas.push({ icon: '👑', texto: 'Quase lá! Meta 10K quase batida!', cor: 'status-success' })
   } else if (progressoMeta >= 50) {
-    conquistas.push({ icon: '🚀', texto: 'Metade do caminho conquistada!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
+    conquistas.push({ icon: '🚀', texto: 'Metade do caminho conquistada!', cor: 'status-tech' })
   } else if (progressoMeta >= 25) {
-    conquistas.push({ icon: '⭐', texto: '25% da meta alcançada!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
+    conquistas.push({ icon: '⭐', texto: '25% da meta alcançada!', cor: 'status-tech' })
   }
   
   if (campanhasAtivas >= 10) {
-    conquistas.push({ icon: '🔥', texto: 'Máquina de vendas ativada!', cor: 'bg-orange-900/20 text-orange-400 border-orange-500/30' })
+    conquistas.push({ icon: '🔥', texto: 'Máquina de vendas ativada!', cor: 'status-success' })
   }
   
   if (totalRecebido30Dias > 0) {
-    conquistas.push({ icon: '💰', texto: 'Faturamento ativo este mês!', cor: 'bg-green-900/20 text-green-400 border-green-500/30' })
+    conquistas.push({ icon: '💰', texto: 'Faturamento ativo este mês!', cor: 'status-success' })
   }
   
   // Mensagens motivacionais dinâmicas
@@ -113,20 +113,28 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   }
 
   return (
-    <div className="space-y-6 bg-gray-950 min-h-screen p-6">
+    <div className="space-y-8 bg-deep-blue min-h-screen p-6">
       {/* Mensagem Motivacional Principal */}
-      <Card className="bg-gray-900/80 border-gray-700 text-white">
+      <Card className="productivity-card">
         <CardContent className="p-6">
-          <div className="flex items-center space-x-3">
-            <Crown className="h-8 w-8 text-orange-400" />
-            <div>
-              <p className="text-xl font-bold mb-2 text-white">{getMensagemMotivacional()}</p>
-              <div className="flex items-center space-x-4 text-gray-300">
-                <span>Meta: <span className="text-green-400 font-semibold">{formatCurrency(META_MENSAL)}</span></span>
-                <span>•</span>
-                <span>Conquistado: <span className="text-green-400 font-semibold">{formatCurrency(totalRecebido30Dias)}</span></span>
-                <span>•</span>
-                <span>Faltam: <span className="text-orange-400 font-semibold">{formatCurrency(faltaParaMeta)}</span></span>
+          <div className="flex items-center space-x-4">
+            <div className="bg-tech-purple/20 p-3 rounded-xl">
+              <Crown className="h-8 w-8 text-tech-purple" />
+            </div>
+            <div className="flex-1">
+              <p className="text-xl font-bold mb-3 text-primary-text">{getMensagemMotivacional()}</p>
+              <div className="flex flex-wrap items-center gap-6 text-secondary-text">
+                <span className="flex items-center gap-2">
+                  Meta: <span className="text-success-green font-semibold">{formatCurrency(META_MENSAL)}</span>
+                </span>
+                <span className="text-info-text">•</span>
+                <span className="flex items-center gap-2">
+                  Conquistado: <span className="text-success-green font-semibold">{formatCurrency(totalRecebido30Dias)}</span>
+                </span>
+                <span className="text-info-text">•</span>
+                <span className="flex items-center gap-2">
+                  Faltam: <span className="text-warning-orange font-semibold">{formatCurrency(faltaParaMeta)}</span>
+                </span>
               </div>
             </div>
           </div>
@@ -134,96 +142,96 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
       </Card>
 
       {/* Progresso da Meta de 10K */}
-      <Card className="bg-gray-900/80 border-gray-700">
+      <Card className="productivity-card">
         <CardHeader className="pb-4">
-          <CardTitle className="flex items-center text-xl text-white">
-            <Target className="h-6 w-6 mr-3 text-purple-400" />
+          <CardTitle className="section-header flex items-center">
+            <Target className="h-6 w-6 mr-3 text-tech-purple" />
             Progresso da Meta: R$ 10.000,00
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-6">
           <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold text-green-400">{formatCurrency(totalRecebido30Dias)}</span>
-            <span className="text-lg font-semibold text-purple-400">{progressoMeta.toFixed(1)}%</span>
+            <span className="metric-value text-success-green">{formatCurrency(totalRecebido30Dias)}</span>
+            <span className="text-xl font-semibold text-tech-purple">{progressoMeta.toFixed(1)}%</span>
           </div>
-          <MotivationalProgress value={progressoMeta} className="h-4" />
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-orange-400">Faltam</div>
-              <div className="text-lg text-orange-300">{formatCurrency(faltaParaMeta)}</div>
+          <ProductivityProgress value={progressoMeta} />
+          <div className="grid grid-cols-3 gap-4">
+            <div className="productivity-card p-4 text-center">
+              <div className="metric-title text-warning-orange">Faltam</div>
+              <div className="metric-value text-warning-orange text-lg">{formatCurrency(faltaParaMeta)}</div>
             </div>
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-purple-400">Campanhas necessárias</div>
-              <div className="text-lg text-purple-300">{campanhasParaMeta}</div>
+            <div className="productivity-card p-4 text-center">
+              <div className="metric-title text-tech-purple">Campanhas necessárias</div>
+              <div className="metric-value text-tech-purple text-lg">{campanhasParaMeta}</div>
             </div>
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-blue-400">Vendas por dia</div>
-              <div className="text-lg text-blue-300">{vendasPorDia}</div>
+            <div className="productivity-card p-4 text-center">
+              <div className="metric-title text-success-green">Vendas por dia</div>
+              <div className="metric-value text-success-green text-lg">{vendasPorDia}</div>
             </div>
           </div>
-          <div className="text-center text-sm text-gray-400">
-            Você precisa de <span className="text-orange-400 font-semibold">{vendasPorDia} vendas por dia</span> para bater essa meta
+          <div className="text-center metric-description">
+            Você precisa de <span className="text-warning-orange font-semibold">{vendasPorDia} vendas por dia</span> para bater essa meta
           </div>
         </CardContent>
       </Card>
 
       {/* Métricas Essenciais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-400 flex items-center">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="productivity-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="metric-title flex items-center text-tech-purple">
               <Rocket className="h-4 w-4 mr-2" />
               Campanhas no Ar
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-blue-300">{campanhasAtivas}</div>
-            <p className="text-xs text-blue-400 mt-1">
+            <div className="metric-value text-tech-purple">{campanhasAtivas}</div>
+            <p className="metric-description">
               ativas agora 🚀
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400 flex items-center">
+        <Card className="productivity-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="metric-title flex items-center text-success-green">
               <Trophy className="h-4 w-4 mr-2" />
               Já Conquistado
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-300">{formatCurrency(totalRecebido30Dias)}</div>
-            <p className="text-xs text-green-400 mt-1">
+            <div className="metric-value text-success-green">{formatCurrency(totalRecebido30Dias)}</div>
+            <p className="metric-description">
               dos seus 10K 💰
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-orange-400 flex items-center">
+        <Card className="productivity-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="metric-title flex items-center text-warning-orange">
               <Star className="h-4 w-4 mr-2" />
               Aguardando Pagamento
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-300">{formatCurrency(totalPendente)}</div>
-            <p className="text-xs text-orange-400 mt-1">
+            <div className="metric-value text-warning-orange">{formatCurrency(totalPendente)}</div>
+            <p className="metric-description">
               {clientesPendentes.length} comissões ⭐
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-400 flex items-center">
+        <Card className="productivity-card">
+          <CardHeader className="pb-3">
+            <CardTitle className="metric-title flex items-center text-tech-purple">
               <Zap className="h-4 w-4 mr-2" />
               Meta Diária
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-300">{formatCurrency(metaDiaria)}</div>
-            <p className="text-xs text-purple-400 mt-1">
+            <div className="metric-value text-tech-purple">{formatCurrency(metaDiaria)}</div>
+            <p className="metric-description">
               para chegar nos 10K ⚡
             </p>
           </CardContent>
@@ -232,17 +240,17 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
 
       {/* Conquistas */}
       {conquistas.length > 0 && (
-        <Card className="bg-gray-900/80 border-gray-700">
+        <Card className="productivity-card">
           <CardHeader className="pb-4">
-            <CardTitle className="flex items-center text-lg text-white">
-              <Trophy className="h-5 w-5 mr-2 text-blue-400" />
+            <CardTitle className="section-header flex items-center">
+              <Trophy className="h-5 w-5 mr-3 text-tech-purple" />
               Suas Conquistas do Mês
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="flex flex-wrap gap-3">
               {conquistas.map((conquista, index) => (
-                <Badge key={index} className={`${conquista.cor} border px-4 py-2 text-sm font-medium`}>
+                <Badge key={index} className={`${conquista.cor} px-4 py-2 text-sm font-medium`}>
                   <span className="mr-2 text-lg">{conquista.icon}</span>
                   {conquista.texto}
                 </Badge>
@@ -253,50 +261,50 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
       )}
 
       {/* Call to Action Consolidado */}
-      <Card className="bg-gray-900/80 border-orange-500/30 text-white">
+      <Card className="productivity-card border-tech-purple/30">
         <CardContent className="p-6">
-          <div className="text-center mb-4">
-            <h3 className="text-2xl font-bold mb-2 text-orange-400">🚀 Acelere rumo aos 10K!</h3>
-            <p className="text-lg text-white">
+          <div className="text-center mb-6">
+            <h3 className="text-2xl font-bold mb-3 text-tech-purple">🚀 Acelere rumo aos 10K!</h3>
+            <p className="text-lg text-primary-text">
               Com {Math.min(10, campanhasParaMeta)} campanhas ativas hoje, você se aproxima da meta!
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-orange-400">{campanhasParaMeta}</div>
-              <div className="text-sm text-gray-300">campanhas faltam</div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-6">
+            <div className="productivity-card p-4">
+              <div className="metric-value text-warning-orange">{campanhasParaMeta}</div>
+              <div className="metric-description">campanhas faltam</div>
             </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-green-400">{formatCurrency(metaDiaria)}</div>
-              <div className="text-sm text-gray-300">por dia restante</div>
+            <div className="productivity-card p-4">
+              <div className="metric-value text-success-green">{formatCurrency(metaDiaria)}</div>
+              <div className="metric-description">por dia restante</div>
             </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-blue-400">{diasRestantesMes}</div>
-              <div className="text-sm text-gray-300">dias restantes</div>
+            <div className="productivity-card p-4">
+              <div className="metric-value text-tech-purple">{diasRestantesMes}</div>
+              <div className="metric-description">dias restantes</div>
             </div>
           </div>
 
-          {/* Projeções de crescimento simplificadas */}
-          <div className="grid gap-4 md:grid-cols-2 mt-6">
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-purple-400">Com +5 campanhas</span>
+          {/* Projeções de crescimento */}
+          <div className="grid gap-4 md:grid-cols-2">
+            <div className="productivity-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold text-tech-purple">Com +5 campanhas</span>
                 <span className="text-2xl">🚀</span>
               </div>
-              <div className="text-xl font-bold text-purple-300">{formatCurrency(totalRecebido30Dias + (5 * TICKET_MEDIO))}</div>
-              <div className="text-sm text-purple-400">
+              <div className="metric-value text-tech-purple text-xl">{formatCurrency(totalRecebido30Dias + (5 * TICKET_MEDIO))}</div>
+              <div className="metric-description text-tech-purple">
                 {(totalRecebido30Dias + (5 * TICKET_MEDIO)) >= META_MENSAL ? '✅ Meta batida!' : `Faltariam ${formatCurrency(META_MENSAL - (totalRecebido30Dias + (5 * TICKET_MEDIO)))}`}
               </div>
             </div>
             
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-purple-400">Com +10 campanhas</span>
+            <div className="productivity-card p-4">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold text-success-green">Com +10 campanhas</span>
                 <span className="text-2xl">🔥</span>
               </div>
-              <div className="text-xl font-bold text-purple-300">{formatCurrency(totalRecebido30Dias + (10 * TICKET_MEDIO))}</div>
-              <div className="text-sm text-purple-400">
+              <div className="metric-value text-success-green text-xl">{formatCurrency(totalRecebido30Dias + (10 * TICKET_MEDIO))}</div>
+              <div className="metric-description text-success-green">
                 {(totalRecebido30Dias + (10 * TICKET_MEDIO)) >= META_MENSAL ? '🏆 Meta ultrapassada!' : `Faltariam ${formatCurrency(META_MENSAL - (totalRecebido30Dias + (10 * TICKET_MEDIO)))}`}
               </div>
             </div>

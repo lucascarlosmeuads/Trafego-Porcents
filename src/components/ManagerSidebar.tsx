@@ -66,18 +66,18 @@ export function ManagerSidebar({
     <div 
       className={`
         ${isCollapsed ? 'w-16' : 'w-64'} 
-        bg-card border-r border-border h-screen 
+        bg-neutral-surface border-r border-neutral-border h-screen 
         transition-all duration-300 ease-in-out overflow-y-auto flex flex-col
         flex-shrink-0 sticky top-0 left-0 z-40
       `}
     >
       {/* Toggle Button */}
-      <div className="p-2 border-b border-border flex justify-end">
+      <div className="p-3 border-b border-neutral-border flex justify-end">
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="p-2"
+          className="p-2 hover:bg-neutral-border text-secondary-text hover:text-primary-text"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -88,23 +88,23 @@ export function ManagerSidebar({
       </div>
 
       {/* Header com nome do gestor */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-neutral-border">
         {!isCollapsed && (
           <>
-            <h2 className="text-lg font-semibold text-card-foreground mb-3">
+            <h2 className="section-header mb-4">
               {isAdmin ? 'Painel Admin' : 'Gestores'}
             </h2>
             
             {/* Nome do gestor */}
-            <div className="flex items-center space-x-2 p-2 rounded-lg bg-accent/30">
-              <div className="bg-primary rounded-full p-1.5">
-                <User className="h-3 w-3 text-primary-foreground" />
+            <div className="flex items-center space-x-3 p-3 rounded-xl bg-tech-purple/10 border border-tech-purple/20">
+              <div className="bg-tech-purple rounded-full p-2">
+                <User className="h-4 w-4 text-primary-text" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-card-foreground truncate">
+                <p className="text-sm font-medium text-primary-text truncate">
                   {currentManagerName}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-secondary-text">
                   {isAdmin ? 'Administrador' : 'Gestor'}
                 </p>
               </div>
@@ -114,8 +114,8 @@ export function ManagerSidebar({
         
         {isCollapsed && (
           <div className="flex justify-center">
-            <div className="bg-primary rounded-full p-2">
-              <User className="h-4 w-4 text-primary-foreground" />
+            <div className="bg-tech-purple rounded-full p-2">
+              <User className="h-4 w-4 text-primary-text" />
             </div>
           </div>
         )}
@@ -142,12 +142,13 @@ export function ManagerSidebar({
       </div>
       
       {/* Logout Button */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-neutral-border">
         <Button
           variant="ghost"
           className={`
             ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'} 
-            text-red-600 hover:text-red-700 hover:bg-red-50
+            text-warning-orange hover:text-warning-orange hover:bg-warning-orange/10
+            transition-all duration-200
           `}
           onClick={handleSignOut}
           disabled={isSigningOut}
