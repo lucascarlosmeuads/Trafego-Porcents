@@ -1,5 +1,5 @@
 
-import { Search, Filter, Globe } from 'lucide-react'
+import { Search, Filter, Globe, Image } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -18,6 +18,8 @@ interface TableFiltersProps {
   siteStatusFilter?: string
   setSiteStatusFilter?: (value: string) => void
   showSiteStatusFilter?: boolean
+  creativoFilter?: string
+  setCreativoFilter?: (value: string) => void
   getStatusColor: (status: string) => string
 }
 
@@ -29,6 +31,12 @@ const SITE_STATUS_OPTIONS = [
   { value: 'finalizado', label: 'Finalizado' }
 ]
 
+const CRIATIVO_STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos os Status' },
+  { value: 'pendente', label: 'Pendente Criativo' },
+  { value: 'feito', label: 'Criativo Feito' }
+]
+
 export function TableFilters({
   searchTerm,
   setSearchTerm,
@@ -37,6 +45,8 @@ export function TableFilters({
   siteStatusFilter = 'all',
   setSiteStatusFilter,
   showSiteStatusFilter = false,
+  creativoFilter = 'all',
+  setCreativoFilter,
   getStatusColor
 }: TableFiltersProps) {
   
@@ -50,6 +60,13 @@ export function TableFilters({
   const handleStatusChange = (value: string) => {
     console.log('📊 [TableFilters] Alterando filtro de status_campanha para:', value)
     setStatusFilter(value)
+  }
+
+  const handleCreativoChange = (value: string) => {
+    console.log('🎨 [TableFilters] Alterando filtro de criativo para:', value)
+    if (setCreativoFilter) {
+      setCreativoFilter(value)
+    }
   }
 
   return (
@@ -89,6 +106,22 @@ export function TableFilters({
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
             {SITE_STATUS_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {setCreativoFilter && (
+        <Select value={creativoFilter} onValueChange={handleCreativoChange}>
+          <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
+            <Image className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Status criativo" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            {CRIATIVO_STATUS_OPTIONS.map(option => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>

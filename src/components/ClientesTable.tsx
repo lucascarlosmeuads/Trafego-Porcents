@@ -69,6 +69,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [siteStatusFilter, setSiteStatusFilter] = useState('all')
+  const [creativoFilter, setCreativoFilter] = useState('all')
+  const [clientesComCriativos, setClientesComCriativos] = useState<Set<string>>(new Set())
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
   const [linkValue, setLinkValue] = useState('')
@@ -81,6 +83,39 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
+
+  // Função para buscar clientes que têm criativos do gestor
+  const fetchClientesComCriativos = async () => {
+    try {
+      console.log('🎨 [ClientesTable] Buscando clientes com criativos do gestor...')
+      
+      const { data: arquivos, error } = await supabase
+        .from('arquivos_cliente')
+        .select('email_cliente')
+        .eq('author_type', 'gestor')
+      
+      if (error) {
+        console.error('❌ [ClientesTable] Erro ao buscar arquivos:', error)
+        return
+      }
+      
+      // Criar Set com emails únicos dos clientes que têm arquivos do gestor
+      const emailsComCriativos = new Set(arquivos?.map(arquivo => arquivo.email_cliente) || [])
+      
+      console.log('✅ [ClientesTable] Clientes com criativos encontrados:', emailsComCriativos.size)
+      setClientesComCriativos(emailsComCriativos)
+      
+    } catch (error) {
+      console.error('💥 [ClientesTable] Erro inesperado ao buscar criativos:', error)
+    }
+  }
+
+  // Buscar clientes com criativos quando a lista de clientes mudar
+  useEffect(() => {
+    if (clientes.length > 0) {
+      fetchClientesComCriativos()
+    }
+  }, [clientes])
 
   const categorizarClientes = (clientesList: typeof clientes) => {
     console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO FINAL - SEM SAQUES PENDENTES) ===')
@@ -197,7 +232,18 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       const matchesSiteStatus = siteStatusFilter === 'all' || cliente.site_status === siteStatusFilter
       
-      return matchesSearch && matchesStatus && matchesSiteStatus
+      // Filtro de criativo
+      let matchesCreativo = true
+      if (creativoFilter === 'pendente') {
+        // Mostrar apenas clientes que NÃO têm criativos do gestor
+        matchesCreativo = !clientesComCriativos.has(cliente.email_cliente || '')
+      } else if (creativoFilter === 'feito') {
+        // Mostrar apenas clientes que JÁ têm criativos do gestor
+        matchesCreativo = clientesComCriativos.has(cliente.email_cliente || '')
+      }
+      // Se for 'all', matchesCreativo permanece true
+      
+      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo
     })
   }
 
@@ -951,6 +997,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               siteStatusFilter={siteStatusFilter}
               setSiteStatusFilter={setSiteStatusFilter}
               showSiteStatusFilter={isAdmin}
+              creativoFilter={creativoFilter}
+              setCreativoFilter={setCreativoFilter}
               getStatusColor={getStatusColor}
             />
 
@@ -974,6 +1022,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               siteStatusFilter={siteStatusFilter}
               setSiteStatusFilter={setSiteStatusFilter}
               showSiteStatusFilter={isAdmin}
+              creativoFilter={creativoFilter}
+              setCreativoFilter={setCreativoFilter}
               getStatusColor={getStatusColor}
             />
 
@@ -1089,6 +1139,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         siteStatusFilter={siteStatusFilter}
         setSiteStatusFilter={setSiteStatusFilter}
         showSiteStatusFilter={isAdmin}
+        creativoFilter={creativoFilter}
+        setCreativoFilter={setCreativoFilter}
         getStatusColor={getStatusColor}
       />
 
