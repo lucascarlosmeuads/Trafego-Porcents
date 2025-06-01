@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase'
 import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
 import { Button } from '@/components/ui/button'
-import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { LogOut, ChevronLeft, ChevronRight, User } from 'lucide-react'
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -20,7 +20,7 @@ export function ManagerSidebar({
   activeTab, 
   onTabChange 
 }: ManagerSidebarProps) {
-  const { isAdmin, signOut } = useAuth()
+  const { isAdmin, signOut, currentManagerName } = useAuth()
   const [problemasPendentes, setProblemasPendentes] = useState(0)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -87,13 +87,41 @@ export function ManagerSidebar({
         </Button>
       </div>
 
-      <div className="p-4 flex-1">
+      {/* Header com nome do gestor */}
+      <div className="p-4 border-b border-border">
         {!isCollapsed && (
-          <h2 className="text-lg font-semibold text-card-foreground mb-4">
-            {isAdmin ? 'Painel Admin' : 'Gestores'}
-          </h2>
+          <>
+            <h2 className="text-lg font-semibold text-card-foreground mb-3">
+              {isAdmin ? 'Painel Admin' : 'Gestores'}
+            </h2>
+            
+            {/* Nome do gestor */}
+            <div className="flex items-center space-x-2 p-2 rounded-lg bg-accent/30">
+              <div className="bg-primary rounded-full p-1.5">
+                <User className="h-3 w-3 text-primary-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-card-foreground truncate">
+                  {currentManagerName}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isAdmin ? 'Administrador' : 'Gestor'}
+                </p>
+              </div>
+            </div>
+          </>
         )}
         
+        {isCollapsed && (
+          <div className="flex justify-center">
+            <div className="bg-primary rounded-full p-2">
+              <User className="h-4 w-4 text-primary-foreground" />
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 flex-1">
         {isAdmin ? (
           <AdminMainMenu
             activeTab={activeTab}
