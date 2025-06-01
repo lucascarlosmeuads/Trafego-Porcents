@@ -1,4 +1,3 @@
-
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, User, AtSign } from 'lucide-react'
@@ -29,9 +28,6 @@ interface ClienteRowProps {
   bmValue: string
   setBmValue: (value: string) => void
   updatingComission: string | null
-  editingComissionValue: string | null
-  comissionValueInput: string
-  setComissionValueInput: (value: string) => void
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
   onSiteStatusChange: (clienteId: string, newStatus: string) => void
@@ -42,9 +38,6 @@ interface ClienteRowProps {
   onBMSave: (clienteId: string) => void
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
-  onComissionValueEdit: (clienteId: string, currentValue: number) => void
-  onComissionValueSave: (clienteId: string, newValue: number) => void
-  onComissionValueCancel: () => void
   onSitePagoChange?: (clienteId: string, newValue: boolean) => void
 }
 
@@ -63,9 +56,6 @@ export function ClienteRow({
   bmValue,
   setBmValue,
   updatingComission,
-  editingComissionValue,
-  comissionValueInput,
-  setComissionValueInput,
   getStatusColor,
   onStatusChange,
   onSiteStatusChange,
@@ -76,9 +66,6 @@ export function ClienteRow({
   onBMSave,
   onBMCancel,
   onComissionToggle,
-  onComissionValueEdit,
-  onComissionValueSave,
-  onComissionValueCancel,
   onSitePagoChange
 }: ClienteRowProps) {
   const formatDate = (dateString: string) => {
@@ -225,13 +212,7 @@ export function ClienteRow({
             isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
             isAdmin={isAdmin}
             updatingComission={updatingComission}
-            editingComissionValue={editingComissionValue}
-            comissionValueInput={comissionValueInput}
-            setComissionValueInput={setComissionValueInput}
             onComissionToggle={onComissionToggle}
-            onComissionValueEdit={onComissionValueEdit}
-            onComissionValueSave={onComissionValueSave}
-            onComissionValueCancel={onComissionValueCancel}
             compact={true}
           />
         </TableCell>
