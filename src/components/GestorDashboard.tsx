@@ -1,9 +1,9 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
 import { ClientesTable } from './ClientesTable'
 import { DashboardMetrics } from './GestorDashboard/DashboardMetrics'
-import { SolicitacoesSaque } from './SolicitacoesSaque'
 import { ManagerSidebar } from './ManagerSidebar'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 
@@ -32,8 +32,6 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return <DashboardMetrics clientes={clientes} />
       case 'clientes':
         return <ClientesTable />
-      case 'saques':
-        return <SolicitacoesSaque />
       case 'chat':
         return <ChatLayoutSplit />
       default:

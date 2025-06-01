@@ -1,285 +1,166 @@
+
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@/hooks/useAuth'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { RefreshCw, TrendingUp, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-
-interface StatusCount {
-  status: string
-  count: number
-  color: string
-  icon: React.ReactNode
-}
-
-interface GestorOption {
-  nome: string
-  email: string
-}
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
+import { AdminDashboardMetrics } from '@/components/AdminDashboard/AdminDashboardMetrics'
+import { useManagerData } from '@/hooks/useManagerData'
+import { supabase } from '@/lib/supabase'
 
 export function StatusFunnelDashboard() {
-  const { isAdmin } = useAuth()
-  const [statusCounts, setStatusCounts] = useState<StatusCount[]>([])
-  const [gestores, setGestores] = useState<GestorOption[]>([])
-  const [selectedGestor, setSelectedGestor] = useState<string>('todos')
   const [loading, setLoading] = useState(true)
-  const [totalClientes, setTotalClientes] = useState(0)
+  const [allClientes, setAllClientes] = useState<any[]>([])
+  
+  // Buscar todos os clientes para o dashboard geral
+  useEffect(() => {
+    const fetchAllClientes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('todos_clientes')
+          .select('*')
+          .order('created_at', { ascending: false })
 
-  const statusConfig = [
-    { 
-      status: 'Sem Status', 
-      dbStatus: null, 
-      color: 'bg-gray-500/20 text-gray-300 border-gray-500/30',
-      icon: <AlertTriangle className="w-4 h-4" />
+        if (error) {
+          console.error('❌ [StatusFunnelDashboard] Erro ao buscar clientes:', error)
+        } else {
+          setAllClientes(data || [])
+        }
+      } catch (error) {
+        console.error('❌ [StatusFunnelDashboard] Erro inesperado:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchAllClientes()
+
+    // Configurar realtime para atualizações
+    const channel = supabase
+      .channel('admin-dashboard-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'todos_clientes'
+        },
+        (payload) => {
+          console.log('🔄 [StatusFunnelDashboard] Atualização detectada:', payload)
+          fetchAllClientes()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Dados para o gráfico de status
+  const statusData = allClientes.reduce((acc, cliente) => {
+    const status = cliente.status_campanha || 'Não definido'
+    acc[status] = (acc[status] || 0) + 1
+    return acc
+  }, {})
+
+  const chartData = Object.entries(statusData).map(([status, count]) => ({
+    status,
+    count
+  }))
+
+  // Dados para o gráfico de comissões
+  const comissaoData = [
+    {
+      name: 'Pendentes',
+      value: allClientes.filter(c => c.comissao === 'Pendente').length,
+      color: '#ef4444'
     },
-    { 
-      status: 'Brief', 
-      dbStatus: 'Brief', 
-      color: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
-      icon: <TrendingUp className="w-4 h-4" />
-    },
-    { 
-      status: 'Criativo', 
-      dbStatus: 'Criativo', 
-      color: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-      icon: <TrendingUp className="w-4 h-4" />
-    },
-    { 
-      status: 'Site', 
-      dbStatus: 'Site', 
-      color: 'bg-orange-500/20 text-orange-300 border-orange-500/30',
-      icon: <TrendingUp className="w-4 h-4" />
-    },
-    { 
-      status: 'Agendamento', 
-      dbStatus: 'Agendamento', 
-      color: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
-      icon: <TrendingUp className="w-4 h-4" />
-    },
-    { 
-      status: 'No Ar', 
-      dbStatus: 'No Ar', 
-      color: 'bg-green-500/20 text-green-300 border-green-500/30',
-      icon: <CheckCircle className="w-4 h-4" />
-    },
-    { 
-      status: 'Otimização', 
-      dbStatus: 'Otimização', 
-      color: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30',
-      icon: <CheckCircle className="w-4 h-4" />
-    },
-    { 
-      status: 'Reembolso', 
-      dbStatus: 'Reembolso', 
-      color: 'bg-red-500/20 text-red-300 border-red-500/30',
-      icon: <AlertTriangle className="w-4 h-4" />
-    },
-    { 
-      status: 'Off', 
-      dbStatus: 'Off', 
-      color: 'bg-slate-500/20 text-slate-300 border-slate-500/30',
-      icon: <AlertTriangle className="w-4 h-4" />
+    {
+      name: 'Pagos',
+      value: allClientes.filter(c => c.comissao === 'Pago').length,
+      color: '#22c55e'
     }
   ]
 
-  const fetchGestores = async () => {
-    if (!isAdmin) return
-
-    try {
-      const { data: gestoresData } = await supabase
-        .from('gestores')
-        .select('nome, email')
-        .eq('ativo', true)
-        .order('nome')
-
-      setGestores(gestoresData || [])
-    } catch (error) {
-      console.error('Erro ao buscar gestores:', error)
-    }
-  }
-
-  const fetchStatusCounts = async () => {
-    setLoading(true)
-    try {
-      let query = supabase
-        .from('todos_clientes')
-        .select('status_campanha, email_gestor')
-
-      // Filtrar por gestor se selecionado
-      if (selectedGestor !== 'todos') {
-        query = query.eq('email_gestor', selectedGestor)
-      }
-
-      const { data } = await query
-
-      if (!data) return
-
-      setTotalClientes(data.length)
-
-      // Contar clientes por status
-      const counts = statusConfig.map(config => {
-        let count = 0
-        
-        if (config.dbStatus === null) {
-          // Contar clientes sem status ou com status vazio
-          count = data.filter(cliente => 
-            !cliente.status_campanha || 
-            cliente.status_campanha.trim() === ''
-          ).length
-        } else {
-          count = data.filter(cliente => 
-            cliente.status_campanha === config.dbStatus
-          ).length
-        }
-
-        return {
-          status: config.status,
-          count,
-          color: config.color,
-          icon: config.icon
-        }
-      })
-
-      setStatusCounts(counts)
-    } catch (error) {
-      console.error('Erro ao buscar contagem de status:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    if (isAdmin) {
-      fetchGestores()
-    }
-    fetchStatusCounts()
-  }, [isAdmin, selectedGestor])
-
-  const maxCount = Math.max(...statusCounts.map(s => s.count))
-
-  return (
-    <div className="space-y-6 p-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h2 className="text-2xl font-bold text-white">Dashboard - Funil de Status</h2>
-          <p className="text-gray-400">Visualização estratégica dos clientes por etapa</p>
-        </div>
-        
-        <div className="flex items-center gap-4">
-          {isAdmin && (
-            <Select value={selectedGestor} onValueChange={setSelectedGestor}>
-              <SelectTrigger className="w-48 bg-card border-border">
-                <SelectValue placeholder="Filtrar por gestor" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-border">
-                <SelectItem value="todos">Todos os Gestores</SelectItem>
-                {gestores.map((gestor) => (
-                  <SelectItem key={gestor.email} value={gestor.email}>
-                    {gestor.nome}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          
-          <Button
-            onClick={fetchStatusCounts}
-            variant="outline"
-            size="sm"
-            disabled={loading}
-            className="bg-card border-border hover:bg-muted"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
+          <p className="text-muted-foreground">Carregando dashboard...</p>
         </div>
       </div>
+    )
+  }
 
-      {/* Resumo Geral */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-white flex items-center gap-2">
-            <CheckCircle className="w-5 h-5 text-green-400" />
-            Resumo Geral
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-white">{totalClientes}</div>
-              <div className="text-sm text-gray-400">Total de Clientes</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-green-400">
-                {statusCounts.find(s => s.status === 'No Ar')?.count || 0}
-              </div>
-              <div className="text-sm text-gray-400">Campanhas No Ar</div>
-            </div>
-            <div className="text-center">
-              <div className="text-3xl font-bold text-yellow-400">
-                {statusCounts.filter(s => 
-                  ['Brief', 'Criativo', 'Site', 'Agendamento'].includes(s.status)
-                ).reduce((sum, s) => sum + s.count, 0)}
-              </div>
-              <div className="text-sm text-gray-400">Em Andamento</div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold text-contrast">Dashboard Administrativo</h1>
+        <Button 
+          variant="outline" 
+          onClick={() => window.location.reload()}
+          className="text-sm"
+        >
+          🔄 Atualizar Dados
+        </Button>
+      </div>
 
-      {/* Funil de Status */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-white">Funil de Status dos Clientes</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {statusCounts.map((statusData, index) => {
-            const percentage = totalClientes > 0 ? (statusData.count / totalClientes) * 100 : 0
-            const barWidth = maxCount > 0 ? (statusData.count / maxCount) * 100 : 0
+      {/* Métricas principais */}
+      <AdminDashboardMetrics clientes={allClientes} selectedManager={null} />
 
-            return (
-              <div key={statusData.status} className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className={`flex items-center gap-2 px-3 py-1 rounded-md border ${statusData.color}`}>
-                      {statusData.icon}
-                      <span className="font-medium">{statusData.status}</span>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary" className="bg-muted text-white">
-                      {statusData.count} clientes
-                    </Badge>
-                    <Badge variant="outline" className="border-gray-600 text-gray-300">
-                      {percentage.toFixed(1)}%
-                    </Badge>
-                  </div>
-                </div>
-                
-                {/* Barra de progresso */}
-                <div className="w-full bg-gray-700 rounded-full h-2">
-                  <div 
-                    className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                    style={{ width: `${barWidth}%` }}
-                  ></div>
-                </div>
-              </div>
-            )
-          })}
-        </CardContent>
-      </Card>
+      {/* Gráficos */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardHeader>
+            <CardTitle>Status das Campanhas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="status" 
+                  angle={-45}
+                  textAnchor="end"
+                  height={80}
+                  fontSize={12}
+                />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="count" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
 
-      {loading && (
-        <div className="flex items-center justify-center py-8">
-          <RefreshCw className="w-6 h-6 animate-spin text-primary mr-2" />
-          <span className="text-white">Carregando dados...</span>
-        </div>
-      )}
+        <Card>
+          <CardHeader>
+            <CardTitle>Status das Comissões</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              <PieChart>
+                <Pie
+                  data={comissaoData}
+                  cx="50%"
+                  cy="50%"
+                  labelLine={false}
+                  label={({ name, value }) => `${name}: ${value}`}
+                  outerRadius={80}
+                  fill="#8884d8"
+                  dataKey="value"
+                >
+                  {comissaoData.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Pie>
+                <Tooltip />
+              </PieChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }
-
-// Add default export for lazy loading
-export default StatusFunnelDashboard

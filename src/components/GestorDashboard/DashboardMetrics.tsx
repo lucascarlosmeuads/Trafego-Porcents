@@ -1,53 +1,65 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, TrendingUp, AlertTriangle, CheckCircle, CircleDollarSign, Clock, Wallet } from 'lucide-react'
+import { Users, CheckCircle, AlertTriangle, CircleDollarSign, XCircle } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
-import { useComissaoMetrics } from '@/hooks/useComissaoMetrics'
-import { useSolicitacoesPagas } from '@/hooks/useSolicitacoesPagas'
 
 interface DashboardMetricsProps {
   clientes: Cliente[]
 }
 
 export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
-  const { solicitacoesPagas } = useSolicitacoesPagas()
-  const comissaoMetrics = useComissaoMetrics(clientes, solicitacoesPagas)
+  console.log('📊 [DashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
 
-  const clientesAtivos = clientes.filter(cliente => 
-    cliente.status_campanha !== 'Off' && 
-    cliente.status_campanha !== 'Reembolso' && 
-    cliente.status_campanha !== 'Problema'
-  )
+  // Total de clientes
+  const totalClientes = clientes.length
 
+  // Campanhas no ar (status "Campanha no Ar" ou "Otimização")
   const clientesNoAr = clientes.filter(cliente => 
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
+  // Total pendente (comissao = "Pendente" - cor vermelha)
+  const clientesPendentes = clientes.filter(cliente => 
+    cliente.comissao === 'Pendente'
+  )
+  const totalPendente = clientesPendentes.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
+  )
+
+  // Total já recebido (comissao = "Pago" - cor verde)
+  const clientesPagos = clientes.filter(cliente => 
+    cliente.comissao === 'Pago'
+  )
+  const totalRecebido = clientesPagos.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
+  )
+
+  // Clientes com problemas
   const clientesProblemas = clientes.filter(cliente => 
     cliente.status_campanha === 'Problema'
   )
 
-  const clientesAtrasados = clientes.filter(cliente => {
-    if (!cliente.data_venda || cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização') return false
-    
-    const venda = new Date(cliente.data_venda)
-    const limite = new Date(venda)
-    limite.setDate(limite.getDate() + 15)
-    
-    return new Date() > limite
+  console.log('📈 [DashboardMetrics] Métricas calculadas:', {
+    totalClientes,
+    campanhasNoAr: clientesNoAr.length,
+    pendentes: clientesPendentes.length,
+    pagos: clientesPagos.length,
+    problemas: clientesProblemas.length,
+    totalPendente,
+    totalRecebido
   })
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium text-contrast">Total de Clientes</CardTitle>
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-contrast">{clientes.length}</div>
+          <div className="text-2xl font-bold text-contrast">{totalClientes}</div>
           <p className="text-xs text-contrast-secondary">
-            {clientesAtivos.length} ativos
+            clientes cadastrados
           </p>
         </CardContent>
       </Card>
@@ -60,59 +72,46 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
         <CardContent>
           <div className="text-2xl font-bold text-green-600">{clientesNoAr.length}</div>
           <p className="text-xs text-contrast-secondary">
-            Campanhas ativas
+            campanhas ativas
           </p>
         </CardContent>
       </Card>
 
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">💰 Total Pendente</CardTitle>
-          <Clock className="h-4 w-4 text-red-600" />
+          <CardTitle className="text-sm font-medium text-contrast">🔴 Total Pendente</CardTitle>
+          <CircleDollarSign className="h-4 w-4 text-red-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">R$ {comissaoMetrics.totalPendente.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-red-600">R$ {totalPendente.toFixed(2)}</div>
           <p className="text-xs text-contrast-secondary">
-            {comissaoMetrics.comissoesPendentes} clientes pendentes
+            {clientesPendentes.length} comissões pendentes
           </p>
         </CardContent>
       </Card>
 
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">🟢 Disponível para Saque</CardTitle>
+          <CardTitle className="text-sm font-medium text-contrast">🟢 Total Já Recebido</CardTitle>
           <CircleDollarSign className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">R$ {comissaoMetrics.totalDisponivel.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</div>
           <p className="text-xs text-contrast-secondary">
-            {comissaoMetrics.comissoesDisponiveis} comissões disponíveis
+            {clientesPagos.length} comissões pagas
           </p>
         </CardContent>
       </Card>
 
       <Card className="bg-card border-border">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">💼 Total já recebido</CardTitle>
-          <Wallet className="h-4 w-4 text-blue-600" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-blue-600">R$ {comissaoMetrics.totalRecebido.toFixed(2)}</div>
-          <p className="text-xs text-contrast-secondary">
-            {comissaoMetrics.comissoesRecebidas} comissões pagas
-          </p>
-        </CardContent>
-      </Card>
-
-      <Card className="bg-card border-border">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium text-contrast">Problemas</CardTitle>
+          <CardTitle className="text-sm font-medium text-contrast">⚠️ Problemas</CardTitle>
           <AlertTriangle className="h-4 w-4 text-amber-600" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold text-amber-600">{clientesProblemas.length}</div>
           <p className="text-xs text-contrast-secondary">
-            Requer atenção
+            requer atenção
           </p>
         </CardContent>
       </Card>

@@ -3,9 +3,11 @@ import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
+import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
+import { useManagerData } from '@/hooks/useManagerData'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -16,6 +18,11 @@ interface AdminDashboardProps {
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
+  
+  // Buscar dados dos clientes baseado no gestor selecionado
+  const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
+    selectedManager === '__GESTORES__' ? '' : (selectedManager || '')
+  )
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -37,9 +44,22 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     switch (activeTab) {
       case 'dashboard':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyStatusFunnelDashboard />
-          </Suspense>
+          <div className="space-y-6">
+            {/* Seletor de gestores */}
+            <div className="bg-card border rounded-lg p-4">
+              <ManagerSelector 
+                selectedManager={selectedManager}
+                onManagerSelect={onManagerSelect}
+                isAdminContext={true}
+              />
+            </div>
+            
+            {/* Métricas do Admin */}
+            <AdminDashboardMetrics 
+              clientes={gestorClientes} 
+              selectedManager={selectedManager}
+            />
+          </div>
         )
 
       case 'documentacao':

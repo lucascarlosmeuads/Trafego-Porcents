@@ -1,88 +1,58 @@
 
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { 
-  BarChart3, 
-  Users, 
-  MessageCircle,
-  AlertTriangle
-} from 'lucide-react'
+import { BarChart3, Users, MessageCircle } from 'lucide-react'
+import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
 
 interface GestorMenuProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  problemasPendentes: number
-  isCollapsed?: boolean
 }
 
-export function GestorMenu({ 
-  activeTab, 
-  onTabChange, 
-  problemasPendentes,
-  isCollapsed = false 
-}: GestorMenuProps) {
-
+export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
-      onClick: () => onTabChange('dashboard')
+      description: 'Visão geral e métricas'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      onClick: () => onTabChange('clientes')
+      description: 'Gerenciar clientes'
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
-      onClick: () => onTabChange('chat')
+      description: 'Conversas com clientes'
     }
   ]
 
   return (
-    <nav className="space-y-2">
-      {menuItems.map((item) => (
-        <Button
-          key={item.id}
-          variant={activeTab === item.id ? 'default' : 'ghost'}
-          className={`
-            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
-          `}
-          onClick={item.onClick}
-          title={isCollapsed ? item.label : ''}
-        >
-          <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
-          {!isCollapsed && item.label}
-        </Button>
-      ))}
-
-      {problemasPendentes > 0 && (
-        <div className="pt-4 border-t">
-          <Button
-            variant="ghost"
-            className={`
-              ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'} 
-              text-orange-600 hover:text-orange-700 hover:bg-orange-50
-            `}
-            onClick={() => onTabChange('clientes')}
-            title={isCollapsed ? `${problemasPendentes} problemas pendentes` : ''}
-          >
-            <AlertTriangle className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
-            {!isCollapsed && (
-              <>
-                Problemas
-                <Badge variant="destructive" className="ml-2 px-1.5 py-0.5 text-xs">
-                  {problemasPendentes}
-                </Badge>
-              </>
-            )}
-          </Button>
-        </div>
-      )}
-    </nav>
+    <SidebarGroup>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            return (
+              <SidebarMenuItem key={item.id}>
+                <SidebarMenuButton 
+                  onClick={() => onTabChange(item.id)}
+                  isActive={activeTab === item.id}
+                  className="w-full"
+                >
+                  <Icon className="w-4 h-4" />
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">{item.label}</span>
+                    <span className="text-xs text-muted-foreground">{item.description}</span>
+                  </div>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )
+          })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   )
 }
