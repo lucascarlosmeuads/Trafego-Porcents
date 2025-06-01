@@ -19,7 +19,7 @@ export function GestorChatList() {
     marcarChatComoLidoEstaSecao,
     chatFoiLidoEstaSecao,
     getTotalNaoLidas,
-    atualizarConversaComoLida // NOVA FUNÇÃO
+    atualizarConversaComoLida
   } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -36,7 +36,6 @@ export function GestorChatList() {
 
   const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
-  // FILTRO CORRIGIDO: Considerar o estado local para mensagens não lidas
   const conversasFiltradas = conversasValidas
     .filter(conversa =>
       conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -45,15 +44,12 @@ export function GestorChatList() {
     .filter(conversa => {
       if (!showOnlyUnread) return true
       
-      // Verificar se foi lido nesta sessão
       const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
       
-      // Mostrar apenas conversas com mensagens não lidas E que não foram lidas nesta sessão
       return conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     })
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  // Calculate totalNaoLidas only once here
   const totalNaoLidas = getTotalNaoLidas()
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
@@ -110,37 +106,46 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
-  // NOVA LÓGICA DE CLIQUE COM ATUALIZAÇÃO IMEDIATA
   const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente)
 
-    // MARCAR IMEDIATAMENTE COMO LIDO SE TEM MENSAGENS NÃO LIDAS
     if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
       console.log('🔄 [GestorChatList] Marcando chat como lido automaticamente')
       marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
     }
 
-    // Selecionar o chat
     setSelectedChat(conversa)
   }
 
-  // NOVA FUNÇÃO: Marcar como lida via botão (será passada para ChatInterface)
+  // FUNÇÃO CORRIGIDA: Marcar como lida via botão com atualização visual imediata
   const handleMarcarComoLida = (emailCliente: string, emailGestor: string) => {
     console.log('🎯 [GestorChatList] Marcando como lida via botão:', emailCliente)
     
+    // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
+    if (atualizarConversaComoLida) {
+      console.log('🔄 [GestorChatList] Forçando atualização visual imediata')
+      atualizarConversaComoLida(emailCliente, emailGestor)
+    }
+    
+    // 2. MARCAR NO ESTADO DE SESSÃO
     if (marcarChatComoLidoEstaSecao) {
+      console.log('🔄 [GestorChatList] Marcando no estado de sessão')
       marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
     }
+
+    // 3. FORÇAR RE-RENDERIZAÇÃO ADICIONAL APÓS 500ms PARA GARANTIR
+    setTimeout(() => {
+      console.log('🔄 [GestorChatList] Recarregando conversas para sincronizar')
+      recarregar()
+    }, 500)
   }
 
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
     
-    // Verificar se foi lido nesta sessão
     const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
     
-    // Lógica: se foi lido nesta sessão, nunca mostrar como não lido
     const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
     if (selecionado) {
@@ -151,7 +156,6 @@ export function GestorChatList() {
       return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
     }
     
-    // Se foi lido nesta sessão ou não tem mensagens não lidas, mostrar como cinza
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
 
@@ -214,7 +218,7 @@ export function GestorChatList() {
           statusCampanha={selectedChat.status_campanha}
           onBack={() => setSelectedChat(null)}
           showBackButton={true}
-          onMarcarComoLida={handleMarcarComoLida} // NOVA PROP
+          onMarcarComoLida={handleMarcarComoLida}
         />
       </div>
     )
@@ -270,7 +274,6 @@ export function GestorChatList() {
         </div>
 
         <div className="flex gap-3">
-          {/* BOTÃO CORRIGIDO COM COR VERMELHA */}
           <Button
             variant={showOnlyUnread ? "default" : "ghost"}
             size="sm"
