@@ -32,6 +32,16 @@ export function validateAndLogCommissionValue(
   return valorNumerico
 }
 
+// Função para verificar se um email é de criador de sites
+export function isSitesUser(email: string): boolean {
+  const sitesEmails = [
+    'sites@gpsagenciaweb.com.br',
+    'sites@example.com'
+  ]
+  
+  return sitesEmails.includes(email?.toLowerCase())
+}
+
 export function logClientCreation(clientData: any, source: string) {
   console.log(`🎯 [${source}] === CRIAÇÃO DE CLIENTE ===`)
   console.log(`📝 [${source}] Nome:`, clientData.nome_cliente)
