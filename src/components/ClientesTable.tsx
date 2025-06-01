@@ -680,62 +680,73 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
+      {/* Mobile indicator */}
+      <div className="lg:hidden">
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-2">
+          <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
+            <span>📱 Deslize horizontalmente para ver todas as colunas</span>
+          </div>
+        </div>
+      </div>
+      
       <div className="border rounded-lg overflow-hidden bg-card border-border">
         <div className="overflow-x-auto">
-          <Table className="table-dark">
-            <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
-            <TableBody>
-              {clientesList.length === 0 ? (
-                <TableRow className="border-border hover:bg-muted/20">
-                  <TableCell colSpan={isAdmin || isSitesContext ? 12 : 11} className="text-center py-8 text-white">
-                    {isInactive 
-                      ? `Nenhum cliente inativo encontrado`
-                      : clientes.length === 0 
-                        ? `Nenhum cliente encontrado`
-                        : `Nenhum cliente corresponde aos filtros aplicados`
-                    }
-                  </TableCell>
-                </TableRow>
-              ) : (
-                clientesList.map((cliente, index) => (
-                  <ClienteRow
-                    key={`${emailToUse}-${cliente.id}-${index}`}
-                    cliente={cliente}
-                    selectedManager={currentManager || selectedManager || 'Próprios dados'}
-                    index={index}
-                    isAdmin={isAdmin}
-                    showEmailGestor={isSitesContext}
-                    showSitePagoCheckbox={showSitePagoCheckbox}
-                    updatingStatus={updatingStatus}
-                    editingLink={editingLink}
-                    linkValue={linkValue}
-                    setLinkValue={setLinkValue}
-                    editingBM={editingBM}
-                    bmValue={bmValue}
-                    setBmValue={setBmValue}
-                    updatingComission={updatingComission}
-                    editingComissionValue={editingComissionValue}
-                    comissionValueInput={comissionValueInput}
-                    setComissionValueInput={setComissionValueInput}
-                    getStatusColor={getStatusColor}
-                    onStatusChange={handleStatusChange}
-                    onSiteStatusChange={handleSiteStatusChange}
-                    onLinkEdit={handleLinkEdit}
-                    onLinkSave={handleLinkSave}
-                    onLinkCancel={handleLinkCancel}
-                    onBMEdit={handleBMEdit}
-                    onBMSave={handleBMSave}
-                    onBMCancel={handleBMCancel}
-                    onComissionToggle={handleComissionToggle}
-                    onComissionValueEdit={handleComissionValueEdit}
-                    onComissionValueSave={handleComissionValueSave}
-                    onComissionValueCancel={handleComissionValueCancel}
-                    onSitePagoChange={handleSitePagoChange}
-                  />
-                ))
-              )}
-            </TableBody>
-          </Table>
+          <div className="min-w-[800px]">
+            <Table className="table-dark">
+              <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
+              <TableBody>
+                {clientesList.length === 0 ? (
+                  <TableRow className="border-border hover:bg-muted/20">
+                    <TableCell colSpan={isAdmin || isSitesContext ? 12 : 11} className="text-center py-8 text-white">
+                      {isInactive 
+                        ? `Nenhum cliente inativo encontrado`
+                        : clientes.length === 0 
+                          ? `Nenhum cliente encontrado`
+                          : `Nenhum cliente corresponde aos filtros aplicados`
+                      }
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  clientesList.map((cliente, index) => (
+                    <ClienteRow
+                      key={`${emailToUse}-${cliente.id}-${index}`}
+                      cliente={cliente}
+                      selectedManager={currentManager || selectedManager || 'Próprios dados'}
+                      index={index}
+                      isAdmin={isAdmin}
+                      showEmailGestor={isSitesContext}
+                      showSitePagoCheckbox={showSitePagoCheckbox}
+                      updatingStatus={updatingStatus}
+                      editingLink={editingLink}
+                      linkValue={linkValue}
+                      setLinkValue={setLinkValue}
+                      editingBM={editingBM}
+                      bmValue={bmValue}
+                      setBmValue={setBmValue}
+                      updatingComission={updatingComission}
+                      editingComissionValue={editingComissionValue}
+                      comissionValueInput={comissionValueInput}
+                      setComissionValueInput={setComissionValueInput}
+                      getStatusColor={getStatusColor}
+                      onStatusChange={handleStatusChange}
+                      onSiteStatusChange={handleSiteStatusChange}
+                      onLinkEdit={handleLinkEdit}
+                      onLinkSave={handleLinkSave}
+                      onLinkCancel={handleLinkCancel}
+                      onBMEdit={handleBMEdit}
+                      onBMSave={handleBMSave}
+                      onBMCancel={handleBMCancel}
+                      onComissionToggle={handleComissionToggle}
+                      onComissionValueEdit={handleComissionValueEdit}
+                      onComissionValueSave={handleComissionValueSave}
+                      onComissionValueCancel={handleComissionValueCancel}
+                      onSitePagoChange={handleSitePagoChange}
+                    />
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </div>

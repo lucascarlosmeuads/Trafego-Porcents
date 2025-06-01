@@ -97,25 +97,25 @@ export function ClienteRow({
         className="border-border hover:bg-muted/20" 
         style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
       >
-        <TableCell className="text-white text-xs p-2">
+        <TableCell className="text-white text-xs p-1 sticky left-0 bg-card z-10 border-r border-border">
           {formatDate(cliente.data_venda || cliente.created_at)}
         </TableCell>
 
-        <TableCell className="text-white text-xs p-2 max-w-[120px]">
+        <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
           <ClienteRowName 
             clienteId={cliente.id!.toString()}
             nomeCliente={cliente.nome_cliente || ''}
           />
         </TableCell>
 
-        <TableCell className="text-white text-xs p-2">
+        <TableCell className="text-white text-xs p-1">
           <ClienteRowPhone 
             telefone={cliente.telefone || ''}
             nomeCliente={cliente.nome_cliente || ''}
           />
         </TableCell>
 
-        <TableCell className="text-white text-xs p-2">
+        <TableCell className="text-white text-xs p-1">
           <Tooltip>
             <TooltipTrigger>
               <div className="flex items-center justify-center">
@@ -129,7 +129,7 @@ export function ClienteRow({
         </TableCell>
 
         {(isAdmin || showEmailGestor) && (
-          <TableCell className="text-white text-xs p-2">
+          <TableCell className="text-white text-xs p-1">
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex items-center justify-center">
@@ -143,7 +143,7 @@ export function ClienteRow({
           </TableCell>
         )}
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <StatusSelect
             value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
             onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
@@ -154,7 +154,7 @@ export function ClienteRow({
           />
         </TableCell>
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <SiteStatusSelect
             value={cliente.site_status || 'pendente'}
             onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
@@ -172,7 +172,7 @@ export function ClienteRow({
           compact={true}
         />
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <BriefingMaterialsModal 
             emailCliente={cliente.email_cliente || ''}
             nomeCliente={cliente.nome_cliente || ''}
@@ -180,15 +180,15 @@ export function ClienteRow({
               <Button
                 size="sm"
                 variant="outline"
-                className="h-6 w-6 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
+                className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
               >
-                <Eye className="h-3 w-3" />
+                <Eye className="h-2.5 w-2.5" />
               </Button>
             }
           />
         </TableCell>
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <ClienteRowSite
             clienteId={cliente.id!.toString()}
             linkSite={cliente.link_site || ''}
@@ -205,7 +205,7 @@ export function ClienteRow({
           />
         </TableCell>
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <ClienteRowBM
             clienteId={cliente.id!.toString()}
             numeroBM={cliente.numero_bm || ''}
@@ -219,7 +219,7 @@ export function ClienteRow({
           />
         </TableCell>
 
-        <TableCell className="p-2">
+        <TableCell className="p-1">
           <ComissaoButton
             cliente={cliente}
             isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
