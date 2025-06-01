@@ -929,6 +929,37 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     return (
       <div className="space-y-4 p-4 lg:p-0">
+        {/* Banner de Atualizações Recentes */}
+        <div className="bg-gradient-to-r from-green-500/15 to-blue-500/15 border border-green-500/30 rounded-lg p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <span className="text-lg">🚀</span>
+            </div>
+            <div className="flex-1">
+              <h3 className="text-sm font-semibold text-green-400 mb-2">
+                ATUALIZAÇÕES RECENTES (Junho 2025)
+              </h3>
+              <div className="space-y-1.5 text-xs text-green-300">
+                <div className="flex items-center gap-2">
+                  <span className="text-green-400">✅</span>
+                  <span><strong>Prazos corrigidos:</strong> Agora calcula 15 dias úteis corretamente (eliminada confusão sobre deadlines)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-blue-400">✅</span>
+                  <span><strong>Status simplificados:</strong> Removidos "Saque Pendente" e "Campanha Anual" (redução de complexidade)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-purple-400">✅</span>
+                  <span><strong>Identificação do gestor:</strong> Nome agora visível na barra lateral (melhor usabilidade)</span>
+                </div>
+              </div>
+              <div className="mt-2 text-xs text-muted-foreground">
+                Todas as mudanças foram implementadas para melhorar a experiência de uso do sistema.
+              </div>
+            </div>
+          </div>
+        </div>
+
         {!isAdmin && !isSitesContext && (
           <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-green-600 text-sm">
@@ -966,14 +997,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             )}
           </div>
         )}
-        
-        {/* SUCCESS banner about removing Saques Pendentes */}
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
-          <div className="flex items-center gap-2 text-green-600 text-sm">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>✅ ATUALIZAÇÃO: Funcionalidade "Saques Pendentes" removida! Clientes "Saque Pendente" e "Campanha Anual" agora estão na aba "Clientes Ativos"</span>
-          </div>
-        </div>
         
         <Tabs defaultValue="ativos" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
