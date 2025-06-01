@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -929,7 +930,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
     return (
       <div className="space-y-4 p-4 lg:p-0">
-        {/* Banner de Atualizações Recentes */}
+        {/* Banner de Melhorias Recentes */}
         <div className="bg-gradient-to-r from-green-500/15 to-blue-500/15 border border-green-500/30 rounded-lg p-4 mb-4">
           <div className="flex items-start gap-3">
             <div className="flex-shrink-0 mt-0.5">
@@ -937,24 +938,24 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             </div>
             <div className="flex-1">
               <h3 className="text-sm font-semibold text-green-400 mb-2">
-                ATUALIZAÇÕES RECENTES (Junho 2025)
+                MELHORIAS RECENTES (Junho 2025)
               </h3>
               <div className="space-y-1.5 text-xs text-green-300">
                 <div className="flex items-center gap-2">
                   <span className="text-green-400">✅</span>
-                  <span><strong>Prazos corrigidos:</strong> Agora calcula 15 dias úteis corretamente (eliminada confusão sobre deadlines)</span>
+                  <span><strong>Interface otimizada:</strong> Botões menores para melhor aproveitamento do espaço na tela</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-blue-400">✅</span>
-                  <span><strong>Status simplificados:</strong> Removidos "Saque Pendente" e "Campanha Anual" (redução de complexidade)</span>
+                  <span><strong>Filtro "Pendente Criativo":</strong> Novo filtro para identificar clientes que ainda precisam de criativos</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-purple-400">✅</span>
-                  <span><strong>Identificação do gestor:</strong> Nome agora visível na barra lateral (melhor usabilidade)</span>
+                  <span><strong>Filtro "Sem BM":</strong> Novo filtro para localizar clientes sem número de Business Manager configurado</span>
                 </div>
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
-                Todas as mudanças foram implementadas para melhorar a experiência de uso do sistema.
+                Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores.
               </div>
             </div>
           </div>
