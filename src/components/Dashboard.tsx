@@ -11,6 +11,7 @@ import { VendedorDashboard } from './VendedorDashboard'
 import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
 import { SitesDashboard } from './SitesDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
+import { UnauthorizedUser } from './UnauthorizedUser'
 
 export function Dashboard() {
   const { 
@@ -20,7 +21,8 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites
+    isSites,
+    userType
   } = useAuth()
 
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
@@ -34,7 +36,8 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites
+    isSites,
+    userType
   })
 
   // Reset tab when user type changes
@@ -55,6 +58,12 @@ export function Dashboard() {
         <div className="text-lg">Usuário não autenticado</div>
       </div>
     )
+  }
+
+  // Verificar se o usuário não está autorizado
+  if (userType === 'unauthorized' || userType === 'error') {
+    console.log('❌ [Dashboard] Usuário não autorizado, mostrando tela de erro')
+    return <UnauthorizedUser />
   }
 
   // Cliente Dashboard
@@ -122,12 +131,6 @@ export function Dashboard() {
     )
   }
 
-  console.log('❌ [Dashboard] Tipo de usuário não autorizado')
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-lg text-red-600">
-        Tipo de usuário não autorizado
-      </div>
-    </div>
-  )
+  console.log('❌ [Dashboard] Fallback - tipo de usuário não reconhecido')
+  return <UnauthorizedUser />
 }
