@@ -10,6 +10,20 @@ interface DashboardMetricsProps {
 export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
   console.log('📊 [DashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
 
+  // Função para determinar se uma comissão é considerada pendente
+  const isComissaoPendente = (comissao: string | null | undefined): boolean => {
+    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
+    if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
+      return true
+    }
+    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
+    if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
+      return true
+    }
+    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
+    return comissao.trim() !== 'Pago'
+  }
+
   // Total de clientes
   const totalClientes = clientes.length
 
@@ -18,15 +32,15 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // Total pendente (comissao = "Pendente" - cor vermelha)
+  // Total pendente - usando nova lógica que considera todos os casos
   const clientesPendentes = clientes.filter(cliente => 
-    cliente.comissao === 'Pendente'
+    isComissaoPendente(cliente.comissao)
   )
   const totalPendente = clientesPendentes.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // Total já recebido (comissao = "Pago" - cor verde)
+  // Total já recebido (comissao = "Pago" explicitamente)
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -47,6 +61,14 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     problemas: clientesProblemas.length,
     totalPendente,
     totalRecebido
+  })
+
+  // Log detalhado dos valores de comissão para debug
+  const comissaoValues = clientes.map(c => c.comissao).filter((value, index, self) => self.indexOf(value) === index)
+  console.log('📊 [DashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
+  console.log('📊 [DashboardMetrics] Breakdown por tipo de comissão:', {
+    pendentes: clientes.filter(c => isComissaoPendente(c.comissao)).map(c => ({ id: c.id, comissao: c.comissao })),
+    pagos: clientes.filter(c => c.comissao === 'Pago').map(c => ({ id: c.id, comissao: c.comissao }))
   })
 
   return (

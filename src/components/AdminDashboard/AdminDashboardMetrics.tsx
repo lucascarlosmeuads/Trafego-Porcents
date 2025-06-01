@@ -12,6 +12,20 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   console.log('📊 [AdminDashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
   console.log('📊 [AdminDashboardMetrics] Gestor selecionado:', selectedManager)
 
+  // Função para determinar se uma comissão é considerada pendente
+  const isComissaoPendente = (comissao: string | null | undefined): boolean => {
+    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
+    if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
+      return true
+    }
+    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
+    if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
+      return true
+    }
+    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
+    return comissao.trim() !== 'Pago'
+  }
+
   // Total de clientes
   const totalClientes = clientes.length
 
@@ -20,15 +34,15 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // Total pendente (comissao = "Pendente" - cor vermelha)
+  // Total pendente - usando nova lógica que considera todos os casos
   const clientesPendentes = clientes.filter(cliente => 
-    cliente.comissao === 'Pendente'
+    isComissaoPendente(cliente.comissao)
   )
   const totalPendente = clientesPendentes.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // Total já recebido (comissao = "Pago" - cor verde)
+  // Total já recebido (comissao = "Pago" explicitamente)
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -41,9 +55,9 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Problema'
   )
 
-  // Métricas específicas do admin
+  // Métricas específicas do admin (usando a mesma lógica corrigida)
   const clientesParaPagar = clientes.filter(cliente => 
-    cliente.comissao === 'Pendente'
+    isComissaoPendente(cliente.comissao)
   )
 
   const clientesJaPagos = clientes.filter(cliente => 
@@ -61,6 +75,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     paraPagar: clientesParaPagar.length,
     jaPagos: clientesJaPagos.length
   })
+
+  // Log detalhado dos valores de comissão para debug
+  const comissaoValues = clientes.map(c => c.comissao).filter((value, index, self) => self.indexOf(value) === index)
+  console.log('📊 [AdminDashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
 
   return (
     <div className="space-y-6">

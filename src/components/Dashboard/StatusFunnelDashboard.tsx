@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,6 +10,20 @@ export function StatusFunnelDashboard() {
   const [loading, setLoading] = useState(true)
   const [allClientes, setAllClientes] = useState<any[]>([])
   
+  // Função para determinar se uma comissão é considerada pendente
+  const isComissaoPendente = (comissao: string | null | undefined): boolean => {
+    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
+    if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
+      return true
+    }
+    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
+    if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
+      return true
+    }
+    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
+    return comissao.trim() !== 'Pago'
+  }
+
   // Buscar todos os clientes para o dashboard geral
   useEffect(() => {
     const fetchAllClientes = async () => {
@@ -68,11 +81,11 @@ export function StatusFunnelDashboard() {
     count
   }))
 
-  // Dados para o gráfico de comissões
+  // Dados para o gráfico de comissões - usando nova lógica corrigida
   const comissaoData = [
     {
       name: 'Pendentes',
-      value: allClientes.filter(c => c.comissao === 'Pendente').length,
+      value: allClientes.filter(c => isComissaoPendente(c.comissao)).length,
       color: '#ef4444'
     },
     {
