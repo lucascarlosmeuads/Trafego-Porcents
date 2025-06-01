@@ -1,9 +1,10 @@
+
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { LazyAdminChatLayoutSplit } from './LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -63,11 +64,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'documentacao':
         return (
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <p className="text-muted-foreground">Documentação em desenvolvimento</p>
-            </div>
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyDocumentationViewer />
+          </Suspense>
         )
 
       case 'chat':

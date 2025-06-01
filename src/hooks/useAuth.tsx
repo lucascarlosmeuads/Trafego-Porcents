@@ -1,7 +1,8 @@
+
 import { useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthState } from '@/hooks/useAuthState'
-import type { AuthContextType, UserType } from '@/types/auth'
+import type { AuthContextType } from '@/types/auth'
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -15,21 +16,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites,
+    isSites, // NOVO
     currentManagerName,
     updateUserType,
     resetUserState
   } = useAuthState()
-
-  // Calcular userType baseado nos boolean flags
-  const getUserType = (): UserType => {
-    if (isAdmin) return 'admin'
-    if (isGestor) return 'gestor'
-    if (isCliente) return 'cliente'
-    if (isVendedor) return 'vendedor'
-    if (isSites) return 'sites'
-    return 'unauthorized'
-  }
 
   // Função otimizada para evitar loops
   const handleAuthChange = useCallback(async (event: string, session: any) => {
@@ -216,8 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites,
-    userType: getUserType()
+    isSites
   })
 
   return (
@@ -231,9 +221,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGestor,
       isCliente,
       isVendedor,
-      isSites,
-      currentManagerName,
-      userType: getUserType()
+      isSites, // NOVO
+      currentManagerName
     }}>
       {children}
     </AuthContext.Provider>

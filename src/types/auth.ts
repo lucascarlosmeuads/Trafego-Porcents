@@ -11,9 +11,8 @@ export interface AuthContextType {
   isGestor: boolean
   isCliente: boolean
   isVendedor: boolean
-  isSites: boolean
+  isSites: boolean // NOVO
   currentManagerName: string
-  userType: UserType
 }
 
-export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error'
+export type UserType = 'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error' // ATUALIZADO

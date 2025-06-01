@@ -4,8 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { 
   LazyAdminDashboard, 
   LazyGestorDashboard, 
-  LazyClienteDashboard,
-  LazyUnauthorizedUser
+  LazyClienteDashboard 
 } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { VendedorDashboard } from './VendedorDashboard'
@@ -55,16 +54,6 @@ export function Dashboard() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Usuário não autenticado</div>
       </div>
-    )
-  }
-
-  // Verificar se o usuário não está autorizado
-  if (!isAdmin && !isGestor && !isCliente && !isVendedor && !isSites) {
-    console.log('❌ [Dashboard] Usuário não autorizado, mostrando tela de erro')
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <LazyUnauthorizedUser />
-      </Suspense>
     )
   }
 
@@ -133,10 +122,12 @@ export function Dashboard() {
     )
   }
 
-  console.log('❌ [Dashboard] Fallback - tipo de usuário não reconhecido')
+  console.log('❌ [Dashboard] Tipo de usuário não autorizado')
   return (
-    <Suspense fallback={<LoadingFallback />}>
-      <LazyUnauthorizedUser />
-    </Suspense>
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-lg text-red-600">
+        Tipo de usuário não autorizado
+      </div>
+    </div>
   )
 }
