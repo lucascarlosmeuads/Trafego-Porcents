@@ -22,67 +22,71 @@ export function AdminTable() {
 
   if (loading) {
     return (
-      <Card className="bg-card border-border">
-        <CardContent className="flex items-center justify-center py-12">
-          <div className="flex flex-col items-center gap-4">
-            <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            <span className="text-foreground">Carregando dados...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="bg-admin-bg min-h-screen p-6">
+        <Card className="bg-admin-card border-admin-border rounded-xl">
+          <CardContent className="flex items-center justify-center py-16">
+            <div className="flex flex-col items-center gap-4">
+              <Loader2 className="w-8 h-8 animate-spin text-admin-purple" />
+              <span className="text-admin-text-primary">Carregando dados...</span>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     )
   }
 
   return (
-    <Card className="w-full bg-card border-border">
-      <CardHeader>
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <CardTitle className="text-lg sm:text-xl text-card-foreground">
-            Todos os Clientes ({clientes.length})
-          </CardTitle>
-          <Button
-            onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
-            variant="outline"
-            size="sm"
-            className="lg:hidden"
-          >
-            {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
-            {viewMode === 'table' ? 'Cartões' : 'Tabela'}
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent className="p-0 sm:p-6">
-        {/* Visualização em cartões para mobile */}
-        {viewMode === 'cards' && (
-          <AdminTableCards
-            clientes={clientes}
-            gestores={gestores}
-            transferindoCliente={transferindoCliente}
-            onTransferirCliente={handleTransferirCliente}
-            formatDate={formatDate}
-            getStatusColor={getStatusColor}
-          />
-        )}
-
-        {/* Tabela para desktop */}
-        <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
-          <AdminTableDesktop
-            clientes={clientes}
-            gestores={gestores}
-            transferindoCliente={transferindoCliente}
-            onTransferirCliente={handleTransferirCliente}
-            onStatusChange={handleStatusChange}
-            formatDate={formatDate}
-            getStatusColor={getStatusColor}
-          />
-        </div>
-        
-        {clientes.length === 0 && (
-          <div className="text-center py-12 text-muted-foreground">
-            Nenhum cliente encontrado
+    <div className="bg-admin-bg min-h-screen p-6">
+      <Card className="w-full bg-admin-card border-admin-border rounded-xl shadow-sm">
+        <CardHeader className="pb-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <CardTitle className="text-xl font-bold text-admin-text-primary">
+              Todos os Clientes ({clientes.length})
+            </CardTitle>
+            <Button
+              onClick={() => setViewMode(viewMode === 'table' ? 'cards' : 'table')}
+              variant="outline"
+              size="sm"
+              className="lg:hidden bg-admin-card border-admin-border text-admin-text-info hover:bg-admin-border/20 hover:text-admin-text-primary transition-colors"
+            >
+              {viewMode === 'table' ? <Smartphone className="w-4 h-4 mr-2" /> : <Monitor className="w-4 h-4 mr-2" />}
+              {viewMode === 'table' ? 'Cartões' : 'Tabela'}
+            </Button>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardHeader>
+        <CardContent className="p-0 sm:p-6">
+          {/* Visualização em cartões para mobile */}
+          {viewMode === 'cards' && (
+            <AdminTableCards
+              clientes={clientes}
+              gestores={gestores}
+              transferindoCliente={transferindoCliente}
+              onTransferirCliente={handleTransferirCliente}
+              formatDate={formatDate}
+              getStatusColor={getStatusColor}
+            />
+          )}
+
+          {/* Tabela para desktop */}
+          <div className={`${viewMode === 'cards' ? 'hidden lg:block' : 'block'}`}>
+            <AdminTableDesktop
+              clientes={clientes}
+              gestores={gestores}
+              transferindoCliente={transferindoCliente}
+              onTransferirCliente={handleTransferirCliente}
+              onStatusChange={handleStatusChange}
+              formatDate={formatDate}
+              getStatusColor={getStatusColor}
+            />
+          </div>
+          
+          {clientes.length === 0 && (
+            <div className="text-center py-16 text-admin-text-secondary">
+              Nenhum cliente encontrado
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

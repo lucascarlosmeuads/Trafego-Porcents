@@ -31,63 +31,65 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }, [user, isAdmin])
 
   if (loading) {
-    return <LoadingFallback />
+    return (
+      <div className="bg-admin-bg min-h-screen">
+        <LoadingFallback />
+      </div>
+    )
   }
 
   const renderContent = () => {
     // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
+      return (
+        <div className="bg-admin-bg min-h-screen">
+          <GestoresManagement />
+        </div>
+      )
     }
     
     // Navegação por abas
     switch (activeTab) {
       case 'dashboard':
         return (
-          <div className="space-y-6">
-            {/* Seletor de gestores */}
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
-            </div>
-            
-            {/* Métricas do Admin */}
-            <AdminDashboardMetrics 
-              clientes={gestorClientes} 
-              selectedManager={selectedManager}
-            />
-          </div>
+          <AdminDashboardMetrics 
+            clientes={gestorClientes} 
+            selectedManager={selectedManager}
+          />
         )
 
       case 'documentacao':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyDocumentationViewer />
-          </Suspense>
+          <div className="bg-admin-bg min-h-screen">
+            <Suspense fallback={<LoadingFallback />}>
+              <LazyDocumentationViewer />
+            </Suspense>
+          </div>
         )
 
       case 'chat':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyAdminChatLayoutSplit />
-          </Suspense>
+          <div className="bg-admin-bg min-h-screen">
+            <Suspense fallback={<LoadingFallback />}>
+              <LazyAdminChatLayoutSplit />
+            </Suspense>
+          </div>
         )
       
       case 'clientes':
       default:
         return (
-          <div className="space-y-4 w-full">
+          <div className="bg-admin-bg min-h-screen space-y-6">
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
             {selectedManager !== '__GESTORES__' && (
-              <div className="bg-card border rounded-lg p-4">
-                <ManagerSelector 
-                  selectedManager={selectedManager}
-                  onManagerSelect={onManagerSelect}
-                  isAdminContext={true}
-                />
+              <div className="p-6 pb-0">
+                <div className="bg-admin-card border-admin-border rounded-xl p-6 shadow-sm">
+                  <ManagerSelector 
+                    selectedManager={selectedManager}
+                    onManagerSelect={onManagerSelect}
+                    isAdminContext={true}
+                  />
+                </div>
               </div>
             )}
             
@@ -101,7 +103,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }
 
   return (
-    <div className="w-full">
+    <div className="w-full bg-admin-bg min-h-screen">
       {renderContent()}
     </div>
   )

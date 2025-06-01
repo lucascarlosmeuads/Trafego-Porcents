@@ -27,18 +27,18 @@ export function AdminTableDesktop({
   getStatusColor 
 }: AdminTableDesktopProps) {
   return (
-    <div className="overflow-x-auto">
-      <Table className="table-dark">
+    <div className="overflow-x-auto rounded-lg border border-admin-border">
+      <Table className="w-full">
         <TableHeader>
-          <TableRow className="border-border hover:bg-muted/20">
-            <TableHead className="w-16 text-muted-foreground">ID</TableHead>
-            <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
-            <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
-            <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
-            <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
-            <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
-            <TableHead className="min-w-[180px] text-muted-foreground">Data Limite</TableHead>
-            <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
+          <TableRow className="border-admin-border bg-admin-border/10 hover:bg-admin-border/20">
+            <TableHead className="w-16 text-admin-text-info font-semibold">ID</TableHead>
+            <TableHead className="min-w-[100px] text-admin-text-info font-semibold">Data Venda</TableHead>
+            <TableHead className="min-w-[200px] text-admin-text-info font-semibold">Nome Cliente</TableHead>
+            <TableHead className="min-w-[120px] text-admin-text-info font-semibold">Telefone</TableHead>
+            <TableHead className="min-w-[180px] text-admin-text-info font-semibold">Email Gestor</TableHead>
+            <TableHead className="min-w-[180px] text-admin-text-info font-semibold">Status Campanha</TableHead>
+            <TableHead className="min-w-[180px] text-admin-text-info font-semibold">Data Limite</TableHead>
+            <TableHead className="min-w-[120px] text-admin-text-info font-semibold">Transferir</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -52,25 +52,25 @@ export function AdminTableDesktop({
             return (
               <TableRow 
                 key={cliente.id} 
-                className="border-border hover:bg-muted/20 transition-colors"
+                className="border-admin-border hover:bg-admin-border/10 transition-colors duration-200"
               >
-                <TableCell className="font-mono text-xs text-foreground">
+                <TableCell className="font-mono text-xs text-admin-text-secondary">
                   {String(index + 1).padStart(3, '0')}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-1">
-                    <Calendar className="w-3 h-3 text-muted-foreground" />
-                    <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
+                  <div className="flex items-center gap-2">
+                    <Calendar className="w-3 h-3 text-admin-text-secondary" />
+                    <span className="text-xs text-admin-text-primary">{formatDate(cliente.data_venda)}</span>
                   </div>
                 </TableCell>
                 <TableCell className="font-medium">
-                  <div className="max-w-[200px] truncate text-foreground">
+                  <div className="max-w-[200px] truncate text-admin-text-primary">
                     {cliente.nome_cliente}
                   </div>
                 </TableCell>
-                <TableCell className="text-foreground">{cliente.telefone}</TableCell>
+                <TableCell className="text-admin-text-primary">{cliente.telefone}</TableCell>
                 <TableCell>
-                  <div className="max-w-[180px] truncate text-foreground">
+                  <div className="max-w-[180px] truncate text-admin-text-primary bg-admin-border/10 px-2 py-1 rounded text-xs">
                     {cliente.email_gestor}
                   </div>
                 </TableCell>
@@ -79,16 +79,16 @@ export function AdminTableDesktop({
                     value={cliente.status_campanha || ''}
                     onValueChange={(value) => onStatusChange(cliente.id, value)}
                   >
-                    <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+                    <SelectTrigger className="h-8 w-48 bg-admin-card border-admin-border text-admin-text-primary hover:bg-admin-border/10 transition-colors">
                       <SelectValue>
                         <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(cliente.status_campanha || '')}`}>
                           {cliente.status_campanha || 'Sem status'}
                         </span>
                       </SelectValue>
                     </SelectTrigger>
-                    <SelectContent className="bg-card border-border z-50">
+                    <SelectContent className="bg-admin-card border-admin-border max-h-60 overflow-y-auto">
                       {STATUS_CAMPANHA.map(status => (
-                        <SelectItem key={status} value={status}>
+                        <SelectItem key={status} value={status} className="text-admin-text-primary hover:bg-admin-border/20">
                           <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
                             {status}
                           </span>
@@ -98,7 +98,7 @@ export function AdminTableDesktop({
                   </Select>
                 </TableCell>
                 <TableCell>
-                  <span className={`text-xs font-medium ${dataLimiteDisplay.classeCor}`}>
+                  <span className={`text-xs font-medium px-2 py-1 rounded ${dataLimiteDisplay.classeCor}`}>
                     {dataLimiteDisplay.texto}
                   </span>
                 </TableCell>

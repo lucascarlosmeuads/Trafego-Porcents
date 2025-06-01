@@ -32,30 +32,34 @@ export function AdminMainMenu({
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
+      description: 'Visão geral e métricas',
       onClick: () => onTabChange('dashboard')
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
+      description: 'Gerenciar clientes',
       onClick: () => onTabChange('clientes')
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
+      description: 'Conversas com clientes',
       onClick: () => onTabChange('chat')
     },
     {
       id: 'documentacao',
       label: 'Documentação',
       icon: Book,
+      description: 'Guias e manuais',
       onClick: () => onTabChange('documentacao')
     }
   ]
 
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-3">
       {menuItems.map((item) => {
         const isActive = activeTab === item.id
         
@@ -64,38 +68,49 @@ export function AdminMainMenu({
             key={item.id}
             variant="ghost"
             className={`
-              ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+              ${isCollapsed ? 'w-10 p-2 justify-center' : 'w-full justify-start'}
               ${isActive 
-                ? 'sidebar-item active bg-tech-purple/20 text-tech-purple border-l-2 border-tech-purple' 
-                : 'sidebar-item text-secondary-text hover:bg-neutral-surface hover:text-primary-text'
+                ? 'bg-admin-purple/20 text-admin-purple border-l-2 border-admin-purple shadow-sm' 
+                : 'text-admin-text-secondary hover:bg-admin-border/20 hover:text-admin-text-primary'
               }
-              transition-all duration-200
+              transition-all duration-200 rounded-lg h-auto ${!isCollapsed ? 'py-3' : 'py-2'}
             `}
             onClick={item.onClick}
             title={isCollapsed ? item.label : ''}
           >
             <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-3' : ''}`} />
-            {!isCollapsed && item.label}
+            {!isCollapsed && (
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium text-sm">{item.label}</span>
+                <span className="text-xs text-admin-text-secondary opacity-70">{item.description}</span>
+              </div>
+            )}
           </Button>
         )
       })}
 
-      <div className="pt-4 border-t border-neutral-border">
+      <div className="pt-4">
+        <div className="h-px bg-admin-border mb-4"></div>
         <Button
           variant="ghost"
           className={`
-            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+            ${isCollapsed ? 'w-10 p-2 justify-center' : 'w-full justify-start'}
             ${selectedManager === '__GESTORES__' 
-              ? 'sidebar-item active bg-tech-purple/20 text-tech-purple border-l-2 border-tech-purple' 
-              : 'sidebar-item text-secondary-text hover:bg-neutral-surface hover:text-primary-text'
+              ? 'bg-admin-purple/20 text-admin-purple border-l-2 border-admin-purple shadow-sm' 
+              : 'text-admin-text-secondary hover:bg-admin-border/20 hover:text-admin-text-primary'
             }
-            transition-all duration-200
+            transition-all duration-200 rounded-lg h-auto ${!isCollapsed ? 'py-3' : 'py-2'}
           `}
           onClick={() => onManagerSelect('__GESTORES__')}
           title={isCollapsed ? 'Gestores' : ''}
         >
           <Settings className={`h-4 w-4 ${!isCollapsed ? 'mr-3' : ''}`} />
-          {!isCollapsed && 'Gestores'}
+          {!isCollapsed && (
+            <div className="flex flex-col items-start text-left">
+              <span className="font-medium text-sm">Gestores</span>
+              <span className="text-xs text-admin-text-secondary opacity-70">Gerenciar equipe</span>
+            </div>
+          )}
         </Button>
       </div>
     </nav>
