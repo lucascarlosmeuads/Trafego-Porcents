@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, Target, Calendar, Trophy, Zap, Rocket, Star, Crown } from 'lucide-react'
+import { TrendingUp, Target, Trophy, Zap, Rocket, Star, Crown } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
@@ -62,11 +62,6 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   )
   const campanhasAtivas = clientesAtivos.length
   
-  // Problemas em aberto
-  const problemasAbertos = clientes.filter(cliente => 
-    cliente.status_campanha === 'Problema'
-  ).length
-  
   // CÁLCULOS MOTIVACIONAIS BASEADOS NA META DE 10K
   const progressoMeta = Math.min(100, (totalRecebido30Dias / META_MENSAL) * 100)
   const faltaParaMeta = Math.max(0, META_MENSAL - totalRecebido30Dias)
@@ -81,7 +76,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   // Cálculo de vendas necessárias por dia
   const vendasPorDia = Math.ceil(metaDiaria / TICKET_MEDIO)
   
-  // Sistema de conquistas motivacionais
+  // Sistema de conquistas motivacionais (sem repetir informações já mostradas)
   const conquistas = []
   
   if (progressoMeta >= 80) {
@@ -93,11 +88,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   }
   
   if (campanhasAtivas >= 10) {
-    conquistas.push({ icon: '🔥', texto: `${campanhasAtivas} campanhas no ar — cada uma pode render até R$60!`, cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
-  } else if (campanhasAtivas >= 5) {
-    conquistas.push({ icon: '💪', texto: `${campanhasAtivas} campanhas no ar — cada uma pode render até R$60!`, cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
-  } else if (campanhasAtivas > 0) {
-    conquistas.push({ icon: '🎯', texto: `${campanhasAtivas} campanhas no ar — cada uma pode render até R$60!`, cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
+    conquistas.push({ icon: '🔥', texto: 'Máquina de vendas ativada!', cor: 'bg-orange-900/20 text-orange-400 border-orange-500/30' })
   }
   
   if (totalRecebido30Dias > 0) {
@@ -116,7 +107,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
       return `⭐ Ótimo progresso! Você já conquistou ${formatCurrency(totalRecebido30Dias)} rumo aos 10K!`
     }
     if (campanhasAtivas > 0) {
-      return `💪 ${campanhasAtivas} campanhas no ar — cada uma pode render até R$60! Vamos acelerar?`
+      return `💪 ${campanhasAtivas} campanhas no ar! Vamos acelerar?`
     }
     return `🎯 Sua meta de 10K está esperando! Com ${campanhasParaMeta} campanhas ativas, você chega lá!`
   }
@@ -176,7 +167,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
         </CardContent>
       </Card>
 
-      {/* Métricas de Performance Motivacionais */}
+      {/* Métricas Essenciais */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="bg-gray-900/80 border-gray-700">
           <CardHeader className="pb-2">
@@ -188,7 +179,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
           <CardContent>
             <div className="text-3xl font-bold text-blue-300">{campanhasAtivas}</div>
             <p className="text-xs text-blue-400 mt-1">
-              cada uma pode render até R$60! 🚀
+              ativas agora 🚀
             </p>
           </CardContent>
         </Card>
@@ -203,22 +194,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
           <CardContent>
             <div className="text-2xl font-bold text-green-300">{formatCurrency(totalRecebido30Dias)}</div>
             <p className="text-xs text-green-400 mt-1">
-              dos seus 10K! 💰
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400 flex items-center">
-              <Star className="h-4 w-4 mr-2" />
-              Falta Receber
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-300">{formatCurrency(totalPendente)}</div>
-            <p className="text-xs text-green-400 mt-1">
-              aguardando novas campanhas no ar ⭐
+              dos seus 10K 💰
             </p>
           </CardContent>
         </Card>
@@ -226,20 +202,35 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
         <Card className="bg-gray-900/80 border-gray-700">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-orange-400 flex items-center">
+              <Star className="h-4 w-4 mr-2" />
+              Aguardando Pagamento
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-300">{formatCurrency(totalPendente)}</div>
+            <p className="text-xs text-orange-400 mt-1">
+              {clientesPendentes.length} comissões ⭐
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900/80 border-gray-700">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm text-purple-400 flex items-center">
               <Zap className="h-4 w-4 mr-2" />
               Meta Diária
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-orange-300">{formatCurrency(metaDiaria)}</div>
-            <p className="text-xs text-orange-400 mt-1">
+            <div className="text-2xl font-bold text-purple-300">{formatCurrency(metaDiaria)}</div>
+            <p className="text-xs text-purple-400 mt-1">
               para chegar nos 10K ⚡
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Conquistas e Medalhas */}
+      {/* Conquistas */}
       {conquistas.length > 0 && (
         <Card className="bg-gray-900/80 border-gray-700">
           <CardHeader className="pb-4">
@@ -261,16 +252,33 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
         </Card>
       )}
 
-      {/* Potencial de Crescimento */}
-      <Card className="bg-gray-900/80 border-gray-700">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center text-lg text-white">
-            <TrendingUp className="h-5 w-5 mr-2 text-purple-400" />
-            Potencial de Crescimento
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2">
+      {/* Call to Action Consolidado */}
+      <Card className="bg-gray-900/80 border-orange-500/30 text-white">
+        <CardContent className="p-6">
+          <div className="text-center mb-4">
+            <h3 className="text-2xl font-bold mb-2 text-orange-400">🚀 Acelere rumo aos 10K!</h3>
+            <p className="text-lg text-white">
+              Com {Math.min(10, campanhasParaMeta)} campanhas ativas hoje, você se aproxima da meta!
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="text-2xl font-bold text-orange-400">{campanhasParaMeta}</div>
+              <div className="text-sm text-gray-300">campanhas faltam</div>
+            </div>
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="text-2xl font-bold text-green-400">{formatCurrency(metaDiaria)}</div>
+              <div className="text-sm text-gray-300">por dia restante</div>
+            </div>
+            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
+              <div className="text-2xl font-bold text-blue-400">{diasRestantesMes}</div>
+              <div className="text-sm text-gray-300">dias restantes</div>
+            </div>
+          </div>
+
+          {/* Projeções de crescimento simplificadas */}
+          <div className="grid gap-4 md:grid-cols-2 mt-6">
             <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
               <div className="flex items-center justify-between mb-2">
                 <span className="font-semibold text-purple-400">Com +5 campanhas</span>
@@ -291,62 +299,6 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
               <div className="text-sm text-purple-400">
                 {(totalRecebido30Dias + (10 * TICKET_MEDIO)) >= META_MENSAL ? '🏆 Meta ultrapassada!' : `Faltariam ${formatCurrency(META_MENSAL - (totalRecebido30Dias + (10 * TICKET_MEDIO)))}`}
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Estatísticas de Suporte */}
-      <div className="grid gap-4 md:grid-cols-3">
-        <Card className="text-center bg-gray-900/80 border-gray-700">
-          <CardContent className="p-4">
-            <div className="text-3xl mb-2">🎯</div>
-            <div className="text-2xl font-bold text-blue-400">{campanhasAtivas}</div>
-            <p className="text-sm text-blue-300">Campanhas no Ar</p>
-            <p className="text-xs text-blue-400 mt-1">Cada uma pode render até R$60!</p>
-          </CardContent>
-        </Card>
-
-        <Card className="text-center bg-gray-900/80 border-gray-700">
-          <CardContent className="p-4">
-            <div className="text-3xl mb-2">💎</div>
-            <div className="text-2xl font-bold text-green-400">{formatCurrency(totalPendente)}</div>
-            <p className="text-sm text-green-300">Falta Receber</p>
-            <p className="text-xs text-green-400 mt-1">{clientesPendentes.length} comissões aguardando</p>
-          </CardContent>
-        </Card>
-
-        <Card className="text-center bg-gray-900/80 border-gray-700">
-          <CardContent className="p-4">
-            <div className="text-3xl mb-2">{problemasAbertos > 0 ? '⚠️' : '✅'}</div>
-            <div className="text-2xl font-bold text-orange-400">{problemasAbertos}</div>
-            <p className="text-sm text-orange-300">Problemas</p>
-            <p className="text-xs text-orange-400 mt-1">
-              {problemasAbertos === 0 ? 'Tudo funcionando!' : 'Precisam de atenção'}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Call to Action Final */}
-      <Card className="bg-gray-900/80 border-orange-500/30 text-white">
-        <CardContent className="p-6 text-center">
-          <h3 className="text-2xl font-bold mb-2 text-orange-400">🚀 Acelere!</h3>
-          <p className="text-lg mb-4 text-white">
-            Com {Math.min(10, campanhasParaMeta)} campanhas ativas hoje, você se aproxima dos 10K!
-          </p>
-          <div className="flex justify-center items-center space-x-6 text-gray-300">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-orange-400">{campanhasParaMeta}</div>
-              <div className="text-sm">campanhas faltam</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-400">{formatCurrency(metaDiaria)}</div>
-              <div className="text-sm">por dia restante</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-blue-400">{diasRestantesMes}</div>
-              <div className="text-sm">dias restantes</div>
             </div>
           </div>
         </CardContent>
