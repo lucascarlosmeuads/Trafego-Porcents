@@ -4,14 +4,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { 
   LazyAdminDashboard, 
   LazyGestorDashboard, 
-  LazyClienteDashboard 
+  LazyClienteDashboard,
+  LazyUnauthorizedUser
 } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { VendedorDashboard } from './VendedorDashboard'
 import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
 import { SitesDashboard } from './SitesDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
-import { UnauthorizedUser } from './UnauthorizedUser'
 
 export function Dashboard() {
   const { 
@@ -21,8 +21,7 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites,
-    userType
+    isSites
   } = useAuth()
 
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
@@ -36,8 +35,7 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites,
-    userType
+    isSites
   })
 
   // Reset tab when user type changes
@@ -61,9 +59,13 @@ export function Dashboard() {
   }
 
   // Verificar se o usuário não está autorizado
-  if (userType === 'unauthorized' || userType === 'error') {
+  if (!isAdmin && !isGestor && !isCliente && !isVendedor && !isSites) {
     console.log('❌ [Dashboard] Usuário não autorizado, mostrando tela de erro')
-    return <UnauthorizedUser />
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LazyUnauthorizedUser />
+      </Suspense>
+    )
   }
 
   // Cliente Dashboard
@@ -132,5 +134,9 @@ export function Dashboard() {
   }
 
   console.log('❌ [Dashboard] Fallback - tipo de usuário não reconhecido')
-  return <UnauthorizedUser />
+  return (
+    <Suspense fallback={<LoadingFallback />}>
+      <LazyUnauthorizedUser />
+    </Suspense>
+  )
 }
