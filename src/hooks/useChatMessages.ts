@@ -68,6 +68,49 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     }
   }, [user?.email, isCliente, isGestor, isAdmin, emailCliente, emailGestor])
 
+  // NOVA FUNÇÃO: Marcação automática como lida ao visualizar
+  const marcarMensagensComoLidasAutomaticamente = useCallback(async () => {
+    if (!user?.email || !emailCliente || !emailGestor) return
+
+    try {
+      console.log('🔄 [useChatMessages] Marcação automática como lida iniciada')
+      
+      const remetenteOposto = isCliente ? 'gestor' : 'cliente'
+      
+      let query = supabase
+        .from('chat_mensagens')
+        .update({ lida: true })
+        .eq('lida', false)
+        .eq('remetente', remetenteOposto)
+
+      if (isCliente) {
+        query = query.eq('email_cliente', user.email)
+      } else if (isGestor) {
+        query = query
+          .eq('email_cliente', emailCliente)
+          .eq('email_gestor', user.email)
+      } else if (isAdmin) {
+        query = query
+          .eq('email_cliente', emailCliente)
+          .eq('email_gestor', emailGestor)
+      }
+
+      const { error } = await query
+
+      if (error) throw error
+      
+      console.log('✅ [useChatMessages] Mensagens marcadas como lidas automaticamente')
+      
+      // Recarregar mensagens para refletir as mudanças
+      setTimeout(() => {
+        carregarMensagens()
+      }, 500)
+      
+    } catch (err) {
+      console.error('❌ [useChatMessages] Erro na marcação automática:', err)
+    }
+  }, [user?.email, isCliente, isGestor, isAdmin, emailCliente, emailGestor, carregarMensagens])
+
   const enviarMensagem = useCallback(async (
     conteudo: string, 
     tipo: 'texto' | 'audio' = 'texto',
@@ -105,7 +148,12 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       .insert([novaMensagem])
 
     if (error) throw error
-  }, [user?.email, isCliente, isGestor, emailCliente, emailGestor])
+
+    // MARCAÇÃO AUTOMÁTICA: Ao enviar mensagem, marcar mensagens anteriores como lidas
+    setTimeout(() => {
+      marcarMensagensComoLidasAutomaticamente()
+    }, 200)
+  }, [user?.email, isCliente, isGestor, emailCliente, emailGestor, marcarMensagensComoLidasAutomaticamente])
 
   const marcarComoLida = useCallback(async (mensagemId: string) => {
     const { error } = await supabase
@@ -116,55 +164,22 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     if (error) throw error
   }, [])
 
+  // FUNÇÃO SIMPLIFICADA: Sem estados complexos, apenas marca direto no banco
   const marcarTodasComoLidas = useCallback(async () => {
-    if (!user?.email || !emailCliente) return
-
-    try {
-      console.log('🔄 [useChatMessages] Marcando mensagens como lidas para:', {
-        userEmail: user.email,
-        emailCliente,
-        emailGestor,
-        isCliente,
-        isGestor,
-        isAdmin
-      })
-
-      const remetenteOposto = isCliente ? 'gestor' : 'cliente'
-      
-      let query = supabase
-        .from('chat_mensagens')
-        .update({ lida: true })
-        .eq('lida', false)
-        .eq('remetente', remetenteOposto)
-
-      if (isCliente) {
-        query = query.eq('email_cliente', user.email)
-      } else if (isGestor) {
-        query = query
-          .eq('email_cliente', emailCliente)
-          .eq('email_gestor', user.email)
-      } else if (isAdmin && emailGestor) {
-        query = query
-          .eq('email_cliente', emailCliente)
-          .eq('email_gestor', emailGestor)
-      }
-
-      const { error } = await query
-
-      if (error) throw error
-      
-      console.log('✅ [useChatMessages] Mensagens marcadas como lidas com sucesso')
-      
-      carregarMensagens()
-    } catch (err) {
-      console.error('❌ [useChatMessages] Erro ao marcar mensagens como lidas:', err)
-    }
-  }, [user?.email, isCliente, isGestor, isAdmin, emailCliente, emailGestor, carregarMensagens])
+    await marcarMensagensComoLidasAutomaticamente()
+  }, [marcarMensagensComoLidasAutomaticamente])
 
   useEffect(() => {
     if (!user?.email) return
 
     carregarMensagens()
+
+    // MARCAÇÃO AUTOMÁTICA: Ao carregar mensagens de um chat, marcar como lidas
+    if (emailCliente && emailGestor && !isCliente) {
+      setTimeout(() => {
+        marcarMensagensComoLidasAutomaticamente()
+      }, 1000)
+    }
 
     const channel = supabase
       .channel('chat-changes')
@@ -184,7 +199,7 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [carregarMensagens, user?.email])
+  }, [carregarMensagens, user?.email, emailCliente, emailGestor, isCliente, marcarMensagensComoLidasAutomaticamente])
 
   return {
     mensagens,
@@ -193,21 +208,33 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     enviarMensagem,
     marcarComoLida,
     marcarTodasComoLidas,
-    recarregar: carregarMensagens
+    recarregar: carregarMensagens,
+    marcarMensagensComoLidasAutomaticamente
   }
 }
 
 export function useChatConversas(gestorFiltro?: string | null) {
   const [conversas, setConversas] = useState<ChatConversaPreview[]>([])
   const [loading, setLoading] = useState(true)
-  const [chatsLidosDefinitivamente, setChatsLidosDefinitivamente] = useState<Set<string>>(new Set())
+  // SIMPLIFICADO: Apenas um estado para indicar processamento visual temporário
+  const [chatsProcessando, setChatsProcessando] = useState<Set<string>>(new Set())
   const { user, isGestor, isAdmin } = useAuth()
 
-  // CORREÇÃO PRINCIPAL: Função para marcar chat como lido definitivamente (não volta mais)
-  const marcarChatComoLidoDefinitivamente = useCallback((emailCliente: string, emailGestor: string) => {
+  // FUNÇÃO SIMPLIFICADA: Apenas indicador visual temporário
+  const marcarChatComoProcessando = useCallback((emailCliente: string, emailGestor: string) => {
     const chaveChat = `${emailCliente}-${emailGestor}`
-    console.log('🔒 [useChatConversas] Marcando chat como DEFINITIVAMENTE LIDO:', chaveChat)
-    setChatsLidosDefinitivamente(prev => new Set(prev).add(chaveChat))
+    console.log('⏳ [useChatConversas] Processando chat:', chaveChat)
+    
+    setChatsProcessando(prev => new Set(prev).add(chaveChat))
+    
+    // Remove o indicador após 3 segundos
+    setTimeout(() => {
+      setChatsProcessando(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(chaveChat)
+        return newSet
+      })
+    }, 3000)
   }, [])
 
   const carregarConversas = useCallback(async () => {
@@ -234,8 +261,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
 
       if (clientesError) throw clientesError
 
-      console.log('👥 [useChatConversas] Clientes encontrados:', clientes?.length || 0)
-
       if (!clientes || clientes.length === 0) {
         setConversas([])
         return
@@ -261,26 +286,16 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .eq('remetente', 'cliente')
 
           const chaveChat = `${cliente.email_cliente}-${cliente.email_gestor}`
-          const foiLidoDefinitivamente = chatsLidosDefinitivamente.has(chaveChat)
+          const estaProcessando = chatsProcessando.has(chaveChat)
           
-          // CORREÇÃO: Se foi lido definitivamente, forçar zero mensagens não lidas
-          let mensagensNaoLidasFinais = naoLidasCount || 0
-          
-          if (foiLidoDefinitivamente) {
-            console.log(`🔒 [useChatConversas] Chat DEFINITIVAMENTE LIDO - forçando zero para ${cliente.nome_cliente}`)
-            mensagensNaoLidasFinais = 0
-          }
-          
-          // CORREÇÃO: Se o banco agora mostra zero mensagens não lidas, pode limpar o estado local
-          if ((naoLidasCount || 0) === 0 && foiLidoDefinitivamente) {
-            console.log(`🧹 [useChatConversas] Banco confirmou zero mensagens para ${cliente.nome_cliente} - mantendo estado definitivo`)
-          }
+          // LÓGICA SIMPLIFICADA: Apenas confiar nos dados do banco
+          const mensagensNaoLidas = naoLidasCount || 0
+          const temMensagensNaoLidas = mensagensNaoLidas > 0 && !estaProcessando
           
           console.log(`📊 [useChatConversas] Cliente: ${cliente.nome_cliente}`, {
-            ultimaMensagem: ultimaMensagem?.conteudo || 'Nenhuma',
-            mensagensNaoLidasDB: naoLidasCount || 0,
-            foiLidoDefinitivamente,
-            mensagensNaoLidasFinais
+            mensagensNaoLidas,
+            temMensagensNaoLidas,
+            estaProcessando
           })
 
           return {
@@ -290,8 +305,8 @@ export function useChatConversas(gestorFiltro?: string | null) {
             status_campanha: cliente.status_campanha,
             ultima_mensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem',
             ultima_mensagem_data: ultimaMensagem?.created_at || '',
-            mensagens_nao_lidas: mensagensNaoLidasFinais,
-            tem_mensagens_nao_lidas: mensagensNaoLidasFinais > 0
+            mensagens_nao_lidas: mensagensNaoLidas,
+            tem_mensagens_nao_lidas: temMensagensNaoLidas
           }
         })
       )
@@ -305,7 +320,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
         return dataB - dataA
       })
 
-      console.log('✅ [useChatConversas] Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
       
     } catch (err) {
@@ -313,7 +327,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
     } finally {
       setLoading(false)
     }
-  }, [user?.email, isGestor, isAdmin, gestorFiltro, chatsLidosDefinitivamente])
+  }, [user?.email, isGestor, isAdmin, gestorFiltro, chatsProcessando])
 
   useEffect(() => {
     carregarConversas()
@@ -330,24 +344,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
         (payload) => {
           console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens', payload.eventType)
           
-          // CORREÇÃO: Se for uma nova mensagem do cliente, limpar estado definitivo apenas para esse chat
-          if (payload.eventType === 'INSERT' && payload.new) {
-            const novaMensagem = payload.new as any
-            if (novaMensagem.remetente === 'cliente') {
-              const chaveChat = `${novaMensagem.email_cliente}-${novaMensagem.email_gestor}`
-              console.log('📨 [useChatConversas] Nova mensagem do cliente, limpando estado definitivo:', chaveChat)
-              setChatsLidosDefinitivamente(prev => {
-                const newSet = new Set(prev)
-                newSet.delete(chaveChat)
-                return newSet
-              })
-            }
-          }
-          
-          // Delay para garantir sincronização com banco
+          // Atualizar mais rapidamente em tempo real
           setTimeout(() => {
             carregarConversas()
-          }, 1000)
+          }, 500)
         }
       )
       .subscribe()
@@ -361,10 +361,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
     conversas,
     loading,
     recarregar: carregarConversas,
-    marcarChatComoLidoDefinitivamente,
-    foiLidoDefinitivamente: (emailCliente: string, emailGestor: string) => {
+    marcarChatComoProcessando,
+    estaProcessando: (emailCliente: string, emailGestor: string) => {
       const chaveChat = `${emailCliente}-${emailGestor}`
-      return chatsLidosDefinitivamente.has(chaveChat)
+      return chatsProcessando.has(chaveChat)
     }
   }
 }
