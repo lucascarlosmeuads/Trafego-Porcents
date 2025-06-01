@@ -35,12 +35,21 @@ export function GestorChatList() {
 
   const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
+  // FILTRO CORRIGIDO: Considerar o estado local para mensagens não lidas
   const conversasFiltradas = conversasValidas
     .filter(conversa =>
       conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
+    .filter(conversa => {
+      if (!showOnlyUnread) return true
+      
+      // Verificar se foi lido nesta sessão
+      const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+      
+      // Mostrar apenas conversas com mensagens não lidas E que não foram lidas nesta sessão
+      return conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    })
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
   // Calculate totalNaoLidas only once here
@@ -114,7 +123,6 @@ export function GestorChatList() {
     setSelectedChat(conversa)
   }
 
-  // NOVA LÓGICA DE CORES SIMPLIFICADA
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
@@ -251,13 +259,14 @@ export function GestorChatList() {
         </div>
 
         <div className="flex gap-3">
+          {/* BOTÃO CORRIGIDO COM COR VERMELHA */}
           <Button
             variant={showOnlyUnread ? "default" : "ghost"}
             size="sm"
             onClick={() => setShowOnlyUnread(!showOnlyUnread)}
             className={`justify-start ${
               showOnlyUnread 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
+                ? 'bg-red-600 hover:bg-red-700 text-white border-red-500' 
                 : 'text-gray-300 hover:text-white hover:bg-gray-700'
             }`}
           >
