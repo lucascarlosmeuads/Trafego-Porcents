@@ -1,7 +1,7 @@
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Save, X, Edit, Hash } from 'lucide-react'
+import { Save, X, Edit } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ClienteRowBMProps {
@@ -74,9 +74,9 @@ export function ClienteRowBM({
                       size="sm"
                       variant="outline"
                       onClick={() => onBMEdit(clienteId, numeroBM || '')}
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 text-xs font-bold"
                     >
-                      <Hash className="h-2 w-2" />
+                      BM
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
@@ -90,9 +90,9 @@ export function ClienteRowBM({
                       size="sm"
                       variant="outline"
                       onClick={() => onBMEdit(clienteId, '')}
-                      className="h-6 w-6 p-0"
+                      className="h-6 w-6 p-0 text-xs font-bold"
                     >
-                      <Hash className="h-2 w-2" />
+                      BM
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>

@@ -1,7 +1,6 @@
-
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Eye, User, Mail } from 'lucide-react'
+import { Folder, User, AtSign } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
@@ -133,7 +132,7 @@ export function ClienteRow({
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex items-center justify-center">
-                  <Mail className="h-3 w-3 text-green-400" />
+                  <AtSign className="h-3 w-3 text-green-400" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -182,7 +181,7 @@ export function ClienteRow({
                 variant="outline"
                 className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
               >
-                <Eye className="h-2.5 w-2.5" />
+                <Folder className="h-2.5 w-2.5" />
               </Button>
             }
           />

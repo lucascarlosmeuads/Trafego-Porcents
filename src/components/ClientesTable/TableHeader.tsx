@@ -1,7 +1,7 @@
 
 import { TableHead, TableHeader as TableHeaderComponent, TableRow } from '@/components/ui/table'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Eye, Upload, Hash, Mail, User, Calendar, Phone, Building, Globe, Target, DollarSign } from 'lucide-react'
+import { Folder, Upload, AtSign, User, Calendar, Phone, Building, Globe, Target, DollarSign } from 'lucide-react'
 
 interface TableHeaderProps {
   isAdmin?: boolean
@@ -66,7 +66,7 @@ export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableH
               <Tooltip>
                 <TooltipTrigger>
                   <div className="flex items-center justify-center">
-                    <Mail className="h-3 w-3" />
+                    <AtSign className="h-3 w-3" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -115,7 +115,7 @@ export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableH
             <Tooltip>
               <TooltipTrigger>
                 <div className="flex items-center justify-center">
-                  <Eye className="h-3 w-3" />
+                  <Folder className="h-3 w-3" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -138,8 +138,8 @@ export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableH
           <TableHead className="text-white font-semibold w-8 text-xs">
             <Tooltip>
               <TooltipTrigger>
-                <div className="flex items-center justify-center">
-                  <Hash className="h-3 w-3" />
+                <div className="flex items-center justify-center text-xs font-bold">
+                  BM
                 </div>
               </TooltipTrigger>
               <TooltipContent>
