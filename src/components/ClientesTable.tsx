@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -961,15 +960,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           </div>
         </div>
 
-        {!isAdmin && !isSitesContext && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 text-green-600 text-sm">
-              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-              <span>🔒 Filtro de Segurança Ativo - Visualizando apenas seus clientes ({emailToUse})</span>
-            </div>
-          </div>
-        )}
-        
         {isSitesContext && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center gap-2 text-blue-600 text-sm">
@@ -1134,15 +1124,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   return (
     <div className="space-y-4 p-4 lg:p-0">
-      {!isAdmin && !isSitesContext && (
-        <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-3 mb-4">
-          <div className="flex items-center gap-2 text-green-600 text-sm">
-            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-            <span>🔒 Filtro de Segurança Ativo - Visualizando apenas seus clientes ({emailToUse})</span>
-          </div>
-        </div>
-      )}
-
       {isSitesContext && (
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
           <div className="flex items-center gap-2 text-blue-600 text-sm">
