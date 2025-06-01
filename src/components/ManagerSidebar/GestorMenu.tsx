@@ -5,9 +5,11 @@ import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, Side
 interface GestorMenuProps {
   activeTab: string
   onTabChange: (tab: string) => void
+  problemasPendentes?: number
+  isCollapsed?: boolean
 }
 
-export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
+export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isCollapsed = false }: GestorMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
@@ -43,10 +45,12 @@ export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
                   className="w-full"
                 >
                   <Icon className="w-4 h-4" />
-                  <div className="flex flex-col items-start">
-                    <span className="font-medium">{item.label}</span>
-                    <span className="text-xs text-muted-foreground">{item.description}</span>
-                  </div>
+                  {!isCollapsed && (
+                    <div className="flex flex-col items-start">
+                      <span className="font-medium">{item.label}</span>
+                      <span className="text-xs text-muted-foreground">{item.description}</span>
+                    </div>
+                  )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
             )
