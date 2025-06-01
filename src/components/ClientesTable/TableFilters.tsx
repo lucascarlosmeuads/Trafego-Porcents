@@ -1,4 +1,3 @@
-
 import { Search, Filter, Globe, Image, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -104,7 +103,7 @@ export function TableFilters({
           <SelectValue placeholder="Status da campanha" />
         </SelectTrigger>
         <SelectContent className="bg-card border-border">
-          <SelectItem value="all">Status Campanha</SelectItem>
+          <SelectItem value="all">Status Cliente</SelectItem>
           {STATUS_CAMPANHA.map(status => (
             <SelectItem key={status} value={status}>
               <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
