@@ -6,7 +6,26 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
-import { STATUS_CAMPANHA } from '@/lib/supabase'
+
+// Status disponíveis para campanha
+const STATUS_CAMPANHA = [
+  'Cliente Novo',
+  'Preenchimento do Formulário',
+  'Brief',
+  'Criativo', 
+  'Site',
+  'Agendamento',
+  'Configurando BM',
+  'Subindo Campanha',
+  'Otimização',
+  'Problema',
+  'Cliente Sumiu',
+  'Reembolso',
+  'Saque Pendente',
+  'Campanha Anual',
+  'Urgente',
+  'Cliente Antigo'
+] as const
 
 interface NewSellerAddClientFormProps {
   onAddClient: (clientData: any) => Promise<any>
@@ -113,6 +132,12 @@ export function NewSellerAddClientForm({ onAddClient, isLoading, onCancel }: New
       }
 
       onCancel() // Fechar modal
+    } else if (result && result.error) {
+      toast({
+        title: "Erro",
+        description: result.error,
+        variant: "destructive"
+      })
     }
   }
 

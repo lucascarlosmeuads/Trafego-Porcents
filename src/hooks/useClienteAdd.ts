@@ -1,8 +1,7 @@
 
 import { useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { useToast } from '@/hooks/use-toast'
-import { ensureClienteExists, restoreClienteData } from '@/utils/clienteDataHelpers'
 
 export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const [isAdding, setIsAdding] = useState(false)
@@ -32,6 +31,21 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
     setIsAdding(true)
     
     try {
+      // Verificar se usuário está autenticado
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError) {
+        console.error('❌ [useClienteAdd] Erro ao verificar sessão:', sessionError)
+        throw new Error('Erro de autenticação')
+      }
+
+      if (!session) {
+        console.error('❌ [useClienteAdd] Usuário não autenticado')
+        throw new Error('Usuário não está autenticado')
+      }
+
+      console.log('✅ [useClienteAdd] Usuário autenticado:', session.user.email)
+
       // Validações básicas
       if (!clientData.nome_cliente?.trim()) {
         throw new Error('Nome do cliente é obrigatório')
@@ -81,7 +95,7 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
 
       if (insertError) {
         console.error('❌ [useClienteAdd] Erro na inserção:', insertError)
-        throw insertError
+        throw new Error(`Erro ao inserir cliente: ${insertError.message}`)
       }
 
       console.log('✅ [useClienteAdd] CLIENTE INSERIDO COM SUCESSO!')
@@ -99,10 +113,15 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         console.log('🔐 [useClienteAdd] Tentando criar usuário cliente:', finalData.email_cliente)
         
         try {
-          const { data: signUpData, error: signUpError } = await supabase.auth.admin.createUser({
+          const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
             email: finalData.email_cliente,
             password: 'parceriadesucesso',
-            email_confirm: true
+            options: {
+              emailRedirectTo: `${window.location.origin}/`,
+              data: {
+                role: 'cliente'
+              }
+            }
           })
 
           if (signUpError) {
@@ -142,7 +161,7 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         description: error.message || "Erro ao adicionar cliente",
         variant: "destructive"
       })
-      return false
+      return { success: false, error: error.message }
     } finally {
       setIsAdding(false)
     }
