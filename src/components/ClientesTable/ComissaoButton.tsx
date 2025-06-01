@@ -1,10 +1,9 @@
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Save, X, Edit, DollarSign, CheckCircle, XCircle, Lock } from 'lucide-react'
+import { Save, X, Edit, DollarSign, Lock } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
@@ -113,13 +112,7 @@ export function ComissaoButton({
                       ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
                     `}
                   >
-                    {!canEdit ? (
-                      <Lock className="h-2 w-2" />
-                    ) : isPago ? (
-                      <CheckCircle className="h-2 w-2" />
-                    ) : (
-                      <XCircle className="h-2 w-2" />
-                    )}
+                    <DollarSign className="h-2 w-2" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -230,15 +223,25 @@ export function ComissaoButton({
           >
             {!canEdit ? (
               <div className="flex items-center gap-1">
-                <Lock className="h-3 w-3" />
+                <DollarSign className="h-3 w-3" />
                 {isPago ? 'Pago' : 'Pendente'}
               </div>
             ) : isUpdating ? (
               'Atualizando...'
             ) : isPago ? (
-              isHovered ? 'Marcar Pendente' : 'Pago'
+              isHovered ? 'Marcar Pendente' : (
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  Pago
+                </div>
+              )
             ) : (
-              isHovered ? 'Marcar Pago' : 'Pendente'
+              isHovered ? 'Marcar Pago' : (
+                <div className="flex items-center gap-1">
+                  <DollarSign className="h-3 w-3" />
+                  Pendente
+                </div>
+              )
             )}
           </Button>
           
