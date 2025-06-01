@@ -115,9 +115,9 @@ export function NewSellerAddClientForm() {
       
       console.log("🔵 [NewSellerAddClientForm] Resultado do addCliente:", result)
       
-      if (result && result.success) {
+      if (result && typeof result === 'object' && result.success) {
         console.log("🟢 [NewSellerAddClientForm] === CLIENTE CRIADO COM SUCESSO ===")
-        console.log("💰 [NewSellerAddClientForm] Valor comissão final:", result.valorComissao || '60.00')
+        console.log("💰 [NewSellerAddClientForm] Valor comissão final: R$60,00")
         
         // Limpar formulário
         setFormData({
@@ -138,13 +138,24 @@ export function NewSellerAddClientForm() {
 E-mail: ${clienteData.email_cliente}
 Senha: ${clienteData.senha_cliente}
 Gestor: ${formData.email_gestor}
-Valor Comissão: R$${result.valorComissao || '60,00'}
+Valor Comissão: R$60,00
 
 O cliente pode fazer login imediatamente com essas credenciais.`,
           duration: 10000
         })
         
         console.log("🎉 [NewSellerAddClientForm] Processo completo - cliente pode fazer login!")
+        
+        // Mostrar aviso sobre senha padrão se foi definida
+        if (result.senhaDefinida) {
+          setTimeout(() => {
+            toast({
+              title: "🔐 Senha padrão definida",
+              description: "Senha padrão definida como: parceriadesucesso",
+              duration: 8000
+            })
+          }, 1000)
+        }
         
       } else {
         console.error("❌ [NewSellerAddClientForm] Resultado indica falha:", result)
