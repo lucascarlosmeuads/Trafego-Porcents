@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -43,6 +44,7 @@ export function GestorChatList() {
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
+  // Calculate totalNaoLidas only once here
   const totalNaoLidas = getTotalNaoLidas()
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
