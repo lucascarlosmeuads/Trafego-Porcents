@@ -952,9 +952,13 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                   <span className="text-purple-400">✅</span>
                   <span><strong>Filtro "Sem BM":</strong> Novo filtro para localizar clientes sem número de Business Manager configurado</span>
                 </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-cyan-400">✅</span>
+                  <span><strong>Status "Otimização" e "Campanha no Ar":</strong> Novos status que mantêm o cliente ativo para otimizações contínuas</span>
+                </div>
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
-                Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores.
+                Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores e manter clientes ativos durante otimizações.
               </div>
             </div>
           </div>
