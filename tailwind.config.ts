@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,18 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				// Cores customizadas para produtividade
+				'deep-blue': 'hsl(var(--deep-blue))',
+				'success-green': 'hsl(var(--success-green))',
+				'warning-orange': 'hsl(var(--warning-orange))',
+				'primary-text': 'hsl(var(--primary-text))',
+				'secondary-text': 'hsl(var(--secondary-text))',
+				'info-text': 'hsl(var(--info-text))',
+				'neutral-border': 'hsl(var(--neutral-border))',
+				'neutral-surface': 'hsl(var(--neutral-surface))',
+				'tech-purple': 'hsl(var(--tech-purple))',
+				'soft-purple': 'hsl(var(--soft-purple))'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

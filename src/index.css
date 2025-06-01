@@ -109,61 +109,6 @@
   }
 }
 
-/* Nova paleta de cores utilitárias */
-@layer utilities {
-  .bg-deep-blue {
-    background-color: hsl(var(--deep-blue));
-  }
-
-  .bg-success-green {
-    background-color: hsl(var(--success-green));
-  }
-
-  .bg-warning-orange {
-    background-color: hsl(var(--warning-orange));
-  }
-
-  .bg-neutral-surface {
-    background-color: hsl(var(--neutral-surface));
-  }
-
-  .bg-tech-purple {
-    background-color: hsl(var(--tech-purple));
-  }
-
-  .text-primary-text {
-    color: hsl(var(--primary-text));
-  }
-
-  .text-secondary-text {
-    color: hsl(var(--secondary-text));
-  }
-
-  .text-info-text {
-    color: hsl(var(--info-text));
-  }
-
-  .text-success-green {
-    color: hsl(var(--success-green));
-  }
-
-  .text-warning-orange {
-    color: hsl(var(--warning-orange));
-  }
-
-  .text-tech-purple {
-    color: hsl(var(--tech-purple));
-  }
-
-  .border-neutral-border {
-    border-color: hsl(var(--neutral-border));
-  }
-
-  .border-tech-purple {
-    border-color: hsl(var(--tech-purple));
-  }
-}
-
 /* Componentes com melhor contraste e conforto visual */
 @layer components {
   /* Cards de produtividade */
@@ -175,31 +120,38 @@
   /* Botões com design suave */
   .productivity-button {
     @apply bg-tech-purple text-primary-text rounded-lg px-4 py-2;
-    @apply transition-all duration-200 hover:bg-soft-purple;
+    @apply transition-all duration-200;
     @apply shadow-sm hover:shadow-md;
   }
 
   /* Status positivo */
   .status-success {
-    @apply bg-success-green/20 text-success-green border-success-green/30;
     @apply rounded-lg px-3 py-1 text-sm font-medium;
+    background-color: hsl(var(--success-green) / 0.2);
+    color: hsl(var(--success-green));
+    border: 1px solid hsl(var(--success-green) / 0.3);
   }
 
   /* Alertas críticos */
   .status-warning {
-    @apply bg-warning-orange/20 text-warning-orange border-warning-orange/30;
     @apply rounded-lg px-3 py-1 text-sm font-medium;
+    background-color: hsl(var(--warning-orange) / 0.2);
+    color: hsl(var(--warning-orange));
+    border: 1px solid hsl(var(--warning-orange) / 0.3);
   }
 
   /* Elementos tech */
   .status-tech {
-    @apply bg-tech-purple/20 text-tech-purple border-tech-purple/30;
     @apply rounded-lg px-3 py-1 text-sm font-medium;
+    background-color: hsl(var(--tech-purple) / 0.2);
+    color: hsl(var(--tech-purple));
+    border: 1px solid hsl(var(--tech-purple) / 0.3);
   }
 
   /* Barras de progresso suaves */
   .progress-bar {
-    @apply w-full bg-neutral-border rounded-full h-3;
+    @apply w-full rounded-full h-3;
+    background-color: hsl(var(--neutral-border));
   }
 
   .progress-fill {
@@ -209,92 +161,141 @@
 
   /* Headers com hierarquia clara */
   .section-header {
-    @apply text-lg font-semibold text-primary-text mb-4;
+    @apply text-lg font-semibold mb-4;
+    color: hsl(var(--primary-text));
   }
 
   .metric-title {
-    @apply text-sm font-medium text-secondary-text;
+    @apply text-sm font-medium;
+    color: hsl(var(--secondary-text));
   }
 
   .metric-value {
-    @apply text-2xl font-bold text-primary-text;
+    @apply text-2xl font-bold;
+    color: hsl(var(--primary-text));
   }
 
   .metric-description {
-    @apply text-xs text-info-text mt-1;
+    @apply text-xs mt-1;
+    color: hsl(var(--info-text));
   }
 
   /* Sidebar produtiva */
   .sidebar-item {
-    @apply text-secondary-text p-3 rounded-lg transition-all duration-200;
-    @apply hover:bg-neutral-surface hover:text-primary-text;
+    @apply p-3 rounded-lg transition-all duration-200;
+    color: hsl(var(--secondary-text));
+  }
+
+  .sidebar-item:hover {
+    background-color: hsl(var(--neutral-surface));
+    color: hsl(var(--primary-text));
   }
 
   .sidebar-item.active {
-    @apply bg-tech-purple/20 text-tech-purple border-l-2 border-tech-purple;
+    background-color: hsl(var(--tech-purple) / 0.2);
+    color: hsl(var(--tech-purple));
+    border-left: 2px solid hsl(var(--tech-purple));
   }
 
   /* Tabelas com melhor legibilidade */
   .table-header {
-    @apply bg-neutral-surface text-secondary-text font-medium;
-    @apply border-b border-neutral-border;
+    @apply font-medium border-b;
+    background-color: hsl(var(--neutral-surface));
+    color: hsl(var(--secondary-text));
+    border-color: hsl(var(--neutral-border));
   }
 
   .table-cell {
-    @apply text-primary-text border-b border-neutral-border/50;
-    @apply py-3 px-4;
+    @apply py-3 px-4 border-b;
+    color: hsl(var(--primary-text));
+    border-color: hsl(var(--neutral-border) / 0.5);
   }
 
   .table-row:hover {
-    @apply bg-neutral-surface/30;
+    background-color: hsl(var(--neutral-surface) / 0.3);
   }
 
   /* Inputs confortáveis */
   .productivity-input {
-    @apply bg-neutral-surface border-neutral-border text-primary-text;
     @apply rounded-lg px-3 py-2 transition-all duration-200;
-    @apply focus:border-tech-purple focus:ring-1 focus:ring-tech-purple/20;
+    background-color: hsl(var(--neutral-surface));
+    border: 1px solid hsl(var(--neutral-border));
+    color: hsl(var(--primary-text));
+  }
+
+  .productivity-input:focus {
+    border-color: hsl(var(--tech-purple));
+    box-shadow: 0 0 0 1px hsl(var(--tech-purple) / 0.2);
   }
 }
 
 /* Status específicos com nova paleta */
 .status-formulario {
-  @apply bg-info-text/20 text-info-text border-info-text/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--info-text) / 0.2);
+  color: hsl(var(--info-text));
+  border: 1px solid hsl(var(--info-text) / 0.3);
 }
 
 .status-brief {
-  @apply bg-tech-purple/20 text-tech-purple border-tech-purple/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--tech-purple) / 0.2);
+  color: hsl(var(--tech-purple));
+  border: 1px solid hsl(var(--tech-purple) / 0.3);
 }
 
 .status-criativo {
-  @apply bg-soft-purple/20 text-soft-purple border-soft-purple/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--soft-purple) / 0.2);
+  color: hsl(var(--soft-purple));
+  border: 1px solid hsl(var(--soft-purple) / 0.3);
 }
 
 .status-site {
-  @apply bg-warning-orange/20 text-warning-orange border-warning-orange/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--warning-orange) / 0.2);
+  color: hsl(var(--warning-orange));
+  border: 1px solid hsl(var(--warning-orange) / 0.3);
 }
 
 .status-agendamento {
-  @apply bg-warning-orange/15 text-warning-orange border-warning-orange/25;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--warning-orange) / 0.15);
+  color: hsl(var(--warning-orange));
+  border: 1px solid hsl(var(--warning-orange) / 0.25);
 }
 
 .status-no-ar {
-  @apply bg-success-green/20 text-success-green border-success-green/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--success-green) / 0.2);
+  color: hsl(var(--success-green));
+  border: 1px solid hsl(var(--success-green) / 0.3);
 }
 
 .status-otimizacao {
-  @apply bg-success-green/15 text-success-green border-success-green/25;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--success-green) / 0.15);
+  color: hsl(var(--success-green));
+  border: 1px solid hsl(var(--success-green) / 0.25);
 }
 
 .status-problema {
-  @apply bg-warning-orange/25 text-warning-orange border-warning-orange/40;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--warning-orange) / 0.25);
+  color: hsl(var(--warning-orange));
+  border: 1px solid hsl(var(--warning-orange) / 0.4);
 }
 
 .status-off {
-  @apply bg-info-text/20 text-info-text border-info-text/30;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--info-text) / 0.2);
+  color: hsl(var(--info-text));
+  border: 1px solid hsl(var(--info-text) / 0.3);
 }
 
 .status-reembolso {
-  @apply bg-warning-orange/25 text-warning-orange border-warning-orange/40;
+  @apply rounded-lg px-3 py-1 text-sm font-medium;
+  background-color: hsl(var(--warning-orange) / 0.25);
+  color: hsl(var(--warning-orange));
+  border: 1px solid hsl(var(--warning-orange) / 0.4);
 }
-
