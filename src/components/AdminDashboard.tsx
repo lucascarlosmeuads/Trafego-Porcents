@@ -19,10 +19,19 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   
-  // Buscar dados dos clientes baseado no gestor selecionado
+  // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
+  // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
-    selectedManager === '__GESTORES__' ? '' : (selectedManager || '')
+    user?.email || '', // userEmail: email do admin atual
+    true, // isAdminUser: true para admin
+    selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
   )
+
+  console.log('🔍 [AdminDashboard] === DEBUG ADMIN DASHBOARD ===')
+  console.log('👤 [AdminDashboard] Admin user email:', user?.email)
+  console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
+  console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
+  console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -54,7 +63,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               />
             </div>
             
-            {/* Métricas do Admin */}
+            {/* Métricas do Admin - CORREÇÃO: Passar clientes corretos */}
             <AdminDashboardMetrics 
               clientes={gestorClientes} 
               selectedManager={selectedManager}

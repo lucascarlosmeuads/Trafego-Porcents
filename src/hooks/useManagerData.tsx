@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
@@ -52,19 +53,21 @@ export function useManagerData(
         query = query.eq('site_status', 'finalizado')
       } else {
         // PRIORITY 2: Handle Admin panel logic
-        console.log('📊 [useManagerData] Admin panel mode')
+        console.log('📊 [useManagerData] Admin/Gestor panel mode')
         
         if (isAdminUser) {
-          // Admin user logic
+          // Admin user logic - CORREÇÃO PRINCIPAL
           if (selectedManager && 
               selectedManager !== 'Todos os Clientes' && 
               selectedManager !== 'Todos os Gestores' && 
-              selectedManager !== null) {
+              selectedManager !== null &&
+              selectedManager !== '') {
             console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
             query = query.eq('email_gestor', selectedManager)
           } else {
             console.log('👑 [useManagerData] Admin buscando TODOS os clientes (sem filtro de gestor)')
-            // For admin with "Todos os Gestores" or null, NO email_gestor filter is applied
+            // Para admin com "Todos os Gestores" ou null/vazio, NÃO aplicar filtro de email_gestor
+            // Isso permite que o admin veja TODOS os clientes de TODOS os gestores
           }
         } else {
           // Regular manager/gestor - only their clients
@@ -100,7 +103,7 @@ export function useManagerData(
             site_status: c.site_status,
             email_gestor: c.email_gestor
           })))
-        } else if (isAdminUser && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes')) {
+        } else if (isAdminUser && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes' || selectedManager === '')) {
           console.log('👑 [useManagerData] Admin - TODOS os clientes:', data.length)
           console.log('📊 [useManagerData] Distribuição por site_status:', {
             pendente: data.filter(c => c.site_status === 'pendente').length,
@@ -108,6 +111,15 @@ export function useManagerData(
             finalizado: data.filter(c => c.site_status === 'finalizado').length,
             outros: data.filter(c => !['pendente', 'aguardando_link', 'finalizado'].includes(c.site_status)).length
           })
+          console.log('📊 [useManagerData] Amostra de clientes (todos os gestores):', data.slice(0, 5).map(c => ({
+            id: c.id,
+            nome: c.nome_cliente,
+            email_gestor: c.email_gestor,
+            status_campanha: c.status_campanha,
+            comissao: c.comissao
+          })))
+        } else if (isAdminUser && selectedManager) {
+          console.log('🎯 [useManagerData] Admin - Clientes do gestor específico:', selectedManager, ':', data.length)
         }
       }
       
