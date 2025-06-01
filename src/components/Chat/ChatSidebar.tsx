@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
@@ -16,11 +17,8 @@ interface ChatSidebarProps {
   onSelectChat: (conversa: ChatConversaPreview) => void
   loading: boolean
   recarregarConversas?: () => void
-  marcarChatComoProcessandoLeitura?: (emailCliente: string, emailGestor: string) => void
-  marcarChatComoLidoLocalmente?: (emailCliente: string, emailGestor: string) => void
-  pararProcessamentoLeitura?: (emailCliente: string, emailGestor: string) => void
-  estaProcessandoLeitura?: (emailCliente: string, emailGestor: string) => boolean
-  foiLidoLocalmente?: (emailCliente: string, emailGestor: string) => boolean
+  marcarChatComoLidoDefinitivamente?: (emailCliente: string, emailGestor: string) => void
+  foiLidoDefinitivamente?: (emailCliente: string, emailGestor: string) => boolean
 }
 
 export function ChatSidebar({ 
@@ -29,23 +27,18 @@ export function ChatSidebar({
   onSelectChat, 
   loading, 
   recarregarConversas,
-  marcarChatComoProcessandoLeitura,
-  marcarChatComoLidoLocalmente,
-  pararProcessamentoLeitura,
-  estaProcessandoLeitura,
-  foiLidoLocalmente
+  marcarChatComoLidoDefinitivamente,
+  foiLidoDefinitivamente
 }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Função específica para marcar mensagens como lidas no banco
+  // Função para marcar mensagens como lidas no banco
   const marcarMensagensComoLidas = async (emailCliente: string, emailGestor: string) => {
     try {
-      console.log('📖 [ChatSidebar] Marcando mensagens como lidas no banco:', {
-        emailCliente,
-        emailGestor
-      })
+      console.log('📖 [ChatSidebar] === MARCANDO MENSAGENS COMO LIDAS NO BANCO ===')
+      console.log('📖 [ChatSidebar] Cliente:', emailCliente, 'Gestor:', emailGestor)
 
       const { error } = await supabase
         .from('chat_mensagens')
@@ -59,8 +52,8 @@ export function ChatSidebar({
       
       console.log('✅ [ChatSidebar] Mensagens marcadas como lidas no banco com sucesso')
       
-      // CORREÇÃO: Aguardar mais tempo para garantir propagação no banco
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // CORREÇÃO: Aguardar tempo para garantir propagação
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
       if (recarregarConversas) {
         console.log('🔄 [ChatSidebar] Forçando recarregamento das conversas...')
@@ -88,7 +81,12 @@ export function ChatSidebar({
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  const totalNaoLidas = conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
+  // CORREÇÃO: Calcular o total não lidas considerando o estado definitivo
+  const totalNaoLidas = conversasValidas.filter(c => {
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(c.email_cliente, c.email_gestor || '') : false
+    return c.tem_mensagens_nao_lidas && !foiLido
+  }).length
+
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
 
@@ -155,68 +153,45 @@ export function ChatSidebar({
     })
 
     const jaEstaSelecionado = isSelected(conversa)
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
     
-    // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
-    if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
-      console.log('📖 [ChatSidebar] === INICIANDO PROCESSO DE MARCAÇÃO COMO LIDA ===')
+    // CORREÇÃO: Marcar como lido definitivamente APENAS se tem mensagens não lidas E não foi lido definitivamente E não está selecionado
+    if (conversa.tem_mensagens_nao_lidas && !foiLido && !jaEstaSelecionado) {
+      console.log('📖 [ChatSidebar] === INICIANDO PROCESSO DE MARCAÇÃO DEFINITIVA ===')
       
-      // 1. Marcar como processando leitura (estado temporário)
-      if (marcarChatComoProcessandoLeitura) {
-        marcarChatComoProcessandoLeitura(conversa.email_cliente, conversa.email_gestor)
+      // 1. Marcar como lido definitivamente IMEDIATAMENTE (força atualização visual do badge)
+      if (marcarChatComoLidoDefinitivamente) {
+        marcarChatComoLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '')
       }
       
-      // 2. Marcar como lido localmente (força atualização visual imediata)
-      if (marcarChatComoLidoLocalmente) {
-        marcarChatComoLidoLocalmente(conversa.email_cliente, conversa.email_gestor)
-      }
+      // 2. Marcar no banco de dados em background
+      marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor || '')
       
-      // 3. Marcar no banco de dados
-      await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
-      
-      // 4. Parar processamento após delay
-      if (pararProcessamentoLeitura) {
-        setTimeout(() => {
-          pararProcessamentoLeitura(conversa.email_cliente, conversa.email_gestor)
-        }, 3000)
-      }
-      
-      console.log('✅ [ChatSidebar] === PROCESSO DE MARCAÇÃO CONCLUÍDO ===')
+      console.log('✅ [ChatSidebar] === PROCESSO DE MARCAÇÃO DEFINITIVA CONCLUÍDO ===')
     }
 
     console.log('✅ [ChatSidebar] Chamando onSelectChat para:', conversa.email_cliente)
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de cores completamente reformulada
+  // CORREÇÃO: Lógica de cores simplificada baseada no estado definitivo
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
-    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
-    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
-    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !foiLido
     
     console.log(`🎨 [ChatSidebar] Classes para ${conversa.email_cliente}:`, {
       selecionado,
-      processandoLeitura,
-      lidoLocalmente,
+      foiLido,
       naoLidoReal,
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas
     })
     
-    // HIERARQUIA CORRIGIDA: 1º Selecionado (AZUL), 2º Processando (AMARELO), 3º Lido Local (CINZA), 4º Não Lido (VERMELHO), 5º Padrão (CINZA)
+    // HIERARQUIA: 1º Selecionado (AZUL), 2º Não Lido Real (VERMELHO), 3º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [ChatSidebar] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
-    }
-    
-    if (processandoLeitura) {
-      console.log(`🟡 [ChatSidebar] Card PROCESSANDO LEITURA (AMARELO): ${conversa.email_cliente}`)
-      return `${baseClasses} !bg-yellow-900/50 hover:!bg-yellow-900/60 !border-yellow-500 shadow-yellow-500/30`
-    }
-    
-    if (lidoLocalmente) {
-      console.log(`⚪ [ChatSidebar] Card LIDO LOCALMENTE (CINZA): ${conversa.email_cliente}`)
-      return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
     }
     
     if (naoLidoReal) {
@@ -230,16 +205,11 @@ export function ChatSidebar({
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
-    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
-    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
-    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !foiLido
     
     if (isSelected(conversa)) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
-    }
-    
-    if (processandoLeitura) {
-      return `${baseClasses} bg-gradient-to-br from-yellow-700 to-yellow-800 ring-2 ring-yellow-500`
     }
     
     if (naoLidoReal) {
@@ -250,16 +220,11 @@ export function ChatSidebar({
   }
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
-    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
-    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
-    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !foiLido
     
     if (isSelected(conversa)) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
-    }
-    
-    if (processandoLeitura) {
-      return isTitle ? 'text-yellow-100 font-semibold' : 'text-yellow-200 font-medium'
     }
     
     if (naoLidoReal) {
@@ -270,16 +235,11 @@ export function ChatSidebar({
   }
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
-    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
-    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
-    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+    const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !foiLido
     
     if (isSelected(conversa)) {
       return 'text-blue-200'
-    }
-    
-    if (processandoLeitura) {
-      return 'text-yellow-200'
     }
     
     if (naoLidoReal) {
@@ -380,9 +340,8 @@ export function ChatSidebar({
         ) : (
           conversasFiltradas.map((conversa, index) => {
             const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
-            const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
-            const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
-            const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+            const foiLido = foiLidoDefinitivamente ? foiLidoDefinitivamente(conversa.email_cliente, conversa.email_gestor || '') : false
+            const naoLidoReal = conversa.tem_mensagens_nao_lidas && !foiLido
             const mostrarBadgeNaoLidas = naoLidoReal && !isSelected(conversa)
             
             return (
@@ -403,9 +362,6 @@ export function ChatSidebar({
                           {conversa.nome_cliente}
                           {naoLidoReal && (
                             <span className="ml-1 text-red-400 animate-pulse">●</span>
-                          )}
-                          {processandoLeitura && (
-                            <span className="ml-1 text-yellow-400 animate-spin">⟳</span>
                           )}
                         </h3>
                         <span className="text-xs text-gray-400 flex-shrink-0">
