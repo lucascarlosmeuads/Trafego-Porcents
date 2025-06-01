@@ -1,6 +1,8 @@
+
 import { TableCell } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { addBusinessDays, getBusinessDaysBetween } from '@/utils/dateUtils'
 
 interface ClienteRowDataLimiteProps {
   dataVenda: string
@@ -30,26 +32,32 @@ export function ClienteRowDataLimite({
         }
       }
 
-      const dataLimite = new Date(baseDate)
-      dataLimite.setDate(baseDate.getDate() + 30)
+      // Usar função do dateUtils para calcular 15 dias úteis
+      const dataLimite = addBusinessDays(baseDate, 15)
       
       const hoje = new Date()
       hoje.setHours(0, 0, 0, 0)
-      dataLimite.setHours(0, 0, 0, 0)
+      const limiteCopy = new Date(dataLimite)
+      limiteCopy.setHours(0, 0, 0, 0)
       
-      const diffTime = dataLimite.getTime() - hoje.getTime()
-      const diasRestantes = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+      // Calcular dias úteis restantes
+      let diasRestantes = 0
+      if (hoje <= limiteCopy) {
+        diasRestantes = getBusinessDaysBetween(hoje, limiteCopy) - 1
+      } else {
+        diasRestantes = -(getBusinessDaysBetween(limiteCopy, hoje) - 1)
+      }
       
       let status = 'normal'
       if (diasRestantes < 0) {
         status = 'vencido'
-      } else if (diasRestantes <= 5) {
+      } else if (diasRestantes <= 2) {
         status = 'urgente'
-      } else if (diasRestantes <= 10) {
+      } else if (diasRestantes <= 5) {
         status = 'atencao'
       }
 
-      const detalhes = `Data base: ${baseDate.toLocaleDateString('pt-BR')}\nData limite: ${dataLimite.toLocaleDateString('pt-BR')}\nDias restantes: ${diasRestantes}`
+      const detalhes = `Data base: ${baseDate.toLocaleDateString('pt-BR')}\nData limite: ${dataLimite.toLocaleDateString('pt-BR')}\nDias úteis restantes: ${diasRestantes}`
 
       return {
         data: compact ? 
@@ -130,11 +138,11 @@ export function ClienteRowDataLimite({
         >
           {data}
         </Badge>
-        {diasRestantes <= 10 && (
+        {diasRestantes <= 5 && (
           <span className="text-xs opacity-70">
             {diasRestantes < 0 
-              ? `Vencido há ${Math.abs(diasRestantes)} dias` 
-              : `${diasRestantes} dias restantes`
+              ? `Vencido há ${Math.abs(diasRestantes)} dias úteis` 
+              : `${diasRestantes} dias úteis restantes`
             }
           </span>
         )}
