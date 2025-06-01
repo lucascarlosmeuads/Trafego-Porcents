@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
@@ -17,9 +16,17 @@ interface ChatSidebarProps {
   onSelectChat: (conversa: ChatConversaPreview) => void
   loading: boolean
   recarregarConversas?: () => void
+  marcarChatComoJaLido?: (emailCliente: string, emailGestor: string) => void
 }
 
-export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, recarregarConversas }: ChatSidebarProps) {
+export function ChatSidebar({ 
+  conversas, 
+  selectedChat, 
+  onSelectChat, 
+  loading, 
+  recarregarConversas,
+  marcarChatComoJaLido 
+}: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -45,8 +52,8 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, re
       
       console.log('✅ [ChatSidebar] Mensagens marcadas como lidas com sucesso')
       
-      // CORREÇÃO: Aguardar 1 segundo e forçar recarregamento das conversas
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // CORREÇÃO: Aguardar mais tempo e forçar recarregamento
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
       if (recarregarConversas) {
         console.log('🔄 [ChatSidebar] Forçando recarregamento das conversas...')
@@ -57,7 +64,6 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, re
     }
   }
 
-  // CORREÇÃO: Filtrar conversas válidas primeiro
   const conversasValidas = conversas.filter(c => 
     c.email_cliente && 
     c.email_cliente.trim() !== '' && 
@@ -146,15 +152,20 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, re
     
     // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
     if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
-      console.log('📖 [ChatSidebar] Marcando conversa como processando leitura...')
+      console.log('📖 [ChatSidebar] Processando leitura de mensagens...')
       
-      // Adicionar ao estado local temporário
+      // 1. Marcar como processando leitura (temporário)
       setConversasProcessandoLeitura(prev => new Set(prev).add(chaveConversa))
       
-      console.log('📖 [ChatSidebar] Marcando mensagens como lidas...')
+      // 2. Marcar no hook como "já lido" para forçar atualização local
+      if (marcarChatComoJaLido) {
+        marcarChatComoJaLido(conversa.email_cliente, conversa.email_gestor)
+      }
+      
+      // 3. Marcar no banco de dados
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
       
-      // Remover do estado local após processamento
+      // 4. Remover do estado de processamento após delay
       setTimeout(() => {
         setConversasProcessandoLeitura(prev => {
           const newSet = new Set(prev)
@@ -174,7 +185,7 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, re
     return conversasProcessandoLeitura.has(chaveConversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS melhorada com verificação de processamento
+  // CORREÇÃO: Lógica de classes CSS corrigida - Azul > Amarelo > Cinza (lido) > Vermelho > Cinza padrão
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
@@ -209,7 +220,6 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, re
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
 
-  // Função para determinar as classes do avatar
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
     const processandoLeitura = estaProcessandoLeitura(conversa)

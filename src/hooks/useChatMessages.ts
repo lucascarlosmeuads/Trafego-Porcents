@@ -200,7 +200,14 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
 export function useChatConversas(gestorFiltro?: string | null) {
   const [conversas, setConversas] = useState<ChatConversaPreview[]>([])
   const [loading, setLoading] = useState(true)
+  const [chatsJaLidos, setChatsJaLidos] = useState<Set<string>>(new Set())
   const { user, isGestor, isAdmin } = useAuth()
+
+  const marcarChatComoJaLido = useCallback((emailCliente: string, emailGestor: string) => {
+    const chaveChat = `${emailCliente}-${emailGestor}`
+    console.log('📖 [useChatConversas] Marcando chat como já lido:', chaveChat)
+    setChatsJaLidos(prev => new Set(prev).add(chaveChat))
+  }, [])
 
   const carregarConversas = useCallback(async () => {
     if (!user?.email || (!isGestor && !isAdmin)) return
@@ -233,9 +240,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
         return
       }
 
-      // CORREÇÃO: Aguardar um pouco antes de buscar mensagens para garantir que atualizações foram aplicadas
-      await new Promise(resolve => setTimeout(resolve, 200))
-
       const conversasComMensagens = await Promise.all(
         clientes.map(async (cliente) => {
           const { data: ultimaMensagem } = await supabase
@@ -255,9 +259,17 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .eq('lida', false)
             .eq('remetente', 'cliente')
 
+          const chaveChat = `${cliente.email_cliente}-${cliente.email_gestor}`
+          const jaFoiLidoLocalmente = chatsJaLidos.has(chaveChat)
+          
+          // CORREÇÃO: Se foi marcado como lido localmente, forçar contagem zero
+          const mensagensNaoLidasFinais = jaFoiLidoLocalmente ? 0 : (naoLidasCount || 0)
+          
           console.log(`📊 [useChatConversas] Cliente: ${cliente.nome_cliente}`, {
             ultimaMensagem: ultimaMensagem?.conteudo || 'Nenhuma',
-            mensagensNaoLidas: naoLidasCount || 0
+            mensagensNaoLidasDB: naoLidasCount || 0,
+            jaFoiLidoLocalmente,
+            mensagensNaoLidasFinais
           })
 
           return {
@@ -267,8 +279,8 @@ export function useChatConversas(gestorFiltro?: string | null) {
             status_campanha: cliente.status_campanha,
             ultima_mensagem: ultimaMensagem?.conteudo || 'Nenhuma mensagem',
             ultima_mensagem_data: ultimaMensagem?.created_at || '',
-            mensagens_nao_lidas: naoLidasCount || 0,
-            tem_mensagens_nao_lidas: (naoLidasCount || 0) > 0
+            mensagens_nao_lidas: mensagensNaoLidasFinais,
+            tem_mensagens_nao_lidas: mensagensNaoLidasFinais > 0
           }
         })
       )
@@ -284,17 +296,30 @@ export function useChatConversas(gestorFiltro?: string | null) {
 
       console.log('✅ [useChatConversas] Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
+      
+      // CORREÇÃO: Limpar chats marcados como lidos localmente se agora estão realmente lidos no banco
+      conversasOrdenadas.forEach(conversa => {
+        const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+        if (chatsJaLidos.has(chaveChat) && !conversa.tem_mensagens_nao_lidas) {
+          console.log('🔄 [useChatConversas] Removendo chat do estado local (confirmado no banco):', chaveChat)
+          setChatsJaLidos(prev => {
+            const newSet = new Set(prev)
+            newSet.delete(chaveChat)
+            return newSet
+          })
+        }
+      })
+      
     } catch (err) {
       console.error('❌ [useChatConversas] Erro ao carregar conversas:', err)
     } finally {
       setLoading(false)
     }
-  }, [user?.email, isGestor, isAdmin, gestorFiltro])
+  }, [user?.email, isGestor, isAdmin, gestorFiltro, chatsJaLidos])
 
   useEffect(() => {
     carregarConversas()
 
-    // CORREÇÃO: Sistema de realtime melhorado com debounce mais agressivo para recarregamento
     const channel = supabase
       .channel('conversas-changes')
       .on(
@@ -304,13 +329,27 @@ export function useChatConversas(gestorFiltro?: string | null) {
           schema: 'public',
           table: 'chat_mensagens'
         },
-        () => {
-          console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens, recarregando conversas')
+        (payload) => {
+          console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens', payload.eventType)
           
-          // CORREÇÃO: Debounce de 800ms para garantir que atualizações sejam refletidas
+          // CORREÇÃO: Se for uma nova mensagem, limpar o estado local do chat correspondente
+          if (payload.eventType === 'INSERT' && payload.new) {
+            const novaMensagem = payload.new as any
+            if (novaMensagem.remetente === 'cliente') {
+              const chaveChat = `${novaMensagem.email_cliente}-${novaMensagem.email_gestor}`
+              console.log('📨 [useChatConversas] Nova mensagem do cliente, removendo do estado local:', chaveChat)
+              setChatsJaLidos(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(chaveChat)
+                return newSet
+              })
+            }
+          }
+          
+          // Delay maior para garantir sincronização
           setTimeout(() => {
             carregarConversas()
-          }, 800)
+          }, 1200)
         }
       )
       .subscribe()
@@ -323,6 +362,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
   return {
     conversas,
     loading,
-    recarregar: carregarConversas
+    recarregar: carregarConversas,
+    marcarChatComoJaLido
   }
 }

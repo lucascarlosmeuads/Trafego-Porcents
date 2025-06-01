@@ -13,7 +13,7 @@ import { ptBR } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 
 export function GestorChatList() {
-  const { conversas, loading, recarregar } = useChatConversas()
+  const { conversas, loading, recarregar, marcarChatComoJaLido } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
@@ -41,8 +41,8 @@ export function GestorChatList() {
       
       console.log('✅ [GestorChatList] Mensagens marcadas como lidas com sucesso')
       
-      // CORREÇÃO: Aguardar 1 segundo e forçar recarregamento das conversas
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // CORREÇÃO: Aguardar mais tempo e forçar recarregamento
+      await new Promise(resolve => setTimeout(resolve, 1500))
       
       console.log('🔄 [GestorChatList] Forçando recarregamento das conversas...')
       recarregar()
@@ -150,15 +150,20 @@ export function GestorChatList() {
     
     // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
     if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
-      console.log('📖 [GestorChatList] Marcando conversa como processando leitura...')
+      console.log('📖 [GestorChatList] Processando leitura de mensagens...')
       
-      // Adicionar ao estado local temporário
+      // 1. Marcar como processando leitura (temporário)
       setConversasProcessandoLeitura(prev => new Set(prev).add(chaveConversa))
       
-      console.log('📖 [GestorChatList] Marcando mensagens como lidas...')
+      // 2. Marcar no hook como "já lido" para forçar atualização local
+      if (marcarChatComoJaLido) {
+        marcarChatComoJaLido(conversa.email_cliente, conversa.email_gestor)
+      }
+      
+      // 3. Marcar no banco de dados
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
       
-      // Remover do estado local após processamento
+      // 4. Remover do estado de processamento após delay
       setTimeout(() => {
         setConversasProcessandoLeitura(prev => {
           const newSet = new Set(prev)
@@ -172,7 +177,7 @@ export function GestorChatList() {
     setSelectedChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS melhorada com verificação de processamento
+  // CORREÇÃO: Lógica de classes CSS corrigida - Azul > Amarelo > Cinza (lido) > Vermelho > Cinza padrão
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
