@@ -1,6 +1,7 @@
 
 import { Button } from '@/components/ui/button'
 import { MessageCircle } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ClienteRowPhoneProps {
   telefone: string
@@ -26,21 +27,43 @@ export function ClienteRowPhone({ telefone, nomeCliente }: ClienteRowPhoneProps)
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <span className="font-mono text-xs">
-        {formatPhone(telefone || '')}
-      </span>
-      {telefone && (
-        <Button
-          size="sm"
-          variant="outline"
-          className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700 border-green-600"
-          onClick={() => openWhatsApp(telefone, nomeCliente || 'Cliente')}
-          title="Abrir WhatsApp"
-        >
-          <MessageCircle className="h-3 w-3 text-white" />
-        </Button>
-      )}
-    </div>
+    <TooltipProvider>
+      <div className="flex items-center justify-center">
+        {telefone ? (
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700 border-green-600"
+                onClick={() => openWhatsApp(telefone, nomeCliente || 'Cliente')}
+                title="Abrir WhatsApp"
+              >
+                <MessageCircle className="h-3 w-3 text-white" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{formatPhone(telefone)}</p>
+            </TooltipContent>
+          </Tooltip>
+        ) : (
+          <Tooltip>
+            <TooltipTrigger>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 w-6 p-0 bg-gray-600 hover:bg-gray-700 border-gray-600"
+                disabled
+              >
+                <MessageCircle className="h-3 w-3 text-white" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Telefone não informado</p>
+            </TooltipContent>
+          </Tooltip>
+        )}
+      </div>
+    </TooltipProvider>
   )
 }
