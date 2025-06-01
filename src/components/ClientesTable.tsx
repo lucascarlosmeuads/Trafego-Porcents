@@ -954,7 +954,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400">✅</span>
-                  <span><strong>Status "Otimização" e "Campanha no Ar":</strong> Novos status que mantêm o cliente ativo para otimizações contínuas</span>
+                  <span><strong>Status renomeado:</strong> "Saque Pendente" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua (novos criativos, públicos, etc.)</span>
                 </div>
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
