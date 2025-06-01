@@ -1,32 +1,21 @@
+
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Search, MessageCircle, User, ArrowRight, Filter, FilterX, X } from 'lucide-react'
+import { Search, MessageCircle, User, ArrowRight, X } from 'lucide-react'
 import { ChatInterface } from './ChatInterface'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
 export function GestorChatList() {
-  const { 
-    conversas, 
-    loading, 
-    recarregar, 
-    marcarChatComoLidoEstaSecao,
-    atualizarConversaComoLida
-  } = useChatConversas()
+  const { conversas, loading, recarregar } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  
-  // ESTADO LOCAL DIRETO - FONTE DE VERDADE PARA VISUAL
-  const [chatsLidosLocalmente, setChatsLidosLocalmente] = useState<Set<string>>(new Set())
-  const [forceRender, setForceRender] = useState(0)
   
   const { user } = useAuth()
 
@@ -44,22 +33,7 @@ export function GestorChatList() {
       conversa.nome_cliente.toLowerCase().includes(searchTerm.toLowerCase()) ||
       conversa.email_cliente.toLowerCase().includes(searchTerm.toLowerCase())
     )
-    .filter(conversa => {
-      if (!showOnlyUnread) return true
-      
-      const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-      const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
-      
-      return conversa.tem_mensagens_nao_lidas && !lidoLocalmente
-    })
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
-
-  // CALCULAR TOTAL NÃO LIDAS COM ESTADO LOCAL
-  const totalNaoLidas = conversasValidas.filter(c => {
-    const chaveChat = `${c.email_cliente}-${c.email_gestor}`
-    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
-    return c.tem_mensagens_nao_lidas && !lidoLocalmente
-  }).length
 
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
@@ -104,11 +78,10 @@ export function GestorChatList() {
 
   const clearAllFilters = () => {
     setSearchTerm('')
-    setShowOnlyUnread(false)
     setStatusFilter('all')
   }
 
-  const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
+  const hasActiveFilters = searchTerm || statusFilter !== 'all'
 
   const isSelected = (conversa: ChatConversaPreview) => {
     if (!selectedChat || !conversa) return false
@@ -116,103 +89,27 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
-  // FUNÇÃO RADICAL: Marcar como lido INSTANTANEAMENTE no estado local
-  const marcarComoLidoInstantaneo = (emailCliente: string, emailGestor: string) => {
-    const chaveChat = `${emailCliente}-${emailGestor}`
-    
-    console.log('🔥 [RADICAL] Marcando como lido INSTANTÂNEO:', chaveChat)
-    
-    // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
-    setChatsLidosLocalmente(prev => {
-      const newSet = new Set(prev)
-      newSet.add(chaveChat)
-      return newSet
-    })
-    
-    // 2. FORÇAR RE-RENDER IMEDIATO
-    setForceRender(prev => prev + 1)
-    
-    // 3. AÇÕES DE BACKGROUND (não dependemos delas para visual)
-    setTimeout(() => {
-      if (atualizarConversaComoLida) {
-        atualizarConversaComoLida(emailCliente, emailGestor)
-      }
-      if (marcarChatComoLidoEstaSecao) {
-        marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
-      }
-    }, 0)
-  }
-
-  // FUNÇÃO RADICAL: Seleção com marcação instantânea
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🎯 [RADICAL] Chat selecionado:', conversa.email_cliente)
-
-    // SE TEM MENSAGENS NÃO LIDAS: MARCAR COMO LIDO INSTANTANEAMENTE
-    if (conversa.tem_mensagens_nao_lidas) {
-      marcarComoLidoInstantaneo(conversa.email_cliente, conversa.email_gestor || '')
-    }
-
-    // SELECIONAR O CHAT
     setSelectedChat(conversa)
   }
 
-  // FUNÇÃO RADICAL: Marcar via botão com feedback instantâneo
-  const handleMarcarComoLida = (emailCliente: string, emailGestor: string) => {
-    console.log('🔥 [RADICAL] Botão marcar como lida:', emailCliente)
-    marcarComoLidoInstantaneo(emailCliente, emailGestor)
-  }
-
-  // FUNÇÃO RADICAL: Classes do card baseadas APENAS no estado local
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
-    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
     
-    // PRIMEIRA VERIFICAÇÃO: Estado local (fonte de verdade)
-    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
-    
-    console.log(`🔥 [RADICAL] Card ${conversa.nome_cliente}:`, {
-      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
-      lidoLocalmente,
-      selecionado,
-      chaveChat
-    })
-    
-    // LÓGICA VISUAL SIMPLIFICADA
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
     }
     
-    // SE FOI LIDO LOCALMENTE: SEMPRE CINZA (independente do banco)
-    if (lidoLocalmente) {
-      return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-gray-500`
-    }
-    
-    // SE TEM MENSAGENS NÃO LIDAS E NÃO FOI LIDO LOCALMENTE: VERMELHO
-    if (conversa.tem_mensagens_nao_lidas) {
-      return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
-    }
-    
-    // PADRÃO: CINZA
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500`
   }
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14"
     const selecionado = isSelected(conversa)
-    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
-    }
-    
-    if (lidoLocalmente) {
-      return `${baseClasses} bg-gradient-to-br from-blue-800 to-blue-900`
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
-      return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
     return `${baseClasses} bg-gradient-to-br from-blue-800 to-blue-900`
@@ -220,19 +117,9 @@ export function GestorChatList() {
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
     const selecionado = isSelected(conversa)
-    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
-    }
-    
-    if (lidoLocalmente) {
-      return isTitle ? 'text-white' : 'text-gray-400'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
-      return isTitle ? 'text-red-100' : 'text-gray-200 font-medium'
     }
     
     return isTitle ? 'text-white' : 'text-gray-400'
@@ -240,19 +127,9 @@ export function GestorChatList() {
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
     const selecionado = isSelected(conversa)
-    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return 'text-blue-200'
-    }
-    
-    if (lidoLocalmente) {
-      return 'text-blue-300'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
-      return 'text-red-200'
     }
     
     return 'text-blue-300'
@@ -268,7 +145,6 @@ export function GestorChatList() {
           statusCampanha={selectedChat.status_campanha}
           onBack={() => setSelectedChat(null)}
           showBackButton={true}
-          onMarcarComoLida={handleMarcarComoLida}
         />
       </div>
     )
@@ -291,11 +167,6 @@ export function GestorChatList() {
       <div className="bg-gray-800 border-b border-gray-700 p-6 shadow-lg">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-2xl font-bold text-white">Mensagens dos Clientes</h2>
-          {totalNaoLidas > 0 && (
-            <Badge variant="destructive" className="bg-red-600 text-white text-sm px-3 py-1">
-              {totalNaoLidas} não lidas
-            </Badge>
-          )}
         </div>
         
         <div className="mb-4 text-sm text-gray-400">
@@ -324,20 +195,6 @@ export function GestorChatList() {
         </div>
 
         <div className="flex gap-3">
-          <Button
-            variant={showOnlyUnread ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-            className={`justify-start ${
-              showOnlyUnread 
-                ? 'bg-red-600 hover:bg-red-700 text-white border-red-500' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
-          </Button>
-
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48 h-9 bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Filtrar por status" />
@@ -375,10 +232,7 @@ export function GestorChatList() {
           </div>
         ) : (
           conversasFiltradas.map((conversa, index) => {
-            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}-${forceRender}`
-            const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-            const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
-            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !lidoLocalmente
+            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
             
             return (
               <Card 
@@ -397,9 +251,6 @@ export function GestorChatList() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
                           <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${getTextClasses(conversa, true)}`}>
                             {conversa.nome_cliente}
-                            {conversa.tem_mensagens_nao_lidas && !lidoLocalmente && (
-                              <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
-                            )}
                           </h3>
                           <span className="text-sm text-gray-400 flex-shrink-0">
                             {formatLastMessageTime(conversa.ultima_mensagem_data)}
@@ -407,11 +258,11 @@ export function GestorChatList() {
                         </div>
                         
                         <div className="mb-4">
-                          <Badge 
-                            className={`text-base font-semibold px-4 py-2 ${getStatusBadgeVariant(conversa.status_campanha)}`}
+                          <div 
+                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors text-base font-semibold px-4 py-2 ${getStatusBadgeVariant(conversa.status_campanha)}`}
                           >
                             {conversa.status_campanha}
-                          </Badge>
+                          </div>
                         </div>
                         
                         <p className={`text-sm line-clamp-2 leading-relaxed ${getTextClasses(conversa)}`}>
@@ -421,18 +272,10 @@ export function GestorChatList() {
                     </div>
                     
                     <div className="flex flex-col items-end gap-3 ml-4 flex-shrink-0">
-                      {mostrarBadgeNaoLidas && (
-                        <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white animate-pulse">
-                          {conversa.mensagens_nao_lidas}
-                        </Badge>
-                      )}
-                      
                       <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
                         isSelected(conversa)
                           ? 'bg-blue-600 hover:bg-blue-700'
-                          : conversa.tem_mensagens_nao_lidas && !lidoLocalmente
-                            ? 'bg-red-600 hover:bg-red-700' 
-                            : 'bg-blue-600 hover:bg-blue-700'
+                          : 'bg-blue-600 hover:bg-blue-700'
                       }`}>
                         <ArrowRight className="h-6 w-6 text-white" />
                       </div>

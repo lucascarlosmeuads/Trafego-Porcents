@@ -5,7 +5,7 @@ import { MessageInput } from './MessageInput'
 import { useChatMessages } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, User, CheckCheck } from 'lucide-react'
+import { ArrowLeft, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
 interface ChatInterfaceProps {
@@ -15,7 +15,6 @@ interface ChatInterfaceProps {
   statusCampanha?: string
   onBack?: () => void
   showBackButton?: boolean
-  onMarcarComoLida?: (emailCliente: string, emailGestor: string) => void
 }
 
 export function ChatInterface({
@@ -24,11 +23,10 @@ export function ChatInterface({
   nomeCliente,
   statusCampanha,
   onBack,
-  showBackButton = false,
-  onMarcarComoLida
+  showBackButton = false
 }: ChatInterfaceProps) {
   const { user, isCliente, isGestor } = useAuth()
-  const { mensagens, loading, enviarMensagem, marcarTodasComoLidas } = useChatMessages(emailCliente, emailGestor)
+  const { mensagens, loading, enviarMensagem } = useChatMessages(emailCliente, emailGestor)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -38,34 +36,6 @@ export function ChatInterface({
   const handleSendMessage = async (content: string, type: 'texto' | 'audio' = 'texto') => {
     await enviarMensagem(content, type, emailCliente)
   }
-
-  // FUNÇÃO CORRIGIDA: Marcar como lida com feedback imediato
-  const handleMarcarTodasLidas = async () => {
-    console.log('🎯 [ChatInterface] Marcando todas como lidas - BOTÃO CLICADO')
-    
-    try {
-      // 1. Marcar no banco de dados primeiro
-      console.log('🔄 [ChatInterface] Marcando no banco de dados')
-      await marcarTodasComoLidas()
-      
-      // 2. ATUALIZAR LISTA DE CONVERSAS VIA CALLBACK IMEDIATAMENTE
-      if (onMarcarComoLida) {
-        console.log('🔄 [ChatInterface] Chamando callback para atualizar lista')
-        onMarcarComoLida(emailCliente, emailGestor)
-      }
-      
-      console.log('✅ [ChatInterface] Marcação como lida concluída com sucesso')
-      
-    } catch (error) {
-      console.error('❌ [ChatInterface] Erro ao marcar como lida:', error)
-    }
-  }
-
-  const mensagensNaoLidas = mensagens.filter(msg => 
-    !msg.lida && 
-    ((isCliente && msg.remetente === 'gestor') || 
-     (isGestor && msg.remetente === 'cliente'))
-  ).length
 
   if (loading) {
     return (
@@ -106,19 +76,6 @@ export function ChatInterface({
                 </div>
               </div>
             </div>
-
-            {mensagensNaoLidas > 0 && !isCliente && (
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={handleMarcarTodasLidas}
-                className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white border-green-500"
-              >
-                <CheckCheck className="h-4 w-4" />
-                <span className="hidden sm:inline">Marcar como lida</span>
-                <span className="sm:hidden">({mensagensNaoLidas})</span>
-              </Button>
-            )}
           </div>
         </div>
       )}
