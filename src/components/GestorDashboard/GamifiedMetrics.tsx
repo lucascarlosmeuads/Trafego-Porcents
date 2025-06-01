@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { TrendingUp, Target, Calendar, Trophy, Zap, Fire } from 'lucide-react'
+import { TrendingUp, Target, Calendar, Trophy, Zap, Flame } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
