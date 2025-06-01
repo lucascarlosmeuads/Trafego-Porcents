@@ -33,7 +33,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
       case 'clientes':
         return (
           <div className="bg-gray-950 min-h-screen">
-            <ClientesTable />
+            <ClientesTable selectedManager={user?.email || ''} />
           </div>
         )
       case 'chat':

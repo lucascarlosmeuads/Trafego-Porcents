@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { ResponsiveTableWrapper } from '@/components/ui/responsive-table-wrapper'
-import { ClienteRow } from './ClienteRow'
+import { ClientesTable as ResponsiveTableWrapper } from './ClientesTable/ResponsiveTableWrapper'
+import { ClienteRow } from './ClientesTable/ClienteRow'
 import { Cliente } from '@/lib/supabase'
 
 interface ClientesTableProps {
