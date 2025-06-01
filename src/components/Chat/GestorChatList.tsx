@@ -25,6 +25,8 @@ export function GestorChatList() {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  // NOVO: Estado local para forçar re-renderização
+  const [forceUpdate, setForceUpdate] = useState(0)
   const { user } = useAuth()
 
   const conversasValidas = conversas.filter(c => 
@@ -106,47 +108,80 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
+  // FUNÇÃO CORRIGIDA: Seleção com marcação imediata como lida
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente)
+    console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente, 'Tem não lidas:', conversa.tem_mensagens_nao_lidas)
 
-    if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
-      console.log('🔄 [GestorChatList] Marcando chat como lido automaticamente')
-      marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
+    // 1. MARCAR COMO LIDO IMEDIATAMENTE SE TEM MENSAGENS NÃO LIDAS
+    if (conversa.tem_mensagens_nao_lidas) {
+      console.log('🔄 [GestorChatList] Marcando chat como lido IMEDIATAMENTE')
+      
+      // ATUALIZAR ESTADO LOCAL PRIMEIRO
+      if (atualizarConversaComoLida) {
+        console.log('🔄 [GestorChatList] Atualizando conversa local como lida')
+        atualizarConversaComoLida(conversa.email_cliente, conversa.email_gestor || '')
+      }
+      
+      // MARCAR NO ESTADO DE SESSÃO
+      if (marcarChatComoLidoEstaSecao) {
+        console.log('🔄 [GestorChatList] Marcando no estado de sessão')
+        marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
+      }
+      
+      // FORÇAR RE-RENDERIZAÇÃO IMEDIATA
+      console.log('🔄 [GestorChatList] Forçando re-renderização')
+      setForceUpdate(prev => prev + 1)
     }
 
+    // 2. SELECIONAR O CHAT
     setSelectedChat(conversa)
   }
 
-  // FUNÇÃO CORRIGIDA: Marcar como lida via botão com atualização visual imediata
+  // FUNÇÃO CORRIGIDA: Marcar como lida via botão com feedback instantâneo
   const handleMarcarComoLida = (emailCliente: string, emailGestor: string) => {
     console.log('🎯 [GestorChatList] Marcando como lida via botão:', emailCliente)
     
     // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
     if (atualizarConversaComoLida) {
-      console.log('🔄 [GestorChatList] Forçando atualização visual imediata')
+      console.log('🔄 [GestorChatList] Forçando atualização visual imediata via botão')
       atualizarConversaComoLida(emailCliente, emailGestor)
     }
     
     // 2. MARCAR NO ESTADO DE SESSÃO
     if (marcarChatComoLidoEstaSecao) {
-      console.log('🔄 [GestorChatList] Marcando no estado de sessão')
+      console.log('🔄 [GestorChatList] Marcando no estado de sessão via botão')
       marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
     }
 
-    // 3. FORÇAR RE-RENDERIZAÇÃO ADICIONAL APÓS 500ms PARA GARANTIR
+    // 3. FORÇAR RE-RENDERIZAÇÃO IMEDIATA
+    console.log('🔄 [GestorChatList] Forçando re-renderização via botão')
+    setForceUpdate(prev => prev + 1)
+
+    // 4. RECARREGAR CONVERSAS PARA SINCRONIZAR
     setTimeout(() => {
       console.log('🔄 [GestorChatList] Recarregando conversas para sincronizar')
       recarregar()
     }, 500)
   }
 
+  // FUNÇÃO CORRIGIDA: Classes do card com lógica melhorada
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
     
+    // VERIFICAR SE FOI LIDO NESTA SESSÃO
     const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
     
+    // LÓGICA PRINCIPAL: Se foi lido nesta sessão OU não tem mensagens não lidas, não é vermelho
     const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    
+    console.log(`📊 [GestorChatList] Card ${conversa.nome_cliente}:`, {
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
+      foiLidoEstaSecao,
+      naoLido,
+      selecionado,
+      forceUpdate // Para debug
+    })
     
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
@@ -156,6 +191,7 @@ export function GestorChatList() {
       return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
     }
     
+    // SE FOI LIDO OU NÃO TEM MENSAGENS NÃO LIDAS: CINZA
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
 
@@ -325,7 +361,7 @@ export function GestorChatList() {
           </div>
         ) : (
           conversasFiltradas.map((conversa, index) => {
-            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
+            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}-${forceUpdate}`
             const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
             const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !foiLidoEstaSecao
             
