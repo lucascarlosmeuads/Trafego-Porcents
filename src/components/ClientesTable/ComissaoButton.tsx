@@ -1,9 +1,10 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Save, X, Edit, DollarSign, Lock } from 'lucide-react'
+import { Save, X, Edit, DollarSign } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
@@ -141,7 +142,7 @@ export function ComissaoButton({
                     onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
                     className={`h-6 w-6 p-0 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
-                    {!canEdit ? <Lock className="h-2 w-2" /> : <DollarSign className="h-2 w-2" />}
+                    <DollarSign className="h-2 w-2" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
@@ -252,7 +253,6 @@ export function ComissaoButton({
             onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
             className={`h-6 text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
-            {!canEdit && <Lock className="h-3 w-3 mr-1" />}
             {formatCurrency(valorComissao)}
           </Button>
         </>
