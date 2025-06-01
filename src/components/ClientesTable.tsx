@@ -70,6 +70,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [statusFilter, setStatusFilter] = useState('all')
   const [siteStatusFilter, setSiteStatusFilter] = useState('all')
   const [creativoFilter, setCreativoFilter] = useState('all')
+  const [bmFilter, setBmFilter] = useState('all')
   const [clientesComCriativos, setClientesComCriativos] = useState<Set<string>>(new Set())
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
@@ -243,7 +244,18 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       }
       // Se for 'all', matchesCreativo permanece true
       
-      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo
+      // Filtro de BM
+      let matchesBm = true
+      if (bmFilter === 'com_bm') {
+        // Mostrar apenas clientes que têm número BM preenchido
+        matchesBm = !!(cliente.numero_bm && cliente.numero_bm.trim() !== '')
+      } else if (bmFilter === 'sem_bm') {
+        // Mostrar apenas clientes que NÃO têm número BM preenchido
+        matchesBm = !(cliente.numero_bm && cliente.numero_bm.trim() !== '')
+      }
+      // Se for 'all', matchesBm permanece true
+      
+      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm
     })
   }
 
@@ -999,6 +1011,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               showSiteStatusFilter={isAdmin}
               creativoFilter={creativoFilter}
               setCreativoFilter={setCreativoFilter}
+              bmFilter={bmFilter}
+              setBmFilter={setBmFilter}
               getStatusColor={getStatusColor}
             />
 
@@ -1024,6 +1038,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               showSiteStatusFilter={isAdmin}
               creativoFilter={creativoFilter}
               setCreativoFilter={setCreativoFilter}
+              bmFilter={bmFilter}
+              setBmFilter={setBmFilter}
               getStatusColor={getStatusColor}
             />
 
@@ -1141,6 +1157,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         showSiteStatusFilter={isAdmin}
         creativoFilter={creativoFilter}
         setCreativoFilter={setCreativoFilter}
+        bmFilter={bmFilter}
+        setBmFilter={setBmFilter}
         getStatusColor={getStatusColor}
       />
 

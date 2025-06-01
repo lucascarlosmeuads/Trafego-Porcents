@@ -1,5 +1,5 @@
 
-import { Search, Filter, Globe, Image } from 'lucide-react'
+import { Search, Filter, Globe, Image, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -20,6 +20,8 @@ interface TableFiltersProps {
   showSiteStatusFilter?: boolean
   creativoFilter?: string
   setCreativoFilter?: (value: string) => void
+  bmFilter?: string
+  setBmFilter?: (value: string) => void
   getStatusColor: (status: string) => string
 }
 
@@ -37,6 +39,12 @@ const CRIATIVO_STATUS_OPTIONS = [
   { value: 'feito', label: 'Criativo Feito' }
 ]
 
+const BM_STATUS_OPTIONS = [
+  { value: 'all', label: 'Todos os Status' },
+  { value: 'com_bm', label: 'Com BM' },
+  { value: 'sem_bm', label: 'Sem BM' }
+]
+
 export function TableFilters({
   searchTerm,
   setSearchTerm,
@@ -47,6 +55,8 @@ export function TableFilters({
   showSiteStatusFilter = false,
   creativoFilter = 'all',
   setCreativoFilter,
+  bmFilter = 'all',
+  setBmFilter,
   getStatusColor
 }: TableFiltersProps) {
   
@@ -66,6 +76,13 @@ export function TableFilters({
     console.log('🎨 [TableFilters] Alterando filtro de criativo para:', value)
     if (setCreativoFilter) {
       setCreativoFilter(value)
+    }
+  }
+
+  const handleBmChange = (value: string) => {
+    console.log('⚙️ [TableFilters] Alterando filtro de BM para:', value)
+    if (setBmFilter) {
+      setBmFilter(value)
     }
   }
 
@@ -122,6 +139,22 @@ export function TableFilters({
           </SelectTrigger>
           <SelectContent className="bg-card border-border">
             {CRIATIVO_STATUS_OPTIONS.map(option => (
+              <SelectItem key={option.value} value={option.value}>
+                {option.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
+
+      {setBmFilter && (
+        <Select value={bmFilter} onValueChange={handleBmChange}>
+          <SelectTrigger className="w-full sm:w-48 bg-background border-border text-white">
+            <Settings className="w-4 h-4 mr-2" />
+            <SelectValue placeholder="Status BM" />
+          </SelectTrigger>
+          <SelectContent className="bg-card border-border">
+            {BM_STATUS_OPTIONS.map(option => (
               <SelectItem key={option.value} value={option.value}>
                 {option.label}
               </SelectItem>
