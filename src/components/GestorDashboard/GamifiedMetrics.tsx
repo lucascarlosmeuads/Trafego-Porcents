@@ -1,6 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { TrendingUp, Target, Calendar, Trophy, Zap, Flame } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
@@ -8,6 +7,16 @@ import { formatCurrency } from '@/lib/utils'
 interface GamifiedMetricsProps {
   clientes: Cliente[]
 }
+
+// Componente Progress temporário para evitar erros de contexto
+const SimpleProgress = ({ value, className }: { value: number; className?: string }) => (
+  <div className={`w-full bg-gray-200 rounded-full h-3 ${className}`}>
+    <div 
+      className="bg-blue-600 h-3 rounded-full transition-all duration-300" 
+      style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+    />
+  </div>
+)
 
 export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   // Calcular dados dos últimos 30 dias
@@ -187,7 +196,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
               <span>Progresso: {formatCurrency(totalRecebido30Dias)}</span>
               <span className="font-medium">Meta: {formatCurrency(metaMensal)}</span>
             </div>
-            <Progress 
+            <SimpleProgress 
               value={progressoMeta} 
               className="h-3"
             />
