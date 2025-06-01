@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -62,31 +61,7 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				},
-				// Nova paleta corporativa otimizada
-				'admin-bg': '#0D1B2A',
-				'admin-card': '#1E293B',
-				'admin-text-primary': '#F1F5F9',
-				'admin-text-white': '#FFFFFF',
-				'admin-text-secondary': '#94A3B8',
-				'admin-text-info': '#CBD5E1',
-				'admin-purple': '#7C3AED',
-				'admin-purple-light': '#8B5CF6',
-				'admin-green': '#22C55E',
-				'admin-orange': '#FB923C',
-				'admin-border': '#334155',
-				
-				// Cores customizadas existentes (mantidas para compatibilidade)
-				'deep-blue': '#0D1B2A',
-				'success-green': '#22C55E',
-				'warning-orange': '#FB923C',
-				'primary-text': '#F1F5F9',
-				'secondary-text': '#94A3B8',
-				'info-text': '#CBD5E1',
-				'neutral-border': '#334155',
-				'neutral-surface': '#1E293B',
-				'tech-purple': '#7C3AED',
-				'soft-purple': '#8B5CF6'
+				}
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

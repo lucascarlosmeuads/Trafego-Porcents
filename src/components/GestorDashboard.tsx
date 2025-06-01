@@ -18,10 +18,10 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="flex items-center justify-center h-64 bg-deep-blue">
+        <div className="flex items-center justify-center h-64 bg-gray-950">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-tech-purple mx-auto mb-2"></div>
-            <p className="text-secondary-text">Carregando dados...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+            <p className="text-gray-300">Carregando dados...</p>
           </div>
         </div>
       )
@@ -32,13 +32,13 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return <GamifiedMetrics clientes={clientes} />
       case 'clientes':
         return (
-          <div className="bg-deep-blue min-h-screen">
+          <div className="bg-gray-950 min-h-screen">
             <ClientesTable />
           </div>
         )
       case 'chat':
         return (
-          <div className="bg-deep-blue min-h-screen">
+          <div className="bg-gray-950 min-h-screen">
             <ChatLayoutSplit />
           </div>
         )
@@ -48,7 +48,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   }
 
   return (
-    <div className="bg-deep-blue min-h-screen">
+    <div className="bg-gray-950 min-h-screen">
       {renderContent()}
     </div>
   )

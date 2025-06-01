@@ -15,12 +15,15 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
 
   // Função para determinar se uma comissão é considerada pendente
   const isComissaoPendente = (comissao: string | null | undefined): boolean => {
+    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
     if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
       return true
     }
+    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
     if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
       return true
     }
+    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
     return comissao.trim() !== 'Pago'
   }
 
@@ -79,73 +82,73 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   console.log('📊 [AdminDashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
 
   return (
-    <div className="space-y-8 bg-admin-bg min-h-screen p-6">
+    <div className="space-y-6">
       {/* Métricas Gerais */}
       <div>
-        <h3 className="text-2xl font-bold mb-6 text-admin-text-primary">
+        <h3 className="text-lg font-semibold mb-4 text-contrast">
           📊 Visão Geral {selectedManager ? `- ${selectedManager}` : '(Todos os Gestores)'}
         </h3>
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">Total de Clientes</CardTitle>
-              <Users className="h-5 w-5 text-admin-text-secondary" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">Total de Clientes</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-text-primary mb-2">{totalClientes}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-contrast">{totalClientes}</div>
+              <p className="text-xs text-contrast-secondary">
                 clientes cadastrados
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">Campanhas No Ar</CardTitle>
-              <CheckCircle className="h-5 w-5 text-admin-green" />
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">Campanhas No Ar</CardTitle>
+              <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-green mb-2">{clientesNoAr.length}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{clientesNoAr.length}</div>
+              <p className="text-xs text-contrast-secondary">
                 campanhas ativas
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">🔴 Total Pendente</CardTitle>
-              <CircleDollarSign className="h-5 w-5 text-admin-orange" />
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">🔴 Total Pendente</CardTitle>
+              <CircleDollarSign className="h-4 w-4 text-red-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-orange mb-2">{formatCurrency(totalPendente)}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalPendente)}</div>
+              <p className="text-xs text-contrast-secondary">
                 {clientesPendentes.length} comissões pendentes
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">🟢 Total Já Recebido</CardTitle>
-              <CircleDollarSign className="h-5 w-5 text-admin-green" />
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">🟢 Total Já Recebido</CardTitle>
+              <CircleDollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-green mb-2">{formatCurrency(totalRecebido)}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</div>
+              <p className="text-xs text-contrast-secondary">
                 {clientesPagos.length} comissões pagas
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">⚠️ Problemas</CardTitle>
-              <AlertTriangle className="h-5 w-5 text-admin-orange" />
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">⚠️ Problemas</CardTitle>
+              <AlertTriangle className="h-4 w-4 text-amber-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-orange mb-2">{clientesProblemas.length}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-amber-600">{clientesProblemas.length}</div>
+              <p className="text-xs text-contrast-secondary">
                 requer atenção
               </p>
             </CardContent>
@@ -155,31 +158,31 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
 
       {/* Métricas Específicas do Admin */}
       <div>
-        <h3 className="text-xl font-semibold mb-6 text-admin-text-primary">
+        <h3 className="text-lg font-semibold mb-4 text-contrast">
           💳 Controle de Pagamentos (Admin)
         </h3>
-        <div className="grid gap-6 md:grid-cols-2">
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">⏰ Pendentes para Pagar</CardTitle>
-              <Clock className="h-5 w-5 text-admin-purple" />
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">⏰ Pendentes para Pagar</CardTitle>
+              <Clock className="h-4 w-4 text-orange-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-purple mb-2">{clientesParaPagar.length}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{clientesParaPagar.length}</div>
+              <p className="text-xs text-contrast-secondary">
                 {formatCurrency(clientesParaPagar.length * 60)} aguardando pagamento
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-admin-card border-admin-border rounded-xl shadow-sm hover:shadow-md transition-shadow duration-200">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-admin-text-info">✅ Já Paguei</CardTitle>
-              <CreditCard className="h-5 w-5 text-admin-purple-light" />
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-contrast">✅ Já Paguei</CardTitle>
+              <CreditCard className="h-4 w-4 text-blue-600" />
             </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-3xl font-bold text-admin-purple-light mb-2">{clientesJaPagos.length}</div>
-              <p className="text-xs text-admin-text-secondary">
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{clientesJaPagos.length}</div>
+              <p className="text-xs text-contrast-secondary">
                 {formatCurrency(clientesJaPagos.length * 60)} já pagos pelo admin
               </p>
             </CardContent>

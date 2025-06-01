@@ -32,85 +32,56 @@ export function AdminMainMenu({
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
-      description: 'Visão geral e métricas',
       onClick: () => onTabChange('dashboard')
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      description: 'Gerenciar clientes',
       onClick: () => onTabChange('clientes')
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
-      description: 'Conversas com clientes',
       onClick: () => onTabChange('chat')
     },
     {
       id: 'documentacao',
       label: 'Documentação',
       icon: Book,
-      description: 'Guias e manuais',
       onClick: () => onTabChange('documentacao')
     }
   ]
 
   return (
-    <nav className="space-y-3">
-      {menuItems.map((item) => {
-        const isActive = activeTab === item.id
-        
-        return (
-          <Button
-            key={item.id}
-            variant="ghost"
-            className={`
-              ${isCollapsed ? 'w-10 p-2 justify-center' : 'w-full justify-start'}
-              ${isActive 
-                ? 'bg-admin-purple/20 text-admin-purple border-l-2 border-admin-purple shadow-sm' 
-                : 'text-admin-text-secondary hover:bg-admin-border/20 hover:text-admin-text-primary'
-              }
-              transition-all duration-200 rounded-lg h-auto ${!isCollapsed ? 'py-3' : 'py-2'}
-            `}
-            onClick={item.onClick}
-            title={isCollapsed ? item.label : ''}
-          >
-            <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-3' : ''}`} />
-            {!isCollapsed && (
-              <div className="flex flex-col items-start text-left">
-                <span className="font-medium text-sm">{item.label}</span>
-                <span className="text-xs text-admin-text-secondary opacity-70">{item.description}</span>
-              </div>
-            )}
-          </Button>
-        )
-      })}
-
-      <div className="pt-4">
-        <div className="h-px bg-admin-border mb-4"></div>
+    <nav className="space-y-2">
+      {menuItems.map((item) => (
         <Button
-          variant="ghost"
+          key={item.id}
+          variant={activeTab === item.id ? 'default' : 'ghost'}
           className={`
-            ${isCollapsed ? 'w-10 p-2 justify-center' : 'w-full justify-start'}
-            ${selectedManager === '__GESTORES__' 
-              ? 'bg-admin-purple/20 text-admin-purple border-l-2 border-admin-purple shadow-sm' 
-              : 'text-admin-text-secondary hover:bg-admin-border/20 hover:text-admin-text-primary'
-            }
-            transition-all duration-200 rounded-lg h-auto ${!isCollapsed ? 'py-3' : 'py-2'}
+            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+          `}
+          onClick={item.onClick}
+          title={isCollapsed ? item.label : ''}
+        >
+          <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+          {!isCollapsed && item.label}
+        </Button>
+      ))}
+
+      <div className="pt-4 border-t">
+        <Button
+          variant={selectedManager === '__GESTORES__' ? 'default' : 'ghost'}
+          className={`
+            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
           `}
           onClick={() => onManagerSelect('__GESTORES__')}
           title={isCollapsed ? 'Gestores' : ''}
         >
-          <Settings className={`h-4 w-4 ${!isCollapsed ? 'mr-3' : ''}`} />
-          {!isCollapsed && (
-            <div className="flex flex-col items-start text-left">
-              <span className="font-medium text-sm">Gestores</span>
-              <span className="text-xs text-admin-text-secondary opacity-70">Gerenciar equipe</span>
-            </div>
-          )}
+          <Settings className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+          {!isCollapsed && 'Gestores'}
         </Button>
       </div>
     </nav>

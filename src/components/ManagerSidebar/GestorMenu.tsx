@@ -35,28 +35,21 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
     <nav className="space-y-2">
       {menuItems.map((item) => {
         const Icon = item.icon
-        const isActive = activeTab === item.id
-        
         return (
           <Button
             key={item.id}
-            variant="ghost"
+            variant={activeTab === item.id ? 'default' : 'ghost'}
             className={`
               ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
-              ${isActive 
-                ? 'sidebar-item active bg-tech-purple/20 text-tech-purple border-l-2 border-tech-purple' 
-                : 'sidebar-item text-secondary-text hover:bg-neutral-surface hover:text-primary-text'
-              }
-              transition-all duration-200
             `}
             onClick={() => onTabChange(item.id)}
             title={isCollapsed ? item.label : ''}
           >
-            <Icon className={`h-4 w-4 ${!isCollapsed ? 'mr-3' : ''}`} />
+            <Icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
             {!isCollapsed && (
-              <div className="flex flex-col items-start text-left">
+              <div className="flex flex-col items-start">
                 <span className="font-medium">{item.label}</span>
-                <span className="text-xs text-info-text">{item.description}</span>
+                <span className="text-xs text-muted-foreground">{item.description}</span>
               </div>
             )}
           </Button>
