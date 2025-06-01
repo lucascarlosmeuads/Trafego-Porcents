@@ -74,8 +74,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [editingBM, setEditingBM] = useState<string | null>(null)
   const [bmValue, setBmValue] = useState('')
   const [updatingComission, setUpdatingComission] = useState<string | null>(null)
-  const [editingComissionValue, setEditingComissionValue] = useState<string | null>(null)
-  const [comissionValueInput, setComissionValueInput] = useState('')
   const [realtimeConnected, setRealtimeConnected] = useState(false)
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
@@ -655,44 +653,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  const handleComissionValueEdit = (clienteId: string, currentValue: number) => {
-    setEditingComissionValue(clienteId)
-    setComissionValueInput(currentValue.toFixed(2))
-  }
-
-  const handleComissionValueSave = async (clienteId: string, newValue: number) => {
-    try {
-      const success = await updateCliente(clienteId, 'valor_comissao', newValue)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Valor da comissão atualizado com sucesso",
-        })
-        setEditingComissionValue(null)
-        setComissionValueInput('')
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar valor da comissão",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao salvar valor da comissão:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar valor da comissão",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleComissionValueCancel = () => {
-    setEditingComissionValue(null)
-    setComissionValueInput('')
-  }
-
   const handleAddClient = async (clienteData: any) => {
     setAddingClient(true)
     try {
@@ -751,9 +711,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       bmValue={bmValue}
                       setBmValue={setBmValue}
                       updatingComission={updatingComission}
-                      editingComissionValue={editingComissionValue}
-                      comissionValueInput={comissionValueInput}
-                      setComissionValueInput={setComissionValueInput}
                       getStatusColor={getStatusColor}
                       onStatusChange={handleStatusChange}
                       onSiteStatusChange={handleSiteStatusChange}
@@ -764,9 +721,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       onBMSave={handleBMSave}
                       onBMCancel={handleBMCancel}
                       onComissionToggle={handleComissionToggle}
-                      onComissionValueEdit={handleComissionValueEdit}
-                      onComissionValueSave={handleComissionValueSave}
-                      onComissionValueCancel={handleComissionValueCancel}
                       onSitePagoChange={handleSitePagoChange}
                     />
                   ))
