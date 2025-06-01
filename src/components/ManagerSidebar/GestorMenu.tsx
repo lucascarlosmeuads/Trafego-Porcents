@@ -1,6 +1,6 @@
 
 import { BarChart3, Users, MessageCircle } from 'lucide-react'
-import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from '@/components/ui/sidebar'
+import { Button } from '@/components/ui/button'
 
 interface GestorMenuProps {
   activeTab: string
@@ -32,31 +32,29 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
   ]
 
   return (
-    <SidebarGroup>
-      <SidebarGroupContent>
-        <SidebarMenu>
-          {menuItems.map((item) => {
-            const Icon = item.icon
-            return (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton 
-                  onClick={() => onTabChange(item.id)}
-                  isActive={activeTab === item.id}
-                  className="w-full"
-                >
-                  <Icon className="w-4 h-4" />
-                  {!isCollapsed && (
-                    <div className="flex flex-col items-start">
-                      <span className="font-medium">{item.label}</span>
-                      <span className="text-xs text-muted-foreground">{item.description}</span>
-                    </div>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            )
-          })}
-        </SidebarMenu>
-      </SidebarGroupContent>
-    </SidebarGroup>
+    <nav className="space-y-2">
+      {menuItems.map((item) => {
+        const Icon = item.icon
+        return (
+          <Button
+            key={item.id}
+            variant={activeTab === item.id ? 'default' : 'ghost'}
+            className={`
+              ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+            `}
+            onClick={() => onTabChange(item.id)}
+            title={isCollapsed ? item.label : ''}
+          >
+            <Icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+            {!isCollapsed && (
+              <div className="flex flex-col items-start">
+                <span className="font-medium">{item.label}</span>
+                <span className="text-xs text-muted-foreground">{item.description}</span>
+              </div>
+            )}
+          </Button>
+        )
+      })}
+    </nav>
   )
 }
