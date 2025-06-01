@@ -16,12 +16,14 @@ interface ChatSidebarProps {
   selectedChat: ChatConversaPreview | null
   onSelectChat: (conversa: ChatConversaPreview) => void
   loading: boolean
+  recarregarConversas?: () => void
 }
 
-export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: ChatSidebarProps) {
+export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading, recarregarConversas }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [conversasProcessandoLeitura, setConversasProcessandoLeitura] = useState<Set<string>>(new Set())
 
   // Função específica para marcar mensagens como lidas
   const marcarMensagensComoLidas = async (emailCliente: string, emailGestor: string) => {
@@ -42,6 +44,14 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       if (error) throw error
       
       console.log('✅ [ChatSidebar] Mensagens marcadas como lidas com sucesso')
+      
+      // CORREÇÃO: Aguardar 1 segundo e forçar recarregamento das conversas
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      if (recarregarConversas) {
+        console.log('🔄 [ChatSidebar] Forçando recarregamento das conversas...')
+        recarregarConversas()
+      }
     } catch (err) {
       console.error('❌ [ChatSidebar] Erro ao marcar mensagens como lidas:', err)
     }
@@ -55,7 +65,6 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     c.nome_cliente.trim() !== ''
   )
 
-  // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversasValidas
@@ -108,17 +117,10 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
     }
   }
 
-  // CORREÇÃO: Função isSelected mais rigorosa
   const isSelected = (conversa: ChatConversaPreview) => {
     if (!selectedChat || !conversa) return false
-    const isSelectedChat = selectedChat.email_cliente === conversa.email_cliente && 
-                          selectedChat.email_gestor === conversa.email_gestor
-    console.log(`🔍 [ChatSidebar] Verificando seleção para ${conversa.email_cliente}:`, {
-      isSelectedChat,
-      selectedEmail: selectedChat?.email_cliente,
-      conversaEmail: conversa.email_cliente
-    })
-    return isSelectedChat
+    return selectedChat.email_cliente === conversa.email_cliente && 
+           selectedChat.email_gestor === conversa.email_gestor
   }
 
   const clearAllFilters = () => {
@@ -139,38 +141,63 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
       jaEstaSelecionado: isSelected(conversa)
     })
 
-    // CORREÇÃO: Verificar se já está selecionado ANTES de marcar como lidas
     const jaEstaSelecionado = isSelected(conversa)
+    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
     
     // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
     if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
+      console.log('📖 [ChatSidebar] Marcando conversa como processando leitura...')
+      
+      // Adicionar ao estado local temporário
+      setConversasProcessandoLeitura(prev => new Set(prev).add(chaveConversa))
+      
       console.log('📖 [ChatSidebar] Marcando mensagens como lidas...')
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
       
-      // AGUARDAR um pouco para a atualização do banco
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Remover do estado local após processamento
+      setTimeout(() => {
+        setConversasProcessandoLeitura(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(chaveConversa)
+          return newSet
+        })
+      }, 2000)
     }
 
     console.log('✅ [ChatSidebar] Chamando onSelectChat para:', conversa.email_cliente)
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS mais específica e hierárquica
+  // CORREÇÃO: Função para verificar se uma conversa está processando leitura
+  const estaProcessandoLeitura = (conversa: ChatConversaPreview) => {
+    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
+    return conversasProcessandoLeitura.has(chaveConversa)
+  }
+
+  // CORREÇÃO: Lógica de classes CSS melhorada com verificação de processamento
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
-    const naoLido = conversa.tem_mensagens_nao_lidas
+    const processandoLeitura = estaProcessandoLeitura(conversa)
+    const naoLido = conversa.tem_mensagens_nao_lidas && !processandoLeitura
     
     console.log(`🎨 [ChatSidebar] Classes para ${conversa.email_cliente}:`, {
       selecionado,
       naoLido,
+      processandoLeitura,
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       selectedChatEmail: selectedChat?.email_cliente
     })
     
-    // HIERARQUIA CORRETA: 1º Selecionado (AZUL), 2º Não Lido (VERMELHO), 3º Padrão (CINZA)
+    // HIERARQUIA: 1º Selecionado (AZUL), 2º Processando (AMARELO), 3º Não Lido (VERMELHO), 4º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [ChatSidebar] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
+    }
+    
+    if (processandoLeitura) {
+      console.log(`🟡 [ChatSidebar] Card PROCESSANDO LEITURA (AMARELO): ${conversa.email_cliente}`)
+      return `${baseClasses} !bg-yellow-900/50 hover:!bg-yellow-900/60 !border-yellow-500 shadow-yellow-500/30`
     }
     
     if (naoLido) {
@@ -185,38 +212,53 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
   // Função para determinar as classes do avatar
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
+    const processandoLeitura = estaProcessandoLeitura(conversa)
     
     if (isSelected(conversa)) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
     }
     
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (processandoLeitura) {
+      return `${baseClasses} bg-gradient-to-br from-yellow-700 to-yellow-800 ring-2 ring-yellow-500`
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
       return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
     return `${baseClasses} bg-gradient-to-br from-blue-800 to-blue-900`
   }
 
-  // Função para determinar as classes do texto
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
+    const processandoLeitura = estaProcessandoLeitura(conversa)
+    
     if (isSelected(conversa)) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
     }
     
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (processandoLeitura) {
+      return isTitle ? 'text-yellow-100 font-semibold' : 'text-yellow-200 font-medium'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
       return isTitle ? 'text-red-100 font-semibold' : 'text-gray-200 font-medium'
     }
     
     return isTitle ? 'text-white' : 'text-gray-400'
   }
 
-  // Função para determinar as classes do ícone do usuário
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
+    const processandoLeitura = estaProcessandoLeitura(conversa)
+    
     if (isSelected(conversa)) {
       return 'text-blue-200'
     }
     
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (processandoLeitura) {
+      return 'text-yellow-200'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
       return 'text-red-200'
     }
     
@@ -317,59 +359,68 @@ export function ChatSidebar({ conversas, selectedChat, onSelectChat, loading }: 
             </p>
           </div>
         ) : (
-          conversasFiltradas.map((conversa, index) => (
-            <Card 
-              key={`conversa-${conversa.email_cliente}-${conversa.email_gestor}-${index}`}
-              className={getCardClasses(conversa)}
-              onClick={() => handleSelectChat(conversa)}
-            >
-              <CardContent className="p-3">
-                <div className="flex items-start gap-3">
-                  {/* Avatar */}
-                  <div className={getAvatarClasses(conversa)}>
-                    <User className={`h-6 w-6 ${getUserIconClasses(conversa)}`} />
-                  </div>
-                  
-                  {/* Informações */}
-                  <div className="flex-1 min-w-0">
-                    {/* Nome e timestamp */}
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
-                        {conversa.nome_cliente}
-                        {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
-                          <span className="ml-1 text-red-400 animate-pulse">●</span>
-                        )}
-                      </h3>
-                      <span className="text-xs text-gray-400 flex-shrink-0">
-                        {formatLastMessageTime(conversa.ultima_mensagem_data)}
-                      </span>
+          conversasFiltradas.map((conversa, index) => {
+            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
+            const processandoLeitura = estaProcessandoLeitura(conversa)
+            const mostrarBadgeNaoLidas = conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && !processandoLeitura
+            
+            return (
+              <Card 
+                key={chaveUnica}
+                className={getCardClasses(conversa)}
+                onClick={() => handleSelectChat(conversa)}
+              >
+                <CardContent className="p-3">
+                  <div className="flex items-start gap-3">
+                    {/* Avatar */}
+                    <div className={getAvatarClasses(conversa)}>
+                      <User className={`h-6 w-6 ${getUserIconClasses(conversa)}`} />
                     </div>
                     
-                    {/* Status */}
-                    <div className="mb-2">
-                      <Badge 
-                        className={`text-xs font-medium px-2 py-1 ${getStatusBadgeVariant(conversa.status_campanha)}`}
-                      >
-                        {conversa.status_campanha}
+                    {/* Informações */}
+                    <div className="flex-1 min-w-0">
+                      {/* Nome e timestamp */}
+                      <div className="flex items-center justify-between mb-1">
+                        <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
+                          {conversa.nome_cliente}
+                          {(conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !processandoLeitura) && (
+                            <span className="ml-1 text-red-400 animate-pulse">●</span>
+                          )}
+                          {processandoLeitura && (
+                            <span className="ml-1 text-yellow-400 animate-spin">⟳</span>
+                          )}
+                        </h3>
+                        <span className="text-xs text-gray-400 flex-shrink-0">
+                          {formatLastMessageTime(conversa.ultima_mensagem_data)}
+                        </span>
+                      </div>
+                      
+                      {/* Status */}
+                      <div className="mb-2">
+                        <Badge 
+                          className={`text-xs font-medium px-2 py-1 ${getStatusBadgeVariant(conversa.status_campanha)}`}
+                        >
+                          {conversa.status_campanha}
+                        </Badge>
+                      </div>
+                      
+                      {/* Última mensagem */}
+                      <p className={`text-xs line-clamp-1 leading-relaxed ${getTextClasses(conversa)}`}>
+                        {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
+                      </p>
+                    </div>
+                    
+                    {/* Badge de mensagens não lidas */}
+                    {mostrarBadgeNaoLidas && (
+                      <Badge variant="destructive" className="text-xs font-bold px-2 py-1 min-w-[24px] h-6 flex items-center justify-center bg-red-600 text-white animate-pulse">
+                        {conversa.mensagens_nao_lidas > 99 ? '99+' : conversa.mensagens_nao_lidas}
                       </Badge>
-                    </div>
-                    
-                    {/* Última mensagem */}
-                    <p className={`text-xs line-clamp-1 leading-relaxed ${getTextClasses(conversa)}`}>
-                      {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
-                    </p>
+                    )}
                   </div>
-                  
-                  {/* Badge de mensagens não lidas */}
-                  {conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && (
-                    <Badge variant="destructive" className="text-xs font-bold px-2 py-1 min-w-[24px] h-6 flex items-center justify-center bg-red-600 text-white animate-pulse">
-                      {conversa.mensagens_nao_lidas > 99 ? '99+' : conversa.mensagens_nao_lidas}
-                    </Badge>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

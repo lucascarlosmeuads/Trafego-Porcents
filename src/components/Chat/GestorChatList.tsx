@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -14,11 +13,12 @@ import { ptBR } from 'date-fns/locale'
 import { supabase } from '@/lib/supabase'
 
 export function GestorChatList() {
-  const { conversas, loading } = useChatConversas()
+  const { conversas, loading, recarregar } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [conversasProcessandoLeitura, setConversasProcessandoLeitura] = useState<Set<string>>(new Set())
   const { user } = useAuth()
 
   // Função específica para marcar mensagens como lidas
@@ -40,12 +40,17 @@ export function GestorChatList() {
       if (error) throw error
       
       console.log('✅ [GestorChatList] Mensagens marcadas como lidas com sucesso')
+      
+      // CORREÇÃO: Aguardar 1 segundo e forçar recarregamento das conversas
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
+      console.log('🔄 [GestorChatList] Forçando recarregamento das conversas...')
+      recarregar()
     } catch (err) {
       console.error('❌ [GestorChatList] Erro ao marcar mensagens como lidas:', err)
     }
   }
 
-  // CORREÇÃO: Filtrar conversas válidas primeiro
   const conversasValidas = conversas.filter(c => 
     c.email_cliente && 
     c.email_cliente.trim() !== '' && 
@@ -53,13 +58,11 @@ export function GestorChatList() {
     c.nome_cliente.trim() !== ''
   )
 
-  // Debug: log das conversas carregadas
   console.log('📋 [GestorChatList] Conversas válidas carregadas:', conversasValidas.length)
   conversasValidas.forEach(c => {
     console.log(`📝 [GestorChatList] Cliente: ${c.nome_cliente}, Última mensagem: "${c.ultima_mensagem}", Data: ${c.ultima_mensagem_data}, Não lidas: ${c.mensagens_nao_lidas}`)
   })
 
-  // Obter lista única de status das conversas
   const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversasValidas
@@ -120,17 +123,16 @@ export function GestorChatList() {
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
-  // CORREÇÃO: Função isSelected mais rigorosa
   const isSelected = (conversa: ChatConversaPreview) => {
     if (!selectedChat || !conversa) return false
-    const isSelectedChat = selectedChat.email_cliente === conversa.email_cliente && 
-                          selectedChat.email_gestor === conversa.email_gestor
-    console.log(`🔍 [GestorChatList] Verificando seleção para ${conversa.email_cliente}:`, {
-      isSelectedChat,
-      selectedEmail: selectedChat?.email_cliente,
-      conversaEmail: conversa.email_cliente
-    })
-    return isSelectedChat
+    return selectedChat.email_cliente === conversa.email_cliente && 
+           selectedChat.email_gestor === conversa.email_gestor
+  }
+
+  // CORREÇÃO: Função para verificar se uma conversa está processando leitura
+  const estaProcessandoLeitura = (conversa: ChatConversaPreview) => {
+    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
+    return conversasProcessandoLeitura.has(chaveConversa)
   }
 
   const handleSelectChat = async (conversa: ChatConversaPreview) => {
@@ -143,38 +145,57 @@ export function GestorChatList() {
       jaEstaSelecionado: isSelected(conversa)
     })
 
-    // CORREÇÃO: Verificar se já está selecionado ANTES de marcar como lidas
     const jaEstaSelecionado = isSelected(conversa)
+    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
     
     // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
     if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
+      console.log('📖 [GestorChatList] Marcando conversa como processando leitura...')
+      
+      // Adicionar ao estado local temporário
+      setConversasProcessandoLeitura(prev => new Set(prev).add(chaveConversa))
+      
       console.log('📖 [GestorChatList] Marcando mensagens como lidas...')
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
       
-      // AGUARDAR um pouco para a atualização do banco
-      await new Promise(resolve => setTimeout(resolve, 500))
+      // Remover do estado local após processamento
+      setTimeout(() => {
+        setConversasProcessandoLeitura(prev => {
+          const newSet = new Set(prev)
+          newSet.delete(chaveConversa)
+          return newSet
+        })
+      }, 2000)
     }
 
     console.log('✅ [GestorChatList] Definindo chat selecionado para:', conversa.email_cliente)
     setSelectedChat(conversa)
   }
 
-  // CORREÇÃO: Lógica de classes CSS mais específica e hierárquica
+  // CORREÇÃO: Lógica de classes CSS melhorada com verificação de processamento
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
-    const naoLido = conversa.tem_mensagens_nao_lidas
+    const processandoLeitura = estaProcessandoLeitura(conversa)
+    const naoLido = conversa.tem_mensagens_nao_lidas && !processandoLeitura
     
     console.log(`🎨 [GestorChatList] Classes para ${conversa.email_cliente}:`, {
       selecionado,
       naoLido,
+      processandoLeitura,
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
       selectedChatEmail: selectedChat?.email_cliente
     })
     
-    // HIERARQUIA CORRETA: 1º Selecionado (AZUL), 2º Não Lido (VERMELHO), 3º Padrão (CINZA)
+    // HIERARQUIA: 1º Selecionado (AZUL), 2º Processando (AMARELO), 3º Não Lido (VERMELHO), 4º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [GestorChatList] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
+    }
+    
+    if (processandoLeitura) {
+      console.log(`🟡 [GestorChatList] Card PROCESSANDO LEITURA (AMARELO): ${conversa.email_cliente}`)
+      return `${baseClasses} !bg-yellow-900/40 !border-yellow-500 hover:!bg-yellow-900/50 shadow-yellow-500/30`
     }
     
     if (naoLido) {
@@ -225,7 +246,6 @@ export function GestorChatList() {
           )}
         </div>
         
-        {/* Contador de resultados */}
         <div className="mb-4 text-sm text-gray-400">
           Mostrando {totalFiltradas} de {totalConversas} conversas
           {hasActiveFilters && (
@@ -241,7 +261,6 @@ export function GestorChatList() {
           )}
         </div>
         
-        {/* Busca */}
         <div className="relative mb-4">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
           <Input
@@ -252,9 +271,7 @@ export function GestorChatList() {
           />
         </div>
 
-        {/* Filtros */}
         <div className="flex gap-3">
-          {/* Filtro de não lidas */}
           <Button
             variant={showOnlyUnread ? "default" : "ghost"}
             size="sm"
@@ -269,7 +286,6 @@ export function GestorChatList() {
             {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
           </Button>
 
-          {/* Filtro por status */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-48 h-9 bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Filtrar por status" />
@@ -306,94 +322,113 @@ export function GestorChatList() {
             </p>
           </div>
         ) : (
-          conversasFiltradas.map((conversa, index) => (
-            <Card 
-              key={`gestor-conversa-${conversa.email_cliente}-${conversa.email_gestor}-${index}`}
-              className={getCardClasses(conversa)}
-              onClick={() => handleSelectChat(conversa)}
-            >
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between">
-                  {/* Lado esquerdo - Informações do cliente */}
-                  <div className="flex items-start gap-4 flex-1 min-w-0">
-                    {/* Avatar */}
-                    <div className={`h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14 ${
-                      isSelected(conversa) 
-                        ? 'bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400'
-                        : conversa.tem_mensagens_nao_lidas 
-                          ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
-                          : 'bg-gradient-to-br from-blue-800 to-blue-900'
-                    }`}>
-                      <User className={`h-8 w-8 md:h-7 md:w-7 ${
-                        isSelected(conversa)
-                          ? 'text-blue-200'
-                          : conversa.tem_mensagens_nao_lidas ? 'text-red-200' : 'text-blue-300'
-                      }`} />
-                    </div>
-                    
-                    {/* Informações */}
-                    <div className="flex-1 min-w-0">
-                      {/* Nome e timestamp */}
-                      <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
-                        <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${
-                          isSelected(conversa)
-                            ? 'text-blue-100'
-                            : conversa.tem_mensagens_nao_lidas ? 'text-red-100' : 'text-white'
-                        }`}>
-                          {conversa.nome_cliente}
-                          {conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && (
-                            <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
-                          )}
-                        </h3>
-                        <span className="text-sm text-gray-400 flex-shrink-0">
-                          {formatLastMessageTime(conversa.ultima_mensagem_data)}
-                        </span>
-                      </div>
-                      
-                      {/* Status */}
-                      <div className="mb-4">
-                        <Badge 
-                          className={`text-base font-semibold px-4 py-2 ${getStatusBadgeVariant(conversa.status_campanha)}`}
-                        >
-                          {conversa.status_campanha}
-                        </Badge>
-                      </div>
-                      
-                      {/* Última mensagem */}
-                      <p className={`text-sm line-clamp-2 leading-relaxed ${
-                        isSelected(conversa)
-                          ? 'text-blue-200'
-                          : conversa.tem_mensagens_nao_lidas ? 'text-gray-200 font-medium' : 'text-gray-400'
+          conversasFiltradas.map((conversa, index) => {
+            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
+            const processandoLeitura = estaProcessandoLeitura(conversa)
+            const mostrarBadgeNaoLidas = conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && !processandoLeitura
+            
+            return (
+              <Card 
+                key={chaveUnica}
+                className={getCardClasses(conversa)}
+                onClick={() => handleSelectChat(conversa)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    {/* Lado esquerdo - Informações do cliente */}
+                    <div className="flex items-start gap-4 flex-1 min-w-0">
+                      {/* Avatar */}
+                      <div className={`h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14 ${
+                        isSelected(conversa) 
+                          ? 'bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400'
+                          : processandoLeitura
+                            ? 'bg-gradient-to-br from-yellow-700 to-yellow-800 ring-2 ring-yellow-500'
+                            : (conversa.tem_mensagens_nao_lidas && !processandoLeitura)
+                              ? 'bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500' 
+                              : 'bg-gradient-to-br from-blue-800 to-blue-900'
                       }`}>
-                        {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
-                      </p>
+                        <User className={`h-8 w-8 md:h-7 md:w-7 ${
+                          isSelected(conversa)
+                            ? 'text-blue-200'
+                            : processandoLeitura
+                              ? 'text-yellow-200'
+                              : (conversa.tem_mensagens_nao_lidas && !processandoLeitura) ? 'text-red-200' : 'text-blue-300'
+                        }`} />
+                      </div>
+                      
+                      {/* Informações */}
+                      <div className="flex-1 min-w-0">
+                        {/* Nome e timestamp */}
+                        <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
+                          <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${
+                            isSelected(conversa)
+                              ? 'text-blue-100'
+                              : processandoLeitura
+                                ? 'text-yellow-100'
+                                : (conversa.tem_mensagens_nao_lidas && !processandoLeitura) ? 'text-red-100' : 'text-white'
+                          }`}>
+                            {conversa.nome_cliente}
+                            {(conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !processandoLeitura) && (
+                              <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
+                            )}
+                            {processandoLeitura && (
+                              <span className="ml-2 text-yellow-400 text-xl animate-spin">⟳</span>
+                            )}
+                          </h3>
+                          <span className="text-sm text-gray-400 flex-shrink-0">
+                            {formatLastMessageTime(conversa.ultima_mensagem_data)}
+                          </span>
+                        </div>
+                        
+                        {/* Status */}
+                        <div className="mb-4">
+                          <Badge 
+                            className={`text-base font-semibold px-4 py-2 ${getStatusBadgeVariant(conversa.status_campanha)}`}
+                          >
+                            {conversa.status_campanha}
+                          </Badge>
+                        </div>
+                        
+                        {/* Última mensagem */}
+                        <p className={`text-sm line-clamp-2 leading-relaxed ${
+                          isSelected(conversa)
+                            ? 'text-blue-200'
+                            : processandoLeitura
+                              ? 'text-yellow-200 font-medium'
+                              : (conversa.tem_mensagens_nao_lidas && !processandoLeitura) ? 'text-gray-200 font-medium' : 'text-gray-400'
+                        }`}>
+                          {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  
-                  {/* Lado direito - Indicadores */}
-                  <div className="flex flex-col items-end gap-3 ml-4 flex-shrink-0">
-                    {/* Badge de mensagens não lidas */}
-                    {conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && (
-                      <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white animate-pulse">
-                        {conversa.mensagens_nao_lidas}
-                      </Badge>
-                    )}
                     
-                    {/* Botão de chat */}
-                    <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
-                      isSelected(conversa)
-                        ? 'bg-blue-600 hover:bg-blue-700'
-                        : conversa.tem_mensagens_nao_lidas 
-                          ? 'bg-red-600 hover:bg-red-700' 
-                          : 'bg-blue-600 hover:bg-blue-700'
-                    }`}>
-                      <ArrowRight className="h-6 w-6 text-white" />
+                    {/* Lado direito - Indicadores */}
+                    <div className="flex flex-col items-end gap-3 ml-4 flex-shrink-0">
+                      {/* Badge de mensagens não lidas */}
+                      {mostrarBadgeNaoLidas && (
+                        <Badge variant="destructive" className="text-sm font-bold px-3 py-2 min-w-[32px] h-8 flex items-center justify-center bg-red-600 text-white animate-pulse">
+                          {conversa.mensagens_nao_lidas}
+                        </Badge>
+                      )}
+                      
+                      {/* Botão de chat */}
+                      <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
+                        isSelected(conversa)
+                          ? 'bg-blue-600 hover:bg-blue-700'
+                          : processandoLeitura
+                            ? 'bg-yellow-600 hover:bg-yellow-700'
+                            : (conversa.tem_mensagens_nao_lidas && !processandoLeitura)
+                              ? 'bg-red-600 hover:bg-red-700' 
+                              : 'bg-blue-600 hover:bg-blue-700'
+                      }`}>
+                        <ArrowRight className="h-6 w-6 text-white" />
+                      </div>
                     </div>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </CardContent>
+              </Card>
+            )
+          })
         )}
       </div>
     </div>

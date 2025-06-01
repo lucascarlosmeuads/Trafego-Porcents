@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -43,7 +44,6 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
         .select('*')
         .order('created_at', { ascending: true })
 
-      // Filtrar baseado no tipo de usuário
       if (isCliente) {
         query = query.eq('email_cliente', user.email)
       } else if (isGestor && emailCliente) {
@@ -83,7 +83,6 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       throw new Error('Email do cliente ou gestor não definido')
     }
 
-    // Buscar status atual da campanha
     const { data: clienteData } = await supabase
       .from('todos_clientes')
       .select('status_campanha, id')
@@ -156,14 +155,12 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       
       console.log('✅ [useChatMessages] Mensagens marcadas como lidas com sucesso')
       
-      // Recarregar mensagens para atualizar estado
       carregarMensagens()
     } catch (err) {
       console.error('❌ [useChatMessages] Erro ao marcar mensagens como lidas:', err)
     }
   }, [user?.email, isCliente, isGestor, isAdmin, emailCliente, emailGestor, carregarMensagens])
 
-  // Configurar realtime
   useEffect(() => {
     if (!user?.email) return
 
@@ -213,7 +210,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
       
       console.log('🔍 [useChatConversas] Carregando conversas para:', user.email, 'Tipo:', isGestor ? 'Gestor' : 'Admin')
       
-      // Query otimizada para buscar clientes e suas últimas mensagens
       let clientesQuery = supabase
         .from('todos_clientes')
         .select('email_cliente, nome_cliente, status_campanha, email_gestor')
@@ -237,10 +233,11 @@ export function useChatConversas(gestorFiltro?: string | null) {
         return
       }
 
-      // CORREÇÃO: Query única para buscar todas as últimas mensagens por conversa
+      // CORREÇÃO: Aguardar um pouco antes de buscar mensagens para garantir que atualizações foram aplicadas
+      await new Promise(resolve => setTimeout(resolve, 200))
+
       const conversasComMensagens = await Promise.all(
         clientes.map(async (cliente) => {
-          // Buscar última mensagem específica para este cliente/gestor
           const { data: ultimaMensagem } = await supabase
             .from('chat_mensagens')
             .select('conteudo, created_at')
@@ -250,7 +247,6 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .limit(1)
             .maybeSingle()
 
-          // Contar mensagens não lidas específicas para este cliente/gestor
           const { count: naoLidasCount } = await supabase
             .from('chat_mensagens')
             .select('*', { count: 'exact', head: true })
@@ -277,13 +273,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
         })
       )
 
-      // Ordenar: primeiro as com mensagens não lidas, depois por última atividade
       const conversasOrdenadas = conversasComMensagens.sort((a, b) => {
-        // Primeiro critério: mensagens não lidas
         if (a.tem_mensagens_nao_lidas && !b.tem_mensagens_nao_lidas) return -1
         if (!a.tem_mensagens_nao_lidas && b.tem_mensagens_nao_lidas) return 1
         
-        // Segundo critério: última atividade
         const dataA = new Date(a.ultima_mensagem_data).getTime()
         const dataB = new Date(b.ultima_mensagem_data).getTime()
         return dataB - dataA
@@ -301,7 +294,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
   useEffect(() => {
     carregarConversas()
 
-    // CORREÇÃO: Configurar realtime com menor delay para atualizações mais rápidas
+    // CORREÇÃO: Sistema de realtime melhorado com debounce mais agressivo para recarregamento
     const channel = supabase
       .channel('conversas-changes')
       .on(
@@ -313,10 +306,11 @@ export function useChatConversas(gestorFiltro?: string | null) {
         },
         () => {
           console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens, recarregando conversas')
-          // Debounce para evitar múltiplas chamadas
+          
+          // CORREÇÃO: Debounce de 800ms para garantir que atualizações sejam refletidas
           setTimeout(() => {
             carregarConversas()
-          }, 300)
+          }, 800)
         }
       )
       .subscribe()
