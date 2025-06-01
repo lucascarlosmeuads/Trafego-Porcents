@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, CheckCircle, AlertTriangle, CircleDollarSign, XCircle, Clock, CreditCard } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
+import { formatCurrency } from '@/lib/utils'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
@@ -120,7 +121,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
               <CircleDollarSign className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">R$ {totalPendente.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalPendente)}</div>
               <p className="text-xs text-contrast-secondary">
                 {clientesPendentes.length} comissões pendentes
               </p>
@@ -133,7 +134,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
               <CircleDollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</div>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</div>
               <p className="text-xs text-contrast-secondary">
                 {clientesPagos.length} comissões pagas
               </p>
@@ -169,7 +170,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{clientesParaPagar.length}</div>
               <p className="text-xs text-contrast-secondary">
-                R$ {(clientesParaPagar.length * 60).toFixed(2)} aguardando pagamento
+                {formatCurrency(clientesParaPagar.length * 60)} aguardando pagamento
               </p>
             </CardContent>
           </Card>
@@ -182,7 +183,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{clientesJaPagos.length}</div>
               <p className="text-xs text-contrast-secondary">
-                R$ {(clientesJaPagos.length * 60).toFixed(2)} já pagos pelo admin
+                {formatCurrency(clientesJaPagos.length * 60)} já pagos pelo admin
               </p>
             </CardContent>
           </Card>

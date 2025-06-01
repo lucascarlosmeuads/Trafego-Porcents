@@ -1,9 +1,9 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DollarSign, FileText, Camera, TrendingUp, Calendar, Target } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import type { BriefingCliente, VendaCliente, ArquivoCliente } from '@/hooks/useClienteData'
+import { formatCurrency } from '@/lib/utils'
 
 interface ClienteDashboardMetricsProps {
   cliente: Cliente | null
@@ -31,7 +31,7 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">R$ {totalVendas.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalVendas)}</div>
             <p className="text-xs text-muted-foreground">
               {vendasCount} {vendasCount === 1 ? 'venda registrada' : 'vendas registradas'}
             </p>
@@ -57,9 +57,9 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">R$ {totalInvestido.toFixed(2)}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalInvestido)}</div>
             <p className="text-xs text-muted-foreground">
-              {diasCampanha} {diasCampanha === 1 ? 'dia' : 'dias'} × R$ {investimentoDiario}/dia
+              {diasCampanha} {diasCampanha === 1 ? 'dia' : 'dias'} × {formatCurrency(investimentoDiario)}/dia
             </p>
           </CardContent>
         </Card>
@@ -89,7 +89,7 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
                 {briefing.investimento_diario && (
                   <div className="flex items-center justify-between">
                     <span className="text-sm">Investimento diário:</span>
-                    <span className="text-sm font-medium">R$ {briefing.investimento_diario}</span>
+                    <span className="text-sm font-medium">{formatCurrency(briefing.investimento_diario)}</span>
                   </div>
                 )}
                 {briefing.comissao_aceita && (

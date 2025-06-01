@@ -2,6 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, CheckCircle, AlertTriangle, CircleDollarSign, XCircle } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
+import { formatCurrency } from '@/lib/utils'
 
 interface DashboardMetricsProps {
   clientes: Cliente[]
@@ -105,7 +106,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
           <CircleDollarSign className="h-4 w-4 text-red-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-red-600">R$ {totalPendente.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-red-600">{formatCurrency(totalPendente)}</div>
           <p className="text-xs text-contrast-secondary">
             {clientesPendentes.length} comissões pendentes
           </p>
@@ -118,7 +119,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
           <CircleDollarSign className="h-4 w-4 text-green-600" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold text-green-600">R$ {totalRecebido.toFixed(2)}</div>
+          <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</div>
           <p className="text-xs text-contrast-secondary">
             {clientesPagos.length} comissões pagas
           </p>

@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -5,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Save, X, Edit, DollarSign, CheckCircle, XCircle } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
+import { formatCurrency } from '@/lib/utils'
 
 interface ComissaoButtonProps {
   cliente: Cliente
@@ -115,7 +117,7 @@ export function ComissaoButton({
                 <TooltipContent>
                   <div className="text-sm">
                     <p><strong>Status:</strong> {cliente.comissao || 'Pendente'}</p>
-                    <p><strong>Valor:</strong> R$ {valorComissao.toFixed(2)}</p>
+                    <p><strong>Valor:</strong> {formatCurrency(valorComissao)}</p>
                     <p className="text-xs mt-1">
                       {isPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}
                     </p>
@@ -135,7 +137,7 @@ export function ComissaoButton({
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Editar valor: R$ {valorComissao.toFixed(2)}</p>
+                  <p>Editar valor: {formatCurrency(valorComissao)}</p>
                 </TooltipContent>
               </Tooltip>
             </>
@@ -221,7 +223,7 @@ export function ComissaoButton({
             onClick={() => onComissionValueEdit(clienteId, valorComissao)}
             className="h-6 text-xs"
           >
-            R$ {valorComissao.toFixed(2)}
+            {formatCurrency(valorComissao)}
           </Button>
         </>
       )}

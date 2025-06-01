@@ -1,6 +1,8 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp, DollarSign, Calendar } from 'lucide-react'
 import { SellerMetrics as SellerMetricsType } from '@/hooks/useSellerData'
+import { formatCurrency } from '@/lib/utils'
 
 interface SellerMetricsProps {
   metrics: SellerMetricsType
@@ -104,7 +106,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {(metrics.clientsToday * comissaoPorCliente).toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsToday * comissaoPorCliente)}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsToday} cliente{metrics.clientsToday !== 1 ? 's' : ''} hoje
               </p>
@@ -117,7 +119,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {(metrics.clientsThisWeek * comissaoPorCliente).toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisWeek * comissaoPorCliente)}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisWeek} cliente{metrics.clientsThisWeek !== 1 ? 's' : ''} esta semana
               </p>
@@ -130,7 +132,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {(metrics.clientsThisMonth * comissaoPorCliente).toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisMonth * comissaoPorCliente)}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisMonth} cliente{metrics.clientsThisMonth !== 1 ? 's' : ''} este mês
               </p>
@@ -143,7 +145,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {(metrics.clientsThisYear * comissaoPorCliente).toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisYear * comissaoPorCliente)}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisYear} cliente{metrics.clientsThisYear !== 1 ? 's' : ''} no total
               </p>
@@ -165,7 +167,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {metrics.salesToday.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.salesToday)}</div>
               <p className="text-xs text-muted-foreground">
                 em comissões pagas hoje
               </p>
@@ -178,7 +180,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {metrics.salesYesterday.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.salesYesterday)}</div>
               <p className="text-xs text-muted-foreground">
                 em comissões pagas ontem
               </p>
@@ -191,7 +193,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {metrics.salesThisMonth.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.salesThisMonth)}</div>
               <p className="text-xs text-muted-foreground">
                 em comissões pagas este mês
               </p>
@@ -204,7 +206,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">R$ {metrics.salesAllTime.toFixed(2)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(metrics.salesAllTime)}</div>
               <p className="text-xs text-muted-foreground">
                 total de comissões pagas
               </p>
