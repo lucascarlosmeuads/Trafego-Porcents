@@ -1,9 +1,9 @@
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Save, X, Edit, ExternalLink } from 'lucide-react'
+import { Save, X, Edit, ExternalLink, Upload } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 
@@ -19,6 +19,7 @@ interface ClienteRowSiteProps {
   onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onSitePagoChange?: (clienteId: string, newValue: boolean) => void
+  compact?: boolean
 }
 
 export function ClienteRowSite({
@@ -32,7 +33,8 @@ export function ClienteRowSite({
   onLinkEdit,
   onLinkSave,
   onLinkCancel,
-  onSitePagoChange
+  onSitePagoChange,
+  compact = false
 }: ClienteRowSiteProps) {
   const [siteLinkInput, setSiteLinkInput] = useState('')
   const [updatingSitePago, setUpdatingSitePago] = useState(false)
@@ -119,6 +121,101 @@ export function ClienteRowSite({
     }
   }
 
+  if (compact) {
+    return (
+      <TooltipProvider>
+        <div className="flex items-center gap-1">
+          {isEditingSiteLink ? (
+            <>
+              <Input
+                value={siteLinkInput}
+                onChange={(e) => setSiteLinkInput(e.target.value)}
+                placeholder="Site"
+                className="h-6 w-20 bg-background text-white text-xs"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSiteLinkSave()
+                  }
+                  if (e.key === 'Escape') {
+                    onLinkCancel()
+                    setSiteLinkInput('')
+                  }
+                }}
+              />
+              <Button 
+                size="sm" 
+                onClick={handleSiteLinkSave}
+                className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700"
+              >
+                <Save className="h-2 w-2" />
+              </Button>
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={() => {
+                  onLinkCancel()
+                  setSiteLinkInput('')
+                }}
+                className="h-6 w-6 p-0"
+              >
+                <X className="h-2 w-2" />
+              </Button>
+            </>
+          ) : (
+            <>
+              {linkSite && linkSite.trim() !== '' ? (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openSiteLink(linkSite)}
+                      className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700 border-green-600"
+                    >
+                      <ExternalLink className="h-2 w-2" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Ver Site: {linkSite}</p>
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setSiteLinkInput('')
+                        onLinkEdit(clienteId, 'link_site', '')
+                      }}
+                      className="h-6 w-6 p-0"
+                    >
+                      <Upload className="h-2 w-2" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Adicionar Site</p>
+                  </TooltipContent>
+                </Tooltip>
+              )}
+              
+              {showSitePagoCheckbox && (
+                <Checkbox
+                  checked={sitePago || false}
+                  onCheckedChange={handleSitePagoToggle}
+                  disabled={updatingSitePago}
+                  className="h-3 w-3 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                />
+              )}
+            </>
+          )}
+        </div>
+      </TooltipProvider>
+    )
+  }
+
+  
   return (
     <div className="flex items-center gap-2">
       {isEditingSiteLink ? (

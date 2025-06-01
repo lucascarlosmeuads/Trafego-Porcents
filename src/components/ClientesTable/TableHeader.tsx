@@ -1,5 +1,7 @@
 
 import { TableHead, TableHeader as TableHeaderComponent, TableRow } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Eye, Upload, Hash, Mail, User } from 'lucide-react'
 
 interface TableHeaderProps {
   isAdmin?: boolean
@@ -8,23 +10,80 @@ interface TableHeaderProps {
 
 export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableHeaderProps) {
   return (
-    <TableHeaderComponent>
-      <TableRow className="border-border hover:bg-transparent">
-        <TableHead className="text-white font-semibold">Data Venda</TableHead>
-        <TableHead className="text-white font-semibold">Nome Cliente</TableHead>
-        <TableHead className="text-white font-semibold">Telefone</TableHead>
-        <TableHead className="text-white font-semibold">Email Cliente</TableHead>
-        {(isAdmin || showEmailGestor) && (
-          <TableHead className="text-white font-semibold">Email Gestor</TableHead>
-        )}
-        <TableHead className="text-white font-semibold">Status Campanha</TableHead>
-        <TableHead className="text-white font-semibold">Status Site</TableHead>
-        <TableHead className="text-white font-semibold">Data Limite</TableHead>
-        <TableHead className="text-white font-semibold">Materiais</TableHead>
-        <TableHead className="text-white font-semibold">Site</TableHead>
-        <TableHead className="text-white font-semibold">Número BM</TableHead>
-        <TableHead className="text-white font-semibold">Comissão</TableHead>
-      </TableRow>
-    </TableHeaderComponent>
+    <TooltipProvider>
+      <TableHeaderComponent>
+        <TableRow className="border-border hover:bg-transparent">
+          <TableHead className="text-white font-semibold w-24 text-xs">Data</TableHead>
+          <TableHead className="text-white font-semibold w-32 text-xs">Cliente</TableHead>
+          <TableHead className="text-white font-semibold w-24 text-xs">Telefone</TableHead>
+          <TableHead className="text-white font-semibold w-12 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <User className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Email Cliente</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          {(isAdmin || showEmailGestor) && (
+            <TableHead className="text-white font-semibold w-12 text-xs">
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex items-center justify-center">
+                    <Mail className="h-3 w-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Email Gestor</p>
+                </TooltipContent>
+              </Tooltip>
+            </TableHead>
+          )}
+          <TableHead className="text-white font-semibold w-28 text-xs">Status</TableHead>
+          <TableHead className="text-white font-semibold w-24 text-xs">Site</TableHead>
+          <TableHead className="text-white font-semibold w-20 text-xs">Limite</TableHead>
+          <TableHead className="text-white font-semibold w-12 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Eye className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Materiais</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-12 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Upload className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Site</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-12 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Hash className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Número BM</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-16 text-xs">Comissão</TableHead>
+        </TableRow>
+      </TableHeaderComponent>
+    </TooltipProvider>
   )
 }

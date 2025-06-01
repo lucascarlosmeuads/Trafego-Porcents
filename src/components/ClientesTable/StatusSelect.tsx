@@ -1,49 +1,50 @@
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Badge } from '@/components/ui/badge'
 import { Loader2 } from 'lucide-react'
-import { STATUS_CAMPANHA, getStatusDisplayLabel, type StatusCampanha } from '@/lib/supabase'
+import { STATUS_CAMPANHA, type StatusCampanha } from '@/lib/supabase'
 
 interface StatusSelectProps {
   value: StatusCampanha
-  onValueChange: (value: string) => void
+  onValueChange: (value: StatusCampanha) => void
   disabled?: boolean
   isUpdating?: boolean
   getStatusColor: (status: string) => string
+  compact?: boolean
 }
 
-export function StatusSelect({
-  value,
-  onValueChange,
-  disabled = false,
-  isUpdating = false,
-  getStatusColor
+export function StatusSelect({ 
+  value, 
+  onValueChange, 
+  disabled = false, 
+  isUpdating = false, 
+  getStatusColor,
+  compact = false
 }: StatusSelectProps) {
   return (
-    <Select 
-      value={value}
-      onValueChange={onValueChange}
-      disabled={disabled}
-    >
-      <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
+    <Select value={value} onValueChange={onValueChange} disabled={disabled || isUpdating}>
+      <SelectTrigger className={`${compact ? 'h-6 text-xs' : 'h-8'} bg-background text-white border-border`}>
         <SelectValue>
-          {isUpdating ? (
-            <div className="flex items-center gap-2">
-              <Loader2 className="w-3 h-3 animate-spin" />
-              <span>Atualizando...</span>
-            </div>
-          ) : (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(value)}`}>
-              {getStatusDisplayLabel(value)}
-            </span>
-          )}
+          <div className="flex items-center gap-1">
+            {isUpdating && <Loader2 className="h-3 w-3 animate-spin" />}
+            <Badge 
+              variant="outline" 
+              className={`${getStatusColor(value)} ${compact ? 'text-xs px-1 py-0' : 'text-xs'} border-0`}
+            >
+              {compact ? value.substring(0, 8) + (value.length > 8 ? '...' : '') : value}
+            </Badge>
+          </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="bg-card border-border z-50">
-        {STATUS_CAMPANHA.map(status => (
-          <SelectItem key={status} value={status}>
-            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
-              {getStatusDisplayLabel(status)}
-            </span>
+      <SelectContent className="bg-card border-border max-h-60 overflow-y-auto">
+        {STATUS_CAMPANHA.map((status) => (
+          <SelectItem key={status} value={status} className="text-card-foreground">
+            <Badge 
+              variant="outline" 
+              className={`${getStatusColor(status)} text-xs border-0`}
+            >
+              {status}
+            </Badge>
           </SelectItem>
         ))}
       </SelectContent>

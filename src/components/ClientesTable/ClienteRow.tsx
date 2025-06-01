@@ -1,7 +1,8 @@
 
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Eye } from 'lucide-react'
+import { Eye, User, Mail } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
@@ -81,138 +82,159 @@ export function ClienteRow({
   onSitePagoChange
 }: ClienteRowProps) {
   const formatDate = (dateString: string) => {
-    if (!dateString || dateString.trim() === '') return 'Não informado'
+    if (!dateString || dateString.trim() === '') return 'N/A'
     try {
       const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR')
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
     } catch {
-      return dateString
+      return 'N/A'
     }
   }
 
   return (
-    <TableRow 
-      className="border-border hover:bg-muted/20" 
-      style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
-    >
-      <TableCell className="text-white text-sm">
-        {formatDate(cliente.data_venda || cliente.created_at)}
-      </TableCell>
-
-      <TableCell className="text-white text-sm max-w-[150px]">
-        <ClienteRowName 
-          clienteId={cliente.id!.toString()}
-          nomeCliente={cliente.nome_cliente || ''}
-        />
-      </TableCell>
-
-      <TableCell className="text-white text-sm">
-        <ClienteRowPhone 
-          telefone={cliente.telefone || ''}
-          nomeCliente={cliente.nome_cliente || ''}
-        />
-      </TableCell>
-
-      <TableCell className="text-white text-sm max-w-[180px]">
-        <div className="truncate" title={cliente.email_cliente || ''}>
-          {cliente.email_cliente || 'Não informado'}
-        </div>
-      </TableCell>
-
-      {(isAdmin || showEmailGestor) && (
-        <TableCell className="text-white text-sm max-w-[180px]">
-          <div className="truncate" title={cliente.email_gestor || ''}>
-            {cliente.email_gestor || 'Não informado'}
-          </div>
+    <TooltipProvider>
+      <TableRow 
+        className="border-border hover:bg-muted/20" 
+        style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
+      >
+        <TableCell className="text-white text-xs p-2">
+          {formatDate(cliente.data_venda || cliente.created_at)}
         </TableCell>
-      )}
 
-      <TableCell>
-        <StatusSelect
-          value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
-          onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
-          disabled={updatingStatus === cliente.id!.toString()}
-          isUpdating={updatingStatus === cliente.id!.toString()}
-          getStatusColor={getStatusColor}
-        />
-      </TableCell>
+        <TableCell className="text-white text-xs p-2 max-w-[120px]">
+          <ClienteRowName 
+            clienteId={cliente.id!.toString()}
+            nomeCliente={cliente.nome_cliente || ''}
+          />
+        </TableCell>
 
-      <TableCell>
-        <SiteStatusSelect
-          value={cliente.site_status || 'pendente'}
-          onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
-          disabled={updatingStatus === cliente.id!.toString()}
-          isUpdating={updatingStatus === cliente.id!.toString()}
-        />
-      </TableCell>
+        <TableCell className="text-white text-xs p-2">
+          <ClienteRowPhone 
+            telefone={cliente.telefone || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+          />
+        </TableCell>
 
-      <ClienteRowDataLimite
-        dataVenda={cliente.data_venda || ''}
-        createdAt={cliente.created_at}
-        statusCampanha={cliente.status_campanha || 'Cliente Novo'}
-        nomeCliente={cliente.nome_cliente || ''}
-      />
+        <TableCell className="text-white text-xs p-2">
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center justify-center">
+                <User className="h-3 w-3 text-blue-400" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs break-all">{cliente.email_cliente || 'Não informado'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TableCell>
 
-      <TableCell>
-        <BriefingMaterialsModal 
-          emailCliente={cliente.email_cliente || ''}
+        {(isAdmin || showEmailGestor) && (
+          <TableCell className="text-white text-xs p-2">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Mail className="h-3 w-3 text-green-400" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs break-all">{cliente.email_gestor || 'Não informado'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+        )}
+
+        <TableCell className="p-2">
+          <StatusSelect
+            value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
+            onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
+            disabled={updatingStatus === cliente.id!.toString()}
+            isUpdating={updatingStatus === cliente.id!.toString()}
+            getStatusColor={getStatusColor}
+            compact={true}
+          />
+        </TableCell>
+
+        <TableCell className="p-2">
+          <SiteStatusSelect
+            value={cliente.site_status || 'pendente'}
+            onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
+            disabled={updatingStatus === cliente.id!.toString()}
+            isUpdating={updatingStatus === cliente.id!.toString()}
+            compact={true}
+          />
+        </TableCell>
+
+        <ClienteRowDataLimite
+          dataVenda={cliente.data_venda || ''}
+          createdAt={cliente.created_at}
+          statusCampanha={cliente.status_campanha || 'Cliente Novo'}
           nomeCliente={cliente.nome_cliente || ''}
-          trigger={
-            <Button
-              size="sm"
-              variant="outline"
-              className="h-8 bg-blue-600 hover:bg-blue-700 border-blue-600 text-white"
-            >
-              <Eye className="h-3 w-3 mr-1" />
-              Ver materiais
-            </Button>
-          }
+          compact={true}
         />
-      </TableCell>
 
-      <TableCell>
-        <ClienteRowSite
-          clienteId={cliente.id!.toString()}
-          linkSite={cliente.link_site || ''}
-          sitePago={cliente.site_pago || false}
-          showSitePagoCheckbox={showSitePagoCheckbox}
-          editingLink={editingLink}
-          linkValue={linkValue}
-          setLinkValue={setLinkValue}
-          onLinkEdit={onLinkEdit}
-          onLinkSave={onLinkSave}
-          onLinkCancel={onLinkCancel}
-          onSitePagoChange={onSitePagoChange}
-        />
-      </TableCell>
+        <TableCell className="p-2">
+          <BriefingMaterialsModal 
+            emailCliente={cliente.email_cliente || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-6 w-6 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
+              >
+                <Eye className="h-3 w-3" />
+              </Button>
+            }
+          />
+        </TableCell>
 
-      <TableCell>
-        <ClienteRowBM
-          clienteId={cliente.id!.toString()}
-          numeroBM={cliente.numero_bm || ''}
-          editingBM={editingBM}
-          bmValue={bmValue}
-          setBmValue={setBmValue}
-          onBMEdit={onBMEdit}
-          onBMSave={onBMSave}
-          onBMCancel={onBMCancel}
-        />
-      </TableCell>
+        <TableCell className="p-2">
+          <ClienteRowSite
+            clienteId={cliente.id!.toString()}
+            linkSite={cliente.link_site || ''}
+            sitePago={cliente.site_pago || false}
+            showSitePagoCheckbox={showSitePagoCheckbox}
+            editingLink={editingLink}
+            linkValue={linkValue}
+            setLinkValue={setLinkValue}
+            onLinkEdit={onLinkEdit}
+            onLinkSave={onLinkSave}
+            onLinkCancel={onLinkCancel}
+            onSitePagoChange={onSitePagoChange}
+            compact={true}
+          />
+        </TableCell>
 
-      <TableCell>
-        <ComissaoButton
-          cliente={cliente}
-          isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
-          updatingComission={updatingComission}
-          editingComissionValue={editingComissionValue}
-          comissionValueInput={comissionValueInput}
-          setComissionValueInput={setComissionValueInput}
-          onComissionToggle={onComissionToggle}
-          onComissionValueEdit={onComissionValueEdit}
-          onComissionValueSave={onComissionValueSave}
-          onComissionValueCancel={onComissionValueCancel}
-        />
-      </TableCell>
-    </TableRow>
+        <TableCell className="p-2">
+          <ClienteRowBM
+            clienteId={cliente.id!.toString()}
+            numeroBM={cliente.numero_bm || ''}
+            editingBM={editingBM}
+            bmValue={bmValue}
+            setBmValue={setBmValue}
+            onBMEdit={onBMEdit}
+            onBMSave={onBMSave}
+            onBMCancel={onBMCancel}
+            compact={true}
+          />
+        </TableCell>
+
+        <TableCell className="p-2">
+          <ComissaoButton
+            cliente={cliente}
+            isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
+            updatingComission={updatingComission}
+            editingComissionValue={editingComissionValue}
+            comissionValueInput={comissionValueInput}
+            setComissionValueInput={setComissionValueInput}
+            onComissionToggle={onComissionToggle}
+            onComissionValueEdit={onComissionValueEdit}
+            onComissionValueSave={onComissionValueSave}
+            onComissionValueCancel={onComissionValueCancel}
+            compact={true}
+          />
+        </TableCell>
+      </TableRow>
+    </TooltipProvider>
   )
 }
