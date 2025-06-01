@@ -66,8 +66,9 @@ export function ManagerSidebar({
     <div 
       className={`
         ${isCollapsed ? 'w-16' : 'w-64'} 
-        bg-card border-r border-border h-screen fixed left-0 top-0 z-40 
+        bg-card border-r border-border h-screen 
         transition-all duration-300 ease-in-out overflow-y-auto flex flex-col
+        flex-shrink-0
       `}
     >
       {/* Toggle Button */}

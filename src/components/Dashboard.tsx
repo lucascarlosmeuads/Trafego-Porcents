@@ -91,7 +91,7 @@ export function Dashboard() {
   if (isAdmin || isGestor) {
     console.log('✅ [Dashboard] Direcionando para Admin/Gestor Dashboard')
     return (
-      <div className="min-h-screen flex w-full">
+      <div className="min-h-screen flex w-full bg-background">
         <ManagerSidebar
           selectedManager={selectedManager}
           onManagerSelect={setSelectedManager}
@@ -99,22 +99,24 @@ export function Dashboard() {
           onTabChange={setActiveTab}
         />
         
-        <div className="flex-1 p-6 overflow-auto">
-          <Suspense fallback={<LoadingFallback />}>
-            {/* Admin Dashboard */}
-            {isAdmin && (
-              <LazyAdminDashboard
-                selectedManager={selectedManager}
-                onManagerSelect={setSelectedManager}
-                activeTab={activeTab}
-              />
-            )}
-            
-            {/* Gestor Dashboard */}
-            {isGestor && (
-              <LazyGestorDashboard activeTab={activeTab} />
-            )}
-          </Suspense>
+        <div className="flex-1 overflow-auto">
+          <div className="p-6 w-full max-w-full">
+            <Suspense fallback={<LoadingFallback />}>
+              {/* Admin Dashboard */}
+              {isAdmin && (
+                <LazyAdminDashboard
+                  selectedManager={selectedManager}
+                  onManagerSelect={setSelectedManager}
+                  activeTab={activeTab}
+                />
+              )}
+              
+              {/* Gestor Dashboard */}
+              {isGestor && (
+                <LazyGestorDashboard activeTab={activeTab} />
+              )}
+            </Suspense>
+          </div>
         </div>
       </div>
     )

@@ -59,7 +59,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'clientes':
       default:
         return (
-          <div className="space-y-4 max-w-full overflow-hidden">
+          <div className="space-y-4 w-full">
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
             {selectedManager !== '__GESTORES__' && (
               <div className="bg-card border rounded-lg p-4">
@@ -72,7 +72,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
             
             {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <div className="w-full overflow-auto">
+            <div className="w-full">
               <ClientesTable selectedManager={selectedManager} />
             </div>
           </div>
@@ -81,7 +81,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }
 
   return (
-    <div className="space-y-6 w-full max-w-full">
+    <div className="w-full">
       {renderContent()}
     </div>
   )
