@@ -6,17 +6,17 @@ export function useComissaoMetrics(clientes: Cliente[], solicitacoesPagas: strin
   const metrics = useMemo(() => {
     console.log('📊 [useComissaoMetrics] Calculando métricas para', clientes.length, 'clientes')
     
-    // Comissões pendentes - todas que não estão "Saque Pendente", não são "Off", "Reembolso" e não foram pagas
+    // Comissões pendentes - todas que não estão "Campanha no Ar", não são "Off", "Reembolso" e não foram pagas
     const comissoesPendentes = clientes.filter(cliente => 
-      cliente.status_campanha !== 'Saque Pendente' && 
+      cliente.status_campanha !== 'Campanha no Ar' && 
       cliente.status_campanha !== 'Off' && 
       cliente.status_campanha !== 'Reembolso' &&
       !cliente.comissao_paga
     )
 
-    // Comissões disponíveis para saque - status "Saque Pendente", não solicitadas ainda e não pagas pelo admin
+    // Comissões disponíveis para saque - status "Campanha no Ar", não solicitadas ainda e não pagas pelo admin
     const comissoesDisponiveis = clientes.filter(cliente => {
-      const disponivel = cliente.status_campanha === 'Saque Pendente' && 
+      const disponivel = cliente.status_campanha === 'Campanha no Ar' && 
         !cliente.saque_solicitado &&
         !cliente.comissao_paga &&
         !solicitacoesPagas.includes(cliente.id)
