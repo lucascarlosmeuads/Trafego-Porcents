@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -186,9 +185,6 @@ export function GestorChatList() {
     
     return 'text-blue-300'
   }
-
-  // Usar função atualizada com estado local
-  const totalNaoLidas = getTotalNaoLidas()
 
   if (selectedChat) {
     return (
