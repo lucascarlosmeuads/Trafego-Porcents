@@ -5,16 +5,14 @@ import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
 import { ManagerSelector } from '@/components/ManagerSelector'
-import { MessageCircle, Shield, Filter, FilterX } from 'lucide-react'
+import { MessageCircle, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
 
 export function AdminChatLayoutSplit() {
   const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
   const { conversas, loading } = useChatConversas(selectedGestor)
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [isMobile, setIsMobile] = useState(false)
-  const [showOnlyUnread, setShowOnlyUnread] = useState(false)
 
   // Detectar se é mobile
   useEffect(() => {
@@ -51,14 +49,6 @@ export function AdminChatLayoutSplit() {
     setSelectedGestor(manager)
   }
 
-  // Filtrar conversas
-  const conversasFiltradas = conversas.filter(conversa => 
-    showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true
-  )
-
-  // Contador de não lidas
-  const totalNaoLidas = conversas.filter(c => c.tem_mensagens_nao_lidas).length
-
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
@@ -93,11 +83,6 @@ export function AdminChatLayoutSplit() {
           <div className="flex items-center gap-2 mb-4">
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-xl font-bold text-white">Admin - Monitoramento de Chat</h2>
-            {totalNaoLidas > 0 && (
-              <Badge variant="destructive" className="bg-red-600 text-white ml-auto">
-                {totalNaoLidas} não lidas
-              </Badge>
-            )}
           </div>
           
           {/* Manager Selector - Mobile */}
@@ -108,29 +93,9 @@ export function AdminChatLayoutSplit() {
               isAdminContext={true}
             />
           </div>
-
-          {/* Filtro de não lidas - Mobile */}
-          <Button
-            variant={showOnlyUnread ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-            className={`w-full justify-start ${
-              showOnlyUnread 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
-            {showOnlyUnread && totalNaoLidas > 0 && (
-              <Badge variant="secondary" className="ml-auto">
-                {totalNaoLidas}
-              </Badge>
-            )}
-          </Button>
         </div>
         <ChatSidebar
-          conversas={conversasFiltradas}
+          conversas={conversas}
           selectedChat={selectedChat}
           onSelectChat={handleSelectChat}
           loading={loading}
@@ -148,11 +113,6 @@ export function AdminChatLayoutSplit() {
           <div className="flex items-center gap-2 mb-3">
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-bold text-white">Admin - Chat Monitor</h2>
-            {totalNaoLidas > 0 && (
-              <Badge variant="destructive" className="bg-red-600 text-white ml-auto">
-                {totalNaoLidas}
-              </Badge>
-            )}
           </div>
           <p className="text-xs text-gray-400 mb-4">Monitoramento de todas as conversas</p>
           
@@ -164,31 +124,11 @@ export function AdminChatLayoutSplit() {
               isAdminContext={true}
             />
           </div>
-
-          {/* Filtro de não lidas - Desktop */}
-          <Button
-            variant={showOnlyUnread ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setShowOnlyUnread(!showOnlyUnread)}
-            className={`w-full justify-start ${
-              showOnlyUnread 
-                ? 'bg-blue-600 hover:bg-blue-700 text-white' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-700'
-            }`}
-          >
-            {showOnlyUnread ? <FilterX className="h-4 w-4 mr-2" /> : <Filter className="h-4 w-4 mr-2" />}
-            {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
-            {showOnlyUnread && totalNaoLidas > 0 && (
-              <Badge variant="secondary" className="ml-auto">
-                {totalNaoLidas}
-              </Badge>
-            )}
-          </Button>
         </div>
         
         <div className="flex-1 overflow-hidden">
           <ChatSidebar
-            conversas={conversasFiltradas}
+            conversas={conversas}
             selectedChat={selectedChat}
             onSelectChat={handleSelectChat}
             loading={loading}
@@ -221,17 +161,9 @@ export function AdminChatLayoutSplit() {
                   : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação entre gestores e clientes'
                 }
               </p>
-              {conversasFiltradas.length === 0 && selectedGestor && (
+              {conversas.length === 0 && selectedGestor && (
                 <p className="text-gray-500 text-sm mt-2">
-                  {showOnlyUnread 
-                    ? 'Nenhuma conversa não lida encontrada para o gestor selecionado'
-                    : 'Nenhuma conversa encontrada para o gestor selecionado'
-                  }
-                </p>
-              )}
-              {conversasFiltradas.length === 0 && showOnlyUnread && !selectedGestor && (
-                <p className="text-gray-500 text-sm mt-2">
-                  Nenhuma conversa não lida encontrada
+                  Nenhuma conversa encontrada para o gestor selecionado
                 </p>
               )}
             </div>
