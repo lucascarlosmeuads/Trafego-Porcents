@@ -1,3 +1,4 @@
+
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, User, AtSign } from 'lucide-react'
@@ -222,6 +223,7 @@ export function ClienteRow({
           <ComissaoButton
             cliente={cliente}
             isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
+            isAdmin={isAdmin}
             updatingComission={updatingComission}
             editingComissionValue={editingComissionValue}
             comissionValueInput={comissionValueInput}

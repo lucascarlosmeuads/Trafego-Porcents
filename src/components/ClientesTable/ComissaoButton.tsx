@@ -4,13 +4,14 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { Save, X, Edit, DollarSign, CheckCircle, XCircle } from 'lucide-react'
+import { Save, X, Edit, DollarSign, CheckCircle, XCircle, Lock } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
 interface ComissaoButtonProps {
   cliente: Cliente
   isGestorDashboard?: boolean
+  isAdmin?: boolean
   updatingComission: string | null
   editingComissionValue: string | null
   comissionValueInput: string
@@ -25,6 +26,7 @@ interface ComissaoButtonProps {
 export function ComissaoButton({
   cliente,
   isGestorDashboard = false,
+  isAdmin = false,
   updatingComission,
   editingComissionValue,
   comissionValueInput,
@@ -44,11 +46,14 @@ export function ComissaoButton({
   const valorComissao = cliente.valor_comissao || 60
   const isPago = cliente.comissao === 'Pago'
 
+  // Para gestores (não admins), mostrar apenas visualização
+  const canEdit = isAdmin
+
   if (compact) {
     return (
       <TooltipProvider>
         <div className="flex items-center gap-1">
-          {isEditingValue ? (
+          {isEditingValue && canEdit ? (
             <>
               <Input
                 type="number"
@@ -97,17 +102,20 @@ export function ComissaoButton({
                   <Button
                     size="sm"
                     variant="outline"
-                    disabled={isUpdating}
-                    onClick={() => onComissionToggle(clienteId, isPago)}
+                    disabled={isUpdating || !canEdit}
+                    onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
                     className={`
                       h-6 w-6 p-0
                       ${isPago 
                         ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
                         : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
                       }
+                      ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
                     `}
                   >
-                    {isPago ? (
+                    {!canEdit ? (
+                      <Lock className="h-2 w-2" />
+                    ) : isPago ? (
                       <CheckCircle className="h-2 w-2" />
                     ) : (
                       <XCircle className="h-2 w-2" />
@@ -118,9 +126,15 @@ export function ComissaoButton({
                   <div className="text-sm">
                     <p><strong>Status:</strong> {cliente.comissao || 'Pendente'}</p>
                     <p><strong>Valor:</strong> {formatCurrency(valorComissao)}</p>
-                    <p className="text-xs mt-1">
-                      {isPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}
-                    </p>
+                    {canEdit ? (
+                      <p className="text-xs mt-1">
+                        {isPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}
+                      </p>
+                    ) : (
+                      <p className="text-xs mt-1 text-orange-300">
+                        🔒 Apenas admins podem alterar
+                      </p>
+                    )}
                   </div>
                 </TooltipContent>
               </Tooltip>
@@ -130,14 +144,19 @@ export function ComissaoButton({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => onComissionValueEdit(clienteId, valorComissao)}
-                    className="h-6 w-6 p-0"
+                    disabled={!canEdit}
+                    onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
+                    className={`h-6 w-6 p-0 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
                   >
-                    <DollarSign className="h-2 w-2" />
+                    {!canEdit ? <Lock className="h-2 w-2" /> : <DollarSign className="h-2 w-2" />}
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>Editar valor: {formatCurrency(valorComissao)}</p>
+                  {canEdit ? (
+                    <p>Editar valor: {formatCurrency(valorComissao)}</p>
+                  ) : (
+                    <p>🔒 Apenas admins podem editar valor: {formatCurrency(valorComissao)}</p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </>
@@ -149,7 +168,7 @@ export function ComissaoButton({
 
   return (
     <div className="flex flex-col gap-1">
-      {isEditingValue ? (
+      {isEditingValue && canEdit ? (
         <div className="flex items-center gap-1">
           <Input
             type="number"
@@ -196,19 +215,25 @@ export function ComissaoButton({
           <Button
             size="sm"
             variant="outline"
-            disabled={isUpdating}
-            onClick={() => onComissionToggle(clienteId, isPago)}
+            disabled={isUpdating || !canEdit}
+            onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
             className={`
               h-8 text-xs
               ${isPago 
                 ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
                 : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
               }
+              ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
             `}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
           >
-            {isUpdating ? (
+            {!canEdit ? (
+              <div className="flex items-center gap-1">
+                <Lock className="h-3 w-3" />
+                {isPago ? 'Pago' : 'Pendente'}
+              </div>
+            ) : isUpdating ? (
               'Atualizando...'
             ) : isPago ? (
               isHovered ? 'Marcar Pendente' : 'Pago'
@@ -220,9 +245,11 @@ export function ComissaoButton({
           <Button
             size="sm"
             variant="outline"
-            onClick={() => onComissionValueEdit(clienteId, valorComissao)}
-            className="h-6 text-xs"
+            disabled={!canEdit}
+            onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
+            className={`h-6 text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
           >
+            {!canEdit && <Lock className="h-3 w-3 mr-1" />}
             {formatCurrency(valorComissao)}
           </Button>
         </>
