@@ -32,14 +32,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   
   const emailToUse = userEmail || user?.email || ''
   
-  // Site Creator context detection
   const isSitesContext = filterType === 'sites-pendentes' || 
                         filterType === 'sites-finalizados' ||
                         emailToUse.includes('criador') || 
                         emailToUse.includes('site') || 
                         emailToUse.includes('webdesign')
   
-  // Determine if the "Pago" checkbox should be shown
   const showSitePagoCheckbox = isAdmin || isSitesContext
   
   console.log('🔍 [ClientesTable] Configuração de acesso:', {
@@ -52,7 +50,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     showSitePagoCheckbox
   })
   
-  // For Site Creator panels, don't pass selectedManager to avoid conflicts
   const managerForQuery = isSitesContext ? undefined : selectedManager
   
   const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager, setClientes } = useManagerData(
@@ -63,7 +60,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     filterType === 'sites-finalizados' ? 'sites-finalizados' : undefined
   )
 
-  // Add the site pago update hook
   const { handleSitePagoChange } = useSitePagoUpdate(clientes, setClientes)
   
   const [searchTerm, setSearchTerm] = useState('')
@@ -85,7 +81,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
 
-  // Função para buscar clientes que têm criativos do gestor
   const fetchClientesComCriativos = async () => {
     try {
       console.log('🎨 [ClientesTable] Buscando clientes com criativos do gestor...')
@@ -100,7 +95,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return
       }
       
-      // Criar Set com emails únicos dos clientes que têm arquivos do gestor
       const emailsComCriativos = new Set(arquivos?.map(arquivo => arquivo.email_cliente) || [])
       
       console.log('✅ [ClientesTable] Clientes com criativos encontrados:', emailsComCriativos.size)
@@ -111,7 +105,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // Buscar clientes com criativos quando a lista de clientes mudar
   useEffect(() => {
     if (clientes.length > 0) {
       fetchClientesComCriativos()
@@ -122,7 +115,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     console.log('📊 [ClientesTable] === CATEGORIZANDO CLIENTES (VERSÃO FINAL - SEM SAQUES PENDENTES) ===')
     console.log('📊 [ClientesTable] Total de clientes recebidos:', clientesList.length)
     
-    // Complete list of INACTIVE statuses - clients not actively progressing
     const statusInativos = [
       'Cliente Sumiu',
       'Reembolso', 
@@ -136,11 +128,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       'Encerrado'
     ]
     
-    // REMOVED: statusSaquesPendentes array completely
-    // All clients now go to either ACTIVE or INACTIVE
-    
-    // ACTIVE statuses - all statuses that represent clients actively progressing
-    // NOW INCLUDING "Saque Pendente" and "Campanha Anual" as ACTIVE clients
     const clientesAtivos = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
       return !statusInativos.includes(status)
@@ -151,20 +138,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       return statusInativos.includes(status)
     })
     
-    // Keep problemas as a separate category for filtering purposes only
     const clientesProblemas = clientesList.filter(cliente => {
       const status = cliente.status_campanha || ''
       return status === 'Problema'
     })
     
-    // Enhanced logging to identify all unique statuses
     const statusDistribution = clientesList.reduce((acc, cliente) => {
       const status = cliente.status_campanha || 'SEM_STATUS'
       acc[status] = (acc[status] || 0) + 1
       return acc
     }, {} as Record<string, number>)
     
-    // Get all unique statuses for debugging
     const uniqueStatuses = Object.keys(statusDistribution).sort()
     
     console.log('📊 [ClientesTable] Todos os status únicos encontrados (', uniqueStatuses.length, '):', uniqueStatuses)
@@ -176,20 +160,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     console.log('   🧮 Soma total:', clientesAtivos.length + clientesInativos.length)
     console.log('   🎯 Total esperado:', clientesList.length)
     
-    // Status categorization breakdown for debugging
     console.log('📋 [ClientesTable] Status por categoria:')
     console.log('   ✅ Status ATIVOS (incluindo Saque Pendente e Campanha Anual):', 
       uniqueStatuses.filter(s => !statusInativos.includes(s))
     )
     console.log('   ❌ Status INATIVOS:', statusInativos.filter(s => uniqueStatuses.includes(s)))
     
-    // Validation: Check if all clients are accounted for
     const totalCategorizado = clientesAtivos.length + clientesInativos.length
     if (totalCategorizado !== clientesList.length) {
       console.error('🚨 [ClientesTable] ERRO CRÍTICO: Clientes não categorizados encontrados!')
       console.error('🚨 [ClientesTable] Diferença:', clientesList.length - totalCategorizado, 'clientes')
       
-      // Find uncategorized clients
       const clientesCategorizados = [...clientesAtivos, ...clientesInativos]
       const idsCategorizados = new Set(clientesCategorizados.map(c => c.id))
       const clientesOrfaos = clientesList.filter(c => !idsCategorizados.has(c.id))
@@ -199,7 +180,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         console.error(`   - ID: ${cliente.id}, Nome: ${cliente.nome_cliente}, Status: "${cliente.status_campanha}"`)
       })
       
-      // Show toast warning to user
       toast({
         title: "⚠️ Erro de Categorização",
         description: `${clientesOrfaos.length} clientes não foram categorizados. Verifique os logs.`,
@@ -233,27 +213,19 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       const matchesSiteStatus = siteStatusFilter === 'all' || cliente.site_status === siteStatusFilter
       
-      // Filtro de criativo
       let matchesCreativo = true
       if (creativoFilter === 'pendente') {
-        // Mostrar apenas clientes que NÃO têm criativos do gestor
         matchesCreativo = !clientesComCriativos.has(cliente.email_cliente || '')
       } else if (creativoFilter === 'feito') {
-        // Mostrar apenas clientes que JÁ têm criativos do gestor
         matchesCreativo = clientesComCriativos.has(cliente.email_cliente || '')
       }
-      // Se for 'all', matchesCreativo permanece true
       
-      // Filtro de BM
       let matchesBm = true
       if (bmFilter === 'com_bm') {
-        // Mostrar apenas clientes que têm número BM preenchido
         matchesBm = !!(cliente.numero_bm && cliente.numero_bm.trim() !== '')
       } else if (bmFilter === 'sem_bm') {
-        // Mostrar apenas clientes que NÃO têm número BM preenchido
         matchesBm = !(cliente.numero_bm && cliente.numero_bm.trim() !== '')
       }
-      // Se for 'all', matchesBm permanece true
       
       return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm
     })
@@ -341,7 +313,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
       case 'Reembolso':
         return 'bg-red-500/20 text-red-300 border border-red-500/30'
-      case 'Saque Pendente':
+      case 'Campanha no Ar':
         return 'bg-green-500/20 text-green-300 border border-green-500/30'
       case 'Campanha Anual':
         return 'bg-green-500/20 text-green-300 border border-green-500/30'
@@ -631,7 +603,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         totalClientes: clientes.length
       })
       
-      // Find the current client to check the comissao field - FIX: Keep clienteId as string for consistent comparison
       const cliente = clientes.find(c => c.id?.toString() === clienteId)
       if (!cliente) {
         console.error('❌ [ClientesTable] Cliente não encontrado:', {
@@ -646,7 +617,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return false
       }
 
-      // Toggle between "Pendente" and "Pago" based on current comissao value
       const newComissaoStatus = cliente.comissao === 'Pago' ? 'Pendente' : 'Pago'
       
       console.log('💰 [ClientesTable] Alterando comissão:', {
@@ -738,7 +708,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
     <div className="space-y-4">
-      {/* Mobile indicator */}
       <div className="lg:hidden">
         <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-2">
           <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
@@ -841,7 +810,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         site_status: c.site_status
       })))
       
-      // Validation for Admin panel - should show ALL clients when "Todos os Gestores"
       if (isAdmin && !isSitesContext && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes')) {
         console.log('👑 [ClientesTable] ADMIN GLOBAL VIEW - Verificando se mostra todos os clientes:')
         console.log('📈 [ClientesTable] Total de clientes exibidos:', clientes.length)
@@ -852,7 +820,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         }
       }
       
-      // Validation for Site Creator panels
       if (filterType === 'sites-pendentes') {
         console.log('🌐 [ClientesTable] SITE CREATOR - Sites pendentes:')
         console.log('📈 [ClientesTable] Total de sites aguardando_link:', clientes.length)
@@ -871,7 +838,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         console.log('🎯 [ClientesTable] Esperado: ~14 clientes (confirmado no Supabase)')
       }
       
-      // Security validation for non-admin users
       if (!isAdmin && !isSitesContext) {
         const clientesInvalidos = clientes.filter(c => c.email_gestor !== emailToUse)
         if (clientesInvalidos.length > 0) {
@@ -906,7 +872,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         return
       }
 
-      // NEW LOGIC: Only admins can add clients
       if (isAdmin) {
         console.log('✅ Usuário é admin - pode adicionar clientes')
         setPodeAdicionarCliente(true)
@@ -954,7 +919,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-cyan-400">✅</span>
-                  <span><strong>Status renomeado:</strong> "Saque Pendente" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua (novos criativos, públicos, etc.)</span>
+                  <span><strong>Status renomeado:</strong> "Campanha no Ar" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua (novos criativos, públicos, etc.)</span>
                 </div>
               </div>
               <div className="mt-2 text-xs text-muted-foreground">
@@ -964,16 +929,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           </div>
         </div>
 
-        {isSitesContext && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
-            <div className="flex items-center gap-2 text-blue-600 text-sm">
-              <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-              <span>🌐 Painel de Criação de Sites - Visualizando clientes aguardando sites</span>
-            </div>
-          </div>
-        )}
-        
-        {/* Enhanced validation panel for Admin */}
         {isAdmin && !isSitesContext && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') && (
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
             <div className="flex items-center justify-between">
@@ -1009,7 +964,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 onExport={exportToCSV}
               />
               
-              {/* ONLY SHOW ADD CLIENT BUTTON FOR ADMINS */}
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
                   selectedManager={currentManager || selectedManager || 'Próprios dados'}
@@ -1146,7 +1100,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           onExport={exportToCSV}
         />
         
-        {/* ONLY SHOW ADD CLIENT BUTTON FOR ADMINS */}
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
             selectedManager={currentManager || selectedManager || 'Próprios dados'}
