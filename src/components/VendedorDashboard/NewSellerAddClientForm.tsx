@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -9,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { supabase } from '@/integrations/supabase/client'
-import { Copy, Check } from 'lucide-react'
+import { Copy, Check, AlertTriangle } from 'lucide-react'
 
 interface GestorOption {
   nome: string
@@ -22,6 +21,7 @@ export function NewSellerAddClientForm() {
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
   const [copied, setCopied] = useState(false)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     email_cliente: '',
@@ -29,6 +29,34 @@ export function NewSellerAddClientForm() {
     senha: 'parceriadesucesso',
     email_gestor: ''
   })
+
+  // Verificar autenticação
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession()
+        
+        if (error) {
+          console.error('❌ [NewSellerAddClientForm] Erro ao verificar sessão:', error)
+          setIsAuthenticated(false)
+          return
+        }
+
+        if (session && session.user) {
+          console.log('✅ [NewSellerAddClientForm] Usuário autenticado:', session.user.email)
+          setIsAuthenticated(true)
+        } else {
+          console.log('❌ [NewSellerAddClientForm] Usuário não autenticado')
+          setIsAuthenticated(false)
+        }
+      } catch (error) {
+        console.error('❌ [NewSellerAddClientForm] Erro na verificação de auth:', error)
+        setIsAuthenticated(false)
+      }
+    }
+
+    checkAuth()
+  }, [user])
 
   // Buscar gestores disponíveis
   useEffect(() => {
@@ -57,12 +85,24 @@ export function NewSellerAddClientForm() {
       }
     }
 
-    fetchGestores()
-  }, [])
+    if (isAuthenticated) {
+      fetchGestores()
+    }
+  }, [isAuthenticated])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Verificar autenticação antes de prosseguir
+    if (!isAuthenticated) {
+      toast({
+        title: "Erro de Autenticação",
+        description: "Você precisa estar logado para criar clientes. Faça login novamente.",
+        variant: "destructive"
+      })
+      return
+    }
+
     if (!formData.nome_cliente || !formData.email_cliente || !formData.telefone) {
       toast({
         title: "Erro",
@@ -216,6 +256,31 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         variant: "destructive"
       })
     }
+  }
+
+  // Se não estiver autenticado, mostrar aviso
+  if (!isAuthenticated) {
+    return (
+      <Card className="max-w-2xl mx-auto">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AlertTriangle className="w-5 h-5 text-yellow-500" />
+            Autenticação Necessária
+          </CardTitle>
+          <CardDescription>
+            Você precisa estar logado para criar novos clientes.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <p className="text-sm text-yellow-800">
+              Para criar clientes, você deve estar autenticado no sistema. 
+              Faça login novamente ou verifique sua conexão.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (

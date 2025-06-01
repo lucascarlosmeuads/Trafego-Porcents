@@ -5,17 +5,42 @@ import { SENHA_PADRAO_CLIENTE } from '@/utils/clienteValidation'
 
 export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const addCliente = async (clienteData: any) => {
+    console.log('🚀 [useClienteAdd] === INICIANDO ADIÇÃO DE CLIENTE ===')
+    console.log('📥 Dados recebidos:', clienteData)
+    console.log('👤 User Email:', userEmail)
+    console.log('🔒 IsAdmin:', isAdmin)
+
+    // Verificar se há usuário logado
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+    
+    if (sessionError) {
+      console.error('❌ [useClienteAdd] Erro ao verificar sessão:', sessionError)
+      toast({
+        title: "Erro de Autenticação",
+        description: "Erro ao verificar sessão. Faça login novamente.",
+        variant: "destructive"
+      })
+      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
+    }
+
+    if (!session || !session.user) {
+      console.error('❌ [useClienteAdd] Usuário não autenticado')
+      toast({
+        title: "Erro de Autenticação", 
+        description: "Você precisa estar logado para criar clientes. Faça login novamente.",
+        variant: "destructive"
+      })
+      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
+    }
+
+    console.log('✅ [useClienteAdd] Usuário autenticado:', session.user.email)
+
     if (!userEmail) {
       console.error('❌ [useClienteAdd] Email do usuário não fornecido')
-      return { success: false, isNewClient: false, clientData: null }
+      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
     }
 
     try {
-      console.log('🚀 [useClienteAdd] === INICIANDO ADIÇÃO DE CLIENTE ===')
-      console.log('📥 Dados recebidos:', clienteData)
-      console.log('👤 User Email:', userEmail)
-      console.log('🔒 IsAdmin:', isAdmin)
-      
       const emailGestorFinal = isAdmin ? (clienteData.email_gestor || userEmail) : userEmail
       
       // Step 1: Check if client already exists in todos_clientes
@@ -104,7 +129,12 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
           
           // Verificar se é erro de RLS
           if (error.message?.includes('row-level security') || error.message?.includes('policy')) {
-            throw new Error('Erro de permissão: Verifique se as políticas de segurança estão configuradas corretamente.')
+            throw new Error('Erro de permissão: Verifique se você tem permissões para criar clientes ou se está logado corretamente.')
+          }
+          
+          // Verificar se é erro de autenticação
+          if (error.message?.includes('JWT') || error.message?.includes('auth')) {
+            throw new Error('Erro de autenticação: Sua sessão pode ter expirado. Faça login novamente.')
           }
           
           throw new Error(`Erro ao adicionar cliente: ${error.message}`)
@@ -161,16 +191,14 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         success: true,
         isNewClient: !clienteJaExistia,
         clientData: finalClientData,
-        senhaDefinida,
-        valorComissao: finalClientData.valor_comissao || 60.00
+        senhaDefinida
       })
       
       return { 
         success: true, 
         isNewClient: !clienteJaExistia, 
         clientData: finalClientData,
-        senhaDefinida,
-        valorComissao: finalClientData.valor_comissao || 60.00
+        senhaDefinida
       }
     } catch (error) {
       console.error('💥 [useClienteAdd] === ERRO GERAL ===')
@@ -182,7 +210,7 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         description: error instanceof Error ? error.message : "Erro inesperado ao adicionar cliente",
         variant: "destructive"
       })
-      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false, valorComissao: 0 }
+      return { success: false, isNewClient: false, clientData: null, senhaDefinida: false }
     }
   }
 
