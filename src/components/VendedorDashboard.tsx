@@ -1,9 +1,9 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp } from 'lucide-react'
 import { useSellerData } from '@/hooks/useSellerData'
-import { useClienteAdd } from '@/hooks/useClienteAdd'
 import { SellerMetrics } from './VendedorDashboard/SellerMetrics'
 import { SellerClientsList } from './VendedorDashboard/SellerClientsList'
 import { NewSellerAddClientForm } from './VendedorDashboard/NewSellerAddClientForm'
@@ -14,14 +14,8 @@ import { useIsMobile } from '@/hooks/use-mobile'
 export function VendedorDashboard() {
   const { user, currentManagerName } = useAuth()
   const { clientes, metrics, loading, refetch } = useSellerData(user?.email || '')
-  const { addCliente, isAdding } = useClienteAdd(user?.email || '', false, refetch)
   const [activeTab, setActiveTab] = useState('dashboard')
   const isMobile = useIsMobile()
-
-  const handleAddClient = async (clientData: any) => {
-    console.log('🎯 [VendedorDashboard] Adicionando cliente com valor padrão R$60,00')
-    return await addCliente(clientData)
-  }
 
   const renderContent = () => {
     switch (activeTab) {
@@ -113,13 +107,7 @@ export function VendedorDashboard() {
         return <SellerClientsList clientes={clientes} loading={loading} onRefresh={refetch} />
 
       case 'adicionar-cliente':
-        return (
-          <NewSellerAddClientForm
-            onAddClient={handleAddClient}
-            isLoading={isAdding}
-            onCancel={() => setActiveTab('dashboard')}
-          />
-        )
+        return <NewSellerAddClientForm />
 
       default:
         return <div>Página não encontrada</div>
