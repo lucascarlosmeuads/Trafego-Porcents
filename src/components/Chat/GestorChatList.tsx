@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -100,21 +99,18 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
+  // NOVA LÓGICA DE CLIQUE SIMPLIFICADA
   const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente)
 
-    // MARCA IMEDIATAMENTE COMO LIDO DESTA SESSÃO
+    // MARCAR IMEDIATAMENTE COMO LIDO SE TEM MENSAGENS NÃO LIDAS
     if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
+      console.log('🔄 [GestorChatList] Marcando chat como lido automaticamente')
       marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
     }
 
     // Selecionar o chat
     setSelectedChat(conversa)
-
-    // Forçar atualização das conversas
-    setTimeout(() => {
-      recarregar()
-    }, 1000)
   }
 
   // NOVA LÓGICA DE CORES SIMPLIFICADA
@@ -188,6 +184,9 @@ export function GestorChatList() {
     
     return 'text-blue-300'
   }
+
+  // Usar função atualizada com estado local
+  const totalNaoLidas = getTotalNaoLidas()
 
   if (selectedChat) {
     return (

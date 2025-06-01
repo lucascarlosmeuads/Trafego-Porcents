@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
@@ -52,11 +51,6 @@ export function ChatSidebar({
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  // Usar a função fornecida ou calcular localmente
-  const totalNaoLidas = getTotalNaoLidas ? getTotalNaoLidas() : conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
-  const totalFiltradas = conversasFiltradas.length
-  const totalConversas = conversasValidas.length
-
   const formatLastMessageTime = (dateString: string) => {
     if (!dateString) return ''
     
@@ -109,23 +103,18 @@ export function ChatSidebar({
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
+  // NOVA LÓGICA DE CLIQUE SIMPLIFICADA
   const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [ChatSidebar] Chat selecionado:', conversa.email_cliente)
 
-    // MARCA IMEDIATAMENTE COMO LIDO DESTA SESSÃO
+    // MARCAR IMEDIATAMENTE COMO LIDO SE TEM MENSAGENS NÃO LIDAS
     if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
+      console.log('🔄 [ChatSidebar] Marcando chat como lido automaticamente')
       marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
     }
 
     // Selecionar o chat
     onSelectChat(conversa)
-
-    // Forçar atualização das conversas
-    if (recarregarConversas) {
-      setTimeout(() => {
-        recarregarConversas()
-      }, 1000)
-    }
   }
 
   // NOVA LÓGICA DE CORES SIMPLIFICADA
@@ -138,8 +127,6 @@ export function ChatSidebar({
     
     // Lógica: se foi lido nesta sessão, nunca mostrar como não lido
     const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
-    
-    console.log(`🎨 [ChatSidebar] ${conversa.nome_cliente}:`, { selecionado, naoLido, foiLidoEstaSecao })
     
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
@@ -202,6 +189,13 @@ export function ChatSidebar({
     return 'text-blue-300'
   }
 
+  // Usar a função fornecida ou calcular localmente com estado atualizado
+  const totalNaoLidas = getTotalNaoLidas ? getTotalNaoLidas() : 
+    conversas.filter(c => {
+      const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(c.email_cliente, c.email_gestor || '') : false
+      return c.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    }).length
+
   return (
     <div className="h-full flex flex-col bg-gray-900">
       {/* Header - fixo */}
@@ -216,7 +210,7 @@ export function ChatSidebar({
         </div>
         
         <div className="mb-3 text-xs text-gray-400">
-          Mostrando {totalFiltradas} de {totalConversas} conversas
+          Mostrando {conversasFiltradas.length} de {conversasValidas.length} conversas
           {hasActiveFilters && (
             <Button
               variant="ghost"

@@ -100,10 +100,8 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       
       console.log('✅ [useChatMessages] Mensagens marcadas como lidas automaticamente')
       
-      // Recarregar mensagens para refletir as mudanças
-      setTimeout(() => {
-        carregarMensagens()
-      }, 500)
+      // Recarregar mensagens imediatamente para refletir as mudanças
+      carregarMensagens()
       
     } catch (err) {
       console.error('❌ [useChatMessages] Erro na marcação automática:', err)
@@ -171,12 +169,6 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
 
     carregarMensagens()
 
-    if (emailCliente && emailGestor && !isCliente) {
-      setTimeout(() => {
-        marcarMensagensComoLidasAutomaticamente()
-      }, 1000)
-    }
-
     const channel = supabase
       .channel('chat-changes')
       .on(
@@ -195,7 +187,7 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [carregarMensagens, user?.email, emailCliente, emailGestor, isCliente, marcarMensagensComoLidasAutomaticamente])
+  }, [carregarMensagens, user?.email, emailCliente, emailGestor])
 
   return {
     mensagens,
@@ -216,12 +208,46 @@ export function useChatConversas(gestorFiltro?: string | null) {
   const [chatsLidosEstaSecao, setChatsLidosEstaSecao] = useState<Set<string>>(new Set())
   const { user, isGestor, isAdmin } = useAuth()
 
-  // Marcar um chat como lido desta sessão
+  // Marcar um chat como lido desta sessão COM FEEDBACK IMEDIATO
   const marcarChatComoLidoEstaSecao = useCallback((emailCliente: string, emailGestor: string) => {
     const chaveChat = `${emailCliente}-${emailGestor}`
     console.log('✅ [useChatConversas] Marcando chat como lido desta sessão:', chaveChat)
     
-    setChatsLidosEstaSecao(prev => new Set(prev).add(chaveChat))
+    setChatsLidosEstaSecao(prev => {
+      const newSet = new Set(prev)
+      newSet.add(chaveChat)
+      return newSet
+    })
+
+    // MARCAÇÃO AUTOMÁTICA NO BANCO DE DADOS
+    const marcarNoBanco = async () => {
+      try {
+        console.log('🔄 [useChatConversas] Marcando mensagens como lidas no banco')
+        
+        const { error } = await supabase
+          .from('chat_mensagens')
+          .update({ lida: true })
+          .eq('email_cliente', emailCliente)
+          .eq('email_gestor', emailGestor)
+          .eq('remetente', 'cliente')
+          .eq('lida', false)
+
+        if (error) throw error
+        
+        console.log('✅ [useChatConversas] Mensagens marcadas no banco com sucesso')
+        
+        // Recarregar conversas após 500ms para refletir mudanças
+        setTimeout(() => {
+          carregarConversas()
+        }, 500)
+        
+      } catch (err) {
+        console.error('❌ [useChatConversas] Erro ao marcar no banco:', err)
+      }
+    }
+
+    // Executar marcação no banco imediatamente
+    marcarNoBanco()
   }, [])
 
   // Remover um chat do estado lido (quando nova mensagem chegar)
@@ -375,9 +401,13 @@ export function useChatConversas(gestorFiltro?: string | null) {
     recarregar: carregarConversas,
     marcarChatComoLidoEstaSecao,
     chatFoiLidoEstaSecao,
-    // Função para calcular total não lidas considerando estado local
-    getTotalNaoLidas: () => {
-      return conversas.filter(c => c.tem_mensagens_nao_lidas).length
-    }
+    // NOVA FUNÇÃO: Calcular total não lidas considerando estado local
+    getTotalNaoLidas: useCallback(() => {
+      return conversas.filter(c => {
+        const chaveChat = `${c.email_cliente}-${c.email_gestor}`
+        const foiLidoEstaSecao = chatsLidosEstaSecao.has(chaveChat)
+        return c.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+      }).length
+    }, [conversas, chatsLidosEstaSecao])
   }
 }
