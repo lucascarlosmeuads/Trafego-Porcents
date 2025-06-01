@@ -17,8 +17,9 @@ export function GestorChatList() {
     conversas, 
     loading, 
     recarregar, 
-    marcarChatComoProcessando,
-    estaProcessando
+    marcarChatComoLidoEstaSecao,
+    chatFoiLidoEstaSecao,
+    getTotalNaoLidas
   } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
@@ -43,8 +44,7 @@ export function GestorChatList() {
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  // SIMPLIFICADO: Contagem baseada apenas nos dados reais do banco
-  const totalNaoLidas = conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
+  const totalNaoLidas = getTotalNaoLidas()
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
 
@@ -100,58 +100,57 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
-  const handleSelectChat = async (conversa: ChatConversaPreview) => {
+  const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente)
 
-    // SIMPLIFICADO: Marcar como processando apenas para feedback visual
-    if (conversa.tem_mensagens_nao_lidas && marcarChatComoProcessando) {
-      marcarChatComoProcessando(conversa.email_cliente, conversa.email_gestor || '')
+    // MARCA IMEDIATAMENTE COMO LIDO DESTA SESSÃO
+    if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
+      marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
     }
 
-    // Selecionar o chat - a marcação automática acontece no hook useChatMessages
+    // Selecionar o chat
     setSelectedChat(conversa)
 
-    // Forçar atualização das conversas após um tempo
+    // Forçar atualização das conversas
     setTimeout(() => {
       recarregar()
-    }, 2000)
+    }, 1000)
   }
 
-  // LÓGICA DE CORES SIMPLIFICADA
+  // NOVA LÓGICA DE CORES SIMPLIFICADA
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
-    const naoLido = conversa.tem_mensagens_nao_lidas && !processando
+    
+    // Verificar se foi lido nesta sessão
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    
+    // Lógica: se foi lido nesta sessão, nunca mostrar como não lido
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
-    }
-    
-    if (processando) {
-      return `${baseClasses} !bg-yellow-900/50 !border-yellow-500 shadow-yellow-500/30`
     }
     
     if (naoLido) {
       return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
     }
     
+    // Se foi lido nesta sessão ou não tem mensagens não lidas, mostrar como cinza
     return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
   }
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14"
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
     }
     
-    if (processando) {
-      return `${baseClasses} bg-gradient-to-br from-yellow-600 to-yellow-700 ring-2 ring-yellow-500`
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
@@ -159,17 +158,15 @@ export function GestorChatList() {
   }
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
     }
     
-    if (processando) {
-      return isTitle ? 'text-yellow-100 font-semibold' : 'text-yellow-200'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return isTitle ? 'text-red-100' : 'text-gray-200 font-medium'
     }
     
@@ -177,17 +174,15 @@ export function GestorChatList() {
   }
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return 'text-blue-200'
     }
     
-    if (processando) {
-      return 'text-yellow-200'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return 'text-red-200'
     }
     
@@ -311,8 +306,8 @@ export function GestorChatList() {
         ) : (
           conversasFiltradas.map((conversa, index) => {
             const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
-            const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
-            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !processando
+            const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !foiLidoEstaSecao
             
             return (
               <Card 
@@ -331,10 +326,7 @@ export function GestorChatList() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
                           <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${getTextClasses(conversa, true)}`}>
                             {conversa.nome_cliente}
-                            {processando && (
-                              <span className="ml-2 text-yellow-400 text-xl animate-pulse">⏳</span>
-                            )}
-                            {conversa.tem_mensagens_nao_lidas && !processando && (
+                            {conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao && (
                               <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
                             )}
                           </h3>
@@ -367,11 +359,9 @@ export function GestorChatList() {
                       <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
                         isSelected(conversa)
                           ? 'bg-blue-600 hover:bg-blue-700'
-                          : processando
-                            ? 'bg-yellow-600 hover:bg-yellow-700'
-                            : conversa.tem_mensagens_nao_lidas
-                              ? 'bg-red-600 hover:bg-red-700' 
-                              : 'bg-blue-600 hover:bg-blue-700'
+                          : conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+                            ? 'bg-red-600 hover:bg-red-700' 
+                            : 'bg-blue-600 hover:bg-blue-700'
                       }`}>
                         <ArrowRight className="h-6 w-6 text-white" />
                       </div>

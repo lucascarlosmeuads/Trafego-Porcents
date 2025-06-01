@@ -16,8 +16,9 @@ interface ChatSidebarProps {
   onSelectChat: (conversa: ChatConversaPreview) => void
   loading: boolean
   recarregarConversas?: () => void
-  marcarChatComoProcessando?: (emailCliente: string, emailGestor: string) => void
-  estaProcessando?: (emailCliente: string, emailGestor: string) => boolean
+  marcarChatComoLidoEstaSecao?: (emailCliente: string, emailGestor: string) => void
+  chatFoiLidoEstaSecao?: (emailCliente: string, emailGestor: string) => boolean
+  getTotalNaoLidas?: () => number
 }
 
 export function ChatSidebar({ 
@@ -26,8 +27,9 @@ export function ChatSidebar({
   onSelectChat, 
   loading, 
   recarregarConversas,
-  marcarChatComoProcessando,
-  estaProcessando
+  marcarChatComoLidoEstaSecao,
+  chatFoiLidoEstaSecao,
+  getTotalNaoLidas
 }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
@@ -50,8 +52,8 @@ export function ChatSidebar({
     .filter(conversa => showOnlyUnread ? conversa.tem_mensagens_nao_lidas : true)
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  // SIMPLIFICADO: Contagem baseada apenas nos dados reais do banco
-  const totalNaoLidas = conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
+  // Usar a função fornecida ou calcular localmente
+  const totalNaoLidas = getTotalNaoLidas ? getTotalNaoLidas() : conversasValidas.filter(c => c.tem_mensagens_nao_lidas).length
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
 
@@ -107,62 +109,61 @@ export function ChatSidebar({
 
   const hasActiveFilters = searchTerm || showOnlyUnread || statusFilter !== 'all'
 
-  const handleSelectChat = async (conversa: ChatConversaPreview) => {
+  const handleSelectChat = (conversa: ChatConversaPreview) => {
     console.log('🎯 [ChatSidebar] Chat selecionado:', conversa.email_cliente)
 
-    // SIMPLIFICADO: Marcar como processando apenas para feedback visual
-    if (conversa.tem_mensagens_nao_lidas && marcarChatComoProcessando) {
-      marcarChatComoProcessando(conversa.email_cliente, conversa.email_gestor || '')
+    // MARCA IMEDIATAMENTE COMO LIDO DESTA SESSÃO
+    if (conversa.tem_mensagens_nao_lidas && marcarChatComoLidoEstaSecao) {
+      marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
     }
 
-    // Selecionar o chat - a marcação automática acontece no hook useChatMessages
+    // Selecionar o chat
     onSelectChat(conversa)
 
-    // Forçar atualização das conversas após um tempo
+    // Forçar atualização das conversas
     if (recarregarConversas) {
       setTimeout(() => {
         recarregarConversas()
-      }, 2000)
+      }, 1000)
     }
   }
 
-  // LÓGICA DE CORES SIMPLIFICADA
+  // NOVA LÓGICA DE CORES SIMPLIFICADA
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
-    const naoLido = conversa.tem_mensagens_nao_lidas && !processando
     
-    console.log(`🎨 [ChatSidebar] ${conversa.nome_cliente}:`, { selecionado, naoLido, processando })
+    // Verificar se foi lido nesta sessão
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    
+    // Lógica: se foi lido nesta sessão, nunca mostrar como não lido
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    
+    console.log(`🎨 [ChatSidebar] ${conversa.nome_cliente}:`, { selecionado, naoLido, foiLidoEstaSecao })
     
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
-    }
-    
-    if (processando) {
-      return `${baseClasses} !bg-yellow-900/50 !border-yellow-500 shadow-yellow-500/30`
     }
     
     if (naoLido) {
       return `${baseClasses} !bg-red-900/50 hover:!bg-red-900/60 !border-red-500 shadow-red-500/30`
     }
     
+    // Se foi lido nesta sessão ou não tem mensagens não lidas, mostrar como cinza
     return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
   }
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
     }
     
-    if (processando) {
-      return `${baseClasses} bg-gradient-to-br from-yellow-600 to-yellow-700 ring-2 ring-yellow-500`
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
@@ -170,17 +171,15 @@ export function ChatSidebar({
   }
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
     }
     
-    if (processando) {
-      return isTitle ? 'text-yellow-100 font-semibold' : 'text-yellow-200'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return isTitle ? 'text-red-100 font-semibold' : 'text-gray-200 font-medium'
     }
     
@@ -188,17 +187,15 @@ export function ChatSidebar({
   }
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
-    const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
+    const selecionado = isSelected(conversa)
+    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
     
-    if (isSelected(conversa)) {
+    if (selecionado) {
       return 'text-blue-200'
     }
     
-    if (processando) {
-      return 'text-yellow-200'
-    }
-    
-    if (conversa.tem_mensagens_nao_lidas) {
+    if (naoLido) {
       return 'text-red-200'
     }
     
@@ -296,8 +293,8 @@ export function ChatSidebar({
         ) : (
           conversasFiltradas.map((conversa, index) => {
             const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
-            const processando = estaProcessando ? estaProcessando(conversa.email_cliente, conversa.email_gestor || '') : false
-            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !processando
+            const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !foiLidoEstaSecao
             
             return (
               <Card 
@@ -315,10 +312,7 @@ export function ChatSidebar({
                       <div className="flex items-center justify-between mb-1">
                         <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
                           {conversa.nome_cliente}
-                          {processando && (
-                            <span className="ml-1 text-yellow-400 animate-pulse">⏳</span>
-                          )}
-                          {conversa.tem_mensagens_nao_lidas && !processando && (
+                          {conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao && (
                             <span className="ml-1 text-red-400 animate-pulse">●</span>
                           )}
                         </h3>
