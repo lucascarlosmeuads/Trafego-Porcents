@@ -17,16 +17,17 @@ export function GestorChatList() {
     loading, 
     recarregar, 
     marcarChatComoLidoEstaSecao,
-    chatFoiLidoEstaSecao,
-    getTotalNaoLidas,
     atualizarConversaComoLida
   } = useChatConversas()
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  // NOVO: Estado local para forçar re-renderização
-  const [forceUpdate, setForceUpdate] = useState(0)
+  
+  // ESTADO LOCAL DIRETO - FONTE DE VERDADE PARA VISUAL
+  const [chatsLidosLocalmente, setChatsLidosLocalmente] = useState<Set<string>>(new Set())
+  const [forceRender, setForceRender] = useState(0)
+  
   const { user } = useAuth()
 
   const conversasValidas = conversas.filter(c => 
@@ -46,13 +47,20 @@ export function GestorChatList() {
     .filter(conversa => {
       if (!showOnlyUnread) return true
       
-      const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+      const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+      const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
       
-      return conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+      return conversa.tem_mensagens_nao_lidas && !lidoLocalmente
     })
     .filter(conversa => statusFilter === 'all' ? true : conversa.status_campanha === statusFilter)
 
-  const totalNaoLidas = getTotalNaoLidas()
+  // CALCULAR TOTAL NÃO LIDAS COM ESTADO LOCAL
+  const totalNaoLidas = conversasValidas.filter(c => {
+    const chaveChat = `${c.email_cliente}-${c.email_gestor}`
+    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
+    return c.tem_mensagens_nao_lidas && !lidoLocalmente
+  }).length
+
   const totalFiltradas = conversasFiltradas.length
   const totalConversas = conversasValidas.length
 
@@ -108,104 +116,102 @@ export function GestorChatList() {
            selectedChat.email_gestor === conversa.email_gestor
   }
 
-  // FUNÇÃO CORRIGIDA: Seleção com marcação imediata como lida
-  const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🎯 [GestorChatList] Chat selecionado:', conversa.email_cliente, 'Tem não lidas:', conversa.tem_mensagens_nao_lidas)
-
-    // 1. MARCAR COMO LIDO IMEDIATAMENTE SE TEM MENSAGENS NÃO LIDAS
-    if (conversa.tem_mensagens_nao_lidas) {
-      console.log('🔄 [GestorChatList] Marcando chat como lido IMEDIATAMENTE')
-      
-      // ATUALIZAR ESTADO LOCAL PRIMEIRO
+  // FUNÇÃO RADICAL: Marcar como lido INSTANTANEAMENTE no estado local
+  const marcarComoLidoInstantaneo = (emailCliente: string, emailGestor: string) => {
+    const chaveChat = `${emailCliente}-${emailGestor}`
+    
+    console.log('🔥 [RADICAL] Marcando como lido INSTANTÂNEO:', chaveChat)
+    
+    // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
+    setChatsLidosLocalmente(prev => {
+      const newSet = new Set(prev)
+      newSet.add(chaveChat)
+      return newSet
+    })
+    
+    // 2. FORÇAR RE-RENDER IMEDIATO
+    setForceRender(prev => prev + 1)
+    
+    // 3. AÇÕES DE BACKGROUND (não dependemos delas para visual)
+    setTimeout(() => {
       if (atualizarConversaComoLida) {
-        console.log('🔄 [GestorChatList] Atualizando conversa local como lida')
-        atualizarConversaComoLida(conversa.email_cliente, conversa.email_gestor || '')
+        atualizarConversaComoLida(emailCliente, emailGestor)
       }
-      
-      // MARCAR NO ESTADO DE SESSÃO
       if (marcarChatComoLidoEstaSecao) {
-        console.log('🔄 [GestorChatList] Marcando no estado de sessão')
-        marcarChatComoLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '')
+        marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
       }
-      
-      // FORÇAR RE-RENDERIZAÇÃO IMEDIATA
-      console.log('🔄 [GestorChatList] Forçando re-renderização')
-      setForceUpdate(prev => prev + 1)
+    }, 0)
+  }
+
+  // FUNÇÃO RADICAL: Seleção com marcação instantânea
+  const handleSelectChat = (conversa: ChatConversaPreview) => {
+    console.log('🎯 [RADICAL] Chat selecionado:', conversa.email_cliente)
+
+    // SE TEM MENSAGENS NÃO LIDAS: MARCAR COMO LIDO INSTANTANEAMENTE
+    if (conversa.tem_mensagens_nao_lidas) {
+      marcarComoLidoInstantaneo(conversa.email_cliente, conversa.email_gestor || '')
     }
 
-    // 2. SELECIONAR O CHAT
+    // SELECIONAR O CHAT
     setSelectedChat(conversa)
   }
 
-  // FUNÇÃO CORRIGIDA: Marcar como lida via botão com feedback instantâneo
+  // FUNÇÃO RADICAL: Marcar via botão com feedback instantâneo
   const handleMarcarComoLida = (emailCliente: string, emailGestor: string) => {
-    console.log('🎯 [GestorChatList] Marcando como lida via botão:', emailCliente)
-    
-    // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
-    if (atualizarConversaComoLida) {
-      console.log('🔄 [GestorChatList] Forçando atualização visual imediata via botão')
-      atualizarConversaComoLida(emailCliente, emailGestor)
-    }
-    
-    // 2. MARCAR NO ESTADO DE SESSÃO
-    if (marcarChatComoLidoEstaSecao) {
-      console.log('🔄 [GestorChatList] Marcando no estado de sessão via botão')
-      marcarChatComoLidoEstaSecao(emailCliente, emailGestor)
-    }
-
-    // 3. FORÇAR RE-RENDERIZAÇÃO IMEDIATA
-    console.log('🔄 [GestorChatList] Forçando re-renderização via botão')
-    setForceUpdate(prev => prev + 1)
-
-    // 4. RECARREGAR CONVERSAS PARA SINCRONIZAR
-    setTimeout(() => {
-      console.log('🔄 [GestorChatList] Recarregando conversas para sincronizar')
-      recarregar()
-    }, 500)
+    console.log('🔥 [RADICAL] Botão marcar como lida:', emailCliente)
+    marcarComoLidoInstantaneo(emailCliente, emailGestor)
   }
 
-  // FUNÇÃO CORRIGIDA: Classes do card com lógica melhorada
+  // FUNÇÃO RADICAL: Classes do card baseadas APENAS no estado local
   const getCardClasses = (conversa: ChatConversaPreview) => {
-    const baseClasses = "transition-all duration-300 cursor-pointer hover:shadow-xl border-l-4"
+    const baseClasses = "transition-all duration-200 cursor-pointer hover:shadow-xl border-l-4"
     const selecionado = isSelected(conversa)
+    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
     
-    // VERIFICAR SE FOI LIDO NESTA SESSÃO
-    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
+    // PRIMEIRA VERIFICAÇÃO: Estado local (fonte de verdade)
+    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
-    // LÓGICA PRINCIPAL: Se foi lido nesta sessão OU não tem mensagens não lidas, não é vermelho
-    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
-    
-    console.log(`📊 [GestorChatList] Card ${conversa.nome_cliente}:`, {
+    console.log(`🔥 [RADICAL] Card ${conversa.nome_cliente}:`, {
       temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
-      foiLidoEstaSecao,
-      naoLido,
+      lidoLocalmente,
       selecionado,
-      forceUpdate // Para debug
+      chaveChat
     })
     
+    // LÓGICA VISUAL SIMPLIFICADA
     if (selecionado) {
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50`
     }
     
-    if (naoLido) {
+    // SE FOI LIDO LOCALMENTE: SEMPRE CINZA (independente do banco)
+    if (lidoLocalmente) {
+      return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-gray-500`
+    }
+    
+    // SE TEM MENSAGENS NÃO LIDAS E NÃO FOI LIDO LOCALMENTE: VERMELHO
+    if (conversa.tem_mensagens_nao_lidas) {
       return `${baseClasses} !bg-red-900/40 !border-red-500 hover:!bg-red-900/50 shadow-red-500/30`
     }
     
-    // SE FOI LIDO OU NÃO TEM MENSAGENS NÃO LIDAS: CINZA
-    return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500 hover:border-l-blue-400`
+    // PADRÃO: CINZA
+    return `${baseClasses} bg-gray-800 border-gray-700 hover:bg-gray-750 border-l-blue-500`
   }
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-16 w-16 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg md:h-14 md:w-14"
     const selecionado = isSelected(conversa)
-    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
-    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
     }
     
-    if (naoLido) {
+    if (lidoLocalmente) {
+      return `${baseClasses} bg-gradient-to-br from-blue-800 to-blue-900`
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
       return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
@@ -214,14 +220,18 @@ export function GestorChatList() {
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
     const selecionado = isSelected(conversa)
-    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
-    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
     }
     
-    if (naoLido) {
+    if (lidoLocalmente) {
+      return isTitle ? 'text-white' : 'text-gray-400'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
       return isTitle ? 'text-red-100' : 'text-gray-200 font-medium'
     }
     
@@ -230,14 +240,18 @@ export function GestorChatList() {
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
     const selecionado = isSelected(conversa)
-    const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
-    const naoLido = conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+    const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+    const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
     
     if (selecionado) {
       return 'text-blue-200'
     }
     
-    if (naoLido) {
+    if (lidoLocalmente) {
+      return 'text-blue-300'
+    }
+    
+    if (conversa.tem_mensagens_nao_lidas) {
       return 'text-red-200'
     }
     
@@ -361,9 +375,10 @@ export function GestorChatList() {
           </div>
         ) : (
           conversasFiltradas.map((conversa, index) => {
-            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}-${forceUpdate}`
-            const foiLidoEstaSecao = chatFoiLidoEstaSecao ? chatFoiLidoEstaSecao(conversa.email_cliente, conversa.email_gestor || '') : false
-            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !foiLidoEstaSecao
+            const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}-${forceRender}`
+            const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
+            const lidoLocalmente = chatsLidosLocalmente.has(chaveChat)
+            const mostrarBadgeNaoLidas = conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !lidoLocalmente
             
             return (
               <Card 
@@ -382,7 +397,7 @@ export function GestorChatList() {
                         <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
                           <h3 className={`text-xl font-bold truncate pr-2 mb-1 md:mb-0 ${getTextClasses(conversa, true)}`}>
                             {conversa.nome_cliente}
-                            {conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao && (
+                            {conversa.tem_mensagens_nao_lidas && !lidoLocalmente && (
                               <span className="ml-2 text-red-400 text-xl animate-pulse">●</span>
                             )}
                           </h3>
@@ -415,7 +430,7 @@ export function GestorChatList() {
                       <div className={`rounded-full p-4 transition-all duration-200 shadow-lg hover:scale-105 ${
                         isSelected(conversa)
                           ? 'bg-blue-600 hover:bg-blue-700'
-                          : conversa.tem_mensagens_nao_lidas && !foiLidoEstaSecao
+                          : conversa.tem_mensagens_nao_lidas && !lidoLocalmente
                             ? 'bg-red-600 hover:bg-red-700' 
                             : 'bg-blue-600 hover:bg-blue-700'
                       }`}>
