@@ -126,33 +126,30 @@ export function ComissaoButton({
                       </p>
                     ) : (
                       <p className="text-xs mt-1 text-orange-300">
-                        🔒 Apenas admins podem alterar
+                        Apenas admins podem alterar
                       </p>
                     )}
                   </div>
                 </TooltipContent>
               </Tooltip>
               
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={!canEdit}
-                    onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
-                    className={`h-6 w-6 p-0 ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
-                  >
-                    <DollarSign className="h-2 w-2" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  {canEdit ? (
+              {canEdit && (
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => onComissionValueEdit(clienteId, valorComissao)}
+                      className="h-6 w-6 p-0"
+                    >
+                      <DollarSign className="h-2 w-2" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
                     <p>Editar valor: {formatCurrency(valorComissao)}</p>
-                  ) : (
-                    <p>🔒 Apenas admins podem editar valor: {formatCurrency(valorComissao)}</p>
-                  )}
-                </TooltipContent>
-              </Tooltip>
+                  </TooltipContent>
+                </Tooltip>
+              )}
             </>
           )}
         </div>
@@ -246,15 +243,16 @@ export function ComissaoButton({
             )}
           </Button>
           
-          <Button
-            size="sm"
-            variant="outline"
-            disabled={!canEdit}
-            onClick={() => canEdit ? onComissionValueEdit(clienteId, valorComissao) : undefined}
-            className={`h-6 text-xs ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}`}
-          >
-            {formatCurrency(valorComissao)}
-          </Button>
+          {canEdit && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onComissionValueEdit(clienteId, valorComissao)}
+              className="h-6 text-xs"
+            >
+              {formatCurrency(valorComissao)}
+            </Button>
+          )}
         </>
       )}
     </div>
