@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -200,13 +199,30 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
 export function useChatConversas(gestorFiltro?: string | null) {
   const [conversas, setConversas] = useState<ChatConversaPreview[]>([])
   const [loading, setLoading] = useState(true)
-  const [chatsJaLidos, setChatsJaLidos] = useState<Set<string>>(new Set())
+  const [chatsProcessandoLeitura, setChatsProcessandoLeitura] = useState<Set<string>>(new Set())
+  const [chatsLidosLocalmente, setChatsLidosLocalmente] = useState<Set<string>>(new Set())
   const { user, isGestor, isAdmin } = useAuth()
 
-  const marcarChatComoJaLido = useCallback((emailCliente: string, emailGestor: string) => {
+  const marcarChatComoProcessandoLeitura = useCallback((emailCliente: string, emailGestor: string) => {
     const chaveChat = `${emailCliente}-${emailGestor}`
-    console.log('📖 [useChatConversas] Marcando chat como já lido:', chaveChat)
-    setChatsJaLidos(prev => new Set(prev).add(chaveChat))
+    console.log('🟡 [useChatConversas] Marcando chat como processando leitura:', chaveChat)
+    setChatsProcessandoLeitura(prev => new Set(prev).add(chaveChat))
+  }, [])
+
+  const marcarChatComoLidoLocalmente = useCallback((emailCliente: string, emailGestor: string) => {
+    const chaveChat = `${emailCliente}-${emailGestor}`
+    console.log('📖 [useChatConversas] Marcando chat como lido localmente:', chaveChat)
+    setChatsLidosLocalmente(prev => new Set(prev).add(chaveChat))
+  }, [])
+
+  const pararProcessamentoLeitura = useCallback((emailCliente: string, emailGestor: string) => {
+    const chaveChat = `${emailCliente}-${emailGestor}`
+    console.log('⏹️ [useChatConversas] Parando processamento de leitura:', chaveChat)
+    setChatsProcessandoLeitura(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(chaveChat)
+      return newSet
+    })
   }, [])
 
   const carregarConversas = useCallback(async () => {
@@ -251,6 +267,9 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .limit(1)
             .maybeSingle()
 
+          // CORREÇÃO: Aguardar um tempo para garantir que a marcação foi processada
+          await new Promise(resolve => setTimeout(resolve, 100))
+
           const { count: naoLidasCount } = await supabase
             .from('chat_mensagens')
             .select('*', { count: 'exact', head: true })
@@ -260,15 +279,32 @@ export function useChatConversas(gestorFiltro?: string | null) {
             .eq('remetente', 'cliente')
 
           const chaveChat = `${cliente.email_cliente}-${cliente.email_gestor}`
-          const jaFoiLidoLocalmente = chatsJaLidos.has(chaveChat)
+          const estaSendoProcessado = chatsProcessandoLeitura.has(chaveChat)
+          const foiLidoLocalmente = chatsLidosLocalmente.has(chaveChat)
           
-          // CORREÇÃO: Se foi marcado como lido localmente, forçar contagem zero
-          const mensagensNaoLidasFinais = jaFoiLidoLocalmente ? 0 : (naoLidasCount || 0)
+          // CORREÇÃO PRINCIPAL: Se foi lido localmente ou está sendo processado, forçar zero mensagens não lidas
+          let mensagensNaoLidasFinais = naoLidasCount || 0
+          
+          if (estaSendoProcessado || foiLidoLocalmente) {
+            console.log(`🔧 [useChatConversas] Forçando zero mensagens não lidas para ${cliente.nome_cliente} (processando: ${estaSendoProcessado}, lido local: ${foiLidoLocalmente})`)
+            mensagensNaoLidasFinais = 0
+          }
+          
+          // CORREÇÃO: Se o banco agora mostra zero mensagens não lidas, limpar o estado local
+          if ((naoLidasCount || 0) === 0 && foiLidoLocalmente) {
+            console.log(`🧹 [useChatConversas] Limpando estado local para ${cliente.nome_cliente} (confirmado no banco)`)
+            setChatsLidosLocalmente(prev => {
+              const newSet = new Set(prev)
+              newSet.delete(chaveChat)
+              return newSet
+            })
+          }
           
           console.log(`📊 [useChatConversas] Cliente: ${cliente.nome_cliente}`, {
             ultimaMensagem: ultimaMensagem?.conteudo || 'Nenhuma',
             mensagensNaoLidasDB: naoLidasCount || 0,
-            jaFoiLidoLocalmente,
+            estaSendoProcessado,
+            foiLidoLocalmente,
             mensagensNaoLidasFinais
           })
 
@@ -297,25 +333,12 @@ export function useChatConversas(gestorFiltro?: string | null) {
       console.log('✅ [useChatConversas] Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
       
-      // CORREÇÃO: Limpar chats marcados como lidos localmente se agora estão realmente lidos no banco
-      conversasOrdenadas.forEach(conversa => {
-        const chaveChat = `${conversa.email_cliente}-${conversa.email_gestor}`
-        if (chatsJaLidos.has(chaveChat) && !conversa.tem_mensagens_nao_lidas) {
-          console.log('🔄 [useChatConversas] Removendo chat do estado local (confirmado no banco):', chaveChat)
-          setChatsJaLidos(prev => {
-            const newSet = new Set(prev)
-            newSet.delete(chaveChat)
-            return newSet
-          })
-        }
-      })
-      
     } catch (err) {
       console.error('❌ [useChatConversas] Erro ao carregar conversas:', err)
     } finally {
       setLoading(false)
     }
-  }, [user?.email, isGestor, isAdmin, gestorFiltro, chatsJaLidos])
+  }, [user?.email, isGestor, isAdmin, gestorFiltro, chatsProcessandoLeitura, chatsLidosLocalmente])
 
   useEffect(() => {
     carregarConversas()
@@ -332,13 +355,18 @@ export function useChatConversas(gestorFiltro?: string | null) {
         (payload) => {
           console.log('🔄 [useChatConversas] Realtime: mudança nas mensagens', payload.eventType)
           
-          // CORREÇÃO: Se for uma nova mensagem, limpar o estado local do chat correspondente
+          // CORREÇÃO: Se for uma nova mensagem do cliente, limpar estado local
           if (payload.eventType === 'INSERT' && payload.new) {
             const novaMensagem = payload.new as any
             if (novaMensagem.remetente === 'cliente') {
               const chaveChat = `${novaMensagem.email_cliente}-${novaMensagem.email_gestor}`
-              console.log('📨 [useChatConversas] Nova mensagem do cliente, removendo do estado local:', chaveChat)
-              setChatsJaLidos(prev => {
+              console.log('📨 [useChatConversas] Nova mensagem do cliente, limpando estado local:', chaveChat)
+              setChatsLidosLocalmente(prev => {
+                const newSet = new Set(prev)
+                newSet.delete(chaveChat)
+                return newSet
+              })
+              setChatsProcessandoLeitura(prev => {
                 const newSet = new Set(prev)
                 newSet.delete(chaveChat)
                 return newSet
@@ -346,10 +374,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
             }
           }
           
-          // Delay maior para garantir sincronização
+          // CORREÇÃO: Delay maior para garantir sincronização com banco
           setTimeout(() => {
             carregarConversas()
-          }, 1200)
+          }, 2000)
         }
       )
       .subscribe()
@@ -363,6 +391,16 @@ export function useChatConversas(gestorFiltro?: string | null) {
     conversas,
     loading,
     recarregar: carregarConversas,
-    marcarChatComoJaLido
+    marcarChatComoProcessandoLeitura,
+    marcarChatComoLidoLocalmente,
+    pararProcessamentoLeitura,
+    estaProcessandoLeitura: (emailCliente: string, emailGestor: string) => {
+      const chaveChat = `${emailCliente}-${emailGestor}`
+      return chatsProcessandoLeitura.has(chaveChat)
+    },
+    foiLidoLocalmente: (emailCliente: string, emailGestor: string) => {
+      const chaveChat = `${emailCliente}-${emailGestor}`
+      return chatsLidosLocalmente.has(chaveChat)
+    }
   }
 }

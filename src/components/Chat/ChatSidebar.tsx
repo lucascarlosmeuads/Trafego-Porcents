@@ -16,7 +16,11 @@ interface ChatSidebarProps {
   onSelectChat: (conversa: ChatConversaPreview) => void
   loading: boolean
   recarregarConversas?: () => void
-  marcarChatComoJaLido?: (emailCliente: string, emailGestor: string) => void
+  marcarChatComoProcessandoLeitura?: (emailCliente: string, emailGestor: string) => void
+  marcarChatComoLidoLocalmente?: (emailCliente: string, emailGestor: string) => void
+  pararProcessamentoLeitura?: (emailCliente: string, emailGestor: string) => void
+  estaProcessandoLeitura?: (emailCliente: string, emailGestor: string) => boolean
+  foiLidoLocalmente?: (emailCliente: string, emailGestor: string) => boolean
 }
 
 export function ChatSidebar({ 
@@ -25,17 +29,20 @@ export function ChatSidebar({
   onSelectChat, 
   loading, 
   recarregarConversas,
-  marcarChatComoJaLido 
+  marcarChatComoProcessandoLeitura,
+  marcarChatComoLidoLocalmente,
+  pararProcessamentoLeitura,
+  estaProcessandoLeitura,
+  foiLidoLocalmente
 }: ChatSidebarProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [showOnlyUnread, setShowOnlyUnread] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('all')
-  const [conversasProcessandoLeitura, setConversasProcessandoLeitura] = useState<Set<string>>(new Set())
 
-  // Função específica para marcar mensagens como lidas
+  // Função específica para marcar mensagens como lidas no banco
   const marcarMensagensComoLidas = async (emailCliente: string, emailGestor: string) => {
     try {
-      console.log('📖 [ChatSidebar] Marcando mensagens como lidas:', {
+      console.log('📖 [ChatSidebar] Marcando mensagens como lidas no banco:', {
         emailCliente,
         emailGestor
       })
@@ -50,10 +57,10 @@ export function ChatSidebar({
 
       if (error) throw error
       
-      console.log('✅ [ChatSidebar] Mensagens marcadas como lidas com sucesso')
+      console.log('✅ [ChatSidebar] Mensagens marcadas como lidas no banco com sucesso')
       
-      // CORREÇÃO: Aguardar mais tempo e forçar recarregamento
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // CORREÇÃO: Aguardar mais tempo para garantir propagação no banco
+      await new Promise(resolve => setTimeout(resolve, 2000))
       
       if (recarregarConversas) {
         console.log('🔄 [ChatSidebar] Forçando recarregamento das conversas...')
@@ -148,59 +155,55 @@ export function ChatSidebar({
     })
 
     const jaEstaSelecionado = isSelected(conversa)
-    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
     
     // CORREÇÃO: Marcar como lidas APENAS se tem mensagens não lidas E não está selecionado
     if (conversa.tem_mensagens_nao_lidas && !jaEstaSelecionado) {
-      console.log('📖 [ChatSidebar] Processando leitura de mensagens...')
+      console.log('📖 [ChatSidebar] === INICIANDO PROCESSO DE MARCAÇÃO COMO LIDA ===')
       
-      // 1. Marcar como processando leitura (temporário)
-      setConversasProcessandoLeitura(prev => new Set(prev).add(chaveConversa))
+      // 1. Marcar como processando leitura (estado temporário)
+      if (marcarChatComoProcessandoLeitura) {
+        marcarChatComoProcessandoLeitura(conversa.email_cliente, conversa.email_gestor)
+      }
       
-      // 2. Marcar no hook como "já lido" para forçar atualização local
-      if (marcarChatComoJaLido) {
-        marcarChatComoJaLido(conversa.email_cliente, conversa.email_gestor)
+      // 2. Marcar como lido localmente (força atualização visual imediata)
+      if (marcarChatComoLidoLocalmente) {
+        marcarChatComoLidoLocalmente(conversa.email_cliente, conversa.email_gestor)
       }
       
       // 3. Marcar no banco de dados
       await marcarMensagensComoLidas(conversa.email_cliente, conversa.email_gestor)
       
-      // 4. Remover do estado de processamento após delay
-      setTimeout(() => {
-        setConversasProcessandoLeitura(prev => {
-          const newSet = new Set(prev)
-          newSet.delete(chaveConversa)
-          return newSet
-        })
-      }, 2000)
+      // 4. Parar processamento após delay
+      if (pararProcessamentoLeitura) {
+        setTimeout(() => {
+          pararProcessamentoLeitura(conversa.email_cliente, conversa.email_gestor)
+        }, 3000)
+      }
+      
+      console.log('✅ [ChatSidebar] === PROCESSO DE MARCAÇÃO CONCLUÍDO ===')
     }
 
     console.log('✅ [ChatSidebar] Chamando onSelectChat para:', conversa.email_cliente)
     onSelectChat(conversa)
   }
 
-  // CORREÇÃO: Função para verificar se uma conversa está processando leitura
-  const estaProcessandoLeitura = (conversa: ChatConversaPreview) => {
-    const chaveConversa = `${conversa.email_cliente}-${conversa.email_gestor}`
-    return conversasProcessandoLeitura.has(chaveConversa)
-  }
-
-  // CORREÇÃO: Lógica de classes CSS corrigida - Azul > Amarelo > Cinza (lido) > Vermelho > Cinza padrão
+  // CORREÇÃO: Lógica de cores completamente reformulada
   const getCardClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "cursor-pointer transition-all duration-300 hover:shadow-lg border-l-4"
     const selecionado = isSelected(conversa)
-    const processandoLeitura = estaProcessandoLeitura(conversa)
-    const naoLido = conversa.tem_mensagens_nao_lidas && !processandoLeitura
+    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
+    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
     
     console.log(`🎨 [ChatSidebar] Classes para ${conversa.email_cliente}:`, {
       selecionado,
-      naoLido,
       processandoLeitura,
-      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas,
-      selectedChatEmail: selectedChat?.email_cliente
+      lidoLocalmente,
+      naoLidoReal,
+      temMensagensNaoLidas: conversa.tem_mensagens_nao_lidas
     })
     
-    // HIERARQUIA: 1º Selecionado (AZUL), 2º Processando (AMARELO), 3º Não Lido (VERMELHO), 4º Padrão (CINZA)
+    // HIERARQUIA CORRIGIDA: 1º Selecionado (AZUL), 2º Processando (AMARELO), 3º Lido Local (CINZA), 4º Não Lido (VERMELHO), 5º Padrão (CINZA)
     if (selecionado) {
       console.log(`🔵 [ChatSidebar] Card SELECIONADO (AZUL): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-blue-900/90 !border-blue-400 shadow-blue-500/30 ring-2 ring-blue-400/50 !shadow-xl`
@@ -211,7 +214,12 @@ export function ChatSidebar({
       return `${baseClasses} !bg-yellow-900/50 hover:!bg-yellow-900/60 !border-yellow-500 shadow-yellow-500/30`
     }
     
-    if (naoLido) {
+    if (lidoLocalmente) {
+      console.log(`⚪ [ChatSidebar] Card LIDO LOCALMENTE (CINZA): ${conversa.email_cliente}`)
+      return `${baseClasses} bg-gray-800 border-gray-600 hover:bg-gray-750`
+    }
+    
+    if (naoLidoReal) {
       console.log(`🔴 [ChatSidebar] Card NÃO LIDO (VERMELHO): ${conversa.email_cliente}`)
       return `${baseClasses} !bg-red-900/50 hover:!bg-red-900/60 !border-red-500 shadow-red-500/30`
     }
@@ -222,7 +230,9 @@ export function ChatSidebar({
 
   const getAvatarClasses = (conversa: ChatConversaPreview) => {
     const baseClasses = "h-12 w-12 rounded-full flex items-center justify-center flex-shrink-0 shadow-lg"
-    const processandoLeitura = estaProcessandoLeitura(conversa)
+    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
+    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
     
     if (isSelected(conversa)) {
       return `${baseClasses} bg-gradient-to-br from-blue-700 to-blue-800 ring-2 ring-blue-400`
@@ -232,7 +242,7 @@ export function ChatSidebar({
       return `${baseClasses} bg-gradient-to-br from-yellow-700 to-yellow-800 ring-2 ring-yellow-500`
     }
     
-    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
+    if (naoLidoReal) {
       return `${baseClasses} bg-gradient-to-br from-red-700 to-red-800 ring-2 ring-red-500`
     }
     
@@ -240,7 +250,9 @@ export function ChatSidebar({
   }
 
   const getTextClasses = (conversa: ChatConversaPreview, isTitle: boolean = false) => {
-    const processandoLeitura = estaProcessandoLeitura(conversa)
+    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
+    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
     
     if (isSelected(conversa)) {
       return isTitle ? 'text-blue-100' : 'text-blue-200'
@@ -250,7 +262,7 @@ export function ChatSidebar({
       return isTitle ? 'text-yellow-100 font-semibold' : 'text-yellow-200 font-medium'
     }
     
-    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
+    if (naoLidoReal) {
       return isTitle ? 'text-red-100 font-semibold' : 'text-gray-200 font-medium'
     }
     
@@ -258,7 +270,9 @@ export function ChatSidebar({
   }
 
   const getUserIconClasses = (conversa: ChatConversaPreview) => {
-    const processandoLeitura = estaProcessandoLeitura(conversa)
+    const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
+    const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
+    const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
     
     if (isSelected(conversa)) {
       return 'text-blue-200'
@@ -268,7 +282,7 @@ export function ChatSidebar({
       return 'text-yellow-200'
     }
     
-    if (conversa.tem_mensagens_nao_lidas && !processandoLeitura) {
+    if (naoLidoReal) {
       return 'text-red-200'
     }
     
@@ -288,7 +302,6 @@ export function ChatSidebar({
           )}
         </div>
         
-        {/* Contador de resultados */}
         <div className="mb-3 text-xs text-gray-400">
           Mostrando {totalFiltradas} de {totalConversas} conversas
           {hasActiveFilters && (
@@ -304,7 +317,6 @@ export function ChatSidebar({
           )}
         </div>
         
-        {/* Busca */}
         <div className="relative mb-3">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
@@ -315,9 +327,7 @@ export function ChatSidebar({
           />
         </div>
 
-        {/* Filtros */}
         <div className="space-y-2">
-          {/* Filtro de não lidas */}
           <Button
             variant={showOnlyUnread ? "default" : "ghost"}
             size="sm"
@@ -332,7 +342,6 @@ export function ChatSidebar({
             {showOnlyUnread ? 'Mostrar todas' : 'Apenas não lidas'}
           </Button>
 
-          {/* Filtro por status */}
           <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full h-9 bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Filtrar por status" />
@@ -371,8 +380,10 @@ export function ChatSidebar({
         ) : (
           conversasFiltradas.map((conversa, index) => {
             const chaveUnica = `${conversa.email_cliente}-${conversa.email_gestor}-${index}`
-            const processandoLeitura = estaProcessandoLeitura(conversa)
-            const mostrarBadgeNaoLidas = conversa.mensagens_nao_lidas > 0 && !isSelected(conversa) && !processandoLeitura
+            const processandoLeitura = estaProcessandoLeitura ? estaProcessandoLeitura(conversa.email_cliente, conversa.email_gestor) : false
+            const lidoLocalmente = foiLidoLocalmente ? foiLidoLocalmente(conversa.email_cliente, conversa.email_gestor) : false
+            const naoLidoReal = conversa.tem_mensagens_nao_lidas && !processandoLeitura && !lidoLocalmente
+            const mostrarBadgeNaoLidas = naoLidoReal && !isSelected(conversa)
             
             return (
               <Card 
@@ -382,18 +393,15 @@ export function ChatSidebar({
               >
                 <CardContent className="p-3">
                   <div className="flex items-start gap-3">
-                    {/* Avatar */}
                     <div className={getAvatarClasses(conversa)}>
                       <User className={`h-6 w-6 ${getUserIconClasses(conversa)}`} />
                     </div>
                     
-                    {/* Informações */}
                     <div className="flex-1 min-w-0">
-                      {/* Nome e timestamp */}
                       <div className="flex items-center justify-between mb-1">
                         <h3 className={`text-sm font-bold truncate pr-2 ${getTextClasses(conversa, true)}`}>
                           {conversa.nome_cliente}
-                          {(conversa.tem_mensagens_nao_lidas && !isSelected(conversa) && !processandoLeitura) && (
+                          {naoLidoReal && (
                             <span className="ml-1 text-red-400 animate-pulse">●</span>
                           )}
                           {processandoLeitura && (
@@ -405,7 +413,6 @@ export function ChatSidebar({
                         </span>
                       </div>
                       
-                      {/* Status */}
                       <div className="mb-2">
                         <Badge 
                           className={`text-xs font-medium px-2 py-1 ${getStatusBadgeVariant(conversa.status_campanha)}`}
@@ -414,13 +421,11 @@ export function ChatSidebar({
                         </Badge>
                       </div>
                       
-                      {/* Última mensagem */}
                       <p className={`text-xs line-clamp-1 leading-relaxed ${getTextClasses(conversa)}`}>
                         {conversa.ultima_mensagem || 'Nenhuma mensagem ainda'}
                       </p>
                     </div>
                     
-                    {/* Badge de mensagens não lidas */}
                     {mostrarBadgeNaoLidas && (
                       <Badge variant="destructive" className="text-xs font-bold px-2 py-1 min-w-[24px] h-6 flex items-center justify-center bg-red-600 text-white animate-pulse">
                         {conversa.mensagens_nao_lidas > 99 ? '99+' : conversa.mensagens_nao_lidas}
