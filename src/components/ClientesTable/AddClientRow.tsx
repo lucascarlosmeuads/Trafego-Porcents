@@ -35,6 +35,9 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
   })
 
   const handleSave = async () => {
+    console.log('🔵 [AddClientRow] === INICIANDO CRIAÇÃO DE CLIENTE ===')
+    console.log('🔵 [AddClientRow] Dados do formulário:', formData)
+    
     // Validar campos obrigatórios
     if (!formData.nome_cliente.trim()) {
       toast({
@@ -72,14 +75,25 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       return
     }
 
-    const result = await onAddClient({
+    console.log('🔵 [AddClientRow] Validação passou, chamando onAddClient...')
+    
+    const clienteParaAdicionar = {
       ...formData,
       comissao_paga: false,
-      valor_comissao: 60.00
-    })
+      valor_comissao: 60.00 // ✅ Garantir R$60,00 para novos clientes
+    }
+
+    console.log('🔵 [AddClientRow] Cliente para adicionar:', clienteParaAdicionar)
+
+    const result = await onAddClient(clienteParaAdicionar)
+    
+    console.log('🔵 [AddClientRow] Resultado do onAddClient:', result)
 
     // Type guard to check if result is not false
     if (result && typeof result === 'object' && result.success) {
+      console.log('🟢 [AddClientRow] === CLIENTE CRIADO COM SUCESSO ===')
+      console.log('💰 [AddClientRow] Valor comissão final:', result.valorComissao || '60.00')
+      
       // Clear form and exit edit mode
       setFormData({
         nome_cliente: '',
@@ -92,8 +106,8 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       setIsEditing(false)
       
       toast({
-        title: "Sucesso",
-        description: "Cliente adicionado com sucesso"
+        title: "✅ Sucesso",
+        description: `Cliente adicionado com sucesso! Valor de comissão: R$${result.valorComissao || '60,00'}`
       })
 
       // Mostrar aviso sobre senha padrão se foi definida
@@ -112,6 +126,13 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
         setNewClientData(result.clientData)
         setShowInstructions(true)
       }
+    } else {
+      console.error('❌ [AddClientRow] Resultado indica falha:', result)
+      toast({
+        title: "❌ Erro",
+        description: "Falha ao criar cliente. Verifique os dados e tente novamente.",
+        variant: "destructive"
+      })
     }
   }
 
@@ -192,7 +213,7 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
           />
         </TableCell>
         <TableCell className="text-center">
-          <span className="text-xs text-muted-foreground">Auto</span>
+          <span className="text-xs text-green-600 font-semibold">R$60,00</span>
         </TableCell>
         <TableCell>
           <Select 

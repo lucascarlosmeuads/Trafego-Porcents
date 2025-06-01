@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -7,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
-import { supabase } from '@/lib/supabase'
+import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check } from 'lucide-react'
 
 interface GestorOption {
@@ -103,10 +104,12 @@ export function NewSellerAddClientForm() {
         status_campanha: 'Cliente Novo', // ✅ Usando "Cliente Novo" como padrão
         data_venda: new Date().toISOString().split('T')[0],
         produto_nicho: 'Tráfego Pago',
-        senha_cliente: formData.senha
+        senha_cliente: formData.senha,
+        valor_comissao: 60.00 // ✅ Garantir R$60,00 para novos clientes
       }
 
       console.log("🔵 [NewSellerAddClientForm] Dados para addCliente:", clienteData)
+      console.log("💰 [NewSellerAddClientForm] Valor comissão definido:", clienteData.valor_comissao)
 
       const result = await addCliente(clienteData)
       
@@ -114,6 +117,7 @@ export function NewSellerAddClientForm() {
       
       if (result && result.success) {
         console.log("🟢 [NewSellerAddClientForm] === CLIENTE CRIADO COM SUCESSO ===")
+        console.log("💰 [NewSellerAddClientForm] Valor comissão final:", result.valorComissao || '60.00')
         
         // Limpar formulário
         setFormData({
@@ -134,6 +138,7 @@ export function NewSellerAddClientForm() {
 E-mail: ${clienteData.email_cliente}
 Senha: ${clienteData.senha_cliente}
 Gestor: ${formData.email_gestor}
+Valor Comissão: R$${result.valorComissao || '60,00'}
 
 O cliente pode fazer login imediatamente com essas credenciais.`,
           duration: 10000
@@ -172,6 +177,7 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 📧 Email: ${clienteEmail}
 🔐 Senha: ${clienteSenha}
+💰 Valor Comissão: R$60,00
 
 🔗 Acesse: https://login.trafegoporcents.com
 
@@ -206,7 +212,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       <CardHeader>
         <CardTitle>Adicionar Novo Cliente</CardTitle>
         <CardDescription>
-          Preencha os dados do cliente para criar uma nova conta
+          Preencha os dados do cliente para criar uma nova conta (valor padrão de comissão: R$60,00)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -288,11 +294,18 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </p>
           </div>
 
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <h3 className="font-semibold text-green-800 text-sm mb-2">💰 Valor de Comissão</h3>
+            <p className="text-sm text-green-700">
+              Todos os novos clientes são criados com valor padrão de comissão de <strong>R$60,00</strong>.
+            </p>
+          </div>
+
           {/* Mensagem personalizada para o cliente */}
           {formData.nome_cliente && formData.email_cliente && (
-            <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="font-semibold text-green-800 text-sm">📱 Mensagem para enviar ao cliente:</h3>
+                <h3 className="font-semibold text-blue-800 text-sm">📱 Mensagem para enviar ao cliente:</h3>
                 <Button
                   type="button"
                   onClick={handleCopyWelcomeMessage}
@@ -322,7 +335,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           )}
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Criando Cliente..." : "Criar Cliente"}
+            {loading ? "Criando Cliente..." : "Criar Cliente (R$60,00)"}
           </Button>
         </form>
       </CardContent>
