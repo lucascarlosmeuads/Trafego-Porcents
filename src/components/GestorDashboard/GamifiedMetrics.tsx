@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -161,7 +160,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
         <Card className="bg-gradient-to-br from-orange-50 to-orange-100 border-orange-200">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-orange-700 flex items-center">
-              <Fire className="h-4 w-4 mr-2" />
+              <Flame className="h-4 w-4 mr-2" />
               Potencial +1 Cliente
             </CardTitle>
           </CardHeader>
