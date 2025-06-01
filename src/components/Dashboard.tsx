@@ -99,7 +99,7 @@ export function Dashboard() {
           onTabChange={setActiveTab}
         />
         
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto min-h-screen">
           <div className="p-6 w-full max-w-full">
             <Suspense fallback={<LoadingFallback />}>
               {/* Admin Dashboard */}
