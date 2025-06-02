@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { ChatConversaPreview } from '@/hooks/useChatMessages'
 import { Badge } from '@/components/ui/badge'
@@ -10,6 +9,7 @@ import { Search, MessageCircle, User, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { getStatusBadgeClasses } from '@/utils/statusColors'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 interface ChatSidebarProps {
   conversas: ChatConversaPreview[]
@@ -35,8 +35,6 @@ export function ChatSidebar({
     c.nome_cliente && 
     c.nome_cliente.trim() !== ''
   )
-
-  const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversasValidas
     .filter(conversa =>
@@ -157,16 +155,18 @@ export function ChatSidebar({
             <SelectTrigger className="w-full h-9 bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="all" className="text-white hover:bg-gray-600">
+            <SelectContent className="bg-gray-800 border-gray-600 z-[60]">
+              <SelectItem value="all" className="text-white hover:bg-gray-600 focus:bg-gray-600">
                 Todos os status
               </SelectItem>
-              {availableStatus.map((status) => (
-                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
-                  <div className="flex items-center gap-2">
-                    <Badge className={`text-xs font-medium px-2 py-1 ${getStatusBadgeClasses(status)}`}>
+              {STATUS_CAMPANHA.map((status) => (
+                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600 focus:bg-gray-600">
+                  <div className="flex items-center gap-2 w-full">
+                    <span 
+                      className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors ${getStatusBadgeClasses(status)} !text-white border-transparent`}
+                    >
                       {status}
-                    </Badge>
+                    </span>
                   </div>
                 </SelectItem>
               ))}
@@ -216,11 +216,11 @@ export function ChatSidebar({
                       </div>
                       
                       <div className="mb-2">
-                        <Badge 
-                          className={`text-xs font-medium px-2 py-1 ${getStatusBadgeClasses(conversa.status_campanha)}`}
+                        <span 
+                          className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors ${getStatusBadgeClasses(conversa.status_campanha)} !text-white border-transparent`}
                         >
                           {conversa.status_campanha}
-                        </Badge>
+                        </span>
                       </div>
                       
                       <p className={`text-xs line-clamp-1 leading-relaxed ${getTextClasses(conversa)}`}>

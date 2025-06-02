@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { useAuth } from '@/hooks/useAuth'
@@ -10,6 +9,8 @@ import { Search, MessageCircle, User, ArrowRight, X } from 'lucide-react'
 import { ChatInterface } from './ChatInterface'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { getStatusBadgeClasses } from '@/utils/statusColors'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 
 export function GestorChatList() {
   const { conversas, loading, recarregar } = useChatConversas()
@@ -25,8 +26,6 @@ export function GestorChatList() {
     c.nome_cliente && 
     c.nome_cliente.trim() !== ''
   )
-
-  const availableStatus = Array.from(new Set(conversasValidas.map(c => c.status_campanha).filter(Boolean)))
 
   const conversasFiltradas = conversasValidas
     .filter(conversa =>
@@ -49,30 +48,6 @@ export function GestorChatList() {
       return format(date, 'HH:mm', { locale: ptBR })
     } else {
       return format(date, 'dd/MM', { locale: ptBR })
-    }
-  }
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'otimização':
-      case 'otimizacao':
-        return 'bg-blue-600 text-white hover:bg-blue-700'
-      case 'agendamento':
-        return 'bg-yellow-500 text-black hover:bg-yellow-600'
-      case 'off':
-        return 'bg-red-600 text-white hover:bg-red-700'
-      case 'no ar':
-        return 'bg-green-600 text-white hover:bg-green-700'
-      case 'site':
-        return 'bg-orange-600 text-white hover:bg-orange-700'
-      case 'criativo':
-        return 'bg-purple-600 text-white hover:bg-purple-700'
-      case 'brief':
-        return 'bg-indigo-600 text-white hover:bg-indigo-700'
-      case 'problema':
-        return 'bg-red-700 text-white hover:bg-red-800'
-      default:
-        return 'bg-gray-600 text-white hover:bg-gray-700'
     }
   }
 
@@ -199,15 +174,18 @@ export function GestorChatList() {
             <SelectTrigger className="w-48 h-9 bg-gray-700 border-gray-600 text-white">
               <SelectValue placeholder="Filtrar por status" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-700 border-gray-600">
-              <SelectItem value="all" className="text-white hover:bg-gray-600">
+            <SelectContent className="bg-gray-800 border-gray-600 z-[60]">
+              <SelectItem value="all" className="text-white hover:bg-gray-600 focus:bg-gray-600">
                 Todos os status
               </SelectItem>
-              {availableStatus.map((status) => (
-                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
+              {STATUS_CAMPANHA.map((status) => (
+                <SelectItem key={status} value={status} className="text-white hover:bg-gray-600 focus:bg-gray-600">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${getStatusBadgeVariant(status).split(' ')[0]}`} />
-                    {status}
+                    <span 
+                      className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors ${getStatusBadgeClasses(status)} !text-white border-transparent`}
+                    >
+                      {status}
+                    </span>
                   </div>
                 </SelectItem>
               ))}
@@ -258,11 +236,11 @@ export function GestorChatList() {
                         </div>
                         
                         <div className="mb-4">
-                          <div 
-                            className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors text-base font-semibold px-4 py-2 ${getStatusBadgeVariant(conversa.status_campanha)}`}
+                          <span 
+                            className={`inline-flex items-center rounded-md border px-2.5 py-0.5 text-xs font-semibold transition-colors px-4 py-2 ${getStatusBadgeClasses(conversa.status_campanha)} !text-white border-transparent`}
                           >
                             {conversa.status_campanha}
-                          </div>
+                          </span>
                         </div>
                         
                         <p className={`text-sm line-clamp-2 leading-relaxed ${getTextClasses(conversa)}`}>
