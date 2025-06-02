@@ -5,7 +5,7 @@ import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
 import { ManagerSelector } from '@/components/ManagerSelector'
-import { MessageCircle, Shield } from 'lucide-react'
+import { MessageCircle, Shield, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 export function AdminChatLayoutSplit() {
@@ -49,6 +49,17 @@ export function AdminChatLayoutSplit() {
     setSelectedGestor(manager)
   }
 
+  const getTotalConversas = () => {
+    return conversas.length
+  }
+
+  const getFilterText = () => {
+    if (!selectedGestor) {
+      return 'Todas as conversas'
+    }
+    return `Conversas filtradas`
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen bg-gray-900">
@@ -85,6 +96,15 @@ export function AdminChatLayoutSplit() {
             <h2 className="text-xl font-bold text-white">Admin - Monitoramento de Chat</h2>
           </div>
           
+          {/* Status das conversas */}
+          <div className="flex items-center gap-2 mb-3">
+            <Users className="h-4 w-4 text-blue-400" />
+            <span className="text-sm text-gray-300">{getFilterText()}</span>
+            <Badge variant="outline" className="bg-blue-800 text-blue-100 border-blue-600">
+              {getTotalConversas()} conversa{getTotalConversas() !== 1 ? 's' : ''}
+            </Badge>
+          </div>
+          
           {/* Manager Selector - Mobile */}
           <div className="bg-gray-700 rounded-lg p-3 mb-3">
             <ManagerSelector 
@@ -114,7 +134,15 @@ export function AdminChatLayoutSplit() {
             <Shield className="h-5 w-5 text-yellow-500" />
             <h2 className="text-lg font-bold text-white">Admin - Chat Monitor</h2>
           </div>
-          <p className="text-xs text-gray-400 mb-4">Monitoramento de todas as conversas</p>
+          
+          {/* Status das conversas */}
+          <div className="flex items-center gap-2 mb-4">
+            <Users className="h-4 w-4 text-blue-400" />
+            <span className="text-sm text-gray-300">{getFilterText()}</span>
+            <Badge variant="outline" className="bg-blue-800 text-blue-100 border-blue-600">
+              {getTotalConversas()} conversa{getTotalConversas() !== 1 ? 's' : ''}
+            </Badge>
+          </div>
           
           {/* Manager Selector - Desktop */}
           <div className="bg-gray-700 rounded-lg p-3 mb-3">
@@ -155,16 +183,18 @@ export function AdminChatLayoutSplit() {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
                 Modo Administrador
               </h3>
-              <p className="text-gray-600 max-w-sm">
-                {selectedGestor 
-                  ? 'Selecione uma conversa da lista à esquerda para monitorar a comunicação do gestor selecionado'
-                  : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação entre gestores e clientes'
+              <p className="text-gray-600 max-w-sm mb-4">
+                {conversas.length === 0 
+                  ? selectedGestor 
+                    ? 'Nenhuma conversa encontrada para o gestor selecionado'
+                    : 'Nenhuma conversa encontrada no sistema'
+                  : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação'
                 }
               </p>
-              {conversas.length === 0 && selectedGestor && (
-                <p className="text-gray-500 text-sm mt-2">
-                  Nenhuma conversa encontrada para o gestor selecionado
-                </p>
+              {conversas.length > 0 && (
+                <div className="text-sm text-gray-500">
+                  {getTotalConversas()} conversa{getTotalConversas() !== 1 ? 's' : ''} disponível{getTotalConversas() !== 1 ? 'is' : ''}
+                </div>
               )}
             </div>
           </div>

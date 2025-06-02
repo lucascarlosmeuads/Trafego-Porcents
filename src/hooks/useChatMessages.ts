@@ -151,6 +151,8 @@ export function useChatConversas(gestorFiltro?: string | null) {
       setLoading(true)
       
       console.log('🔍 [useChatConversas] Carregando conversas para:', user.email)
+      console.log('🔍 [useChatConversas] IsAdmin:', isAdmin, 'IsGestor:', isGestor)
+      console.log('🔍 [useChatConversas] Gestor filtro:', gestorFiltro)
       
       let clientesQuery = supabase
         .from('todos_clientes')
@@ -159,14 +161,21 @@ export function useChatConversas(gestorFiltro?: string | null) {
         .not('nome_cliente', 'is', null)
 
       if (isGestor) {
+        // Gestor só vê seus próprios clientes
         clientesQuery = clientesQuery.eq('email_gestor', user.email)
-      } else if (isAdmin && gestorFiltro) {
-        clientesQuery = clientesQuery.eq('email_gestor', gestorFiltro)
+      } else if (isAdmin) {
+        // Admin vê todas as conversas por padrão, ou filtra por gestor específico se solicitado
+        if (gestorFiltro && gestorFiltro !== '__GESTORES__') {
+          clientesQuery = clientesQuery.eq('email_gestor', gestorFiltro)
+        }
+        // Se gestorFiltro for null/undefined, admin vê TODAS as conversas
       }
 
       const { data: clientes, error: clientesError } = await clientesQuery
 
       if (clientesError) throw clientesError
+
+      console.log('📊 [useChatConversas] Clientes encontrados:', clientes?.length || 0)
 
       if (!clientes || clientes.length === 0) {
         setConversas([])
@@ -195,12 +204,18 @@ export function useChatConversas(gestorFiltro?: string | null) {
         })
       )
 
+      // Ordenar por data da última mensagem (mais recentes primeiro)
       const conversasOrdenadas = conversasComMensagens.sort((a, b) => {
+        if (!a.ultima_mensagem_data && !b.ultima_mensagem_data) return 0
+        if (!a.ultima_mensagem_data) return 1
+        if (!b.ultima_mensagem_data) return -1
+        
         const dataA = new Date(a.ultima_mensagem_data).getTime()
         const dataB = new Date(b.ultima_mensagem_data).getTime()
         return dataB - dataA
       })
 
+      console.log('✅ [useChatConversas] Conversas processadas:', conversasOrdenadas.length)
       setConversas(conversasOrdenadas)
       
     } catch (err) {
