@@ -9,12 +9,15 @@ import { Globe, CheckCircle, Clock, LogOut } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
+type FiltroStatus = 'todos' | 'pendentes' | 'finalizados'
+
 export function SitesDashboard() {
   const { user, signOut } = useAuth()
   const { clientes, loading, refetch } = useSitesData()
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [updatingClientes, setUpdatingClientes] = useState<Set<number>>(new Set())
   const [linkInputs, setLinkInputs] = useState<Record<number, string>>({})
+  const [filtroAtivo, setFiltroAtivo] = useState<FiltroStatus>('todos')
   const { toast } = useToast()
 
   console.log('🌐 [SitesDashboard] === DEBUGGING PAINEL DE SITES ===')
@@ -120,6 +123,31 @@ export function SitesDashboard() {
     }
   }
 
+  // Função para filtrar clientes
+  const filtrarClientes = () => {
+    switch (filtroAtivo) {
+      case 'pendentes':
+        return clientes.filter(cliente => cliente.site_status === 'aguardando_link')
+      case 'finalizados':
+        return clientes.filter(cliente => cliente.site_status === 'finalizado')
+      default:
+        return clientes
+    }
+  }
+
+  // Função para obter título da seção
+  const getTituloSecao = () => {
+    const clientesFiltrados = filtrarClientes()
+    switch (filtroAtivo) {
+      case 'pendentes':
+        return `Sites Pendentes (${clientesFiltrados.length})`
+      case 'finalizados':
+        return `Sites Finalizados (${clientesFiltrados.length})`
+      default:
+        return `Todos os Sites (${clientesFiltrados.length})`
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -131,6 +159,7 @@ export function SitesDashboard() {
   // Calcular métricas corretas baseadas no site_status
   const sitesPendentes = clientes.filter(cliente => cliente.site_status === 'aguardando_link').length
   const sitesFinalizados = clientes.filter(cliente => cliente.site_status === 'finalizado').length
+  const clientesFiltrados = filtrarClientes()
 
   console.log('🌐 [SitesDashboard] Métricas calculadas:', {
     sitesPendentes,
@@ -161,33 +190,57 @@ export function SitesDashboard() {
       <div className="p-6">
         {/* Métricas */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+              filtroAtivo === 'todos' ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-gray-400'
+            }`}
+            onClick={() => setFiltroAtivo('todos')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-card-foreground">Total de Sites</CardTitle>
               <Globe className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-card-foreground">{clientes.length}</div>
+              {filtroAtivo === 'todos' && (
+                <p className="text-xs text-blue-600 mt-1">Filtro ativo</p>
+              )}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+              filtroAtivo === 'pendentes' ? 'ring-2 ring-yellow-500 border-yellow-500' : 'hover:border-gray-400'
+            }`}
+            onClick={() => setFiltroAtivo('pendentes')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-card-foreground">Sites Pendentes</CardTitle>
               <Clock className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">{sitesPendentes}</div>
+              {filtroAtivo === 'pendentes' && (
+                <p className="text-xs text-yellow-600 mt-1">Filtro ativo</p>
+              )}
             </CardContent>
           </Card>
 
-          <Card>
+          <Card 
+            className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
+              filtroAtivo === 'finalizados' ? 'ring-2 ring-green-500 border-green-500' : 'hover:border-gray-400'
+            }`}
+            onClick={() => setFiltroAtivo('finalizados')}
+          >
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-card-foreground">Sites Finalizados</CardTitle>
               <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold text-green-600 dark:text-green-400">{sitesFinalizados}</div>
+              {filtroAtivo === 'finalizados' && (
+                <p className="text-xs text-green-600 mt-1">Filtro ativo</p>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -195,16 +248,20 @@ export function SitesDashboard() {
         {/* Lista de Sites */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-card-foreground">Gerenciar Sites</CardTitle>
+            <CardTitle className="text-card-foreground">{getTituloSecao()}</CardTitle>
           </CardHeader>
           <CardContent>
-            {clientes.length === 0 ? (
+            {clientesFiltrados.length === 0 ? (
               <div className="text-center py-8">
-                <p className="text-muted-foreground">Nenhum site encontrado.</p>
+                <p className="text-muted-foreground">
+                  {filtroAtivo === 'pendentes' && 'Nenhum site pendente encontrado.'}
+                  {filtroAtivo === 'finalizados' && 'Nenhum site finalizado encontrado.'}
+                  {filtroAtivo === 'todos' && 'Nenhum site encontrado.'}
+                </p>
               </div>
             ) : (
               <div className="space-y-4">
-                {clientes.map((cliente) => {
+                {clientesFiltrados.map((cliente) => {
                   const isUpdating = updatingClientes.has(Number(cliente.id))
                   const isPendente = cliente.site_status === 'aguardando_link'
                   const linkValue = linkInputs[cliente.id] || cliente.link_site || ''
