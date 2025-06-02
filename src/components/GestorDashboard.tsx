@@ -1,96 +1,58 @@
 
-import React, { useState, useEffect, Suspense } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useManagerData } from '@/hooks/useManagerData'
+import { ClientesTable } from './ClientesTable'
+import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
 import { ManagerSidebar } from './ManagerSidebar'
-import { Dashboard } from './Dashboard'
-import { AdminTable } from './AdminTable'
-import { MelhoriasEDicas } from './MelhoriasEDicas'
-import { GestoresManagement } from './GestoresManagement'
-import { LoadingFallback } from './LoadingFallback'
-import { DocumentationViewer } from './Documentation/DocumentationViewer'
+import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 
-// Lazy load components para melhor performance
-const LazyClientesTable = React.lazy(() => import('./ClientesTable').then(module => ({ default: module.ClientesTable })))
-const LazyChatInterface = React.lazy(() => import('./Chat/ChatInterface').then(module => ({ default: module.ChatInterface })))
+interface GestorDashboardProps {
+  activeTab: string
+}
 
-export function GestorDashboard() {
-  const { isAdmin, currentManagerName } = useAuth()
-  const [selectedManager, setSelectedManager] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('dashboard')
-
-  // Resetar manager selecionado quando mudar de aba (exceto gestores)
-  useEffect(() => {
-    if (activeTab !== 'gestores' && selectedManager === '__GESTORES__') {
-      setSelectedManager(null)
-    }
-  }, [activeTab, selectedManager])
+export function GestorDashboard({ activeTab }: GestorDashboardProps) {
+  const { user } = useAuth()
+  const { clientes, loading } = useManagerData(user?.email || '')
 
   const renderContent = () => {
-    // Se gestores foi selecionado, mostrar gestão de gestores
-    if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
+    if (loading) {
+      return (
+        <div className="flex items-center justify-center h-64 bg-gray-950">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+            <p className="text-gray-300">Carregando dados...</p>
+          </div>
+        </div>
+      )
     }
 
-    // Renderizar conteúdo baseado na aba ativa
     switch (activeTab) {
       case 'dashboard':
-        return <Dashboard />
-      
+        return <GamifiedMetrics clientes={clientes} />
       case 'clientes':
-        if (isAdmin) {
-          return selectedManager ? (
-            <Suspense fallback={<LoadingFallback />}>
-              <LazyClientesTable selectedManager={selectedManager} />
-            </Suspense>
-          ) : <AdminTable />
-        } else {
-          return (
-            <Suspense fallback={<LoadingFallback />}>
-              <LazyClientesTable selectedManager={currentManagerName} />
-            </Suspense>
-          )
-        }
-      
-      case 'melhorias-dicas':
-        return <MelhoriasEDicas />
-      
+        return (
+          <div className="bg-gray-950 min-h-screen">
+            <ClientesTable />
+          </div>
+        )
       case 'chat':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyChatInterface 
-              emailCliente=""
-              emailGestor={currentManagerName || ""}
-              nomeCliente=""
-            />
-          </Suspense>
+          <div className="bg-gray-950 min-h-screen">
+            <ChatLayoutSplit />
+          </div>
         )
-      
-      case 'documentacao':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <DocumentationViewer />
-          </Suspense>
-        )
-      
       default:
-        return <Dashboard />
+        return <GamifiedMetrics clientes={clientes} />
     }
   }
 
   return (
-    <div className="min-h-screen flex w-full bg-background">
-      <ManagerSidebar
-        selectedManager={selectedManager}
-        onManagerSelect={setSelectedManager}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-      />
-      
-      <div className="flex-1 overflow-auto">
-        {renderContent()}
-      </div>
+    <div className="bg-gray-950 min-h-screen">
+      {renderContent()}
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default GestorDashboard
