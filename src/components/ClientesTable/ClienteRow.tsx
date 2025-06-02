@@ -1,12 +1,13 @@
+
 import { useState } from 'react'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { DotsHorizontalIcon, Copy, CheckCircle, Circle, AlertTriangle } from 'lucide-react'
+import { MoreHorizontal, Copy, CheckCircle, Circle, AlertTriangle } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { STATUS_CAMPANHA, SITE_STATUS } from '@/lib/supabase'
+import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { ComissaoButton } from './ComissaoButton'
 
@@ -82,6 +83,12 @@ export function ClienteRow({
     setTimeout(() => setIsCopied(false), 2000)
   }
 
+  const handleSitePagoChange = (checked: boolean | string) => {
+    // Ensure we only pass boolean values
+    const booleanValue = typeof checked === 'boolean' ? checked : false
+    onSitePagoChange(clienteId, booleanValue)
+  }
+
   return (
     <TableRow 
       className={`border-border hover:bg-muted/20 ${
@@ -132,7 +139,7 @@ export function ClienteRow({
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="w-[150px]">
               <span className="line-clamp-1">{cliente.status_campanha || 'Sem Status'}</span>
-              <DotsHorizontalIcon className="h-4 w-4 ml-2" />
+              <MoreHorizontal className="h-4 w-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-[180px]">
@@ -204,7 +211,7 @@ export function ClienteRow({
               size="icon"
               onClick={() => onLinkEdit(clienteId, 'link_briefing', cliente.link_briefing)}
             >
-              <DotsHorizontalIcon className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -243,7 +250,7 @@ export function ClienteRow({
               size="icon"
               onClick={() => onLinkEdit(clienteId, 'link_criativo', cliente.link_criativo)}
             >
-              <DotsHorizontalIcon className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -282,7 +289,7 @@ export function ClienteRow({
               size="icon"
               onClick={() => onLinkEdit(clienteId, 'link_site', cliente.link_site)}
             >
-              <DotsHorizontalIcon className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -319,7 +326,7 @@ export function ClienteRow({
               size="icon"
               onClick={() => onBMEdit(clienteId, cliente.numero_bm || '')}
             >
-              <DotsHorizontalIcon className="h-4 w-4" />
+              <MoreHorizontal className="h-4 w-4" />
             </Button>
           </div>
         )}
@@ -328,7 +335,7 @@ export function ClienteRow({
         <TableCell className="p-2">
           <Checkbox
             checked={cliente.site_pago || false}
-            onCheckedChange={(checked) => onSitePagoChange(clienteId, checked || false)}
+            onCheckedChange={handleSitePagoChange}
           />
         </TableCell>
       )}
