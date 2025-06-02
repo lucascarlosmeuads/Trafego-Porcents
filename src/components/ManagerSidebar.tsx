@@ -72,25 +72,10 @@ export function ManagerSidebar({
         flex-shrink-0 sticky top-0 left-0 z-40 shadow-2xl
       `}
     >
-      {/* Toggle Button */}
-      <div className="p-3 border-b border-gray-800 flex justify-end">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-
-      {/* Logo TráfegoPorcents */}
-      <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center justify-center mb-4">
+      {/* Header com Logo e Toggle Button */}
+      <div className="p-3 border-b border-gray-800 flex items-center justify-between">
+        {/* Logo TráfegoPorcents */}
+        <div className="flex items-center">
           <div className="relative group cursor-pointer">
             <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
             <div className={cn(
@@ -109,27 +94,37 @@ export function ManagerSidebar({
           </div>
         </div>
 
+        {/* Toggle Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={toggleSidebar}
+          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+        >
+          {isCollapsed ? (
+            <ChevronRight className="h-4 w-4" />
+          ) : (
+            <ChevronLeft className="h-4 w-4" />
+          )}
+        </Button>
+      </div>
+
+      {/* Card do Gestor */}
+      <div className="p-4 border-b border-gray-800">
         {!isCollapsed && (
-          <>
-            <h2 className="text-lg font-semibold text-white mb-3">
-              {isAdmin ? 'Painel Admin' : 'Gestores'}
-            </h2>
-            
-            {/* Nome do gestor */}
-            <div className="flex items-center space-x-3 p-3 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
-                <User className="h-4 w-4 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-white truncate">
-                  {currentManagerName}
-                </p>
-                <p className="text-xs text-blue-300">
-                  {isAdmin ? 'Administrador' : 'Gestor'}
-                </p>
-              </div>
+          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
+              <User className="h-4 w-4 text-white" />
             </div>
-          </>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {currentManagerName}
+              </p>
+              <p className="text-xs text-blue-300">
+                {isAdmin ? 'Administrador' : 'Gestor'}
+              </p>
+            </div>
+          </div>
         )}
         
         {isCollapsed && (
