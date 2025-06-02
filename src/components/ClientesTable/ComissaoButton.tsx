@@ -1,8 +1,8 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { DollarSign, Lock, AlertTriangle } from 'lucide-react'
+import { DollarSign, Lock, AlertTriangle, RefreshCw } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useComissaoOperations } from '@/hooks/useComissaoOperations'
@@ -13,6 +13,7 @@ interface ComissaoButtonProps {
   isAdmin?: boolean
   updatingComission: string | null
   onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
+  refetchData?: () => void
   compact?: boolean
 }
 
@@ -22,6 +23,7 @@ export function ComissaoButton({
   isAdmin = false,
   updatingComission,
   onComissionToggle,
+  refetchData,
   compact = false
 }: ComissaoButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
@@ -44,7 +46,8 @@ export function ComissaoButton({
       console.warn('🚫 [ComissaoButton] Operação bloqueada:', {
         canEdit,
         isAnyOperationRunning,
-        clienteId
+        clienteId,
+        clienteNome: cliente.nome_cliente
       })
       return
     }
@@ -64,11 +67,13 @@ export function ComissaoButton({
       (newStatus) => {
         console.log('✅ [ComissaoButton] Operação concluída com sucesso:', {
           clienteId,
+          clienteNome: cliente.nome_cliente,
           newStatus
         })
         // Simular o callback antigo para manter compatibilidade
         onComissionToggle(clienteId, newStatus === 'Pago')
-      }
+      },
+      refetchData // Passar função de refresh
     )
 
     if (!result.success) {
@@ -100,7 +105,7 @@ export function ComissaoButton({
                 {isThisClientBeingProcessed && (
                   <div className="absolute inset-0 bg-yellow-500/20 border border-yellow-500 rounded animate-pulse">
                     <div className="flex items-center justify-center h-full">
-                      <Lock className="h-2 w-2 text-yellow-600" />
+                      <RefreshCw className="h-2 w-2 text-yellow-600 animate-spin" />
                     </div>
                   </div>
                 )}
@@ -111,6 +116,7 @@ export function ComissaoButton({
               <div className="text-sm">
                 <p><strong>Status:</strong> {cliente.comissao || 'Pendente'}</p>
                 <p><strong>Valor:</strong> {formatCurrency(valorComissao)}</p>
+                <p><strong>Cliente:</strong> {cliente.nome_cliente}</p>
                 {isAnyOperationRunning && (
                   <p className="text-xs mt-1 text-yellow-300 flex items-center gap-1">
                     <AlertTriangle className="h-3 w-3" />
@@ -156,7 +162,7 @@ export function ComissaoButton({
         {isThisClientBeingProcessed && (
           <div className="absolute inset-0 bg-yellow-500/20 border border-yellow-500 rounded animate-pulse">
             <div className="flex items-center justify-center h-full">
-              <Lock className="h-3 w-3 text-yellow-600" />
+              <RefreshCw className="h-3 w-3 text-yellow-600 animate-spin" />
             </div>
           </div>
         )}
@@ -168,7 +174,10 @@ export function ComissaoButton({
             </span>
           </div>
         ) : isUpdating ? (
-          'Processando...'
+          <div className="flex items-center gap-1">
+            <RefreshCw className="h-3 w-3 animate-spin" />
+            Processando...
+          </div>
         ) : isPago ? (
           isHovered ? 'Marcar Pendente' : (
             <div className="flex items-center gap-1">

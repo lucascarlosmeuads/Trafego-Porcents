@@ -591,127 +591,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // REMOVIDA A FUNÇÃO handleComissionToggle - agora tudo é feito pelo useComissaoOperations
   const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
-    console.log('🔄 [ClientesTable] === OPERAÇÃO DE COMISSÃO CRÍTICA ===')
-    console.log('📋 Cliente ID:', clienteId)
-    console.log('📊 Status Atual (boolean):', currentStatus)
-    
-    setUpdatingComission(clienteId)
-    
-    try {
-      // PROTEÇÃO CRÍTICA: Buscar dados atuais direto do banco
-      const cliente = clientes.find(c => c.id?.toString() === clienteId)
-      if (!cliente) {
-        throw new Error(`Cliente ${clienteId} não encontrado na lista local`)
-      }
-
-      // VALIDAÇÃO CRÍTICA: Verificar se dados locais estão sincronizados
-      const { data: clienteAtualDB, error: fetchError } = await supabase
-        .from('todos_clientes')
-        .select('id, nome_cliente, comissao')
-        .eq('id', Number(clienteId))
-        .single()
-
-      if (fetchError || !clienteAtualDB) {
-        throw new Error(`Erro ao buscar cliente ${clienteId} no banco: ${fetchError?.message}`)
-      }
-
-      const statusAtualDB = clienteAtualDB.comissao || 'Pendente'
-      const statusAtualLocal = cliente.comissao || 'Pendente'
-
-      console.log('🔍 [ClientesTable] Validação de sincronização:', {
-        clienteId,
-        statusLocal: statusAtualLocal,
-        statusBanco: statusAtualDB,
-        sincronizado: statusAtualLocal === statusAtualDB
-      })
-
-      // ALERTA CRÍTICO: Se não estão sincronizados, forçar refresh
-      if (statusAtualLocal !== statusAtualDB) {
-        console.error('🚨 [ClientesTable] DADOS DESSINCRONIZADOS DETECTADOS!')
-        console.error(`   Local: "${statusAtualLocal}"`)
-        console.error(`   Banco: "${statusAtualDB}"`)
-        
-        toast({
-          title: "⚠️ Dados Desatualizados",
-          description: "Recarregando dados para sincronizar...",
-          variant: "destructive"
-        })
-        
-        // Forçar refresh dos dados
-        setTimeout(() => {
-          refetch()
-        }, 1000)
-        
-        return false
-      }
-
-      // Calcular novo status
-      const novoStatus = statusAtualDB === 'Pago' ? 'Pendente' : 'Pago'
-      
-      console.log('🎯 [ClientesTable] Operação validada:', {
-        clienteId,
-        clienteNome: clienteAtualDB.nome_cliente,
-        statusAtual: statusAtualDB,
-        novoStatus
-      })
-
-      // OPERAÇÃO ATÔMICA CRÍTICA
-      const { error: updateError, data: updateData } = await supabase
-        .from('todos_clientes')
-        .update({ comissao: novoStatus })
-        .eq('id', Number(clienteId))
-        .eq('comissao', statusAtualDB) // WHERE adicional para atomicidade
-        .select('id, comissao, nome_cliente')
-
-      if (updateError) {
-        throw updateError
-      }
-
-      if (!updateData || updateData.length === 0) {
-        throw new Error('ERRO CRÍTICO: Nenhuma linha foi atualizada - possível conflito de concorrência')
-      }
-
-      const recordAtualizado = updateData[0]
-      
-      console.log('✅ [ClientesTable] Operação de comissão bem-sucedida:', {
-        clienteId: recordAtualizado.id,
-        novoStatusConfirmado: recordAtualizado.comissao,
-        clienteNome: recordAtualizado.nome_cliente
-      })
-
-      // Atualizar estado local apenas APÓS confirmação do banco
-      setClientes(prev => prev.map(c => 
-        c.id?.toString() === clienteId 
-          ? { ...c, comissao: recordAtualizado.comissao }
-          : c
-      ))
-
-      toast({
-        title: "✅ Comissão Atualizada com Segurança",
-        description: `${recordAtualizado.nome_cliente}: ${statusAtualDB} → ${recordAtualizado.comissao}`,
-      })
-
-      return true
-
-    } catch (error) {
-      console.error('💥 [ClientesTable] ERRO CRÍTICO na operação de comissão:', error)
-      
-      toast({
-        title: "❌ Erro Crítico de Comissão",
-        description: `Falha: ${error.message}. Recarregando dados...`,
-        variant: "destructive"
-      })
-
-      // Em caso de erro, forçar refresh para garantir consistência
-      setTimeout(() => {
-        refetch()
-      }, 2000)
-
-      return false
-    } finally {
-      setUpdatingComission(null)
-    }
+    console.log('🚫 [ClientesTable] handleComissionToggle REMOVIDA - usando useComissaoOperations')
+    return true // Compatibilidade apenas
   }
 
   const handleAddClient = async (clienteData: any) => {
@@ -783,6 +666,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       onBMCancel={handleBMCancel}
                       onComissionToggle={handleComissionToggle}
                       onSitePagoChange={handleSitePagoChange}
+                      refetchData={refetch}
                     />
                   ))
                 )}
