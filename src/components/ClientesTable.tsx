@@ -509,150 +509,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     setBmValue('')
   }
 
-  const marcarPagamentoFeito = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
-    setUpdatingComission(clienteId)
-    
-    try {
-      console.log('💰 [ClientesTable] Marcando pagamento como feito para cliente:', clienteId)
-      
-      const success = await updateCliente(clienteId, 'comissao_paga', true)
-      
-      if (success) {
-        const { error: updateSaqueError } = await supabase
-          .from('solicitacoes_saque')
-          .update({ 
-            status_saque: 'pago',
-            processado_em: new Date().toISOString()
-          })
-          .eq('cliente_id', parseInt(clienteId))
-
-        if (updateSaqueError) {
-          console.error('❌ Erro ao atualizar solicitação de saque:', updateSaqueError)
-        }
-
-        toast({
-          title: "Pagamento Confirmado",
-          description: "Pagamento marcado como feito. O gestor será notificado.",
-        })
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao confirmar pagamento",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('💥 Erro ao marcar pagamento:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao confirmar pagamento",
-        variant: "destructive",
-      })
-      return false
-    } finally {
-      setUpdatingComission(null)
-    }
-  }
-
-  const handleGestorSaqueRequest = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
-    setUpdatingComission(clienteId)
-    
-    try {
-      console.log('💸 [ClientesTable] Gestor solicitando saque para cliente:', clienteId)
-      
-      const success = await updateCliente(clienteId, 'comissao', 'Solicitado')
-      
-      if (success) {
-        toast({
-          title: "Instruções para Saque",
-          description: "Mude o status para 'Campanha no Ar' para solicitar o saque",
-        })
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao solicitar saque",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('💥 Erro ao solicitar saque:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao solicitar saque",
-        variant: "destructive",
-      })
-      return false
-    } finally {
-      setUpdatingComission(null)
-    }
-  }
-
-  const handleComissionToggle = async (clienteId: string, currentStatus: boolean): Promise<boolean> => {
-    setUpdatingComission(clienteId)
-    
-    try {
-      console.log('🔍 [ClientesTable] Buscando cliente:', {
-        clienteId,
-        clienteIdType: typeof clienteId,
-        totalClientes: clientes.length
-      })
-      
-      const cliente = clientes.find(c => c.id?.toString() === clienteId)
-      if (!cliente) {
-        console.error('❌ [ClientesTable] Cliente não encontrado:', {
-          clienteIdBuscado: clienteId,
-          idsDisponiveis: clientes.map(c => ({ id: c.id, nome: c.nome_cliente })).slice(0, 5)
-        })
-        toast({
-          title: "Erro",
-          description: "Cliente não encontrado",
-          variant: "destructive",
-        })
-        return false
-      }
-
-      const newComissaoStatus = cliente.comissao === 'Pago' ? 'Pendente' : 'Pago'
-      
-      console.log('💰 [ClientesTable] Alterando comissão:', {
-        clienteId,
-        clienteNome: cliente.nome_cliente,
-        currentComissao: cliente.comissao,
-        newComissaoStatus
-      })
-      
-      const success = await updateCliente(clienteId, 'comissao', newComissaoStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: `Comissão alterada para: ${newComissaoStatus}`,
-        })
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar comissão",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar comissão:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar comissão",
-        variant: "destructive",
-      })
-      return false
-    } finally {
-      setUpdatingComission(null)
-    }
-  }
-
   const handleAddClient = async (clienteData: any) => {
     setAddingClient(true)
     try {
@@ -664,6 +520,12 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     } finally {
       setAddingClient(false)
     }
+  }
+
+  // Função para atualizar os dados após operações de comissão
+  const handleComissionUpdate = () => {
+    console.log('🔄 [ClientesTable] Atualizando dados após operação de comissão...')
+    refetch()
   }
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
@@ -710,7 +572,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       editingBM={editingBM}
                       bmValue={bmValue}
                       setBmValue={setBmValue}
-                      updatingComission={updatingComission}
                       getStatusColor={getStatusColor}
                       onStatusChange={handleStatusChange}
                       onSiteStatusChange={handleSiteStatusChange}
@@ -720,7 +581,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       onBMEdit={handleBMEdit}
                       onBMSave={handleBMSave}
                       onBMCancel={handleBMCancel}
-                      onComissionToggle={handleComissionToggle}
+                      onComissionUpdate={handleComissionUpdate}
                       onSitePagoChange={handleSitePagoChange}
                     />
                   ))

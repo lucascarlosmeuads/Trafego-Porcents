@@ -1,3 +1,4 @@
+
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, Mail, AtSign } from 'lucide-react'
@@ -12,7 +13,7 @@ import { ClienteRowDataLimite } from './ClienteRowDataLimite'
 import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
-import { toast } from '@/components/ui/sonner'
+import { toast } from '@/hooks/use-toast'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -28,7 +29,6 @@ interface ClienteRowProps {
   editingBM: string | null
   bmValue: string
   setBmValue: (value: string) => void
-  updatingComission: string | null
   getStatusColor: (status: string) => string
   onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
   onSiteStatusChange: (clienteId: string, newStatus: string) => void
@@ -38,7 +38,7 @@ interface ClienteRowProps {
   onBMEdit: (clienteId: string, currentValue: string) => void
   onBMSave: (clienteId: string) => void
   onBMCancel: () => void
-  onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
+  onComissionUpdate: () => void
   onSitePagoChange?: (clienteId: string, newValue: boolean) => void
 }
 
@@ -56,7 +56,6 @@ export function ClienteRow({
   editingBM,
   bmValue,
   setBmValue,
-  updatingComission,
   getStatusColor,
   onStatusChange,
   onSiteStatusChange,
@@ -66,7 +65,7 @@ export function ClienteRow({
   onBMEdit,
   onBMSave,
   onBMCancel,
-  onComissionToggle,
+  onComissionUpdate,
   onSitePagoChange
 }: ClienteRowProps) {
   const formatDate = (dateString: string) => {
@@ -81,9 +80,14 @@ export function ClienteRow({
 
   const handleGestorClick = () => {
     if (!isAdmin) {
-      toast.error("Apenas administradores podem editar gestores")
+      toast({
+        title: "Apenas administradores podem editar gestores",
+        variant: "destructive"
+      })
     } else {
-      toast.info("Funcionalidade de edição em desenvolvimento")
+      toast({
+        title: "Funcionalidade de edição em desenvolvimento"
+      })
     }
   }
 
@@ -223,8 +227,7 @@ export function ClienteRow({
             cliente={cliente}
             isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
             isAdmin={isAdmin}
-            updatingComission={updatingComission}
-            onComissionToggle={onComissionToggle}
+            onComissionUpdate={onComissionUpdate}
             compact={true}
           />
         </TableCell>
