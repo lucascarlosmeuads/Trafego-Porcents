@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -60,11 +61,9 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 🔗 Acesse: https://login.trafegoporcents.com
 
-O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
 
-🚨 Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo!
-
-Qualquer dúvida, estamos aqui para ajudar! 💪`
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo! 💪`
 
   const handleCopy = async () => {
     try {
@@ -151,17 +150,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         setOpen(false)
         onClienteAdicionado()
 
-        // Mostrar aviso sobre senha padrão se foi definida
-        if (result.senhaDefinida) {
-          setTimeout(() => {
-            toast({
-              title: "🔐 Senha padrão definida",
-              description: "Senha padrão definida como: parceriadesucesso",
-              duration: 8000
-            })
-          }, 1000)
-        }
-
         // Show instructions modal for new clients only
         if (result.isNewClient) {
           setNewClientData(result.clientData)
@@ -225,13 +213,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             <p className="text-yellow-700 text-xs mt-2">
               💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
             </p>
-            
-            {/* Nota sobre senha padrão */}
-            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-blue-800 text-xs">
-                Se não quiser alterar, a senha padrão será <strong>parceriadesucesso</strong>.
-              </p>
-            </div>
           </div>
 
           <div className="grid gap-4 py-4">

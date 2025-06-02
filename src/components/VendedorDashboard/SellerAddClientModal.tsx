@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -26,7 +27,7 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     nome_cliente: '',
     telefone: '',
     email_cliente: '',
-    status_campanha: 'Cliente Novo', // ✅ Mudando de 'Brief' para 'Cliente Novo'
+    status_campanha: 'Cliente Novo',
     data_venda: new Date().toISOString().split('T')[0]
   })
 
@@ -48,15 +49,18 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     { name: 'Rullian', email: 'rullian@trafegoporcents.com' }
   ]
 
-  const instructions = `Olá ${formData.nome_cliente || '[Nome do Cliente]'},
+  const instructions = `Olá ${formData.nome_cliente || '[Nome do Cliente]'}! 🎉
 
-1. Acesse o link: https://login.trafegoporcents.com
-2. Clique em "Criar Conta"
-3. Use este mesmo e-mail: ${formData.email_cliente || '[Email do Cliente]'}
-4. Escolha uma senha segura (ex: cliente123)
-5. Após o cadastro, você verá o painel com os materiais e campanhas atribuídas
+Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
-Qualquer dúvida, entre em contato conosco!`
+📧 Email: ${formData.email_cliente || '[Email do Cliente]'}
+🔐 Senha: parceriadesucesso
+
+🔗 Acesse: https://login.trafegoporcents.com
+
+💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
+
+Seja bem-vindo! 💪`
 
   const handleCopy = async () => {
     try {
@@ -146,17 +150,6 @@ Qualquer dúvida, entre em contato conosco!`
         setSelectedGestor('')
         setOpen(false)
         
-        // Mostrar aviso sobre senha padrão se foi definida
-        if (result.senhaDefinida) {
-          setTimeout(() => {
-            toast({
-              title: "🔐 Senha padrão definida",
-              description: "Senha padrão definida como: parceriadesucesso",
-              duration: 8000
-            })
-          }, 1000)
-        }
-        
         // SEMPRE mostrar modal de instruções para clientes criados com sucesso
         console.log("🟢 [SellerAddClientModal] Preparando modal de instruções...")
         
@@ -211,7 +204,7 @@ Qualquer dúvida, entre em contato conosco!`
           {/* Instructions section */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-yellow-800 text-sm">📋 Instruções para enviar ao cliente</h3>
+              <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
               <Button
                 onClick={handleCopy}
                 size="sm"
@@ -237,15 +230,8 @@ Qualquer dúvida, entre em contato conosco!`
               </pre>
             </div>
             <p className="text-yellow-700 text-xs mt-2">
-              💡 Após cadastrar o cliente, envie essas instruções via WhatsApp
+              💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
             </p>
-            
-            {/* Aviso sobre senha padrão */}
-            <div className="mt-3 p-2 bg-blue-50 border border-blue-200 rounded">
-              <p className="text-blue-800 text-xs font-medium">
-                🔐 Senha padrão definida automaticamente como: <code className="bg-blue-100 px-1 rounded">parceriadesucesso</code>
-              </p>
-            </div>
           </div>
 
           <div className="grid gap-4 py-4">
