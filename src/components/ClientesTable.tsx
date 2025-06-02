@@ -882,25 +882,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             </div>
           </div>
         </div>
-
-        {isAdmin && !isSitesContext && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-blue-600 text-sm">
-                <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
-                <span>👑 Painel Admin - Visualização Global de Todos os Clientes</span>
-              </div>
-              <div className="text-sm text-blue-600">
-                Total: {clientesOriginais.length} | Ativos: {clientesAtivos.length} | Inativos: {clientesInativos.length}
-              </div>
-            </div>
-            {clientesOriginais.length !== 552 && (
-              <div className="mt-2 text-amber-600 text-xs">
-                ⚠️ Atenção: Esperado 552 clientes, encontrados {clientesOriginais.length}
-              </div>
-            )}
-          </div>
-        )}
         
         <Tabs defaultValue="ativos" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
