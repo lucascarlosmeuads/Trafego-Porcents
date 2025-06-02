@@ -14,7 +14,7 @@ interface ClienteDashboardOverviewProps {
 }
 
 const STATUS_STAGES = [
-  'Preenchimento do Formulário',
+  'Formulário',
   'Brief',
   'Criativo',
   'Agendamento',
@@ -22,7 +22,7 @@ const STATUS_STAGES = [
 ]
 
 const STATUS_MAPPING = {
-  'Preenchimento do Formulário': 1,
+  'Formulário': 1,
   'Brief': 2,
   'Criativo': 3,
   'Agendamento': 4,
@@ -121,7 +121,7 @@ export function ClienteDashboardOverview({
         <CardContent className="space-y-6">
           <div className="flex items-center justify-between">
             <span className="text-sm font-medium">
-              {cliente?.status_campanha || 'Preenchimento do Formulário'}
+              {cliente?.status_campanha || 'Formulário'}
             </span>
             <Badge variant="outline" className="bg-blue-500 text-white">
               {getProgressPercentage()}% concluído

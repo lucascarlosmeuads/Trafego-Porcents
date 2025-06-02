@@ -11,7 +11,7 @@ export const formatDate = (dateString: string | null) => {
 
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case 'Preenchimento do Formulário':
+    case 'Formulário':
       return 'bg-gray-500/20 text-gray-700 border border-gray-500/30'
     case 'Brief':
       return 'bg-blue-500/20 text-blue-700 border border-blue-500/30'

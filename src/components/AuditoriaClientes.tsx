@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -100,7 +99,7 @@ export function AuditoriaClientes() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Preenchimento do Formulário':
+      case 'Formulário':
         return 'bg-yellow-100 text-yellow-800'
       case 'Brief':
         return 'bg-blue-100 text-blue-800'

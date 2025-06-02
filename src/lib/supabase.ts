@@ -59,7 +59,7 @@ export type SolicitacaoSaque = {
 // Status operacionais disponíveis - Status atualizados e organizados com os novos status
 export const STATUS_CAMPANHA = [
   'Cliente Novo',
-  'Preenchimento do Formulário',
+  'Formulário',
   'Brief',
   'Criativo', 
   'Site',
@@ -81,7 +81,7 @@ export type StatusCampanha = typeof STATUS_CAMPANHA[number]
 // Mapeamento para exibição visual - labels atualizados com os novos status
 export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
   'Cliente Novo': 'Cliente Novo',
-  'Preenchimento do Formulário': 'Preenchimento do Formulário',
+  'Formulário': 'Formulário',
   'Brief': 'Brief',
   'Criativo': 'Criativo',
   'Site': 'Site',
