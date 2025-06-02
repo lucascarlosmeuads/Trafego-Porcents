@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Search, MessageCircle, User, X } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { getStatusBadgeClasses } from '@/utils/statusColors'
 
 interface ChatSidebarProps {
   conversas: ChatConversaPreview[]
@@ -55,30 +56,6 @@ export function ChatSidebar({
       return format(date, 'HH:mm', { locale: ptBR })
     } else {
       return format(date, 'dd/MM', { locale: ptBR })
-    }
-  }
-
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'otimização':
-      case 'otimizacao':
-        return 'bg-blue-600 text-white hover:bg-blue-700'
-      case 'agendamento':
-        return 'bg-yellow-500 text-black hover:bg-yellow-600'
-      case 'off':
-        return 'bg-red-600 text-white hover:bg-red-700'
-      case 'no ar':
-        return 'bg-green-600 text-white hover:bg-green-700'
-      case 'site':
-        return 'bg-orange-600 text-white hover:bg-orange-700'
-      case 'criativo':
-        return 'bg-purple-600 text-white hover:bg-purple-700'
-      case 'brief':
-        return 'bg-indigo-600 text-white hover:bg-indigo-700'
-      case 'problema':
-        return 'bg-red-700 text-white hover:bg-red-800'
-      default:
-        return 'bg-gray-600 text-white hover:bg-gray-700'
     }
   }
 
@@ -187,8 +164,9 @@ export function ChatSidebar({
               {availableStatus.map((status) => (
                 <SelectItem key={status} value={status} className="text-white hover:bg-gray-600">
                   <div className="flex items-center gap-2">
-                    <div className={`w-3 h-3 rounded-full ${getStatusBadgeVariant(status).split(' ')[0]}`} />
-                    {status}
+                    <Badge className={`text-xs font-medium px-2 py-1 ${getStatusBadgeClasses(status)}`}>
+                      {status}
+                    </Badge>
                   </div>
                 </SelectItem>
               ))}
@@ -239,7 +217,7 @@ export function ChatSidebar({
                       
                       <div className="mb-2">
                         <Badge 
-                          className={`text-xs font-medium px-2 py-1 ${getStatusBadgeVariant(conversa.status_campanha)}`}
+                          className={`text-xs font-medium px-2 py-1 ${getStatusBadgeClasses(conversa.status_campanha)}`}
                         >
                           {conversa.status_campanha}
                         </Badge>
