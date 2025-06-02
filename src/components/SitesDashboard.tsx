@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useSitesData } from '@/hooks/useSitesData'
@@ -5,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
-import { Globe, CheckCircle, Clock, LogOut } from 'lucide-react'
+import { Globe, CheckCircle, Clock, LogOut, ExternalLink, Edit3, Trash2, DollarSign } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
@@ -17,6 +18,7 @@ export function SitesDashboard() {
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [updatingClientes, setUpdatingClientes] = useState<Set<number>>(new Set())
   const [linkInputs, setLinkInputs] = useState<Record<number, string>>({})
+  const [editingLinks, setEditingLinks] = useState<Set<number>>(new Set())
   const [filtroAtivo, setFiltroAtivo] = useState<FiltroStatus>('todos')
   const { toast } = useToast()
 
@@ -46,6 +48,135 @@ export function SitesDashboard() {
     }))
   }
 
+  const handleEditLink = (clienteId: number, currentLink: string) => {
+    setLinkInputs(prev => ({
+      ...prev,
+      [clienteId]: currentLink
+    }))
+    setEditingLinks(prev => new Set([...prev, clienteId]))
+  }
+
+  const handleCancelEdit = (clienteId: number) => {
+    setEditingLinks(prev => {
+      const newSet = new Set(prev)
+      newSet.delete(clienteId)
+      return newSet
+    })
+    setLinkInputs(prev => {
+      const newInputs = { ...prev }
+      delete newInputs[clienteId]
+      return newInputs
+    })
+  }
+
+  const handleSaveLink = async (clienteId: number) => {
+    const newLink = linkInputs[clienteId]?.trim()
+    
+    if (!newLink) {
+      toast({
+        title: "Link obrigatório",
+        description: "Por favor, insira um link válido",
+        variant: "destructive"
+      })
+      return
+    }
+
+    setUpdatingClientes(prev => new Set([...prev, clienteId]))
+    
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ link_site: newLink })
+        .eq('id', clienteId)
+
+      if (error) throw error
+
+      toast({
+        title: "Sucesso",
+        description: "Link atualizado com sucesso"
+      })
+
+      setEditingLinks(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(clienteId)
+        return newSet
+      })
+      
+      setLinkInputs(prev => {
+        const newInputs = { ...prev }
+        delete newInputs[clienteId]
+        return newInputs
+      })
+
+      await refetch()
+    } catch (error) {
+      console.error('Erro ao atualizar link:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar link",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingClientes(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(clienteId)
+        return newSet
+      })
+    }
+  }
+
+  const handleDeleteLink = async (clienteId: number) => {
+    setUpdatingClientes(prev => new Set([...prev, clienteId]))
+    
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ link_site: null })
+        .eq('id', clienteId)
+
+      if (error) throw error
+
+      toast({
+        title: "Sucesso",
+        description: "Link removido com sucesso"
+      })
+
+      await refetch()
+    } catch (error) {
+      console.error('Erro ao remover link:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao remover link",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingClientes(prev => {
+        const newSet = new Set(prev)
+        newSet.delete(clienteId)
+        return newSet
+      })
+    }
+  }
+
+  const openLink = (url: string) => {
+    if (!url) return
+    
+    let finalUrl = url
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      finalUrl = `https://${url}`
+    }
+    
+    try {
+      window.open(finalUrl, '_blank', 'noopener,noreferrer')
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível abrir o link",
+        variant: "destructive"
+      })
+    }
+  }
+
   const handleToggleSitePago = async (clienteId: number, sitePago: boolean) => {
     console.log('🌐 [SitesDashboard] === ATUALIZANDO STATUS DO SITE ===')
     console.log('🌐 [SitesDashboard] Cliente ID:', clienteId)
@@ -67,14 +198,12 @@ export function SitesDashboard() {
         site_pago: sitePago
       }
 
-      // Se está marcando como finalizado, atualizar também o site_status e o link
       if (sitePago) {
         updateData.site_status = 'finalizado'
         if (linkInputs[clienteId]?.trim()) {
           updateData.link_site = linkInputs[clienteId].trim()
         }
       } else {
-        // Se está desmarcando, volta para aguardando_link
         updateData.site_status = 'aguardando_link'
       }
 
@@ -96,7 +225,6 @@ export function SitesDashboard() {
         description: `Site ${sitePago ? 'finalizado' : 'marcado como pendente'} com sucesso`
       })
 
-      // Limpar o input se foi finalizado
       if (sitePago) {
         setLinkInputs(prev => {
           const newInputs = { ...prev }
@@ -105,7 +233,6 @@ export function SitesDashboard() {
         })
       }
 
-      // Recarregar dados
       await refetch()
     } catch (error) {
       console.error('❌ [SitesDashboard] Erro ao atualizar status:', error)
@@ -123,7 +250,6 @@ export function SitesDashboard() {
     }
   }
 
-  // Função para filtrar clientes
   const filtrarClientes = () => {
     switch (filtroAtivo) {
       case 'pendentes':
@@ -135,7 +261,6 @@ export function SitesDashboard() {
     }
   }
 
-  // Função para obter título da seção
   const getTituloSecao = () => {
     const clientesFiltrados = filtrarClientes()
     switch (filtroAtivo) {
@@ -156,14 +281,19 @@ export function SitesDashboard() {
     )
   }
 
-  // Calcular métricas corretas baseadas no site_status
   const sitesPendentes = clientes.filter(cliente => cliente.site_status === 'aguardando_link').length
   const sitesFinalizados = clientes.filter(cliente => cliente.site_status === 'finalizado').length
+  const sitesPagos = clientes.filter(cliente => cliente.site_status === 'finalizado' && cliente.site_pago).length
+  const valorTotalFinalizados = sitesFinalizados * 20
+  const valorTotalRecebido = sitesPagos * 20
   const clientesFiltrados = filtrarClientes()
 
   console.log('🌐 [SitesDashboard] Métricas calculadas:', {
     sitesPendentes,
     sitesFinalizados,
+    sitesPagos,
+    valorTotalFinalizados,
+    valorTotalRecebido,
     total: clientes.length
   })
 
@@ -189,7 +319,7 @@ export function SitesDashboard() {
       {/* Content */}
       <div className="p-6">
         {/* Métricas */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
           <Card 
             className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
               filtroAtivo === 'todos' ? 'ring-2 ring-blue-500 border-blue-500' : 'hover:border-gray-400'
@@ -243,6 +373,27 @@ export function SitesDashboard() {
               )}
             </CardContent>
           </Card>
+
+          {/* Relatório Financeiro */}
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-card-foreground">Relatório Financeiro</CardTitle>
+              <DollarSign className="h-4 w-4 text-green-600 dark:text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <div className="text-xl font-bold text-green-600 dark:text-green-400">
+                  R$ {valorTotalRecebido.toFixed(2)}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Recebido ({sitesPagos} sites pagos)
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  Total possível: R$ {valorTotalFinalizados.toFixed(2)}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Lista de Sites */}
@@ -264,6 +415,7 @@ export function SitesDashboard() {
                 {clientesFiltrados.map((cliente) => {
                   const isUpdating = updatingClientes.has(Number(cliente.id))
                   const isPendente = cliente.site_status === 'aguardando_link'
+                  const isEditing = editingLinks.has(cliente.id)
                   const linkValue = linkInputs[cliente.id] || cliente.link_site || ''
                   
                   return (
@@ -274,6 +426,11 @@ export function SitesDashboard() {
                           <Badge variant={cliente.site_status === 'finalizado' ? "default" : "secondary"}>
                             {cliente.site_status === 'finalizado' ? "Finalizado" : "Pendente"}
                           </Badge>
+                          {cliente.site_pago && (
+                            <Badge variant="default" className="bg-green-600">
+                              Pago
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">{cliente.email_cliente}</p>
                         <p className="text-sm text-muted-foreground">
@@ -292,17 +449,80 @@ export function SitesDashboard() {
                           </div>
                         )}
                         
-                        {/* Exibir link para sites finalizados */}
-                        {!isPendente && cliente.link_site && (
+                        {/* Exibir/Editar link para sites finalizados */}
+                        {!isPendente && (
                           <div className="mt-2">
-                            <a 
-                              href={cliente.link_site} 
-                              target="_blank" 
-                              rel="noopener noreferrer"
-                              className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
-                            >
-                              {cliente.link_site}
-                            </a>
+                            {isEditing ? (
+                              <div className="flex gap-2">
+                                <Input
+                                  value={linkValue}
+                                  onChange={(e) => handleLinkChange(cliente.id, e.target.value)}
+                                  className="text-sm bg-background border-input text-foreground"
+                                  placeholder="Digite o link do site"
+                                />
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleSaveLink(cliente.id)}
+                                  disabled={isUpdating}
+                                >
+                                  Salvar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleCancelEdit(cliente.id)}
+                                  disabled={isUpdating}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="flex items-center gap-2">
+                                {cliente.link_site ? (
+                                  <>
+                                    <button
+                                      onClick={() => openLink(cliente.link_site)}
+                                      className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline flex items-center gap-1"
+                                    >
+                                      {cliente.link_site}
+                                      <ExternalLink className="h-3 w-3" />
+                                    </button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleEditLink(cliente.id, cliente.link_site)}
+                                      className="h-6 w-6 p-0"
+                                      title="Editar link"
+                                    >
+                                      <Edit3 className="h-3 w-3" />
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleDeleteLink(cliente.id)}
+                                      className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                                      title="Remover link"
+                                      disabled={isUpdating}
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-sm text-muted-foreground">Nenhum link cadastrado</span>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() => handleEditLink(cliente.id, '')}
+                                      className="h-6 w-6 p-0"
+                                      title="Adicionar link"
+                                    >
+                                      <Edit3 className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
                           </div>
                         )}
                       </div>

@@ -40,7 +40,8 @@ export function useSitesData() {
       console.log('✅ [useSitesData] Dados encontrados:', {
         total: data?.length || 0,
         aguardandoLink: data?.filter(c => c.site_status === 'aguardando_link').length || 0,
-        finalizados: data?.filter(c => c.site_status === 'finalizado').length || 0
+        finalizados: data?.filter(c => c.site_status === 'finalizado').length || 0,
+        pagos: data?.filter(c => c.site_status === 'finalizado' && c.site_pago).length || 0
       })
       setClientes(data || [])
     }
