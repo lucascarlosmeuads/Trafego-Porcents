@@ -65,7 +65,11 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
         query = query
           .eq('email_cliente', emailCliente)
           .eq('email_gestor', emailGestor)
-        console.log('🔍 [useChatMessages] Query Admin:', { emailCliente, emailGestor })
+        console.log('🔍 [useChatMessages] Query Admin conversa específica:', { emailCliente, emailGestor })
+      } else if (isAdmin && emailGestor && !emailCliente) {
+        // NOVA FUNCIONALIDADE: Admin vê TODAS as mensagens de um gestor específico
+        query = query.eq('email_gestor', emailGestor)
+        console.log('🔍 [useChatMessages] Query Admin - TODAS mensagens do gestor:', { emailGestor })
       } else {
         // Se não há filtros válidos, não carregar mensagens
         console.log('❌ [useChatMessages] Nenhum filtro válido definido para carregar mensagens')

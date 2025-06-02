@@ -1,12 +1,13 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
 import { ChatSidebar } from './ChatSidebar'
 import { ChatInterface } from './ChatInterface'
+import { AdminGestorOverview } from './AdminGestorOverview'
 import { ManagerSelector } from '@/components/ManagerSelector'
 import { MessageCircle, Shield, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
-import { supabase } from '@/lib/supabase'
 
 export function AdminChatLayoutSplit() {
   const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
@@ -24,45 +25,6 @@ export function AdminChatLayoutSplit() {
     } : null,
     loading
   })
-
-  // DEBUG: Vamos investigar os emails da Andreza especificamente
-  useEffect(() => {
-    const investigarEmailsAndreza = async () => {
-      if (selectedGestor && selectedGestor.includes('andreza')) {
-        console.log('🔍 [AdminChatLayoutSplit] === INVESTIGAÇÃO ANDREZA ===')
-        console.log('🔍 [AdminChatLayoutSplit] Gestor selecionado:', selectedGestor)
-        
-        // Verificar na tabela gestores
-        const { data: gestores } = await supabase
-          .from('gestores')
-          .select('email, nome')
-          .ilike('email', '%andreza%')
-        
-        console.log('👥 [AdminChatLayoutSplit] Gestores Andreza encontrados:', gestores)
-        
-        // Verificar na tabela todos_clientes
-        const { data: clientes } = await supabase
-          .from('todos_clientes')
-          .select('email_gestor, nome_cliente, email_cliente')
-          .ilike('email_gestor', '%andreza%')
-        
-        console.log('👤 [AdminChatLayoutSplit] Clientes da Andreza encontrados:', clientes?.length)
-        console.log('👤 [AdminChatLayoutSplit] Primeiros 3 clientes:', clientes?.slice(0, 3))
-        
-        // Verificar mensagens especificamente
-        const { data: mensagens } = await supabase
-          .from('chat_mensagens')
-          .select('email_gestor, email_cliente, conteudo')
-          .ilike('email_gestor', '%andreza%')
-          .limit(5)
-        
-        console.log('💬 [AdminChatLayoutSplit] Mensagens da Andreza encontradas:', mensagens?.length)
-        console.log('💬 [AdminChatLayoutSplit] Primeiras mensagens:', mensagens)
-      }
-    }
-    
-    investigarEmailsAndreza()
-  }, [selectedGestor])
 
   useEffect(() => {
     const checkMobile = () => {
@@ -85,7 +47,7 @@ export function AdminChatLayoutSplit() {
   }, [selectedGestor])
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
-    console.log('🔍 [AdminChatLayoutSplit] Selecionando conversa:', {
+    console.log('🔍 [AdminChatLayoutSplit] Selecionando conversa específica:', {
       email_cliente: conversa.email_cliente,
       email_gestor: conversa.email_gestor,
       nome_cliente: conversa.nome_cliente
@@ -113,6 +75,13 @@ export function AdminChatLayoutSplit() {
       return 'Todas as conversas'
     }
     return `Conversas filtradas`
+  }
+
+  const getSelectedGestorName = () => {
+    if (!selectedGestor) return null
+    // Extrair nome do email do gestor para exibição
+    const nomeGestor = selectedGestor.split('@')[0]
+    return nomeGestor.charAt(0).toUpperCase() + nomeGestor.slice(1)
   }
 
   if (loading) {
@@ -222,6 +191,7 @@ export function AdminChatLayoutSplit() {
       {/* Área principal - Chat ativo ocupando altura total */}
       <div className="flex-1 bg-white flex flex-col h-full">
         {selectedChat ? (
+          // Conversa específica selecionada
           <ChatInterface
             emailCliente={selectedChat.email_cliente}
             emailGestor={selectedChat.email_gestor || ''}
@@ -229,7 +199,14 @@ export function AdminChatLayoutSplit() {
             statusCampanha={selectedChat.status_campanha}
             showBackButton={false}
           />
+        ) : selectedGestor ? (
+          // Gestor selecionado mas nenhuma conversa específica - mostrar overview
+          <AdminGestorOverview
+            emailGestor={selectedGestor}
+            nomeGestor={getSelectedGestorName() || selectedGestor}
+          />
         ) : (
+          // Nenhum gestor selecionado
           <div className="h-full flex items-center justify-center bg-gray-50">
             <div className="text-center">
               <div className="bg-gradient-to-br from-yellow-100 to-yellow-200 rounded-full w-20 h-20 flex items-center justify-center mx-auto mb-6">
@@ -239,18 +216,11 @@ export function AdminChatLayoutSplit() {
                 Modo Administrador
               </h3>
               <p className="text-gray-600 max-w-sm mb-4">
-                {conversas.length === 0 
-                  ? selectedGestor 
-                    ? 'Nenhuma conversa encontrada para o gestor selecionado'
-                    : 'Nenhuma conversa encontrada no sistema'
-                  : 'Selecione uma conversa da lista à esquerda para monitorar a comunicação'
-                }
+                Selecione um gestor à esquerda para monitorar todas as suas conversas, ou clique em uma conversa específica para ver os detalhes
               </p>
-              {conversas.length > 0 && (
-                <div className="text-sm text-gray-500">
-                  {getTotalConversas()} conversa{getTotalConversas() !== 1 ? 's' : ''} disponível{getTotalConversas() !== 1 ? 'is' : ''}
-                </div>
-              )}
+              <div className="text-sm text-gray-500">
+                Sistema de monitoramento de chat ativo
+              </div>
             </div>
           </div>
         )}
