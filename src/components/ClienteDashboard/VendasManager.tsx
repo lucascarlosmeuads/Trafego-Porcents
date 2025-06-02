@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -106,34 +105,39 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Gerenciamento de Vendas</h1>
-        <p className="text-muted-foreground">Registre e acompanhe suas vendas</p>
+        <h1 className="text-3xl font-black text-trafego-text-primary">Gerenciamento de Vendas</h1>
+        <p className="text-trafego-text-secondary">Registre e acompanhe suas vendas</p>
       </div>
 
       {/* Configuração de Comissão */}
-      <Card>
+      <Card 
+        className="border-trafego-border-subtle shadow-lg"
+        style={{backgroundColor: '#1f2937'}}
+      >
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <DollarSign className="w-5 h-5" />
+          <CardTitle className="flex items-center gap-2 text-trafego-text-primary">
+            <DollarSign className="w-5 h-5 text-trafego-accent-primary" />
             Configuração de Comissão
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div>
-              <Label htmlFor="comissao">Quanto você pagará de comissão por venda para a equipe?</Label>
+              <Label htmlFor="comissao" className="text-trafego-text-primary font-medium">
+                Quanto você pagará de comissão por venda para a equipe?
+              </Label>
               <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm">R$</span>
+                <span className="text-sm text-trafego-text-secondary">R$</span>
                 <Input
                   id="comissao"
                   type="number"
                   value={comissaoPorVenda}
                   onChange={(e) => setComissaoPorVenda(Number(e.target.value))}
-                  className="w-32"
+                  className="w-32 bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary focus:border-trafego-accent-primary"
                   min="0"
                   step="0.01"
                 />
-                <span className="text-sm text-muted-foreground">por venda</span>
+                <span className="text-sm text-trafego-text-secondary">por venda</span>
               </div>
             </div>
           </div>
@@ -142,51 +146,66 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
 
       {/* Resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card 
+          className="border-trafego-border-subtle shadow-lg"
+          style={{backgroundColor: '#1f2937'}}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Vendas</CardTitle>
-            <Package className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-trafego-text-primary">Total de Vendas</CardTitle>
+            <Package className="h-4 w-4 text-trafego-accent-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{vendas.length}</div>
-            <p className="text-xs text-muted-foreground">vendas registradas</p>
+            <div className="text-2xl font-bold text-trafego-text-primary">{vendas.length}</div>
+            <p className="text-xs text-trafego-text-secondary">vendas registradas</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="border-trafego-border-subtle shadow-lg"
+          style={{backgroundColor: '#1f2937'}}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-trafego-text-primary">Valor Total</CardTitle>
+            <DollarSign className="h-4 w-4 text-trafego-accent-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-trafego-accent-primary">
               R$ {totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground">em vendas</p>
+            <p className="text-xs text-trafego-text-secondary">em vendas</p>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card 
+          className="border-trafego-border-subtle shadow-lg"
+          style={{backgroundColor: '#1f2937'}}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total de Comissões</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-trafego-text-primary">Total de Comissões</CardTitle>
+            <DollarSign className="h-4 w-4 text-trafego-accent-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-trafego-accent-secondary">
               R$ {totalComissoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
             </div>
-            <p className="text-xs text-muted-foreground">para a equipe</p>
+            <p className="text-xs text-trafego-text-secondary">para a equipe</p>
           </CardContent>
         </Card>
       </div>
 
       {/* Adicionar Nova Venda */}
-      <Card>
+      <Card 
+        className="border-trafego-border-subtle shadow-lg"
+        style={{backgroundColor: '#1f2937'}}
+      >
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle>Registrar Nova Venda</CardTitle>
+            <CardTitle className="text-trafego-text-primary">Registrar Nova Venda</CardTitle>
             {!isAdding && (
-              <Button onClick={() => setIsAdding(true)}>
+              <Button 
+                onClick={() => setIsAdding(true)}
+                className="bg-gradient-trafego hover:bg-gradient-trafego-hover text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+              >
                 <Plus className="w-4 h-4 mr-2" />
                 Nova Venda
               </Button>
@@ -197,16 +216,21 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="produto">Nome do Produto (opcional)</Label>
+                <Label htmlFor="produto" className="text-trafego-text-primary font-medium">
+                  Nome do Produto (opcional)
+                </Label>
                 <Input
                   id="produto"
                   value={novaVenda.produto_vendido}
                   onChange={(e) => setNovaVenda({ ...novaVenda, produto_vendido: e.target.value })}
                   placeholder="Ex: Curso de Marketing Digital"
+                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="valor">Valor da Venda *</Label>
+                <Label htmlFor="valor" className="text-trafego-text-primary font-medium">
+                  Valor da Venda *
+                </Label>
                 <Input
                   id="valor"
                   type="number"
@@ -214,33 +238,47 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
                   onChange={(e) => setNovaVenda({ ...novaVenda, valor_venda: e.target.value })}
                   placeholder="0.00"
                   step="0.01"
+                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="data">Data da Venda</Label>
+                <Label htmlFor="data" className="text-trafego-text-primary font-medium">
+                  Data da Venda
+                </Label>
                 <Input
                   id="data"
                   type="date"
                   value={novaVenda.data_venda}
                   onChange={(e) => setNovaVenda({ ...novaVenda, data_venda: e.target.value })}
+                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary focus:border-trafego-accent-primary"
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="observacoes">Observações (opcional)</Label>
+              <Label htmlFor="observacoes" className="text-trafego-text-primary font-medium">
+                Observações (opcional)
+              </Label>
               <Textarea
                 id="observacoes"
                 value={novaVenda.observacoes}
                 onChange={(e) => setNovaVenda({ ...novaVenda, observacoes: e.target.value })}
                 placeholder="Adicione detalhes sobre a venda..."
                 rows={3}
+                className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
               />
             </div>
             <div className="flex gap-2">
-              <Button onClick={handleAddVenda}>
+              <Button 
+                onClick={handleAddVenda}
+                className="bg-gradient-trafego hover:bg-gradient-trafego-hover text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
+              >
                 Registrar Venda
               </Button>
-              <Button variant="outline" onClick={() => setIsAdding(false)}>
+              <Button 
+                variant="outline" 
+                onClick={() => setIsAdding(false)}
+                className="border-trafego-border-subtle text-trafego-text-primary hover:bg-trafego-bg-card"
+              >
                 Cancelar
               </Button>
             </div>
@@ -249,13 +287,16 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
       </Card>
 
       {/* Lista de Vendas */}
-      <Card>
+      <Card 
+        className="border-trafego-border-subtle shadow-lg"
+        style={{backgroundColor: '#1f2937'}}
+      >
         <CardHeader>
-          <CardTitle>Histórico de Vendas</CardTitle>
+          <CardTitle className="text-trafego-text-primary">Histórico de Vendas</CardTitle>
         </CardHeader>
         <CardContent>
           {vendas.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
+            <div className="text-center py-8 text-trafego-text-secondary">
               <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
               <p>Nenhuma venda registrada ainda.</p>
               <p className="text-sm">Clique em "Nova Venda" para começar.</p>
@@ -263,15 +304,19 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
           ) : (
             <div className="space-y-3">
               {vendas.map((venda) => (
-                <div key={venda.id} className="flex items-center justify-between p-4 border rounded-lg">
+                <div 
+                  key={venda.id} 
+                  className="flex items-center justify-between p-4 border border-trafego-border-subtle rounded-lg transition-all duration-200 hover:border-trafego-accent-primary/30 hover:shadow-md"
+                  style={{backgroundColor: '#374151'}}
+                >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4" />
-                      <span className="font-medium">
+                      <Package className="w-4 h-4 text-trafego-accent-primary" />
+                      <span className="font-medium text-trafego-text-primary">
                         {venda.produto_vendido || 'Produto não especificado'}
                       </span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <div className="flex items-center gap-4 text-sm text-trafego-text-secondary">
                       <div className="flex items-center gap-1">
                         <DollarSign className="w-3 h-3" />
                         R$ {Number(venda.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
@@ -282,21 +327,21 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasM
                       </div>
                     </div>
                     {venda.observacoes && (
-                      <p className="text-sm text-muted-foreground mt-1">{venda.observacoes}</p>
+                      <p className="text-sm text-trafego-text-muted mt-1">{venda.observacoes}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <div className="text-right">
-                      <div className="text-sm font-medium">
+                      <div className="text-sm font-medium text-trafego-accent-primary">
                         R$ {comissaoPorVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
                       </div>
-                      <div className="text-xs text-muted-foreground">comissão</div>
+                      <div className="text-xs text-trafego-text-secondary">comissão</div>
                     </div>
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={() => handleDeleteVenda(venda.id)}
-                      className="text-red-600 hover:text-red-700"
+                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
                     >
                       <Trash2 className="w-4 h-4" />
                     </Button>

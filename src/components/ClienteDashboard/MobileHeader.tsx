@@ -21,21 +21,29 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
   const currentLabel = TAB_LABELS[activeTab as keyof typeof TAB_LABELS] || 'Painel do Cliente'
 
   return (
-    <header className="flex items-center justify-between p-4 border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60 sticky top-0 z-40">
+    <header 
+      className="flex items-center justify-between p-4 border-b border-trafego-border-subtle backdrop-blur-sm sticky top-0 z-40 shadow-sm"
+      style={{backgroundColor: '#1a1a1a'}}
+    >
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="md:hidden" />
+        <SidebarTrigger className="md:hidden text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
         {onBack && (
-          <Button variant="ghost" size="icon" onClick={onBack} className="md:hidden">
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            onClick={onBack} 
+            className="md:hidden text-trafego-text-primary hover:text-trafego-accent-primary hover:bg-trafego-bg-card"
+          >
             <ArrowLeft className="h-4 w-4" />
           </Button>
         )}
-        <h1 className="text-lg font-semibold text-card-foreground truncate">
+        <h1 className="text-lg font-bold text-trafego-text-primary truncate">
           {currentLabel}
         </h1>
       </div>
       
       <div className="hidden md:flex items-center gap-2">
-        <SidebarTrigger />
+        <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
       </div>
     </header>
   )

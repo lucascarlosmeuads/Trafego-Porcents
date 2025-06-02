@@ -74,8 +74,8 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Carregando progresso...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
+          <p className="text-trafego-text-secondary">Carregando progresso...</p>
         </div>
       </div>
     )
@@ -87,40 +87,43 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       <div className="text-center space-y-3 sm:space-y-4 px-2">
         <h1 className={`${
           isMobile ? 'text-2xl' : 'text-3xl'
-        } font-bold text-card-foreground flex items-center justify-center gap-2 sm:gap-3`}>
+        } font-black text-trafego-text-primary flex items-center justify-center gap-2 sm:gap-3`}>
           🧭 Bem-vindo!
         </h1>
         <p className={`${
           isMobile ? 'text-base' : 'text-lg'
-        } text-muted-foreground leading-relaxed`}>
+        } text-trafego-text-secondary leading-relaxed`}>
           Veja abaixo o passo a passo da sua campanha:
         </p>
       </div>
 
       {/* Progress Summary Card */}
-      <Card className="bg-card border-primary/20">
+      <Card 
+        className="border-trafego-border-subtle shadow-lg shadow-trafego-accent-primary/5"
+        style={{backgroundColor: '#1f2937'}}
+      >
         <CardContent className={`${isMobile ? 'p-4' : 'p-6'} text-center`}>
-          <div className="space-y-3">
-            <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-semibold text-primary`}>
+          <div className="space-y-4">
+            <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-trafego-accent-primary`}>
               Progresso Atual
             </h3>
-            <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-bold text-primary`}>
+            <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-black text-trafego-text-primary`}>
               {progresso.size} / {steps.length}
             </div>
-            <div className="w-full bg-muted rounded-full h-2 sm:h-3">
+            <div className="w-full bg-trafego-bg-input rounded-full h-3 overflow-hidden">
               <div 
-                className="bg-gradient-to-r from-blue-500 to-green-500 h-2 sm:h-3 rounded-full transition-all duration-300" 
+                className="bg-gradient-trafego h-3 rounded-full transition-all duration-500 shadow-md" 
                 style={{ width: `${progressPercentage}%` }}
               ></div>
             </div>
-            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-muted-foreground`}>
+            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-trafego-text-muted`}>
               {progresso.size === steps.length 
                 ? '🎉 Parabéns! Você completou todos os passos!'
                 : `${progressPercentage}% concluído`
               }
             </p>
             {saving && (
-              <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center justify-center gap-2 text-sm text-trafego-text-secondary">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 Salvando progresso...
               </div>
@@ -136,20 +139,24 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           const StepIcon = step.icon
           
           return (
-            <Card key={step.id} className={`transition-all duration-200 ${
-              isCompleted 
-                ? 'bg-accent border-primary/40 shadow-md' 
-                : 'bg-card hover:shadow-md border-border hover:bg-accent/50'
-            }`}>
+            <Card 
+              key={step.id} 
+              className={`transition-all duration-300 border-trafego-border-subtle shadow-md hover:shadow-lg hover:shadow-trafego-accent-primary/10 ${
+                isCompleted 
+                  ? 'shadow-trafego-accent-primary/20 border-trafego-accent-primary/40' 
+                  : 'hover:border-trafego-accent-secondary/30'
+              }`}
+              style={{backgroundColor: isCompleted ? '#1f2937' : '#1a1a1a'}}
+            >
               <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
                 <div className="flex items-start gap-3 sm:gap-4">
                   {/* Step Icon */}
                   <div className={`flex-shrink-0 ${
                     isMobile ? 'w-8 h-8' : 'w-10 h-10'
-                  } rounded-full flex items-center justify-center transition-all ${
+                  } rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted 
-                      ? 'bg-green-500 text-white shadow-lg' 
-                      : 'bg-blue-500 text-white'
+                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
+                      : 'bg-gradient-trafego text-white shadow-lg shadow-trafego-accent-primary/30'
                   }`}>
                     {isCompleted ? (
                       <CheckCircle className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
@@ -161,17 +168,20 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                   {/* Step Content */}
                   <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
                     <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                      <Badge variant="outline" className={`${
-                        isMobile ? 'text-xs' : 'text-sm'
-                      } w-fit`}>
+                      <Badge 
+                        variant="outline" 
+                        className={`${
+                          isMobile ? 'text-xs' : 'text-sm'
+                        } w-fit border-trafego-accent-primary/50 text-trafego-accent-primary bg-trafego-accent-primary/10`}
+                      >
                         Passo {step.id}
                       </Badge>
                       <h3 className={`${
                         isMobile ? 'text-base' : 'text-lg'
-                      } font-semibold ${
+                      } font-bold ${
                         isCompleted 
-                          ? 'text-primary' 
-                          : 'text-card-foreground'
+                          ? 'text-trafego-accent-primary' 
+                          : 'text-trafego-text-primary'
                       } break-words`}>
                         {step.title}
                       </h3>
@@ -179,7 +189,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                     
                     <p className={`${
                       isMobile ? 'text-sm' : 'text-base'
-                    } text-muted-foreground leading-relaxed`}>
+                    } text-trafego-text-secondary leading-relaxed`}>
                       {step.description}
                     </p>
                     
@@ -191,7 +201,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                             variant="outline"
                             size={isMobile ? "sm" : "default"}
                             onClick={step.menuAction}
-                            className="w-full sm:w-auto flex items-center gap-2 text-primary border-primary/20 hover:bg-accent hover:border-primary/30"
+                            className="w-full sm:w-auto flex items-center gap-2 bg-gradient-trafego hover:bg-gradient-trafego-hover text-white border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
                           >
                             {step.actionLabel}
                             <ArrowRight className="w-4 h-4" />
@@ -206,13 +216,13 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                           checked={isCompleted}
                           onCheckedChange={() => handleToggleStep(step.id)}
                           disabled={saving}
-                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500"
+                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 border-trafego-accent-primary"
                         />
                         <label 
                           htmlFor={`step-${step.id}`}
                           className={`${
                             isMobile ? 'text-sm' : 'text-base'
-                          } font-medium cursor-pointer whitespace-nowrap text-card-foreground ${
+                          } font-semibold cursor-pointer whitespace-nowrap text-trafego-text-primary ${
                             saving ? 'opacity-50' : ''
                           }`}
                         >
@@ -229,20 +239,23 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       </div>
 
       {/* Observação */}
-      <Card className="bg-card border-primary/20">
+      <Card 
+        className="border-trafego-accent-primary/30 shadow-lg shadow-trafego-accent-primary/10"
+        style={{backgroundColor: '#1f2937'}}
+      >
         <CardHeader className={isMobile ? 'pb-3' : ''}>
           <CardTitle className={`${
             isMobile ? 'text-base' : 'text-lg'
-          } text-primary flex items-center gap-2`}>
+          } text-trafego-accent-primary flex items-center gap-2 font-bold`}>
             📌 Observação
           </CardTitle>
         </CardHeader>
         <CardContent className={isMobile ? 'pt-0' : ''}>
-          <div className={`space-y-2 text-card-foreground ${
+          <div className={`space-y-2 text-trafego-text-primary ${
             isMobile ? 'text-sm' : 'text-base'
           }`}>
             <p>
-              Todo esse processo pode durar até <strong>15 dias</strong>, dependendo do seu projeto.
+              Todo esse processo pode durar até <strong className="text-trafego-accent-primary">15 dias</strong>, dependendo do seu projeto.
             </p>
             <p>
               Fique tranquilo, sua campanha vai ao ar dentro desse prazo.

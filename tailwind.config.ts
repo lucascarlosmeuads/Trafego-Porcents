@@ -62,10 +62,25 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
+				},
+				// Tráfego Porcents Color Scheme
+				'trafego': {
+					'bg-primary': '#0a0a0a',
+					'bg-secondary': '#1a1a1a', 
+					'bg-card': '#1f2937',
+					'bg-input': '#374151',
+					'text-primary': '#ffffff',
+					'text-secondary': '#a1a1aa',
+					'text-muted': '#9ca3af',
+					'border-subtle': '#4b5563',
+					'accent-primary': '#10b981',
+					'accent-secondary': '#06b6d4',
 				}
 			},
 			backgroundImage: {
-				'gradient-hero': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #d946ef 100%)'
+				'gradient-hero': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #d946ef 100%)',
+				'gradient-trafego': 'linear-gradient(135deg, #06b6d4 0%, #10b981 100%)',
+				'gradient-trafego-hover': 'linear-gradient(135deg, #0891b2 0%, #059669 100%)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

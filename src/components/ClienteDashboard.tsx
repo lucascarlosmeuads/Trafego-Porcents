@@ -29,10 +29,10 @@ export function ClienteDashboard() {
   if (authLoading) {
     console.log('⏳ [ClienteDashboard] Mostrando loading de autenticação')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#0a0a0a'}}>
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-          <p className="text-muted-foreground">Verificando autenticação...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
+          <p className="text-trafego-text-secondary">Verificando autenticação...</p>
         </div>
       </div>
     )
@@ -42,9 +42,9 @@ export function ClienteDashboard() {
   if (!user) {
     console.log('❌ [ClienteDashboard] Usuário não autenticado, redirecionando...')
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#0a0a0a'}}>
         <div className="text-center">
-          <p className="text-muted-foreground">Redirecionando para login...</p>
+          <p className="text-trafego-text-secondary">Redirecionando para login...</p>
         </div>
       </div>
     )
@@ -58,8 +58,8 @@ export function ClienteDashboard() {
       return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-2"></div>
-            <p className="text-muted-foreground">Carregando dados...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
+            <p className="text-trafego-text-secondary">Carregando dados...</p>
           </div>
         </div>
       )
@@ -111,7 +111,7 @@ export function ClienteDashboard() {
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <div className="min-h-screen flex w-full bg-background">
+      <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
         <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
         
         <SidebarInset className="flex-1">
