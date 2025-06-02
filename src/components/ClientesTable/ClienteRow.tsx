@@ -1,6 +1,6 @@
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Folder, User, AtSign } from 'lucide-react'
+import { Folder, Mail, AtSign } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { StatusSelect } from './StatusSelect'
 import { SiteStatusSelect } from './SiteStatusSelect'
@@ -115,7 +115,7 @@ export function ClienteRow({
           <Tooltip>
             <TooltipTrigger>
               <div className="flex items-center justify-center">
-                <User className="h-3 w-3 text-blue-400" />
+                <Mail className="h-3 w-3 text-blue-400" />
               </div>
             </TooltipTrigger>
             <TooltipContent>
