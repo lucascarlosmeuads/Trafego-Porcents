@@ -39,7 +39,7 @@ export function ClienteRowPhone({ telefone, nomeCliente }: ClienteRowPhoneProps)
                 onClick={() => openWhatsApp(telefone, nomeCliente || 'Cliente')}
                 title="Abrir WhatsApp"
               >
-                <MessageCircle className="h-3 w-3 text-white" />
+                <MessageCircle className="h-3.5 w-3.5 text-white" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -55,7 +55,7 @@ export function ClienteRowPhone({ telefone, nomeCliente }: ClienteRowPhoneProps)
                 className="h-6 w-6 p-0 bg-gray-600 hover:bg-gray-700 border-gray-600"
                 disabled
               >
-                <MessageCircle className="h-3 w-3 text-white" />
+                <MessageCircle className="h-3.5 w-3.5 text-white" />
               </Button>
             </TooltipTrigger>
             <TooltipContent>

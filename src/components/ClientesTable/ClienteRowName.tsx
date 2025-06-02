@@ -18,7 +18,7 @@ export function ClienteRowName({ clienteId, nomeCliente }: ClienteRowNameProps) 
   return (
     <>
       <div className="flex items-center gap-2">
-        <div className="truncate" title={nomeCliente || ''}>
+        <div className="font-semibold text-white/90 text-sm leading-tight" title={nomeCliente || ''}>
           {nomeCliente || 'Não informado'}
         </div>
         <div className="relative">
