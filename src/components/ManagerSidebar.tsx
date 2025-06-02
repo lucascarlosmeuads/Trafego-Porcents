@@ -72,64 +72,55 @@ export function ManagerSidebar({
         flex-shrink-0 sticky top-0 left-0 z-40 shadow-2xl
       `}
     >
-      {/* Header com Logo e Toggle Button */}
-      <div className={cn(
-        "p-3 border-b border-gray-800 flex items-center transition-all duration-300",
-        isCollapsed ? "justify-between" : "justify-center relative"
-      )}>
-        {/* Logo TráfegoPorcents */}
-        <div className={cn(
-          "flex items-center",
-          !isCollapsed && "flex-1 justify-center"
-        )}>
-          <div className="relative group cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-            <div className={cn(
-              "relative bg-gradient-hero text-white rounded-lg font-bold transition-transform duration-300 hover:scale-105",
-              isCollapsed ? "px-2 py-1.5 text-xs" : "px-4 py-2 text-lg"
-            )}>
-              {!isCollapsed ? (
-                <>
-                  <span>Tráfego</span>
-                  <span className="text-orange-300">Porcents</span>
-                </>
-              ) : (
-                <span className="text-orange-300">TP%</span>
-              )}
+      {/* Header com Logo e Toggle Button - Reorganizado */}
+      <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center justify-between mb-4">
+          {/* Logo TráfegoPorcents */}
+          <div className="flex-1 flex justify-center">
+            <div className="relative group cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+              <div className={cn(
+                "relative bg-gradient-hero text-white rounded-lg font-bold transition-transform duration-300 hover:scale-105",
+                isCollapsed ? "px-2 py-1.5 text-xs" : "px-4 py-2 text-lg"
+              )}>
+                {!isCollapsed ? (
+                  <>
+                    <span>Tráfego</span>
+                    <span className="text-orange-300">Porcents</span>
+                  </>
+                ) : (
+                  <span className="text-orange-300">TP%</span>
+                )}
+              </div>
             </div>
           </div>
+
+          {/* Toggle Button - Posicionado à direita */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleSidebar}
+            className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors bg-gray-800/30 border border-gray-700/30 ml-2"
+          >
+            {isCollapsed ? (
+              <ChevronRight className="h-4 w-4" />
+            ) : (
+              <ChevronLeft className="h-4 w-4" />
+            )}
+          </Button>
         </div>
 
-        {/* Toggle Button */}
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={toggleSidebar}
-          className={cn(
-            "p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors bg-gray-800/50 border border-gray-700/50",
-            !isCollapsed && "absolute right-3"
-          )}
-        >
-          {isCollapsed ? (
-            <ChevronRight className="h-4 w-4" />
-          ) : (
-            <ChevronLeft className="h-4 w-4" />
-          )}
-        </Button>
-      </div>
-
-      {/* Card do Gestor */}
-      <div className="p-4 border-b border-gray-800">
+        {/* Perfil do Gestor - Mais sutil */}
         {!isCollapsed && (
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
-              <User className="h-4 w-4 text-white" />
+          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/30 border border-gray-700/20 hover:bg-gray-800/50 transition-colors duration-200">
+            <div className="bg-gray-700 rounded-full p-2">
+              <User className="h-4 w-4 text-gray-300" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-white truncate">
+              <p className="text-sm font-medium text-gray-200 truncate">
                 {currentManagerName}
               </p>
-              <p className="text-xs text-blue-300">
+              <p className="text-xs text-gray-400">
                 {isAdmin ? 'Administrador' : 'Gestor'}
               </p>
             </div>
@@ -137,14 +128,15 @@ export function ManagerSidebar({
         )}
         
         {isCollapsed && (
-          <div className="flex justify-center">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
-              <User className="h-4 w-4 text-white" />
+          <div className="flex justify-center mt-2">
+            <div className="bg-gray-700 rounded-full p-2">
+              <User className="h-4 w-4 text-gray-300" />
             </div>
           </div>
         )}
       </div>
 
+      {/* Menu Principal */}
       <div className="p-4 flex-1">
         {isAdmin ? (
           <AdminMainMenu

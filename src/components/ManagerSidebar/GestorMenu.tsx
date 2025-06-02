@@ -35,7 +35,7 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
   ]
 
   return (
-    <nav className="space-y-2">
+    <nav className="space-y-3">
       {menuItems.map((item) => {
         const Icon = item.icon
         const isActive = activeTab === item.id
@@ -47,10 +47,10 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
             className={`
               ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
               ${isActive 
-                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-800 border border-transparent hover:border-gray-700'
+                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
               }
-              transition-all duration-200 h-auto py-3
+              transition-all duration-200 h-auto py-3 group
             `}
             onClick={() => onTabChange(item.id)}
             title={isCollapsed ? item.label : ''}
@@ -59,8 +59,8 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
               ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
               rounded-lg flex items-center justify-center
               ${isActive 
-                ? `bg-gradient-to-r ${item.color} shadow-lg` 
-                : 'bg-gray-800 group-hover:bg-gray-700'
+                ? `bg-gradient-to-r ${item.color} shadow-md` 
+                : 'bg-gray-800/60 group-hover:bg-gray-700/80'
               }
               transition-all duration-200
             `}>
@@ -69,8 +69,8 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
             
             {!isCollapsed && (
               <div className="flex flex-col items-start text-left">
-                <span className="font-medium text-sm">{item.label}</span>
-                <span className="text-xs text-gray-400">{item.description}</span>
+                <span className="font-medium text-sm leading-tight">{item.label}</span>
+                <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
               </div>
             )}
           </Button>
