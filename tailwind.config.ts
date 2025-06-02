@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -62,6 +63,9 @@ export default {
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
 				}
+			},
+			backgroundImage: {
+				'gradient-hero': 'linear-gradient(135deg, #3b82f6 0%, #8b5cf6 50%, #d946ef 100%)'
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

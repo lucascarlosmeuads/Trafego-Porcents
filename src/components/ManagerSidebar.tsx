@@ -6,6 +6,7 @@ import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
 import { Button } from '@/components/ui/button'
 import { LogOut, ChevronLeft, ChevronRight, User } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -87,8 +88,27 @@ export function ManagerSidebar({
         </Button>
       </div>
 
-      {/* Header com nome do gestor */}
+      {/* Logo TráfegoPorcents */}
       <div className="p-4 border-b border-gray-800">
+        <div className="flex items-center justify-center mb-4">
+          <div className="relative group cursor-pointer">
+            <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+            <div className={cn(
+              "relative bg-gradient-hero text-white rounded-lg font-bold transition-transform duration-300 hover:scale-105",
+              isCollapsed ? "px-2 py-1.5 text-xs" : "px-4 py-2 text-lg"
+            )}>
+              {!isCollapsed ? (
+                <>
+                  <span>Tráfego</span>
+                  <span className="text-orange-300">Porcents</span>
+                </>
+              ) : (
+                <span className="text-orange-300">TP%</span>
+              )}
+            </div>
+          </div>
+        </div>
+
         {!isCollapsed && (
           <>
             <h2 className="text-lg font-semibold text-white mb-3">
