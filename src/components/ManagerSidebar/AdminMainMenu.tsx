@@ -32,56 +32,110 @@ export function AdminMainMenu({
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
-      onClick: () => onTabChange('dashboard')
+      onClick: () => onTabChange('dashboard'),
+      color: 'from-blue-500 to-blue-600',
+      description: 'Visão geral do sistema'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      onClick: () => onTabChange('clientes')
+      onClick: () => onTabChange('clientes'),
+      color: 'from-green-500 to-green-600',
+      description: 'Gerenciar todos os clientes'
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
-      onClick: () => onTabChange('chat')
+      onClick: () => onTabChange('chat'),
+      color: 'from-purple-500 to-purple-600',
+      description: 'Conversas e suporte'
     },
     {
       id: 'documentacao',
       label: 'Documentação',
       icon: Book,
-      onClick: () => onTabChange('documentacao')
+      onClick: () => onTabChange('documentacao'),
+      color: 'from-orange-500 to-orange-600',
+      description: 'Guias e manuais'
     }
   ]
 
   return (
-    <nav className="space-y-2">
-      {menuItems.map((item) => (
-        <Button
-          key={item.id}
-          variant={activeTab === item.id ? 'default' : 'ghost'}
-          className={`
-            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
-          `}
-          onClick={item.onClick}
-          title={isCollapsed ? item.label : ''}
-        >
-          <item.icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
-          {!isCollapsed && item.label}
-        </Button>
-      ))}
+    <nav className="space-y-3">
+      {menuItems.map((item) => {
+        const isActive = activeTab === item.id
+        
+        return (
+          <Button
+            key={item.id}
+            variant="ghost"
+            className={`
+              ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
+              ${isActive 
+                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-800 border border-transparent hover:border-gray-700'
+              }
+              transition-all duration-200 h-auto py-3
+            `}
+            onClick={item.onClick}
+            title={isCollapsed ? item.label : ''}
+          >
+            <div className={`
+              ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
+              rounded-lg flex items-center justify-center
+              ${isActive 
+                ? `bg-gradient-to-r ${item.color} shadow-lg` 
+                : 'bg-gray-800'
+              }
+              transition-all duration-200
+            `}>
+              <item.icon className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
+            </div>
+            
+            {!isCollapsed && (
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium text-sm">{item.label}</span>
+                <span className="text-xs text-gray-400">{item.description}</span>
+              </div>
+            )}
+          </Button>
+        )
+      })}
 
-      <div className="pt-4 border-t">
+      <div className="pt-4 border-t border-gray-800">
         <Button
-          variant={selectedManager === '__GESTORES__' ? 'default' : 'ghost'}
+          variant="ghost"
           className={`
-            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+            ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
+            ${selectedManager === '__GESTORES__' 
+              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg' 
+              : 'text-gray-300 hover:text-white hover:bg-gray-800 border border-transparent hover:border-gray-700'
+            }
+            transition-all duration-200 h-auto py-3
           `}
           onClick={() => onManagerSelect('__GESTORES__')}
           title={isCollapsed ? 'Gestores' : ''}
         >
-          <Settings className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
-          {!isCollapsed && 'Gestores'}
+          <div className={`
+            ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
+            rounded-lg flex items-center justify-center
+            ${selectedManager === '__GESTORES__' 
+              ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-lg' 
+              : 'bg-gray-800'
+            }
+            transition-all duration-200
+          `}>
+            <Settings className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
+          </div>
+          
+          {!isCollapsed && (
+            <div className="flex flex-col items-start text-left">
+              <span className="font-medium text-sm">Gestores</span>
+              <span className="text-xs text-gray-400">Gerenciar equipe</span>
+            </div>
+          )}
         </Button>
       </div>
     </nav>

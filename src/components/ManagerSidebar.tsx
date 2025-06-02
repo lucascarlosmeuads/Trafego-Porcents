@@ -66,18 +66,18 @@ export function ManagerSidebar({
     <div 
       className={`
         ${isCollapsed ? 'w-16' : 'w-64'} 
-        bg-card border-r border-border h-screen 
+        bg-gray-900 border-r border-gray-800 h-screen 
         transition-all duration-300 ease-in-out overflow-y-auto flex flex-col
-        flex-shrink-0 sticky top-0 left-0 z-40
+        flex-shrink-0 sticky top-0 left-0 z-40 shadow-2xl
       `}
     >
       {/* Toggle Button */}
-      <div className="p-2 border-b border-border flex justify-end">
+      <div className="p-3 border-b border-gray-800 flex justify-end">
         <Button
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="p-2"
+          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -88,23 +88,23 @@ export function ManagerSidebar({
       </div>
 
       {/* Header com nome do gestor */}
-      <div className="p-4 border-b border-border">
+      <div className="p-4 border-b border-gray-800">
         {!isCollapsed && (
           <>
-            <h2 className="text-lg font-semibold text-card-foreground mb-3">
+            <h2 className="text-lg font-semibold text-white mb-3">
               {isAdmin ? 'Painel Admin' : 'Gestores'}
             </h2>
             
             {/* Nome do gestor */}
-            <div className="flex items-center space-x-2 p-2 rounded-lg bg-accent/30">
-              <div className="bg-primary rounded-full p-1.5">
-                <User className="h-3 w-3 text-primary-foreground" />
+            <div className="flex items-center space-x-3 p-3 rounded-lg bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
+                <User className="h-4 w-4 text-white" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-card-foreground truncate">
+                <p className="text-sm font-medium text-white truncate">
                   {currentManagerName}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-blue-300">
                   {isAdmin ? 'Administrador' : 'Gestor'}
                 </p>
               </div>
@@ -114,8 +114,8 @@ export function ManagerSidebar({
         
         {isCollapsed && (
           <div className="flex justify-center">
-            <div className="bg-primary rounded-full p-2">
-              <User className="h-4 w-4 text-primary-foreground" />
+            <div className="bg-gradient-to-r from-blue-500 to-purple-600 rounded-full p-2 shadow-lg">
+              <User className="h-4 w-4 text-white" />
             </div>
           </div>
         )}
@@ -142,12 +142,13 @@ export function ManagerSidebar({
       </div>
       
       {/* Logout Button */}
-      <div className="p-4 border-t border-border">
+      <div className="p-4 border-t border-gray-800">
         <Button
           variant="ghost"
           className={`
             ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'} 
-            text-red-600 hover:text-red-700 hover:bg-red-50
+            text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30
+            transition-all duration-200
           `}
           onClick={handleSignOut}
           disabled={isSigningOut}

@@ -15,19 +15,22 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
-      description: 'Visão geral e métricas'
+      description: 'Visão geral e métricas',
+      color: 'from-blue-500 to-blue-600'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      description: 'Gerenciar clientes'
+      description: 'Gerenciar clientes',
+      color: 'from-green-500 to-green-600'
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
-      description: 'Conversas com clientes'
+      description: 'Conversas com clientes',
+      color: 'from-purple-500 to-purple-600'
     }
   ]
 
@@ -35,21 +38,39 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
     <nav className="space-y-2">
       {menuItems.map((item) => {
         const Icon = item.icon
+        const isActive = activeTab === item.id
+        
         return (
           <Button
             key={item.id}
-            variant={activeTab === item.id ? 'default' : 'ghost'}
+            variant="ghost"
             className={`
-              ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'}
+              ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
+              ${isActive 
+                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-lg' 
+                : 'text-gray-300 hover:text-white hover:bg-gray-800 border border-transparent hover:border-gray-700'
+              }
+              transition-all duration-200 h-auto py-3
             `}
             onClick={() => onTabChange(item.id)}
             title={isCollapsed ? item.label : ''}
           >
-            <Icon className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+            <div className={`
+              ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
+              rounded-lg flex items-center justify-center
+              ${isActive 
+                ? `bg-gradient-to-r ${item.color} shadow-lg` 
+                : 'bg-gray-800 group-hover:bg-gray-700'
+              }
+              transition-all duration-200
+            `}>
+              <Icon className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
+            </div>
+            
             {!isCollapsed && (
-              <div className="flex flex-col items-start">
-                <span className="font-medium">{item.label}</span>
-                <span className="text-xs text-muted-foreground">{item.description}</span>
+              <div className="flex flex-col items-start text-left">
+                <span className="font-medium text-sm">{item.label}</span>
+                <span className="text-xs text-gray-400">{item.description}</span>
               </div>
             )}
           </Button>
