@@ -3,7 +3,7 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { useSitePagoUpdate } from '@/hooks/useSitePagoUpdate'
 import { supabase } from '@/lib/supabase'
-import { RefreshCw, ChevronDown, ChevronUp, Sparkles, Lightbulb } from 'lucide-react'
+import { RefreshCw, Users, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -20,7 +20,6 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -79,10 +78,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
-  const [bannerExpanded, setBannerExpanded] = useState(true)
-
-  const [bannerMelhoriasExpanded, setBannerMelhoriasExpanded] = useState(false)
-  const [bannerProdutividadeExpanded, setBannerProdutividadeExpanded] = useState(false)
 
   const fetchClientesComCriativos = async () => {
     try {
@@ -852,154 +847,42 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     const filteredClientesInativos = getFilteredClientes(clientesInativos)
 
     return (
-      <div className="space-y-4 p-4 lg:p-0">
-        {/* Banner de Melhorias Recentes - Versão Sutil */}
-        <div className="bg-muted/30 border border-muted-foreground/20 rounded-lg p-3 mb-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <div className="flex items-center gap-1">
-                <Sparkles className="h-4 w-4 text-yellow-500" />
-                <span className="text-xs bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded-full font-medium border border-yellow-500/30">
-                  NOVO
-                </span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-sm font-medium text-muted-foreground">
-                  Melhorias Recentes (Junho 2025)
-                </h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setBannerMelhoriasExpanded(!bannerMelhoriasExpanded)}
-                        className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                      >
-                        {bannerMelhoriasExpanded ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{bannerMelhoriasExpanded ? 'Minimizar' : 'Ver melhorias'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                bannerMelhoriasExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-              }`}>
-                <div className="space-y-1.5 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">✅</span>
-                    <span><strong>Interface otimizada:</strong> Botões menores para melhor aproveitamento do espaço na tela</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-blue-400">✅</span>
-                    <span><strong>Filtro "Pendente Criativo":</strong> Novo filtro para identificar clientes que ainda precisam de criativos</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400">✅</span>
-                    <span><strong>Filtro "Sem BM":</strong> Novo filtro para localizar clientes sem número de Business Manager configurado</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-400">✅</span>
-                    <span><strong>Status renomeado:</strong> "Campanha no Ar" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua</span>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-muted-foreground/70">
-                  Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Banner de Dicas de Produtividade */}
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3 mb-4">
-          <div className="flex items-start gap-3">
-            <div className="flex-shrink-0 mt-0.5">
-              <div className="flex items-center gap-1">
-                <Lightbulb className="h-4 w-4 text-blue-400" />
-                <span className="text-xs bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded-full font-medium border border-blue-500/30">
-                  DICAS
-                </span>
-              </div>
-            </div>
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <h3 className="text-sm font-medium text-blue-400">
-                  Dicas de Produtividade
-                </h3>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setBannerProdutividadeExpanded(!bannerProdutividadeExpanded)}
-                        className="h-6 w-6 p-0 text-blue-400 hover:text-blue-300 hover:bg-blue-500/10"
-                      >
-                        {bannerProdutividadeExpanded ? (
-                          <ChevronUp className="h-3 w-3" />
-                        ) : (
-                          <ChevronDown className="h-3 w-3" />
-                        )}
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>{bannerProdutividadeExpanded ? 'Minimizar' : 'Ver dicas'}</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              </div>
-              
-              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
-                bannerProdutividadeExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
-              }`}>
-                <div className="space-y-1.5 text-xs text-blue-300">
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-400">💡</span>
-                    <span><strong>Filtro "Sem BM":</strong> Use para localizar e configurar Business Managers rapidamente</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-green-400">🎯</span>
-                    <span><strong>Filtro "Pendente Criativo":</strong> Identifique clientes que precisam de materiais criativos</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-yellow-400">⚡</span>
-                    <span><strong>Status "Otimização":</strong> Clientes neste status precisam de novos criativos semanalmente</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-purple-400">📞</span>
-                    <span><strong>Follow-up:</strong> Clientes em "Agendamento" precisam de ligação para marcar reunião</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-orange-400">📋</span>
-                    <span><strong>Combine filtros:</strong> Use "Status + Criativo" para priorizar tarefas do dia</span>
-                  </div>
-                </div>
-                <div className="mt-2 text-xs text-blue-400/70">
-                  Use os filtros em combinação para organizar melhor seu fluxo de trabalho diário.
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
+      <div className="space-y-6 p-4 lg:p-0">
         <Tabs defaultValue="ativos" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="ativos">Clientes Ativos ({clientesAtivos.length})</TabsTrigger>
-            <TabsTrigger value="inativos">Clientes Inativos ({clientesInativos.length})</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 h-14 bg-gradient-to-r from-slate-800/50 to-slate-900/50 border border-slate-700/50 rounded-xl p-1">
+            <TabsTrigger 
+              value="ativos" 
+              className="relative h-12 rounded-lg font-semibold text-sm transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-emerald-500/20 data-[state=active]:to-green-500/20 data-[state=active]:text-emerald-300 data-[state=active]:border data-[state=active]:border-emerald-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-emerald-500/10 text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-emerald-400 rounded-full shadow-sm shadow-emerald-400/50"></div>
+                  <Users className="h-4 w-4" />
+                </div>
+                <span>Clientes Ativos</span>
+                <div className="bg-emerald-500/20 text-emerald-300 px-2 py-1 rounded-md text-xs font-bold border border-emerald-500/30">
+                  {clientesAtivos.length}
+                </div>
+              </div>
+            </TabsTrigger>
+            <TabsTrigger 
+              value="inativos"
+              className="relative h-12 rounded-lg font-semibold text-sm transition-all duration-300 data-[state=active]:bg-gradient-to-r data-[state=active]:from-slate-500/20 data-[state=active]:to-gray-500/20 data-[state=active]:text-slate-300 data-[state=active]:border data-[state=active]:border-slate-500/30 data-[state=active]:shadow-lg data-[state=active]:shadow-slate-500/10 text-slate-400 hover:text-slate-200 hover:bg-slate-700/30"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-2 h-2 bg-slate-400 rounded-full shadow-sm shadow-slate-400/50"></div>
+                  <UserX className="h-4 w-4" />
+                </div>
+                <span>Clientes Inativos</span>
+                <div className="bg-slate-500/20 text-slate-300 px-2 py-1 rounded-md text-xs font-bold border border-slate-500/30">
+                  {clientesInativos.length}
+                </div>
+              </div>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="ativos" className="space-y-4">
+          <TabsContent value="ativos" className="space-y-4 mt-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
               <TableActions
                 selectedManager={currentManager || selectedManager || 'Próprios dados'}
@@ -1036,7 +919,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
             {renderClientesTable(filteredClientesAtivos)}
           </TabsContent>
 
-          <TabsContent value="inativos" className="space-y-4">
+          <TabsContent value="inativos" className="space-y-4 mt-6">
             <TableActions
               selectedManager={currentManager || selectedManager || 'Próprios dados'}
               filteredClientesCount={filteredClientesInativos.length}
