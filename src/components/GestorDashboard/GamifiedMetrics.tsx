@@ -1,13 +1,24 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
 import { Target, TrendingUp, Users, Clock, CheckCircle, ArrowRight } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
 interface GamifiedMetricsProps {
   clientes: Cliente[]
+}
+
+// Simple Progress component to avoid provider issues
+const SimpleProgress = ({ value, className }: { value: number; className?: string }) => {
+  return (
+    <div className={`w-full bg-gray-200 rounded-full h-3 ${className}`}>
+      <div 
+        className="bg-gray-600 h-3 rounded-full transition-all duration-300 ease-out"
+        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
+      />
+    </div>
+  )
 }
 
 export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
@@ -107,7 +118,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
                 </div>
               </div>
               
-              <Progress value={progressoMeta} className="h-3 bg-gray-200" />
+              <SimpleProgress value={progressoMeta} className="h-3 bg-gray-200" />
               
               <div className="text-center">
                 <p className="text-lg text-gray-700 font-medium">{getMensagemFoco()}</p>
