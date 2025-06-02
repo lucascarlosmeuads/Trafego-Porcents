@@ -13,10 +13,30 @@ interface SiteStatusSelectProps {
 }
 
 const SITE_STATUS_OPTIONS = [
-  { value: 'pendente', label: 'Pendente', compact: 'Pend.', color: 'bg-gray-500/20 text-gray-300' },
-  { value: 'aguardando_link', label: 'Aguardando Link', compact: 'Aguard.', color: 'bg-yellow-500/20 text-yellow-300' },
-  { value: 'nao_precisa', label: 'Não Precisa', compact: 'N/Prec.', color: 'bg-blue-500/20 text-blue-300' },
-  { value: 'finalizado', label: 'Finalizado', compact: 'Final.', color: 'bg-green-500/20 text-green-300' }
+  { 
+    value: 'pendente', 
+    label: 'Pendente', 
+    compact: 'Pend.', 
+    style: 'bg-gradient-to-r from-gray-500/20 to-gray-600/20 text-gray-300 border border-gray-500/30 shadow-lg shadow-gray-500/20'
+  },
+  { 
+    value: 'aguardando_link', 
+    label: 'Aguardando Link', 
+    compact: 'Aguard.', 
+    style: 'bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 text-yellow-300 border border-yellow-500/30 shadow-lg shadow-yellow-500/20'
+  },
+  { 
+    value: 'nao_precisa', 
+    label: 'Não Precisa', 
+    compact: 'N/Prec.', 
+    style: 'bg-gradient-to-r from-blue-500/20 to-blue-600/20 text-blue-300 border border-blue-500/30 shadow-lg shadow-blue-500/20'
+  },
+  { 
+    value: 'finalizado', 
+    label: 'Finalizado', 
+    compact: 'Final.', 
+    style: 'bg-gradient-to-r from-green-500/20 to-green-600/20 text-green-300 border border-green-500/30 shadow-lg shadow-green-500/20'
+  }
 ]
 
 export function SiteStatusSelect({ 
@@ -32,28 +52,26 @@ export function SiteStatusSelect({
 
   const selectContent = (
     <Select value={value} onValueChange={onValueChange} disabled={disabled || isUpdating}>
-      <SelectTrigger className={`${compact ? 'h-6 text-xs w-fit max-w-[80px]' : 'h-8 w-fit max-w-[120px]'} bg-background text-white border-border`}>
+      <SelectTrigger className={`${compact ? 'h-6 text-xs w-fit max-w-[80px]' : 'h-8 w-fit max-w-[120px]'} bg-background/50 backdrop-blur-sm text-white border-border/50 hover:border-border transition-all duration-200`}>
         <SelectValue>
           <div className="flex items-center gap-1">
             {isUpdating && <Loader2 className="h-3 w-3 animate-spin" />}
-            <Badge 
-              variant="outline" 
-              className={`${currentStatus.color} ${compact ? 'text-xs px-1 py-0' : 'text-xs px-2 py-0'} border-0`}
+            <div 
+              className={`${currentStatus.style} ${compact ? 'text-xs px-2 py-0.5 rounded-lg' : 'text-xs px-3 py-1 rounded-lg'} font-medium transition-all duration-200 hover:scale-105`}
             >
               {displayValue}
-            </Badge>
+            </div>
           </div>
         </SelectValue>
       </SelectTrigger>
-      <SelectContent className="bg-card border-border">
+      <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl">
         {SITE_STATUS_OPTIONS.map((option) => (
-          <SelectItem key={option.value} value={option.value} className="text-card-foreground">
-            <Badge 
-              variant="outline" 
-              className={`${option.color} text-xs border-0`}
+          <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+            <div 
+              className={`${option.style} text-xs px-3 py-1 rounded-lg font-medium transition-all duration-200 hover:scale-105`}
             >
               {option.label}
-            </Badge>
+            </div>
           </SelectItem>
         ))}
       </SelectContent>
@@ -67,7 +85,7 @@ export function SiteStatusSelect({
           <TooltipTrigger asChild>
             {selectContent}
           </TooltipTrigger>
-          <TooltipContent>
+          <TooltipContent className="bg-card/95 backdrop-blur-sm border-border/50">
             <p>{currentStatus.label}</p>
           </TooltipContent>
         </Tooltip>
