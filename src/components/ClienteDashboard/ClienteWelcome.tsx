@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Badge } from '@/components/ui/badge'
@@ -20,14 +19,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const steps = [
     {
       id: 1,
-      title: 'Conversar com seu Gestor Auxiliar',
-      description: 'Entre em contato via chat para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.',
-      icon: MessageCircle,
-      menuAction: () => onTabChange('chat'),
-      actionLabel: 'Ir para Chat'
-    },
-    {
-      id: 2,
       title: 'Preencher Formulário',
       description: 'Clique no menu lateral em "Briefing" e preencha com seus dados.',
       icon: FileText,
@@ -35,12 +26,20 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       actionLabel: 'Ir para Briefing'
     },
     {
-      id: 3,
+      id: 2,
       title: 'Enviar Materiais',
       description: 'Você pode anexar imagens, vídeos ou textos no menu "Criativos".',
       icon: Folder,
       menuAction: () => onTabChange('arquivos'),
       actionLabel: 'Ir para Criativos'
+    },
+    {
+      id: 3,
+      title: 'Conversar com seu Gestor Auxiliar',
+      description: 'Agora que você já preencheu o briefing e enviou seus materiais, entre em contato via chat para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.',
+      icon: MessageCircle,
+      menuAction: () => onTabChange('chat'),
+      actionLabel: 'Ir para Chat'
     },
     {
       id: 4,
@@ -145,7 +144,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         {steps.map((step) => {
           const isCompleted = progresso.has(step.id)
           const StepIcon = step.icon
-          const isFirstStep = step.id === 1 // Destaque especial para o chat
           
           return (
             <Card 
@@ -154,11 +152,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                 isCompleted 
                   ? 'shadow-trafego-accent-primary/20 border-trafego-accent-primary/40' 
                   : 'hover:border-trafego-accent-secondary/30'
-              } ${
-                isFirstStep ? 'border-orange-500/50 shadow-orange-500/20' : ''
               }`}
               style={{
-                backgroundColor: isCompleted ? '#1f2937' : (isFirstStep ? '#1a1a2e' : '#1a1a1a')
+                backgroundColor: isCompleted ? '#1f2937' : '#1a1a1a'
               }}
             >
               <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
@@ -169,9 +165,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                   } rounded-full flex items-center justify-center transition-all duration-300 ${
                     isCompleted 
                       ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
-                      : isFirstStep
-                        ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white shadow-lg shadow-orange-500/30'
-                        : 'bg-gradient-trafego text-white shadow-lg shadow-trafego-accent-primary/30'
+                      : 'bg-gradient-trafego text-white shadow-lg shadow-trafego-accent-primary/30'
                   }`}>
                     {isCompleted ? (
                       <CheckCircle className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
@@ -188,33 +182,17 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                           variant="outline" 
                           className={`${
                             isMobile ? 'text-xs' : 'text-sm'
-                          } w-fit ${
-                            isFirstStep 
-                              ? 'border-orange-500/50 text-orange-400 bg-orange-500/10'
-                              : 'border-trafego-accent-primary/50 text-trafego-accent-primary bg-trafego-accent-primary/10'
-                          }`}
+                          } w-fit border-trafego-accent-primary/50 text-trafego-accent-primary bg-trafego-accent-primary/10`}
                         >
                           Passo {step.id}
                         </Badge>
-                        {isFirstStep && (
-                          <Badge 
-                            variant="outline" 
-                            className={`${
-                              isMobile ? 'text-xs' : 'text-sm'
-                            } border-orange-600/50 text-orange-300 bg-orange-600/20 font-bold`}
-                          >
-                            IMPORTANTE
-                          </Badge>
-                        )}
                       </div>
                       <h3 className={`${
                         isMobile ? 'text-base' : 'text-lg'
                       } font-bold ${
                         isCompleted 
                           ? 'text-trafego-accent-primary'
-                          : isFirstStep
-                            ? 'text-orange-300' 
-                            : 'text-trafego-text-primary'
+                          : 'text-trafego-text-primary'
                       } break-words`}>
                         {step.title}
                       </h3>
@@ -222,11 +200,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                     
                     <p className={`${
                       isMobile ? 'text-sm' : 'text-base'
-                    } ${
-                      isFirstStep 
-                        ? 'text-orange-200' 
-                        : 'text-trafego-text-secondary'
-                    } leading-relaxed`}>
+                    } text-trafego-text-secondary leading-relaxed`}>
                       {step.description}
                     </p>
                     
@@ -238,11 +212,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                             variant="outline"
                             size={isMobile ? "sm" : "default"}
                             onClick={step.menuAction}
-                            className={`w-full sm:w-auto flex items-center gap-2 border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] ${
-                              isFirstStep
-                                ? 'bg-gradient-to-r from-orange-500 to-yellow-500 hover:from-orange-600 hover:to-yellow-600 text-white'
-                                : 'bg-gradient-trafego hover:bg-gradient-trafego-hover text-white'
-                            }`}
+                            className="w-full sm:w-auto flex items-center gap-2 border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-gradient-trafego hover:bg-gradient-trafego-hover text-white"
                           >
                             {step.actionLabel}
                             <ArrowRight className="w-4 h-4" />
