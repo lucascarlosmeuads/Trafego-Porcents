@@ -11,18 +11,26 @@ export function StatusFunnelDashboard() {
   const [loading, setLoading] = useState(true)
   const [allClientes, setAllClientes] = useState<any[]>([])
   
-  // Função para determinar se uma comissão é considerada pendente
+  // FUNÇÃO CORRIGIDA: Determinar se uma comissão é considerada pendente
   const isComissaoPendente = (comissao: string | null | undefined): boolean => {
-    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
-    if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
-      return true
+    // Considera pendente TODOS os casos que NÃO são explicitamente "Pago":
+    if (!comissao || comissao.trim() === '') {
+      return true // null, undefined, string vazia
     }
-    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
-    if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
-      return true
+    
+    const comissaoTrimmed = comissao.trim()
+    
+    // Explicitamente "Pago" = NÃO pendente
+    if (comissaoTrimmed === 'Pago') {
+      return false
     }
-    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
-    return comissao.trim() !== 'Pago'
+    
+    // TODOS os outros casos são pendentes:
+    // - "Pendente"
+    // - "Solicitado" 
+    // - Valores numéricos antigos: "20", "60", "80", etc.
+    // - Qualquer outro status
+    return true
   }
 
   // Buscar todos os clientes para o dashboard geral
@@ -82,19 +90,29 @@ export function StatusFunnelDashboard() {
     count
   }))
 
-  // Dados para o gráfico de comissões - usando nova lógica corrigida
+  // CÁLCULO CORRIGIDO: Dados para o gráfico de comissões
+  const clientesPendentes = allClientes.filter(c => isComissaoPendente(c.comissao))
+  const clientesPagos = allClientes.filter(c => c.comissao === 'Pago')
+  
   const comissaoData = [
     {
       name: 'Pendentes',
-      value: allClientes.filter(c => isComissaoPendente(c.comissao)).length,
+      value: clientesPendentes.length,
       color: '#ef4444'
     },
     {
       name: 'Pagos',
-      value: allClientes.filter(c => c.comissao === 'Pago').length,
+      value: clientesPagos.length,
       color: '#22c55e'
     }
   ]
+
+  // LOG DE AUDITORIA
+  console.log('📊 [StatusFunnelDashboard] === AUDITORIA DO GRÁFICO ===')
+  console.log('📊 [StatusFunnelDashboard] Total clientes:', allClientes.length)
+  console.log('📊 [StatusFunnelDashboard] Pendentes:', clientesPendentes.length)
+  console.log('📊 [StatusFunnelDashboard] Pagos:', clientesPagos.length)
+  console.log('📊 [StatusFunnelDashboard] Soma verificação:', clientesPendentes.length + clientesPagos.length)
 
   if (loading) {
     return (

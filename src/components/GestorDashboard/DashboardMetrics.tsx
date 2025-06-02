@@ -11,18 +11,26 @@ interface DashboardMetricsProps {
 export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
   console.log('📊 [DashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
 
-  // Função para determinar se uma comissão é considerada pendente
+  // FUNÇÃO CORRIGIDA: Determinar se uma comissão é considerada pendente
   const isComissaoPendente = (comissao: string | null | undefined): boolean => {
-    // Considera pendente: null, undefined, string vazia, "Pendente", ou qualquer valor que não seja "Pago"
-    if (!comissao || comissao.trim() === '' || comissao === 'Pendente') {
-      return true
+    // Considera pendente TODOS os casos que NÃO são explicitamente "Pago":
+    if (!comissao || comissao.trim() === '') {
+      return true // null, undefined, string vazia
     }
-    // Valores numéricos como "20", "60" etc também são considerados pendentes (valores antigos)
-    if (/^\d+(\.\d+)?$/.test(comissao.trim())) {
-      return true
+    
+    const comissaoTrimmed = comissao.trim()
+    
+    // Explicitamente "Pago" = NÃO pendente
+    if (comissaoTrimmed === 'Pago') {
+      return false
     }
-    // Qualquer coisa que não seja explicitamente "Pago" é considerada pendente
-    return comissao.trim() !== 'Pago'
+    
+    // TODOS os outros casos são pendentes:
+    // - "Pendente"
+    // - "Solicitado" 
+    // - Valores numéricos antigos: "20", "60", "80", etc.
+    // - Qualquer outro status
+    return true
   }
 
   // Total de clientes
@@ -33,7 +41,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // Total pendente - usando nova lógica que considera todos os casos e SOMA OS VALORES REAIS
+  // CÁLCULO CORRIGIDO: Total pendente - SOMA OS VALORES REAIS de valor_comissao
   const clientesPendentes = clientes.filter(cliente => 
     isComissaoPendente(cliente.comissao)
   )
@@ -41,7 +49,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // Total já recebido (comissao = "Pago" explicitamente) - SOMA OS VALORES REAIS
+  // CÁLCULO CORRIGIDO: Total já recebido - SOMA OS VALORES REAIS de valor_comissao
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -54,23 +62,40 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     cliente.status_campanha === 'Problema'
   )
 
-  console.log('📈 [DashboardMetrics] Métricas calculadas:', {
-    totalClientes,
-    campanhasNoAr: clientesNoAr.length,
-    pendentes: clientesPendentes.length,
-    pagos: clientesPagos.length,
-    problemas: clientesProblemas.length,
-    totalPendente,
-    totalRecebido
-  })
+  // VALIDAÇÃO DOS CÁLCULOS: Log detalhado para auditoria
+  console.log('📈 [DashboardMetrics] === AUDITORIA DE CÁLCULOS GESTOR ===')
+  console.log('📊 [DashboardMetrics] Breakdown por status de comissão:')
+  
+  // Agrupar por status de comissão para debug
+  const comissaoBreakdown = clientes.reduce((acc, cliente) => {
+    const status = cliente.comissao || 'null/undefined'
+    if (!acc[status]) {
+      acc[status] = { count: 0, total: 0 }
+    }
+    acc[status].count++
+    acc[status].total += (cliente.valor_comissao || 60.00)
+    return acc
+  }, {} as Record<string, { count: number, total: number }>)
 
-  // Log detalhado dos valores de comissão para debug
-  const comissaoValues = clientes.map(c => c.comissao).filter((value, index, self) => self.indexOf(value) === index)
-  console.log('📊 [DashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
-  console.log('📊 [DashboardMetrics] Breakdown por tipo de comissão:', {
-    pendentes: clientes.filter(c => isComissaoPendente(c.comissao)).map(c => ({ id: c.id, comissao: c.comissao, valor: c.valor_comissao })),
-    pagos: clientes.filter(c => c.comissao === 'Pago').map(c => ({ id: c.id, comissao: c.comissao, valor: c.valor_comissao }))
-  })
+  console.log('📊 [DashboardMetrics] Breakdown detalhado:', comissaoBreakdown)
+  
+  console.log('📈 [DashboardMetrics] Métricas calculadas:')
+  console.log('   🔢 Total clientes:', totalClientes)
+  console.log('   🟢 Campanhas no ar:', clientesNoAr.length)
+  console.log('   🔴 Pendentes (count):', clientesPendentes.length)
+  console.log('   🔴 Pendentes (valor):', formatCurrency(totalPendente))
+  console.log('   ✅ Pagos (count):', clientesPagos.length)
+  console.log('   ✅ Pagos (valor):', formatCurrency(totalRecebido))
+  console.log('   ⚠️ Problemas:', clientesProblemas.length)
+
+  // Validação cruzada dos totais
+  const totalValorCalculado = totalPendente + totalRecebido
+  const totalValorEsperado = clientes.reduce((total, cliente) => total + (cliente.valor_comissao || 60.00), 0)
+  
+  console.log('💰 [DashboardMetrics] Validação de valores:')
+  console.log('   📊 Total calculado (pendente + pago):', formatCurrency(totalValorCalculado))
+  console.log('   📊 Total esperado (soma de todos):', formatCurrency(totalValorEsperado))
+  console.log('   ✅ Valores batem?', totalValorCalculado === totalValorEsperado ? 'SIM' : 'NÃO')
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">

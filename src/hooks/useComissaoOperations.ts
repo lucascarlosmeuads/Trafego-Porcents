@@ -44,11 +44,11 @@ export function useComissaoOperations() {
         throw new Error(`ID do cliente inválido: ${clienteId}`)
       }
 
-      // VALIDAÇÃO 2: Buscar o cliente DIRETAMENTE no banco para verificar se existe
-      console.log('🔍 [useComissaoOperations] Buscando cliente no banco de dados...')
-      const { data: clienteAtual, error: fetchError } = await supabase
+      // VALIDAÇÃO 2: Buscar o cliente ANTES da atualização para verificar se existe E obter estado atual
+      console.log('🔍 [useComissaoOperations] STEP 1: Buscando cliente no banco de dados...')
+      const { data: clienteAntes, error: fetchError } = await supabase
         .from('todos_clientes')
-        .select('id, nome_cliente, email_cliente, comissao')
+        .select('id, nome_cliente, email_cliente, comissao, valor_comissao')
         .eq('id', clienteIdNumber)
         .single()
 
@@ -57,37 +57,38 @@ export function useComissaoOperations() {
         throw new Error(`Cliente não encontrado: ${fetchError.message}`)
       }
 
-      if (!clienteAtual) {
+      if (!clienteAntes) {
         console.error('❌ [useComissaoOperations] Cliente não existe no banco:', clienteIdNumber)
         throw new Error(`Cliente com ID ${clienteIdNumber} não encontrado`)
       }
 
-      console.log('✅ [useComissaoOperations] Cliente encontrado:', {
-        id: clienteAtual.id,
-        nome: clienteAtual.nome_cliente,
-        email: clienteAtual.email_cliente,
-        comissaoAtual: clienteAtual.comissao
+      console.log('✅ [useComissaoOperations] STEP 1 COMPLETO - Cliente encontrado:', {
+        id: clienteAntes.id,
+        nome: clienteAntes.nome_cliente,
+        email: clienteAntes.email_cliente,
+        comissaoAtual: clienteAntes.comissao,
+        valorComissao: clienteAntes.valor_comissao
       })
 
       // VALIDAÇÃO 3: Verificar se o status está realmente mudando
-      if (clienteAtual.comissao === novoStatusComissao) {
+      if (clienteAntes.comissao === novoStatusComissao) {
         console.warn('⚠️ [useComissaoOperations] Status já é o mesmo, operação desnecessária')
         toast({
           title: "Aviso",
-          description: `A comissão de ${clienteAtual.nome_cliente} já está como: ${novoStatusComissao}`,
+          description: `A comissão de ${clienteAntes.nome_cliente} já está como: ${novoStatusComissao}`,
         })
         return true
       }
 
-      // ATUALIZAÇÃO CRÍTICA: Atualizar apenas a coluna comissao na tabela todos_clientes
-      console.log('💾 [useComissaoOperations] Executando atualização no banco...')
+      // ATUALIZAÇÃO CRÍTICA: Atualizar apenas a coluna comissao na tabela todos_clientes COM SELECT
+      console.log('💾 [useComissaoOperations] STEP 2: Executando atualização no banco...')
       const { data: updatedData, error: updateError } = await supabase
         .from('todos_clientes')
         .update({ 
           comissao: novoStatusComissao
         })
         .eq('id', clienteIdNumber)
-        .select('id, nome_cliente, comissao')
+        .select('id, nome_cliente, comissao, valor_comissao')
 
       if (updateError) {
         console.error('❌ [useComissaoOperations] Erro na atualização:', updateError)
@@ -116,10 +117,49 @@ export function useComissaoOperations() {
         throw new Error('A atualização não foi aplicada corretamente')
       }
 
-      console.log('✅ [useComissaoOperations] OPERAÇÃO CONCLUÍDA COM SUCESSO:', {
+      // VALIDAÇÃO 6: Verificar se o ID permanece o mesmo (segurança anti-bug)
+      if (clienteAtualizado.id !== clienteAntes.id) {
+        console.error('❌ [useComissaoOperations] ERRO CRÍTICO: ID mudou durante atualização:', {
+          antes: clienteAntes.id,
+          depois: clienteAtualizado.id
+        })
+        throw new Error('Erro crítico: ID do cliente mudou durante atualização')
+      }
+
+      // VALIDAÇÃO 7: Buscar novamente do banco para confirmar persistência
+      console.log('🔍 [useComissaoOperations] STEP 3: Verificação final - rebuscando cliente...')
+      const { data: clienteDepois, error: verifyError } = await supabase
+        .from('todos_clientes')
+        .select('id, nome_cliente, comissao, valor_comissao')
+        .eq('id', clienteIdNumber)
+        .single()
+
+      if (verifyError || !clienteDepois) {
+        console.error('❌ [useComissaoOperations] Erro na verificação final:', verifyError)
+        throw new Error('Erro na verificação final da atualização')
+      }
+
+      if (clienteDepois.comissao !== novoStatusComissao) {
+        console.error('❌ [useComissaoOperations] VALIDAÇÃO FINAL FALHOU:', {
+          esperado: novoStatusComissao,
+          encontrado: clienteDepois.comissao
+        })
+        throw new Error('A atualização não foi persistida corretamente')
+      }
+
+      console.log('✅ [useComissaoOperations] STEP 3 COMPLETO - Verificação final OK:', {
+        clienteId: clienteDepois.id,
+        clienteNome: clienteDepois.nome_cliente,
+        statusFinal: clienteDepois.comissao,
+        valorComissao: clienteDepois.valor_comissao
+      })
+
+      console.log('✅ [useComissaoOperations] OPERAÇÃO CONCLUÍDA COM SUCESSO TOTAL:', {
         clienteId: clienteAtualizado.id,
         clienteNome: clienteAtualizado.nome_cliente,
-        novoStatus: clienteAtualizado.comissao
+        statusAnterior: clienteAntes.comissao,
+        novoStatus: clienteAtualizado.comissao,
+        valorComissao: clienteAtualizado.valor_comissao
       })
 
       toast({

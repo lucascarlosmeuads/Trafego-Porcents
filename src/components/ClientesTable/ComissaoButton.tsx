@@ -22,6 +22,7 @@ export function ComissaoButton({
   compact = false
 }: ComissaoButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
+  const [clickTimeout, setClickTimeout] = useState(false)
   const { atualizarComissao, loading, operationLock } = useComissaoOperations()
   
   const clienteId = cliente.id?.toString() || ''
@@ -32,24 +33,47 @@ export function ComissaoButton({
   const canEdit = isAdmin
 
   const handleComissionToggle = async () => {
-    if (!canEdit || loading || operationLock) return
+    if (!canEdit || loading || operationLock || clickTimeout) return
 
-    console.log('🔄 [ComissaoButton] Iniciando toggle da comissão:', {
+    // PROTEÇÃO ANTI-CLIQUE MÚLTIPLO: Timeout de 2 segundos
+    setClickTimeout(true)
+    setTimeout(() => setClickTimeout(false), 2000)
+
+    console.log('🔄 [ComissaoButton] === INICIANDO TOGGLE SEGURO ===')
+    console.log('🔄 [ComissaoButton] Cliente selecionado:', {
       clienteId,
       clienteNome: cliente.nome_cliente,
       statusAtual: cliente.comissao,
-      novoStatus: isPago ? 'Pendente' : 'Pago'
+      valorComissao: cliente.valor_comissao
     })
 
     const novoStatus = isPago ? 'Pendente' : 'Pago'
+    
+    console.log('🔄 [ComissaoButton] Executando atualização:', {
+      clienteId,
+      novoStatus,
+      statusAnterior: cliente.comissao
+    })
+
     const sucesso = await atualizarComissao(clienteId, novoStatus)
     
-    if (sucesso && onComissionUpdate) {
-      console.log('✅ [ComissaoButton] Comissão atualizada com sucesso, chamando onComissionUpdate')
-      // Notificar o componente pai para atualizar os dados
-      onComissionUpdate()
+    if (sucesso) {
+      console.log('✅ [ComissaoButton] Atualização bem-sucedida, chamando refresh')
+      
+      // Aguardar um momento antes de fazer refresh para garantir que o banco foi atualizado
+      setTimeout(() => {
+        if (onComissionUpdate) {
+          console.log('🔄 [ComissaoButton] Executando refresh dos dados')
+          onComissionUpdate()
+        }
+      }, 500)
+    } else {
+      console.error('❌ [ComissaoButton] Falha na atualização')
     }
   }
+
+  // Indicador visual durante timeout
+  const isDisabled = loading || operationLock || !canEdit || clickTimeout
 
   if (compact) {
     return (
@@ -60,7 +84,7 @@ export function ComissaoButton({
               <Button
                 size="sm"
                 variant="outline"
-                disabled={loading || operationLock || !canEdit}
+                disabled={isDisabled}
                 onClick={handleComissionToggle}
                 className={`
                   h-6 px-2 py-0 text-xs font-medium min-w-fit
@@ -69,10 +93,10 @@ export function ComissaoButton({
                     : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
                   }
                   ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
-                  ${(loading || operationLock) ? 'opacity-50 cursor-wait' : ''}
+                  ${isDisabled ? 'opacity-50 cursor-wait' : ''}
                 `}
               >
-                {loading || operationLock ? '...' : formatCurrency(valorComissao)}
+                {isDisabled ? '...' : formatCurrency(valorComissao)}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -82,7 +106,7 @@ export function ComissaoButton({
                 <p><strong>Valor:</strong> {formatCurrency(valorComissao)}</p>
                 {canEdit ? (
                   <p className="text-xs mt-1">
-                    {loading || operationLock ? 'Processando...' : 
+                    {isDisabled ? 'Processando...' : 
                      isPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}
                   </p>
                 ) : (
@@ -103,7 +127,7 @@ export function ComissaoButton({
       <Button
         size="sm"
         variant="outline"
-        disabled={loading || operationLock || !canEdit}
+        disabled={isDisabled}
         onClick={handleComissionToggle}
         className={`
           h-8 text-xs px-3
@@ -112,7 +136,7 @@ export function ComissaoButton({
             : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
           }
           ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
-          ${(loading || operationLock) ? 'opacity-50 cursor-wait' : ''}
+          ${isDisabled ? 'opacity-50 cursor-wait' : ''}
         `}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
@@ -124,8 +148,8 @@ export function ComissaoButton({
               ({isPago ? 'Pago' : 'Pendente'})
             </span>
           </div>
-        ) : (loading || operationLock) ? (
-          'Processando...'
+        ) : isDisabled ? (
+          clickTimeout ? 'Aguarde...' : 'Processando...'
         ) : isPago ? (
           isHovered ? 'Marcar Pendente' : (
             <div className="flex items-center gap-1">
