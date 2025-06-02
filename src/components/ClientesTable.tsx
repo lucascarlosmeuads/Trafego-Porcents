@@ -78,6 +78,9 @@ export interface Cliente {
   bm_status: string | null
 }
 
+// Tipo para os status válidos de campanha
+type StatusCampanha = "Cliente Novo" | "Formulário" | "Brief" | "Criativo" | "Site" | "Agendamento" | "Configurando BM" | "Subindo Campanha" | "Otimização" | "Problema" | "Cliente Sumiu" | "Reembolso" | "Saque Pendente" | "Campanha Anual" | "Urgente" | "Cliente Antigo"
+
 interface ClientesTableProps {
   selectedManager?: string
 }
@@ -690,7 +693,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                     <TableCell>
                       {editingClienteId !== cliente.id ? (
                         <StatusSelect
-                          value={cliente.status_campanha}
+                          value={cliente.status_campanha as StatusCampanha}
                           onValueChange={(value) => handleStatusChange(cliente.id, value)}
                           getStatusColor={getStatusColor}
                           disabled={transferindoCliente === cliente.id}
