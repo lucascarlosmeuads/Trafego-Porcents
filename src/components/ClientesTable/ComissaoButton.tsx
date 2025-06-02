@@ -47,7 +47,7 @@ export function ComissaoButton({
                 disabled={isUpdating || !canEdit}
                 onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
                 className={`
-                  h-6 w-6 p-0
+                  h-6 px-2 py-0 text-xs font-medium min-w-fit
                   ${isPago 
                     ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
                     : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
@@ -55,7 +55,7 @@ export function ComissaoButton({
                   ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
                 `}
               >
-                <DollarSign className="h-2 w-2" />
+                {formatCurrency(valorComissao)}
               </Button>
             </TooltipTrigger>
             <TooltipContent>
@@ -87,7 +87,7 @@ export function ComissaoButton({
         disabled={isUpdating || !canEdit}
         onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
         className={`
-          h-8 text-xs
+          h-8 text-xs px-3
           ${isPago 
             ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
             : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
@@ -99,23 +99,25 @@ export function ComissaoButton({
       >
         {!canEdit ? (
           <div className="flex items-center gap-1">
-            <DollarSign className="h-3 w-3" />
-            {isPago ? 'Pago' : 'Pendente'}
+            {formatCurrency(valorComissao)}
+            <span className="text-xs opacity-75">
+              ({isPago ? 'Pago' : 'Pendente'})
+            </span>
           </div>
         ) : isUpdating ? (
           'Atualizando...'
         ) : isPago ? (
           isHovered ? 'Marcar Pendente' : (
             <div className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              Pago
+              {formatCurrency(valorComissao)}
+              <span className="text-xs opacity-75">(Pago)</span>
             </div>
           )
         ) : (
           isHovered ? 'Marcar Pago' : (
             <div className="flex items-center gap-1">
-              <DollarSign className="h-3 w-3" />
-              Pendente
+              {formatCurrency(valorComissao)}
+              <span className="text-xs opacity-75">(Pendente)</span>
             </div>
           )
         )}
