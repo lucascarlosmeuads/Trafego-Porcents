@@ -73,9 +73,15 @@ export function ManagerSidebar({
       `}
     >
       {/* Header com Logo e Toggle Button */}
-      <div className="p-3 border-b border-gray-800 flex items-center justify-between">
+      <div className={cn(
+        "p-3 border-b border-gray-800 flex items-center transition-all duration-300",
+        isCollapsed ? "justify-between" : "justify-center relative"
+      )}>
         {/* Logo TráfegoPorcents */}
-        <div className="flex items-center">
+        <div className={cn(
+          "flex items-center",
+          !isCollapsed && "flex-1 justify-center"
+        )}>
           <div className="relative group cursor-pointer">
             <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
             <div className={cn(
@@ -99,7 +105,10 @@ export function ManagerSidebar({
           variant="ghost"
           size="sm"
           onClick={toggleSidebar}
-          className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors"
+          className={cn(
+            "p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors bg-gray-800/50 border border-gray-700/50",
+            !isCollapsed && "absolute right-3"
+          )}
         >
           {isCollapsed ? (
             <ChevronRight className="h-4 w-4" />
