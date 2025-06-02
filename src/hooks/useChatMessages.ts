@@ -187,9 +187,10 @@ export function useChatConversas(gestorFiltro?: string | null) {
     try {
       setLoading(true)
       
+      console.log('🔍 [useChatConversas] === INÍCIO CARREGAMENTO ===')
       console.log('🔍 [useChatConversas] Carregando conversas para:', user.email)
       console.log('🔍 [useChatConversas] IsAdmin:', isAdmin, 'IsGestor:', isGestor)
-      console.log('🔍 [useChatConversas] Gestor filtro:', gestorFiltro)
+      console.log('🔍 [useChatConversas] Gestor filtro recebido:', gestorFiltro)
       
       let clientesQuery = supabase
         .from('todos_clientes')
@@ -200,21 +201,36 @@ export function useChatConversas(gestorFiltro?: string | null) {
       if (isGestor) {
         // Gestor só vê seus próprios clientes
         clientesQuery = clientesQuery.eq('email_gestor', user.email)
+        console.log('🔍 [useChatConversas] Query Gestor:', { emailGestor: user.email })
       } else if (isAdmin) {
         // Admin vê todas as conversas por padrão, ou filtra por gestor específico se solicitado
         if (gestorFiltro && gestorFiltro !== '__GESTORES__') {
           clientesQuery = clientesQuery.eq('email_gestor', gestorFiltro)
+          console.log('🔍 [useChatConversas] Query Admin com filtro:', { gestorFiltro })
+        } else {
+          console.log('🔍 [useChatConversas] Query Admin sem filtro (todos os gestores)')
         }
         // Se gestorFiltro for null/undefined, admin vê TODAS as conversas
       }
 
       const { data: clientes, error: clientesError } = await clientesQuery
 
-      if (clientesError) throw clientesError
+      if (clientesError) {
+        console.error('❌ [useChatConversas] Erro na query de clientes:', clientesError)
+        throw clientesError
+      }
 
       console.log('📊 [useChatConversas] Clientes encontrados:', clientes?.length || 0)
+      
+      // DEBUG: Se for filtro da Andreza, mostrar detalhes
+      if (gestorFiltro?.includes('andreza')) {
+        console.log('🔍 [useChatConversas] === DETALHES ANDREZA ===')
+        console.log('🔍 [useChatConversas] Filtro aplicado:', gestorFiltro)
+        console.log('🔍 [useChatConversas] Clientes da Andreza:', clientes)
+      }
 
       if (!clientes || clientes.length === 0) {
+        console.log('📊 [useChatConversas] Nenhum cliente encontrado')
         setConversas([])
         return
       }
@@ -253,6 +269,7 @@ export function useChatConversas(gestorFiltro?: string | null) {
       })
 
       console.log('✅ [useChatConversas] Conversas processadas:', conversasOrdenadas.length)
+      console.log('✅ [useChatConversas] Primeiras 3 conversas:', conversasOrdenadas.slice(0, 3))
       setConversas(conversasOrdenadas)
       
     } catch (err) {

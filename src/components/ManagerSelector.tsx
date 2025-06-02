@@ -1,212 +1,193 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Users, User, ChevronDown } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+import { Users, UserCheck, Settings } from 'lucide-react'
 
-interface GestorInfo {
-  nome: string
+interface Manager {
   email: string
-  total_clientes: number
+  nome: string
+  ativo: boolean
+  clientesCount?: number
 }
 
 interface ManagerSelectorProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
+  showMetrics?: boolean
   isAdminContext?: boolean
 }
 
-export function ManagerSelector({ selectedManager, onManagerSelect, isAdminContext = true }: ManagerSelectorProps) {
-  const [gestores, setGestores] = useState<GestorInfo[]>([])
-  const [totalClientes, setTotalClientes] = useState(0)
+export function ManagerSelector({ 
+  selectedManager, 
+  onManagerSelect, 
+  showMetrics = false,
+  isAdminContext = false 
+}: ManagerSelectorProps) {
+  const [managers, setManagers] = useState<Manager[]>([])
   const [loading, setLoading] = useState(true)
 
-  const buscarGestores = async () => {
-    try {
-      console.log('🔍 [ManagerSelector] Buscando gestores e contagens...')
-      
-      // Buscar contagem total de clientes
-      const { count: totalCount } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact', head: true })
+  useEffect(() => {
+    const loadManagers = async () => {
+      try {
+        console.log('🔍 [ManagerSelector] Carregando gestores...')
+        
+        const { data: gestores, error } = await supabase
+          .from('gestores')
+          .select('email, nome, ativo')
+          .eq('ativo', true)
+          .order('nome')
 
-      setTotalClientes(totalCount || 0)
+        if (error) throw error
 
-      // Buscar gestores ativos
-      const { data: gestoresData, error: gestoresError } = await supabase
-        .from('gestores')
-        .select('nome, email')
-        .eq('ativo', true)
-        .order('nome')
+        console.log('🔍 [ManagerSelector] Gestores carregados:', gestores?.length)
+        console.log('🔍 [ManagerSelector] Lista de gestores:', gestores)
 
-      if (gestoresError) {
-        console.error('❌ [ManagerSelector] Erro ao buscar gestores:', gestoresError)
-        return
+        // Se precisar mostrar métricas, buscar contagem de clientes
+        let managersWithMetrics = gestores || []
+        
+        if (showMetrics) {
+          managersWithMetrics = await Promise.all(
+            (gestores || []).map(async (gestor) => {
+              const { count } = await supabase
+                .from('todos_clientes')
+                .select('*', { count: 'exact', head: true })
+                .eq('email_gestor', gestor.email)
+
+              return {
+                ...gestor,
+                clientesCount: count || 0
+              }
+            })
+          )
+        }
+
+        setManagers(managersWithMetrics)
+      } catch (error) {
+        console.error('❌ [ManagerSelector] Erro ao carregar gestores:', error)
+      } finally {
+        setLoading(false)
       }
+    }
 
-      // Para cada gestor, contar seus clientes
-      const gestoresComContagem = await Promise.all(
-        (gestoresData || []).map(async (gestor) => {
-          const { count } = await supabase
-            .from('todos_clientes')
-            .select('*', { count: 'exact', head: true })
-            .eq('email_gestor', gestor.email)
+    loadManagers()
+  }, [showMetrics])
 
-          return {
-            ...gestor,
-            total_clientes: count || 0
-          }
-        })
-      )
-
-      console.log('✅ [ManagerSelector] Gestores carregados:', gestoresComContagem.length)
-      console.log('📊 [ManagerSelector] Total de clientes:', totalCount)
-      
-      setGestores(gestoresComContagem)
-    } catch (error) {
-      console.error('💥 [ManagerSelector] Erro na busca:', error)
-    } finally {
-      setLoading(false)
+  const handleManagerChange = (value: string) => {
+    console.log('🔍 [ManagerSelector] === SELEÇÃO DE GESTOR ===')
+    console.log('🔍 [ManagerSelector] Valor selecionado:', value)
+    
+    if (value === 'all') {
+      console.log('🔍 [ManagerSelector] Selecionando "Todos os gestores" (null)')
+      onManagerSelect(null)
+    } else if (value === '__GESTORES__') {
+      console.log('🔍 [ManagerSelector] Selecionando "Gerenciar gestores"')
+      onManagerSelect('__GESTORES__')
+    } else {
+      // Encontrar o gestor selecionado para confirmar o email
+      const gestorSelecionado = managers.find(m => m.email === value)
+      console.log('🔍 [ManagerSelector] Gestor encontrado:', gestorSelecionado)
+      console.log('🔍 [ManagerSelector] Email que será passado:', value)
+      onManagerSelect(value)
     }
   }
 
-  useEffect(() => {
-    buscarGestores()
-    
-    // Configurar listener de realtime para atualizações automáticas
-    const channel = supabase
-      .channel('manager-selector-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'todos_clientes'
-        },
-        () => {
-          console.log('🔄 [ManagerSelector] Atualizando contagens...')
-          buscarGestores()
-        }
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [])
-
-  const handleManagerSelect = (managerEmail: string | null) => {
-    console.log('🎯 [ManagerSelector] Selecionando gestor:', managerEmail)
-    onManagerSelect(managerEmail)
+  const getDisplayValue = () => {
+    if (!selectedManager) return 'all'
+    if (selectedManager === '__GESTORES__') return '__GESTORES__'
+    return selectedManager
   }
 
   const getSelectedManagerName = () => {
-    if (!selectedManager) {
-      return isAdminContext ? 'Todos os Gestores' : 'Todos os Clientes'
-    }
-    // selectedManager agora é sempre o email, então buscar o nome pelo email
-    const gestor = gestores.find(g => g.email === selectedManager)
-    return gestor ? gestor.nome : selectedManager
+    if (!selectedManager) return 'Todos os gestores'
+    if (selectedManager === '__GESTORES__') return 'Gerenciar gestores'
+    
+    const manager = managers.find(m => m.email === selectedManager)
+    return manager ? manager.nome : selectedManager
   }
 
-  const getSelectedManagerCount = () => {
-    if (!selectedManager) return totalClientes
-    const gestor = gestores.find(g => g.email === selectedManager)
-    return gestor ? gestor.total_clientes : totalClientes
-  }
-
-  const getAllLabel = () => {
-    return isAdminContext ? 'Todos os Gestores' : 'Todos os Clientes'
+  const getTotalClientes = () => {
+    return managers.reduce((total, manager) => total + (manager.clientesCount || 0), 0)
   }
 
   if (loading) {
     return (
-      <div className="flex items-center gap-2">
-        <div className="h-9 w-48 bg-muted animate-pulse rounded-md"></div>
+      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-muted-foreground"></div>
+        <span>Carregando gestores...</span>
       </div>
     )
   }
 
   return (
-    <div className="flex items-center gap-4">
-      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-        <span className="font-medium">
-          {isAdminContext ? 'Filtrar por gestor:' : 'Filtrar por cliente:'}
-        </span>
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Users className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm font-medium text-foreground">Filtrar por Gestor:</span>
       </div>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="outline" className="justify-between min-w-[200px] max-w-[300px]">
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              {selectedManager ? (
-                <>
-                  <User className="w-4 h-4 text-green-600 flex-shrink-0" />
-                  <span className="truncate">{getSelectedManagerName()}</span>
-                </>
-              ) : (
-                <>
-                  <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-                  <span className="truncate">{getAllLabel()}</span>
-                </>
+
+      <Select value={getDisplayValue()} onValueChange={handleManagerChange}>
+        <SelectTrigger className="w-full">
+          <SelectValue placeholder="Selecione um gestor">
+            <div className="flex items-center gap-2">
+              <UserCheck className="h-4 w-4" />
+              <span>{getSelectedManagerName()}</span>
+            </div>
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="all">
+            <div className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              <span>Todos os gestores</span>
+              {showMetrics && (
+                <Badge variant="secondary" className="ml-auto">
+                  {getTotalClientes()} clientes
+                </Badge>
               )}
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <Badge variant="secondary" className="text-xs">
-                {getSelectedManagerCount()}
-              </Badge>
-              <ChevronDown className="w-4 h-4" />
-            </div>
-          </Button>
-        </DropdownMenuTrigger>
-        
-        <DropdownMenuContent align="start" className="min-w-[200px] max-w-[400px]">
-          <DropdownMenuLabel>
-            {isAdminContext ? 'Selecionar Gestor' : 'Selecionar Cliente'}
-          </DropdownMenuLabel>
-          <DropdownMenuSeparator />
+          </SelectItem>
           
-          <DropdownMenuItem
-            onClick={() => handleManagerSelect(null)}
-            className="flex items-center justify-between cursor-pointer"
-          >
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-              <Users className="w-4 h-4 text-blue-600 flex-shrink-0" />
-              <span className="font-medium">{getAllLabel()}</span>
-            </div>
-            <Badge variant="secondary" className="ml-2 flex-shrink-0">
-              {totalClientes}
-            </Badge>
-          </DropdownMenuItem>
-          
-          <DropdownMenuSeparator />
-          
-          {gestores.map((gestor) => (
-            <DropdownMenuItem
-              key={gestor.email}
-              onClick={() => handleManagerSelect(gestor.email)}
-              className="flex items-center justify-between cursor-pointer"
-            >
-              <div className="flex items-center gap-2 min-w-0 flex-1">
-                <User className="w-4 h-4 text-green-600 flex-shrink-0" />
-                <span className="font-medium truncate">{gestor.nome}</span>
+          {managers.map((manager) => (
+            <SelectItem key={manager.email} value={manager.email}>
+              <div className="flex items-center gap-2 w-full">
+                <UserCheck className="h-4 w-4" />
+                <div className="flex-1">
+                  <div className="font-medium">{manager.nome}</div>
+                  <div className="text-xs text-muted-foreground">{manager.email}</div>
+                </div>
+                {showMetrics && (
+                  <Badge variant="outline" className="ml-auto">
+                    {manager.clientesCount || 0} clientes
+                  </Badge>
+                )}
               </div>
-              <Badge variant="secondary" className="ml-2 flex-shrink-0">
-                {gestor.total_clientes}
-              </Badge>
-            </DropdownMenuItem>
+            </SelectItem>
           ))}
-        </DropdownMenuContent>
-      </DropdownMenu>
+
+          {isAdminContext && (
+            <>
+              <div className="border-t my-1" />
+              <SelectItem value="__GESTORES__">
+                <div className="flex items-center gap-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Gerenciar gestores</span>
+                </div>
+              </SelectItem>
+            </>
+          )}
+        </SelectContent>
+      </Select>
+
+      {selectedManager && selectedManager !== '__GESTORES__' && (
+        <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+          {selectedManager === null 
+            ? `Mostrando todos os gestores (${managers.length} ativos)`
+            : `Filtrado por: ${getSelectedManagerName()}`
+          }
+        </div>
+      )}
     </div>
   )
 }

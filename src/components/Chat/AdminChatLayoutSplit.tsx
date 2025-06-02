@@ -6,6 +6,7 @@ import { ChatInterface } from './ChatInterface'
 import { ManagerSelector } from '@/components/ManagerSelector'
 import { MessageCircle, Shield, Users } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
+import { supabase } from '@/lib/supabase'
 
 export function AdminChatLayoutSplit() {
   const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
@@ -24,7 +25,45 @@ export function AdminChatLayoutSplit() {
     loading
   })
 
-  // Detectar se é mobile
+  // DEBUG: Vamos investigar os emails da Andreza especificamente
+  useEffect(() => {
+    const investigarEmailsAndreza = async () => {
+      if (selectedGestor && selectedGestor.includes('andreza')) {
+        console.log('🔍 [AdminChatLayoutSplit] === INVESTIGAÇÃO ANDREZA ===')
+        console.log('🔍 [AdminChatLayoutSplit] Gestor selecionado:', selectedGestor)
+        
+        // Verificar na tabela gestores
+        const { data: gestores } = await supabase
+          .from('gestores')
+          .select('email, nome')
+          .ilike('email', '%andreza%')
+        
+        console.log('👥 [AdminChatLayoutSplit] Gestores Andreza encontrados:', gestores)
+        
+        // Verificar na tabela todos_clientes
+        const { data: clientes } = await supabase
+          .from('todos_clientes')
+          .select('email_gestor, nome_cliente, email_cliente')
+          .ilike('email_gestor', '%andreza%')
+        
+        console.log('👤 [AdminChatLayoutSplit] Clientes da Andreza encontrados:', clientes?.length)
+        console.log('👤 [AdminChatLayoutSplit] Primeiros 3 clientes:', clientes?.slice(0, 3))
+        
+        // Verificar mensagens especificamente
+        const { data: mensagens } = await supabase
+          .from('chat_mensagens')
+          .select('email_gestor, email_cliente, conteudo')
+          .ilike('email_gestor', '%andreza%')
+          .limit(5)
+        
+        console.log('💬 [AdminChatLayoutSplit] Mensagens da Andreza encontradas:', mensagens?.length)
+        console.log('💬 [AdminChatLayoutSplit] Primeiras mensagens:', mensagens)
+      }
+    }
+    
+    investigarEmailsAndreza()
+  }, [selectedGestor])
+
   useEffect(() => {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
@@ -35,14 +74,12 @@ export function AdminChatLayoutSplit() {
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  // Selecionar primeiro chat automaticamente se não houver seleção
   useEffect(() => {
     if (!selectedChat && conversas.length > 0 && !isMobile) {
       setSelectedChat(conversas[0])
     }
   }, [conversas, selectedChat, isMobile])
 
-  // Reset selected chat when changing manager filter
   useEffect(() => {
     setSelectedChat(null)
   }, [selectedGestor])
@@ -61,6 +98,9 @@ export function AdminChatLayoutSplit() {
   }
 
   const handleManagerSelect = (manager: string | null) => {
+    console.log('🔍 [AdminChatLayoutSplit] === MUDANÇA DE GESTOR ===')
+    console.log('🔍 [AdminChatLayoutSplit] Gestor anterior:', selectedGestor)
+    console.log('🔍 [AdminChatLayoutSplit] Novo gestor selecionado:', manager)
     setSelectedGestor(manager)
   }
 
