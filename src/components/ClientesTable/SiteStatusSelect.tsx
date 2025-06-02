@@ -52,7 +52,7 @@ export function SiteStatusSelect({
 
   const selectContent = (
     <Select value={value} onValueChange={onValueChange} disabled={disabled || isUpdating}>
-      <SelectTrigger className={`${compact ? 'h-6 text-xs w-[120px] min-w-[120px]' : 'h-8 w-[140px] min-w-[140px]'} bg-background/50 backdrop-blur-sm text-white border-border/50 hover:border-border transition-all duration-200`}>
+      <SelectTrigger className={`${compact ? 'h-6 text-xs w-[140px] min-w-[140px]' : 'h-8 w-[160px] min-w-[160px]'} bg-background/50 backdrop-blur-sm text-white border-border/50 hover:border-border transition-all duration-200`}>
         <SelectValue>
           <div className="flex items-center gap-1">
             {isUpdating && <Loader2 className="h-3 w-3 animate-spin" />}

@@ -87,41 +87,41 @@ export function TableFilters({
   }
 
   return (
-    <div className="flex flex-col space-y-4 sm:flex-row sm:space-y-0 sm:space-x-4">
-      {/* Campo de Busca com gradiente azul */}
+    <div className="flex flex-col space-y-6 sm:flex-row sm:space-y-0 sm:space-x-6">
+      {/* Campo de Busca com gradiente azul vibrante */}
       <div className="relative flex-1">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-blue-600/10 rounded-lg border border-blue-500/20 shadow-lg shadow-blue-500/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 to-cyan-500/15 rounded-xl border border-blue-400/30 shadow-xl shadow-blue-500/15 backdrop-blur-sm"></div>
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-blue-400 w-4 h-4 drop-shadow-sm" />
+          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5 drop-shadow-lg" />
           <Input
             placeholder="Pesquisar por nome, email, telefone, vendedor..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10 bg-background/80 backdrop-blur-sm border-blue-500/30 text-white hover:border-blue-400/50 focus:border-blue-400 transition-all duration-200"
+            className="pl-12 h-12 bg-background/90 backdrop-blur-sm border-blue-400/40 text-white placeholder:text-blue-200/70 hover:border-blue-300/60 focus:border-blue-300 focus:ring-2 focus:ring-blue-400/30 transition-all duration-300 text-sm font-medium rounded-xl"
           />
         </div>
       </div>
       
-      {/* Status da Campanha com gradiente verde */}
+      {/* Status da Campanha com gradiente verde vibrante */}
       <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-r from-green-500/10 to-green-600/10 rounded-lg border border-green-500/20 shadow-lg shadow-green-500/10"></div>
+        <div className="absolute inset-0 bg-gradient-to-r from-green-500/15 to-emerald-500/15 rounded-xl border border-green-400/30 shadow-xl shadow-green-500/15 backdrop-blur-sm"></div>
         <Select value={statusFilter} onValueChange={handleStatusChange}>
-          <SelectTrigger className="relative w-full sm:w-48 bg-background/80 backdrop-blur-sm border-green-500/30 text-white hover:border-green-400/50 focus:border-green-400 transition-all duration-200">
+          <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-green-400/40 text-white hover:border-green-300/60 focus:border-green-300 focus:ring-2 focus:ring-green-400/30 transition-all duration-300 rounded-xl">
             <div className="flex items-center">
-              <Users className="w-4 h-4 mr-2 text-green-400 drop-shadow-sm" />
-              <SelectValue placeholder="Status da campanha" />
+              <Users className="w-5 h-5 mr-3 text-green-300 drop-shadow-lg" />
+              <SelectValue placeholder="Status da campanha" className="font-medium" />
             </div>
           </SelectTrigger>
-          <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl">
-            <SelectItem value="all" className="text-card-foreground hover:bg-muted/50">
+          <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
+            <SelectItem value="all" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
               <div className="flex items-center">
                 <Users className="w-4 h-4 mr-2 text-green-400" />
-                Status Cliente
+                <span className="font-medium">Status Cliente</span>
               </div>
             </SelectItem>
             {STATUS_CAMPANHA.map(status => (
-              <SelectItem key={status} value={status} className="text-card-foreground hover:bg-muted/50">
-                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(status)}`}>
+              <SelectItem key={status} value={status} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${getStatusColor(status)}`}>
                   {status}
                 </span>
               </SelectItem>
@@ -130,23 +130,23 @@ export function TableFilters({
         </Select>
       </div>
 
-      {/* Status do Site com gradiente laranja */}
+      {/* Status do Site com gradiente laranja vibrante */}
       {showSiteStatusFilter && setSiteStatusFilter && (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/10 to-orange-600/10 rounded-lg border border-orange-500/20 shadow-lg shadow-orange-500/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-orange-500/15 to-amber-500/15 rounded-xl border border-orange-400/30 shadow-xl shadow-orange-500/15 backdrop-blur-sm"></div>
           <Select value={siteStatusFilter} onValueChange={handleSiteStatusChange}>
-            <SelectTrigger className="relative w-full sm:w-48 bg-background/80 backdrop-blur-sm border-orange-500/30 text-white hover:border-orange-400/50 focus:border-orange-400 transition-all duration-200">
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-orange-400/40 text-white hover:border-orange-300/60 focus:border-orange-300 focus:ring-2 focus:ring-orange-400/30 transition-all duration-300 rounded-xl">
               <div className="flex items-center">
-                <Globe className="w-4 h-4 mr-2 text-orange-400 drop-shadow-sm" />
-                <SelectValue placeholder="Status do site" />
+                <Globe className="w-5 h-5 mr-3 text-orange-300 drop-shadow-lg" />
+                <SelectValue placeholder="Status do site" className="font-medium" />
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl">
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {SITE_STATUS_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50">
+                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
                   <div className="flex items-center">
                     <Globe className="w-4 h-4 mr-2 text-orange-400" />
-                    {option.label}
+                    <span className="font-medium">{option.label}</span>
                   </div>
                 </SelectItem>
               ))}
@@ -155,23 +155,23 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status Criativo com gradiente roxo */}
+      {/* Status Criativo com gradiente roxo vibrante */}
       {setCreativoFilter && (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 to-purple-600/10 rounded-lg border border-purple-500/20 shadow-lg shadow-purple-500/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-purple-500/15 to-violet-500/15 rounded-xl border border-purple-400/30 shadow-xl shadow-purple-500/15 backdrop-blur-sm"></div>
           <Select value={creativoFilter} onValueChange={handleCreativoChange}>
-            <SelectTrigger className="relative w-full sm:w-48 bg-background/80 backdrop-blur-sm border-purple-500/30 text-white hover:border-purple-400/50 focus:border-purple-400 transition-all duration-200">
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-purple-400/40 text-white hover:border-purple-300/60 focus:border-purple-300 focus:ring-2 focus:ring-purple-400/30 transition-all duration-300 rounded-xl">
               <div className="flex items-center">
-                <Image className="w-4 h-4 mr-2 text-purple-400 drop-shadow-sm" />
-                <SelectValue placeholder="Status criativo" />
+                <Image className="w-5 h-5 mr-3 text-purple-300 drop-shadow-lg" />
+                <SelectValue placeholder="Status criativo" className="font-medium" />
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl">
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {CRIATIVO_STATUS_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50">
+                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
                   <div className="flex items-center">
                     <Image className="w-4 h-4 mr-2 text-purple-400" />
-                    {option.label}
+                    <span className="font-medium">{option.label}</span>
                   </div>
                 </SelectItem>
               ))}
@@ -180,23 +180,23 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status BM com gradiente ciano */}
+      {/* Status BM com gradiente ciano vibrante */}
       {setBmFilter && (
         <div className="relative">
-          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/10 to-cyan-600/10 rounded-lg border border-cyan-500/20 shadow-lg shadow-cyan-500/10"></div>
+          <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/15 to-teal-500/15 rounded-xl border border-cyan-400/30 shadow-xl shadow-cyan-500/15 backdrop-blur-sm"></div>
           <Select value={bmFilter} onValueChange={handleBmChange}>
-            <SelectTrigger className="relative w-full sm:w-48 bg-background/80 backdrop-blur-sm border-cyan-500/30 text-white hover:border-cyan-400/50 focus:border-cyan-400 transition-all duration-200">
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-cyan-400/40 text-white hover:border-cyan-300/60 focus:border-cyan-300 focus:ring-2 focus:ring-cyan-400/30 transition-all duration-300 rounded-xl">
               <div className="flex items-center">
-                <Settings className="w-4 h-4 mr-2 text-cyan-400 drop-shadow-sm" />
-                <SelectValue placeholder="Status BM" />
+                <Settings className="w-5 h-5 mr-3 text-cyan-300 drop-shadow-lg" />
+                <SelectValue placeholder="Status BM" className="font-medium" />
               </div>
             </SelectTrigger>
-            <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl">
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {BM_STATUS_OPTIONS.map(option => (
-                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50">
+                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
                   <div className="flex items-center">
                     <Settings className="w-4 h-4 mr-2 text-cyan-400" />
-                    {option.label}
+                    <span className="font-medium">{option.label}</span>
                   </div>
                 </SelectItem>
               ))}
