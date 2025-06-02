@@ -12,6 +12,7 @@ import { ClienteRowDataLimite } from './ClienteRowDataLimite'
 import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
+import { toast } from '@/components/ui/sonner'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -78,6 +79,14 @@ export function ClienteRow({
     }
   }
 
+  const handleGestorClick = () => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem editar gestores")
+    } else {
+      toast.info("Funcionalidade de edição em desenvolvimento")
+    }
+  }
+
   return (
     <TooltipProvider>
       <TableRow 
@@ -118,7 +127,10 @@ export function ClienteRow({
         {(isAdmin || showEmailGestor) && (
           <TableCell className="text-white text-xs p-1">
             <Tooltip>
-              <TooltipTrigger>
+              <TooltipTrigger 
+                onClick={handleGestorClick}
+                className="cursor-pointer"
+              >
                 <div className="flex items-center justify-center">
                   <AtSign className="h-3 w-3 text-green-400" />
                 </div>
