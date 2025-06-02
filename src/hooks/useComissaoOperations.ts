@@ -71,9 +71,12 @@ export function useComissaoOperations() {
 
     setIsAnyOperationRunning(true)
     
+    // Declarar as variáveis no escopo correto
+    let validation: { exists: boolean, currentStatus: string | null, clienteNome: string | null } | null = null
+    
     try {
       // PROTEÇÃO 2: Validar que o cliente existe e obter status atual
-      const validation = await validateClienteExists(clienteId)
+      validation = await validateClienteExists(clienteId)
       
       if (!validation.exists) {
         throw new Error(`Cliente ${clienteId} não encontrado no banco de dados`)
