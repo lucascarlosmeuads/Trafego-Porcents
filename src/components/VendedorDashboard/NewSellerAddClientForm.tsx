@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -141,15 +142,14 @@ export function NewSellerAddClientForm() {
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
         email_gestor: formData.email_gestor,
-        status_campanha: 'Cliente Novo', // ✅ Usando "Cliente Novo" como padrão
+        status_campanha: 'Cliente Novo',
         data_venda: new Date().toISOString().split('T')[0],
         produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha,
-        valor_comissao: 60.00 // ✅ Garantir R$60,00 para novos clientes
+        valor_comissao: 60.00
       }
 
       console.log("🔵 [NewSellerAddClientForm] Dados para addCliente:", clienteData)
-      console.log("💰 [NewSellerAddClientForm] Valor comissão definido:", clienteData.valor_comissao)
 
       const result = await addCliente(clienteData)
       
@@ -157,7 +157,6 @@ export function NewSellerAddClientForm() {
       
       if (result && typeof result === 'object' && result.success) {
         console.log("🟢 [NewSellerAddClientForm] === CLIENTE CRIADO COM SUCESSO ===")
-        console.log("💰 [NewSellerAddClientForm] Valor comissão final: R$60,00")
         
         // Limpar formulário
         setFormData({
@@ -171,14 +170,13 @@ export function NewSellerAddClientForm() {
         // Recarregar dados
         await refetch()
         
-        // Mostrar mensagem de sucesso detalhada
+        // Mostrar mensagem de sucesso
         toast({
           title: "✅ Cliente criado com sucesso!",
           description: `Cliente: ${clienteData.nome_cliente}
 E-mail: ${clienteData.email_cliente}
 Senha: ${clienteData.senha_cliente}
 Gestor: ${formData.email_gestor}
-Valor Comissão: R$60,00
 
 O cliente pode fazer login imediatamente com essas credenciais.`,
           duration: 10000
@@ -228,9 +226,10 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 📧 Email: ${clienteEmail}
 🔐 Senha: ${clienteSenha}
-💰 Valor Comissão: R$60,00
 
 🔗 Acesse: https://login.trafegoporcents.com
+
+💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
 
 O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
 
@@ -288,7 +287,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       <CardHeader>
         <CardTitle>Adicionar Novo Cliente</CardTitle>
         <CardDescription>
-          Preencha os dados do cliente para criar uma nova conta (valor padrão de comissão: R$60,00)
+          Preencha os dados do cliente para criar uma nova conta
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -370,13 +369,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </p>
           </div>
 
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-            <h3 className="font-semibold text-green-800 text-sm mb-2">💰 Valor de Comissão</h3>
-            <p className="text-sm text-green-700">
-              Todos os novos clientes são criados com valor padrão de comissão de <strong>R$60,00</strong>.
-            </p>
-          </div>
-
           {/* Mensagem personalizada para o cliente */}
           {formData.nome_cliente && formData.email_cliente && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -411,7 +403,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           )}
 
           <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Criando Cliente..." : "Criar Cliente (R$60,00)"}
+            {loading ? "Criando Cliente..." : "Criar Cliente"}
           </Button>
         </form>
       </CardContent>
