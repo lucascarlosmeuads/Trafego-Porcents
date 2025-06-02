@@ -3,7 +3,7 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { useSitePagoUpdate } from '@/hooks/useSitePagoUpdate'
 import { supabase } from '@/lib/supabase'
-import { RefreshCw } from 'lucide-react'
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -20,6 +20,7 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -78,6 +79,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
+  const [bannerExpanded, setBannerExpanded] = useState(true)
 
   const fetchClientesComCriativos = async () => {
     try {
@@ -855,29 +857,57 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               <span className="text-lg">🚀</span>
             </div>
             <div className="flex-1">
-              <h3 className="text-sm font-semibold text-green-400 mb-2">
-                MELHORIAS RECENTES (Junho 2025)
-              </h3>
-              <div className="space-y-1.5 text-xs text-green-300">
-                <div className="flex items-center gap-2">
-                  <span className="text-green-400">✅</span>
-                  <span><strong>Interface otimizada:</strong> Botões menores para melhor aproveitamento do espaço na tela</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-blue-400">✅</span>
-                  <span><strong>Filtro "Pendente Criativo":</strong> Novo filtro para identificar clientes que ainda precisam de criativos</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-purple-400">✅</span>
-                  <span><strong>Filtro "Sem BM":</strong> Novo filtro para localizar clientes sem número de Business Manager configurado</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-cyan-400">✅</span>
-                  <span><strong>Status renomeado:</strong> "Campanha no Ar" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua (novos criativos, públicos, etc.)</span>
-                </div>
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-green-400">
+                  MELHORIAS RECENTES (Junho 2025)
+                </h3>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setBannerExpanded(!bannerExpanded)}
+                        className="h-6 w-6 p-0 text-green-400 hover:text-green-300 hover:bg-green-500/10"
+                      >
+                        {bannerExpanded ? (
+                          <ChevronUp className="h-3 w-3" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3" />
+                        )}
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>{bannerExpanded ? 'Minimizar' : 'Expandir'}</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </div>
-              <div className="mt-2 text-xs text-muted-foreground">
-                Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores e manter clientes ativos durante otimizações.
+              
+              <div className={`transition-all duration-300 ease-in-out overflow-hidden ${
+                bannerExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'
+              }`}>
+                <div className="space-y-1.5 text-xs text-green-300">
+                  <div className="flex items-center gap-2">
+                    <span className="text-green-400">✅</span>
+                    <span><strong>Interface otimizada:</strong> Botões menores para melhor aproveitamento do espaço na tela</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-blue-400">✅</span>
+                    <span><strong>Filtro "Pendente Criativo":</strong> Novo filtro para identificar clientes que ainda precisam de criativos</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-purple-400">✅</span>
+                    <span><strong>Filtro "Sem BM":</strong> Novo filtro para localizar clientes sem número de Business Manager configurado</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-cyan-400">✅</span>
+                    <span><strong>Status renomeado:</strong> "Campanha no Ar" agora é "Otimização" para lembrar que clientes ativos precisam de otimização contínua (novos criativos, públicos, etc.)</span>
+                  </div>
+                </div>
+                <div className="mt-2 text-xs text-muted-foreground">
+                  Todas as mudanças foram implementadas para otimizar o fluxo de trabalho dos gestores e manter clientes ativos durante otimizações.
+                </div>
               </div>
             </div>
           </div>
