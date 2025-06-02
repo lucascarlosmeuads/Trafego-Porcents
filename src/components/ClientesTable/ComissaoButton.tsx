@@ -45,6 +45,7 @@ export function ComissaoButton({
     const sucesso = await atualizarComissao(clienteId, novoStatus)
     
     if (sucesso && onComissionUpdate) {
+      console.log('✅ [ComissaoButton] Comissão atualizada com sucesso, chamando onComissionUpdate')
       // Notificar o componente pai para atualizar os dados
       onComissionUpdate()
     }

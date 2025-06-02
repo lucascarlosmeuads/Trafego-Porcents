@@ -81,37 +81,33 @@ export function useComissaoOperations() {
 
       // ATUALIZAÇÃO CRÍTICA: Atualizar apenas a coluna comissao na tabela todos_clientes
       console.log('💾 [useComissaoOperations] Executando atualização no banco...')
-      const { error: updateError, count } = await supabase
+      const { data: updatedData, error: updateError } = await supabase
         .from('todos_clientes')
         .update({ 
           comissao: novoStatusComissao
         })
         .eq('id', clienteIdNumber)
+        .select('id, nome_cliente, comissao')
 
       if (updateError) {
         console.error('❌ [useComissaoOperations] Erro na atualização:', updateError)
         throw updateError
       }
 
-      // VALIDAÇÃO 4: Verificar se a atualização afetou exatamente 1 linha
-      if (count !== 1) {
-        console.error('❌ [useComissaoOperations] ERRO CRÍTICO: Número incorreto de linhas afetadas:', count)
-        throw new Error(`Erro crítico: ${count} linhas afetadas (deveria ser 1)`)
+      // VALIDAÇÃO 4: Verificar se a atualização retornou dados
+      if (!updatedData || updatedData.length === 0) {
+        console.error('❌ [useComissaoOperations] ERRO CRÍTICO: Nenhuma linha foi atualizada')
+        throw new Error('Nenhuma linha foi afetada pela atualização')
       }
 
-      // VALIDAÇÃO 5: Confirmar a atualização com uma nova consulta
-      console.log('🔍 [useComissaoOperations] Validando a atualização...')
-      const { data: clienteAtualizado, error: validationError } = await supabase
-        .from('todos_clientes')
-        .select('id, nome_cliente, comissao')
-        .eq('id', clienteIdNumber)
-        .single()
-
-      if (validationError || !clienteAtualizado) {
-        console.error('❌ [useComissaoOperations] Erro na validação:', validationError)
-        throw new Error('Falha na validação da atualização')
+      if (updatedData.length > 1) {
+        console.error('❌ [useComissaoOperations] ERRO CRÍTICO: Múltiplas linhas afetadas:', updatedData.length)
+        throw new Error(`Erro crítico: ${updatedData.length} linhas afetadas (deveria ser 1)`)
       }
 
+      const clienteAtualizado = updatedData[0]
+
+      // VALIDAÇÃO 5: Confirmar que a atualização foi aplicada corretamente
       if (clienteAtualizado.comissao !== novoStatusComissao) {
         console.error('❌ [useComissaoOperations] VALIDAÇÃO FALHOU:', {
           esperado: novoStatusComissao,

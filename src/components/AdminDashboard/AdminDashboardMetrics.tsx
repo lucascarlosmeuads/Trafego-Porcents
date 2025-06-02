@@ -35,7 +35,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // Total pendente - usando nova lógica que considera todos os casos
+  // Total pendente - usando nova lógica que considera todos os casos e SOMA OS VALORES REAIS
   const clientesPendentes = clientes.filter(cliente => 
     isComissaoPendente(cliente.comissao)
   )
@@ -43,7 +43,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // Total já recebido (comissao = "Pago" explicitamente)
+  // Total já recebido (comissao = "Pago" explicitamente) - SOMA OS VALORES REAIS
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -56,13 +56,19 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Problema'
   )
 
-  // Métricas específicas do admin (usando a mesma lógica corrigida)
+  // Métricas específicas do admin (usando a mesma lógica corrigida com VALORES REAIS)
   const clientesParaPagar = clientes.filter(cliente => 
     isComissaoPendente(cliente.comissao)
+  )
+  const valorTotalParaPagar = clientesParaPagar.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
   )
 
   const clientesJaPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
+  )
+  const valorTotalJaPago = clientesJaPagos.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
   )
 
   console.log('📈 [AdminDashboardMetrics] Métricas calculadas:', {
@@ -74,12 +80,18 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     totalPendente,
     totalRecebido,
     paraPagar: clientesParaPagar.length,
-    jaPagos: clientesJaPagos.length
+    jaPagos: clientesJaPagos.length,
+    valorTotalParaPagar,
+    valorTotalJaPago
   })
 
   // Log detalhado dos valores de comissão para debug
   const comissaoValues = clientes.map(c => c.comissao).filter((value, index, self) => self.indexOf(value) === index)
   console.log('📊 [AdminDashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
+
+  // Log detalhado dos valores de comissão reais
+  const valoresComissaoReais = clientes.map(c => c.valor_comissao).filter((value, index, self) => self.indexOf(value) === index)
+  console.log('💰 [AdminDashboardMetrics] Valores únicos de valor_comissao encontrados:', valoresComissaoReais)
 
   return (
     <div className="space-y-6">
@@ -170,7 +182,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
             <CardContent>
               <div className="text-2xl font-bold text-orange-600">{clientesParaPagar.length}</div>
               <p className="text-xs text-contrast-secondary">
-                {formatCurrency(clientesParaPagar.length * 60)} aguardando pagamento
+                {formatCurrency(valorTotalParaPagar)} aguardando pagamento
               </p>
             </CardContent>
           </Card>
@@ -183,7 +195,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
             <CardContent>
               <div className="text-2xl font-bold text-blue-600">{clientesJaPagos.length}</div>
               <p className="text-xs text-contrast-secondary">
-                {formatCurrency(clientesJaPagos.length * 60)} já pagos pelo admin
+                {formatCurrency(valorTotalJaPago)} já pagos pelo admin
               </p>
             </CardContent>
           </Card>

@@ -33,7 +33,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // Total pendente - usando nova lógica que considera todos os casos
+  // Total pendente - usando nova lógica que considera todos os casos e SOMA OS VALORES REAIS
   const clientesPendentes = clientes.filter(cliente => 
     isComissaoPendente(cliente.comissao)
   )
@@ -41,7 +41,7 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // Total já recebido (comissao = "Pago" explicitamente)
+  // Total já recebido (comissao = "Pago" explicitamente) - SOMA OS VALORES REAIS
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -68,8 +68,8 @@ export function DashboardMetrics({ clientes }: DashboardMetricsProps) {
   const comissaoValues = clientes.map(c => c.comissao).filter((value, index, self) => self.indexOf(value) === index)
   console.log('📊 [DashboardMetrics] Valores únicos de comissão encontrados:', comissaoValues)
   console.log('📊 [DashboardMetrics] Breakdown por tipo de comissão:', {
-    pendentes: clientes.filter(c => isComissaoPendente(c.comissao)).map(c => ({ id: c.id, comissao: c.comissao })),
-    pagos: clientes.filter(c => c.comissao === 'Pago').map(c => ({ id: c.id, comissao: c.comissao }))
+    pendentes: clientes.filter(c => isComissaoPendente(c.comissao)).map(c => ({ id: c.id, comissao: c.comissao, valor: c.valor_comissao })),
+    pagos: clientes.filter(c => c.comissao === 'Pago').map(c => ({ id: c.id, comissao: c.comissao, valor: c.valor_comissao }))
   })
 
   return (
