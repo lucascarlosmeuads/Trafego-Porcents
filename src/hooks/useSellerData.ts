@@ -57,15 +57,22 @@ export function useSellerData(sellerEmail: string) {
 
       console.log('✅ [useSellerData] Database connection successful')
 
-      // Extract seller name from email for matching
-      const emailPrefix = sellerEmail.split('@')[0]
-      let sellerName = emailPrefix.replace('vendedor', '').toLowerCase()
+      // Extract seller name from email for matching - SPECIAL HANDLING FOR JOÃO LADISLAU
+      let sellerName = ''
       
-      // Handle specific cases
-      if (emailPrefix.includes('itamar')) sellerName = 'itamar'
-      if (emailPrefix.includes('edu')) sellerName = 'edu'
-      
-      console.log('🏷️ [useSellerData] Extracted seller name:', sellerName)
+      if (sellerEmail === 'joao.ladislau1@hotmail.com') {
+        sellerName = 'João Ladislau'
+        console.log('🏷️ [useSellerData] Special case - João Ladislau seller:', sellerName)
+      } else {
+        const emailPrefix = sellerEmail.split('@')[0]
+        sellerName = emailPrefix.replace('vendedor', '').toLowerCase()
+        
+        // Handle specific cases
+        if (emailPrefix.includes('itamar')) sellerName = 'itamar'
+        if (emailPrefix.includes('edu')) sellerName = 'edu'
+        
+        console.log('🏷️ [useSellerData] Extracted seller name:', sellerName)
+      }
 
       // Try multiple query strategies to match the seller
       console.log('🔎 [useSellerData] Trying seller matching strategies...')
@@ -92,7 +99,7 @@ export function useSellerData(sellerEmail: string) {
 
       console.log('📊 [useSellerData] Exact email match result:', clientesData?.length || 0)
 
-      // Strategy 2: If no exact match, try partial name matching
+      // Strategy 2: If no exact match, try name-based matching
       if (!clientesData || clientesData.length === 0) {
         console.log('🔍 [useSellerData] Trying name-based matching...')
         
@@ -414,12 +421,18 @@ export function useSellerData(sellerEmail: string) {
       }
 
       // For new clients, use the seller's name derived from email for vendedor field
-      const emailPrefix = sellerEmail.split('@')[0]
-      let vendorName = emailPrefix.replace('vendedor', '')
+      let vendorName = ''
       
-      // Handle specific cases to match existing data
-      if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
-      if (emailPrefix.includes('edu')) vendorName = 'Edu'
+      if (sellerEmail === 'joao.ladislau1@hotmail.com') {
+        vendorName = 'João Ladislau'
+      } else {
+        const emailPrefix = sellerEmail.split('@')[0]
+        vendorName = emailPrefix.replace('vendedor', '')
+        
+        // Handle specific cases to match existing data
+        if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
+        if (emailPrefix.includes('edu')) vendorName = 'Edu'
+      }
       
       // Insert new client - created_at will be automatically set by the database
       const novoCliente = {

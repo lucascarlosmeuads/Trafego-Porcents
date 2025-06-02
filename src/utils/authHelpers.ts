@@ -37,9 +37,11 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'sites'
     }
 
-    // Verificação para vendedores
-    if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('💼 [authHelpers] Usuário é VENDEDOR (vendedor*@trafegoporcents.com)')
+    // Verificação para vendedores - EXPANDIDA para incluir João Ladislau
+    if ((normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) ||
+        normalizedEmail === 'joao.ladislau1@hotmail.com') {
+      console.log('💼 [authHelpers] Usuário é VENDEDOR (padrão reconhecido)')
+      console.log('💼 [authHelpers] Email do vendedor:', normalizedEmail)
       return 'vendedor'
     }
 
@@ -117,7 +119,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     console.log('❌ [authHelpers] Resumo das verificações:')
     console.log('   - Admin (@admin): NÃO')
     console.log('   - Sites (patterns): NÃO')
-    console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
+    console.log('   - Vendedor (patterns): NÃO')
     console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
     console.log('   - Cliente (tabela todos_clientes): NÃO ENCONTRADO')
     console.log('   - Gestor (tabela gestores): NÃO ENCONTRADO OU INATIVO')
@@ -145,6 +147,11 @@ export const getManagerName = async (email: string): Promise<string> => {
       normalizedEmail.includes('developer') ||
       normalizedEmail.includes('dev')) {
     return 'Criador de Sites'
+  }
+  
+  // Para o vendedor João Ladislau, retornar nome específico
+  if (normalizedEmail === 'joao.ladislau1@hotmail.com') {
+    return 'João Ladislau'
   }
   
   try {
