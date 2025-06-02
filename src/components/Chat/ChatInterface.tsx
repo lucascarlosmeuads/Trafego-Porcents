@@ -25,8 +25,30 @@ export function ChatInterface({
   onBack,
   showBackButton = false
 }: ChatInterfaceProps) {
-  const { user, isCliente, isGestor } = useAuth()
-  const { mensagens, loading, enviarMensagem } = useChatMessages(emailCliente, emailGestor)
+  const { user, isCliente, isGestor, isAdmin } = useAuth()
+  
+  console.log('🔍 [ChatInterface] Props recebidas:', {
+    emailCliente,
+    emailGestor,
+    nomeCliente,
+    statusCampanha,
+    userEmail: user?.email,
+    isAdmin,
+    isGestor,
+    isCliente
+  })
+
+  // Determinar os emails corretos para o hook baseado no tipo de usuário
+  const emailClienteParam = emailCliente
+  const emailGestorParam = isGestor ? user?.email || '' : emailGestor
+
+  console.log('🔍 [ChatInterface] Parâmetros para useChatMessages:', {
+    emailClienteParam,
+    emailGestorParam
+  })
+
+  const { mensagens, loading, enviarMensagem } = useChatMessages(emailClienteParam, emailGestorParam)
+
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -96,7 +118,7 @@ export function ChatInterface({
               mensagem={mensagem}
               isOwn={
                 (isCliente && mensagem.remetente === 'cliente') ||
-                (isGestor && mensagem.remetente === 'gestor')
+                ((isGestor || isAdmin) && mensagem.remetente === 'gestor')
               }
             />
           ))

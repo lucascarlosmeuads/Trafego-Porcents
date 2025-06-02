@@ -42,24 +42,48 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
         .select('*')
         .order('created_at', { ascending: true })
 
+      console.log('🔍 [useChatMessages] Carregando mensagens para:', {
+        userEmail: user.email,
+        isAdmin,
+        isGestor,
+        isCliente,
+        emailCliente,
+        emailGestor
+      })
+
       if (isCliente) {
+        // Cliente só vê suas próprias mensagens
         query = query.eq('email_cliente', user.email)
       } else if (isGestor && emailCliente) {
+        // Gestor vê mensagens de um cliente específico
         query = query
           .eq('email_cliente', emailCliente)
           .eq('email_gestor', user.email)
       } else if (isAdmin && emailCliente && emailGestor) {
+        // Admin vê mensagens entre cliente e gestor específicos
         query = query
           .eq('email_cliente', emailCliente)
           .eq('email_gestor', emailGestor)
+        console.log('🔍 [useChatMessages] Query Admin:', { emailCliente, emailGestor })
+      } else {
+        // Se não há filtros específicos, não carregar mensagens
+        console.log('❌ [useChatMessages] Nenhum filtro válido definido')
+        setMensagens([])
+        setLoading(false)
+        return
       }
 
       const { data, error } = await query
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [useChatMessages] Erro na query:', error)
+        throw error
+      }
+
+      console.log('✅ [useChatMessages] Mensagens carregadas:', data?.length || 0)
       setMensagens(data || [])
     } catch (err) {
-      console.error('Erro ao carregar mensagens:', err)
+      console.error('❌ [useChatMessages] Erro ao carregar mensagens:', err)
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
     } finally {
       setLoading(false)
@@ -98,6 +122,8 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       lida: false
     }
 
+    console.log('💬 [useChatMessages] Enviando mensagem:', novaMensagem)
+
     const { error } = await supabase
       .from('chat_mensagens')
       .insert([novaMensagem])
@@ -119,7 +145,8 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
           schema: 'public',
           table: 'chat_mensagens'
         },
-        () => {
+        (payload) => {
+          console.log('🔄 [useChatMessages] Realtime: mudança detectada', payload.eventType)
           carregarMensagens()
         }
       )

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useChatConversas, ChatConversaPreview } from '@/hooks/useChatMessages'
@@ -13,6 +12,17 @@ export function AdminChatLayoutSplit() {
   const { conversas, loading } = useChatConversas(selectedGestor)
   const [selectedChat, setSelectedChat] = useState<ChatConversaPreview | null>(null)
   const [isMobile, setIsMobile] = useState(false)
+
+  console.log('🔍 [AdminChatLayoutSplit] Estado atual:', {
+    selectedGestor,
+    conversasCount: conversas.length,
+    selectedChat: selectedChat ? {
+      email_cliente: selectedChat.email_cliente,
+      email_gestor: selectedChat.email_gestor,
+      nome_cliente: selectedChat.nome_cliente
+    } : null,
+    loading
+  })
 
   // Detectar se é mobile
   useEffect(() => {
@@ -38,6 +48,11 @@ export function AdminChatLayoutSplit() {
   }, [selectedGestor])
 
   const handleSelectChat = (conversa: ChatConversaPreview) => {
+    console.log('🔍 [AdminChatLayoutSplit] Selecionando conversa:', {
+      email_cliente: conversa.email_cliente,
+      email_gestor: conversa.email_gestor,
+      nome_cliente: conversa.nome_cliente
+    })
     setSelectedChat(conversa)
   }
 
