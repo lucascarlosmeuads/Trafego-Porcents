@@ -137,7 +137,7 @@ export function ClienteRow({
             disabled={updatingStatus === cliente.id!.toString()}
             isUpdating={updatingStatus === cliente.id!.toString()}
             getStatusColor={getStatusColor}
-            compact={true}
+            compact={false}
           />
         </TableCell>
 
@@ -147,7 +147,7 @@ export function ClienteRow({
             onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
             disabled={updatingStatus === cliente.id!.toString()}
             isUpdating={updatingStatus === cliente.id!.toString()}
-            compact={true}
+            compact={false}
           />
         </TableCell>
 
