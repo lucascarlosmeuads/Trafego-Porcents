@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -54,11 +53,13 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       if (isCliente) {
         // Cliente só vê suas próprias mensagens
         query = query.eq('email_cliente', user.email)
+        console.log('🔍 [useChatMessages] Query Cliente:', { emailCliente: user.email })
       } else if (isGestor && emailCliente) {
         // Gestor vê mensagens de um cliente específico
         query = query
           .eq('email_cliente', emailCliente)
           .eq('email_gestor', user.email)
+        console.log('🔍 [useChatMessages] Query Gestor:', { emailCliente, emailGestor: user.email })
       } else if (isAdmin && emailCliente && emailGestor) {
         // Admin vê mensagens entre cliente e gestor específicos
         query = query
@@ -66,8 +67,16 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
           .eq('email_gestor', emailGestor)
         console.log('🔍 [useChatMessages] Query Admin:', { emailCliente, emailGestor })
       } else {
-        // Se não há filtros específicos, não carregar mensagens
-        console.log('❌ [useChatMessages] Nenhum filtro válido definido')
+        // Se não há filtros válidos, não carregar mensagens
+        console.log('❌ [useChatMessages] Nenhum filtro válido definido para carregar mensagens')
+        console.log('❌ [useChatMessages] Parâmetros recebidos:', { 
+          isAdmin, 
+          isGestor, 
+          isCliente, 
+          emailCliente, 
+          emailGestor,
+          userEmail: user.email 
+        })
         setMensagens([])
         setLoading(false)
         return
@@ -81,6 +90,7 @@ export function useChatMessages(emailCliente?: string, emailGestor?: string) {
       }
 
       console.log('✅ [useChatMessages] Mensagens carregadas:', data?.length || 0)
+      console.log('✅ [useChatMessages] Dados das mensagens:', data?.slice(0, 2)) // Mostrar apenas as 2 primeiras para debug
       setMensagens(data || [])
     } catch (err) {
       console.error('❌ [useChatMessages] Erro ao carregar mensagens:', err)

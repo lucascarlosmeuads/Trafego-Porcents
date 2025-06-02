@@ -40,11 +40,16 @@ export function ChatInterface({
 
   // Determinar os emails corretos para o hook baseado no tipo de usuário
   const emailClienteParam = emailCliente
-  const emailGestorParam = isGestor ? user?.email || '' : emailGestor
+  // CORREÇÃO: Para admin, sempre usar o emailGestor original passado como prop
+  // Para gestor, usar o email do usuário logado
+  const emailGestorParam = isAdmin ? emailGestor : (isGestor ? user?.email || '' : emailGestor)
 
-  console.log('🔍 [ChatInterface] Parâmetros para useChatMessages:', {
+  console.log('🔍 [ChatInterface] Parâmetros corrigidos para useChatMessages:', {
     emailClienteParam,
-    emailGestorParam
+    emailGestorParam,
+    isAdmin,
+    isGestor,
+    userEmail: user?.email
   })
 
   const { mensagens, loading, enviarMensagem } = useChatMessages(emailClienteParam, emailGestorParam)
