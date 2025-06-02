@@ -113,7 +113,7 @@ export function Dashboard() {
               
               {/* Gestor Dashboard */}
               {isGestor && (
-                <LazyGestorDashboard activeTab={activeTab} />
+                <LazyGestorDashboard />
               )}
             </Suspense>
           </div>

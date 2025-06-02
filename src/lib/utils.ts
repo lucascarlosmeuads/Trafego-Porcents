@@ -12,3 +12,13 @@ export function formatCurrency(value: number): string {
     currency: 'BRL'
   }).format(value)
 }
+
+export function formatDate(dateString: string | null): string {
+  if (!dateString) return '-'
+  try {
+    const date = new Date(dateString)
+    return date.toLocaleDateString('pt-BR')
+  } catch {
+    return dateString
+  }
+}
