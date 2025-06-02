@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, MessageCircle, Lightbulb } from 'lucide-react'
+import { BarChart3, Users, MessageCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface GestorMenuProps {
@@ -24,13 +24,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       icon: Users,
       description: 'Gerenciar clientes',
       color: 'from-green-500 to-green-600'
-    },
-    {
-      id: 'melhorias-dicas',
-      label: 'Melhorias & Dicas',
-      icon: Lightbulb,
-      description: 'Novidades e produtividade',
-      color: 'from-yellow-500 to-orange-500'
     },
     {
       id: 'chat',
