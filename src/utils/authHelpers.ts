@@ -51,18 +51,36 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
 
     // VERIFICAÇÃO PARA CLIENTES - Buscar na tabela todos_clientes (CASE-INSENSITIVE)
     console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
+    console.log('🔍 [authHelpers] Fazendo query: SELECT id, email_cliente, nome_cliente FROM todos_clientes WHERE LOWER(email_cliente) = ?', normalizedEmail)
+    
     const { data: cliente, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('id, email_cliente, nome_cliente')
       .ilike('email_cliente', normalizedEmail)
       .single()
 
+    console.log('🔍 [authHelpers] Resultado da query cliente:', {
+      data: cliente,
+      error: clienteError
+    })
+
     if (clienteError) {
       console.log('⚠️ [authHelpers] Erro ao buscar cliente ou cliente não encontrado:', clienteError.message)
       console.log('⚠️ [authHelpers] Código do erro:', clienteError.code)
+      console.log('⚠️ [authHelpers] Detalhes completos do erro:', clienteError)
       
       if (clienteError.code === 'PGRST116') {
         console.log('❌ [authHelpers] Cliente não encontrado na tabela todos_clientes')
+        console.log('🔍 [authHelpers] Vamos tentar uma busca mais ampla para debug...')
+        
+        // Fazer uma busca mais ampla para debug
+        const { data: todosClientes, error: debugError } = await supabase
+          .from('todos_clientes')
+          .select('id, email_cliente, nome_cliente')
+          .limit(5)
+        
+        console.log('🔍 [authHelpers] Primeiros 5 clientes na tabela (para debug):', todosClientes)
+        console.log('🔍 [authHelpers] Erro na busca debug:', debugError)
       }
     } else if (cliente) {
       console.log('✅ [authHelpers] CLIENTE ENCONTRADO!')
@@ -72,12 +90,43 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'cliente'
     }
 
+    // Verificação adicional na tabela gestores
+    console.log('🔍 [authHelpers] Verificando se é gestor na tabela gestores...')
+    const { data: gestor, error: gestorError } = await supabase
+      .from('gestores')
+      .select('id, email, nome, ativo')
+      .ilike('email', normalizedEmail)
+      .single()
+
+    console.log('🔍 [authHelpers] Resultado da query gestor:', {
+      data: gestor,
+      error: gestorError
+    })
+
+    if (!gestorError && gestor && gestor.ativo) {
+      console.log('✅ [authHelpers] GESTOR ENCONTRADO NA TABELA!')
+      console.log('👨‍💼 [authHelpers] ID:', gestor.id)
+      console.log('👨‍💼 [authHelpers] Nome:', gestor.nome)
+      console.log('👨‍💼 [authHelpers] Email:', gestor.email)
+      console.log('👨‍💼 [authHelpers] Ativo:', gestor.ativo)
+      return 'gestor'
+    }
+
     console.log('❌ [authHelpers] USUÁRIO NÃO AUTORIZADO')
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
+    console.log('❌ [authHelpers] Resumo das verificações:')
+    console.log('   - Admin (@admin): NÃO')
+    console.log('   - Sites (patterns): NÃO')
+    console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
+    console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
+    console.log('   - Cliente (tabela todos_clientes): NÃO ENCONTRADO')
+    console.log('   - Gestor (tabela gestores): NÃO ENCONTRADO OU INATIVO')
+    
     return 'unauthorized'
 
   } catch (error) {
     console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
+    console.error('❌ [authHelpers] Stack trace:', error instanceof Error ? error.stack : 'N/A')
     return 'error'
   }
 }

@@ -29,6 +29,7 @@ export function Dashboard() {
   console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
   console.log('🔍 [Dashboard] Estado de autenticação:', {
     userEmail: user?.email,
+    userEmailRaw: user?.email ? `"${user.email}"` : 'null',
     loading,
     isAdmin,
     isGestor,
@@ -56,6 +57,16 @@ export function Dashboard() {
       </div>
     )
   }
+
+  // Debug: Mostrar qual é o email exato que está sendo processado
+  console.log('🎯 [Dashboard] Email do usuário para verificação:', `"${user.email}"`)
+  console.log('🎯 [Dashboard] Tipos de usuário detectados:', {
+    isAdmin: isAdmin ? '✅' : '❌',
+    isGestor: isGestor ? '✅' : '❌', 
+    isCliente: isCliente ? '✅' : '❌',
+    isVendedor: isVendedor ? '✅' : '❌',
+    isSites: isSites ? '✅' : '❌'
+  })
 
   // Cliente Dashboard
   if (isCliente) {
@@ -123,10 +134,20 @@ export function Dashboard() {
   }
 
   console.log('❌ [Dashboard] Tipo de usuário não autorizado')
+  console.log('❌ [Dashboard] Detalhes para debug:')
+  console.log('   - Email:', user.email)
+  console.log('   - Todos os tipos são false, verificar authHelpers.ts')
+  
   return (
     <div className="min-h-screen flex items-center justify-center">
-      <div className="text-lg text-red-600">
-        Tipo de usuário não autorizado
+      <div className="text-lg text-red-600 text-center">
+        <p>Tipo de usuário não autorizado</p>
+        <p className="text-sm text-gray-500 mt-2">
+          Email: {user.email}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">
+          Verifique o console para mais detalhes de debug
+        </p>
       </div>
     </div>
   )
