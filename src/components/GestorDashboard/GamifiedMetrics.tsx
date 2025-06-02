@@ -1,31 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { TrendingUp, Target, Trophy, Zap, Rocket, Star, Crown } from 'lucide-react'
+import { Progress } from '@/components/ui/progress'
+import { Target, TrendingUp, Users, Clock, CheckCircle, ArrowRight } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
 interface GamifiedMetricsProps {
   clientes: Cliente[]
-}
-
-// Componente Progress motivacional com cores escuras e destaques roxos
-const MotivationalProgress = ({ value, className }: { value: number; className?: string }) => {
-  const getProgressColor = (progress: number) => {
-    if (progress >= 80) return 'bg-gradient-to-r from-purple-500 to-violet-600'
-    if (progress >= 50) return 'bg-gradient-to-r from-purple-600 to-purple-700'
-    if (progress >= 25) return 'bg-gradient-to-r from-purple-700 to-purple-800'
-    return 'bg-gradient-to-r from-purple-800 to-purple-900'
-  }
-  
-  return (
-    <div className={`w-full bg-gray-800 rounded-full h-4 ${className}`}>
-      <div 
-        className={`h-4 rounded-full transition-all duration-500 ${getProgressColor(value)}`}
-        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
-    </div>
-  )
 }
 
 export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
@@ -62,247 +44,212 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   )
   const campanhasAtivas = clientesAtivos.length
   
-  // CÁLCULOS MOTIVACIONAIS BASEADOS NA META DE 10K
+  // CÁLCULOS PARA A META
   const progressoMeta = Math.min(100, (totalRecebido30Dias / META_MENSAL) * 100)
   const faltaParaMeta = Math.max(0, META_MENSAL - totalRecebido30Dias)
-  
-  // Calcular quantas campanhas faltam para a meta
   const campanhasParaMeta = Math.ceil(faltaParaMeta / TICKET_MEDIO)
   
   // Dias restantes no mês
   const diasRestantesMes = Math.max(1, Math.ceil((new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getTime() - hoje.getTime()) / (24 * 60 * 60 * 1000)))
-  const metaDiaria = faltaParaMeta / diasRestantesMes
+  const vendasPorDia = Math.ceil(campanhasParaMeta / diasRestantesMes)
   
-  // Cálculo de vendas necessárias por dia
-  const vendasPorDia = Math.ceil(metaDiaria / TICKET_MEDIO)
-  
-  // Sistema de conquistas motivacionais (sem repetir informações já mostradas)
-  const conquistas = []
-  
-  if (progressoMeta >= 80) {
-    conquistas.push({ icon: '👑', texto: 'Quase lá! Meta 10K quase batida!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
-  } else if (progressoMeta >= 50) {
-    conquistas.push({ icon: '🚀', texto: 'Metade do caminho conquistada!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
-  } else if (progressoMeta >= 25) {
-    conquistas.push({ icon: '⭐', texto: '25% da meta alcançada!', cor: 'bg-blue-900/20 text-blue-400 border-blue-500/30' })
+  // Sistema de níveis baseado no progresso
+  const getNivel = (progresso: number) => {
+    if (progresso >= 90) return { nivel: 'Expert', emoji: '👑', cor: 'text-blue-600' }
+    if (progresso >= 70) return { nivel: 'Avançado', emoji: '🚀', cor: 'text-blue-500' }
+    if (progresso >= 50) return { nivel: 'Intermediário', emoji: '⭐', cor: 'text-gray-600' }
+    if (progresso >= 25) return { nivel: 'Progredindo', emoji: '📈', cor: 'text-gray-500' }
+    return { nivel: 'Iniciante', emoji: '🎯', cor: 'text-gray-400' }
   }
-  
-  if (campanhasAtivas >= 10) {
-    conquistas.push({ icon: '🔥', texto: 'Máquina de vendas ativada!', cor: 'bg-orange-900/20 text-orange-400 border-orange-500/30' })
-  }
-  
-  if (totalRecebido30Dias > 0) {
-    conquistas.push({ icon: '💰', texto: 'Faturamento ativo este mês!', cor: 'bg-green-900/20 text-green-400 border-green-500/30' })
-  }
-  
-  // Mensagens motivacionais dinâmicas
-  const getMensagemMotivacional = () => {
-    if (progressoMeta >= 80) {
-      return `🏆 Incrível! Você já conquistou ${progressoMeta.toFixed(1)}% da sua meta de 10K! A reta final chegou!`
-    }
-    if (progressoMeta >= 50) {
-      return `🚀 Fantástico! Você já passou da metade da meta! Faltam apenas ${formatCurrency(faltaParaMeta)} para os 10K!`
-    }
-    if (progressoMeta >= 25) {
-      return `⭐ Ótimo progresso! Você já conquistou ${formatCurrency(totalRecebido30Dias)} rumo aos 10K!`
-    }
-    if (campanhasAtivas > 0) {
-      return `💪 ${campanhasAtivas} campanhas no ar! Vamos acelerar?`
-    }
-    return `🎯 Sua meta de 10K está esperando! Com ${campanhasParaMeta} campanhas ativas, você chega lá!`
+
+  const nivelAtual = getNivel(progressoMeta)
+
+  // Mensagem motivacional objetiva
+  const getMensagemFoco = () => {
+    if (progressoMeta >= 90) return `Faltam apenas ${formatCurrency(faltaParaMeta)} para completar sua meta!`
+    if (progressoMeta >= 50) return `Você está na metade do caminho! ${campanhasParaMeta} campanhas restantes.`
+    return `Meta: ${campanhasParaMeta} campanhas para atingir R$ 10.000,00`
   }
 
   return (
-    <div className="space-y-6 bg-gray-950 min-h-screen p-6">
-      {/* Mensagem Motivacional Principal */}
-      <Card className="bg-gray-900/80 border-gray-700 text-white">
-        <CardContent className="p-6">
-          <div className="flex items-center space-x-3">
-            <Crown className="h-8 w-8 text-orange-400" />
-            <div>
-              <p className="text-xl font-bold mb-2 text-white">{getMensagemMotivacional()}</p>
-              <div className="flex items-center space-x-4 text-gray-300">
-                <span>Meta: <span className="text-green-400 font-semibold">{formatCurrency(META_MENSAL)}</span></span>
-                <span>•</span>
-                <span>Conquistado: <span className="text-green-400 font-semibold">{formatCurrency(totalRecebido30Dias)}</span></span>
-                <span>•</span>
-                <span>Faltam: <span className="text-orange-400 font-semibold">{formatCurrency(faltaParaMeta)}</span></span>
+    <div className="space-y-8 p-6 bg-gray-50 min-h-screen">
+      {/* SEÇÃO PRINCIPAL: PROGRESSO DA META */}
+      <div className="max-w-4xl mx-auto">
+        {/* Hero - Progresso da Meta */}
+        <Card className="border-0 shadow-lg bg-white">
+          <CardContent className="p-8">
+            {/* Header com Nível */}
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-12 h-12 bg-gray-100 rounded-full flex items-center justify-center">
+                  <Target className="h-6 w-6 text-gray-600" />
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold text-gray-900">Meta Mensal</h1>
+                  <p className="text-gray-500">R$ 10.000,00</p>
+                </div>
+              </div>
+              <Badge variant="secondary" className={`${nivelAtual.cor} bg-gray-100 border-0 text-sm font-medium`}>
+                {nivelAtual.emoji} {nivelAtual.nivel}
+              </Badge>
+            </div>
+
+            {/* Progresso Visual Principal */}
+            <div className="space-y-4">
+              <div className="flex items-baseline justify-between">
+                <div>
+                  <span className="text-4xl font-bold text-gray-900">{formatCurrency(totalRecebido30Dias)}</span>
+                  <span className="text-lg text-gray-500 ml-2">de {formatCurrency(META_MENSAL)}</span>
+                </div>
+                <div className="text-right">
+                  <div className="text-2xl font-bold text-gray-600">{progressoMeta.toFixed(0)}%</div>
+                  <div className="text-sm text-gray-500">completo</div>
+                </div>
+              </div>
+              
+              <Progress value={progressoMeta} className="h-3 bg-gray-200" />
+              
+              <div className="text-center">
+                <p className="text-lg text-gray-700 font-medium">{getMensagemFoco()}</p>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Progresso da Meta de 10K */}
-      <Card className="bg-gray-900/80 border-gray-700">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center text-xl text-white">
-            <Target className="h-6 w-6 mr-3 text-purple-400" />
-            Progresso da Meta: R$ 10.000,00
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex justify-between items-center">
-            <span className="text-2xl font-bold text-green-400">{formatCurrency(totalRecebido30Dias)}</span>
-            <span className="text-lg font-semibold text-purple-400">{progressoMeta.toFixed(1)}%</span>
-          </div>
-          <MotivationalProgress value={progressoMeta} className="h-4" />
-          <div className="grid grid-cols-3 gap-4 text-sm">
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-orange-400">Faltam</div>
-              <div className="text-lg text-orange-300">{formatCurrency(faltaParaMeta)}</div>
-            </div>
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-purple-400">Campanhas necessárias</div>
-              <div className="text-lg text-purple-300">{campanhasParaMeta}</div>
-            </div>
-            <div className="text-center p-3 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="font-bold text-blue-400">Vendas por dia</div>
-              <div className="text-lg text-blue-300">{vendasPorDia}</div>
-            </div>
-          </div>
-          <div className="text-center text-sm text-gray-400">
-            Você precisa de <span className="text-orange-400 font-semibold">{vendasPorDia} vendas por dia</span> para bater essa meta
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Métricas Essenciais */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-blue-400 flex items-center">
-              <Rocket className="h-4 w-4 mr-2" />
-              Campanhas no Ar
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold text-blue-300">{campanhasAtivas}</div>
-            <p className="text-xs text-blue-400 mt-1">
-              ativas agora 🚀
-            </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-green-400 flex items-center">
-              <Trophy className="h-4 w-4 mr-2" />
-              Já Conquistado
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-300">{formatCurrency(totalRecebido30Dias)}</div>
-            <p className="text-xs text-green-400 mt-1">
-              dos seus 10K 💰
-            </p>
-          </CardContent>
-        </Card>
+        {/* SEÇÃO: NÚMEROS ESSENCIAIS */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mt-6">
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Users className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{campanhasAtivas}</div>
+                  <div className="text-sm text-gray-500">Campanhas Ativas</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-orange-400 flex items-center">
-              <Star className="h-4 w-4 mr-2" />
-              Aguardando Pagamento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-300">{formatCurrency(totalPendente)}</div>
-            <p className="text-xs text-orange-400 mt-1">
-              {clientesPendentes.length} comissões ⭐
-            </p>
-          </CardContent>
-        </Card>
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{formatCurrency(totalPendente)}</div>
+                  <div className="text-sm text-gray-500">Aguardando</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm text-purple-400 flex items-center">
-              <Zap className="h-4 w-4 mr-2" />
-              Meta Diária
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-orange-50 rounded-lg flex items-center justify-center">
+                  <Target className="h-5 w-5 text-orange-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{campanhasParaMeta}</div>
+                  <div className="text-sm text-gray-500">Campanhas Restantes</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-sm bg-white">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
+                  <Clock className="h-5 w-5 text-purple-600" />
+                </div>
+                <div>
+                  <div className="text-2xl font-bold text-gray-900">{vendasPorDia}</div>
+                  <div className="text-sm text-gray-500">Vendas/dia</div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* SEÇÃO: PRÓXIMOS PASSOS */}
+        <Card className="border-0 shadow-sm bg-white mt-6">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-semibold text-gray-900 flex items-center">
+              <TrendingUp className="h-5 w-5 mr-2 text-gray-600" />
+              Próximos Passos para Atingir a Meta
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-300">{formatCurrency(metaDiaria)}</div>
-            <p className="text-xs text-purple-400 mt-1">
-              para chegar nos 10K ⚡
-            </p>
+          <CardContent className="space-y-4">
+            {/* Call to Action Principal */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {campanhasParaMeta <= 5 ? 'Reta final!' : 'Foco no essencial'}
+                  </h3>
+                  <p className="text-gray-600 mt-1">
+                    {campanhasParaMeta <= 5 
+                      ? `Apenas ${campanhasParaMeta} campanhas para bater a meta de 10K!`
+                      : `Ative ${Math.min(10, campanhasParaMeta)} campanhas para acelerar rumo à meta.`
+                    }
+                  </p>
+                </div>
+                <ArrowRight className="h-6 w-6 text-gray-400" />
+              </div>
+            </div>
+
+            {/* Plano de Ação */}
+            <div className="grid gap-3 md:grid-cols-2">
+              <div className="p-4 bg-blue-50 rounded-lg">
+                <div className="font-medium text-blue-900">Meta Diária</div>
+                <div className="text-sm text-blue-700">
+                  {vendasPorDia} vendas por dia nos próximos {diasRestantesMes} dias
+                </div>
+              </div>
+              
+              <div className="p-4 bg-green-50 rounded-lg">
+                <div className="font-medium text-green-900">Potencial</div>
+                <div className="text-sm text-green-700">
+                  Com {campanhasAtivas} campanhas ativas: {formatCurrency(campanhasAtivas * TICKET_MEDIO)}
+                </div>
+              </div>
+            </div>
+
+            {/* Conquistas Sutis */}
+            {progressoMeta > 0 && (
+              <div className="pt-4 border-t border-gray-200">
+                <div className="flex items-center space-x-4 text-sm">
+                  <span className="text-gray-500">Conquistas:</span>
+                  {progressoMeta >= 25 && (
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-0">
+                      ⭐ 25% Meta
+                    </Badge>
+                  )}
+                  {progressoMeta >= 50 && (
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-0">
+                      🚀 Metade
+                    </Badge>
+                  )}
+                  {progressoMeta >= 75 && (
+                    <Badge variant="secondary" className="bg-gray-100 text-gray-600 border-0">
+                      🏆 75% Meta
+                    </Badge>
+                  )}
+                  {progressoMeta >= 100 && (
+                    <Badge variant="secondary" className="bg-blue-100 text-blue-600 border-0">
+                      👑 Meta Batida!
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Conquistas */}
-      {conquistas.length > 0 && (
-        <Card className="bg-gray-900/80 border-gray-700">
-          <CardHeader className="pb-4">
-            <CardTitle className="flex items-center text-lg text-white">
-              <Trophy className="h-5 w-5 mr-2 text-blue-400" />
-              Suas Conquistas do Mês
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              {conquistas.map((conquista, index) => (
-                <Badge key={index} className={`${conquista.cor} border px-4 py-2 text-sm font-medium`}>
-                  <span className="mr-2 text-lg">{conquista.icon}</span>
-                  {conquista.texto}
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Call to Action Consolidado */}
-      <Card className="bg-gray-900/80 border-orange-500/30 text-white">
-        <CardContent className="p-6">
-          <div className="text-center mb-4">
-            <h3 className="text-2xl font-bold mb-2 text-orange-400">🚀 Acelere rumo aos 10K!</h3>
-            <p className="text-lg text-white">
-              Com {Math.min(10, campanhasParaMeta)} campanhas ativas hoje, você se aproxima da meta!
-            </p>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-orange-400">{campanhasParaMeta}</div>
-              <div className="text-sm text-gray-300">campanhas faltam</div>
-            </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-green-400">{formatCurrency(metaDiaria)}</div>
-              <div className="text-sm text-gray-300">por dia restante</div>
-            </div>
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="text-2xl font-bold text-blue-400">{diasRestantesMes}</div>
-              <div className="text-sm text-gray-300">dias restantes</div>
-            </div>
-          </div>
-
-          {/* Projeções de crescimento simplificadas */}
-          <div className="grid gap-4 md:grid-cols-2 mt-6">
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-purple-400">Com +5 campanhas</span>
-                <span className="text-2xl">🚀</span>
-              </div>
-              <div className="text-xl font-bold text-purple-300">{formatCurrency(totalRecebido30Dias + (5 * TICKET_MEDIO))}</div>
-              <div className="text-sm text-purple-400">
-                {(totalRecebido30Dias + (5 * TICKET_MEDIO)) >= META_MENSAL ? '✅ Meta batida!' : `Faltariam ${formatCurrency(META_MENSAL - (totalRecebido30Dias + (5 * TICKET_MEDIO)))}`}
-              </div>
-            </div>
-            
-            <div className="p-4 bg-gray-800/50 rounded-lg border border-gray-700">
-              <div className="flex items-center justify-between mb-2">
-                <span className="font-semibold text-purple-400">Com +10 campanhas</span>
-                <span className="text-2xl">🔥</span>
-              </div>
-              <div className="text-xl font-bold text-purple-300">{formatCurrency(totalRecebido30Dias + (10 * TICKET_MEDIO))}</div>
-              <div className="text-sm text-purple-400">
-                {(totalRecebido30Dias + (10 * TICKET_MEDIO)) >= META_MENSAL ? '🏆 Meta ultrapassada!' : `Faltariam ${formatCurrency(META_MENSAL - (totalRecebido30Dias + (10 * TICKET_MEDIO)))}`}
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
