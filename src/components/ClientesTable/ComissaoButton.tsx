@@ -1,11 +1,11 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { DollarSign, Lock, AlertTriangle, RefreshCw } from 'lucide-react'
+import { DollarSign } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
-import { useComissaoOperations } from '@/hooks/useComissaoOperations'
 
 interface ComissaoButtonProps {
   cliente: Cliente
@@ -13,7 +13,6 @@ interface ComissaoButtonProps {
   isAdmin?: boolean
   updatingComission: string | null
   onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
-  refetchData?: () => void
   compact?: boolean
 }
 
@@ -23,63 +22,18 @@ export function ComissaoButton({
   isAdmin = false,
   updatingComission,
   onComissionToggle,
-  refetchData,
   compact = false
 }: ComissaoButtonProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const { toggleComissao, isAnyOperationRunning, currentOperation } = useComissaoOperations()
   
   const clienteId = cliente.id?.toString() || ''
-  const isUpdating = updatingComission === clienteId || 
-                    isAnyOperationRunning || 
-                    currentOperation?.clienteId === clienteId
+  const isUpdating = updatingComission === clienteId
   
   const valorComissao = cliente.valor_comissao || 60
   const isPago = cliente.comissao === 'Pago'
+
+  // Para gestores (não admins), mostrar apenas visualização
   const canEdit = isAdmin
-
-  // Detectar se este cliente está sendo processado especificamente
-  const isThisClientBeingProcessed = currentOperation?.clienteId === clienteId
-
-  const handleClick = async () => {
-    if (!canEdit || isAnyOperationRunning) {
-      console.warn('🚫 [ComissaoButton] Operação bloqueada:', {
-        canEdit,
-        isAnyOperationRunning,
-        clienteId,
-        clienteNome: cliente.nome_cliente
-      })
-      return
-    }
-
-    console.log('🎯 [ComissaoButton] === INICIANDO OPERAÇÃO SEGURA ===')
-    console.log('📋 Cliente:', { 
-      id: clienteId, 
-      nome: cliente.nome_cliente, 
-      statusAtual: cliente.comissao || 'Pendente' 
-    })
-
-    const currentStatus = cliente.comissao || 'Pendente'
-    
-    const result = await toggleComissao(
-      clienteId,
-      currentStatus,
-      (newStatus) => {
-        console.log('✅ [ComissaoButton] Operação concluída com sucesso:', {
-          clienteId,
-          clienteNome: cliente.nome_cliente,
-          newStatus
-        })
-        // Simular o callback antigo para manter compatibilidade
-        onComissionToggle(clienteId, newStatus === 'Pago')
-      },
-      refetchData // Passar função de refresh
-    )
-
-    if (!result.success) {
-      console.error('❌ [ComissaoButton] Operação falhou para cliente:', clienteId)
-    }
-  }
 
   if (compact) {
     return (
@@ -91,24 +45,16 @@ export function ComissaoButton({
                 size="sm"
                 variant="outline"
                 disabled={isUpdating || !canEdit}
-                onClick={handleClick}
+                onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
                 className={`
-                  h-6 px-2 py-0 text-xs font-medium min-w-fit relative
+                  h-6 px-2 py-0 text-xs font-medium min-w-fit
                   ${isPago 
                     ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
                     : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
                   }
                   ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
-                  ${isAnyOperationRunning && !isThisClientBeingProcessed ? 'opacity-40' : ''}
                 `}
               >
-                {isThisClientBeingProcessed && (
-                  <div className="absolute inset-0 bg-yellow-500/20 border border-yellow-500 rounded animate-pulse">
-                    <div className="flex items-center justify-center h-full">
-                      <RefreshCw className="h-2 w-2 text-yellow-600 animate-spin" />
-                    </div>
-                  </div>
-                )}
                 {formatCurrency(valorComissao)}
               </Button>
             </TooltipTrigger>
@@ -116,20 +62,13 @@ export function ComissaoButton({
               <div className="text-sm">
                 <p><strong>Status:</strong> {cliente.comissao || 'Pendente'}</p>
                 <p><strong>Valor:</strong> {formatCurrency(valorComissao)}</p>
-                <p><strong>Cliente:</strong> {cliente.nome_cliente}</p>
-                {isAnyOperationRunning && (
-                  <p className="text-xs mt-1 text-yellow-300 flex items-center gap-1">
-                    <AlertTriangle className="h-3 w-3" />
-                    Sistema protegido - aguarde operação atual
-                  </p>
-                )}
-                {canEdit && !isAnyOperationRunning ? (
+                {canEdit ? (
                   <p className="text-xs mt-1">
                     {isPago ? 'Clique para marcar como pendente' : 'Clique para marcar como pago'}
                   </p>
                 ) : (
                   <p className="text-xs mt-1 text-orange-300">
-                    {!canEdit ? 'Apenas admins podem alterar' : 'Aguarde...'}
+                    Apenas admins podem alterar
                   </p>
                 )}
               </div>
@@ -146,26 +85,18 @@ export function ComissaoButton({
         size="sm"
         variant="outline"
         disabled={isUpdating || !canEdit}
-        onClick={handleClick}
+        onClick={() => canEdit ? onComissionToggle(clienteId, isPago) : undefined}
         className={`
-          h-8 text-xs px-3 relative
+          h-8 text-xs px-3
           ${isPago 
             ? 'bg-green-600 hover:bg-green-700 border-green-600 text-white' 
             : 'bg-red-600 hover:bg-red-700 border-red-600 text-white'
           }
           ${!canEdit ? 'opacity-60 cursor-not-allowed' : ''}
-          ${isAnyOperationRunning && !isThisClientBeingProcessed ? 'opacity-40' : ''}
         `}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >
-        {isThisClientBeingProcessed && (
-          <div className="absolute inset-0 bg-yellow-500/20 border border-yellow-500 rounded animate-pulse">
-            <div className="flex items-center justify-center h-full">
-              <RefreshCw className="h-3 w-3 text-yellow-600 animate-spin" />
-            </div>
-          </div>
-        )}
         {!canEdit ? (
           <div className="flex items-center gap-1">
             {formatCurrency(valorComissao)}
@@ -174,10 +105,7 @@ export function ComissaoButton({
             </span>
           </div>
         ) : isUpdating ? (
-          <div className="flex items-center gap-1">
-            <RefreshCw className="h-3 w-3 animate-spin" />
-            Processando...
-          </div>
+          'Atualizando...'
         ) : isPago ? (
           isHovered ? 'Marcar Pendente' : (
             <div className="flex items-center gap-1">

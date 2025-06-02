@@ -1,23 +1,26 @@
-
-import { useState } from 'react'
-import { TableCell, TableRow } from '@/components/ui/table'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { MoreHorizontal, Copy, CheckCircle, Circle, AlertTriangle } from 'lucide-react'
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { STATUS_CAMPANHA } from '@/lib/supabase'
-import { toast } from '@/hooks/use-toast'
+import { Folder, Mail, AtSign } from 'lucide-react'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { StatusSelect } from './StatusSelect'
+import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
+import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { ClienteRowName } from './ClienteRowName'
+import { ClienteRowPhone } from './ClienteRowPhone'
+import { ClienteRowDataLimite } from './ClienteRowDataLimite'
+import { ClienteRowBM } from './ClienteRowBM'
+import { ClienteRowSite } from './ClienteRowSite'
+import { Cliente, type StatusCampanha } from '@/lib/supabase'
+import { toast } from '@/components/ui/sonner'
 
 interface ClienteRowProps {
-  cliente: any
+  cliente: Cliente
   selectedManager: string
   index: number
-  isAdmin: boolean
-  showEmailGestor: boolean
-  showSitePagoCheckbox: boolean
+  isAdmin?: boolean
+  showEmailGestor?: boolean
+  showSitePagoCheckbox?: boolean
   updatingStatus: string | null
   editingLink: { clienteId: string, field: string } | null
   linkValue: string
@@ -27,25 +30,25 @@ interface ClienteRowProps {
   setBmValue: (value: string) => void
   updatingComission: string | null
   getStatusColor: (status: string) => string
-  onStatusChange: (clienteId: string, newStatus: string) => Promise<void>
-  onSiteStatusChange: (clienteId: string, newStatus: string) => Promise<void>
+  onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
+  onSiteStatusChange: (clienteId: string, newStatus: string) => void
   onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
   onLinkSave: (clienteId: string) => Promise<boolean>
   onLinkCancel: () => void
   onBMEdit: (clienteId: string, currentValue: string) => void
-  onBMSave: (clienteId: string) => Promise<void>
+  onBMSave: (clienteId: string) => void
   onBMCancel: () => void
   onComissionToggle: (clienteId: string, currentStatus: boolean) => Promise<boolean>
-  onSitePagoChange: (clienteId: string, newValue: boolean) => Promise<void>
+  onSitePagoChange?: (clienteId: string, newValue: boolean) => void
 }
 
 export function ClienteRow({
   cliente,
   selectedManager,
   index,
-  isAdmin,
-  showEmailGestor,
-  showSitePagoCheckbox,
+  isAdmin = false,
+  showEmailGestor = false,
+  showSitePagoCheckbox = false,
   updatingStatus,
   editingLink,
   linkValue,
@@ -64,291 +67,168 @@ export function ClienteRow({
   onBMSave,
   onBMCancel,
   onComissionToggle,
-  onSitePagoChange,
-  refetchData
-}: ClienteRowProps & { refetchData?: () => void }) {
-  const [isCopied, setIsCopied] = useState(false)
-  const clienteId = cliente.id?.toString() || ''
-  const isLinkEditing = editingLink?.clienteId === clienteId
-  const isBMEditing = editingBM === clienteId
-  const isUpdating = updatingStatus === clienteId
-
-  const handleCopyClick = (text: string) => {
-    navigator.clipboard.writeText(text)
-    setIsCopied(true)
-    toast({
-      title: "Copiado!",
-      description: "O texto foi copiado para a área de transferência.",
-    })
-    setTimeout(() => setIsCopied(false), 2000)
+  onSitePagoChange
+}: ClienteRowProps) {
+  const formatDate = (dateString: string) => {
+    if (!dateString || dateString.trim() === '') return 'N/A'
+    try {
+      const date = new Date(dateString)
+      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
+    } catch {
+      return 'N/A'
+    }
   }
 
-  const handleSitePagoChange = (checked: boolean | string) => {
-    // Ensure we only pass boolean values
-    const booleanValue = typeof checked === 'boolean' ? checked : false
-    onSitePagoChange(clienteId, booleanValue)
+  const handleGestorClick = () => {
+    if (!isAdmin) {
+      toast.error("Apenas administradores podem editar gestores")
+    } else {
+      toast.info("Funcionalidade de edição em desenvolvimento")
+    }
   }
 
   return (
-    <TableRow 
-      className={`border-border hover:bg-muted/20 ${
-        index % 2 === 0 ? 'bg-muted/5' : 'bg-transparent'
-      }`}
-    >
-      <TableCell className="font-medium p-2">{cliente.id}</TableCell>
-      <TableCell className="p-2">{cliente.data_venda}</TableCell>
-      <TableCell className="p-2">{cliente.nome_cliente}</TableCell>
-      <TableCell className="p-2">
-        {cliente.telefone}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleCopyClick(cliente.telefone)}
-          disabled={isCopied}
-        >
-          {isCopied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </TableCell>
-      <TableCell className="p-2">
-        {cliente.email_cliente}
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleCopyClick(cliente.email_cliente)}
-          disabled={isCopied}
-        >
-          {isCopied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-        </Button>
-      </TableCell>
-      <TableCell className="p-2">{cliente.vendedor}</TableCell>
-      {showEmailGestor && (
-        <TableCell className="p-2">
-          {cliente.email_gestor}
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleCopyClick(cliente.email_gestor || '')}
-            disabled={isCopied}
-          >
-            {isCopied ? <CheckCircle className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
-          </Button>
+    <TooltipProvider>
+      <TableRow 
+        className="border-border hover:bg-muted/20" 
+        style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
+      >
+        <TableCell className="text-white text-xs p-1 sticky left-0 bg-card z-10 border-r border-border">
+          {formatDate(cliente.data_venda || cliente.created_at)}
         </TableCell>
-      )}
-      <TableCell className="p-2">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="w-[150px]">
-              <span className="line-clamp-1">{cliente.status_campanha || 'Sem Status'}</span>
-              <MoreHorizontal className="h-4 w-4 ml-2" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-[180px]">
-            <DropdownMenuLabel>Selecione o status</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            {STATUS_CAMPANHA.map((status) => (
-              <DropdownMenuItem 
-                key={status}
-                onClick={() => onStatusChange(clienteId, status)}
-                className="cursor-pointer"
-              >
-                {status}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        {isUpdating && (
-          <div className="flex items-center justify-center">
-            <svg className="animate-spin h-5 w-5 text-blue-500" viewBox="0 0 24 24">
-              <Circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
-            </svg>
-          </div>
-        )}
-        {!cliente.status_campanha && (
-          <Badge variant="outline" className="mt-2">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            Sem status
-          </Badge>
-        )}
-        {cliente.status_campanha && (
-          <Badge variant="secondary" className={`mt-2 ${getStatusColor(cliente.status_campanha)}`}>
-            {cliente.status_campanha}
-          </Badge>
-        )}
-      </TableCell>
-      <TableCell className="p-2">{cliente.data_limite}</TableCell>
-      <TableCell className="p-2">
-        {isLinkEditing && editingLink.field === 'link_briefing' ? (
-          <div className="flex items-center">
-            <Input
-              type="text"
-              value={linkValue}
-              onChange={(e) => setLinkValue(e.target.value)}
-              className="mr-2"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onLinkSave(clienteId)}
-            >
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onLinkCancel}
-            >
-              <Circle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <a href={cliente.link_briefing} target="_blank" rel="noopener noreferrer" className="hover:underline line-clamp-1 max-w-[200px]">
-              {cliente.link_briefing || 'Sem link'}
-            </a>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onLinkEdit(clienteId, 'link_briefing', cliente.link_briefing)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </TableCell>
-      <TableCell className="p-2">
-        {isLinkEditing && editingLink.field === 'link_criativo' ? (
-          <div className="flex items-center">
-            <Input
-              type="text"
-              value={linkValue}
-              onChange={(e) => setLinkValue(e.target.value)}
-              className="mr-2"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onLinkSave(clienteId)}
-            >
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onLinkCancel}
-            >
-              <Circle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <a href={cliente.link_criativo} target="_blank" rel="noopener noreferrer" className="hover:underline line-clamp-1 max-w-[200px]">
-              {cliente.link_criativo || 'Sem link'}
-            </a>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onLinkEdit(clienteId, 'link_criativo', cliente.link_criativo)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </TableCell>
-      <TableCell className="p-2">
-        {isLinkEditing && editingLink.field === 'link_site' ? (
-          <div className="flex items-center">
-            <Input
-              type="text"
-              value={linkValue}
-              onChange={(e) => setLinkValue(e.target.value)}
-              className="mr-2"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onLinkSave(clienteId)}
-            >
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onLinkCancel}
-            >
-              <Circle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <a href={cliente.link_site} target="_blank" rel="noopener noreferrer" className="hover:underline line-clamp-1 max-w-[200px]">
-              {cliente.link_site || 'Sem link'}
-            </a>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onLinkEdit(clienteId, 'link_site', cliente.link_site)}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </TableCell>
-      <TableCell className="p-2">
-        {isBMEditing ? (
-          <div className="flex items-center">
-            <Input
-              type="text"
-              value={bmValue}
-              onChange={(e) => setBmValue(e.target.value)}
-              className="mr-2"
-            />
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={() => onBMSave(clienteId)}
-            >
-              <CheckCircle className="h-4 w-4 text-green-500" />
-            </Button>
-            <Button
-              size="icon"
-              variant="ghost"
-              onClick={onBMCancel}
-            >
-              <Circle className="h-4 w-4" />
-            </Button>
-          </div>
-        ) : (
-          <div className="flex items-center">
-            <span>{cliente.numero_bm || 'Sem BM'}</span>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onBMEdit(clienteId, cliente.numero_bm || '')}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </div>
-        )}
-      </TableCell>
-      {showSitePagoCheckbox && (
-        <TableCell className="p-2">
-          <Checkbox
-            checked={cliente.site_pago || false}
-            onCheckedChange={handleSitePagoChange}
+
+        <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
+          <ClienteRowName 
+            clienteId={cliente.id!.toString()}
+            nomeCliente={cliente.nome_cliente || ''}
           />
         </TableCell>
-      )}
-      <TableCell className="p-2">
-        <ComissaoButton
-          cliente={cliente}
-          isAdmin={isAdmin}
-          updatingComission={updatingComission}
-          onComissionToggle={onComissionToggle}
-          refetchData={refetchData}
+
+        <TableCell className="text-white text-xs p-1">
+          <ClienteRowPhone 
+            telefone={cliente.telefone || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+          />
+        </TableCell>
+
+        <TableCell className="text-white text-xs p-1">
+          <Tooltip>
+            <TooltipTrigger>
+              <div className="flex items-center justify-center">
+                <Mail className="h-3 w-3 text-blue-400" />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className="max-w-xs break-all">{cliente.email_cliente || 'Não informado'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TableCell>
+
+        {(isAdmin || showEmailGestor) && (
+          <TableCell className="text-white text-xs p-1">
+            <Tooltip>
+              <TooltipTrigger 
+                onClick={handleGestorClick}
+                className="cursor-pointer"
+              >
+                <div className="flex items-center justify-center">
+                  <AtSign className="h-3 w-3 text-green-400" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p className="max-w-xs break-all">{cliente.email_gestor || 'Não informado'}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableCell>
+        )}
+
+        <TableCell className="p-1">
+          <StatusSelect
+            value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
+            onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
+            disabled={updatingStatus === cliente.id!.toString()}
+            isUpdating={updatingStatus === cliente.id!.toString()}
+            getStatusColor={getStatusColor}
+            compact={false}
+          />
+        </TableCell>
+
+        <TableCell className="p-1">
+          <SiteStatusSelect
+            value={cliente.site_status || 'pendente'}
+            onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
+            disabled={updatingStatus === cliente.id!.toString()}
+            isUpdating={updatingStatus === cliente.id!.toString()}
+            compact={false}
+          />
+        </TableCell>
+
+        <ClienteRowDataLimite
+          dataVenda={cliente.data_venda || ''}
+          createdAt={cliente.created_at}
+          statusCampanha={cliente.status_campanha || 'Cliente Novo'}
+          nomeCliente={cliente.nome_cliente || ''}
           compact={true}
         />
-      </TableCell>
-    </TableRow>
+
+        <TableCell className="p-1">
+          <BriefingMaterialsModal 
+            emailCliente={cliente.email_cliente || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
+              >
+                <Folder className="h-2.5 w-2.5" />
+              </Button>
+            }
+          />
+        </TableCell>
+
+        <TableCell className="p-1">
+          <ClienteRowSite
+            clienteId={cliente.id!.toString()}
+            linkSite={cliente.link_site || ''}
+            sitePago={cliente.site_pago || false}
+            showSitePagoCheckbox={showSitePagoCheckbox}
+            editingLink={editingLink}
+            linkValue={linkValue}
+            setLinkValue={setLinkValue}
+            onLinkEdit={onLinkEdit}
+            onLinkSave={onLinkSave}
+            onLinkCancel={onLinkCancel}
+            onSitePagoChange={onSitePagoChange}
+            compact={true}
+          />
+        </TableCell>
+
+        <TableCell className="p-1">
+          <ClienteRowBM
+            clienteId={cliente.id!.toString()}
+            numeroBM={cliente.numero_bm || ''}
+            editingBM={editingBM}
+            bmValue={bmValue}
+            setBmValue={setBmValue}
+            onBMEdit={onBMEdit}
+            onBMSave={onBMSave}
+            onBMCancel={onBMCancel}
+            compact={true}
+          />
+        </TableCell>
+
+        <TableCell className="p-1">
+          <ComissaoButton
+            cliente={cliente}
+            isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
+            isAdmin={isAdmin}
+            updatingComission={updatingComission}
+            onComissionToggle={onComissionToggle}
+            compact={true}
+          />
+        </TableCell>
+      </TableRow>
+    </TooltipProvider>
   )
 }

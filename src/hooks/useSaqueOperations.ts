@@ -11,64 +11,41 @@ export function useSaqueOperations() {
     clienteId: string | number,
     novoStatusComissao: string
   ) => {
-    console.log('🚀 [useSaqueOperations] === OPERAÇÃO SEGURA DE COMISSÃO ===')
-    console.log('🚀 [useSaqueOperations] Cliente ID:', clienteId)
-    console.log('🚀 [useSaqueOperations] Novo Status:', novoStatusComissao)
+    console.log('🚀 [useSaqueOperations] Atualizando comissão:', {
+      clienteId,
+      novoStatusComissao
+    })
 
     setLoading(true)
     
     try {
-      // PROTEÇÃO: Primeiro verificar se o cliente existe
-      const { data: clienteAtual, error: fetchError } = await supabase
+      // Atualizar apenas a coluna comissao na tabela todos_clientes
+      const { error } = await supabase
         .from('todos_clientes')
-        .select('id, nome_cliente, comissao')
+        .update({ 
+          comissao: novoStatusComissao
+        })
         .eq('id', Number(clienteId))
-        .single()
-
-      if (fetchError || !clienteAtual) {
-        throw new Error(`Cliente ${clienteId} não encontrado: ${fetchError?.message}`)
-      }
-
-      console.log('✅ [useSaqueOperations] Cliente encontrado:', {
-        id: clienteAtual.id,
-        nome: clienteAtual.nome_cliente,
-        statusAtual: clienteAtual.comissao
-      })
-
-      // PROTEÇÃO: Operação atômica com validação
-      const { error, data } = await supabase
-        .from('todos_clientes')
-        .update({ comissao: novoStatusComissao })
-        .eq('id', Number(clienteId))
-        .select('id, comissao, nome_cliente')
 
       if (error) {
+        console.error('❌ [useSaqueOperations] Erro ao atualizar comissão:', error)
         throw error
       }
 
-      if (!data || data.length === 0) {
-        throw new Error('Nenhuma linha foi atualizada')
-      }
-
-      const updatedRecord = data[0]
-      console.log('✅ [useSaqueOperations] Atualização confirmada:', {
-        id: updatedRecord.id,
-        novoStatus: updatedRecord.comissao,
-        nome: updatedRecord.nome_cliente
-      })
+      console.log('✅ [useSaqueOperations] Comissão atualizada com sucesso')
 
       toast({
-        title: "✅ Comissão Atualizada",
-        description: `${updatedRecord.nome_cliente}: Status alterado para ${novoStatusComissao}`,
+        title: "Comissão atualizada!",
+        description: `Status alterado para: ${novoStatusComissao}`,
       })
 
       return true
 
     } catch (error) {
-      console.error('💥 [useSaqueOperations] Erro crítico:', error)
+      console.error('💥 [useSaqueOperations] Erro geral:', error)
       toast({
-        title: "❌ Erro ao Atualizar Comissão",
-        description: `Falha: ${error.message}`,
+        title: "Erro ao atualizar comissão",
+        description: "Tente novamente em alguns instantes.",
         variant: "destructive"
       })
       return false
