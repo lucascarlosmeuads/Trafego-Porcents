@@ -32,7 +32,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   const hoje = new Date()
   const dataLimite = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000))
   
-  // Clientes REALMENTE pagos (comissao = "Pago")
+  // CORREÇÃO: Clientes REALMENTE pagos (comissao = "Pago")
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -46,16 +46,15 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
     total + (cliente.valor_comissao || 60), 0
   )
   
-  // Clientes PENDENTES de pagamento (não pagos)
+  // CORREÇÃO: TODOS os clientes que NÃO estão pagos são considerados pendentes
   const clientesPendentes = clientes.filter(cliente => 
-    cliente.comissao !== 'Pago' && 
-    (cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização' || cliente.status_campanha === 'Finalizada')
+    cliente.comissao !== 'Pago'
   )
   const totalPendentePagamento = clientesPendentes.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60), 0
   )
   
-  // Campanhas realmente ativas
+  // Campanhas realmente ativas (separado dos pendentes)
   const campanhasAtivas = clientes.filter(cliente => 
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   ).length
@@ -88,6 +87,16 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
 
   // Detectar se é primeiro acesso ou dados vazios
   const isFirstTime = clientes.length === 0 || totalJaRecebido === 0
+
+  console.log('📊 [GamifiedMetrics] Debug dos cálculos:', {
+    totalClientes: clientes.length,
+    clientesPagos: clientesPagos.length,
+    clientesPendentes: clientesPendentes.length,
+    totalJaRecebido,
+    totalPendentePagamento,
+    campanhasAtivas,
+    progressoMeta: progressoMeta.toFixed(1)
+  })
 
   return (
     <div className="space-y-6 p-6 bg-gray-950 min-h-screen">
