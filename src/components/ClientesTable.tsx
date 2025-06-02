@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -105,7 +106,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
   const [transferindoCliente, setTransferindoCliente] = useState<string | null>(null)
   const [isImporting, setIsImporting] = useState(false)
 
-  // Remove os estados dos banners
   const [showAddForm, setShowAddForm] = useState(false)
   const [expandedComments, setExpandedComments] = useState<{ [key: string]: boolean }>({})
   const [expandedBriefings, setExpandedBriefings] = useState<{ [key: string]: boolean }>({})
@@ -119,7 +119,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     setLoading(true)
     try {
       let query = supabase
-        .from<Cliente>('clientes')
+        .from('clientes')
         .select('*')
         .order('created_at', { ascending: false })
 
@@ -605,8 +605,6 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         getStatusColor={getStatusColor}
       />
 
-      {/* Remove os banners de Melhorias Recentes e Dicas de Produtividade */}
-
       <ResponsiveTableWrapper>
         <Card className="bg-card border-border shadow-xl">
           <CardHeader className="pb-4">
@@ -708,7 +706,22 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                             <SelectValue placeholder={cliente.status_campanha} />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* Mapear as opções de status aqui */}
+                            <SelectItem value="Cliente Novo">Cliente Novo</SelectItem>
+                            <SelectItem value="Formulário">Formulário</SelectItem>
+                            <SelectItem value="Brief">Brief</SelectItem>
+                            <SelectItem value="Criativo">Criativo</SelectItem>
+                            <SelectItem value="Site">Site</SelectItem>
+                            <SelectItem value="Agendamento">Agendamento</SelectItem>
+                            <SelectItem value="Configurando BM">Configurando BM</SelectItem>
+                            <SelectItem value="Subindo Campanha">Subindo Campanha</SelectItem>
+                            <SelectItem value="Otimização">Otimização</SelectItem>
+                            <SelectItem value="Problema">Problema</SelectItem>
+                            <SelectItem value="Cliente Sumiu">Cliente Sumiu</SelectItem>
+                            <SelectItem value="Reembolso">Reembolso</SelectItem>
+                            <SelectItem value="Saque Pendente">Saque Pendente</SelectItem>
+                            <SelectItem value="Campanha Anual">Campanha Anual</SelectItem>
+                            <SelectItem value="Urgente">Urgente</SelectItem>
+                            <SelectItem value="Cliente Antigo">Cliente Antigo</SelectItem>
                           </SelectContent>
                         </Select>
                       )}
@@ -731,7 +744,10 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                             <SelectValue placeholder={cliente.site_status} />
                           </SelectTrigger>
                           <SelectContent>
-                            {/* Mapear as opções de status do site aqui */}
+                            <SelectItem value="Não Pago">Não Pago</SelectItem>
+                            <SelectItem value="Pago">Pago</SelectItem>
+                            <SelectItem value="Pronto">Pronto</SelectItem>
+                            <SelectItem value="Online">Online</SelectItem>
                           </SelectContent>
                         </Select>
                       )}

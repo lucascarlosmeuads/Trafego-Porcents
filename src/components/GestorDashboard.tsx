@@ -9,11 +9,11 @@ import { AdminTable } from './AdminTable'
 import { MelhoriasEDicas } from './MelhoriasEDicas'
 import { GestoresManagement } from './GestoresManagement'
 import { LoadingFallback } from './LoadingFallback'
+import { DocumentationViewer } from './Documentation/DocumentationViewer'
 
 // Lazy load components para melhor performance
 const LazyClientesTable = React.lazy(() => import('./ClientesTable').then(module => ({ default: module.ClientesTable })))
 const LazyChatInterface = React.lazy(() => import('./Chat/ChatInterface').then(module => ({ default: module.ChatInterface })))
-const LazyDocumentation = React.lazy(() => import('./Documentation').then(module => ({ default: module.Documentation })))
 
 export function GestorDashboard() {
   const { isAdmin, currentManagerName } = useAuth()
@@ -59,14 +59,18 @@ export function GestorDashboard() {
       case 'chat':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <LazyChatInterface />
+            <LazyChatInterface 
+              emailCliente=""
+              emailGestor={currentManagerName || ""}
+              nomeCliente=""
+            />
           </Suspense>
         )
       
       case 'documentacao':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <LazyDocumentation />
+            <DocumentationViewer />
           </Suspense>
         )
       
