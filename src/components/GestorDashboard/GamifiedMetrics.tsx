@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Target, TrendingUp, Clock, CheckCircle, DollarSign, Zap } from 'lucide-react'
+import { Target, TrendingUp, Clock, CheckCircle, DollarSign, Zap, Calendar } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 
@@ -31,6 +31,11 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   // Calcular dados dos últimos 30 dias
   const hoje = new Date()
   const dataLimite = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000))
+  
+  // Calcular dias restantes no mês
+  const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
+  const diaAtual = hoje.getDate()
+  const diasRestantesNoMes = ultimoDiaDoMes - diaAtual + 1 // +1 para incluir o dia atual
   
   // CORREÇÃO: Clientes REALMENTE pagos (comissao = "Pago")
   const clientesPagos = clientes.filter(cliente => 
@@ -62,7 +67,11 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   // CÁLCULOS PARA A META
   const progressoMeta = Math.min(100, (totalJaRecebido / META_MENSAL) * 100)
   const faltaParaMeta = Math.max(0, META_MENSAL - totalJaRecebido)
-  const campanhasParaMeta = Math.ceil(faltaParaMeta / TICKET_MEDIO)
+  
+  // NOVO: Calcular vendas diárias necessárias
+  const vendasDiariasNecessarias = diasRestantesNoMes > 0 
+    ? Math.ceil(faltaParaMeta / TICKET_MEDIO / diasRestantesNoMes)
+    : 0
   
   // Sistema de níveis baseado no progresso REAL
   const getNivel = (progresso: number) => {
@@ -79,10 +88,10 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   const getMensagemMotivacional = () => {
     if (progressoMeta >= 100) return `🎉 Parabéns! Meta batida com ${formatCurrency(totalJaRecebido)}!`
     if (progressoMeta >= 75) return `🔥 Faltam apenas ${formatCurrency(faltaParaMeta)} para bater a meta!`
-    if (progressoMeta >= 50) return `💪 Metade do caminho! ${campanhasParaMeta} campanhas para a meta.`
-    if (progressoMeta >= 25) return `📈 Bom progresso! Ative ${campanhasParaMeta} campanhas para R$ 10K.`
-    if (totalJaRecebido > 0) return `🎯 Primeira conquista! Continue ativando campanhas.`
-    return `🚀 Comece sua jornada! Ative suas primeiras campanhas.`
+    if (progressoMeta >= 50) return `💪 Metade do caminho! ${vendasDiariasNecessarias} vendas por dia para a meta.`
+    if (progressoMeta >= 25) return `📈 Bom progresso! ${vendasDiariasNecessarias} vendas diárias para R$ 10K.`
+    if (totalJaRecebido > 0) return `🎯 Primeira conquista! Continue com ${vendasDiariasNecessarias} vendas por dia.`
+    return `🚀 Comece sua jornada! ${vendasDiariasNecessarias} vendas por dia para a meta.`
   }
 
   // Detectar se é primeiro acesso ou dados vazios
@@ -95,7 +104,9 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
     totalJaRecebido,
     totalPendentePagamento,
     campanhasAtivas,
-    progressoMeta: progressoMeta.toFixed(1)
+    progressoMeta: progressoMeta.toFixed(1),
+    diasRestantesNoMes,
+    vendasDiariasNecessarias
   })
 
   return (
@@ -136,9 +147,9 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
               
               <div className="text-center p-4 bg-gray-800 rounded-lg border border-gray-700">
                 <p className="text-xl text-gray-200 font-medium">{getMensagemMotivacional()}</p>
-                {!isFirstTime && (
+                {!isFirstTime && diasRestantesNoMes > 0 && (
                   <p className="text-sm text-gray-400 mt-2">
-                    {campanhasParaMeta > 0 ? `${campanhasParaMeta} campanhas restantes` : 'Meta atingida!'}
+                    {progressoMeta >= 100 ? 'Meta atingida!' : `${diasRestantesNoMes} dias restantes no mês`}
                   </p>
                 )}
               </div>
@@ -221,21 +232,26 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
             <CardHeader className="pb-4">
               <CardTitle className="text-lg font-semibold text-white flex items-center">
                 <div className="w-10 h-10 bg-purple-500/20 rounded-lg flex items-center justify-center border border-purple-500/30 mr-3">
-                  <Target className="h-5 w-5 text-purple-400" />
+                  <Calendar className="h-5 w-5 text-purple-400" />
                 </div>
-                🎯 Para Atingir Meta
+                📅 Vendas Diárias Necessárias
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold text-purple-400 mb-2">
-                {progressoMeta >= 100 ? '0' : campanhasParaMeta}
+                {progressoMeta >= 100 ? '0' : vendasDiariasNecessarias}
               </div>
               <p className="text-gray-400">
-                {progressoMeta >= 100 ? 'Meta já atingida!' : 'Campanhas necessárias para R$ 10K'}
+                {progressoMeta >= 100 ? 'Meta já atingida!' : `vendas por dia para bater R$ 10K`}
               </p>
-              {campanhasParaMeta > 10 && (
-                <p className="text-xs text-yellow-400 mt-2">
-                  💡 Foque em 5-10 campanhas por vez para melhor gestão
+              {diasRestantesNoMes <= 0 && progressoMeta < 100 && (
+                <p className="text-xs text-red-400 mt-2">
+                  ⚠️ Último dia do mês! Acelere as vendas!
+                </p>
+              )}
+              {diasRestantesNoMes > 0 && progressoMeta < 100 && (
+                <p className="text-xs text-gray-400 mt-2">
+                  {diasRestantesNoMes} dias restantes no mês
                 </p>
               )}
             </CardContent>
@@ -266,27 +282,27 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
                 </p>
                 <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
                   <p className="text-sm text-gray-300">
-                    <span className="font-medium">Meta:</span> Ativar 5-10 campanhas na primeira semana<br/>
-                    <span className="font-medium">Resultado:</span> Até {formatCurrency(10 * TICKET_MEDIO)} em comissões
+                    <span className="font-medium">Meta:</span> {vendasDiariasNecessarias} vendas por dia<br/>
+                    <span className="font-medium">Resultado:</span> {formatCurrency(META_MENSAL)} em comissões
                   </p>
                 </div>
               </div>
             ) : (
               <div className="bg-purple-500/10 rounded-lg p-6 border border-purple-500/20">
                 <h3 className="text-xl font-semibold text-purple-300 mb-2">
-                  {campanhasParaMeta <= 5 ? '🔥 Reta Final!' : '💪 Continue Crescendo!'}
+                  {vendasDiariasNecessarias <= 2 ? '🔥 Reta Final!' : '💪 Continue Crescendo!'}
                 </h3>
                 <p className="text-purple-400 mb-3">
-                  {campanhasParaMeta <= 5 
-                    ? `Você está quase lá! Apenas ${campanhasParaMeta} campanhas para bater os R$ 10.000!`
-                    : `Ative mais ${Math.min(10, campanhasParaMeta)} campanhas para acelerar rumo à meta.`
+                  {vendasDiariasNecessarias <= 2 
+                    ? `Você está quase lá! Apenas ${vendasDiariasNecessarias} vendas por dia para bater os R$ 10.000!`
+                    : `Foque em ${vendasDiariasNecessarias} vendas por dia para acelerar rumo à meta.`
                   }
                 </p>
                 <div className="grid gap-3 md:grid-cols-2">
                   <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
-                    <div className="font-medium text-blue-300">Potencial Atual</div>
+                    <div className="font-medium text-blue-300">Ritmo Atual</div>
                     <div className="text-sm text-blue-400">
-                      {campanhasAtivas} campanhas = {formatCurrency(campanhasAtivas * TICKET_MEDIO)}
+                      {campanhasAtivas} campanhas ativas
                     </div>
                   </div>
                   <div className="bg-gray-800 rounded-lg p-4 border border-gray-700">
@@ -302,7 +318,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
             {/* Conquistas */}
             {progressoMeta > 0 && (
               <div className="pt-4 border-t border-gray-800">
-                <div className="flex items-center space-x-4 text-sm">
+                <div className="flex items-center space-x-4 text-sm flex-wrap gap-2">
                   <span className="text-gray-400">Conquistas:</span>
                   {progressoMeta >= 25 && (
                     <Badge variant="secondary" className="bg-gray-800 text-gray-300 border-gray-700">
@@ -324,6 +340,21 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
                       👑 Meta Conquistada!
                     </Badge>
                   )}
+                </div>
+                
+                {/* NOVO: Bônus Especial */}
+                <div className="mt-4 p-4 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 rounded-lg border border-yellow-500/20">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gradient-to-r from-yellow-500 to-orange-500 rounded-full flex items-center justify-center">
+                      <span className="text-white font-bold text-sm">🏆</span>
+                    </div>
+                    <div>
+                      <div className="font-medium text-yellow-300">Bônus Especial R$ 10K</div>
+                      <p className="text-xs text-yellow-200/80 mt-1">
+                        Batendo a meta dos 10K em 30 dias, você receberá um bônus especial que ainda estamos organizando!
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
