@@ -72,65 +72,76 @@ export function ManagerSidebar({
         flex-shrink-0 sticky top-0 left-0 z-40 shadow-2xl
       `}
     >
-      {/* Header com Logo e Toggle Button - Reorganizado */}
-      <div className="p-4 border-b border-gray-800">
-        <div className="flex items-center justify-between mb-4">
-          {/* Logo TráfegoPorcents */}
-          <div className="flex-1 flex justify-center">
+      {/* Header reorganizado */}
+      <div className="p-3 border-b border-gray-800">
+        {isCollapsed ? (
+          /* Layout quando colapsado */
+          <div className="flex flex-col items-center space-y-3">
+            {/* Logo pequena centralizada */}
             <div className="relative group cursor-pointer">
               <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-              <div className={cn(
-                "relative bg-gradient-hero text-white rounded-lg font-bold transition-transform duration-300 hover:scale-105",
-                isCollapsed ? "px-2 py-1.5 text-xs" : "px-4 py-2 text-lg"
-              )}>
-                {!isCollapsed ? (
-                  <>
-                    <span>Tráfego</span>
-                    <span className="text-orange-300">Porcents</span>
-                  </>
-                ) : (
-                  <span className="text-orange-300">TP%</span>
-                )}
+              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-2 py-1.5 text-xs transition-transform duration-300 hover:scale-105">
+                <span className="text-orange-300">TP%</span>
               </div>
             </div>
-          </div>
-
-          {/* Toggle Button - Posicionado à direita */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="p-2 hover:bg-gray-800 text-gray-400 hover:text-white transition-colors bg-gray-800/30 border border-gray-700/30 ml-2"
-          >
-            {isCollapsed ? (
+            
+            {/* Avatar do perfil */}
+            <div className="bg-gray-700/50 rounded-full p-2 border border-gray-600/30">
+              <User className="h-4 w-4 text-gray-300" />
+            </div>
+            
+            {/* Botão de toggle bem visível */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg"
+              title="Expandir menu"
+            >
               <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
-        </div>
-
-        {/* Perfil do Gestor - Mais sutil */}
-        {!isCollapsed && (
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/30 border border-gray-700/20 hover:bg-gray-800/50 transition-colors duration-200">
-            <div className="bg-gray-700 rounded-full p-2">
-              <User className="h-4 w-4 text-gray-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-200 truncate">
-                {currentManagerName}
-              </p>
-              <p className="text-xs text-gray-400">
-                {isAdmin ? 'Administrador' : 'Gestor'}
-              </p>
-            </div>
+            </Button>
           </div>
-        )}
-        
-        {isCollapsed && (
-          <div className="flex justify-center mt-2">
-            <div className="bg-gray-700 rounded-full p-2">
-              <User className="h-4 w-4 text-gray-300" />
+        ) : (
+          /* Layout quando expandido */
+          <div className="space-y-4">
+            {/* Header com logo e botão de toggle */}
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <div className="flex-1">
+                <div className="relative group cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                  <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-4 py-2 text-lg transition-transform duration-300 hover:scale-105">
+                    <span>Tráfego</span>
+                    <span className="text-orange-300">Porcents</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Botão de toggle separado */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg ml-3"
+                title="Minimizar menu"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Perfil do gestor - mais discreto */}
+            <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 hover:bg-gray-800/30 transition-colors duration-200">
+              <div className="bg-gray-700/50 rounded-full p-2 border border-gray-600/30">
+                <User className="h-4 w-4 text-gray-300" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-300 truncate">
+                  {currentManagerName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {isAdmin ? 'Administrador' : 'Gestor'}
+                </p>
+              </div>
             </div>
           </div>
         )}
