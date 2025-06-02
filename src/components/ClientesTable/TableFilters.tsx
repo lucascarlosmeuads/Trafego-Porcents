@@ -1,4 +1,3 @@
-
 import { Search, Filter, Globe, Image, Settings, Users, UserCheck, UserX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -114,10 +113,7 @@ export function TableFilters({
           </SelectTrigger>
           <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
             <SelectItem value="all" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
-              <div className="flex items-center">
-                <Users className="w-4 h-4 mr-2 text-green-400" />
-                <span className="font-medium">Status Cliente</span>
-              </div>
+              <span className="font-medium">Status Cliente</span>
             </SelectItem>
             {STATUS_CAMPANHA.map(status => (
               <SelectItem key={status} value={status} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
@@ -144,10 +140,7 @@ export function TableFilters({
             <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {SITE_STATUS_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
-                  <div className="flex items-center">
-                    <Globe className="w-4 h-4 mr-2 text-orange-400" />
-                    <span className="font-medium">{option.label}</span>
-                  </div>
+                  <span className="font-medium">{option.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -169,10 +162,7 @@ export function TableFilters({
             <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {CRIATIVO_STATUS_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
-                  <div className="flex items-center">
-                    <Image className="w-4 h-4 mr-2 text-purple-400" />
-                    <span className="font-medium">{option.label}</span>
-                  </div>
+                  <span className="font-medium">{option.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -194,10 +184,7 @@ export function TableFilters({
             <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
               {BM_STATUS_OPTIONS.map(option => (
                 <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
-                  <div className="flex items-center">
-                    <Settings className="w-4 h-4 mr-2 text-cyan-400" />
-                    <span className="font-medium">{option.label}</span>
-                  </div>
+                  <span className="font-medium">{option.label}</span>
                 </SelectItem>
               ))}
             </SelectContent>

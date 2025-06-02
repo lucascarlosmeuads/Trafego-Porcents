@@ -5,7 +5,8 @@ import {
   Users, 
   Settings, 
   Book,
-  MessageCircle
+  MessageCircle,
+  Lightbulb
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -43,6 +44,14 @@ export function AdminMainMenu({
       onClick: () => onTabChange('clientes'),
       color: 'from-green-500 to-green-600',
       description: 'Gerenciar todos os clientes'
+    },
+    {
+      id: 'melhorias-dicas',
+      label: 'Melhorias & Dicas',
+      icon: Lightbulb,
+      onClick: () => onTabChange('melhorias-dicas'),
+      color: 'from-yellow-500 to-orange-500',
+      description: 'Novidades e produtividade'
     },
     {
       id: 'chat',
