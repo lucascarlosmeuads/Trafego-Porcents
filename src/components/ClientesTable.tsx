@@ -95,25 +95,73 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
 
   const fetchClientesComCriativos = async () => {
     try {
-      console.log('🎨 [ClientesTable] Buscando clientes com criativos do gestor...')
+      console.log('🎨 [ClientesTable] Buscando clientes com criativos VISUAIS (imagens/vídeos) do gestor...')
+      
+      // Definir tipos de arquivo que são considerados criativos visuais
+      const tiposCriativosVisuais = [
+        // Imagens
+        'image/jpeg',
+        'image/jpg', 
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml',
+        'image/bmp',
+        'image/tiff',
+        // Vídeos
+        'video/mp4',
+        'video/mov',
+        'video/avi',
+        'video/quicktime',
+        'video/webm',
+        'video/mkv',
+        'video/wmv',
+        'video/flv'
+      ]
       
       const { data: arquivos, error } = await supabase
         .from('arquivos_cliente')
-        .select('email_cliente')
+        .select('email_cliente, tipo_arquivo, nome_arquivo')
         .eq('author_type', 'gestor')
+        .in('tipo_arquivo', tiposCriativosVisuais)
       
       if (error) {
-        console.error('❌ [ClientesTable] Erro ao buscar arquivos:', error)
+        console.error('❌ [ClientesTable] Erro ao buscar arquivos criativos:', error)
         return
       }
       
       const emailsComCriativos = new Set(arquivos?.map(arquivo => arquivo.email_cliente) || [])
       
-      console.log('✅ [ClientesTable] Clientes com criativos encontrados:', emailsComCriativos.size)
+      console.log('✅ [ClientesTable] Análise de criativos visuais:')
+      console.log('   📊 Total de arquivos criativos encontrados:', arquivos?.length || 0)
+      console.log('   👥 Clientes únicos com criativos visuais:', emailsComCriativos.size)
+      console.log('   🎯 Tipos aceitos como criativos:', tiposCriativosVisuais.slice(0, 8).join(', '), '...')
+      
+      if (arquivos && arquivos.length > 0) {
+        console.log('   📁 Primeiros 5 arquivos criativos encontrados:')
+        arquivos.slice(0, 5).forEach((arquivo, index) => {
+          console.log(`      ${index + 1}. ${arquivo.nome_arquivo} (${arquivo.tipo_arquivo}) - Cliente: ${arquivo.email_cliente}`)
+        })
+        
+        // Verificar se há outros tipos de arquivo sendo enviados pelo gestor que não são criativos
+        const { data: outrosArquivos, error: outrosError } = await supabase
+          .from('arquivos_cliente')
+          .select('tipo_arquivo, email_cliente, nome_arquivo')
+          .eq('author_type', 'gestor')
+          .not('tipo_arquivo', 'in', `(${tiposCriativosVisuais.map(t => `"${t}"`).join(',')})`)
+        
+        if (!outrosError && outrosArquivos && outrosArquivos.length > 0) {
+          console.log('   📄 Arquivos NÃO criativos encontrados (ignorados no filtro):')
+          const tiposNaoCriativos = [...new Set(outrosArquivos.map(a => a.tipo_arquivo))]
+          console.log('      Tipos:', tiposNaoCriativos.join(', '))
+          console.log('      Quantidade:', outrosArquivos.length, 'arquivos')
+        }
+      }
+      
       setClientesComCriativos(emailsComCriativos)
       
     } catch (error) {
-      console.error('💥 [ClientesTable] Erro inesperado ao buscar criativos:', error)
+      console.error('💥 [ClientesTable] Erro inesperado ao buscar criativos visuais:', error)
     }
   }
 
