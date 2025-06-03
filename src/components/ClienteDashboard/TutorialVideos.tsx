@@ -190,14 +190,4 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
       )}
     </div>
   )
-
-  function handleVideoClick(video: any) {
-    setSelectedVideo(video)
-    setIsModalOpen(true)
-  }
-
-  function closeModal() {
-    setIsModalOpen(false)
-    setSelectedVideo(null)
-  }
 }
