@@ -16,35 +16,35 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
   const tutorialVideos = [
     {
       id: 1,
-      title: "Tutorial 1 - Configuração Inicial",
+      title: "Tutorial 1",
       description: "Aprenda os primeiros passos para configurar sua campanha de tráfego pago.",
       videoId: "EQZyJ3xFKII",
       videoUrl: "https://www.youtube.com/watch?v=EQZyJ3xFKII"
     },
     {
       id: 2,
-      title: "Tutorial 2 - Business Manager",
+      title: "Tutorial 2",
       description: "Como configurar e usar o Business Manager do Facebook para suas campanhas.",
       videoId: "iTAUcJfvN3M",
       videoUrl: "https://www.youtube.com/watch?v=iTAUcJfvN3M"
     },
     {
       id: 3,
-      title: "Tutorial 3 - Criação de Campanhas",
+      title: "Tutorial 3",
       description: "Passo a passo para criar campanhas eficazes e otimizadas.",
       videoId: "zJBZydYUzPo",
       videoUrl: "https://www.youtube.com/watch?v=zJBZydYUzPo"
     },
     {
       id: 4,
-      title: "Tutorial 4 - Análise de Métricas",
+      title: "Tutorial 4",
       description: "Como interpretar e usar as métricas para otimizar suas campanhas.",
       videoId: "ISq5qu2rUdc",
       videoUrl: "https://www.youtube.com/watch?v=ISq5qu2rUdc"
     },
     {
       id: 5,
-      title: "Tutorial 5 - Otimização Avançada",
+      title: "Tutorial 5",
       description: "Técnicas avançadas para maximizar o retorno das suas campanhas.",
       videoId: "j-uDyO5fd0s",
       videoUrl: "https://www.youtube.com/watch?v=j-uDyO5fd0s"
@@ -190,4 +190,14 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
       )}
     </div>
   )
+
+  function handleVideoClick(video: any) {
+    setSelectedVideo(video)
+    setIsModalOpen(true)
+  }
+
+  function closeModal() {
+    setIsModalOpen(false)
+    setSelectedVideo(null)
+  }
 }
