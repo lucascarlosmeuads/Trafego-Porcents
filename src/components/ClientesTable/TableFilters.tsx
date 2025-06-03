@@ -1,4 +1,3 @@
-
 import { Search, Filter, Globe, Image, Settings, Users, UserCheck, UserX } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
@@ -23,6 +22,7 @@ interface TableFiltersProps {
   bmFilter?: string
   setBmFilter?: (value: string) => void
   getStatusColor: (status: string) => string
+  isSearching?: boolean // ETAPA 3: Indicador de busca ativa
 }
 
 const SITE_STATUS_OPTIONS = [
@@ -57,7 +57,8 @@ export function TableFilters({
   setCreativoFilter,
   bmFilter = 'all',
   setBmFilter,
-  getStatusColor
+  getStatusColor,
+  isSearching = false
 }: TableFiltersProps) {
   
   const handleSiteStatusChange = (value: string) => {
@@ -88,11 +89,18 @@ export function TableFilters({
 
   return (
     <div className="flex flex-col space-y-6 sm:flex-row sm:space-y-0 sm:space-x-6">
-      {/* Campo de Busca com gradiente azul vibrante */}
+      {/* Campo de Busca com gradiente azul vibrante e indicador de busca */}
       <div className="relative flex-1">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 to-cyan-500/15 rounded-xl border border-blue-400/30 shadow-xl shadow-blue-500/15 backdrop-blur-sm"></div>
         <div className="relative">
-          <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5 drop-shadow-lg" />
+          {/* ETAPA 3: Ícone animado durante busca */}
+          {isSearching ? (
+            <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <div className="w-5 h-5 border-2 border-blue-300/30 border-t-blue-300 rounded-full animate-spin"></div>
+            </div>
+          ) : (
+            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-blue-300 w-5 h-5 drop-shadow-lg" />
+          )}
           <Input
             placeholder="Pesquisar por nome, email, telefone, vendedor..."
             value={searchTerm}

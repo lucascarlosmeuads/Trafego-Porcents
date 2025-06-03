@@ -22,6 +22,7 @@ import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
 import { TablePagination } from './ClientesTable/TablePagination'
+import { useOptimizedFilters } from '@/hooks/useOptimizedFilters'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -80,6 +81,17 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
+
+  // ETAPA 3: Usar filtros otimizados com debounce
+  const { filteredClientes: optimizedFilteredClientes, isSearching } = useOptimizedFilters({
+    clientes: clientes,
+    searchTerm,
+    statusFilter,
+    siteStatusFilter,
+    creativoFilter,
+    bmFilter,
+    clientesComCriativos
+  })
 
   const fetchClientesComCriativos = async () => {
     try {
@@ -201,7 +213,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
+  // DEPRECATED: Manter getFilteredClientes para compatibilidade, mas usar versão otimizada
   const getFilteredClientes = (clientesList: typeof clientes) => {
+    console.log('⚠️ [ClientesTable] Usando filtros legados - considere migrar para useOptimizedFilters')
     return clientesList.filter(cliente => {
       const matchesSearch = 
         cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -531,7 +545,9 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   }
 
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => {
-    // Initialize pagination for the current cliente list
+    // ETAPA 3: Usar filtros otimizados quando possível
+    const finalClientesList = clientesList === clientes ? optimizedFilteredClientes : getFilteredClientes(clientesList)
+    
     const {
       currentPage,
       itemsPerPage,
@@ -540,12 +556,22 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       handlePageChange,
       handleItemsPerPageChange
     } = useTablePagination({ 
-      data: clientesList,
+      data: finalClientesList,
       initialItemsPerPage: 50 
     })
 
     return (
       <div className="space-y-4">
+        {/* Indicador de busca em tempo real */}
+        {isSearching && searchTerm && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2">
+            <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
+              <div className="w-3 h-3 border-2 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
+              <span>Filtrando resultados...</span>
+            </div>
+          </div>
+        )}
+
         <div className="lg:hidden">
           <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-2">
             <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
@@ -732,8 +758,26 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   function renderWithTabs(clientesOriginais: typeof clientes) {
     const { clientesAtivos, clientesInativos, statusDistribution } = categorizarClientes(clientesOriginais)
     
-    const filteredClientesAtivos = getFilteredClientes(clientesAtivos)
-    const filteredClientesInativos = getFilteredClientes(clientesInativos)
+    // ETAPA 3: Usar filtros otimizados para as abas
+    const { filteredClientes: filteredClientesAtivos } = useOptimizedFilters({
+      clientes: clientesAtivos,
+      searchTerm,
+      statusFilter,
+      siteStatusFilter,
+      creativoFilter,
+      bmFilter,
+      clientesComCriativos
+    })
+
+    const { filteredClientes: filteredClientesInativos } = useOptimizedFilters({
+      clientes: clientesInativos,
+      searchTerm,
+      statusFilter,
+      siteStatusFilter,
+      creativoFilter,
+      bmFilter,
+      clientesComCriativos
+    })
 
     return (
       <div className="space-y-6 p-4 lg:p-0">
@@ -803,6 +847,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
               getStatusColor={getStatusColor}
+              isSearching={isSearching}
             />
 
             {renderClientesTable(filteredClientesAtivos)}
@@ -830,6 +875,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
               getStatusColor={getStatusColor}
+              isSearching={isSearching}
             />
 
             {renderClientesTable(filteredClientesInativos, true)}
@@ -839,35 +885,27 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  let clientesFiltrados = clientes
-  if (filterType === 'ativos') {
-    const { clientesAtivos } = categorizarClientes(clientes)
-    clientesFiltrados = clientesAtivos
-  } else if (filterType === 'inativos') {
-    const { clientesInativos } = categorizarClientes(clientes)
-    clientesFiltrados = clientesInativos
-  } else if (filterType === 'problemas') {
-    const { clientesProblemas } = categorizarClientes(clientes)
-    clientesFiltrados = clientesProblemas
-  } else if (filterType === 'sites-pendentes') {
-    clientesFiltrados = clientes.filter(cliente => 
-      cliente.site_status === 'aguardando_link'
-    )
-  } else if (filterType === 'sites-finalizados') {
-    console.log('🌐 [ClientesTable] Aplicando filtro de sites finalizados - usando dados já filtrados do useManagerData')
-    console.log('📊 [ClientesTable] Total de clientes recebidos do useManagerData:', clientes.length)
-    clientesFiltrados = clientes
-  } else {
+  // Para casos específicos (filterType), usar filtros otimizados
+  if (!filterType) {
     return renderWithTabs(clientes)
   }
 
-  const filteredClientes = getFilteredClientes(clientesFiltrados)
-
-  console.log('📋 [ClientesTable] Resultado final da filtragem:', {
-    filterType,
-    clientesOriginais: clientes.length,
-    clientesFiltrados: clientesFiltrados.length,
-    filteredClientes: filteredClientes.length
+  // ETAPA 3: Usar filtros otimizados para casos específicos
+  const finalFilteredClientes = optimizedFilteredClientes.filter(cliente => {
+    if (filterType === 'ativos') {
+      const { clientesAtivos } = categorizarClientes([cliente])
+      return clientesAtivos.length > 0
+    } else if (filterType === 'inativos') {
+      const { clientesInativos } = categorizarClientes([cliente])
+      return clientesInativos.length > 0
+    } else if (filterType === 'problemas') {
+      return cliente.status_campanha === 'Problema'
+    } else if (filterType === 'sites-pendentes') {
+      return cliente.site_status === 'aguardando_link'
+    } else if (filterType === 'sites-finalizados') {
+      return cliente.site_status === 'finalizado'
+    }
+    return true
   })
 
   if (loading) {
@@ -893,10 +931,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
-  if (!filterType) {
-    return renderWithTabs(clientes)
-  }
-
   return (
     <div className="space-y-4 p-4 lg:p-0">
       {isSitesContext && (
@@ -911,7 +945,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <TableActions
           selectedManager={currentManager || selectedManager || 'Próprios dados'}
-          filteredClientesCount={filteredClientes.length}
+          filteredClientesCount={finalFilteredClientes.length}
           realtimeConnected={realtimeConnected}
           onRefresh={refetch}
           onExport={exportToCSV}
@@ -939,9 +973,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         bmFilter={bmFilter}
         setBmFilter={setBmFilter}
         getStatusColor={getStatusColor}
+        isSearching={isSearching}
       />
 
-      {renderClientesTable(filteredClientes, filterType === 'inativos')}
+      {renderClientesTable(finalFilteredClientes, filterType === 'inativos')}
     </div>
   )
 }
