@@ -14,7 +14,7 @@ interface DashboardProps {
   activeTab?: string
 }
 
-export function Dashboard({ selectedManager, onManagerSelect, activeTab }: DashboardProps) {
+export function Dashboard({ selectedManager, onManagerSelect, activeTab = 'dashboard' }: DashboardProps) {
   const { user, isAdmin, isGestor, isCliente } = useAuth()
 
   console.log('🚀 [Dashboard] Lazy loading baseado no tipo de usuário')
@@ -36,7 +36,7 @@ export function Dashboard({ selectedManager, onManagerSelect, activeTab }: Dashb
   if (isGestor) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <LazyGestorDashboard />
+        <LazyGestorDashboard activeTab={activeTab} />
       </Suspense>
     )
   }
