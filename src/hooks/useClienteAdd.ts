@@ -11,11 +11,21 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
 
     if (!userEmail) {
       console.error('❌ [useClienteAdd] Email do usuário não fornecido')
+      toast({
+        title: "Erro",
+        description: "Email do usuário é obrigatório",
+        variant: "destructive"
+      })
       return { success: false, error: 'Email do usuário é obrigatório' }
     }
 
     if (!clienteData.email_gestor) {
       console.error('❌ [useClienteAdd] Email do gestor não fornecido')
+      toast({
+        title: "Erro",
+        description: "Email do gestor é obrigatório",
+        variant: "destructive"
+      })
       return { success: false, error: 'Email do gestor é obrigatório' }
     }
 
@@ -64,6 +74,12 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
           errorMessage = insertError.message
         }
         
+        toast({
+          title: "Erro ao adicionar cliente",
+          description: errorMessage,
+          variant: "destructive"
+        })
+        
         return { 
           success: false, 
           error: errorMessage,
@@ -73,6 +89,11 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
 
       if (!insertData || insertData.length === 0) {
         console.error('❌ [useClienteAdd] Nenhum dado retornado após inserção')
+        toast({
+          title: "Erro",
+          description: "Nenhum registro foi criado. Verifique suas permissões.",
+          variant: "destructive"
+        })
         return { 
           success: false, 
           error: 'Nenhum registro foi criado. Verifique suas permissões.' 
@@ -111,6 +132,23 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
 
       console.log('🎉 [useClienteAdd] === PROCESSO CONCLUÍDO COM SUCESSO ===')
 
+      // Toast de sucesso
+      toast({
+        title: "Sucesso!",
+        description: `Cliente ${clienteData.nome_cliente} adicionado com sucesso!`,
+      })
+
+      // Mostrar informação sobre senha se foi definida
+      if (senhaDefinida) {
+        setTimeout(() => {
+          toast({
+            title: "🔐 Senha padrão definida",
+            description: "Senha padrão definida como: parceriadesucesso",
+            duration: 8000
+          })
+        }, 1000)
+      }
+
       // Refresh dos dados
       setTimeout(() => {
         console.log('🔄 [useClienteAdd] Executando refresh dos dados...')
@@ -132,6 +170,12 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
       if (err.message) {
         errorMessage = err.message
       }
+      
+      toast({
+        title: "Erro Crítico",
+        description: errorMessage,
+        variant: "destructive"
+      })
       
       return {
         success: false,
