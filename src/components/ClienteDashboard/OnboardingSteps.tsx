@@ -255,14 +255,14 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 } shadow-sm hover:shadow-md`}
               >
                 <div className="flex items-center space-x-3 flex-1">
-                  {/* Checkbox sempre visível */}
+                  {/* Checkbox principal - maior e mais visível */}
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
-                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 w-5 h-5 border-2"
+                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 w-6 h-6 border-2"
                   />
                   
-                  {/* Numeração sempre visível */}
+                  {/* Numeração */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
                     isCompleted 
                       ? 'bg-green-600 border-green-600 text-white' 
@@ -289,7 +289,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                       <h4 className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-800'}`}>
                         {step.title}
                       </h4>
-                      {/* Indicador de conclusão separado */}
                       {isCompleted && (
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                       )}
@@ -303,36 +302,21 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                   </div>
                 </div>
                 
-                {/* Botões de ação */}
-                <div className="flex items-center gap-2">
+                {/* Botão de ação - sempre com texto branco */}
+                <div className="flex items-center">
                   <Button
-                    variant="ghost"
-                    size="sm"
                     onClick={step.action}
                     className={`${
                       isCompleted 
-                        ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
                         : isNext
-                        ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
-                        : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
-                    }`}
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-white'
+                    } shadow-md`}
+                    size="sm"
                   >
                     {step.actionText}
                     <ChevronRight className="h-4 w-4 ml-1" />
-                  </Button>
-                  
-                  {/* Botão explícito de marcar/desmarcar */}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleStepToggle(step.id)}
-                    className={`text-xs border-2 ${
-                      isCompleted 
-                        ? 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white' 
-                        : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
-                    }`}
-                  >
-                    {isCompleted ? 'Desmarcar' : 'Marcar'}
                   </Button>
                 </div>
               </div>
