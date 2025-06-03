@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -32,20 +31,17 @@ export function useSimpleSellerData(sellerEmail: string) {
     try {
       setLoading(true)
       
-      // Extrair nome do vendedor do email de forma padronizada
+      // Extrair nome do vendedor do email
       const emailPrefix = sellerEmail.split('@')[0]
       let sellerName = emailPrefix.replace('vendedor', '')
       
-      // Casos específicos - padronização exata
+      // Casos específicos
       if (emailPrefix.includes('itamar')) sellerName = 'Itamar'
       if (emailPrefix.includes('edu')) sellerName = 'Edu'
       
       console.log('🔍 Buscando clientes para vendedor:', sellerName)
-      console.log('📧 Email do vendedor:', sellerEmail)
 
-      // Buscar clientes usando DUAS condições para maior precisão:
-      // 1. Nome do vendedor deve corresponder EXATAMENTE
-      // 2. Email do gestor deve corresponder ao email do vendedor (para novos clientes)
+      // Buscar clientes do vendedor
       const { data, error } = await supabase
         .from('todos_clientes')
         .select(`
@@ -58,7 +54,7 @@ export function useSimpleSellerData(sellerEmail: string) {
           status_campanha,
           created_at
         `)
-        .or(`and(vendedor.eq.${sellerName}),and(email_gestor.eq.${sellerEmail})`)
+        .ilike('vendedor', `%${sellerName}%`)
         .order('created_at', { ascending: false })
 
       if (error) {
@@ -71,19 +67,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         return
       }
 
-      // Filtrar ainda mais para garantir que só apareçam clientes do vendedor correto
-      const clientesFiltrados = (data || []).filter(item => {
-        // Se tem email_gestor igual ao vendedor, é dele
-        if (item.email_gestor === sellerEmail) return true
-        
-        // Se o vendedor corresponde exatamente, é dele
-        if (item.vendedor === sellerName) return true
-        
-        // Caso contrário, não é dele
-        return false
-      })
-
-      const clientesFormatados = clientesFiltrados.map(item => ({
+      const clientesFormatados = (data || []).map(item => ({
         id: String(item.id),
         nome_cliente: item.nome_cliente || '',
         telefone: item.telefone || '',
@@ -97,7 +81,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       setClientes(clientesFormatados)
       setTotalClientes(clientesFormatados.length)
       
-      console.log(`✅ ${clientesFormatados.length} clientes encontrados para ${sellerName}`)
+      console.log(`✅ ${clientesFormatados.length} clientes encontrados`)
 
     } catch (error) {
       console.error('Erro:', error)
@@ -143,7 +127,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       const { data: existingClient, error: checkError } = await supabase
         .from('todos_clientes')
         .select('id, email_cliente, nome_cliente')
-        .ilike('email_cliente', normalizedEmail)
+        .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
         .maybeSingle()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -164,8 +148,8 @@ export function useSimpleSellerData(sellerEmail: string) {
           .update({
             nome_cliente: clienteData.nome_cliente,
             telefone: clienteData.telefone,
-            email_gestor: sellerEmail, // SEMPRE usar o email do vendedor atual
-            vendedor: vendorName, // SEMPRE usar o nome do vendedor atual
+            email_gestor: clienteData.email_gestor,
+            vendedor: vendorName,
             status_campanha: clienteData.status_campanha,
             data_venda: clienteData.data_venda,
             valor_comissao: 60.00
@@ -185,9 +169,9 @@ export function useSimpleSellerData(sellerEmail: string) {
         const novoCliente = {
           nome_cliente: clienteData.nome_cliente,
           telefone: clienteData.telefone,
-          email_cliente: normalizedEmail,
-          email_gestor: sellerEmail, // SEMPRE usar o email do vendedor atual
-          vendedor: vendorName, // SEMPRE usar o nome do vendedor atual
+          email_cliente: normalizedEmail, // Usar email normalizado
+          email_gestor: clienteData.email_gestor,
+          vendedor: vendorName,
           status_campanha: clienteData.status_campanha,
           data_venda: clienteData.data_venda,
           valor_comissao: 60.00,
@@ -216,8 +200,9 @@ export function useSimpleSellerData(sellerEmail: string) {
         console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
         
         try {
+          // Criar conta usando signUp com a senha informada e email normalizado
           const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: normalizedEmail,
+            email: normalizedEmail, // Usar email normalizado
             password: senhaParaUsar,
             options: {
               data: {
@@ -229,6 +214,7 @@ export function useSimpleSellerData(sellerEmail: string) {
 
           if (authError) {
             console.error('⚠️ [useSimpleSellerData] Erro ao criar conta Auth:', authError)
+            // Não bloquear se a conta já existir
             if (!authError.message.includes('already registered') && !authError.message.includes('User already registered')) {
               console.error('❌ [useSimpleSellerData] Erro crítico na criação da conta:', authError)
             }
@@ -238,6 +224,7 @@ export function useSimpleSellerData(sellerEmail: string) {
           }
         } catch (authErr) {
           console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
+          // Continuar mesmo se houver erro na criação da conta
         }
       }
 
@@ -262,6 +249,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       
       console.log('🎉 [useSimpleSellerData] Processo concluído com sucesso')
       
+      // Retornar estrutura IDÊNTICA ao useClienteOperations
       return { 
         success: true, 
         isNewClient: !clienteJaExistia,
