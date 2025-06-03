@@ -23,9 +23,6 @@ export const getModernStatusStyle = (status: string): string => {
   return modernStyles[status] || 'bg-gradient-to-r from-muted/50 to-muted/70 text-muted-foreground border border-border shadow-lg'
 }
 
-// Função principal para obter cor do status (compatibilidade)
-export const getStatusColor = getModernStatusStyle
-
 // Versão para badges mais simples (sem gradiente)
 export const getStatusBadgeClasses = (status: string): string => {
   const badgeStyles: Record<string, string> = {
