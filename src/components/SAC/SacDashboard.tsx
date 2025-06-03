@@ -31,7 +31,7 @@ export function SacDashboard() {
 
   // Função para lidar com atualizações de solicitação no modal
   const handleSolicitacaoUpdated = (updatedSolicitacao: SacSolicitacao) => {
-    console.log('🔄 [SacDashboard] === RECEBENDO ATUALIZAÇÃO DE SOLICITAÇÃO ===')
+    console.log('🔄 [SacDashboard] === RECEBENDO ATUALIZAÇÃO ===')
     console.log('🔄 [SacDashboard] Solicitação atualizada:', {
       id: updatedSolicitacao.id,
       email_gestor: updatedSolicitacao.email_gestor,

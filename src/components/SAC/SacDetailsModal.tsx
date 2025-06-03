@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -109,22 +108,12 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
   }
 
   const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
-    console.log('🔄 [SacDetailsModal] === RECEBENDO CHAMADA PARA UPDATE ===')
+    console.log('🔄 [SacDetailsModal] === CHAMADA PARA ATUALIZAR GESTOR ===')
     console.log('🔄 [SacDetailsModal] Dados recebidos:', {
       solicitacaoId,
       emailGestor,
-      nomeGestor,
-      currentSolicitacao_id: currentSolicitacao.id,
-      solicitacao_original_id: solicitacao.id
+      nomeGestor
     })
-    
-    // Validação extra para garantir que temos dados consistentes
-    if (solicitacaoId !== currentSolicitacao.id) {
-      console.warn('⚠️ [SacDetailsModal] IDs não coincidem!', {
-        recebido: solicitacaoId,
-        atual: currentSolicitacao.id
-      })
-    }
     
     try {
       console.log('🔄 [SacDetailsModal] Chamando updateGestor do hook...')
@@ -138,7 +127,7 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
   }
 
   const handleGestorUpdated = (updatedSolicitacao: SacSolicitacao) => {
-    console.log('🔄 [SacDetailsModal] === RECEBENDO NOTIFICAÇÃO DE ATUALIZAÇÃO ===')
+    console.log('🔄 [SacDetailsModal] === GESTOR ATUALIZADO ===')
     console.log('🔄 [SacDetailsModal] Dados atualizados:', {
       anterior: {
         email_gestor: currentSolicitacao.email_gestor,
