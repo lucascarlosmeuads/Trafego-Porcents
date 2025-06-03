@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
@@ -9,12 +8,11 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { 
-  MessageCircle, 
   FileText, 
   Upload, 
   Play,
-  CreditCard,
   BarChart3,
+  Headphones,
   ArrowLeft,
   CheckCircle2,
   Clock,
@@ -66,15 +64,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     },
     {
       id: 3,
-      title: 'Conversar sobre Business Manager',
-      description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
-      icon: MessageCircle,
-      action: () => onTabChange('chat'),
-      actionText: 'Acessar Chat',
-      canCheck: true
-    },
-    {
-      id: 4,
       title: 'Assistir Tutorial da BM',
       description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
       icon: Play,
@@ -83,25 +72,16 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       canCheck: true
     },
     {
+      id: 4,
+      title: 'Contatar Suporte se Necessário',
+      description: 'Entre em contato via SAC para tirar dúvidas ou solicitar ajuda',
+      icon: Headphones,
+      action: () => onTabChange('suporte'),
+      actionText: 'Acessar Suporte',
+      canCheck: true
+    },
+    {
       id: 5,
-      title: 'Recarregar Saldo de Tráfego',
-      description: 'Recarregue o saldo para tráfego pago na Business Manager',
-      icon: CreditCard,
-      action: () => onTabChange('chat'),
-      actionText: 'Acessar Chat',
-      canCheck: true
-    },
-    {
-      id: 6,
-      title: 'Finalizar Configurações',
-      description: 'Finalize configurações e tire dúvidas com seu gestor',
-      icon: MessageCircle,
-      action: () => onTabChange('chat'),
-      actionText: 'Acessar Chat',
-      canCheck: true
-    },
-    {
-      id: 7,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
@@ -176,7 +156,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 Guia de Configuração
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Siga estes passos para configurar sua campanha corretamente
+                Siga estes 5 passos para configurar sua campanha corretamente
               </CardDescription>
             </div>
           </div>

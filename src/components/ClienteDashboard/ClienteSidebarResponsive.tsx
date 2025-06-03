@@ -20,7 +20,7 @@ import {
   Upload, 
   TrendingUp, 
   Play, 
-  MessageCircle, 
+  Headphones, 
   LogOut 
 } from 'lucide-react'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
@@ -40,7 +40,7 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
     { id: 'arquivos', label: 'Materiais', icon: Upload },
     { id: 'vendas', label: 'Vendas', icon: TrendingUp },
     { id: 'tutoriais', label: 'Tutoriais', icon: Play },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
+    { id: 'suporte', label: 'Suporte', icon: Headphones },
   ]
 
   const handleSignOut = async () => {

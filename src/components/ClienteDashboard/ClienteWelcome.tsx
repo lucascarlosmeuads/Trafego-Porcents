@@ -5,9 +5,10 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
+import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { FileText, Upload, TrendingUp, Play, MessageCircle, User, Settings } from 'lucide-react'
+import { FileText, Upload, TrendingUp, Play, Headphones, User, Settings } from 'lucide-react'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
@@ -48,10 +49,10 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       color: 'bg-orange-500'
     },
     {
-      title: 'Chat com Gestor',
-      description: 'Entre em contato via chat no sistema para ser atendido pelo seu gestor e montar sua estratégia personalizada',
-      icon: MessageCircle,
-      action: () => onTabChange('chat'),
+      title: 'Suporte Rápido',
+      description: 'Acesse nossa central de atendimento via SAC para tirar dúvidas e receber suporte',
+      icon: Headphones,
+      action: () => onTabChange('suporte'),
       color: 'bg-teal-500'
     }
   ]
@@ -64,6 +65,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   if (isMobile) {
     return (
       <div className="pb-20"> {/* Espaço para navegação inferior */}
+        <AvisoMudancaAtendimento />
         <MobileOnboardingSteps onTabChange={onTabChange} />
       </div>
     )
@@ -92,6 +94,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           preencher o briefing e muito mais. Vamos começar?
         </p>
       </div>
+
+      {/* Aviso de Mudança */}
+      <AvisoMudancaAtendimento />
 
       {/* Seção de Perfil */}
       <Card className="bg-gray-900 border-gray-800">

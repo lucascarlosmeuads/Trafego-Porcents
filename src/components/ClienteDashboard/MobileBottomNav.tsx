@@ -4,8 +4,7 @@ import {
   FileText, 
   Upload, 
   TrendingUp, 
-  Play, 
-  MessageCircle 
+  Headphones 
 } from 'lucide-react'
 
 interface MobileBottomNavProps {
@@ -19,7 +18,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
     { id: 'briefing', label: 'Form', icon: FileText },
     { id: 'arquivos', label: 'Files', icon: Upload },
     { id: 'vendas', label: 'Vendas', icon: TrendingUp },
-    { id: 'chat', label: 'Chat', icon: MessageCircle },
+    { id: 'suporte', label: 'Suporte', icon: Headphones },
   ]
 
   return (

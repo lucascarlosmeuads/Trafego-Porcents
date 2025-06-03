@@ -8,7 +8,7 @@ import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
-import { ClienteChat } from './Chat/ClienteChat'
+import { SuporteRapido } from './ClienteDashboard/SuporteRapido'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
@@ -128,8 +128,8 @@ export function ClienteDashboard() {
         )
       case 'tutoriais':
         return <TutorialVideos onBack={handleBackToOverview} />
-      case 'chat':
-        return <ClienteChat onBack={handleBackToOverview} />
+      case 'suporte':
+        return <SuporteRapido onBack={handleBackToOverview} />
       default:
         return (
           <ClienteWelcome 
@@ -161,7 +161,7 @@ export function ClienteDashboard() {
               {activeTab === 'arquivos' && 'Materiais'}
               {activeTab === 'vendas' && 'Vendas'}
               {activeTab === 'tutoriais' && 'Tutoriais'}
-              {activeTab === 'chat' && 'Chat'}
+              {activeTab === 'suporte' && 'Suporte'}
             </div>
             <ProfileDropdown />
           </div>
