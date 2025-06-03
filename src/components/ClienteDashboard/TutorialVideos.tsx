@@ -102,10 +102,12 @@ export function TutorialVideos() {
           </div>
 
           <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
-            <h3 className="font-medium text-green-800 mb-2">🎯 Dica Importante</h3>
-            <p className="text-sm text-green-700">
-              Assista aos tutoriais na ordem apresentada para obter o máximo aproveitamento. 
-              Cada vídeo complementa o anterior e juntos formam um guia completo para o sucesso da sua campanha.
+            <h3 className="font-medium text-green-800 mb-2">📢 Recado Importante</h3>
+            <p className="text-sm text-green-700 leading-relaxed">
+              Fazer esses passos garante que sua campanha vá ao ar de forma mais rápida! 
+              Essas não são as configurações principais, mas são <strong>pré-configurações importantes</strong> que 
+              agilizam toda a parte da configuração avançada. Como somos parceiros, precisamos da sua 
+              colaboração nessas etapas para otimizar o processo e acelerar os resultados do seu negócio.
             </p>
           </div>
         </CardContent>
