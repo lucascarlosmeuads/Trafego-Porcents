@@ -26,9 +26,13 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated, onBack }:
     setNovasVendas(vendas)
   }, [vendas])
 
-  const handleInputChange = (index: number, field: string, value: string) => {
+  const handleInputChange = (index: number, field: keyof VendaCliente, value: string) => {
     const updatedVendas = [...novasVendas]
-    updatedVendas[index][field as keyof VendaCliente] = value as any
+    if (field === 'valor') {
+      updatedVendas[index][field] = Number(value)
+    } else {
+      updatedVendas[index][field] = value
+    }
     setNovasVendas(updatedVendas)
   }
 
