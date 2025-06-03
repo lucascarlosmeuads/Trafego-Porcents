@@ -1,357 +1,164 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { useToast } from '@/hooks/use-toast'
-import { supabase } from '@/lib/supabase'
-import { Plus, DollarSign, Calendar, Package, Trash2 } from 'lucide-react'
-import type { VendaCliente } from '@/hooks/useClienteData'
+import { ArrowLeft, ShoppingCart } from 'lucide-react'
+
+interface VendaCliente {
+  id: string
+  valor: number
+  data: string
+  produto: string
+}
 
 interface VendasManagerProps {
   emailCliente: string
   vendas: VendaCliente[]
   onVendasUpdated: () => void
+  onBack?: () => void
 }
 
-export function VendasManager({ emailCliente, vendas, onVendasUpdated }: VendasManagerProps) {
-  const [isAdding, setIsAdding] = useState(false)
-  const [comissaoPorVenda, setComissaoPorVenda] = useState(60)
-  const [novaVenda, setNovaVenda] = useState({
-    produto_vendido: '',
-    valor_venda: '',
-    data_venda: new Date().toISOString().split('T')[0],
-    observacoes: ''
-  })
-  const { toast } = useToast()
+export function VendasManager({ emailCliente, vendas, onVendasUpdated, onBack }: VendasManagerProps) {
+  const [novasVendas, setNovasVendas] = useState<VendaCliente[]>([])
+  const [loading, setLoading] = useState(false)
 
-  const totalVendas = vendas.reduce((sum, venda) => sum + Number(venda.valor_venda || 0), 0)
-  const totalComissoes = vendas.length * comissaoPorVenda
+  useEffect(() => {
+    setNovasVendas(vendas)
+  }, [vendas])
 
-  const handleAddVenda = async () => {
-    if (!novaVenda.valor_venda) {
-      toast({
-        title: "Erro",
-        description: "O valor da venda é obrigatório.",
-        variant: "destructive"
-      })
-      return
-    }
-
-    try {
-      const { error } = await supabase
-        .from('vendas_cliente')
-        .insert({
-          email_cliente: emailCliente,
-          produto_vendido: novaVenda.produto_vendido || 'Produto não especificado',
-          valor_venda: parseFloat(novaVenda.valor_venda),
-          data_venda: novaVenda.data_venda,
-          observacoes: novaVenda.observacoes
-        })
-
-      if (error) throw error
-
-      toast({
-        title: "Venda registrada!",
-        description: "Sua venda foi adicionada com sucesso.",
-      })
-
-      setNovaVenda({
-        produto_vendido: '',
-        valor_venda: '',
-        data_venda: new Date().toISOString().split('T')[0],
-        observacoes: ''
-      })
-      setIsAdding(false)
-      onVendasUpdated()
-
-    } catch (error) {
-      console.error('Erro ao adicionar venda:', error)
-      toast({
-        title: "Erro ao registrar venda",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
-      })
-    }
+  const handleInputChange = (index: number, field: string, value: string) => {
+    const updatedVendas = [...novasVendas]
+    // @ts-expect-error
+    updatedVendas[index][field] = value
+    setNovasVendas(updatedVendas)
   }
 
-  const handleDeleteVenda = async (vendaId: string) => {
+  const handleAddVenda = () => {
+    setNovasVendas([
+      ...novasVendas,
+      {
+        id: String(Date.now()),
+        valor: 0,
+        data: new Date().toISOString().split('T')[0],
+        produto: ''
+      }
+    ])
+  }
+
+  const handleRemoveVenda = (id: string) => {
+    setNovasVendas(novasVendas.filter(venda => venda.id !== id))
+  }
+
+  const handleSubmit = async () => {
+    setLoading(true)
     try {
+      const { supabase } = await import('@/lib/supabase')
       const { error } = await supabase
-        .from('vendas_cliente')
-        .delete()
-        .eq('id', vendaId)
+        .from('vendas_clientes')
+        .upsert(
+          novasVendas.map(venda => ({
+            ...venda,
+            email_cliente: emailCliente
+          })),
+          { onConflict: 'id' }
+        )
 
-      if (error) throw error
-
-      toast({
-        title: "Venda removida",
-        description: "A venda foi removida com sucesso.",
-      })
-
-      onVendasUpdated()
-
+      if (error) {
+        console.error('Erro ao atualizar vendas:', error)
+        alert('Erro ao atualizar vendas. Consulte o console para mais detalhes.')
+      } else {
+        alert('Vendas atualizadas com sucesso!')
+        onVendasUpdated()
+      }
     } catch (error) {
-      console.error('Erro ao remover venda:', error)
-      toast({
-        title: "Erro ao remover venda",
-        description: "Tente novamente em alguns instantes.",
-        variant: "destructive"
-      })
+      console.error('Erro ao atualizar vendas:', error)
+      alert('Erro ao atualizar vendas. Consulte o console para mais detalhes.')
+    } finally {
+      setLoading(false)
     }
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-black text-trafego-text-primary">Gerenciamento de Vendas</h1>
-        <p className="text-trafego-text-secondary">Registre e acompanhe suas vendas</p>
-      </div>
+      {/* Botão de voltar para desktop */}
+      {onBack && (
+        <div className="hidden md:block">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
 
-      {/* Configuração de Comissão */}
-      <Card 
-        className="border-trafego-border-subtle shadow-lg"
-        style={{backgroundColor: '#1f2937'}}
-      >
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-trafego-text-primary">
-            <DollarSign className="w-5 h-5 text-trafego-accent-primary" />
-            Configuração de Comissão
+          <CardTitle className="flex items-center gap-2">
+            <ShoppingCart className="w-5 h-5" />
+            Gerenciar Vendas
           </CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="comissao" className="text-trafego-text-primary font-medium">
-                Quanto você pagará de comissão por venda para a equipe?
-              </Label>
-              <div className="flex items-center gap-2 mt-2">
-                <span className="text-sm text-trafego-text-secondary">R$</span>
-                <Input
-                  id="comissao"
-                  type="number"
-                  value={comissaoPorVenda}
-                  onChange={(e) => setComissaoPorVenda(Number(e.target.value))}
-                  className="w-32 bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary focus:border-trafego-accent-primary"
-                  min="0"
-                  step="0.01"
-                />
-                <span className="text-sm text-trafego-text-secondary">por venda</span>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+        <CardContent className="space-y-4">
+          <p className="text-muted-foreground">
+            Registre e acompanhe suas vendas para uma gestão eficaz da sua campanha.
+          </p>
 
-      {/* Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card 
-          className="border-trafego-border-subtle shadow-lg"
-          style={{backgroundColor: '#1f2937'}}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-trafego-text-primary">Total de Vendas</CardTitle>
-            <Package className="h-4 w-4 text-trafego-accent-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-trafego-text-primary">{vendas.length}</div>
-            <p className="text-xs text-trafego-text-secondary">vendas registradas</p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="border-trafego-border-subtle shadow-lg"
-          style={{backgroundColor: '#1f2937'}}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-trafego-text-primary">Valor Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-trafego-accent-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-trafego-accent-primary">
-              R$ {totalVendas.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-trafego-text-secondary">em vendas</p>
-          </CardContent>
-        </Card>
-
-        <Card 
-          className="border-trafego-border-subtle shadow-lg"
-          style={{backgroundColor: '#1f2937'}}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-trafego-text-primary">Total de Comissões</CardTitle>
-            <DollarSign className="h-4 w-4 text-trafego-accent-primary" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-trafego-accent-secondary">
-              R$ {totalComissoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-            </div>
-            <p className="text-xs text-trafego-text-secondary">para a equipe</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Adicionar Nova Venda */}
-      <Card 
-        className="border-trafego-border-subtle shadow-lg"
-        style={{backgroundColor: '#1f2937'}}
-      >
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="text-trafego-text-primary">Registrar Nova Venda</CardTitle>
-            {!isAdding && (
-              <Button 
-                onClick={() => setIsAdding(true)}
-                className="bg-gradient-trafego hover:bg-gradient-trafego-hover text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Nova Venda
-              </Button>
-            )}
-          </div>
-        </CardHeader>
-        {isAdding && (
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="produto" className="text-trafego-text-primary font-medium">
-                  Nome do Produto (opcional)
-                </Label>
-                <Input
-                  id="produto"
-                  value={novaVenda.produto_vendido}
-                  onChange={(e) => setNovaVenda({ ...novaVenda, produto_vendido: e.target.value })}
-                  placeholder="Ex: Curso de Marketing Digital"
-                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="valor" className="text-trafego-text-primary font-medium">
-                  Valor da Venda *
-                </Label>
-                <Input
-                  id="valor"
-                  type="number"
-                  value={novaVenda.valor_venda}
-                  onChange={(e) => setNovaVenda({ ...novaVenda, valor_venda: e.target.value })}
-                  placeholder="0.00"
-                  step="0.01"
-                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="data" className="text-trafego-text-primary font-medium">
-                  Data da Venda
-                </Label>
-                <Input
-                  id="data"
-                  type="date"
-                  value={novaVenda.data_venda}
-                  onChange={(e) => setNovaVenda({ ...novaVenda, data_venda: e.target.value })}
-                  className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary focus:border-trafego-accent-primary"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="observacoes" className="text-trafego-text-primary font-medium">
-                Observações (opcional)
-              </Label>
-              <Textarea
-                id="observacoes"
-                value={novaVenda.observacoes}
-                onChange={(e) => setNovaVenda({ ...novaVenda, observacoes: e.target.value })}
-                placeholder="Adicione detalhes sobre a venda..."
-                rows={3}
-                className="bg-trafego-bg-input border-trafego-border-subtle text-trafego-text-primary placeholder:text-trafego-text-muted focus:border-trafego-accent-primary"
+          {novasVendas.map((venda, index) => (
+            <div key={venda.id} className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <input
+                type="date"
+                className="border rounded px-3 py-2"
+                value={venda.data}
+                onChange={e => handleInputChange(index, 'data', e.target.value)}
               />
+              <input
+                type="text"
+                placeholder="Produto"
+                className="border rounded px-3 py-2"
+                value={venda.produto}
+                onChange={e => handleInputChange(index, 'produto', e.target.value)}
+              />
+              <input
+                type="number"
+                placeholder="Valor"
+                className="border rounded px-3 py-2"
+                value={String(venda.valor)}
+                onChange={e => handleInputChange(index, 'valor', e.target.value)}
+              />
+              <div className="md:col-span-2 flex items-center justify-end gap-2">
+                <Button variant="outline" size="sm" onClick={() => handleRemoveVenda(venda.id)}>
+                  Remover
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button 
-                onClick={handleAddVenda}
-                className="bg-gradient-trafego hover:bg-gradient-trafego-hover text-white shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02]"
-              >
-                Registrar Venda
-              </Button>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsAdding(false)}
-                className="border-trafego-border-subtle text-trafego-text-primary hover:bg-trafego-bg-card"
-              >
-                Cancelar
-              </Button>
-            </div>
-          </CardContent>
-        )}
-      </Card>
+          ))}
 
-      {/* Lista de Vendas */}
-      <Card 
-        className="border-trafego-border-subtle shadow-lg"
-        style={{backgroundColor: '#1f2937'}}
-      >
-        <CardHeader>
-          <CardTitle className="text-trafego-text-primary">Histórico de Vendas</CardTitle>
-        </CardHeader>
-        <CardContent>
-          {vendas.length === 0 ? (
-            <div className="text-center py-8 text-trafego-text-secondary">
-              <Package className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhuma venda registrada ainda.</p>
-              <p className="text-sm">Clique em "Nova Venda" para começar.</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {vendas.map((venda) => (
-                <div 
-                  key={venda.id} 
-                  className="flex items-center justify-between p-4 border border-trafego-border-subtle rounded-lg transition-all duration-200 hover:border-trafego-accent-primary/30 hover:shadow-md"
-                  style={{backgroundColor: '#374151'}}
-                >
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <Package className="w-4 h-4 text-trafego-accent-primary" />
-                      <span className="font-medium text-trafego-text-primary">
-                        {venda.produto_vendido || 'Produto não especificado'}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-4 text-sm text-trafego-text-secondary">
-                      <div className="flex items-center gap-1">
-                        <DollarSign className="w-3 h-3" />
-                        R$ {Number(venda.valor_venda).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Calendar className="w-3 h-3" />
-                        {new Date(venda.data_venda).toLocaleDateString('pt-BR')}
-                      </div>
-                    </div>
-                    {venda.observacoes && (
-                      <p className="text-sm text-trafego-text-muted mt-1">{venda.observacoes}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      <div className="text-sm font-medium text-trafego-accent-primary">
-                        R$ {comissaoPorVenda.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                      </div>
-                      <div className="text-xs text-trafego-text-secondary">comissão</div>
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDeleteVenda(venda.id)}
-                      className="text-red-400 hover:text-red-300 hover:bg-red-500/10"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+          <div className="flex justify-between">
+            <Button variant="secondary" onClick={handleAddVenda}>
+              Adicionar Venda
+            </Button>
+            <Button onClick={handleSubmit} disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Vendas'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Botão de voltar para mobile */}
+      {onBack && (
+        <div className="md:hidden pt-4 border-t border-gray-200">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

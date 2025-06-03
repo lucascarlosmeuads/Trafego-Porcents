@@ -1,491 +1,267 @@
-
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Label } from '@/components/ui/label'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { useToast } from '@/hooks/use-toast'
+import { useState, useEffect } from 'react'
+import { useForm, Controller } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
-import { Edit, Save, CheckCircle } from 'lucide-react'
-import { useIsMobile } from '@/hooks/use-mobile'
-import type { BriefingCliente } from '@/hooks/useClienteData'
+import { useToast } from '@/components/ui/use-toast'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { ArrowLeft, CheckCircle } from 'lucide-react'
 
-interface BriefingFormProps {
-  briefing: BriefingCliente | null
-  emailCliente: string
-  onBriefingUpdated: () => void
+const briefingFormSchema = z.object({
+  nome_campanha: z.string().min(2, {
+    message: "Nome da campanha precisa ter pelo menos 2 caracteres.",
+  }),
+  publico_alvo: z.string().min(10, {
+    message: "Público alvo precisa ter pelo menos 10 caracteres.",
+  }),
+  objetivo_campanha: z.string().min(10, {
+    message: "Objetivo da campanha precisa ter pelo menos 10 caracteres.",
+  }),
+  canais_divulgacao: z.string().min(10, {
+    message: "Canais de divulgação precisa ter pelo menos 10 caracteres.",
+  }),
+  diferenciais_produto: z.string().min(10, {
+    message: "Diferenciais do produto precisa ter pelo menos 10 caracteres.",
+  }),
+  restricoes_campanha: z.string().optional(),
+})
+
+interface BriefingCliente {
+  nome_campanha: string
+  publico_alvo: string
+  objetivo_campanha: string
+  canais_divulgacao: string
+  diferenciais_produto: string
+  restricoes_campanha?: string | null
 }
 
-export function BriefingForm({ briefing, emailCliente, onBriefingUpdated }: BriefingFormProps) {
-  const [isEditing, setIsEditing] = useState(!briefing)
-  const [loading, setLoading] = useState(false)
-  const { toast } = useToast()
-  const isMobile = useIsMobile()
+interface BriefingFormProps {
+  briefing?: BriefingCliente | null
+  emailCliente: string
+  onBriefingUpdated: () => void
+  onBack?: () => void
+}
 
-  const [formData, setFormData] = useState({
-    nome_produto: briefing?.nome_produto || '',
-    descricao_resumida: briefing?.descricao_resumida || '',
-    publico_alvo: briefing?.publico_alvo || '',
-    diferencial: briefing?.diferencial || '',
-    investimento_diario: briefing?.investimento_diario?.toString() || '',
-    observacoes_finais: briefing?.observacoes_finais || '',
-    // Campos extras armazenados nas observações
-    dados_comprador: '',
-    situacao_site: '',
-    links_redes: ''
+export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack }: BriefingFormProps) {
+  const { toast } = useToast()
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [success, setSuccess] = useState(false)
+
+  const form = useForm<z.infer<typeof briefingFormSchema>>({
+    resolver: zodResolver(briefingFormSchema),
+    defaultValues: {
+      nome_campanha: briefing?.nome_campanha || "",
+      publico_alvo: briefing?.publico_alvo || "",
+      objetivo_campanha: briefing?.objetivo_campanha || "",
+      canais_divulgacao: briefing?.canais_divulgacao || "",
+      diferenciais_produto: briefing?.diferenciais_produto || "",
+      restricoes_campanha: briefing?.restricoes_campanha || "",
+    },
   })
 
-  const updateClienteStatus = async () => {
-    try {
-      console.log('🔄 [BriefingForm] Atualizando status do cliente para "Brief"...')
-      
-      const { error: updateError } = await supabase
-        .from('todos_clientes')
-        .update({ 
-          status_campanha: 'Brief'
-        })
-        .eq('email_cliente', emailCliente)
+  useEffect(() => {
+    if (briefing) {
+      form.reset(briefing)
+    }
+  }, [briefing, form])
 
-      if (updateError) {
-        console.error('❌ [BriefingForm] Erro ao atualizar status do cliente:', updateError)
+  async function onSubmit(values: z.infer<typeof briefingFormSchema>) {
+    setIsSubmitting(true)
+    setSuccess(false)
+
+    try {
+      const { error } = await supabase
+        .from('briefings_clientes')
+        .upsert({
+          email_cliente: emailCliente,
+          nome_campanha: values.nome_campanha,
+          publico_alvo: values.publico_alvo,
+          objetivo_campanha: values.objetivo_campanha,
+          canais_divulgacao: values.canais_divulgacao,
+          diferenciais_produto: values.diferenciais_produto,
+          restricoes_campanha: values.restricoes_campanha,
+        }, { onConflict: 'email_cliente' })
+
+      if (error) {
+        console.error("Erro ao salvar o briefing:", error)
         toast({
-          title: "Aviso",
-          description: "Briefing salvo, mas houve um problema ao atualizar o status. Entre em contato com o suporte.",
-          variant: "default"
+          variant: "destructive",
+          title: "Erro ao salvar.",
+          description: "Ocorreu um erro ao salvar o briefing. Tente novamente.",
         })
       } else {
-        console.log('✅ [BriefingForm] Status do cliente atualizado para "Brief" com sucesso')
+        toast({
+          title: "Sucesso!",
+          description: "Briefing salvo com sucesso.",
+        })
+        setSuccess(true)
+        onBriefingUpdated()
       }
     } catch (error) {
-      console.error('💥 [BriefingForm] Erro crítico ao atualizar status:', error)
-    }
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
-
-    console.log('🔄 [BriefingForm] Iniciando submissão do formulário...')
-    console.log('📧 [BriefingForm] Email do cliente:', emailCliente)
-    console.log('📝 [BriefingForm] Dados do formulário:', formData)
-
-    try {
-      // Validar campos obrigatórios
-      if (!formData.nome_produto.trim()) {
-        console.error('❌ [BriefingForm] Nome do produto é obrigatório')
-        toast({
-          title: "Campo obrigatório",
-          description: "Nome do produto é obrigatório.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      if (!emailCliente) {
-        console.error('❌ [BriefingForm] Email do cliente não fornecido')
-        toast({
-          title: "Erro de autenticação",
-          description: "Email do cliente não encontrado. Faça login novamente.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      // Verificar se o usuário está autenticado
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      
-      if (authError) {
-        console.error('❌ [BriefingForm] Erro de autenticação:', authError)
-        toast({
-          title: "Erro de autenticação",
-          description: "Faça login para continuar.",
-          variant: "destructive"
-        })
-        return
-      }
-
-      console.log('👤 [BriefingForm] Usuário autenticado:', user?.email)
-
-      // Montar observações consolidadas
-      let observacoesCompletas = formData.observacoes_finais || ''
-      
-      if (formData.dados_comprador) {
-        observacoesCompletas += `\n\n📊 Dados do comprador ideal: ${formData.dados_comprador}`
-      }
-      
-      if (formData.situacao_site) {
-        observacoesCompletas += `\n\n🌐 Situação do site: ${formData.situacao_site}`
-      }
-      
-      if (formData.links_redes) {
-        observacoesCompletas += `\n\n🔗 Links e redes sociais: ${formData.links_redes}`
-      }
-
-      const briefingData = {
-        email_cliente: emailCliente,
-        nome_produto: formData.nome_produto.trim(),
-        descricao_resumida: formData.descricao_resumida.trim() || null,
-        publico_alvo: formData.publico_alvo.trim() || null,
-        diferencial: formData.diferencial.trim() || null,
-        investimento_diario: formData.investimento_diario ? Number(formData.investimento_diario) : null,
-        observacoes_finais: observacoesCompletas.trim() || null,
-        liberar_edicao: true,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      }
-
-      console.log('💾 [BriefingForm] Dados preparados para inserção:', briefingData)
-
-      if (briefing) {
-        // Atualizar briefing existente
-        console.log('🔄 [BriefingForm] Atualizando briefing existente com ID:', briefing.id)
-        
-        const { data, error } = await supabase
-          .from('briefings_cliente')
-          .update({
-            nome_produto: briefingData.nome_produto,
-            descricao_resumida: briefingData.descricao_resumida,
-            publico_alvo: briefingData.publico_alvo,
-            diferencial: briefingData.diferencial,
-            investimento_diario: briefingData.investimento_diario,
-            observacoes_finais: briefingData.observacoes_finais,
-            updated_at: briefingData.updated_at
-          })
-          .eq('id', briefing.id)
-          .select()
-
-        if (error) {
-          console.error('❌ [BriefingForm] Erro ao atualizar briefing:', error)
-          throw error
-        }
-
-        console.log('✅ [BriefingForm] Briefing atualizado com sucesso:', data)
-        await updateClienteStatus()
-      } else {
-        // Criar novo briefing
-        console.log('📝 [BriefingForm] Criando novo briefing...')
-        
-        const { data, error } = await supabase
-          .from('briefings_cliente')
-          .insert(briefingData)
-          .select()
-
-        if (error) {
-          console.error('❌ [BriefingForm] Erro ao inserir briefing:', error)
-          throw error
-        }
-
-        console.log('✅ [BriefingForm] Briefing criado com sucesso:', data)
-        await updateClienteStatus()
-      }
-
+      console.error("Erro inesperado ao salvar o briefing:", error)
       toast({
-        title: "Sucesso!",
-        description: "Seu briefing foi salvo com sucesso e enviado para nossa equipe.",
-      })
-
-      console.log('🎉 [BriefingForm] Processo concluído com sucesso')
-      setIsEditing(false)
-      onBriefingUpdated()
-
-    } catch (error: any) {
-      console.error('💥 [BriefingForm] Erro crítico ao salvar briefing:', error)
-      
-      let errorMessage = "Ocorreu um erro inesperado. Tente novamente."
-      
-      if (error.message?.includes('permission denied') || error.message?.includes('RLS')) {
-        errorMessage = "Você não tem permissão para salvar este briefing. Verifique se está logado."
-      } else if (error.message?.includes('duplicate key')) {
-        errorMessage = "Já existe um briefing para este cliente."
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente."
-      } else if (error.message) {
-        errorMessage = `Erro: ${error.message}`
-      }
-
-      toast({
-        title: "Erro ao salvar briefing",
-        description: errorMessage,
-        variant: "destructive"
+        variant: "destructive",
+        title: "Erro Inesperado.",
+        description: "Ocorreu um erro inesperado. Tente novamente mais tarde.",
       })
     } finally {
-      setLoading(false)
+      setIsSubmitting(false)
     }
   }
 
-  const canEdit = !briefing || briefing.liberar_edicao
-
   return (
-    <Card className={isMobile ? 'mx-0' : ''}>
-      <CardHeader>
-        <CardTitle className={`flex items-center justify-between ${
-          isMobile ? 'text-lg flex-col items-start gap-2' : ''
-        }`}>
-          <span>Formulário de Briefing</span>
-          {briefing && !isEditing && canEdit && (
-            <Button 
-              variant="outline" 
-              size={isMobile ? "default" : "sm"}
-              onClick={() => setIsEditing(true)}
-              className={isMobile ? 'w-full' : ''}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Editar
-            </Button>
-          )}
-          {briefing && !canEdit && (
-            <div className={`flex items-center gap-2 text-green-600 ${
-              isMobile ? 'w-full justify-center' : ''
-            }`}>
-              <CheckCircle className="w-4 h-4" />
-              <span className="text-sm">Briefing aprovado</span>
-            </div>
-          )}
-        </CardTitle>
-      </CardHeader>
-      <CardContent className={isMobile ? 'px-4' : ''}>
-        {isEditing ? (
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Nome do Produto */}
-            <div>
-              <Label htmlFor="nome_produto" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                📝 Nome do Produto ou Serviço *
-              </Label>
-              <Input
-                id="nome_produto"
-                value={formData.nome_produto}
-                onChange={(e) => setFormData(prev => ({ ...prev, nome_produto: e.target.value }))}
-                required
-                className={isMobile ? 'mt-1 text-base' : ''}
-                placeholder="Ex: Mentoria Transformacional, Loja de Moda Fitness, Curso de Inglês para Adultos"
+    <div className="space-y-6">
+      {/* Botão de voltar para desktop */}
+      {onBack && (
+        <div className="hidden md:block">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            {success ? (
+              <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
+            ) : null}
+            Briefing da Campanha
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="nome_campanha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nome da Campanha</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Campanha de Natal 2024" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Descrição do que vende */}
-            <div>
-              <Label htmlFor="descricao_resumida" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                📣 Como você explicaria o que você vende (de forma breve)?
-              </Label>
-              <Textarea
-                id="descricao_resumida"
-                value={formData.descricao_resumida}
-                onChange={(e) => setFormData(prev => ({ ...prev, descricao_resumida: e.target.value }))}
-                placeholder="Descreva como você apresenta seu produto para alguém pela primeira vez."
-                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
+              <FormField
+                control={form.control}
+                name="publico_alvo"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Público Alvo</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Mulheres de 25 a 35 anos, interessadas em moda e beleza, residentes no Brasil."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Público-alvo */}
-            <div>
-              <Label htmlFor="publico_alvo" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                🎯 Quem é o seu público-alvo?
-              </Label>
-              <Textarea
-                id="publico_alvo"
-                value={formData.publico_alvo}
-                onChange={(e) => setFormData(prev => ({ ...prev, publico_alvo: e.target.value }))}
-                placeholder="Ex: Mulheres de 25 a 40 anos, mães solo, empreendedores, homens que querem emagrecer..."
-                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
+              <FormField
+                control={form.control}
+                name="objetivo_campanha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Objetivo da Campanha</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Aumentar o reconhecimento da marca e gerar leads qualificados."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Dados do comprador ideal */}
-            <div>
-              <Label htmlFor="dados_comprador" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                📊 Dados do comprador ideal (faixa etária, gênero, localização):
-              </Label>
-              <Input
-                id="dados_comprador"
-                value={formData.dados_comprador}
-                onChange={(e) => setFormData(prev => ({ ...prev, dados_comprador: e.target.value }))}
-                placeholder="Ex: 25-40 anos, feminino, São Paulo"
-                className={isMobile ? 'mt-1 text-base' : ''}
+              <FormField
+                control={form.control}
+                name="canais_divulgacao"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Canais de Divulgação</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Facebook, Instagram, Google Ads, e-mail marketing."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Diferencial */}
-            <div>
-              <Label htmlFor="diferencial" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                🚀 Qual é o maior diferencial do seu produto ou serviço?
-              </Label>
-              <Textarea
-                id="diferencial"
-                value={formData.diferencial}
-                onChange={(e) => setFormData(prev => ({ ...prev, diferencial: e.target.value }))}
-                placeholder="O que torna seu produto único e especial?"
-                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
+              <FormField
+                control={form.control}
+                name="diferenciais_produto"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Diferenciais do Produto/Serviço</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Produto sustentável, alta qualidade, design exclusivo."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            {/* Investimento */}
-            <div>
-              <Label htmlFor="investimento_diario" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                💰 Quanto você pretende investir por dia em tráfego pago?
-              </Label>
-              <RadioGroup
-                value={formData.investimento_diario}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, investimento_diario: value }))}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="10" id="inv10" />
-                  <Label htmlFor="inv10">R$ 10/dia</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="30" id="inv30" />
-                  <Label htmlFor="inv30">R$ 30/dia</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="50" id="inv50" />
-                  <Label htmlFor="inv50">R$ 50/dia</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="100" id="inv100" />
-                  <Label htmlFor="inv100">R$ 100+/dia</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Situação do site */}
-            <div>
-              <Label htmlFor="situacao_site" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                🌐 Situação do seu site:
-              </Label>
-              <RadioGroup
-                value={formData.situacao_site}
-                onValueChange={(value) => setFormData(prev => ({ ...prev, situacao_site: value }))}
-                className="mt-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="tem_site" id="tem_site" />
-                  <Label htmlFor="tem_site">Sim, já tenho um site</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="quero_site" id="quero_site" />
-                  <Label htmlFor="quero_site">Não tenho, mas quero que vocês façam um</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="nao_preciso" id="nao_preciso" />
-                  <Label htmlFor="nao_preciso">Não tenho e não preciso de um</Label>
-                </div>
-              </RadioGroup>
-            </div>
-
-            {/* Links e redes sociais */}
-            {formData.situacao_site === 'tem_site' && (
-              <div>
-                <Label htmlFor="links_redes" className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                  🔗 Cole os links do seu site e redes sociais aqui:
-                </Label>
-                <Textarea
-                  id="links_redes"
-                  value={formData.links_redes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, links_redes: e.target.value }))}
-                  placeholder="Instagram, site, YouTube, página de vendas..."
-                  className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
-                />
-              </div>
-            )}
-
-            {/* Observações finais */}
-            <div>
-              <Label htmlFor="observacoes_finais" className={isMobile ? 'text-sm font-medium' : ''}>
-                Observações Finais
-              </Label>
-              <Textarea
-                id="observacoes_finais"
-                value={formData.observacoes_finais}
-                onChange={(e) => setFormData(prev => ({ ...prev, observacoes_finais: e.target.value }))}
-                placeholder="Informações adicionais importantes..."
-                className={isMobile ? 'mt-1 text-base min-h-[80px]' : ''}
+              <FormField
+                control={form.control}
+                name="restricoes_campanha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Restrições da Campanha (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        placeholder="Ex: Não usar imagens de concorrentes, evitar horários de pico."
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-
-            <div className={`flex gap-2 ${isMobile ? 'flex-col' : ''}`}>
-              <Button 
-                type="submit" 
-                disabled={loading}
-                className={isMobile ? 'w-full py-3 text-base' : ''}
-              >
-                <Save className="w-4 h-4 mr-2" />
-                {loading ? 'Salvando...' : 'Salvar Briefing'}
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "Salvando..." : "Salvar Briefing"}
               </Button>
-              {briefing && (
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  onClick={() => setIsEditing(false)}
-                  className={isMobile ? 'w-full py-3 text-base' : ''}
-                >
-                  Cancelar
-                </Button>
-              )}
-            </div>
-          </form>
-        ) : briefing ? (
-          <div className="space-y-4">
-            <div>
-              <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                📝 Nome do Produto/Serviço
-              </Label>
-              <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium`}>
-                {briefing.nome_produto}
-              </p>
-            </div>
+            </form>
+          </Form>
+        </CardContent>
+      </Card>
 
-            {briefing.descricao_resumida && (
-              <div>
-                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                  📣 Como você explica o que vende
-                </Label>
-                <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.descricao_resumida}</p>
-              </div>
-            )}
-
-            {briefing.publico_alvo && (
-              <div>
-                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                  🎯 Público-alvo
-                </Label>
-                <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.publico_alvo}</p>
-              </div>
-            )}
-
-            {briefing.diferencial && (
-              <div>
-                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                  🚀 Diferencial do Produto
-                </Label>
-                <p className={isMobile ? 'text-base' : 'text-sm'}>{briefing.diferencial}</p>
-              </div>
-            )}
-
-            {briefing.investimento_diario && (
-              <div>
-                <Label className={`${isMobile ? 'text-sm font-medium' : ''} flex items-center gap-2`}>
-                  💰 Investimento Diário
-                </Label>
-                <p className={`${isMobile ? 'text-base' : 'text-sm'} font-medium`}>
-                  R$ {briefing.investimento_diario}/dia
-                </p>
-              </div>
-            )}
-
-            {briefing.observacoes_finais && (
-              <div>
-                <Label className={isMobile ? 'text-sm font-medium' : ''}>Observações Finais</Label>
-                <p className={isMobile ? 'text-base' : 'text-sm'} style={{ whiteSpace: 'pre-wrap' }}>{briefing.observacoes_finais}</p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <p className={`text-muted-foreground ${isMobile ? 'text-base text-center' : ''}`}>
-            Clique no botão acima para preencher seu briefing e começar sua campanha.
-          </p>
-        )}
-      </CardContent>
-    </Card>
+      {/* Botão de voltar para mobile */}
+      {onBack && (
+        <div className="md:hidden pt-4 border-t border-gray-200">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
+    </div>
   )
 }

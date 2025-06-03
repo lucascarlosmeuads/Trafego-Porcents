@@ -1,7 +1,7 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useChatMessages } from '@/hooks/useChatMessages'
-import { useChatProfiles } from '@/hooks/useChatProfiles'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { MessageCircle, ArrowLeft } from 'lucide-react'
@@ -13,37 +13,56 @@ interface ClienteChatProps {
 
 export function ClienteChat({ onBack }: ClienteChatProps) {
   const { user } = useAuth()
-  const { gestorProfiles } = useChatProfiles()
-  const [selectedGestor, setSelectedGestor] = useState<string | null>(null)
-
-  useEffect(() => {
-    if (gestorProfiles.length > 0 && !selectedGestor) {
-      // Auto-select the first gestor if none is selected
-      setSelectedGestor(gestorProfiles[0].email)
-    }
-  }, [gestorProfiles, selectedGestor])
-
-  // Auto-select first gestor when profiles load
-  useEffect(() => {
-    if (gestorProfiles.length > 0 && !selectedGestor) {
-      setSelectedGestor(gestorProfiles[0].email)
-    }
-  }, [gestorProfiles, selectedGestor])
-
-  const selectedGestorProfile = gestorProfiles.find(g => g.email === selectedGestor)
-
+  
+  // Para cliente, sempre usar seu próprio email como emailCliente
+  // O emailGestor será determinado automaticamente pelo sistema
   const {
-    messages,
+    mensagens,
     loading,
-    sendMessage,
-    markAsRead
-  } = useChatMessages(user?.email || '', selectedGestor || '', 'cliente')
+    enviarMensagem
+  } = useChatMessages(user?.email, undefined)
+
+  // Buscar dados do gestor do cliente
+  const [gestorEmail, setGestorEmail] = useState<string | null>(null)
+  const [gestorNome, setGestorNome] = useState<string>('Gestor')
 
   useEffect(() => {
-    if (selectedGestor && messages.length > 0) {
-      markAsRead()
+    const buscarGestorDoCliente = async () => {
+      if (!user?.email) return
+      
+      try {
+        const { supabase } = await import('@/lib/supabase')
+        const { data: clienteData } = await supabase
+          .from('todos_clientes')
+          .select('email_gestor')
+          .eq('email_cliente', user.email)
+          .maybeSingle()
+
+        if (clienteData?.email_gestor) {
+          setGestorEmail(clienteData.email_gestor)
+          
+          // Buscar nome do gestor
+          const { data: gestorData } = await supabase
+            .from('gestores')
+            .select('nome')
+            .eq('email', clienteData.email_gestor)
+            .maybeSingle()
+            
+          if (gestorData?.nome) {
+            setGestorNome(gestorData.nome)
+          }
+        }
+      } catch (error) {
+        console.error('Erro ao buscar gestor:', error)
+      }
     }
-  }, [selectedGestor, messages.length, markAsRead])
+
+    buscarGestorDoCliente()
+  }, [user?.email])
+
+  const handleSendMessage = async (content: string, type: 'texto' | 'audio' = 'texto') => {
+    await enviarMensagem(content, type)
+  }
 
   return (
     <div className="space-y-6">
@@ -69,28 +88,28 @@ export function ClienteChat({ onBack }: ClienteChatProps) {
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {selectedGestor ? (
+          {gestorEmail ? (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
                     <span className="text-white font-medium text-sm">
-                      {selectedGestorProfile?.nome_gestor?.charAt(0).toUpperCase() || 'G'}
+                      {gestorNome.charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <h3 className="font-medium">{selectedGestorProfile?.nome_gestor || 'Gestor'}</h3>
-                    <p className="text-sm text-muted-foreground">{selectedGestor}</p>
+                    <h3 className="font-medium">{gestorNome}</h3>
+                    <p className="text-sm text-muted-foreground">{gestorEmail}</p>
                   </div>
                 </div>
               </div>
 
               <ChatInterface
-                messages={messages}
-                onSendMessage={sendMessage}
-                loading={loading}
-                currentUserEmail={user?.email || ''}
-                otherUserName={selectedGestorProfile?.nome_gestor || 'Gestor'}
+                emailCliente={user?.email || ''}
+                emailGestor={gestorEmail}
+                nomeCliente={user?.name || 'Cliente'}
+                onBack={onBack}
+                showBackButton={false}
               />
             </div>
           ) : (

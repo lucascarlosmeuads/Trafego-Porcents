@@ -2,21 +2,62 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-interface ProfileData {
+interface GestorProfile {
   email: string
-  nome: string
+  nome_gestor: string
   avatar_url?: string | null
 }
 
 interface UseChatProfilesReturn {
-  gestorProfile: ProfileData | null
-  clienteProfile: ProfileData | null
+  gestorProfiles: GestorProfile[]
   loading: boolean
+  error: string | null
 }
 
-export function useChatProfiles(emailCliente: string, emailGestor: string): UseChatProfilesReturn {
-  const [gestorProfile, setGestorProfile] = useState<ProfileData | null>(null)
-  const [clienteProfile, setClienteProfile] = useState<ProfileData | null>(null)
+export function useChatProfiles(): UseChatProfilesReturn {
+  const [gestorProfiles, setGestorProfiles] = useState<GestorProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+
+  useEffect(() => {
+    const fetchGestorProfiles = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('gestores')
+          .select('email, nome, avatar_url')
+          .eq('ativo', true)
+
+        if (error) throw error
+
+        const profiles = data?.map(gestor => ({
+          email: gestor.email,
+          nome_gestor: gestor.nome,
+          avatar_url: gestor.avatar_url
+        })) || []
+
+        setGestorProfiles(profiles)
+      } catch (err) {
+        console.error('Erro ao buscar perfis de gestores:', err)
+        setError(err instanceof Error ? err.message : 'Erro desconhecido')
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGestorProfiles()
+  }, [])
+
+  return {
+    gestorProfiles,
+    loading,
+    error
+  }
+}
+
+// Manter a versão original do hook para compatibilidade com outros componentes
+export function useChatProfiles(emailCliente: string, emailGestor: string) {
+  const [gestorProfile, setGestorProfile] = useState<any>(null)
+  const [clienteProfile, setClienteProfile] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -42,7 +83,7 @@ export function useChatProfiles(emailCliente: string, emailGestor: string): UseC
           })
         }
 
-        // Buscar dados do cliente (primeiro verificar se existe perfil)
+        // Buscar dados do cliente
         const { data: clienteProfileData } = await supabase
           .from('cliente_profiles')
           .select('email_cliente, nome_display, avatar_url')
