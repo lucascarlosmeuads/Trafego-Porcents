@@ -1,5 +1,4 @@
 
-import React, { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, CheckCircle, AlertTriangle, CircleDollarSign, XCircle, Clock, CreditCard } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
@@ -10,110 +9,96 @@ interface AdminDashboardMetricsProps {
   selectedManager?: string | null
 }
 
-export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({ 
-  clientes, 
-  selectedManager 
-}: AdminDashboardMetricsProps) {
+export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashboardMetricsProps) {
   console.log('📊 [AdminDashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
   console.log('📊 [AdminDashboardMetrics] Gestor selecionado:', selectedManager)
 
-  // MEMOIZAÇÃO DOS CÁLCULOS PESADOS
-  const metricas = useMemo(() => {
-    console.log('🧮 [AdminDashboardMetrics] Recalculando métricas (memoizado)')
-    
-    // FUNÇÃO CORRIGIDA: Determinar se uma comissão é considerada pendente
-    const isComissaoPendente = (comissao: string | null | undefined): boolean => {
-      if (!comissao || comissao.trim() === '') {
-        return true
-      }
-      
-      const comissaoTrimmed = comissao.trim()
-      
-      if (comissaoTrimmed === 'Pago') {
-        return false
-      }
-      
-      return true
+  // FUNÇÃO CORRIGIDA: Determinar se uma comissão é considerada pendente
+  const isComissaoPendente = (comissao: string | null | undefined): boolean => {
+    // Considera pendente TODOS os casos que NÃO são explicitamente "Pago":
+    if (!comissao || comissao.trim() === '') {
+      return true // null, undefined, string vazia
     }
-
-    // Total de clientes
-    const totalClientes = clientes.length
-
-    // Campanhas no ar (status "Campanha no Ar" ou "Otimização")
-    const clientesNoAr = clientes.filter(cliente => 
-      cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
-    )
-
-    // CÁLCULO CORRIGIDO: Total pendente - SOMA OS VALORES REAIS de valor_comissao
-    const clientesPendentes = clientes.filter(cliente => 
-      isComissaoPendente(cliente.comissao)
-    )
-    const totalPendente = clientesPendentes.reduce((total, cliente) => 
-      total + (cliente.valor_comissao || 60.00), 0
-    )
-
-    // CÁLCULO CORRIGIDO: Total já recebido - SOMA OS VALORES REAIS de valor_comissao
-    const clientesPagos = clientes.filter(cliente => 
-      cliente.comissao === 'Pago'
-    )
-    const totalRecebido = clientesPagos.reduce((total, cliente) => 
-      total + (cliente.valor_comissao || 60.00), 0
-    )
-
-    // Clientes com problemas
-    const clientesProblemas = clientes.filter(cliente => 
-      cliente.status_campanha === 'Problema'
-    )
-
-    return {
-      totalClientes,
-      clientesNoAr,
-      clientesPendentes,
-      totalPendente,
-      clientesPagos,
-      totalRecebido,
-      clientesProblemas
+    
+    const comissaoTrimmed = comissao.trim()
+    
+    // Explicitamente "Pago" = NÃO pendente
+    if (comissaoTrimmed === 'Pago') {
+      return false
     }
-  }, [clientes]) // Só recalcula quando a lista de clientes muda
-
-  // VALIDAÇÃO DOS CÁLCULOS (também memoizada)
-  const debugInfo = useMemo(() => {
-    console.log('📈 [AdminDashboardMetrics] === AUDITORIA DE CÁLCULOS ===')
-    console.log('📊 [AdminDashboardMetrics] Breakdown por status de comissão:')
     
-    // Agrupar por status de comissão para debug
-    const comissaoBreakdown = clientes.reduce((acc, cliente) => {
-      const status = cliente.comissao || 'null/undefined'
-      if (!acc[status]) {
-        acc[status] = { count: 0, total: 0 }
-      }
-      acc[status].count++
-      acc[status].total += (cliente.valor_comissao || 60.00)
-      return acc
-    }, {} as Record<string, { count: number, total: number }>)
+    // TODOS os outros casos são pendentes:
+    // - "Pendente"
+    // - "Solicitado" 
+    // - Valores numéricos antigos: "20", "60", "80", etc.
+    // - Qualquer outro status
+    return true
+  }
 
-    console.log('📊 [AdminDashboardMetrics] Breakdown detalhado:', comissaoBreakdown)
-    
-    console.log('📈 [AdminDashboardMetrics] Métricas calculadas:')
-    console.log('   🔢 Total clientes:', metricas.totalClientes)
-    console.log('   🟢 Campanhas no ar:', metricas.clientesNoAr.length)
-    console.log('   🔴 Pendentes (count):', metricas.clientesPendentes.length)
-    console.log('   🔴 Pendentes (valor):', formatCurrency(metricas.totalPendente))
-    console.log('   ✅ Pagos (count):', metricas.clientesPagos.length)
-    console.log('   ✅ Pagos (valor):', formatCurrency(metricas.totalRecebido))
-    console.log('   ⚠️ Problemas:', metricas.clientesProblemas.length)
+  // Total de clientes
+  const totalClientes = clientes.length
 
-    // Validação cruzada dos totais
-    const totalValorCalculado = metricas.totalPendente + metricas.totalRecebido
-    const totalValorEsperado = clientes.reduce((total, cliente) => total + (cliente.valor_comissao || 60.00), 0)
-    
-    console.log('💰 [AdminDashboardMetrics] Validação de valores:')
-    console.log('   📊 Total calculado (pendente + pago):', formatCurrency(totalValorCalculado))
-    console.log('   📊 Total esperado (soma de todos):', formatCurrency(totalValorEsperado))
-    console.log('   ✅ Valores batem?', totalValorCalculado === totalValorEsperado ? 'SIM' : 'NÃO')
+  // Campanhas no ar (status "Campanha no Ar" ou "Otimização")
+  const clientesNoAr = clientes.filter(cliente => 
+    cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
+  )
 
-    return { comissaoBreakdown, totalValorCalculado, totalValorEsperado }
-  }, [clientes, metricas])
+  // CÁLCULO CORRIGIDO: Total pendente - SOMA OS VALORES REAIS de valor_comissao
+  const clientesPendentes = clientes.filter(cliente => 
+    isComissaoPendente(cliente.comissao)
+  )
+  const totalPendente = clientesPendentes.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
+  )
+
+  // CÁLCULO CORRIGIDO: Total já recebido - SOMA OS VALORES REAIS de valor_comissao
+  const clientesPagos = clientes.filter(cliente => 
+    cliente.comissao === 'Pago'
+  )
+  const totalRecebido = clientesPagos.reduce((total, cliente) => 
+    total + (cliente.valor_comissao || 60.00), 0
+  )
+
+  // Clientes com problemas
+  const clientesProblemas = clientes.filter(cliente => 
+    cliente.status_campanha === 'Problema'
+  )
+
+  // VALIDAÇÃO DOS CÁLCULOS: Log detalhado para auditoria
+  console.log('📈 [AdminDashboardMetrics] === AUDITORIA DE CÁLCULOS ===')
+  console.log('📊 [AdminDashboardMetrics] Breakdown por status de comissão:')
+  
+  // Agrupar por status de comissão para debug
+  const comissaoBreakdown = clientes.reduce((acc, cliente) => {
+    const status = cliente.comissao || 'null/undefined'
+    if (!acc[status]) {
+      acc[status] = { count: 0, total: 0 }
+    }
+    acc[status].count++
+    acc[status].total += (cliente.valor_comissao || 60.00)
+    return acc
+  }, {} as Record<string, { count: number, total: number }>)
+
+  console.log('📊 [AdminDashboardMetrics] Breakdown detalhado:', comissaoBreakdown)
+  
+  console.log('📈 [AdminDashboardMetrics] Métricas calculadas:')
+  console.log('   🔢 Total clientes:', totalClientes)
+  console.log('   🟢 Campanhas no ar:', clientesNoAr.length)
+  console.log('   🔴 Pendentes (count):', clientesPendentes.length)
+  console.log('   🔴 Pendentes (valor):', formatCurrency(totalPendente))
+  console.log('   ✅ Pagos (count):', clientesPagos.length)
+  console.log('   ✅ Pagos (valor):', formatCurrency(totalRecebido))
+  console.log('   ⚠️ Problemas:', clientesProblemas.length)
+  console.log('   🧮 Soma verificação:', clientesPendentes.length + clientesPagos.length, '/', totalClientes)
+
+  // Validação cruzada dos totais
+  const totalValorCalculado = totalPendente + totalRecebido
+  const totalValorEsperado = clientes.reduce((total, cliente) => total + (cliente.valor_comissao || 60.00), 0)
+  
+  console.log('💰 [AdminDashboardMetrics] Validação de valores:')
+  console.log('   📊 Total calculado (pendente + pago):', formatCurrency(totalValorCalculado))
+  console.log('   📊 Total esperado (soma de todos):', formatCurrency(totalValorEsperado))
+  console.log('   ✅ Valores batem?', totalValorCalculado === totalValorEsperado ? 'SIM' : 'NÃO')
 
   return (
     <div className="space-y-6">
@@ -129,7 +114,7 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-contrast">{metricas.totalClientes}</div>
+              <div className="text-2xl font-bold text-contrast">{totalClientes}</div>
               <p className="text-xs text-contrast-secondary">
                 clientes cadastrados
               </p>
@@ -142,7 +127,7 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <CheckCircle className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{metricas.clientesNoAr.length}</div>
+              <div className="text-2xl font-bold text-green-600">{clientesNoAr.length}</div>
               <p className="text-xs text-contrast-secondary">
                 campanhas ativas
               </p>
@@ -155,9 +140,9 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <CircleDollarSign className="h-4 w-4 text-red-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-red-600">{formatCurrency(metricas.totalPendente)}</div>
+              <div className="text-2xl font-bold text-red-600">{formatCurrency(totalPendente)}</div>
               <p className="text-xs text-contrast-secondary">
-                {metricas.clientesPendentes.length} comissões pendentes
+                {clientesPendentes.length} comissões pendentes
               </p>
             </CardContent>
           </Card>
@@ -168,9 +153,9 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <CircleDollarSign className="h-4 w-4 text-green-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">{formatCurrency(metricas.totalRecebido)}</div>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(totalRecebido)}</div>
               <p className="text-xs text-contrast-secondary">
-                {metricas.clientesPagos.length} comissões pagas
+                {clientesPagos.length} comissões pagas
               </p>
             </CardContent>
           </Card>
@@ -181,7 +166,7 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <AlertTriangle className="h-4 w-4 text-amber-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-amber-600">{metricas.clientesProblemas.length}</div>
+              <div className="text-2xl font-bold text-amber-600">{clientesProblemas.length}</div>
               <p className="text-xs text-contrast-secondary">
                 requer atenção
               </p>
@@ -202,9 +187,9 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <Clock className="h-4 w-4 text-orange-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-orange-600">{metricas.clientesPendentes.length}</div>
+              <div className="text-2xl font-bold text-orange-600">{clientesPendentes.length}</div>
               <p className="text-xs text-contrast-secondary">
-                {formatCurrency(metricas.totalPendente)} aguardando pagamento
+                {formatCurrency(totalPendente)} aguardando pagamento
               </p>
             </CardContent>
           </Card>
@@ -215,9 +200,9 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
               <CreditCard className="h-4 w-4 text-blue-600" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">{metricas.clientesPagos.length}</div>
+              <div className="text-2xl font-bold text-blue-600">{clientesPagos.length}</div>
               <p className="text-xs text-contrast-secondary">
-                {formatCurrency(metricas.totalRecebido)} já pagos pelo admin
+                {formatCurrency(totalRecebido)} já pagos pelo admin
               </p>
             </CardContent>
           </Card>
@@ -225,4 +210,4 @@ export const AdminDashboardMetrics = React.memo(function AdminDashboardMetrics({
       </div>
     </div>
   )
-})
+}

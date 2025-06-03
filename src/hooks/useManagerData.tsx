@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 
@@ -24,16 +24,8 @@ export function useManagerData(
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // MEMOIZAÇÃO: Memoizar as dependências da query para evitar refetches desnecessários
-  const queryDependencies = useMemo(() => ({
-    userEmail,
-    isAdminUser,
-    selectedManager,
-    filterType
-  }), [userEmail, isAdminUser, selectedManager, filterType])
-
   const fetchData = useCallback(async () => {
-    if (!queryDependencies.userEmail) {
+    if (!userEmail) {
       console.warn('⚠️ [useManagerData] userEmail não fornecido')
       return
     }
@@ -42,36 +34,36 @@ export function useManagerData(
     setError(null)
 
     try {
-      console.log('🔍 [useManagerData] === INICIANDO BUSCA (MEMOIZADA) ===')
-      console.log('📧 [useManagerData] userEmail:', queryDependencies.userEmail)
-      console.log('🔒 [useManagerData] isAdminUser:', queryDependencies.isAdminUser)
-      console.log('👤 [useManagerData] selectedManager:', queryDependencies.selectedManager)
-      console.log('🎯 [useManagerData] filterType:', queryDependencies.filterType)
+      console.log('🔍 [useManagerData] === INICIANDO BUSCA ===')
+      console.log('📧 [useManagerData] userEmail:', userEmail)
+      console.log('🔒 [useManagerData] isAdminUser:', isAdminUser)
+      console.log('👤 [useManagerData] selectedManager:', selectedManager)
+      console.log('🎯 [useManagerData] filterType:', filterType)
 
       let query = supabase
         .from('todos_clientes')
         .select('*, site_pago')
 
       // PRIORITY 1: Handle Site Creator panel filters first
-      if (queryDependencies.filterType === 'sites-pendentes') {
+      if (filterType === 'sites-pendentes') {
         console.log('🌐 [useManagerData] Site Creator: Aplicando filtro para sites pendentes (aguardando_link)')
         query = query.eq('site_status', 'aguardando_link')
-      } else if (queryDependencies.filterType === 'sites-finalizados') {
+      } else if (filterType === 'sites-finalizados') {
         console.log('✅ [useManagerData] Site Creator: Aplicando filtro para sites finalizados')
         query = query.eq('site_status', 'finalizado')
       } else {
         // PRIORITY 2: Handle Admin panel logic
         console.log('📊 [useManagerData] Admin/Gestor panel mode')
         
-        if (queryDependencies.isAdminUser) {
+        if (isAdminUser) {
           // Admin user logic - CORREÇÃO PRINCIPAL
-          if (queryDependencies.selectedManager && 
-              queryDependencies.selectedManager !== 'Todos os Clientes' && 
-              queryDependencies.selectedManager !== 'Todos os Gestores' && 
-              queryDependencies.selectedManager !== null &&
-              queryDependencies.selectedManager !== '') {
-            console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', queryDependencies.selectedManager)
-            query = query.eq('email_gestor', queryDependencies.selectedManager)
+          if (selectedManager && 
+              selectedManager !== 'Todos os Clientes' && 
+              selectedManager !== 'Todos os Gestores' && 
+              selectedManager !== null &&
+              selectedManager !== '') {
+            console.log('🔍 [useManagerData] Admin filtrando por gestor específico:', selectedManager)
+            query = query.eq('email_gestor', selectedManager)
           } else {
             console.log('👑 [useManagerData] Admin buscando TODOS os clientes (sem filtro de gestor)')
             // Para admin com "Todos os Gestores" ou null/vazio, NÃO aplicar filtro de email_gestor
@@ -80,7 +72,7 @@ export function useManagerData(
         } else {
           // Regular manager/gestor - only their clients
           console.log('👤 [useManagerData] Gestor buscando apenas seus clientes')
-          query = query.eq('email_gestor', queryDependencies.userEmail)
+          query = query.eq('email_gestor', userEmail)
         }
       }
 
@@ -95,7 +87,7 @@ export function useManagerData(
       
       // Enhanced logging for verification
       if (data && data.length > 0) {
-        if (queryDependencies.filterType === 'sites-pendentes') {
+        if (filterType === 'sites-pendentes') {
           console.log('🌐 [useManagerData] Sites pendentes (aguardando_link):', data.length)
           console.log('📋 [useManagerData] Amostra de sites pendentes:', data.slice(0, 3).map(c => ({
             id: c.id,
@@ -103,7 +95,7 @@ export function useManagerData(
             site_status: c.site_status,
             email_gestor: c.email_gestor
           })))
-        } else if (queryDependencies.filterType === 'sites-finalizados') {
+        } else if (filterType === 'sites-finalizados') {
           console.log('✅ [useManagerData] Sites finalizados:', data.length)
           console.log('📋 [useManagerData] Amostra de sites finalizados:', data.slice(0, 3).map(c => ({
             id: c.id,
@@ -111,7 +103,7 @@ export function useManagerData(
             site_status: c.site_status,
             email_gestor: c.email_gestor
           })))
-        } else if (queryDependencies.isAdminUser && (!queryDependencies.selectedManager || queryDependencies.selectedManager === 'Todos os Gestores' || queryDependencies.selectedManager === 'Todos os Clientes' || queryDependencies.selectedManager === '')) {
+        } else if (isAdminUser && (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes' || selectedManager === '')) {
           console.log('👑 [useManagerData] Admin - TODOS os clientes:', data.length)
           console.log('📊 [useManagerData] Distribuição por site_status:', {
             pendente: data.filter(c => c.site_status === 'pendente').length,
@@ -126,8 +118,8 @@ export function useManagerData(
             status_campanha: c.status_campanha,
             comissao: c.comissao
           })))
-        } else if (queryDependencies.isAdminUser && queryDependencies.selectedManager) {
-          console.log('🎯 [useManagerData] Admin - Clientes do gestor específico:', queryDependencies.selectedManager, ':', data.length)
+        } else if (isAdminUser && selectedManager) {
+          console.log('🎯 [useManagerData] Admin - Clientes do gestor específico:', selectedManager, ':', data.length)
         }
       }
       
@@ -139,9 +131,9 @@ export function useManagerData(
     } finally {
       setLoading(false)
     }
-  }, [queryDependencies]) // Agora depende do objeto memoizado
+  }, [userEmail, isAdminUser, selectedManager, filterType])
 
-  const { updateCliente, addCliente } = useClienteOperations(queryDependencies.userEmail, queryDependencies.isAdminUser, fetchData)
+  const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdminUser, fetchData)
 
   useEffect(() => {
     fetchData()
@@ -154,7 +146,7 @@ export function useManagerData(
     refetch: fetchData,
     updateCliente,
     addCliente,
-    currentManager: queryDependencies.selectedManager || null,
+    currentManager: selectedManager || null,
     setClientes,
   }
 }

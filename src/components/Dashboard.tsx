@@ -1,151 +1,210 @@
-import React, { useState, useEffect, Suspense } from 'react'
+
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ManagerSidebar } from './ManagerSidebar'
-import { LoadingFallback } from './LoadingFallback'
 import { 
-  LazyUltraOptimizedAdminDashboard,
+  LazyAdminDashboard, 
   LazyGestorDashboard, 
-  LazyClienteDashboard, 
-  LazyVendedorDashboard,
-  LazyChatLayoutSplit,
-  LazyStatusFunnelDashboard,
-  LazySimpleVendedorDashboard,
-  LazySitesDashboard
-} from './LazyUltraOptimizedComponents'
+  LazyClienteDashboard 
+} from './LazyComponents'
+import { LoadingFallback } from './LoadingFallback'
+import { VendedorDashboard } from './VendedorDashboard'
+import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
+import { SitesDashboard } from './SitesDashboard'
+import { ManagerSidebar } from './ManagerSidebar'
+import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { AlertTriangle, LogOut, Loader2 } from 'lucide-react'
 
 export function Dashboard() {
-  const { user, isAdmin, isGestor, isCliente, isVendedor, isSites, loading } = useAuth()
+  const { 
+    user, 
+    loading, 
+    isAdmin, 
+    isGestor,
+    isCliente,
+    isVendedor,
+    isSites,
+    signOut
+  } = useAuth()
+
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('clientes')
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [loggingOut, setLoggingOut] = useState(false)
 
-  console.log('🚀 [Dashboard] === ETAPA 4: REACT QUERY ULTRA-OTIMIZADO ATIVO ===')
-  console.log('⚡ [Dashboard] Cache inteligente + Optimistic updates + Prefetch')
-  console.log('👤 [Dashboard] User type detection:', { isAdmin, isGestor, isCliente, isVendedor, isSites })
-  console.log('📊 [Dashboard] Selected manager:', selectedManager)
-  console.log('📑 [Dashboard] Active tab:', activeTab)
+  console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
+  console.log('🔍 [Dashboard] Estado de autenticação:', {
+    userEmail: user?.email,
+    userEmailRaw: user?.email ? `"${user.email}"` : 'null',
+    loading,
+    isAdmin,
+    isGestor,
+    isCliente,
+    isVendedor,
+    isSites
+  })
 
+  // Reset tab when user type changes
   useEffect(() => {
-    if (isAdmin) {
-      console.log('👑 [Dashboard] Admin logado - usando UltraOptimizedAdminDashboard')
-    } else if (isGestor) {
-      console.log('👤 [Dashboard] Gestor logado - usando LazyGestorDashboard')
-    } else if (isCliente) {
-      console.log('🎯 [Dashboard] Cliente logado - usando LazyClienteDashboard')
-    } else if (isVendedor) {
-      console.log('💼 [Dashboard] Vendedor logado - usando LazyVendedorDashboard')
-    } else if (isSites) {
-      console.log('🌐 [Dashboard] Sites user logado - usando LazySitesDashboard')
-    }
+    setActiveTab('dashboard')
+    setSelectedManager(null)
   }, [isAdmin, isGestor, isCliente, isVendedor, isSites])
 
+  const handleSignOut = async () => {
+    console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
+    setLoggingOut(true)
+    
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('❌ [Dashboard] Erro no logout, forçando redirecionamento:', error)
+      // Fallback: forçar redirecionamento mesmo com erro
+      window.location.href = '/'
+    }
+  }
+
   if (loading) {
+    console.log('⏳ [Dashboard] Mostrando loading geral')
     return <LoadingFallback />
   }
 
-  const handleManagerSelect = (manager: string | null) => {
-    console.log('🎯 [Dashboard] Manager selecionado (ETAPA 4):', manager)
-    setSelectedManager(manager)
-  }
-
-  if (isAdmin) {
+  if (!user) {
+    console.log('❌ [Dashboard] Usuário não autenticado')
     return (
-      <div className="flex h-screen bg-background">
-        <ManagerSidebar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          selectedManager={selectedManager}
-          onManagerSelect={handleManagerSelect}
-        />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            <Suspense fallback={<LoadingFallback />}>
-              <LazyUltraOptimizedAdminDashboard 
-                selectedManager={selectedManager}
-                onManagerSelect={handleManagerSelect}
-                activeTab={activeTab}
-              />
-            </Suspense>
-          </div>
-        </main>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Usuário não autenticado</div>
       </div>
     )
   }
 
-  if (isVendedor) {
-    return (
-      <div className="flex h-screen bg-background">
-        <ManagerSidebar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          selectedManager={selectedManager}
-          onManagerSelect={handleManagerSelect}
-        />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            <Suspense fallback={<LoadingFallback />}>
-              <LazyVendedorDashboard />
-            </Suspense>
-          </div>
-        </main>
-      </div>
-    )
-  }
+  // Debug: Mostrar qual é o email exato que está sendo processado
+  console.log('🎯 [Dashboard] Email do usuário para verificação:', `"${user.email}"`)
+  console.log('🎯 [Dashboard] Tipos de usuário detectados:', {
+    isAdmin: isAdmin ? '✅' : '❌',
+    isGestor: isGestor ? '✅' : '❌', 
+    isCliente: isCliente ? '✅' : '❌',
+    isVendedor: isVendedor ? '✅' : '❌',
+    isSites: isSites ? '✅' : '❌'
+  })
 
-  if (isSites) {
-    return (
-      <div className="flex h-screen bg-background">
-        <ManagerSidebar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          selectedManager={selectedManager}
-          onManagerSelect={handleManagerSelect}
-        />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            <Suspense fallback={<LoadingFallback />}>
-              <LazySitesDashboard />
-            </Suspense>
-          </div>
-        </main>
-      </div>
-    )
-  }
-  
-  if (isGestor) {
-    return (
-      <div className="flex h-screen bg-background">
-        <ManagerSidebar 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-          selectedManager={selectedManager}
-          onManagerSelect={handleManagerSelect}
-        />
-        <main className="flex-1 overflow-auto">
-          <div className="p-6">
-            <Suspense fallback={<LoadingFallback />}>
-              <LazyGestorDashboard />
-            </Suspense>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
+  // Cliente Dashboard
   if (isCliente) {
+    console.log('✅ [Dashboard] Direcionando para ClienteDashboard')
     return (
-      <div className="min-h-screen bg-background">
-        <Suspense fallback={<LoadingFallback />}>
-          <LazyClienteDashboard />
-        </Suspense>
+      <Suspense fallback={<LoadingFallback />}>
+        <LazyClienteDashboard />
+      </Suspense>
+    )
+  }
+
+  // Vendedor Dashboards (não lazy por enquanto para evitar erros)
+  if (isVendedor) {
+    console.log('✅ [Dashboard] Direcionando para VendedorDashboard')
+    const isSimpleVendedor = user.email?.includes('simple') || false
+    
+    if (isSimpleVendedor) {
+      console.log('🎯 [Dashboard] Usuário é vendedor simples')
+      return <SimpleVendedorDashboard />
+    }
+    
+    console.log('🎯 [Dashboard] Usuário é vendedor padrão')
+    return <VendedorDashboard />
+  }
+
+  // Sites Dashboard (não lazy por enquanto)
+  if (isSites) {
+    console.log('✅ [Dashboard] Direcionando para SitesDashboard')
+    return <SitesDashboard />
+  }
+
+  // Admin/Gestor Dashboards
+  if (isAdmin || isGestor) {
+    console.log('✅ [Dashboard] Direcionando para Admin/Gestor Dashboard')
+    return (
+      <div className="min-h-screen flex w-full bg-background">
+        <ManagerSidebar
+          selectedManager={selectedManager}
+          onManagerSelect={setSelectedManager}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        
+        <div className="flex-1 overflow-auto min-h-screen">
+          <div className="p-6 w-full max-w-full">
+            <Suspense fallback={<LoadingFallback />}>
+              {/* Admin Dashboard */}
+              {isAdmin && (
+                <LazyAdminDashboard
+                  selectedManager={selectedManager}
+                  onManagerSelect={setSelectedManager}
+                  activeTab={activeTab}
+                />
+              )}
+              
+              {/* Gestor Dashboard */}
+              {isGestor && (
+                <LazyGestorDashboard activeTab={activeTab} />
+              )}
+            </Suspense>
+          </div>
+        </div>
       </div>
     )
   }
 
+  console.log('❌ [Dashboard] Tipo de usuário não autorizado')
+  console.log('❌ [Dashboard] Detalhes para debug:')
+  console.log('   - Email:', user.email)
+  console.log('   - Todos os tipos são false, verificar authHelpers.ts')
+  
   return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <h1 className="text-2xl font-bold text-foreground mb-4">Tipo de usuário não reconhecido</h1>
-        <p className="text-muted-foreground">Por favor, entre em contato com o suporte.</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{backgroundColor: '#0a0a0a'}}>
+      <div className="w-full max-w-md px-4">
+        <Card className="border-red-200 shadow-lg" style={{backgroundColor: '#1a1a1a', borderColor: '#dc2626'}}>
+          <CardHeader className="text-center pb-4">
+            <div className="mx-auto w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <AlertTriangle className="w-6 h-6 text-red-600" />
+            </div>
+            <CardTitle className="text-xl font-bold text-red-600">
+              Acesso Não Autorizado
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <div className="space-y-2">
+              <p className="text-gray-300">
+                Seu usuário não possui autorização para acessar este sistema.
+              </p>
+              <div className="text-sm text-gray-500 bg-gray-800 p-3 rounded border">
+                <p className="font-mono break-all">
+                  Email: {user.email}
+                </p>
+              </div>
+            </div>
+            
+            <div className="space-y-3 pt-4">
+              <p className="text-sm text-gray-400">
+                Se você acredita que isso é um erro, entre em contato com o administrador ou tente fazer login novamente.
+              </p>
+              
+              <Button 
+                onClick={handleSignOut}
+                disabled={loggingOut}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center gap-2"
+              >
+                {loggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Saindo...
+                  </>
+                ) : (
+                  <>
+                    <LogOut className="w-4 h-4" />
+                    Voltar ao Login
+                  </>
+                )}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

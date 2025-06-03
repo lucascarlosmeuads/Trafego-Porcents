@@ -1,5 +1,3 @@
-
-import React, { useMemo } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { DollarSign, FileText, Camera, TrendingUp, Calendar, Target } from 'lucide-react'
@@ -14,33 +12,15 @@ interface ClienteDashboardMetricsProps {
   arquivos: ArquivoCliente[]
 }
 
-export const ClienteDashboardMetrics = React.memo(function ClienteDashboardMetrics({ 
-  cliente, 
-  briefing, 
-  vendas, 
-  arquivos 
-}: ClienteDashboardMetricsProps) {
-  
-  // MEMOIZAÇÃO: Cálculos pesados de métricas
-  const metricas = useMemo(() => {
-    const totalVendas = vendas.reduce((sum, venda) => sum + venda.valor_venda, 0)
-    const vendasCount = vendas.length
-    const arquivosCount = arquivos.length
+export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }: ClienteDashboardMetricsProps) {
+  const totalVendas = vendas.reduce((sum, venda) => sum + venda.valor_venda, 0)
+  const vendasCount = vendas.length
+  const arquivosCount = arquivos.length
 
-    const investimentoDiario = briefing?.investimento_diario || 0
-    const diasCampanha = cliente?.data_venda ? 
-      Math.max(1, Math.floor((new Date().getTime() - new Date(cliente.data_venda).getTime()) / (1000 * 60 * 60 * 24))) : 0
-    const totalInvestido = investimentoDiario * diasCampanha
-
-    return {
-      totalVendas,
-      vendasCount,
-      arquivosCount,
-      investimentoDiario,
-      diasCampanha,
-      totalInvestido
-    }
-  }, [vendas, arquivos, briefing, cliente])
+  const investimentoDiario = briefing?.investimento_diario || 0
+  const diasCampanha = cliente?.data_venda ? 
+    Math.max(1, Math.floor((new Date().getTime() - new Date(cliente.data_venda).getTime()) / (1000 * 60 * 60 * 24))) : 0
+  const totalInvestido = investimentoDiario * diasCampanha
 
   return (
     <div className="space-y-6">
@@ -51,9 +31,9 @@ export const ClienteDashboardMetrics = React.memo(function ClienteDashboardMetri
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">{formatCurrency(metricas.totalVendas)}</div>
+            <div className="text-2xl font-bold text-green-600">{formatCurrency(totalVendas)}</div>
             <p className="text-xs text-muted-foreground">
-              {metricas.vendasCount} {metricas.vendasCount === 1 ? 'venda registrada' : 'vendas registradas'}
+              {vendasCount} {vendasCount === 1 ? 'venda registrada' : 'vendas registradas'}
             </p>
           </CardContent>
         </Card>
@@ -64,7 +44,7 @@ export const ClienteDashboardMetrics = React.memo(function ClienteDashboardMetri
             <Camera className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{metricas.arquivosCount}</div>
+            <div className="text-2xl font-bold">{arquivosCount}</div>
             <p className="text-xs text-muted-foreground">
               Arquivos disponíveis para criação
             </p>
@@ -77,9 +57,9 @@ export const ClienteDashboardMetrics = React.memo(function ClienteDashboardMetri
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">{formatCurrency(metricas.totalInvestido)}</div>
+            <div className="text-2xl font-bold text-blue-600">{formatCurrency(totalInvestido)}</div>
             <p className="text-xs text-muted-foreground">
-              {metricas.diasCampanha} {metricas.diasCampanha === 1 ? 'dia' : 'dias'} × {formatCurrency(metricas.investimentoDiario)}/dia
+              {diasCampanha} {diasCampanha === 1 ? 'dia' : 'dias'} × {formatCurrency(investimentoDiario)}/dia
             </p>
           </CardContent>
         </Card>
@@ -198,4 +178,4 @@ export const ClienteDashboardMetrics = React.memo(function ClienteDashboardMetri
       </Card>
     </div>
   )
-})
+}

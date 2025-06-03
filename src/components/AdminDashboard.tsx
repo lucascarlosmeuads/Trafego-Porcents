@@ -1,26 +1,19 @@
 
-import React, { useState, useEffect, Suspense, useMemo } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { ClientesTable } from './ClientesTable'
+import { GestoresManagement } from './GestoresManagement'
+import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
+import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
-import { LoadingFallback, MetricsLoadingFallback, TableLoadingFallback } from './LoadingFallback'
-import { 
-  LazyAdminDashboardMetrics, 
-  LazyClientesTable, 
-  LazyGestoresManagement,
-  LazyStatusFunnelDashboard, 
-  LazyDocumentationViewer, 
-  LazyAdminChatLayoutSplit 
-} from './LazyComponents'
 
 interface AdminDashboardProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
   activeTab: string
 }
-
-// MEMOIZAÇÃO: Memoizar componentes que não mudam frequentemente
-const MemoizedManagerSelector = React.memo(ManagerSelector)
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
@@ -46,18 +39,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     }
   }, [user, isAdmin])
 
-  // MEMOIZAÇÃO: Memoizar props que são passadas para componentes filhos
-  const managerSelectorProps = useMemo(() => ({
-    selectedManager,
-    onManagerSelect,
-    isAdminContext: true
-  }), [selectedManager, onManagerSelect])
-
-  const adminDashboardMetricsProps = useMemo(() => ({
-    clientes: gestorClientes,
-    selectedManager
-  }), [gestorClientes, selectedManager])
-
   if (loading) {
     return <LoadingFallback />
   }
@@ -65,11 +46,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   const renderContent = () => {
     // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
-      return (
-        <Suspense fallback={<TableLoadingFallback />}>
-          <LazyGestoresManagement />
-        </Suspense>
-      )
+      return <GestoresManagement />
     }
     
     // Navegação por abas
@@ -79,13 +56,18 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
           <div className="space-y-6">
             {/* Seletor de gestores */}
             <div className="bg-card border rounded-lg p-4">
-              <MemoizedManagerSelector {...managerSelectorProps} />
+              <ManagerSelector 
+                selectedManager={selectedManager}
+                onManagerSelect={onManagerSelect}
+                isAdminContext={true}
+              />
             </div>
             
-            {/* Métricas do Admin - LAZY LOADING */}
-            <Suspense fallback={<MetricsLoadingFallback />}>
-              <LazyAdminDashboardMetrics {...adminDashboardMetricsProps} />
-            </Suspense>
+            {/* Métricas do Admin - CORREÇÃO: Passar clientes corretos */}
+            <AdminDashboardMetrics 
+              clientes={gestorClientes} 
+              selectedManager={selectedManager}
+            />
           </div>
         )
 
@@ -110,15 +92,17 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
             {selectedManager !== '__GESTORES__' && (
               <div className="bg-card border rounded-lg p-4">
-                <MemoizedManagerSelector {...managerSelectorProps} />
+                <ManagerSelector 
+                  selectedManager={selectedManager}
+                  onManagerSelect={onManagerSelect}
+                  isAdminContext={true}
+                />
               </div>
             )}
             
-            {/* Admin panel: Pass selectedManager directly for proper filtering - LAZY LOADING */}
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
             <div className="w-full">
-              <Suspense fallback={<TableLoadingFallback />}>
-                <LazyClientesTable selectedManager={selectedManager} />
-              </Suspense>
+              <ClientesTable selectedManager={selectedManager} />
             </div>
           </div>
         )
