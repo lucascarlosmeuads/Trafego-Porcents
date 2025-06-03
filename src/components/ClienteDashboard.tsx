@@ -55,6 +55,10 @@ export function ClienteDashboard() {
     )
   }
 
+  const handleBackToOverview = () => {
+    setActiveTab('overview')
+  }
+
   const renderContent = () => {
     console.log('🎯 [ClienteDashboard] renderContent() chamado com activeTab:', activeTab)
     
@@ -83,6 +87,7 @@ export function ClienteDashboard() {
             briefing={briefing}
             emailCliente={user?.email || ''}
             onBriefingUpdated={refetch}
+            onBack={handleBackToOverview}
           />
         )
       case 'arquivos':
@@ -91,6 +96,7 @@ export function ClienteDashboard() {
             emailCliente={user?.email || ''}
             arquivos={arquivos}
             onArquivosUpdated={refetch}
+            onBack={handleBackToOverview}
           />
         )
       case 'vendas':
@@ -99,12 +105,13 @@ export function ClienteDashboard() {
             emailCliente={user?.email || ''}
             vendas={vendas}
             onVendasUpdated={refetch}
+            onBack={handleBackToOverview}
           />
         )
       case 'tutoriais':
-        return <TutorialVideos />
+        return <TutorialVideos onBack={handleBackToOverview} />
       case 'chat':
-        return <ClienteChat />
+        return <ClienteChat onBack={handleBackToOverview} />
       default:
         return (
           <ClienteWelcome 
@@ -151,14 +158,17 @@ export function ClienteDashboard() {
     )
   }
 
-  // Layout desktop COM SidebarProvider
+  // Layout desktop COM SidebarProvider - SEM navegação inferior
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
         <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
         
         <SidebarInset className="flex-1">
-          <MobileHeader activeTab={activeTab} />
+          <MobileHeader 
+            activeTab={activeTab} 
+            onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
+          />
           
           <main className="flex-1 p-4 md:p-6">
             {renderContent()}

@@ -27,16 +27,17 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
       style={{backgroundColor: '#1a1a1a'}}
     >
       <div className="flex items-center gap-3">
-        <SidebarTrigger className="md:hidden text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
-        {onBack && (
+        {onBack ? (
           <Button 
             variant="ghost" 
             size="icon" 
             onClick={onBack} 
-            className="md:hidden text-trafego-text-primary hover:text-trafego-accent-primary hover:bg-trafego-bg-card"
+            className="text-trafego-text-primary hover:text-trafego-accent-primary hover:bg-trafego-bg-card"
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
+        ) : (
+          <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
         )}
         <h1 className="text-lg font-bold text-trafego-text-primary truncate">
           {currentLabel}
@@ -45,9 +46,11 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
       
       <div className="flex items-center gap-2">
         <ProfileDropdown />
-        <div className="hidden md:flex items-center gap-2">
-          <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
-        </div>
+        {!onBack && (
+          <div className="hidden md:flex items-center gap-2">
+            <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
+          </div>
+        )}
       </div>
     </header>
   )

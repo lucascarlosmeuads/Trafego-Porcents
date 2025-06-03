@@ -1,10 +1,15 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Play, FileVideo } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Play, FileVideo, ArrowLeft } from 'lucide-react'
 import { useState } from 'react'
 
-export function TutorialVideos() {
+interface TutorialVideosProps {
+  onBack?: () => void
+}
+
+export function TutorialVideos({ onBack }: TutorialVideosProps) {
   const [selectedVideo, setSelectedVideo] = useState<any>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
 
@@ -58,6 +63,20 @@ export function TutorialVideos() {
 
   return (
     <div className="space-y-6">
+      {/* Botão de voltar para desktop */}
+      {onBack && (
+        <div className="hidden md:block">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -155,6 +174,20 @@ export function TutorialVideos() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Botão de voltar para mobile */}
+      {onBack && (
+        <div className="md:hidden pt-4 border-t border-gray-200">
+          <Button
+            variant="outline"
+            onClick={onBack}
+            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
+      )}
     </div>
   )
 }
