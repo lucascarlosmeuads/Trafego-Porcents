@@ -1,12 +1,13 @@
 
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useProfileData } from '@/hooks/useProfileData'
 import { supabase } from '@/lib/supabase'
 import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
 import { GestorMenu } from './ManagerSidebar/GestorMenu'
 import { Button } from '@/components/ui/button'
-import { LogOut, ChevronLeft, ChevronRight, User } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 
 interface ManagerSidebarProps {
   selectedManager: string | null
@@ -22,6 +23,7 @@ export function ManagerSidebar({
   onTabChange 
 }: ManagerSidebarProps) {
   const { isAdmin, signOut, currentManagerName } = useAuth()
+  const { profileData, updateProfileData } = useProfileData('gestor')
   const [problemasPendentes, setProblemasPendentes] = useState(0)
   const [isSigningOut, setIsSigningOut] = useState(false)
   const [isCollapsed, setIsCollapsed] = useState(false)
@@ -63,6 +65,10 @@ export function ManagerSidebar({
     setIsCollapsed(!isCollapsed)
   }
 
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
+
   return (
     <div 
       className={`
@@ -86,9 +92,14 @@ export function ManagerSidebar({
             </div>
             
             {/* Avatar do perfil */}
-            <div className="bg-gray-700/50 rounded-full p-2 border border-gray-600/30">
-              <User className="h-4 w-4 text-gray-300" />
-            </div>
+            <ProfileAvatarUpload
+              currentAvatarUrl={profileData?.avatar_url}
+              userName={currentManagerName}
+              userType="gestor"
+              onAvatarChange={handleAvatarChange}
+              size="sm"
+              showEditButton={true}
+            />
             
             {/* Botão de toggle bem visível */}
             <Button
@@ -131,9 +142,14 @@ export function ManagerSidebar({
 
             {/* Perfil do gestor - mais discreto */}
             <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 hover:bg-gray-800/30 transition-colors duration-200">
-              <div className="bg-gray-700/50 rounded-full p-2 border border-gray-600/30">
-                <User className="h-4 w-4 text-gray-300" />
-              </div>
+              <ProfileAvatarUpload
+                currentAvatarUrl={profileData?.avatar_url}
+                userName={currentManagerName}
+                userType="gestor"
+                onAvatarChange={handleAvatarChange}
+                size="md"
+                showEditButton={true}
+              />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-300 truncate">
                   {currentManagerName}

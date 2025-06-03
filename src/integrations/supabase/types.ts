@@ -225,6 +225,33 @@ export type Database = {
         }
         Relationships: []
       }
+      cliente_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email_cliente: string
+          id: string
+          nome_display: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email_cliente: string
+          id?: string
+          nome_display?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email_cliente?: string
+          id?: string
+          nome_display?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       cliente_progresso: {
         Row: {
           completado: boolean
@@ -296,6 +323,7 @@ export type Database = {
       gestores: {
         Row: {
           ativo: boolean | null
+          avatar_url: string | null
           created_at: string | null
           email: string
           id: string
@@ -306,6 +334,7 @@ export type Database = {
         }
         Insert: {
           ativo?: boolean | null
+          avatar_url?: string | null
           created_at?: string | null
           email: string
           id?: string
@@ -316,6 +345,7 @@ export type Database = {
         }
         Update: {
           ativo?: boolean | null
+          avatar_url?: string | null
           created_at?: string | null
           email?: string
           id?: string

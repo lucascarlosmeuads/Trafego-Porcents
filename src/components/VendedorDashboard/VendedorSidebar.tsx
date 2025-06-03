@@ -1,6 +1,7 @@
 
 import { useState } from 'react'
 import { useAuth } from "@/hooks/useAuth"
+import { useProfileData } from '@/hooks/useProfileData'
 import {
   Sidebar,
   SidebarContent,
@@ -15,6 +16,7 @@ import {
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { BarChart3, Users, UserPlus, LogOut } from "lucide-react"
+import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 
 interface VendedorSidebarProps {
   activeTab: string
@@ -23,6 +25,7 @@ interface VendedorSidebarProps {
 
 export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps) {
   const { currentManagerName, signOut } = useAuth()
+  const { profileData, updateProfileData } = useProfileData('gestor')
   const [isSigningOut, setIsSigningOut] = useState(false)
 
   const menuItems = [
@@ -54,6 +57,10 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
     }
   }
 
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
+
   return (
     <Sidebar>
       <SidebarHeader className="border-b px-6 py-4">
@@ -64,6 +71,26 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
           <div className="flex flex-col">
             <span className="text-sm font-semibold">Painel Vendedor</span>
             <span className="text-xs text-muted-foreground truncate">{currentManagerName}</span>
+          </div>
+        </div>
+
+        {/* Perfil do Vendedor */}
+        <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-50 dark:bg-gray-800/20 border mt-4">
+          <ProfileAvatarUpload
+            currentAvatarUrl={profileData?.avatar_url}
+            userName={currentManagerName}
+            userType="gestor"
+            onAvatarChange={handleAvatarChange}
+            size="md"
+            showEditButton={true}
+          />
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium truncate">
+              {currentManagerName}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Vendedor
+            </p>
           </div>
         </div>
       </SidebarHeader>

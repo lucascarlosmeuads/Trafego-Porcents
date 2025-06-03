@@ -1,11 +1,10 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
-import { Button } from '@/components/ui/button'
-import { CheckCircle, Circle, FileText, Folder, BarChart3, DollarSign, Users, ArrowRight, Loader2, MessageCircle } from 'lucide-react'
-import { useIsMobile } from '@/hooks/use-mobile'
-import { useClienteProgresso } from '@/hooks/useClienteProgresso'
+
 import { useAuth } from '@/hooks/useAuth'
+import { useProfileData } from '@/hooks/useProfileData'
+import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { FileText, Upload, TrendingUp, Play, MessageCircle, User, Settings } from 'lucide-react'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
@@ -13,264 +12,200 @@ interface ClienteWelcomeProps {
 
 export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const { user } = useAuth()
-  const { progresso, loading, saving, togglePasso } = useClienteProgresso(user?.email || '')
-  const isMobile = useIsMobile()
+  const { profileData, updateProfileData } = useProfileData('cliente')
 
-  const steps = [
+  const quickActions = [
     {
-      id: 1,
-      title: 'Preencher Formulário',
-      description: 'Clique no menu lateral em "Briefing" e preencha com seus dados.',
+      title: 'Preencher Briefing',
+      description: 'Complete as informações do seu projeto',
       icon: FileText,
-      menuAction: () => onTabChange('briefing'),
-      actionLabel: 'Ir para Briefing'
+      action: () => onTabChange('briefing'),
+      color: 'bg-blue-500'
     },
     {
-      id: 2,
       title: 'Enviar Materiais',
-      description: 'Você pode anexar imagens, vídeos ou textos no menu "Criativos".',
-      icon: Folder,
-      menuAction: () => onTabChange('arquivos'),
-      actionLabel: 'Ir para Criativos'
+      description: 'Faça upload de logos, fotos e outros materiais',
+      icon: Upload,
+      action: () => onTabChange('arquivos'),
+      color: 'bg-green-500'
     },
     {
-      id: 3,
-      title: 'Conversar com seu Gestor Auxiliar',
-      description: 'Agora que você já preencheu o briefing e enviou seus materiais, entre em contato via chat para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.',
+      title: 'Registrar Vendas',
+      description: 'Acompanhe o desempenho das suas campanhas',
+      icon: TrendingUp,
+      action: () => onTabChange('vendas'),
+      color: 'bg-purple-500'
+    },
+    {
+      title: 'Assistir Tutoriais',
+      description: 'Aprenda com nossos vídeos explicativos',
+      icon: Play,
+      action: () => onTabChange('tutoriais'),
+      color: 'bg-orange-500'
+    },
+    {
+      title: 'Chat com Gestor',
+      description: 'Tire dúvidas diretamente com sua equipe',
       icon: MessageCircle,
-      menuAction: () => onTabChange('chat'),
-      actionLabel: 'Ir para Chat'
-    },
-    {
-      id: 4,
-      title: 'Configurar sua BM com o Gestor Auxiliar',
-      description: 'Você será orientado diretamente por um gestor via WhatsApp.',
-      icon: Users,
-      menuAction: null,
-      actionLabel: null
-    },
-    {
-      id: 5,
-      title: 'Recarregar valor para tráfego pago',
-      description: 'Combine o valor e forma de recarga com o gestor auxiliar.',
-      icon: DollarSign,
-      menuAction: null,
-      actionLabel: null
-    },
-    {
-      id: 6,
-      title: 'Analisar Métricas e Escalar',
-      description: 'No menu "Vendas", você poderá acompanhar seus resultados com o gestor.',
-      icon: BarChart3,
-      menuAction: () => onTabChange('vendas'),
-      actionLabel: 'Ir para Vendas'
+      action: () => onTabChange('chat'),
+      color: 'bg-teal-500'
     }
   ]
 
-  const handleToggleStep = async (stepId: number) => {
-    const success = await togglePasso(stepId)
-    if (!success) {
-      // Opcional: mostrar toast de erro
-      console.error('Erro ao salvar progresso')
-    }
-  }
-
-  const progressPercentage = Math.round((progresso.size / steps.length) * 100)
-
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
-          <p className="text-trafego-text-secondary">Carregando progresso...</p>
-        </div>
-      </div>
-    )
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="text-center space-y-3 sm:space-y-4 px-2">
-        <h1 className={`${
-          isMobile ? 'text-2xl' : 'text-3xl'
-        } font-black text-trafego-text-primary flex items-center justify-center gap-2 sm:gap-3`}>
-          🧭 Bem-vindo!
+    <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
+      {/* Header de Boas-vindas */}
+      <div className="text-center space-y-4">
+        <div className="inline-block">
+          <div className="relative group cursor-pointer mb-4">
+            <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+            <div className="relative bg-gradient-hero text-white rounded-2xl font-bold px-8 py-4 text-2xl transition-transform duration-300 hover:scale-105">
+              <span>Tráfego</span>
+              <span className="text-orange-300">Porcents</span>
+            </div>
+          </div>
+        </div>
+        
+        <h1 className="text-3xl font-bold text-white">
+          Bem-vindo ao seu painel! 🎉
         </h1>
-        <p className={`${
-          isMobile ? 'text-base' : 'text-lg'
-        } text-trafego-text-secondary leading-relaxed`}>
-          Veja abaixo o passo a passo da sua campanha:
+        <p className="text-gray-400 max-w-2xl mx-auto">
+          Aqui você pode acompanhar o progresso da sua campanha, enviar materiais, 
+          preencher o briefing e muito mais. Vamos começar?
         </p>
       </div>
 
-      {/* Progress Summary Card */}
-      <Card 
-        className="border-trafego-border-subtle shadow-lg shadow-trafego-accent-primary/5"
-        style={{backgroundColor: '#1f2937'}}
-      >
-        <CardContent className={`${isMobile ? 'p-4' : 'p-6'} text-center`}>
-          <div className="space-y-4">
-            <h3 className={`${isMobile ? 'text-lg' : 'text-xl'} font-bold text-trafego-accent-primary`}>
-              Progresso Atual
-            </h3>
-            <div className={`${isMobile ? 'text-2xl' : 'text-3xl'} font-black text-trafego-text-primary`}>
-              {progresso.size} / {steps.length}
-            </div>
-            <div className="w-full bg-trafego-bg-input rounded-full h-3 overflow-hidden">
-              <div 
-                className="bg-gradient-trafego h-3 rounded-full transition-all duration-500 shadow-md" 
-                style={{ width: `${progressPercentage}%` }}
-              ></div>
-            </div>
-            <p className={`${isMobile ? 'text-sm' : 'text-base'} text-trafego-text-muted`}>
-              {progresso.size === steps.length 
-                ? '🎉 Parabéns! Você completou todos os passos!'
-                : `${progressPercentage}% concluído`
-              }
-            </p>
-            {saving && (
-              <div className="flex items-center justify-center gap-2 text-sm text-trafego-text-secondary">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Salvando progresso...
+      {/* Seção de Perfil */}
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader>
+          <CardTitle className="text-white flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Seu Perfil
+          </CardTitle>
+          <CardDescription className="text-gray-400">
+            Gerencie suas informações pessoais e foto de perfil
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <ProfileAvatarUpload
+                currentAvatarUrl={profileData?.avatar_url}
+                userName={profileData?.nome_display || user?.email || 'Cliente'}
+                userType="cliente"
+                onAvatarChange={handleAvatarChange}
+                size="lg"
+                showEditButton={true}
+              />
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {profileData?.nome_display || 'Cliente'}
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  {user?.email}
+                </p>
+                <p className="text-teal-400 text-xs">
+                  ✅ Conta ativa
+                </p>
               </div>
-            )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-700 text-gray-300 hover:text-white"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configurações
+            </Button>
           </div>
         </CardContent>
       </Card>
 
-      {/* Steps */}
-      <div className="space-y-3 sm:space-y-4">
-        {steps.map((step) => {
-          const isCompleted = progresso.has(step.id)
-          const StepIcon = step.icon
-          
-          return (
-            <Card 
-              key={step.id} 
-              className={`transition-all duration-300 border-trafego-border-subtle shadow-md hover:shadow-lg hover:shadow-trafego-accent-primary/10 ${
-                isCompleted 
-                  ? 'shadow-trafego-accent-primary/20 border-trafego-accent-primary/40' 
-                  : 'hover:border-trafego-accent-secondary/30'
-              }`}
-              style={{
-                backgroundColor: isCompleted ? '#1f2937' : '#1a1a1a'
-              }}
-            >
-              <CardContent className={`${isMobile ? 'p-4' : 'p-6'}`}>
-                <div className="flex items-start gap-3 sm:gap-4">
-                  {/* Step Icon */}
-                  <div className={`flex-shrink-0 ${
-                    isMobile ? 'w-8 h-8' : 'w-10 h-10'
-                  } rounded-full flex items-center justify-center transition-all duration-300 ${
-                    isCompleted 
-                      ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white shadow-lg shadow-green-500/30' 
-                      : 'bg-gradient-trafego text-white shadow-lg shadow-trafego-accent-primary/30'
-                  }`}>
-                    {isCompleted ? (
-                      <CheckCircle className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    ) : (
-                      <StepIcon className={`${isMobile ? 'w-4 h-4' : 'w-5 h-5'}`} />
-                    )}
-                  </div>
-                  
-                  {/* Step Content */}
-                  <div className="flex-1 space-y-2 sm:space-y-3 min-w-0">
-                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3">
-                      <div className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={`${
-                            isMobile ? 'text-xs' : 'text-sm'
-                          } w-fit border-trafego-accent-primary/50 text-trafego-accent-primary bg-trafego-accent-primary/10`}
-                        >
-                          Passo {step.id}
-                        </Badge>
-                      </div>
-                      <h3 className={`${
-                        isMobile ? 'text-base' : 'text-lg'
-                      } font-bold ${
-                        isCompleted 
-                          ? 'text-trafego-accent-primary'
-                          : 'text-trafego-text-primary'
-                      } break-words`}>
-                        {step.title}
-                      </h3>
-                    </div>
-                    
-                    <p className={`${
-                      isMobile ? 'text-sm' : 'text-base'
-                    } text-trafego-text-secondary leading-relaxed`}>
-                      {step.description}
-                    </p>
-                    
-                    {/* Action Row */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1">
-                        {step.menuAction && (
-                          <Button
-                            variant="outline"
-                            size={isMobile ? "sm" : "default"}
-                            onClick={step.menuAction}
-                            className="w-full sm:w-auto flex items-center gap-2 border-0 shadow-md hover:shadow-lg transition-all duration-300 hover:scale-[1.02] bg-gradient-trafego hover:bg-gradient-trafego-hover text-white"
-                          >
-                            {step.actionLabel}
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {/* Checkbox */}
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        <Checkbox
-                          id={`step-${step.id}`}
-                          checked={isCompleted}
-                          onCheckedChange={() => handleToggleStep(step.id)}
-                          disabled={saving}
-                          className="data-[state=checked]:bg-green-500 data-[state=checked]:border-green-500 border-trafego-accent-primary"
-                        />
-                        <label 
-                          htmlFor={`step-${step.id}`}
-                          className={`${
-                            isMobile ? 'text-sm' : 'text-base'
-                          } font-semibold cursor-pointer whitespace-nowrap text-trafego-text-primary ${
-                            saving ? 'opacity-50' : ''
-                          }`}
-                        >
-                          Marcar como feito
-                        </label>
-                      </div>
-                    </div>
-                  </div>
+      {/* Grid de Ações Rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {quickActions.map((action, index) => (
+          <Card 
+            key={index} 
+            className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-all duration-200 cursor-pointer group"
+            onClick={action.action}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-start space-x-4">
+                <div className={`${action.color} p-3 rounded-lg group-hover:scale-110 transition-transform duration-200`}>
+                  <action.icon className="h-6 w-6 text-white" />
                 </div>
-              </CardContent>
-            </Card>
-          )
-        })}
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors">
+                    {action.title}
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {action.description}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
-      {/* Observação */}
-      <Card 
-        className="border-trafego-accent-primary/30 shadow-lg shadow-trafego-accent-primary/10"
-        style={{backgroundColor: '#1f2937'}}
-      >
-        <CardHeader className={isMobile ? 'pb-3' : ''}>
-          <CardTitle className={`${
-            isMobile ? 'text-base' : 'text-lg'
-          } text-trafego-accent-primary flex items-center gap-2 font-bold`}>
-            📌 Observação
-          </CardTitle>
+      {/* Informações Importantes */}
+      <Card className="bg-gradient-to-r from-teal-900/20 to-blue-900/20 border-teal-800/50">
+        <CardContent className="p-6">
+          <div className="flex items-start space-x-4">
+            <div className="bg-teal-500 p-3 rounded-lg">
+              <MessageCircle className="h-6 w-6 text-white" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-white mb-2">
+                💬 Importante: Entre em contato via chat!
+              </h3>
+              <p className="text-gray-300 text-sm leading-relaxed">
+                Após fazer login, entre em contato via <strong>chat no sistema</strong> para ser atendido pelo seu gestor auxiliar 
+                que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
+              </p>
+              <div className="mt-4">
+                <Button 
+                  onClick={() => onTabChange('chat')}
+                  className="bg-teal-600 hover:bg-teal-700 text-white"
+                >
+                  Abrir Chat
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Próximos Passos */}
+      <Card className="bg-gray-900 border-gray-800">
+        <CardHeader>
+          <CardTitle className="text-white">📋 Próximos Passos</CardTitle>
+          <CardDescription className="text-gray-400">
+            Siga estes passos para configurar sua campanha
+          </CardDescription>
         </CardHeader>
-        <CardContent className={isMobile ? 'pt-0' : ''}>
-          <div className={`space-y-2 text-trafego-text-primary ${
-            isMobile ? 'text-sm' : 'text-base'
-          }`}>
-            <p>
-              Todo esse processo pode durar até <strong className="text-trafego-accent-primary">15 dias</strong>, dependendo do seu projeto.
-            </p>
-            <p>
-              Fique tranquilo, sua campanha vai ao ar dentro desse prazo.
-            </p>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center font-bold">1</div>
+              <span className="text-gray-300">Entre em contato via chat no sistema</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">2</div>
+              <span className="text-gray-400">Preencha o briefing com as informações do seu projeto</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">3</div>
+              <span className="text-gray-400">Envie seus materiais (logos, fotos, vídeos)</span>
+            </div>
+            <div className="flex items-center space-x-3">
+              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">4</div>
+              <span className="text-gray-400">Aguarde a criação do grupo (máximo 1 dia)</span>
+            </div>
           </div>
         </CardContent>
       </Card>

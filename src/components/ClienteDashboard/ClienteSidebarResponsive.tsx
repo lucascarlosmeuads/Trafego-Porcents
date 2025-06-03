@@ -1,31 +1,29 @@
 
-import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { Button } from '@/components/ui/button'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
+import { useProfileData } from '@/hooks/useProfileData'
 import {
   Sidebar,
   SidebarContent,
-  SidebarFooter,
   SidebarGroup,
   SidebarGroupContent,
   SidebarGroupLabel,
-  SidebarHeader,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar
+  SidebarHeader,
+  SidebarFooter,
 } from '@/components/ui/sidebar'
+import { Button } from '@/components/ui/button'
 import { 
-  BarChart3, 
+  Home, 
   FileText, 
   Upload, 
   TrendingUp, 
-  PlayCircle,
-  MessageCircle,
-  LogOut,
-  User
+  Play, 
+  MessageCircle, 
+  LogOut 
 } from 'lucide-react'
+import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 
 interface ClienteSidebarResponsiveProps {
   activeTab: string
@@ -33,112 +31,59 @@ interface ClienteSidebarResponsiveProps {
 }
 
 export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSidebarResponsiveProps) {
-  const { user, currentManagerName, signOut } = useAuth()
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const { setOpenMobile } = useSidebar()
+  const { signOut, user } = useAuth()
+  const { profileData, updateProfileData } = useProfileData('cliente')
 
   const menuItems = [
-    {
-      id: 'overview',
-      label: 'Visão Geral',
-      icon: BarChart3,
-      description: 'Status da sua campanha'
-    },
-    {
-      id: 'briefing',
-      label: 'Briefing',
-      icon: FileText,
-      description: 'Formulário do briefing'
-    },
-    {
-      id: 'arquivos',
-      label: 'Arquivos',
-      icon: Upload,
-      description: 'Upload de materiais'
-    },
-    {
-      id: 'vendas',
-      label: 'Vendas',
-      icon: TrendingUp,
-      description: 'Registrar suas vendas'
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: MessageCircle,
-      description: 'Conversar com seu gestor'
-    },
-    {
-      id: 'tutoriais',
-      label: 'Tutoriais',
-      icon: PlayCircle,
-      description: 'Vídeos de ajuda'
-    }
+    { id: 'overview', label: 'Visão Geral', icon: Home },
+    { id: 'briefing', label: 'Briefing', icon: FileText },
+    { id: 'arquivos', label: 'Materiais', icon: Upload },
+    { id: 'vendas', label: 'Vendas', icon: TrendingUp },
+    { id: 'tutoriais', label: 'Tutoriais', icon: Play },
+    { id: 'chat', label: 'Chat', icon: MessageCircle },
   ]
 
   const handleSignOut = async () => {
-    setIsSigningOut(true)
     try {
       await signOut()
     } catch (error) {
       console.error('Erro ao fazer logout:', error)
-    } finally {
-      setIsSigningOut(false)
     }
   }
 
-  const handleTabChange = (tab: string) => {
-    onTabChange(tab)
-    // Fechar sidebar mobile após seleção
-    setOpenMobile(false)
-  }
-
-  // Função para gerar iniciais do nome
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
   }
 
   return (
-    <Sidebar 
-      collapsible="icon" 
-      className="border-r border-trafego-border-subtle"
-      style={{backgroundColor: '#111827'}}
-    >
-      <SidebarHeader className="border-b border-trafego-border-subtle">
-        <div className="flex items-center gap-2 px-2 py-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-trafego text-white shadow-lg">
-            <User className="h-4 w-4" />
-          </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
-            <span className="text-sm font-bold text-trafego-text-primary">Painel do Cliente</span>
-            <span className="text-xs text-trafego-text-secondary truncate">
-              {currentManagerName || 'Cliente'}
-            </span>
+    <Sidebar>
+      <SidebarHeader className="border-b border-gray-800 p-4">
+        <div className="flex items-center gap-3">
+          <div className="relative group cursor-pointer">
+            <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+            <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-3 py-2 text-sm transition-transform duration-300 hover:scale-105">
+              <span>Tráfego</span>
+              <span className="text-orange-300">Porcents</span>
+            </div>
           </div>
         </div>
         
-        {/* Perfil do usuário - visível apenas quando expandido */}
-        <div 
-          className="flex items-center space-x-3 p-3 rounded-xl mx-2 group-data-[collapsible=icon]:hidden shadow-sm border border-trafego-border-subtle/50"
-          style={{backgroundColor: '#1f2937'}}
-        >
-          <Avatar className="h-10 w-10 shadow-md">
-            <AvatarFallback className="bg-gradient-trafego text-white font-semibold">
-              {currentManagerName ? getInitials(currentManagerName) : <User className="h-5 w-5" />}
-            </AvatarFallback>
-          </Avatar>
-          
+        {/* Perfil do Cliente */}
+        <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 mt-4">
+          <ProfileAvatarUpload
+            currentAvatarUrl={profileData?.avatar_url}
+            userName={profileData?.nome_display || user?.email || 'Cliente'}
+            userType="cliente"
+            onAvatarChange={handleAvatarChange}
+            size="md"
+            showEditButton={true}
+          />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-trafego-text-primary truncate">
-              {currentManagerName || 'Usuário'}
+            <p className="text-sm font-medium text-white truncate">
+              {profileData?.nome_display || 'Cliente'}
             </p>
-            <p className="text-xs text-trafego-text-muted truncate">
-              {user?.email || 'Carregando...'}
+            <p className="text-xs text-gray-400 truncate">
+              {user?.email}
             </p>
           </div>
         </div>
@@ -146,32 +91,18 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
       
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-trafego-text-secondary font-medium uppercase tracking-wider text-xs">
-            Menu Principal
-          </SidebarGroupLabel>
+          <SidebarGroupLabel className="text-gray-400">Menu Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
                 <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    onClick={() => handleTabChange(item.id)}
+                  <SidebarMenuButton 
+                    onClick={() => onTabChange(item.id)}
                     isActive={activeTab === item.id}
-                    tooltip={item.label}
-                    className={`w-full transition-all duration-200 hover:scale-[1.02] ${
-                      activeTab === item.id 
-                        ? 'bg-gradient-trafego text-white shadow-lg shadow-trafego-accent-primary/20 border border-trafego-accent-primary/30' 
-                        : 'text-trafego-text-primary hover:bg-trafego-bg-card hover:text-white border border-transparent hover:border-trafego-border-subtle'
-                    }`}
+                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50"
                   >
                     <item.icon className="h-4 w-4" />
-                    <div className="flex flex-col items-start group-data-[collapsible=icon]:hidden">
-                      <span className="font-semibold">{item.label}</span>
-                      <span className={`text-xs ${
-                        activeTab === item.id ? 'text-white/90' : 'text-trafego-text-muted'
-                      }`}>
-                        {item.description}
-                      </span>
-                    </div>
+                    <span>{item.label}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
@@ -180,22 +111,15 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-trafego-border-subtle">
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton
-              onClick={handleSignOut}
-              disabled={isSigningOut}
-              tooltip="Sair do Sistema"
-              className="text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-all duration-200 hover:scale-[1.02] border border-transparent hover:border-red-500/30"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="group-data-[collapsible=icon]:hidden font-medium">
-                {isSigningOut ? 'Saindo...' : 'Sair do Sistema'}
-              </span>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+      <SidebarFooter className="border-t border-gray-800 p-4">
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+          onClick={handleSignOut}
+        >
+          <LogOut className="mr-2 h-4 w-4" />
+          Sair do Sistema
+        </Button>
       </SidebarFooter>
     </Sidebar>
   )
