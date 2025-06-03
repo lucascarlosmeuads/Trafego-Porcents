@@ -3,7 +3,7 @@ import React, { Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { LoadingFallback } from './LoadingFallback'
 import { 
-  LazyAdminDashboard, 
+  LazyOptimizedAdminDashboard, 
   LazyGestorDashboard, 
   LazyClienteDashboard 
 } from './LazyComponents'
@@ -17,14 +17,14 @@ interface DashboardProps {
 export function Dashboard({ selectedManager, onManagerSelect, activeTab = 'dashboard' }: DashboardProps) {
   const { user, isAdmin, isGestor, isCliente } = useAuth()
 
-  console.log('🚀 [Dashboard] Lazy loading baseado no tipo de usuário')
+  console.log('🚀 [Dashboard] ETAPA 3 ATIVA - Versões otimizadas com performance')
   console.log('👤 [Dashboard] User type:', { isAdmin, isGestor, isCliente })
 
-  // CODE SPLITTING: Carregamos apenas o dashboard necessário para o tipo de usuário
+  // ETAPA 3: Usando versão otimizada do Admin Dashboard
   if (isAdmin && selectedManager !== undefined && onManagerSelect && activeTab) {
     return (
       <Suspense fallback={<LoadingFallback />}>
-        <LazyAdminDashboard 
+        <LazyOptimizedAdminDashboard 
           selectedManager={selectedManager}
           onManagerSelect={onManagerSelect}
           activeTab={activeTab}

@@ -6,7 +6,7 @@ export const LazyAdminDashboard = lazy(() => import('./AdminDashboard').then(m =
 export const LazyGestorDashboard = lazy(() => import('./GestorDashboard').then(m => ({ default: m.GestorDashboard })))
 export const LazyClienteDashboard = lazy(() => import('./ClienteDashboard').then(m => ({ default: m.ClienteDashboard })))
 
-// ETAPA 3: VERSÕES OTIMIZADAS
+// ETAPA 3: VERSÕES OTIMIZADAS AGORA ATIVAS
 export const LazyOptimizedAdminDashboard = lazy(() => import('./AdminDashboard/OptimizedAdminDashboard').then(m => ({ default: m.OptimizedAdminDashboard })))
 
 // Chat Components  
