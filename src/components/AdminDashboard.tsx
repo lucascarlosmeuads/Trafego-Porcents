@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
@@ -9,7 +8,7 @@ import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayout
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
-import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
+import { SacDashboard } from './SAC/SacDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -81,6 +80,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
           </div>
         )
+
+      case 'sac':
+        return <SacDashboard />
 
       case 'documentacao':
         return (

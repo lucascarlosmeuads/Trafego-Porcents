@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense, memo, useMemo, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from '../ClientesTable'
@@ -8,6 +7,7 @@ import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayout
 import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
+import { SacDashboard } from '../SAC/SacDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -82,6 +82,9 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
             />
           </div>
         )
+
+      case 'sac':
+        return <SacDashboard />
 
       case 'documentacao':
         return (

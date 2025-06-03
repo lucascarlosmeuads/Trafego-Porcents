@@ -45,6 +45,15 @@ export function AdminMainMenu({
       description: 'Gerenciar todos os clientes'
     },
     {
+      id: 'sac',
+      label: 'SAC',
+      icon: MessageCircle,
+      onClick: () => onTabChange('sac'),
+      color: 'from-red-500 to-red-600',
+      description: 'Suporte ao cliente',
+      badge: problemasPendentes > 0 ? problemasPendentes : undefined
+    },
+    {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
@@ -79,7 +88,7 @@ export function AdminMainMenu({
                   ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
                   : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
                 }
-                transition-all duration-200 h-auto py-3 group
+                transition-all duration-200 h-auto py-3 group relative
               `}
               onClick={item.onClick}
               title={isCollapsed ? item.label : ''}
@@ -97,9 +106,20 @@ export function AdminMainMenu({
               </div>
               
               {!isCollapsed && (
-                <div className="flex flex-col items-start text-left">
+                <div className="flex flex-col items-start text-left flex-1">
                   <span className="font-medium text-sm leading-tight">{item.label}</span>
                   <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
+                </div>
+              )}
+
+              {/* Badge para notificações */}
+              {item.badge && (
+                <div className={`
+                  ${isCollapsed ? 'absolute -top-1 -right-1' : 'ml-auto'}
+                  min-w-[20px] h-5 bg-red-500 text-white text-xs rounded-full 
+                  flex items-center justify-center px-1.5 font-medium
+                `}>
+                  {item.badge}
                 </div>
               )}
             </Button>

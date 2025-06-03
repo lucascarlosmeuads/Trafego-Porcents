@@ -356,6 +356,45 @@ export type Database = {
         }
         Relationships: []
       }
+      sac_clientes: {
+        Row: {
+          created_at: string
+          data_envio: string
+          descricao: string
+          email: string
+          email_gestor: string | null
+          id: string
+          nome: string
+          nome_gestor: string | null
+          tipo_problema: string
+          whatsapp: string
+        }
+        Insert: {
+          created_at?: string
+          data_envio?: string
+          descricao: string
+          email: string
+          email_gestor?: string | null
+          id?: string
+          nome: string
+          nome_gestor?: string | null
+          tipo_problema: string
+          whatsapp: string
+        }
+        Update: {
+          created_at?: string
+          data_envio?: string
+          descricao?: string
+          email?: string
+          email_gestor?: string | null
+          id?: string
+          nome?: string
+          nome_gestor?: string | null
+          tipo_problema?: string
+          whatsapp?: string
+        }
+        Relationships: []
+      }
       solicitacoes_saque: {
         Row: {
           cliente_id: number
