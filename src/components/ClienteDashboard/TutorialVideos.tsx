@@ -1,8 +1,13 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Play, FileVideo, ExternalLink } from 'lucide-react'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Play, FileVideo } from 'lucide-react'
+import { useState } from 'react'
 
 export function TutorialVideos() {
+  const [selectedVideo, setSelectedVideo] = useState<any>(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+
   const tutorialVideos = [
     {
       id: 1,
@@ -41,8 +46,14 @@ export function TutorialVideos() {
     }
   ]
 
-  const handleVideoClick = (videoUrl: string) => {
-    window.open(videoUrl, '_blank')
+  const handleVideoClick = (video: any) => {
+    setSelectedVideo(video)
+    setIsModalOpen(true)
+  }
+
+  const closeModal = () => {
+    setIsModalOpen(false)
+    setSelectedVideo(null)
   }
 
   return (
@@ -65,7 +76,7 @@ export function TutorialVideos() {
               <Card 
                 key={video.id} 
                 className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
-                onClick={() => handleVideoClick(video.videoUrl)}
+                onClick={() => handleVideoClick(video)}
               >
                 <CardContent className="p-4">
                   <div className="relative mb-3 group">
@@ -92,8 +103,8 @@ export function TutorialVideos() {
                     <p className="text-xs text-muted-foreground line-clamp-2">{video.description}</p>
                     
                     <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
-                      <ExternalLink className="w-3 h-3" />
-                      Assistir no YouTube
+                      <Play className="w-3 h-3" />
+                      Assistir Vídeo
                     </div>
                   </div>
                 </CardContent>
@@ -106,12 +117,44 @@ export function TutorialVideos() {
             <p className="text-sm text-green-700 leading-relaxed">
               Fazer esses passos garante que sua campanha vá ao ar de forma mais rápida! 
               Essas não são as configurações principais, mas são <strong>pré-configurações importantes</strong> que 
-              agilizam toda a parte da configuração avançada. Como somos parceiros, precisamos da sua 
-              colaboração nessas etapas para otimizar o processo e acelerar os resultados do seu negócio.
+              agilizam toda a parte da configuração avançada. <strong>Nós faremos as configurações avançadas</strong>, 
+              mas essa parte das pré-configurações (como liberar a Business Manager, etc.) é sua responsabilidade. 
+              Como somos parceiros, precisamos da sua colaboração nessas etapas para otimizar o processo e acelerar 
+              os resultados do seu negócio. <strong>Qualquer dúvida, é só chamar seu gestor responsável no chat!</strong>
             </p>
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal do Player de Vídeo */}
+      <Dialog open={isModalOpen} onOpenChange={closeModal}>
+        <DialogContent className="max-w-4xl w-full p-0">
+          <DialogHeader className="p-6 pb-0">
+            <DialogTitle className="text-lg font-semibold">
+              {selectedVideo?.title}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="p-6">
+            {selectedVideo && (
+              <div className="aspect-video w-full">
+                <iframe
+                  width="100%"
+                  height="100%"
+                  src={`https://www.youtube.com/embed/${selectedVideo.videoId}?autoplay=1&rel=0`}
+                  title={selectedVideo.title}
+                  frameBorder="0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="rounded-lg"
+                />
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground mt-4">
+              {selectedVideo?.description}
+            </p>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
