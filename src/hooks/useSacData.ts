@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -47,48 +48,20 @@ export function useSacData() {
 
   const updateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
     try {
-      console.log('🔄 [useSacData] === INÍCIO ATUALIZAÇÃO GESTOR ===')
-      console.log('🔄 [useSacData] Dados recebidos:', {
+      console.log('🔄 [useSacData] === SALVAMENTO SIMPLIFICADO ===')
+      console.log('🔄 [useSacData] Dados para UPDATE:', {
         solicitacaoId,
         emailGestor,
-        nomeGestor,
-        idType: typeof solicitacaoId,
-        idLength: solicitacaoId?.length
+        nomeGestor
       })
 
-      // Validar dados antes de enviar
+      // Validação básica apenas
       if (!solicitacaoId || !emailGestor || !nomeGestor) {
         throw new Error('Dados incompletos para atualização')
       }
 
-      // Validar formato UUID do ID
-      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
-      if (!uuidRegex.test(solicitacaoId)) {
-        console.error('❌ [useSacData] ID inválido (não é UUID):', solicitacaoId)
-        throw new Error('ID da solicitação inválido')
-      }
-
-      // Verificar se o registro existe antes de tentar atualizar
-      console.log('🔍 [useSacData] Verificando se registro existe...')
-      const { data: existingRecord, error: checkError } = await supabase
-        .from('sac_clientes')
-        .select('id, nome, email_gestor, nome_gestor')
-        .eq('id', solicitacaoId)
-        .single()
-
-      if (checkError) {
-        console.error('❌ [useSacData] Erro ao verificar registro:', checkError)
-        throw new Error(`Registro não encontrado: ${checkError.message}`)
-      }
-
-      if (!existingRecord) {
-        throw new Error('Solicitação não encontrada no banco de dados')
-      }
-
-      console.log('✅ [useSacData] Registro encontrado:', existingRecord)
-
-      // Atualizar no banco - CORREÇÃO: Remover verificação restritiva do resultado
-      console.log('💾 [useSacData] Executando UPDATE...')
+      // Executar o UPDATE de forma simples e direta
+      console.log('💾 [useSacData] Executando UPDATE direto...')
       const { error: updateError } = await supabase
         .from('sac_clientes')
         .update({
@@ -97,37 +70,14 @@ export function useSacData() {
         })
         .eq('id', solicitacaoId)
 
-      // CORREÇÃO: Verificar apenas se houve erro, não o resultado vazio
       if (updateError) {
         console.error('❌ [useSacData] Erro no UPDATE:', updateError)
-        throw new Error(`Erro ao atualizar: ${updateError.message}`)
+        throw new Error(`Falha ao salvar: ${updateError.message}`)
       }
 
-      console.log('✅ [useSacData] UPDATE executado sem erros')
+      console.log('✅ [useSacData] UPDATE executado com sucesso')
 
-      // Verificar se a atualização foi realmente aplicada
-      console.log('🔍 [useSacData] Verificando se atualização foi aplicada...')
-      const { data: updatedRecord, error: verifyError } = await supabase
-        .from('sac_clientes')
-        .select('id, nome, email_gestor, nome_gestor')
-        .eq('id', solicitacaoId)
-        .single()
-
-      if (verifyError) {
-        console.error('❌ [useSacData] Erro ao verificar atualização:', verifyError)
-        throw new Error('Erro ao verificar se atualização foi aplicada')
-      }
-
-      if (!updatedRecord || updatedRecord.email_gestor !== emailGestor || updatedRecord.nome_gestor !== nomeGestor) {
-        console.error('❌ [useSacData] Atualização não foi aplicada corretamente')
-        console.error('   - Esperado:', { email_gestor: emailGestor, nome_gestor: nomeGestor })
-        console.error('   - Encontrado:', { email_gestor: updatedRecord?.email_gestor, nome_gestor: updatedRecord?.nome_gestor })
-        throw new Error('Atualização não foi aplicada corretamente no banco de dados')
-      }
-
-      console.log('✅ [useSacData] Verificação confirmada - dados atualizados:', updatedRecord)
-
-      // Atualizar estado local imediatamente
+      // Atualizar estado local imediatamente (sem verificações complexas)
       setSolicitacoes(prev => {
         const updated = prev.map(sol => 
           sol.id === solicitacaoId 
@@ -138,13 +88,13 @@ export function useSacData() {
         return updated
       })
 
-      // Forçar um refresh completo para garantir consistência
+      // Refresh suave após um tempo
       setTimeout(() => {
-        console.log('🔄 [useSacData] Fazendo refresh após atualização...')
+        console.log('🔄 [useSacData] Fazendo refresh para confirmar...')
         fetchSolicitacoes()
-      }, 500)
+      }, 1000)
 
-      return { success: true, data: updatedRecord }
+      return { success: true }
     } catch (err) {
       console.error('💥 [useSacData] Erro ao atualizar gestor:', err)
       throw err

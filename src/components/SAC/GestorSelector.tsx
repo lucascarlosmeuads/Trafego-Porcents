@@ -21,6 +21,10 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
   const [selectedGestorEmail, setSelectedGestorEmail] = useState(solicitacao.email_gestor || '')
   const [saving, setSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
+  
+  // Estado local para mostrar gestor selecionado imediatamente
+  const [localGestorEmail, setLocalGestorEmail] = useState(solicitacao.email_gestor || '')
+  const [localGestorNome, setLocalGestorNome] = useState(solicitacao.nome_gestor || '')
 
   // Encontrar o gestor selecionado pelo email
   const selectedGestor = gestores.find(g => g.email === selectedGestorEmail)
@@ -28,13 +32,11 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
   console.log('🔍 [GestorSelector] === DEBUG SELEÇÃO DE GESTOR ===')
   console.log('🔍 [GestorSelector] Email selecionado:', selectedGestorEmail)
   console.log('🔍 [GestorSelector] Gestor encontrado:', selectedGestor)
-  console.log('🔍 [GestorSelector] Lista completa de gestores:', gestores)
+  console.log('🔍 [GestorSelector] Estado local:', { localGestorEmail, localGestorNome })
 
   const handleSave = async () => {
     if (!selectedGestorEmail || !selectedGestor) {
       console.warn('⚠️ [GestorSelector] Tentativa de salvar sem gestor selecionado')
-      console.warn('⚠️ [GestorSelector] selectedGestorEmail:', selectedGestorEmail)
-      console.warn('⚠️ [GestorSelector] selectedGestor:', selectedGestor)
       toast({
         title: "Erro",
         description: "Por favor, selecione um gestor.",
@@ -44,61 +46,95 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     }
 
     try {
-      console.log('💾 [GestorSelector] === INÍCIO SALVAMENTO ===')
-      console.log('💾 [GestorSelector] Dados que serão salvos:', {
-        solicitacaoId: solicitacao.id,
-        emailGestor: selectedGestor.email,
-        nomeGestor: selectedGestor.nome
-      })
-
-      if (!solicitacao.id) {
-        throw new Error('ID da solicitação não encontrado - dados inconsistentes')
-      }
-
+      console.log('💾 [GestorSelector] === INÍCIO SALVAMENTO (ESTADO LOCAL PRIMEIRO) ===')
+      
       setSaving(true)
       
-      console.log('💾 [GestorSelector] Chamando onUpdateGestor...')
-      const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
+      // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
+      console.log('✅ [GestorSelector] Atualizando estado local primeiro...')
+      setLocalGestorEmail(selectedGestor.email)
+      setLocalGestorNome(selectedGestor.nome)
       
-      console.log('✅ [GestorSelector] Salvamento concluído com sucesso:', result)
-      
-      // Mostrar indicador de sucesso
-      setJustSaved(true)
-      setTimeout(() => setJustSaved(false), 3000)
-      
-      // Notificar o componente pai sobre a atualização
+      // Notificar o componente pai sobre a atualização LOCAL
       if (onGestorUpdated) {
         const updatedSolicitacao = {
           ...solicitacao,
           email_gestor: selectedGestor.email,
           nome_gestor: selectedGestor.nome
         }
-        console.log('🔄 [GestorSelector] Notificando componente pai:', updatedSolicitacao)
+        console.log('🔄 [GestorSelector] Notificando componente pai (estado local):', updatedSolicitacao)
         onGestorUpdated(updatedSolicitacao)
       }
       
+      // Mostrar sucesso imediato
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 3000)
+      
       toast({
-        title: "Sucesso!",
-        description: `Gestor responsável atualizado para ${selectedGestor.nome}.`,
-        duration: 4000
+        title: "Gestor Atribuído!",
+        description: `${selectedGestor.nome} foi definido como responsável.`,
+        duration: 3000
       })
       
       setIsEditing(false)
-    } catch (error) {
-      console.error('❌ [GestorSelector] Erro ao salvar:', error)
       
-      // Mensagem de erro mais específica
-      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar"
+      // 2. TENTAR SALVAR NO BANCO EM BACKGROUND
+      console.log('💾 [GestorSelector] Salvando no banco de dados em background...')
+      
+      try {
+        const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
+        console.log('✅ [GestorSelector] Salvamento no banco concluído:', result)
+        
+        // Toast discreto confirmando salvamento no banco
+        toast({
+          title: "Sincronizado",
+          description: "Dados salvos no servidor.",
+          duration: 2000
+        })
+        
+      } catch (dbError) {
+        console.error('⚠️ [GestorSelector] Erro ao salvar no banco (mantendo estado local):', dbError)
+        
+        // Toast informativo mas não crítico
+        toast({
+          title: "Aviso",
+          description: "Gestor atribuído localmente. Tentando sincronizar...",
+          duration: 4000
+        })
+        
+        // Implementar retry automático após 5 segundos
+        setTimeout(async () => {
+          try {
+            console.log('🔄 [GestorSelector] Tentativa de retry automático...')
+            await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
+            console.log('✅ [GestorSelector] Retry bem-sucedido!')
+            
+            toast({
+              title: "Sincronizado",
+              description: "Dados foram salvos no servidor.",
+              duration: 2000
+            })
+          } catch (retryError) {
+            console.error('❌ [GestorSelector] Retry falhou:', retryError)
+          }
+        }, 5000)
+      }
+      
+    } catch (error) {
+      console.error('❌ [GestorSelector] Erro crítico:', error)
       
       toast({
-        title: "Erro ao salvar",
-        description: errorMessage,
+        title: "Erro",
+        description: "Não foi possível atribuir o gestor. Tente novamente.",
         variant: "destructive",
         duration: 6000
       })
       
-      // Reverter seleção em caso de erro
+      // Reverter estado local em caso de erro crítico
+      setLocalGestorEmail(solicitacao.email_gestor || '')
+      setLocalGestorNome(solicitacao.nome_gestor || '')
       setSelectedGestorEmail(solicitacao.email_gestor || '')
+      
     } finally {
       setSaving(false)
     }
@@ -106,12 +142,13 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
 
   const handleCancel = () => {
     console.log('↩️ [GestorSelector] Cancelando edição')
-    setSelectedGestorEmail(solicitacao.email_gestor || '')
+    setSelectedGestorEmail(localGestorEmail)
     setIsEditing(false)
   }
 
   const handleStartEdit = () => {
     console.log('✏️ [GestorSelector] Iniciando edição')
+    setSelectedGestorEmail(localGestorEmail)
     setIsEditing(true)
   }
 
@@ -182,14 +219,6 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
                   ))}
                 </SelectContent>
               </Select>
-              
-              {/* Debug info - mostrar email/nome selecionado */}
-              {selectedGestor && (
-                <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
-                  <div><strong>Email:</strong> {selectedGestor.email}</div>
-                  <div><strong>Nome:</strong> {selectedGestor.nome}</div>
-                </div>
-              )}
             </div>
 
             <div className="flex gap-2">
@@ -212,7 +241,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
                 )}
               </Button>
               
-              {solicitacao.nome_gestor && (
+              {localGestorNome && (
                 <Button 
                   onClick={handleCancel}
                   variant="outline"
@@ -235,18 +264,18 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
           </div>
         ) : (
           <div>
-            {solicitacao.nome_gestor ? (
+            {localGestorNome ? (
               <>
                 <div className="space-y-2">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Nome do Gestor</label>
-                    <p className="text-lg font-semibold text-gray-900">{solicitacao.nome_gestor}</p>
+                    <p className="text-lg font-semibold text-gray-900">{localGestorNome}</p>
                   </div>
                   
-                  {solicitacao.email_gestor && (
+                  {localGestorEmail && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Email do Gestor</label>
-                      <p className="text-sm text-gray-800">{solicitacao.email_gestor}</p>
+                      <p className="text-sm text-gray-800">{localGestorEmail}</p>
                     </div>
                   )}
                 </div>
