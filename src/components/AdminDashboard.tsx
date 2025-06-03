@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
@@ -14,6 +14,11 @@ interface AdminDashboardProps {
   onManagerSelect: (manager: string | null) => void
   activeTab: string
 }
+
+// MEMOIZAÇÃO: Memoizar componentes que não mudam frequentemente
+const MemoizedManagerSelector = React.memo(ManagerSelector)
+const MemoizedClientesTable = React.memo(ClientesTable)
+const MemoizedGestoresManagement = React.memo(GestoresManagement)
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
@@ -39,6 +44,18 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     }
   }, [user, isAdmin])
 
+  // MEMOIZAÇÃO: Memoizar props que são passadas para componentes filhos
+  const managerSelectorProps = useMemo(() => ({
+    selectedManager,
+    onManagerSelect,
+    isAdminContext: true
+  }), [selectedManager, onManagerSelect])
+
+  const adminDashboardMetricsProps = useMemo(() => ({
+    clientes: gestorClientes,
+    selectedManager
+  }), [gestorClientes, selectedManager])
+
   if (loading) {
     return <LoadingFallback />
   }
@@ -46,7 +63,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   const renderContent = () => {
     // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
+      return <MemoizedGestoresManagement />
     }
     
     // Navegação por abas
@@ -56,18 +73,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
           <div className="space-y-6">
             {/* Seletor de gestores */}
             <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
+              <MemoizedManagerSelector {...managerSelectorProps} />
             </div>
             
             {/* Métricas do Admin - CORREÇÃO: Passar clientes corretos */}
-            <AdminDashboardMetrics 
-              clientes={gestorClientes} 
-              selectedManager={selectedManager}
-            />
+            <AdminDashboardMetrics {...adminDashboardMetricsProps} />
           </div>
         )
 
@@ -92,17 +102,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
             {selectedManager !== '__GESTORES__' && (
               <div className="bg-card border rounded-lg p-4">
-                <ManagerSelector 
-                  selectedManager={selectedManager}
-                  onManagerSelect={onManagerSelect}
-                  isAdminContext={true}
-                />
+                <MemoizedManagerSelector {...managerSelectorProps} />
               </div>
             )}
             
             {/* Admin panel: Pass selectedManager directly for proper filtering */}
             <div className="w-full">
-              <ClientesTable selectedManager={selectedManager} />
+              <MemoizedClientesTable selectedManager={selectedManager} />
             </div>
           </div>
         )
