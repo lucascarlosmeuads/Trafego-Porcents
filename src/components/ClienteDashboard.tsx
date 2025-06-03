@@ -82,19 +82,10 @@ export function ClienteDashboard() {
           />
         )
       case 'briefing':
-        // Convert briefing from useClienteData format to BriefingForm format
-        const briefingForForm = briefing ? {
-          nome_campanha: briefing.nome_produto || '',
-          publico_alvo: briefing.publico_alvo || '',
-          objetivo_campanha: briefing.descricao_resumida || '',
-          canais_divulgacao: '',
-          diferenciais_produto: briefing.diferencial || '',
-          restricoes_campanha: briefing.observacoes_finais || ''
-        } : null
-        
+        console.log('📋 [ClienteDashboard] Passando briefing para o formulário:', briefing)
         return (
           <BriefingForm 
-            briefing={briefingForForm}
+            briefing={briefing}
             emailCliente={user?.email || ''}
             onBriefingUpdated={refetch}
             onBack={handleBackToOverview}

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -19,31 +20,33 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 
 const briefingFormSchema = z.object({
-  nome_campanha: z.string().min(2, {
-    message: "Nome da campanha precisa ter pelo menos 2 caracteres.",
+  nome_produto: z.string().min(2, {
+    message: "Nome do produto precisa ter pelo menos 2 caracteres.",
   }),
   publico_alvo: z.string().min(10, {
     message: "Público alvo precisa ter pelo menos 10 caracteres.",
   }),
-  objetivo_campanha: z.string().min(10, {
-    message: "Objetivo da campanha precisa ter pelo menos 10 caracteres.",
+  descricao_resumida: z.string().min(10, {
+    message: "Descrição resumida precisa ter pelo menos 10 caracteres.",
   }),
-  canais_divulgacao: z.string().min(10, {
-    message: "Canais de divulgação precisa ter pelo menos 10 caracteres.",
+  diferencial: z.string().min(10, {
+    message: "Diferencial do produto precisa ter pelo menos 10 caracteres.",
   }),
-  diferenciais_produto: z.string().min(10, {
-    message: "Diferenciais do produto precisa ter pelo menos 10 caracteres.",
+  investimento_diario: z.number().min(0.01, {
+    message: "Investimento diário deve ser maior que R$ 0,01.",
   }),
-  restricoes_campanha: z.string().optional(),
+  observacoes_finais: z.string().optional(),
+  comissao_aceita: z.enum(['sim', 'nao']).optional(),
 })
 
 interface BriefingCliente {
-  nome_campanha: string
+  nome_produto: string
   publico_alvo: string
-  objetivo_campanha: string
-  canais_divulgacao: string
-  diferenciais_produto: string
-  restricoes_campanha?: string | null
+  descricao_resumida: string
+  diferencial: string
+  investimento_diario: number
+  observacoes_finais?: string | null
+  comissao_aceita?: string | null
 }
 
 interface BriefingFormProps {
@@ -58,21 +61,35 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
+  console.log('🔍 [BriefingForm] === DEBUGGING BRIEFING FORM ===')
+  console.log('📧 [BriefingForm] Email do cliente:', emailCliente)
+  console.log('📋 [BriefingForm] Briefing recebido:', briefing)
+
   const form = useForm<z.infer<typeof briefingFormSchema>>({
     resolver: zodResolver(briefingFormSchema),
     defaultValues: {
-      nome_campanha: briefing?.nome_campanha || "",
+      nome_produto: briefing?.nome_produto || "",
       publico_alvo: briefing?.publico_alvo || "",
-      objetivo_campanha: briefing?.objetivo_campanha || "",
-      canais_divulgacao: briefing?.canais_divulgacao || "",
-      diferenciais_produto: briefing?.diferenciais_produto || "",
-      restricoes_campanha: briefing?.restricoes_campanha || "",
+      descricao_resumida: briefing?.descricao_resumida || "",
+      diferencial: briefing?.diferencial || "",
+      investimento_diario: briefing?.investimento_diario || 0,
+      observacoes_finais: briefing?.observacoes_finais || "",
+      comissao_aceita: briefing?.comissao_aceita as 'sim' | 'nao' || undefined,
     },
   })
 
   useEffect(() => {
     if (briefing) {
-      form.reset(briefing)
+      console.log('🔄 [BriefingForm] Resetando formulário com dados do briefing')
+      form.reset({
+        nome_produto: briefing.nome_produto || "",
+        publico_alvo: briefing.publico_alvo || "",
+        descricao_resumida: briefing.descricao_resumida || "",
+        diferencial: briefing.diferencial || "",
+        investimento_diario: briefing.investimento_diario || 0,
+        observacoes_finais: briefing.observacoes_finais || "",
+        comissao_aceita: briefing.comissao_aceita as 'sim' | 'nao' || undefined,
+      })
     }
   }, [briefing, form])
 
@@ -80,36 +97,56 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
     setIsSubmitting(true)
     setSuccess(false)
 
+    console.log('🚀 [BriefingForm] === INICIANDO SALVAMENTO ===')
+    console.log('📧 [BriefingForm] Email cliente:', emailCliente)
+    console.log('📝 [BriefingForm] Dados do formulário:', values)
+
     try {
-      const { error } = await supabase
-        .from('briefings_clientes')
-        .upsert({
-          email_cliente: emailCliente,
-          nome_campanha: values.nome_campanha,
-          publico_alvo: values.publico_alvo,
-          objetivo_campanha: values.objetivo_campanha,
-          canais_divulgacao: values.canais_divulgacao,
-          diferenciais_produto: values.diferenciais_produto,
-          restricoes_campanha: values.restricoes_campanha,
-        }, { onConflict: 'email_cliente' })
+      const briefingData = {
+        email_cliente: emailCliente.trim().toLowerCase(),
+        nome_produto: values.nome_produto.trim(),
+        publico_alvo: values.publico_alvo.trim(),
+        descricao_resumida: values.descricao_resumida.trim(),
+        diferencial: values.diferencial.trim(),
+        investimento_diario: values.investimento_diario,
+        observacoes_finais: values.observacoes_finais?.trim() || null,
+        comissao_aceita: values.comissao_aceita || null,
+      }
+
+      console.log('💾 [BriefingForm] Dados preparados para salvar:', briefingData)
+
+      const { data, error } = await supabase
+        .from('briefings_cliente')
+        .upsert(briefingData, { 
+          onConflict: 'email_cliente',
+          ignoreDuplicates: false 
+        })
+        .select()
+
+      console.log('📤 [BriefingForm] Resposta do upsert:', { data, error })
 
       if (error) {
-        console.error("Erro ao salvar o briefing:", error)
+        console.error("❌ [BriefingForm] Erro ao salvar o briefing:", error)
         toast({
           variant: "destructive",
           title: "Erro ao salvar.",
-          description: "Ocorreu um erro ao salvar o briefing. Tente novamente.",
+          description: `Ocorreu um erro ao salvar o briefing: ${error.message}`,
         })
-      } else {
-        toast({
-          title: "Sucesso!",
-          description: "Briefing salvo com sucesso.",
-        })
-        setSuccess(true)
-        onBriefingUpdated()
+        return
       }
+
+      console.log('✅ [BriefingForm] Briefing salvo com sucesso!')
+      
+      toast({
+        title: "Sucesso!",
+        description: "Briefing salvo com sucesso.",
+      })
+      
+      setSuccess(true)
+      onBriefingUpdated()
+
     } catch (error) {
-      console.error("Erro inesperado ao salvar o briefing:", error)
+      console.error("💥 [BriefingForm] Erro inesperado ao salvar o briefing:", error)
       toast({
         variant: "destructive",
         title: "Erro Inesperado.",
@@ -142,7 +179,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
             {success ? (
               <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
             ) : null}
-            Briefing da Campanha
+            Briefing do Produto/Serviço
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -150,17 +187,18 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="nome_campanha"
+                name="nome_produto"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Nome da Campanha</FormLabel>
+                    <FormLabel>Nome do Produto/Serviço</FormLabel>
                     <FormControl>
-                      <Input placeholder="Ex: Campanha de Natal 2024" {...field} />
+                      <Input placeholder="Ex: Curso de Marketing Digital" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+              
               <FormField
                 control={form.control}
                 name="publico_alvo"
@@ -169,7 +207,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                     <FormLabel>Público Alvo</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Ex: Mulheres de 25 a 35 anos, interessadas em moda e beleza, residentes no Brasil."
+                        placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
                         {...field}
                       />
                     </FormControl>
@@ -177,15 +215,16 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   </FormItem>
                 )}
               />
+              
               <FormField
                 control={form.control}
-                name="objetivo_campanha"
+                name="descricao_resumida"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Objetivo da Campanha</FormLabel>
+                    <FormLabel>Descrição Resumida do Produto/Serviço</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Ex: Aumentar o reconhecimento da marca e gerar leads qualificados."
+                        placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
                         {...field}
                       />
                     </FormControl>
@@ -193,15 +232,16 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   </FormItem>
                 )}
               />
+              
               <FormField
                 control={form.control}
-                name="canais_divulgacao"
+                name="diferencial"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Canais de Divulgação</FormLabel>
+                    <FormLabel>Diferencial do Produto/Serviço</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Ex: Facebook, Instagram, Google Ads, e-mail marketing."
+                        placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
                         {...field}
                       />
                     </FormControl>
@@ -209,31 +249,57 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="diferenciais_produto"
+                name="investimento_diario"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Diferenciais do Produto/Serviço</FormLabel>
+                    <FormLabel>Investimento Diário (R$)</FormLabel>
                     <FormControl>
-                      <Textarea
-                        placeholder="Ex: Produto sustentável, alta qualidade, design exclusivo."
+                      <Input 
+                        type="number" 
+                        step="0.01" 
+                        placeholder="Ex: 50.00"
                         {...field}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
               <FormField
                 control={form.control}
-                name="restricoes_campanha"
+                name="comissao_aceita"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Restrições da Campanha (Opcional)</FormLabel>
+                    <FormLabel>Aceita trabalhar por comissão?</FormLabel>
+                    <FormControl>
+                      <select 
+                        {...field} 
+                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">Selecione uma opção</option>
+                        <option value="sim">Sim</option>
+                        <option value="nao">Não</option>
+                      </select>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="observacoes_finais"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Observações Finais (Opcional)</FormLabel>
                     <FormControl>
                       <Textarea
-                        placeholder="Ex: Não usar imagens de concorrentes, evitar horários de pico."
+                        placeholder="Ex: Informações adicionais que considera importante para a campanha."
                         {...field}
                       />
                     </FormControl>
@@ -241,7 +307,8 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   </FormItem>
                 )}
               />
-              <Button type="submit" disabled={isSubmitting}>
+              
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? "Salvando..." : "Salvar Briefing"}
               </Button>
             </form>
