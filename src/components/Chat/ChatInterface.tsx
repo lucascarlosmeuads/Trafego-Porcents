@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react'
 import { MessageItem } from './MessageItem'
 import { MessageInput } from './MessageInput'
-import { useChatMessages } from '@/hooks/useChatMessages'
+import { useChatMessages, ChatMensagem } from '@/hooks/useChatMessages'
 import { useChatProfiles } from '@/hooks/useChatProfiles'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
