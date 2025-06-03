@@ -1,17 +1,7 @@
 
 import { useMemo } from 'react'
 import { useDebounce } from './useDebounce'
-
-interface Cliente {
-  id: string
-  nome_cliente?: string
-  email_cliente?: string
-  telefone?: string
-  vendedor?: string
-  status_campanha?: string
-  site_status?: string
-  numero_bm?: string
-}
+import { Cliente } from '@/lib/supabase'
 
 interface UseOptimizedFiltersProps {
   clientes: Cliente[]
