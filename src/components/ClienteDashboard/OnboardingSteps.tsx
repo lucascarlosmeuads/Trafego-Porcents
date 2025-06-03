@@ -9,16 +9,20 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { 
   User, 
   MessageCircle, 
   FileText, 
   Upload, 
-  Users, 
   Play,
+  CreditCard,
+  BarChart3,
+  ArrowLeft,
   CheckCircle2,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Camera
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
@@ -34,71 +38,103 @@ interface Step {
   actionText: string
   canCheck: boolean
   autoCheck?: boolean
+  chatMessage?: string
 }
 
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
-  const { profileData } = useProfileData('cliente')
+  const { profileData, updateProfileData } = useProfileData('cliente')
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
 
-  // Definir os passos do onboarding
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
+
+  const openChatWithMessage = (message: string) => {
+    onTabChange('chat')
+    // TODO: Implementar envio automático de mensagem no chat
+    console.log('Mensagem para enviar no chat:', message)
+  }
+
+  // Definir os passos do onboarding corretos
   const steps: Step[] = React.useMemo(() => [
     {
       id: 1,
-      title: 'Configurar Perfil Completo',
-      description: 'Complete suas informações e adicione uma foto de perfil',
-      icon: User,
-      action: () => onTabChange('overview'),
-      actionText: 'Configurar Perfil',
+      title: 'Adicionar Foto de Perfil',
+      description: 'Adicione sua foto de perfil para personalizar sua conta',
+      icon: Camera,
+      action: () => {}, // Ação será o upload direto no card
+      actionText: 'Adicionar Foto',
       canCheck: true,
-      autoCheck: !!(profileData?.avatar_url && profileData?.nome_display)
+      autoCheck: !!(profileData?.avatar_url)
     },
     {
       id: 2,
-      title: 'Primeiro Contato via Chat',
-      description: 'Entre em contato com seu gestor para iniciar o acompanhamento',
-      icon: MessageCircle,
-      action: () => onTabChange('chat'),
-      actionText: 'Abrir Chat',
-      canCheck: true
-    },
-    {
-      id: 3,
-      title: 'Preencher Briefing Completo',
-      description: 'Forneça todas as informações sobre seu produto e estratégia',
+      title: 'Preencher Formulário',
+      description: 'Complete todas as informações sobre seu produto/serviço',
       icon: FileText,
       action: () => onTabChange('briefing'),
-      actionText: 'Preencher Briefing',
+      actionText: 'Preencher Formulário',
       canCheck: true,
       autoCheck: !!(briefing && briefing.nome_produto && briefing.descricao_resumida)
     },
     {
-      id: 4,
-      title: 'Enviar Materiais',
-      description: 'Faça upload de logos, fotos do produto e outros materiais',
+      id: 3,
+      title: 'Enviar Materiais Criativos',
+      description: 'Envie logos, fotos e materiais para criação dos criativos',
       icon: Upload,
       action: () => onTabChange('arquivos'),
-      actionText: 'Enviar Arquivos',
+      actionText: 'Enviar Materiais',
       canCheck: true,
       autoCheck: !!(arquivos && arquivos.length > 0)
     },
     {
+      id: 4,
+      title: 'Conversar sobre Business Manager',
+      description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
+      icon: MessageCircle,
+      action: () => openChatWithMessage('Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'),
+      actionText: 'Conversar no Chat',
+      canCheck: true,
+      chatMessage: 'Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'
+    },
+    {
       id: 5,
-      title: 'Aguardar Criação do Grupo',
-      description: 'Seu gestor criará o grupo de acompanhamento (máximo 1 dia)',
-      icon: Users,
-      action: () => onTabChange('chat'),
-      actionText: 'Verificar Status',
+      title: 'Assistir Tutorial da BM',
+      description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
+      icon: Play,
+      action: () => onTabChange('tutoriais'),
+      actionText: 'Ver Tutoriais',
       canCheck: true
     },
     {
       id: 6,
-      title: 'Assistir Tutoriais',
-      description: 'Assista aos vídeos explicativos para entender o processo',
-      icon: Play,
-      action: () => onTabChange('tutoriais'),
-      actionText: 'Ver Tutoriais',
+      title: 'Recarregar Saldo de Tráfego',
+      description: 'Recarregue o saldo para tráfego pago na Business Manager',
+      icon: CreditCard,
+      action: () => openChatWithMessage('Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'),
+      actionText: 'Conversar sobre Saldo',
+      canCheck: true,
+      chatMessage: 'Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'
+    },
+    {
+      id: 7,
+      title: 'Finalizar Configurações',
+      description: 'Finalize configurações e tire dúvidas com seu gestor',
+      icon: MessageCircle,
+      action: () => openChatWithMessage('Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'),
+      actionText: 'Conversar com Gestor',
+      canCheck: true,
+      chatMessage: 'Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'
+    },
+    {
+      id: 8,
+      title: 'Analisar Métricas',
+      description: 'Acompanhe o desempenho da sua campanha',
+      icon: BarChart3,
+      action: () => onTabChange('vendas'), // Assumindo que métricas estão na aba vendas
+      actionText: 'Ver Métricas',
       canCheck: true
     }
   ], [profileData, briefing, arquivos, onTabChange])
@@ -133,6 +169,10 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     await togglePasso(stepId)
   }, [togglePasso])
 
+  const handleBackToOverview = () => {
+    onTabChange('overview')
+  }
+
   if (loading) {
     return (
       <Card className="bg-gray-900 border-gray-800">
@@ -150,14 +190,25 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     <Card className="bg-gray-900 border-gray-800">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="text-white flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-teal-500" />
-              Guia de Configuração
-            </CardTitle>
-            <CardDescription className="text-gray-400">
-              Siga estes passos para configurar sua campanha corretamente
-            </CardDescription>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToOverview}
+              className="text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
+            <div>
+              <CardTitle className="text-white flex items-center gap-2">
+                <CheckCircle2 className="h-5 w-5 text-teal-500" />
+                Guia de Configuração
+              </CardTitle>
+              <CardDescription className="text-gray-400">
+                Siga estes passos para configurar sua campanha corretamente
+              </CardDescription>
+            </div>
           </div>
           <Badge 
             variant={completedSteps === totalSteps ? "default" : "secondary"}
@@ -245,23 +296,57 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                       {step.title}
                     </h4>
                     <p className="text-gray-400 text-sm">{step.description}</p>
+                    {step.chatMessage && (
+                      <p className="text-xs text-teal-400 mt-1 italic">
+                        "Mensagem será enviada automaticamente no chat"
+                      </p>
+                    )}
                   </div>
                 </div>
                 
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={step.action}
-                  className={`${
-                    isCompleted 
-                      ? 'text-teal-400 hover:text-teal-300' 
-                      : isNext
-                      ? 'text-blue-400 hover:text-blue-300'
-                      : 'text-gray-400 hover:text-gray-300'
-                  }`}
-                >
-                  {step.actionText}
-                </Button>
+                {/* Ação especial para upload de avatar no passo 1 */}
+                {step.id === 1 ? (
+                  <div className="flex items-center gap-2">
+                    <ProfileAvatarUpload
+                      currentAvatarUrl={profileData?.avatar_url}
+                      userName={profileData?.nome_display || user?.email || 'Cliente'}
+                      userType="cliente"
+                      onAvatarChange={handleAvatarChange}
+                      size="sm"
+                      showEditButton={true}
+                    />
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={step.action}
+                      className={`${
+                        isCompleted 
+                          ? 'text-teal-400 hover:text-teal-300' 
+                          : isNext
+                          ? 'text-blue-400 hover:text-blue-300'
+                          : 'text-gray-400 hover:text-gray-300'
+                      }`}
+                    >
+                      {profileData?.avatar_url ? 'Trocar Foto' : 'Adicionar Foto'}
+                    </Button>
+                  </div>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={step.action}
+                    className={`${
+                      isCompleted 
+                        ? 'text-teal-400 hover:text-teal-300' 
+                        : isNext
+                        ? 'text-blue-400 hover:text-blue-300'
+                        : 'text-gray-400 hover:text-gray-300'
+                    }`}
+                  >
+                    {step.actionText}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                )}
               </div>
             )
           })}
@@ -273,10 +358,31 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
             <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto mb-2" />
             <h3 className="text-green-300 font-semibold mb-1">Parabéns! 🎉</h3>
             <p className="text-gray-300 text-sm">
-              Você completou todos os passos iniciais. Agora é só aguardar seu gestor configurar sua campanha!
+              Você completou todos os passos! Agora suas campanhas estão prontas para decolar!
             </p>
+            <div className="mt-3">
+              <Button
+                onClick={() => onTabChange('vendas')}
+                className="bg-green-600 hover:bg-green-700 text-white"
+                size="sm"
+              >
+                Ver Métricas da Campanha
+              </Button>
+            </div>
           </div>
         )}
+
+        {/* Botão de voltar sempre visível */}
+        <div className="pt-4 border-t border-gray-700">
+          <Button
+            variant="outline"
+            onClick={handleBackToOverview}
+            className="w-full border-gray-600 text-gray-300 hover:text-white hover:bg-gray-800"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
+          </Button>
+        </div>
       </CardContent>
     </Card>
   )
