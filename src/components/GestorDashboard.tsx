@@ -8,6 +8,8 @@ import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 import { GestorSacDashboard } from './SAC/GestorSacDashboard'
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
+import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
+import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User } from 'lucide-react'
@@ -50,6 +52,10 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
       case 'dashboard':
         return (
           <div className="space-y-6">
+            {/* Avisos Importantes para Gestores */}
+            <AvisoSistemasSAC />
+            <AvisoMudancaStatus />
+            
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
@@ -103,6 +109,10 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
       default:
         return (
           <div className="space-y-6">
+            {/* Avisos Importantes para Gestores */}
+            <AvisoSistemasSAC />
+            <AvisoMudancaStatus />
+            
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
