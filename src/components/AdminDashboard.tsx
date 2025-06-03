@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense, useMemo } from 'react'
+import React, { useState, useEffect, Suspense, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
