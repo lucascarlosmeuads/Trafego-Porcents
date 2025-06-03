@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
@@ -218,7 +217,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
         </Card>
       )}
 
-      {/* Lista de Passos */}
+      {/* Lista de Passos com melhor contraste */}
       <div className="space-y-3">
         {steps.map((step, index) => {
           const isCompleted = progresso.has(step.id)
@@ -280,7 +279,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </div>
                 </div>
 
-                {/* Botão de Ação */}
+                {/* Botão de Ação com melhor contraste */}
                 <div className="mt-3">
                   <Button
                     onClick={step.action}
@@ -290,7 +289,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                         : isNext
                         ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
                         : 'bg-gray-600 hover:bg-gray-700 text-white'
-                    } shadow-md`}
+                    } shadow-md font-medium`}
                     size="sm"
                   >
                     {step.actionText}
@@ -298,16 +297,16 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </Button>
                 </div>
 
-                {/* Indicador de Mensagem de Chat */}
+                {/* Indicador de Mensagem de Chat com melhor contraste */}
                 {step.chatMessage && (
-                  <p className="text-xs text-blue-600 mt-2 italic">
+                  <p className="text-xs text-blue-800 mt-2 italic font-medium">
                     💬 Mensagem será enviada automaticamente
                   </p>
                 )}
 
-                {/* Botões de Marcar/Desmarcar sempre visíveis */}
+                {/* Botões de Marcar/Desmarcar com melhor contraste */}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-gray-600">
+                  <span className="text-xs text-gray-700 font-medium">
                     {isCompleted ? '✅ Concluído' : 'Pendente'}
                   </span>
                   <div className="flex gap-2">
@@ -315,10 +314,10 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                       variant="outline"
                       size="sm"
                       onClick={() => handleStepToggle(step.id)}
-                      className={`text-xs border-2 ${
+                      className={`text-xs border-2 font-medium ${
                         isCompleted 
-                          ? 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white' 
-                          : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
+                          ? 'border-green-700 text-green-800 hover:bg-green-700 hover:text-white hover:border-green-700' 
+                          : 'border-blue-700 text-blue-800 hover:bg-blue-700 hover:text-white hover:border-blue-700'
                       }`}
                     >
                       {isCompleted ? 'Desmarcar' : 'Marcar'}

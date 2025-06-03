@@ -1,4 +1,3 @@
-
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
@@ -118,7 +117,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     }
   ], [briefing, arquivos, onTabChange])
 
-  // Auto-marcar passos baseado em dados existentes
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
       if (step.autoCheck && !progresso.has(step.id)) {
@@ -171,7 +169,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
               variant="ghost"
               size="sm"
               onClick={handleBackToOverview}
-              className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+              className="text-gray-800 hover:text-gray-900 hover:bg-gray-100"
             >
               <ArrowLeft className="h-4 w-4 mr-1" />
               Voltar
@@ -296,14 +294,14 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                     </div>
                     <p className="text-gray-600 text-sm">{step.description}</p>
                     {step.chatMessage && (
-                      <p className="text-xs text-blue-600 mt-1 italic">
+                      <p className="text-xs text-blue-700 mt-1 italic font-medium">
                         💬 Mensagem será enviada automaticamente no chat
                       </p>
                     )}
                   </div>
                 </div>
                 
-                {/* Botões de ação */}
+                {/* Botões de ação com melhor contraste */}
                 <div className="flex items-center gap-2">
                   <Button
                     variant="ghost"
@@ -311,25 +309,25 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                     onClick={step.action}
                     className={`${
                       isCompleted 
-                        ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                        ? 'text-green-800 hover:text-green-900 hover:bg-green-100 font-medium' 
                         : isNext
-                        ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
-                        : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
+                        ? 'text-blue-800 hover:text-blue-900 hover:bg-blue-100 font-medium'
+                        : 'text-gray-800 hover:text-gray-900 hover:bg-gray-100 font-medium'
                     }`}
                   >
                     {step.actionText}
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                   
-                  {/* Botão explícito de marcar/desmarcar */}
+                  {/* Botão explícito de marcar/desmarcar com melhor contraste */}
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => handleStepToggle(step.id)}
-                    className={`text-xs border-2 ${
+                    className={`text-xs border-2 font-medium ${
                       isCompleted 
-                        ? 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white' 
-                        : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
+                        ? 'border-green-700 text-green-800 hover:bg-green-700 hover:text-white hover:border-green-700' 
+                        : 'border-blue-700 text-blue-800 hover:bg-blue-700 hover:text-white hover:border-blue-700'
                     }`}
                   >
                     {isCompleted ? 'Desmarcar' : 'Marcar'}
@@ -363,7 +361,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           <Button
             variant="outline"
             onClick={handleBackToOverview}
-            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
+            className="w-full border-gray-300 text-gray-800 hover:text-gray-900 hover:bg-gray-100 font-medium"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Painel Principal
