@@ -53,18 +53,16 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
-    // TODO: Implementar envio automático de mensagem no chat
     console.log('Mensagem para enviar no chat:', message)
   }
 
-  // Definir os passos do onboarding corretos
   const steps: Step[] = React.useMemo(() => [
     {
       id: 1,
       title: 'Adicionar Foto de Perfil',
       description: 'Adicione sua foto de perfil para personalizar sua conta',
       icon: Camera,
-      action: () => {}, // Ação será o upload direto no card
+      action: () => {},
       actionText: 'Adicionar Foto',
       canCheck: true,
       autoCheck: !!(profileData?.avatar_url)
@@ -133,7 +131,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
-      action: () => onTabChange('vendas'), // Assumindo que métricas estão na aba vendas
+      action: () => onTabChange('vendas'),
       actionText: 'Ver Métricas',
       canCheck: true
     }
@@ -148,19 +146,16 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     })
   }, [steps, progresso, togglePasso])
 
-  // Executar auto-check quando dados carregarem
   React.useEffect(() => {
     if (!loading && (briefing || arquivos || profileData)) {
       checkAutoSteps()
     }
   }, [loading, briefing, arquivos, profileData, checkAutoSteps])
 
-  // Calcular progresso
   const totalSteps = steps.length
   const completedSteps = progresso.size
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
 
-  // Encontrar próximo passo
   const nextStep = React.useMemo(() => {
     return steps.find(step => !progresso.has(step.id))
   }, [steps, progresso])
@@ -218,7 +213,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           </Badge>
         </div>
         
-        {/* Barra de progresso */}
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Progresso geral</span>
@@ -234,7 +228,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {/* Próximo passo em destaque */}
         {nextStep && (
           <div className="bg-gradient-to-r from-teal-900/30 to-blue-900/30 border border-teal-800/50 rounded-lg p-4 mb-4">
             <div className="flex items-center gap-2 mb-2">
@@ -258,7 +251,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           </div>
         )}
 
-        {/* Lista de todos os passos */}
         <div className="space-y-3">
           {steps.map((step, index) => {
             const isCompleted = progresso.has(step.id)
@@ -276,45 +268,70 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 }`}
               >
                 <div className="flex items-center space-x-3 flex-1">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      checked={isCompleted}
-                      onCheckedChange={() => handleStepToggle(step.id)}
-                      className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600"
-                    />
-                    <div className="w-6 h-6 rounded-full bg-gray-700 text-white text-xs flex items-center justify-center font-bold">
-                      {index + 1}
-                    </div>
+                  {/* Checkbox sempre visível */}
+                  <Checkbox
+                    checked={isCompleted}
+                    onCheckedChange={() => handleStepToggle(step.id)}
+                    className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 w-5 h-5"
+                  />
+                  
+                  {/* Numeração sempre visível */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
+                    isCompleted 
+                      ? 'bg-teal-600 border-teal-600 text-white' 
+                      : isNext
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-gray-700 border-gray-600 text-gray-300'
+                  }`}>
+                    {index + 1}
                   </div>
                   
+                  {/* Ícone do passo */}
                   <div className={`${isCompleted ? 'bg-teal-600' : isNext ? 'bg-blue-600' : 'bg-gray-600'} p-2 rounded-lg`}>
                     <step.icon className="h-4 w-4 text-white" />
                   </div>
                   
                   <div className="flex-1">
-                    <h4 className={`font-medium ${isCompleted ? 'text-teal-300' : 'text-white'}`}>
-                      {step.title}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className={`font-medium ${isCompleted ? 'text-teal-300' : 'text-white'}`}>
+                        {step.title}
+                      </h4>
+                      {/* Indicador de conclusão separado */}
+                      {isCompleted && (
+                        <CheckCircle2 className="h-4 w-4 text-teal-400" />
+                      )}
+                    </div>
                     <p className="text-gray-400 text-sm">{step.description}</p>
                     {step.chatMessage && (
                       <p className="text-xs text-teal-400 mt-1 italic">
-                        "Mensagem será enviada automaticamente no chat"
+                        💬 Mensagem será enviada automaticamente no chat
                       </p>
                     )}
                   </div>
                 </div>
                 
-                {/* Ação especial para upload de avatar no passo 1 */}
-                {step.id === 1 ? (
-                  <div className="flex items-center gap-2">
-                    <ProfileAvatarUpload
-                      currentAvatarUrl={profileData?.avatar_url}
-                      userName={profileData?.nome_display || user?.email || 'Cliente'}
-                      userType="cliente"
-                      onAvatarChange={handleAvatarChange}
-                      size="sm"
-                      showEditButton={true}
-                    />
+                {/* Botões de ação */}
+                <div className="flex items-center gap-2">
+                  {step.id === 1 ? (
+                    <div className="flex items-center gap-2">
+                      <ProfileAvatarUpload
+                        currentAvatarUrl={profileData?.avatar_url}
+                        userName={profileData?.nome_display || user?.email || 'Cliente'}
+                        userType="cliente"
+                        onAvatarChange={handleAvatarChange}
+                        size="sm"
+                        showEditButton={true}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={step.action}
+                        className="text-gray-400 hover:text-gray-300"
+                      >
+                        {profileData?.avatar_url ? 'Trocar' : 'Adicionar'}
+                      </Button>
+                    </div>
+                  ) : (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -327,32 +344,30 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                           : 'text-gray-400 hover:text-gray-300'
                       }`}
                     >
-                      {profileData?.avatar_url ? 'Trocar Foto' : 'Adicionar Foto'}
+                      {step.actionText}
+                      <ChevronRight className="h-4 w-4 ml-1" />
                     </Button>
-                  </div>
-                ) : (
+                  )}
+                  
+                  {/* Botão explícito de marcar/desmarcar */}
                   <Button
-                    variant="ghost"
+                    variant="outline"
                     size="sm"
-                    onClick={step.action}
-                    className={`${
+                    onClick={() => handleStepToggle(step.id)}
+                    className={`text-xs ${
                       isCompleted 
-                        ? 'text-teal-400 hover:text-teal-300' 
-                        : isNext
-                        ? 'text-blue-400 hover:text-blue-300'
-                        : 'text-gray-400 hover:text-gray-300'
+                        ? 'border-teal-600 text-teal-400 hover:bg-teal-600 hover:text-white' 
+                        : 'border-gray-600 text-gray-400 hover:bg-gray-600 hover:text-white'
                     }`}
                   >
-                    {step.actionText}
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    {isCompleted ? 'Desmarcar' : 'Marcar'}
                   </Button>
-                )}
+                </div>
               </div>
             )
           })}
         </div>
 
-        {/* Mensagem de conclusão */}
         {completedSteps === totalSteps && (
           <div className="bg-gradient-to-r from-green-900/30 to-teal-900/30 border border-green-800/50 rounded-lg p-4 text-center">
             <CheckCircle2 className="h-8 w-8 text-green-400 mx-auto mb-2" />
@@ -372,7 +387,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           </div>
         )}
 
-        {/* Botão de voltar sempre visível */}
         <div className="pt-4 border-t border-gray-700">
           <Button
             variant="outline"

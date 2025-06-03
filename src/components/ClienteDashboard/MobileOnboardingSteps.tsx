@@ -6,6 +6,7 @@ import { useProfileData } from '@/hooks/useProfileData'
 import { useClienteData } from '@/hooks/useClienteData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { MobilePhotoUpload } from './MobilePhotoUpload'
@@ -138,7 +139,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
     }
   ], [profileData, briefing, arquivos, onTabChange, expandedStep])
 
-  // Auto-marcar passos baseado em dados existentes
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
       if (step.autoCheck && !progresso.has(step.id)) {
@@ -253,19 +253,39 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
             >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  <div className="flex items-center space-x-2 flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-700 text-white text-sm flex items-center justify-center font-bold">
-                      {isCompleted ? <CheckCircle2 className="h-4 w-4 text-teal-400" /> : index + 1}
-                    </div>
-                    <div className={`${isCompleted ? 'bg-teal-600' : isNext ? 'bg-blue-600' : 'bg-gray-600'} p-2 rounded-lg`}>
-                      <step.icon className="h-4 w-4 text-white" />
-                    </div>
+                  {/* Checkbox sempre visível */}
+                  <Checkbox
+                    checked={isCompleted}
+                    onCheckedChange={() => handleStepToggle(step.id)}
+                    className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 w-5 h-5 flex-shrink-0"
+                  />
+                  
+                  {/* Numeração sempre visível */}
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 flex-shrink-0 ${
+                    isCompleted 
+                      ? 'bg-teal-600 border-teal-600 text-white' 
+                      : isNext
+                      ? 'bg-blue-600 border-blue-600 text-white'
+                      : 'bg-gray-700 border-gray-600 text-gray-300'
+                  }`}>
+                    {index + 1}
+                  </div>
+                  
+                  {/* Ícone */}
+                  <div className={`${isCompleted ? 'bg-teal-600' : isNext ? 'bg-blue-600' : 'bg-gray-600'} p-2 rounded-lg flex-shrink-0`}>
+                    <step.icon className="h-4 w-4 text-white" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
-                    <h4 className={`font-medium text-sm ${isCompleted ? 'text-teal-300' : 'text-white'}`}>
-                      {step.title}
-                    </h4>
+                    <div className="flex items-center gap-2">
+                      <h4 className={`font-medium text-sm ${isCompleted ? 'text-teal-300' : 'text-white'}`}>
+                        {step.title}
+                      </h4>
+                      {/* Indicador de conclusão separado */}
+                      {isCompleted && (
+                        <CheckCircle2 className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                      )}
+                    </div>
                     <p className="text-gray-400 text-xs mt-1">{step.description}</p>
                   </div>
                   
@@ -321,19 +341,25 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </p>
                 )}
 
-                {/* Toggle de Conclusão */}
+                {/* Botões de Marcar/Desmarcar sempre visíveis */}
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs text-gray-400">
                     {isCompleted ? '✅ Concluído' : 'Pendente'}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleStepToggle(step.id)}
-                    className="text-xs"
-                  >
-                    {isCompleted ? 'Desmarcar' : 'Marcar como feito'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleStepToggle(step.id)}
+                      className={`text-xs ${
+                        isCompleted 
+                          ? 'border-red-600 text-red-400 hover:bg-red-600 hover:text-white' 
+                          : 'border-teal-600 text-teal-400 hover:bg-teal-600 hover:text-white'
+                      }`}
+                    >
+                      {isCompleted ? 'Desmarcar' : 'Marcar'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
