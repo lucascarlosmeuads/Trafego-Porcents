@@ -22,17 +22,26 @@ export function useProfileData(userType: 'gestor' | 'cliente') {
 
       try {
         if (userType === 'gestor') {
+          console.log('🔍 [useProfileData] Buscando dados do gestor:', user.email)
+          
           const { data, error } = await supabase
             .from('gestores')
             .select('avatar_url, nome')
             .eq('email', user.email)
-            .single()
+            .maybeSingle()
 
-          if (!error && data) {
+          if (error) {
+            console.error('❌ [useProfileData] Erro ao buscar gestor:', error)
+          }
+
+          if (data) {
+            console.log('✅ [useProfileData] Dados do gestor encontrados:', data)
             setProfileData({
               avatar_url: data.avatar_url,
               nome_display: data.nome
             })
+          } else {
+            console.warn('⚠️ [useProfileData] Nenhum dado encontrado para o gestor')
           }
         } else {
           const { data, error } = await supabase
@@ -60,7 +69,7 @@ export function useProfileData(userType: 'gestor' | 'cliente') {
           }
         }
       } catch (error) {
-        console.error('Erro ao buscar dados do perfil:', error)
+        console.error('❌ [useProfileData] Erro ao buscar dados do perfil:', error)
       } finally {
         setLoading(false)
       }
@@ -70,6 +79,7 @@ export function useProfileData(userType: 'gestor' | 'cliente') {
   }, [user?.email, userType])
 
   const updateProfileData = (newData: Partial<ProfileData>) => {
+    console.log('🔄 [useProfileData] Atualizando dados do perfil:', newData)
     setProfileData(prev => prev ? { ...prev, ...newData } : newData)
   }
 
