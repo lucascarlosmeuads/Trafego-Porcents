@@ -1,4 +1,3 @@
-
 import { lazy } from 'react'
 
 // Dashboard Components
@@ -8,6 +7,9 @@ export const LazyClienteDashboard = lazy(() => import('./ClienteDashboard').then
 
 // ETAPA 3: VERSÕES OTIMIZADAS AGORA ATIVAS
 export const LazyOptimizedAdminDashboard = lazy(() => import('./AdminDashboard/OptimizedAdminDashboard').then(m => ({ default: m.OptimizedAdminDashboard })))
+
+// ETAPA 4: VERSÕES ULTRA-OTIMIZADAS COM REACT QUERY
+export const LazyUltraOptimizedAdminDashboard = lazy(() => import('./AdminDashboard/UltraOptimizedAdminDashboard').then(m => ({ default: m.UltraOptimizedAdminDashboard })))
 
 // Chat Components  
 export const LazyChatLayoutSplit = lazy(() => import('./Chat/ChatLayoutSplit').then(m => ({ default: m.ChatLayoutSplit })))
