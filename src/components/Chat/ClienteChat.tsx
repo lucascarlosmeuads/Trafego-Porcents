@@ -107,7 +107,7 @@ export function ClienteChat({ onBack }: ClienteChatProps) {
               <ChatInterface
                 emailCliente={user?.email || ''}
                 emailGestor={gestorEmail}
-                nomeCliente={user?.name || 'Cliente'}
+                nomeCliente={user?.email || 'Cliente'}
                 onBack={onBack}
                 showBackButton={false}
               />

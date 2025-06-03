@@ -82,28 +82,55 @@ export function ClienteDashboard() {
           />
         )
       case 'briefing':
+        // Convert briefing from useClienteData format to BriefingForm format
+        const briefingForForm = briefing ? {
+          nome_campanha: briefing.nome_produto || '',
+          publico_alvo: briefing.publico_alvo || '',
+          objetivo_campanha: briefing.descricao_resumida || '',
+          canais_divulgacao: '',
+          diferenciais_produto: briefing.diferencial || '',
+          restricoes_campanha: briefing.observacoes_finais || ''
+        } : null
+        
         return (
           <BriefingForm 
-            briefing={briefing}
+            briefing={briefingForForm}
             emailCliente={user?.email || ''}
             onBriefingUpdated={refetch}
             onBack={handleBackToOverview}
           />
         )
       case 'arquivos':
+        // Convert arquivos from useClienteData format to ArquivosUpload format
+        const arquivosForUpload = arquivos.map(arquivo => ({
+          id: arquivo.id,
+          nome_arquivo: arquivo.nome_arquivo,
+          url_arquivo: arquivo.caminho_arquivo,
+          data_upload: arquivo.created_at,
+          descricao: ''
+        }))
+        
         return (
           <ArquivosUpload 
             emailCliente={user?.email || ''}
-            arquivos={arquivos}
+            arquivos={arquivosForUpload}
             onArquivosUpdated={refetch}
             onBack={handleBackToOverview}
           />
         )
       case 'vendas':
+        // Convert vendas from useClienteData format to VendasManager format
+        const vendasForManager = vendas.map(venda => ({
+          id: venda.id,
+          valor: venda.valor_venda,
+          data: venda.data_venda,
+          produto: venda.produto_vendido
+        }))
+        
         return (
           <VendasManager 
             emailCliente={user?.email || ''}
-            vendas={vendas}
+            vendas={vendasForManager}
             onVendasUpdated={refetch}
             onBack={handleBackToOverview}
           />

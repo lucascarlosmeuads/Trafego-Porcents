@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -27,8 +28,7 @@ export function VendasManager({ emailCliente, vendas, onVendasUpdated, onBack }:
 
   const handleInputChange = (index: number, field: string, value: string) => {
     const updatedVendas = [...novasVendas]
-    // @ts-expect-error
-    updatedVendas[index][field] = value
+    updatedVendas[index][field as keyof VendaCliente] = value as any
     setNovasVendas(updatedVendas)
   }
 
