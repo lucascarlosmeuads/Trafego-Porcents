@@ -4,8 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
 import { ClientesTable } from './ClientesTable'
 import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
-import { ManagerSidebar } from './ManagerSidebar'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
+import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 
 interface GestorDashboardProps {
   activeTab: string
@@ -14,6 +14,13 @@ interface GestorDashboardProps {
 export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   const { user } = useAuth()
   const { clientes, loading } = useManagerData(user?.email || '')
+  const { useOptimized } = useOptimizedComponents()
+
+  console.log('🔍 [GestorDashboard] === DEBUG GESTOR DASHBOARD ===')
+  console.log('👤 [GestorDashboard] User email:', user?.email)
+  console.log('📊 [GestorDashboard] Total clientes:', clientes.length)
+  console.log('⏳ [GestorDashboard] Loading:', loading)
+  console.log('⚡ [GestorDashboard] Usando componentes otimizados:', useOptimized)
 
   const renderContent = () => {
     if (loading) {

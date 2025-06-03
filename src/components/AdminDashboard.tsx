@@ -4,10 +4,12 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
+import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
 import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
+import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -18,6 +20,7 @@ interface AdminDashboardProps {
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
+  const { useOptimized } = useOptimizedComponents()
   
   // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
   // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
@@ -32,6 +35,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
   console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
   console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
+  console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -63,11 +67,18 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               />
             </div>
             
-            {/* Métricas do Admin - CORREÇÃO: Passar clientes corretos */}
-            <AdminDashboardMetrics 
-              clientes={gestorClientes} 
-              selectedManager={selectedManager}
-            />
+            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
+            {useOptimized ? (
+              <OptimizedAdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            ) : (
+              <AdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            )}
           </div>
         )
 
