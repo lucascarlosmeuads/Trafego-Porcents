@@ -48,56 +48,71 @@ export function useSacData() {
 
   const updateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
     try {
-      console.log('🔄 [useSacData] === SALVAMENTO SIMPLIFICADO ===')
-      console.log('🔄 [useSacData] Dados para UPDATE:', {
-        solicitacaoId,
-        emailGestor,
-        nomeGestor
+      console.log('💾 [useSacData] === INÍCIO SALVAMENTO NO BANCO ===')
+      console.log('💾 [useSacData] Dados para UPDATE:', {
+        id: solicitacaoId,
+        email_gestor: emailGestor,
+        nome_gestor: nomeGestor
       })
 
-      // Validação básica apenas
+      // Validação dos parâmetros
       if (!solicitacaoId || !emailGestor || !nomeGestor) {
-        throw new Error('Dados incompletos para atualização')
+        throw new Error(`Parâmetros inválidos: ID=${solicitacaoId}, Email=${emailGestor}, Nome=${nomeGestor}`)
       }
 
-      // Executar o UPDATE de forma simples e direta
-      console.log('💾 [useSacData] Executando UPDATE direto...')
-      const { error: updateError } = await supabase
+      // Executar UPDATE no banco
+      console.log('💾 [useSacData] Executando UPDATE no Supabase...')
+      const { data, error: updateError } = await supabase
         .from('sac_clientes')
         .update({
           email_gestor: emailGestor,
           nome_gestor: nomeGestor
         })
         .eq('id', solicitacaoId)
+        .select('*')
 
       if (updateError) {
         console.error('❌ [useSacData] Erro no UPDATE:', updateError)
-        throw new Error(`Falha ao salvar: ${updateError.message}`)
+        throw new Error(`Falha ao salvar no banco: ${updateError.message}`)
       }
 
-      console.log('✅ [useSacData] UPDATE executado com sucesso')
+      console.log('✅ [useSacData] UPDATE executado com sucesso:', data)
 
-      // Atualizar estado local imediatamente (sem verificações complexas)
+      // Verificar se o registro foi realmente atualizado
+      if (!data || data.length === 0) {
+        console.warn('⚠️ [useSacData] Nenhum registro foi atualizado')
+        throw new Error('Nenhum registro foi encontrado ou atualizado')
+      }
+
+      const updatedRecord = data[0]
+      console.log('✅ [useSacData] Registro atualizado confirmado:', {
+        id: updatedRecord.id,
+        email_gestor: updatedRecord.email_gestor,
+        nome_gestor: updatedRecord.nome_gestor
+      })
+
+      // Atualizar estado local com os dados confirmados do banco
       setSolicitacoes(prev => {
         const updated = prev.map(sol => 
           sol.id === solicitacaoId 
-            ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
+            ? { ...sol, email_gestor: updatedRecord.email_gestor, nome_gestor: updatedRecord.nome_gestor }
             : sol
         )
-        console.log('🔄 [useSacData] Estado local atualizado')
+        console.log('🔄 [useSacData] Estado local atualizado com dados do banco')
         return updated
       })
 
-      // Refresh suave após um tempo
-      setTimeout(() => {
-        console.log('🔄 [useSacData] Fazendo refresh para confirmar...')
-        fetchSolicitacoes()
-      }, 1000)
+      return { 
+        success: true, 
+        data: updatedRecord,
+        message: 'Gestor salvo no banco de dados com sucesso'
+      }
 
-      return { success: true }
     } catch (err) {
       console.error('💥 [useSacData] Erro ao atualizar gestor:', err)
-      throw err
+      
+      // Não atualizar estado local em caso de erro
+      throw new Error(err instanceof Error ? err.message : 'Erro desconhecido ao salvar')
     }
   }
 
@@ -124,6 +139,15 @@ export function useSacData() {
     }
   }
 
+  // Função para atualizar uma solicitação específica no estado local
+  const updateSolicitacaoLocal = (solicitacaoId: string, updates: Partial<SacSolicitacao>) => {
+    setSolicitacoes(prev => prev.map(sol => 
+      sol.id === solicitacaoId 
+        ? { ...sol, ...updates }
+        : sol
+    ))
+  }
+
   useEffect(() => {
     fetchSolicitacoes()
 
@@ -140,19 +164,15 @@ export function useSacData() {
         (payload) => {
           console.log('📡 [useSacData] Mudança detectada via realtime:', payload)
           
-          // Se foi uma atualização, atualizar o estado local também
+          // Se foi uma atualização, atualizar o estado local
           if (payload.eventType === 'UPDATE' && payload.new) {
+            console.log('📡 [useSacData] Atualizando estado local via realtime')
             setSolicitacoes(prev => prev.map(sol => 
               sol.id === payload.new.id 
                 ? { ...sol, ...payload.new }
                 : sol
             ))
           }
-          
-          // Fazer um refresh suave após pequeno delay
-          setTimeout(() => {
-            fetchSolicitacoes()
-          }, 500)
         }
       )
       .subscribe()
@@ -169,6 +189,7 @@ export function useSacData() {
     error,
     refetch: fetchSolicitacoes,
     updateGestor,
-    getSolicitacoesByGestor
+    getSolicitacoesByGestor,
+    updateSolicitacaoLocal
   }
 }

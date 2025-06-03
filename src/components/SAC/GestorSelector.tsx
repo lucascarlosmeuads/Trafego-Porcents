@@ -1,9 +1,9 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Save, X, Loader2, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react'
+import { User, Save, X, Loader2, RefreshCw, CheckCircle, AlertTriangle, Clock } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useGestores } from '@/hooks/useGestores'
 import type { SacSolicitacao } from '@/hooks/useSacData'
@@ -14,25 +14,46 @@ interface GestorSelectorProps {
   onGestorUpdated?: (updatedSolicitacao: SacSolicitacao) => void
 }
 
+type SaveStatus = 'idle' | 'saving' | 'saved' | 'error' | 'pending_sync'
+
 export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }: GestorSelectorProps) {
   const { toast } = useToast()
   const { gestores, loading: loadingGestores } = useGestores()
   const [isEditing, setIsEditing] = useState(!solicitacao.nome_gestor)
   const [selectedGestorEmail, setSelectedGestorEmail] = useState(solicitacao.email_gestor || '')
-  const [saving, setSaving] = useState(false)
-  const [justSaved, setJustSaved] = useState(false)
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle')
   
-  // Estado local para mostrar gestor selecionado imediatamente
-  const [localGestorEmail, setLocalGestorEmail] = useState(solicitacao.email_gestor || '')
-  const [localGestorNome, setLocalGestorNome] = useState(solicitacao.nome_gestor || '')
+  // Estado local que sempre reflete o último estado conhecido
+  const [currentGestorEmail, setCurrentGestorEmail] = useState(solicitacao.email_gestor || '')
+  const [currentGestorNome, setCurrentGestorNome] = useState(solicitacao.nome_gestor || '')
+
+  // Sincronizar com mudanças na prop solicitacao
+  useEffect(() => {
+    console.log('🔄 [GestorSelector] Props solicitacao mudou:', {
+      id: solicitacao.id,
+      email_gestor: solicitacao.email_gestor,
+      nome_gestor: solicitacao.nome_gestor
+    })
+    
+    // Só atualizar se não estivermos editando e não há mudanças pendentes
+    if (!isEditing && saveStatus !== 'pending_sync') {
+      setCurrentGestorEmail(solicitacao.email_gestor || '')
+      setCurrentGestorNome(solicitacao.nome_gestor || '')
+      setSelectedGestorEmail(solicitacao.email_gestor || '')
+    }
+  }, [solicitacao.email_gestor, solicitacao.nome_gestor, isEditing, saveStatus])
 
   // Encontrar o gestor selecionado pelo email
   const selectedGestor = gestores.find(g => g.email === selectedGestorEmail)
+  const currentGestor = gestores.find(g => g.email === currentGestorEmail)
 
-  console.log('🔍 [GestorSelector] === DEBUG SELEÇÃO DE GESTOR ===')
+  console.log('🔍 [GestorSelector] === DEBUG ESTADO ATUAL ===')
+  console.log('🔍 [GestorSelector] Solicitação ID:', solicitacao.id)
+  console.log('🔍 [GestorSelector] Props gestor:', { email: solicitacao.email_gestor, nome: solicitacao.nome_gestor })
+  console.log('🔍 [GestorSelector] Estado local atual:', { email: currentGestorEmail, nome: currentGestorNome })
   console.log('🔍 [GestorSelector] Email selecionado:', selectedGestorEmail)
-  console.log('🔍 [GestorSelector] Gestor encontrado:', selectedGestor)
-  console.log('🔍 [GestorSelector] Estado local:', { localGestorEmail, localGestorNome })
+  console.log('🔍 [GestorSelector] Status de salvamento:', saveStatus)
+  console.log('🔍 [GestorSelector] Editando:', isEditing)
 
   const handleSave = async () => {
     if (!selectedGestorEmail || !selectedGestor) {
@@ -46,14 +67,14 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     }
 
     try {
-      console.log('💾 [GestorSelector] === INÍCIO SALVAMENTO (ESTADO LOCAL PRIMEIRO) ===')
+      console.log('💾 [GestorSelector] === INICIANDO SALVAMENTO ===')
       
-      setSaving(true)
+      setSaveStatus('saving')
       
       // 1. ATUALIZAR ESTADO LOCAL IMEDIATAMENTE
       console.log('✅ [GestorSelector] Atualizando estado local primeiro...')
-      setLocalGestorEmail(selectedGestor.email)
-      setLocalGestorNome(selectedGestor.nome)
+      setCurrentGestorEmail(selectedGestor.email)
+      setCurrentGestorNome(selectedGestor.nome)
       
       // Notificar o componente pai sobre a atualização LOCAL
       if (onGestorUpdated) {
@@ -66,62 +87,87 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
         onGestorUpdated(updatedSolicitacao)
       }
       
-      // Mostrar sucesso imediato
-      setJustSaved(true)
-      setTimeout(() => setJustSaved(false), 3000)
+      setIsEditing(false)
       
+      // Toast de feedback imediato
       toast({
         title: "Gestor Atribuído!",
         description: `${selectedGestor.nome} foi definido como responsável.`,
         duration: 3000
       })
       
-      setIsEditing(false)
-      
-      // 2. TENTAR SALVAR NO BANCO EM BACKGROUND
-      console.log('💾 [GestorSelector] Salvando no banco de dados em background...')
+      // 2. TENTAR SALVAR NO BANCO
+      console.log('💾 [GestorSelector] Salvando no banco de dados...')
+      setSaveStatus('pending_sync')
       
       try {
         const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
         console.log('✅ [GestorSelector] Salvamento no banco concluído:', result)
         
-        // Toast discreto confirmando salvamento no banco
+        setSaveStatus('saved')
+        
+        // Toast de confirmação
         toast({
-          title: "Sincronizado",
-          description: "Dados salvos no servidor.",
+          title: "✅ Sincronizado",
+          description: "Dados salvos no servidor com sucesso.",
           duration: 2000
         })
         
-      } catch (dbError) {
-        console.error('⚠️ [GestorSelector] Erro ao salvar no banco (mantendo estado local):', dbError)
+        // Auto-clear do status após 3 segundos
+        setTimeout(() => {
+          setSaveStatus('idle')
+        }, 3000)
         
-        // Toast informativo mas não crítico
+      } catch (dbError) {
+        console.error('❌ [GestorSelector] Erro ao salvar no banco:', dbError)
+        setSaveStatus('error')
+        
+        // Toast de erro com opção de retry
         toast({
-          title: "Aviso",
-          description: "Gestor atribuído localmente. Tentando sincronizar...",
-          duration: 4000
+          title: "⚠️ Erro de Sincronização",
+          description: "Gestor atribuído localmente, mas falhou ao salvar no servidor. Tentando novamente...",
+          variant: "destructive",
+          duration: 5000
         })
         
-        // Implementar retry automático após 5 segundos
+        // Retry automático após 3 segundos
         setTimeout(async () => {
           try {
             console.log('🔄 [GestorSelector] Tentativa de retry automático...')
+            setSaveStatus('pending_sync')
+            
             await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
             console.log('✅ [GestorSelector] Retry bem-sucedido!')
             
+            setSaveStatus('saved')
+            
             toast({
-              title: "Sincronizado",
-              description: "Dados foram salvos no servidor.",
+              title: "✅ Sincronizado",
+              description: "Dados foram salvos no servidor após retry.",
               duration: 2000
             })
+            
+            setTimeout(() => {
+              setSaveStatus('idle')
+            }, 2000)
+            
           } catch (retryError) {
             console.error('❌ [GestorSelector] Retry falhou:', retryError)
+            setSaveStatus('error')
+            
+            toast({
+              title: "❌ Falha na Sincronização",
+              description: "Não foi possível salvar no servidor. Gestor atribuído apenas localmente.",
+              variant: "destructive",
+              duration: 8000
+            })
           }
-        }, 5000)
+        }, 3000)
       }
       
     } catch (error) {
       console.error('❌ [GestorSelector] Erro crítico:', error)
+      setSaveStatus('error')
       
       toast({
         title: "Erro",
@@ -131,25 +177,24 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
       })
       
       // Reverter estado local em caso de erro crítico
-      setLocalGestorEmail(solicitacao.email_gestor || '')
-      setLocalGestorNome(solicitacao.nome_gestor || '')
+      setCurrentGestorEmail(solicitacao.email_gestor || '')
+      setCurrentGestorNome(solicitacao.nome_gestor || '')
       setSelectedGestorEmail(solicitacao.email_gestor || '')
-      
-    } finally {
-      setSaving(false)
     }
   }
 
   const handleCancel = () => {
     console.log('↩️ [GestorSelector] Cancelando edição')
-    setSelectedGestorEmail(localGestorEmail)
+    setSelectedGestorEmail(currentGestorEmail)
     setIsEditing(false)
+    setSaveStatus('idle')
   }
 
   const handleStartEdit = () => {
     console.log('✏️ [GestorSelector] Iniciando edição')
-    setSelectedGestorEmail(localGestorEmail)
+    setSelectedGestorEmail(currentGestorEmail)
     setIsEditing(true)
+    setSaveStatus('idle')
   }
 
   const handleGestorChange = (email: string) => {
@@ -160,6 +205,66 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     console.log('🎯 [GestorSelector] Gestor correspondente:', gestorSelecionado)
     
     setSelectedGestorEmail(email)
+  }
+
+  const handleRetrySync = async () => {
+    if (!currentGestorEmail || !currentGestorNome) return
+    
+    try {
+      setSaveStatus('pending_sync')
+      await onUpdateGestor(solicitacao.id, currentGestorEmail, currentGestorNome)
+      setSaveStatus('saved')
+      
+      toast({
+        title: "✅ Sincronizado",
+        description: "Dados foram salvos no servidor.",
+        duration: 2000
+      })
+      
+      setTimeout(() => {
+        setSaveStatus('idle')
+      }, 2000)
+      
+    } catch (error) {
+      setSaveStatus('error')
+      toast({
+        title: "❌ Falha na Sincronização",
+        description: "Não foi possível salvar no servidor.",
+        variant: "destructive",
+        duration: 5000
+      })
+    }
+  }
+
+  // Função para obter ícone e cor baseado no status
+  const getStatusIcon = () => {
+    switch (saveStatus) {
+      case 'saving':
+        return <Loader2 className="h-4 w-4 animate-spin text-blue-500" />
+      case 'pending_sync':
+        return <Clock className="h-4 w-4 text-yellow-500" />
+      case 'saved':
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case 'error':
+        return <AlertTriangle className="h-4 w-4 text-red-500" />
+      default:
+        return null
+    }
+  }
+
+  const getStatusText = () => {
+    switch (saveStatus) {
+      case 'saving':
+        return 'Salvando...'
+      case 'pending_sync':
+        return 'Sincronizando...'
+      case 'saved':
+        return 'Sincronizado'
+      case 'error':
+        return 'Erro de sincronização'
+      default:
+        return ''
+    }
   }
 
   if (loadingGestores) {
@@ -187,8 +292,10 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
         <CardTitle className="flex items-center gap-2 text-gray-800">
           <User className="h-5 w-5" />
           Gestor Responsável
-          {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
-          {justSaved && <CheckCircle className="h-4 w-4 text-green-500" />}
+          {getStatusIcon()}
+          {saveStatus !== 'idle' && (
+            <span className="text-xs text-gray-600">{getStatusText()}</span>
+          )}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 bg-white">
@@ -201,7 +308,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
               <Select 
                 value={selectedGestorEmail} 
                 onValueChange={handleGestorChange}
-                disabled={saving}
+                disabled={saveStatus === 'saving'}
               >
                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                   <SelectValue placeholder="Escolha um gestor...">
@@ -224,11 +331,11 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
             <div className="flex gap-2">
               <Button 
                 onClick={handleSave}
-                disabled={saving || !selectedGestorEmail}
+                disabled={saveStatus === 'saving' || !selectedGestorEmail}
                 className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                 size="sm"
               >
-                {saving ? (
+                {saveStatus === 'saving' ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     Salvando...
@@ -241,12 +348,12 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
                 )}
               </Button>
               
-              {localGestorNome && (
+              {currentGestorNome && (
                 <Button 
                   onClick={handleCancel}
                   variant="outline"
                   size="sm"
-                  disabled={saving}
+                  disabled={saveStatus === 'saving'}
                   className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   <X className="h-4 w-4 mr-2" />
@@ -264,18 +371,43 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
           </div>
         ) : (
           <div>
-            {localGestorNome ? (
+            {currentGestorNome ? (
               <>
                 <div className="space-y-2">
                   <div>
                     <label className="text-sm font-medium text-gray-600">Nome do Gestor</label>
-                    <p className="text-lg font-semibold text-gray-900">{localGestorNome}</p>
+                    <p className="text-lg font-semibold text-gray-900">{currentGestorNome}</p>
                   </div>
                   
-                  {localGestorEmail && (
+                  {currentGestorEmail && (
                     <div>
                       <label className="text-sm font-medium text-gray-600">Email do Gestor</label>
-                      <p className="text-sm text-gray-800">{localGestorEmail}</p>
+                      <p className="text-sm text-gray-800">{currentGestorEmail}</p>
+                    </div>
+                  )}
+
+                  {/* Status de sincronização */}
+                  {saveStatus !== 'idle' && (
+                    <div className="flex items-center gap-2 text-sm">
+                      {getStatusIcon()}
+                      <span className={`
+                        ${saveStatus === 'error' ? 'text-red-600' : ''}
+                        ${saveStatus === 'pending_sync' ? 'text-yellow-600' : ''}
+                        ${saveStatus === 'saved' ? 'text-green-600' : ''}
+                        ${saveStatus === 'saving' ? 'text-blue-600' : ''}
+                      `}>
+                        {getStatusText()}
+                      </span>
+                      {saveStatus === 'error' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={handleRetrySync}
+                          className="ml-2 h-6 px-2 text-xs"
+                        >
+                          Tentar novamente
+                        </Button>
+                      )}
                     </div>
                   )}
                 </div>

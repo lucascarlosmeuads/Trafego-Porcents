@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { AlertCircle, Users, Clock, CheckCircle } from 'lucide-react'
 
 export function SacDashboard() {
-  const { solicitacoes, loading, error } = useSacData()
+  const { solicitacoes, loading, error, updateSolicitacaoLocal } = useSacData()
   const [filteredSolicitacoes, setFilteredSolicitacoes] = useState<SacSolicitacao[]>([])
   const [selectedSolicitacao, setSelectedSolicitacao] = useState<SacSolicitacao | null>(null)
 
@@ -27,6 +27,43 @@ export function SacDashboard() {
         </div>
       </div>
     )
+  }
+
+  // Função para lidar com atualizações de solicitação no modal
+  const handleSolicitacaoUpdated = (updatedSolicitacao: SacSolicitacao) => {
+    console.log('🔄 [SacDashboard] === RECEBENDO ATUALIZAÇÃO DE SOLICITAÇÃO ===')
+    console.log('🔄 [SacDashboard] Solicitação atualizada:', {
+      id: updatedSolicitacao.id,
+      email_gestor: updatedSolicitacao.email_gestor,
+      nome_gestor: updatedSolicitacao.nome_gestor
+    })
+
+    // Atualizar no hook global
+    updateSolicitacaoLocal(updatedSolicitacao.id, {
+      email_gestor: updatedSolicitacao.email_gestor,
+      nome_gestor: updatedSolicitacao.nome_gestor
+    })
+
+    // Atualizar a solicitação selecionada se for a mesma
+    if (selectedSolicitacao && selectedSolicitacao.id === updatedSolicitacao.id) {
+      console.log('🔄 [SacDashboard] Atualizando solicitação selecionada')
+      setSelectedSolicitacao(updatedSolicitacao)
+    }
+  }
+
+  // Função para abrir detalhes de uma solicitação
+  const handleViewDetails = (solicitacao: SacSolicitacao) => {
+    console.log('🔍 [SacDashboard] Abrindo detalhes da solicitação:', solicitacao.id)
+    
+    // Buscar a versão mais atualizada da solicitação na lista
+    const updatedSolicitacao = solicitacoes.find(s => s.id === solicitacao.id) || solicitacao
+    console.log('🔍 [SacDashboard] Versão atualizada encontrada:', {
+      id: updatedSolicitacao.id,
+      email_gestor: updatedSolicitacao.email_gestor,
+      nome_gestor: updatedSolicitacao.nome_gestor
+    })
+    
+    setSelectedSolicitacao(updatedSolicitacao)
   }
 
   // Calcular métricas
@@ -97,7 +134,7 @@ export function SacDashboard() {
       {/* Tabela */}
       <SacTable 
         solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes}
-        onViewDetails={setSelectedSolicitacao}
+        onViewDetails={handleViewDetails}
       />
 
       {/* Modal de detalhes */}
@@ -105,6 +142,7 @@ export function SacDashboard() {
         <SacDetailsModal
           solicitacao={selectedSolicitacao}
           onClose={() => setSelectedSolicitacao(null)}
+          onSolicitacaoUpdated={handleSolicitacaoUpdated}
         />
       )}
     </div>

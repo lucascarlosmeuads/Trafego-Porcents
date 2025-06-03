@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -15,9 +16,10 @@ import type { SacSolicitacao } from '@/hooks/useSacData'
 interface SacDetailsModalProps {
   solicitacao: SacSolicitacao
   onClose: () => void
+  onSolicitacaoUpdated?: (updatedSolicitacao: SacSolicitacao) => void
 }
 
-export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) {
+export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: SacDetailsModalProps) {
   const { toast } = useToast()
   const { updateGestor } = useSacData()
   const [isExpanded, setIsExpanded] = useState(false)
@@ -136,7 +138,8 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const handleGestorUpdated = (updatedSolicitacao: SacSolicitacao) => {
-    console.log('🔄 [SacDetailsModal] Atualizando estado local do modal:', {
+    console.log('🔄 [SacDetailsModal] === RECEBENDO NOTIFICAÇÃO DE ATUALIZAÇÃO ===')
+    console.log('🔄 [SacDetailsModal] Dados atualizados:', {
       anterior: {
         email_gestor: currentSolicitacao.email_gestor,
         nome_gestor: currentSolicitacao.nome_gestor
@@ -146,7 +149,15 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
         nome_gestor: updatedSolicitacao.nome_gestor
       }
     })
+    
+    // Atualizar estado local do modal
     setCurrentSolicitacao(updatedSolicitacao)
+    
+    // Notificar componente pai se callback fornecido
+    if (onSolicitacaoUpdated) {
+      console.log('🔄 [SacDetailsModal] Notificando componente pai sobre atualização')
+      onSolicitacaoUpdated(updatedSolicitacao)
+    }
   }
 
   const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
