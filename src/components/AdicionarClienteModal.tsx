@@ -62,7 +62,11 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
 
-O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo! 💪`
+O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
+
+🚨 Aguarde 1 dia pela criação do grupo. Se não for criado hoje, no máximo no outro dia cedo será criado. Fique tranquilo!
+
+Qualquer dúvida, estamos aqui para ajudar! 💪`
 
   const handleCopy = async () => {
     try {

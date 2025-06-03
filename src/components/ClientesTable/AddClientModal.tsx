@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -62,6 +61,8 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 🔐 Senha: parceriadesucesso
 
 🔗 Acesse: https://login.trafegoporcents.com
+
+💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
 
 O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
 
