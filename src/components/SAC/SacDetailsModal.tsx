@@ -102,20 +102,17 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
     
     try {
       const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)
-      
-      // Atualizar o estado local para refletir a mudança imediatamente
-      setCurrentSolicitacao(prev => ({
-        ...prev,
-        email_gestor: emailGestor,
-        nome_gestor: nomeGestor
-      }))
-      
-      console.log('✅ [SacDetailsModal] Estado local atualizado com sucesso')
+      console.log('✅ [SacDetailsModal] Atualização concluída:', result)
       return result
     } catch (error) {
       console.error('❌ [SacDetailsModal] Erro ao atualizar gestor:', error)
       throw error
     }
+  }
+
+  const handleGestorUpdated = (updatedSolicitacao: SacSolicitacao) => {
+    console.log('🔄 [SacDetailsModal] Atualizando estado local do modal:', updatedSolicitacao)
+    setCurrentSolicitacao(updatedSolicitacao)
   }
 
   const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
@@ -257,6 +254,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
             <GestorSelector 
               solicitacao={currentSolicitacao}
               onUpdateGestor={handleUpdateGestor}
+              onGestorUpdated={handleGestorUpdated}
             />
           </div>
         </div>

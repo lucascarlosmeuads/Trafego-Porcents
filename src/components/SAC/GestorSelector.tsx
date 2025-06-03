@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Save, X, Loader2, RefreshCw } from 'lucide-react'
+import { User, Save, X, Loader2, RefreshCw, CheckCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useGestores } from '@/hooks/useGestores'
 import type { SacSolicitacao } from '@/hooks/useSacData'
@@ -11,14 +11,16 @@ import type { SacSolicitacao } from '@/hooks/useSacData'
 interface GestorSelectorProps {
   solicitacao: SacSolicitacao
   onUpdateGestor: (solicitacaoId: string, emailGestor: string, nomeGestor: string) => Promise<any>
+  onGestorUpdated?: (updatedSolicitacao: SacSolicitacao) => void
 }
 
-export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorProps) {
+export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }: GestorSelectorProps) {
   const { toast } = useToast()
   const { gestores, loading: loadingGestores } = useGestores()
   const [isEditing, setIsEditing] = useState(!solicitacao.nome_gestor)
   const [selectedGestorEmail, setSelectedGestorEmail] = useState(solicitacao.email_gestor || '')
   const [saving, setSaving] = useState(false)
+  const [justSaved, setJustSaved] = useState(false)
 
   const selectedGestor = gestores.find(g => g.email === selectedGestorEmail)
 
@@ -45,6 +47,19 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
       const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
       
       console.log('✅ [GestorSelector] Salvamento concluído:', result)
+      
+      // Mostrar indicador de sucesso
+      setJustSaved(true)
+      setTimeout(() => setJustSaved(false), 2000)
+      
+      // Notificar o componente pai sobre a atualização
+      if (onGestorUpdated) {
+        onGestorUpdated({
+          ...solicitacao,
+          email_gestor: selectedGestor.email,
+          nome_gestor: selectedGestor.nome
+        })
+      }
       
       toast({
         title: "Sucesso!",
@@ -105,6 +120,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
           <User className="h-5 w-5" />
           Gestor Responsável
           {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
+          {justSaved && <CheckCircle className="h-4 w-4 text-green-500" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 bg-white">

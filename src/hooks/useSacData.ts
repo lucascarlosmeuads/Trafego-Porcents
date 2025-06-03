@@ -59,6 +59,7 @@ export function useSacData() {
         throw new Error('Dados incompletos para atualização')
       }
 
+      // Atualizar no banco
       const { data, error } = await supabase
         .from('sac_clientes')
         .update({
@@ -66,27 +67,33 @@ export function useSacData() {
           nome_gestor: nomeGestor
         })
         .eq('id', solicitacaoId)
-        .select() // Retornar os dados atualizados
+        .select()
 
       if (error) {
         console.error('❌ [useSacData] Erro ao atualizar gestor:', error)
         throw new Error(error.message)
       }
 
-      console.log('✅ [useSacData] Gestor atualizado com sucesso:', data)
+      if (!data || data.length === 0) {
+        throw new Error('Nenhuma linha foi atualizada - verifique se o ID existe')
+      }
 
-      // Atualizar o estado local imediatamente
+      console.log('✅ [useSacData] Gestor atualizado no banco:', data[0])
+
+      // Atualizar estado local imediatamente para feedback instantâneo
       setSolicitacoes(prev => prev.map(sol => 
         sol.id === solicitacaoId 
           ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
           : sol
       ))
 
-      // Forçar refresh dos dados para garantir consistência
-      console.log('🔄 [useSacData] Recarregando dados para confirmar atualização...')
-      await fetchSolicitacoes()
+      // Forçar um refresh completo para garantir consistência
+      setTimeout(() => {
+        console.log('🔄 [useSacData] Fazendo refresh após atualização...')
+        fetchSolicitacoes()
+      }, 100)
 
-      return { success: true, data }
+      return { success: true, data: data[0] }
     } catch (err) {
       console.error('💥 [useSacData] Erro ao atualizar gestor:', err)
       throw err
@@ -131,7 +138,20 @@ export function useSacData() {
         }, 
         (payload) => {
           console.log('📡 [useSacData] Mudança detectada via realtime:', payload)
-          fetchSolicitacoes()
+          
+          // Se foi uma atualização, atualizar o estado local também
+          if (payload.eventType === 'UPDATE' && payload.new) {
+            setSolicitacoes(prev => prev.map(sol => 
+              sol.id === payload.new.id 
+                ? { ...sol, ...payload.new }
+                : sol
+            ))
+          }
+          
+          // Fazer um refresh suave após pequeno delay
+          setTimeout(() => {
+            fetchSolicitacoes()
+          }, 500)
         }
       )
       .subscribe()
