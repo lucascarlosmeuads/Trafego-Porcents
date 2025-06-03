@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Input } from '@/components/ui/input'
@@ -14,16 +13,19 @@ import {
 } from '@/components/ui/select'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
+import { useAuth } from '@/hooks/useAuth'
 
 interface AddClientRowProps {
   onAddClient: (clientData: any) => Promise<any>
   isLoading: boolean
   getStatusColor: (status: string) => string
+  selectedManager?: string | null
 }
 
-export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClientRowProps) {
+export function AddClientRow({ onAddClient, isLoading, getStatusColor, selectedManager }: AddClientRowProps) {
+  const { user, isAdmin } = useAuth()
   const [isEditing, setIsEditing] = useState(false)
-  const [showInstructions, setShowInstructions] = useState(false)
+  const [showInstructions, setShowInstructions] = useState<boolean>(false)
   const [newClientData, setNewClientData] = useState<any>(null)
   const [formData, setFormData] = useState({
     nome_cliente: '',
@@ -31,12 +33,16 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
     email_cliente: '',
     data_venda: '',
     vendedor: '',
-    status_campanha: ''
+    status_campanha: '',
+    email_gestor: '' // Adicionar campo para gestor
   })
 
   const handleSave = async () => {
     console.log('🔵 [AddClientRow] === INICIANDO CRIAÇÃO DE CLIENTE ===')
     console.log('🔵 [AddClientRow] Dados do formulário:', formData)
+    console.log('🔵 [AddClientRow] Selected manager:', selectedManager)
+    console.log('🔵 [AddClientRow] User email:', user?.email)
+    console.log('🔵 [AddClientRow] Is admin:', isAdmin)
     
     // Validar campos obrigatórios
     if (!formData.nome_cliente.trim()) {
@@ -75,12 +81,23 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       return
     }
 
+    // Para admin: verificar se gestor foi selecionado
+    if (isAdmin && !selectedManager) {
+      toast({
+        title: "Erro",
+        description: "Selecione um gestor para atribuir o cliente",
+        variant: "destructive"
+      })
+      return
+    }
+
     console.log('🔵 [AddClientRow] Validação passou, chamando onAddClient...')
     
     const clienteParaAdicionar = {
       ...formData,
-      comissao_paga: false,
-      valor_comissao: 60.00 // ✅ Garantir R$60,00 para novos clientes
+      email_gestor: isAdmin ? selectedManager : user?.email,
+      vendedor: formData.vendedor || user?.email,
+      valor_comissao: 60.00
     }
 
     console.log('🔵 [AddClientRow] Cliente para adicionar:', clienteParaAdicionar)
@@ -89,10 +106,8 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
     
     console.log('🔵 [AddClientRow] Resultado do onAddClient:', result)
 
-    // Type guard to check if result is not false
     if (result && typeof result === 'object' && result.success) {
       console.log('🟢 [AddClientRow] === CLIENTE CRIADO COM SUCESSO ===')
-      console.log('💰 [AddClientRow] Valor comissão final:', result.valorComissao || '60.00')
       
       // Clear form and exit edit mode
       setFormData({
@@ -101,25 +116,15 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
         email_cliente: '',
         data_venda: '',
         vendedor: '',
-        status_campanha: ''
+        status_campanha: '',
+        email_gestor: ''
       })
       setIsEditing(false)
       
       toast({
         title: "✅ Sucesso",
-        description: `Cliente adicionado com sucesso! Valor de comissão: R$${result.valorComissao || '60,00'}`
+        description: `Cliente adicionado com sucesso!`
       })
-
-      // Mostrar aviso sobre senha padrão se foi definida
-      if (result.senhaDefinida) {
-        setTimeout(() => {
-          toast({
-            title: "🔐 Senha padrão definida",
-            description: "Senha padrão definida como: parceriadesucesso",
-            duration: 8000
-          })
-        }, 1000)
-      }
 
       // Show instructions modal for new clients only
       if (result.isNewClient) {
@@ -128,11 +133,6 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       }
     } else {
       console.error('❌ [AddClientRow] Resultado indica falha:', result)
-      toast({
-        title: "❌ Erro",
-        description: "Falha ao criar cliente. Verifique os dados e tente novamente.",
-        variant: "destructive"
-      })
     }
   }
 
@@ -143,7 +143,8 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
       email_cliente: '',
       data_venda: '',
       vendedor: '',
-      status_campanha: ''
+      status_campanha: '',
+      email_gestor: ''
     })
     setIsEditing(false)
   }
@@ -270,7 +271,6 @@ export function AddClientRow({ onAddClient, isLoading, getStatusColor }: AddClie
         </TableCell>
       </TableRow>
       
-      {/* Instructions Modal */}
       <ClientInstructionsModal
         isOpen={showInstructions}
         onClose={() => setShowInstructions(false)}
