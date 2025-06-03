@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -124,41 +125,48 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         .select('email_cliente, tipo_arquivo, nome_arquivo')
         .eq('author_type', 'gestor')
         .in('tipo_arquivo', tiposCriativosVisuais)
+        .not('email_cliente', 'is', null)
+        .neq('email_cliente', '')
       
       if (error) {
         console.error('❌ [ClientesTable] Erro ao buscar arquivos criativos:', error)
         return
       }
       
-      const emailsComCriativos = new Set(arquivos?.map(arquivo => arquivo.email_cliente) || [])
+      console.log('🔍 [ClientesTable] Arquivos brutos encontrados:', arquivos?.length || 0)
       
-      console.log('✅ [ClientesTable] Análise de criativos visuais:')
+      // Filtrar e validar emails antes de adicionar ao Set
+      const emailsValidos = new Set<string>()
+      let emailsVaziosIgnorados = 0
+      
+      arquivos?.forEach(arquivo => {
+        const email = arquivo.email_cliente?.trim()
+        if (email && email !== '' && email !== 'null' && email !== 'undefined') {
+          emailsValidos.add(email)
+          console.log(`✅ [ClientesTable] Email válido encontrado: ${email} - Arquivo: ${arquivo.nome_arquivo} (${arquivo.tipo_arquivo})`)
+        } else {
+          emailsVaziosIgnorados++
+          console.log(`❌ [ClientesTable] Email inválido ignorado: "${arquivo.email_cliente}" - Arquivo: ${arquivo.nome_arquivo}`)
+        }
+      })
+      
+      console.log('✅ [ClientesTable] Análise de criativos visuais FINAL:')
       console.log('   📊 Total de arquivos criativos encontrados:', arquivos?.length || 0)
-      console.log('   👥 Clientes únicos com criativos visuais:', emailsComCriativos.size)
+      console.log('   📧 Emails vazios/inválidos ignorados:', emailsVaziosIgnorados)
+      console.log('   👥 Clientes únicos com criativos visuais E email válido:', emailsValidos.size)
       console.log('   🎯 Tipos aceitos como criativos:', tiposCriativosVisuais.slice(0, 8).join(', '), '...')
       
-      if (arquivos && arquivos.length > 0) {
-        console.log('   📁 Primeiros 5 arquivos criativos encontrados:')
-        arquivos.slice(0, 5).forEach((arquivo, index) => {
-          console.log(`      ${index + 1}. ${arquivo.nome_arquivo} (${arquivo.tipo_arquivo}) - Cliente: ${arquivo.email_cliente}`)
+      if (emailsValidos.size > 0) {
+        console.log('   📧 Emails válidos com criativos:')
+        Array.from(emailsValidos).slice(0, 10).forEach((email, index) => {
+          console.log(`      ${index + 1}. ${email}`)
         })
-        
-        // Verificar se há outros tipos de arquivo sendo enviados pelo gestor que não são criativos
-        const { data: outrosArquivos, error: outrosError } = await supabase
-          .from('arquivos_cliente')
-          .select('tipo_arquivo, email_cliente, nome_arquivo')
-          .eq('author_type', 'gestor')
-          .not('tipo_arquivo', 'in', `(${tiposCriativosVisuais.map(t => `"${t}"`).join(',')})`)
-        
-        if (!outrosError && outrosArquivos && outrosArquivos.length > 0) {
-          console.log('   📄 Arquivos NÃO criativos encontrados (ignorados no filtro):')
-          const tiposNaoCriativos = [...new Set(outrosArquivos.map(a => a.tipo_arquivo))]
-          console.log('      Tipos:', tiposNaoCriativos.join(', '))
-          console.log('      Quantidade:', outrosArquivos.length, 'arquivos')
+        if (emailsValidos.size > 10) {
+          console.log(`      ... e mais ${emailsValidos.size - 10} emails`)
         }
       }
       
-      setClientesComCriativos(emailsComCriativos)
+      setClientesComCriativos(emailsValidos)
       
     } catch (error) {
       console.error('💥 [ClientesTable] Erro inesperado ao buscar criativos visuais:', error)
