@@ -1,38 +1,49 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Play, FileVideo } from 'lucide-react'
+import { Play, FileVideo, ExternalLink } from 'lucide-react'
 
 export function TutorialVideos() {
   const tutorialVideos = [
     {
       id: 1,
-      title: "Como Preencher o Briefing",
-      description: "Aprenda a preencher corretamente o formulário de briefing para garantir os melhores resultados da sua campanha.",
-      thumbnail: "/placeholder.svg",
-      videoUrl: "" // URL será definida posteriormente
+      title: "Tutorial 1 - Configuração Inicial",
+      description: "Aprenda os primeiros passos para configurar sua campanha de tráfego pago.",
+      videoId: "EQZyJ3xFKII",
+      videoUrl: "https://www.youtube.com/watch?v=EQZyJ3xFKII"
     },
     {
       id: 2,
-      title: "Enviando Materiais de Qualidade",
-      description: "Dicas importantes sobre como enviar fotos e vídeos do seu produto para criar materiais publicitários eficazes.",
-      thumbnail: "/placeholder.svg",
-      videoUrl: ""
+      title: "Tutorial 2 - Business Manager",
+      description: "Como configurar e usar o Business Manager do Facebook para suas campanhas.",
+      videoId: "iTAUcJfvN3M",
+      videoUrl: "https://www.youtube.com/watch?v=iTAUcJfvN3M"
     },
     {
       id: 3,
-      title: "Registrando Suas Vendas",
-      description: "Como registrar corretamente suas vendas no sistema para acompanhar o desempenho da campanha.",
-      thumbnail: "/placeholder.svg",
-      videoUrl: ""
+      title: "Tutorial 3 - Criação de Campanhas",
+      description: "Passo a passo para criar campanhas eficazes e otimizadas.",
+      videoId: "zJBZydYUzPo",
+      videoUrl: "https://www.youtube.com/watch?v=zJBZydYUzPo"
     },
     {
       id: 4,
-      title: "Acompanhando o Progresso",
-      description: "Entenda como funciona o funil de status e como acompanhar o progresso da sua campanha em tempo real.",
-      thumbnail: "/placeholder.svg",
-      videoUrl: ""
+      title: "Tutorial 4 - Análise de Métricas",
+      description: "Como interpretar e usar as métricas para otimizar suas campanhas.",
+      videoId: "ISq5qu2rUdc",
+      videoUrl: "https://www.youtube.com/watch?v=ISq5qu2rUdc"
+    },
+    {
+      id: 5,
+      title: "Tutorial 5 - Otimização Avançada",
+      description: "Técnicas avançadas para maximizar o retorno das suas campanhas.",
+      videoId: "j-uDyO5fd0s",
+      videoUrl: "https://www.youtube.com/watch?v=j-uDyO5fd0s"
     }
   ]
+
+  const handleVideoClick = (videoUrl: string) => {
+    window.open(videoUrl, '_blank')
+  }
 
   return (
     <div className="space-y-6">
@@ -40,7 +51,7 @@ export function TutorialVideos() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileVideo className="w-5 h-5" />
-            Como Usar o Sistema
+            Tutoriais em Vídeo
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -49,30 +60,52 @@ export function TutorialVideos() {
             e maximizar os resultados da sua campanha de tráfego.
           </p>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {tutorialVideos.map((video) => (
-              <Card key={video.id} className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card 
+                key={video.id} 
+                className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105"
+                onClick={() => handleVideoClick(video.videoUrl)}
+              >
                 <CardContent className="p-4">
-                  <div className="relative mb-3">
-                    <div className="aspect-video bg-gray-100 rounded-lg flex items-center justify-center">
-                      <div className="text-center">
-                        <Play className="w-12 h-12 text-gray-400 mx-auto mb-2" />
-                        <p className="text-sm text-gray-500">Vídeo em breve</p>
+                  <div className="relative mb-3 group">
+                    <div className="aspect-video bg-gray-100 rounded-lg overflow-hidden">
+                      <img
+                        src={`https://img.youtube.com/vi/${video.videoId}/maxresdefault.jpg`}
+                        alt={video.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          // Fallback para thumbnail de menor qualidade se a maxres não estiver disponível
+                          e.currentTarget.src = `https://img.youtube.com/vi/${video.videoId}/hqdefault.jpg`
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center group-hover:bg-opacity-40 transition-all duration-200">
+                        <div className="w-16 h-16 bg-red-600 rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-200">
+                          <Play className="w-6 h-6 text-white ml-1" fill="white" />
+                        </div>
                       </div>
                     </div>
                   </div>
-                  <h3 className="font-medium mb-2">{video.title}</h3>
-                  <p className="text-sm text-muted-foreground">{video.description}</p>
+                  
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-sm line-clamp-2">{video.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{video.description}</p>
+                    
+                    <div className="flex items-center gap-1 text-xs text-blue-600 font-medium">
+                      <ExternalLink className="w-3 h-3" />
+                      Assistir no YouTube
+                    </div>
+                  </div>
                 </CardContent>
               </Card>
             ))}
           </div>
 
-          <div className="mt-6 p-4 bg-blue-50 rounded-lg">
-            <h3 className="font-medium text-blue-800 mb-2">📹 Vídeos em Produção</h3>
-            <p className="text-sm text-blue-700">
-              Os vídeos tutoriais estão sendo produzidos e estarão disponíveis em breve. 
-              Você será notificado quando eles estiverem prontos!
+          <div className="mt-6 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 className="font-medium text-green-800 mb-2">🎯 Dica Importante</h3>
+            <p className="text-sm text-green-700">
+              Assista aos tutoriais na ordem apresentada para obter o máximo aproveitamento. 
+              Cada vídeo complementa o anterior e juntos formam um guia completo para o sucesso da sua campanha.
             </p>
           </div>
         </CardContent>
