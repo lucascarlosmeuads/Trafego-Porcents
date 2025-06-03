@@ -9,7 +9,7 @@ import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { ClienteChat } from './Chat/ClienteChat'
-import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
@@ -113,11 +113,30 @@ export function ClienteDashboard() {
     }
   }
 
-  // Layout mobile otimizado
+  // Layout mobile otimizado - SEM SidebarProvider
   if (isMobile) {
     return (
       <div className="min-h-screen bg-gray-950">
-        <MobileHeader activeTab={activeTab} />
+        <div className="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20"></div>
+              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-3 py-2 text-sm">
+                <span>Tráfego</span>
+                <span className="text-orange-300">Porcents</span>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-white text-sm font-medium">
+            {activeTab === 'overview' && 'Painel Principal'}
+            {activeTab === 'briefing' && 'Briefing'}
+            {activeTab === 'arquivos' && 'Materiais'}
+            {activeTab === 'vendas' && 'Vendas'}
+            {activeTab === 'tutoriais' && 'Tutoriais'}
+            {activeTab === 'chat' && 'Chat'}
+          </div>
+        </div>
         
         <main className="pb-20">
           {renderContent()}
@@ -128,7 +147,7 @@ export function ClienteDashboard() {
     )
   }
 
-  // Layout desktop mantido igual
+  // Layout desktop COM SidebarProvider
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
