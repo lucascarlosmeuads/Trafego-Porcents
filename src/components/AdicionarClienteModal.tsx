@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -150,11 +149,9 @@ O passo a passo com as instruções vai estar logo na primeira tela assim que lo
         setOpen(false)
         onClienteAdicionado()
 
-        // Show instructions modal for new clients only
-        if (result.isNewClient) {
-          setNewClientData(result.clientData)
-          setShowInstructions(true)
-        }
+        // Always show instructions modal for successfully created clients
+        setNewClientData(result.clientData)
+        setShowInstructions(true)
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)
