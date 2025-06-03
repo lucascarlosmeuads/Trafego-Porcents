@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -30,7 +31,7 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Cliente Novo', // ✅ Mudando de 'Brief' para 'Cliente Novo'
+    status_campanha: 'Cliente Novo',
     data_venda: new Date().toISOString().split('T')[0]
   })
   const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
@@ -87,6 +88,14 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
   }
 
   const handleSubmit = async () => {
+    console.log("🔵 [AddClientModal] === INICIANDO VALIDAÇÕES ===")
+    console.log("🔵 [AddClientModal] Dados do formulário:", formData)
+    console.log("🔵 [AddClientModal] Gestor selecionado:", selectedGestor)
+    console.log("🔵 [AddClientModal] É admin:", isAdmin)
+    console.log("🔵 [AddClientModal] Modo gestor:", gestorMode)
+    console.log("🔵 [AddClientModal] Email do usuário:", user?.email)
+
+    // Validações básicas
     if (!formData.nome_cliente || !formData.telefone) {
       toast({
         title: "Erro",
@@ -114,11 +123,48 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       return
     }
 
-    // Para usuários em modo não-gestor: require gestor selection
-    if (!gestorMode && !selectedGestor) {
+    // CORREÇÃO: Determinar email_gestor baseado no contexto
+    let emailGestorFinal: string
+
+    if (gestorMode) {
+      // Em modo gestor, sempre usar o email do usuário logado
+      emailGestorFinal = user?.email || ''
+      console.log("🔵 [AddClientModal] Modo gestor - usando email do gestor logado:", emailGestorFinal)
+    } else if (isAdmin) {
+      // Para admin, verificar se tem gestor selecionado
+      if (selectedGestor && selectedGestor.trim() !== '') {
+        emailGestorFinal = selectedGestor
+        console.log("🔵 [AddClientModal] Admin com gestor selecionado:", emailGestorFinal)
+      } else {
+        // CORREÇÃO: Admin sem gestor selecionado - usar o primeiro gestor da lista como fallback
+        emailGestorFinal = managerOptions[0].email
+        console.log("🔵 [AddClientModal] Admin sem gestor - usando fallback:", emailGestorFinal)
+        
+        toast({
+          title: "Atenção",
+          description: `Nenhum gestor selecionado. Cliente será atribuído a ${managerOptions[0].name}`,
+          duration: 3000
+        })
+      }
+    } else {
+      // Para outros usuários, validar seleção de gestor
+      if (!selectedGestor) {
+        toast({
+          title: "Erro",
+          description: "Selecione um gestor para atribuir o cliente",
+          variant: "destructive"
+        })
+        return
+      }
+      emailGestorFinal = selectedGestor
+      console.log("🔵 [AddClientModal] Usuário não-admin - usando gestor selecionado:", emailGestorFinal)
+    }
+
+    if (!emailGestorFinal) {
+      console.error("❌ [AddClientModal] Email do gestor final está vazio!")
       toast({
         title: "Erro",
-        description: "Selecione um gestor para atribuir o cliente",
+        description: "Erro interno: não foi possível determinar o gestor responsável",
         variant: "destructive"
       })
       return
@@ -127,24 +173,9 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
     setLoading(true)
 
     try {
-      console.log("🔵 [AddClientModal] === INICIANDO PROCESSO DE ADIÇÃO ===")
-      console.log("🔵 [AddClientModal] Modo Gestor:", gestorMode)
-      console.log("🔵 [AddClientModal] É Admin:", isAdmin)
-      console.log("🔵 [AddClientModal] Email do usuário:", user?.email)
+      console.log("🔵 [AddClientModal] === PREPARANDO DADOS PARA INSERÇÃO ===")
       
-      // Determine final email_gestor based on mode
-      let emailGestorFinal
-      if (gestorMode) {
-        // Em modo gestor, sempre usar o email do usuário logado
-        emailGestorFinal = user?.email
-        console.log("🔵 [AddClientModal] Usando email do gestor logado:", emailGestorFinal)
-      } else {
-        // Em modo admin normal, usar o gestor selecionado ou o email do usuário
-        emailGestorFinal = isAdmin ? selectedGestor : user?.email
-        console.log("🔵 [AddClientModal] Usando email selecionado/admin:", emailGestorFinal)
-      }
-      
-      const vendedor = formData.vendedor || currentManagerName
+      const vendedor = formData.vendedor || currentManagerName || (isAdmin ? 'Admin' : user?.email)
 
       const clienteData = {
         nome_cliente: formData.nome_cliente,
@@ -182,6 +213,12 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         // Atualizar dados
         onClienteAdicionado()
 
+        // Toast de sucesso
+        toast({
+          title: "Sucesso!",
+          description: `Cliente ${formData.nome_cliente} adicionado com sucesso!`,
+        })
+
         // Mostrar aviso sobre senha padrão se foi definida
         if (result.senhaDefinida) {
           setTimeout(() => {
@@ -193,7 +230,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           }, 1000)
         }
 
-        // SEMPRE exibir o modal de instruções após criação bem-sucedida
+        // Exibir o modal de instruções após criação bem-sucedida
         console.log("🔵 [AddClientModal] Preparando dados para o modal de instruções...")
         
         const dadosCliente = {
@@ -213,17 +250,33 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         
       } else {
         console.error("🔴 [AddClientModal] Falha na criação do cliente:", result)
+        
+        // Mensagem de erro mais específica
+        const errorMessage = result?.error || "Falha ao criar cliente. Verifique os dados e tente novamente."
+        
         toast({
-          title: "Erro",
-          description: "Falha ao criar cliente",
+          title: "Erro ao adicionar cliente",
+          description: errorMessage,
           variant: "destructive"
         })
       }
     } catch (error: any) {
-      console.error('💥 [AddClientModal] Erro ao adicionar cliente:', error)
+      console.error('💥 [AddClientModal] Erro crítico ao adicionar cliente:', error)
+      
+      // Tratamento de erro mais detalhado
+      let errorMessage = "Erro inesperado durante a criação do cliente"
+      
+      if (error.message) {
+        errorMessage = error.message
+      } else if (error.code === 'PGRST116') {
+        errorMessage = "Erro de permissão: verifique se você tem autorização para adicionar clientes"
+      } else if (error.code === '23505') {
+        errorMessage = "Cliente com este email já existe no sistema"
+      }
+      
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao adicionar cliente",
+        title: "Erro Crítico",
+        description: errorMessage,
         variant: "destructive"
       })
     } finally {
@@ -245,7 +298,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
           
-          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE - POSICIONADAS AQUI CONFORME SOLICITADO */}
+          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE */}
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
             <div className="flex items-start justify-between mb-2">
               <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
@@ -327,8 +380,30 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               />
             </div>
 
-            {/* Mostrar campo de gestor para qualquer usuário em modo não-gestor */}
-            {!gestorMode && (
+            {/* Campo de gestor para admin (agora com fallback automático) */}
+            {!gestorMode && isAdmin && (
+              <div className="grid gap-2">
+                <Label htmlFor="gestor">Atribuir ao Gestor</Label>
+                <Select value={selectedGestor} onValueChange={setSelectedGestor}>
+                  <SelectTrigger>
+                    <SelectValue placeholder={`Selecione um gestor (padrão: ${managerOptions[0].name})`} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {managerOptions.map((manager) => (
+                      <SelectItem key={manager.email} value={manager.email}>
+                        {manager.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Se nenhum gestor for selecionado, será atribuído automaticamente a {managerOptions[0].name}
+                </p>
+              </div>
+            )}
+
+            {/* Campo de gestor para não-admin em modo não-gestor */}
+            {!gestorMode && !isAdmin && (
               <div className="grid gap-2">
                 <Label htmlFor="gestor">Atribuir ao Gestor *</Label>
                 <Select value={selectedGestor} onValueChange={setSelectedGestor}>
@@ -352,9 +427,11 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                 id="vendedor"
                 value={formData.vendedor}
                 onChange={(e) => setFormData(prev => ({ ...prev, vendedor: e.target.value }))}
-                placeholder="Preenchido automaticamente com seu e-mail"
+                placeholder={isAdmin ? "Admin" : "Preenchido automaticamente"}
               />
-              <p className="text-xs text-gray-500">Preenchido automaticamente com seu e-mail</p>
+              <p className="text-xs text-gray-500">
+                {isAdmin ? "Preenchido com 'Admin' por padrão" : "Preenchido automaticamente com seu e-mail"}
+              </p>
             </div>
             
             <div className="grid gap-2">
