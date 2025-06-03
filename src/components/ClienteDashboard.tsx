@@ -13,6 +13,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
+import { ProfileDropdown } from './ProfileDropdown'
 
 export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
@@ -128,13 +129,16 @@ export function ClienteDashboard() {
             </div>
           </div>
           
-          <div className="text-white text-sm font-medium">
-            {activeTab === 'overview' && 'Painel Principal'}
-            {activeTab === 'briefing' && 'Briefing'}
-            {activeTab === 'arquivos' && 'Materiais'}
-            {activeTab === 'vendas' && 'Vendas'}
-            {activeTab === 'tutoriais' && 'Tutoriais'}
-            {activeTab === 'chat' && 'Chat'}
+          <div className="flex items-center gap-3">
+            <div className="text-white text-sm font-medium">
+              {activeTab === 'overview' && 'Painel Principal'}
+              {activeTab === 'briefing' && 'Briefing'}
+              {activeTab === 'arquivos' && 'Materiais'}
+              {activeTab === 'vendas' && 'Vendas'}
+              {activeTab === 'tutoriais' && 'Tutoriais'}
+              {activeTab === 'chat' && 'Chat'}
+            </div>
+            <ProfileDropdown />
           </div>
         </div>
         

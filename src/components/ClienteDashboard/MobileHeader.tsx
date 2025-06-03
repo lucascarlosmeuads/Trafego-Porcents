@@ -2,6 +2,7 @@
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft } from 'lucide-react'
+import { ProfileDropdown } from '../ProfileDropdown'
 
 interface MobileHeaderProps {
   activeTab: string
@@ -42,8 +43,11 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
         </h1>
       </div>
       
-      <div className="hidden md:flex items-center gap-2">
-        <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
+      <div className="flex items-center gap-2">
+        <ProfileDropdown />
+        <div className="hidden md:flex items-center gap-2">
+          <SidebarTrigger className="text-trafego-text-primary hover:text-trafego-accent-primary transition-colors" />
+        </div>
       </div>
     </header>
   )

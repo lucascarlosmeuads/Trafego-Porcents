@@ -2,16 +2,13 @@
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
-import { useProfileData } from '@/hooks/useProfileData'
 import { useClienteData } from '@/hooks/useClienteData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { 
-  User, 
   MessageCircle, 
   FileText, 
   Upload, 
@@ -21,8 +18,7 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
-  ChevronRight,
-  Camera
+  ChevronRight
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
@@ -43,13 +39,8 @@ interface Step {
 
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
-  const { profileData, updateProfileData } = useProfileData('cliente')
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-
-  const handleAvatarChange = (newUrl: string | null) => {
-    updateProfileData({ avatar_url: newUrl })
-  }
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
@@ -69,16 +60,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     },
     {
       id: 2,
-      title: 'Adicionar Foto de Perfil',
-      description: 'Adicione sua foto de perfil para personalizar sua conta',
-      icon: Camera,
-      action: () => {},
-      actionText: 'Adicionar Foto',
-      canCheck: true,
-      autoCheck: !!(profileData?.avatar_url)
-    },
-    {
-      id: 3,
       title: 'Enviar Materiais Criativos',
       description: 'Envie logos, fotos e materiais para criação dos criativos',
       icon: Upload,
@@ -88,7 +69,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       autoCheck: !!(arquivos && arquivos.length > 0)
     },
     {
-      id: 4,
+      id: 3,
       title: 'Conversar sobre Business Manager',
       description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
       icon: MessageCircle,
@@ -98,7 +79,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       chatMessage: 'Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'
     },
     {
-      id: 5,
+      id: 4,
       title: 'Assistir Tutorial da BM',
       description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
       icon: Play,
@@ -107,7 +88,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       canCheck: true
     },
     {
-      id: 6,
+      id: 5,
       title: 'Recarregar Saldo de Tráfego',
       description: 'Recarregue o saldo para tráfego pago na Business Manager',
       icon: CreditCard,
@@ -117,7 +98,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       chatMessage: 'Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'
     },
     {
-      id: 7,
+      id: 6,
       title: 'Finalizar Configurações',
       description: 'Finalize configurações e tire dúvidas com seu gestor',
       icon: MessageCircle,
@@ -127,7 +108,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       chatMessage: 'Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'
     },
     {
-      id: 8,
+      id: 7,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
@@ -135,7 +116,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       actionText: 'Ver Métricas',
       canCheck: true
     }
-  ], [profileData, briefing, arquivos, onTabChange])
+  ], [briefing, arquivos, onTabChange])
 
   // Auto-marcar passos baseado em dados existentes
   const checkAutoSteps = React.useCallback(() => {
@@ -147,10 +128,10 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   }, [steps, progresso, togglePasso])
 
   React.useEffect(() => {
-    if (!loading && (briefing || arquivos || profileData)) {
+    if (!loading && (briefing || arquivos)) {
       checkAutoSteps()
     }
-  }, [loading, briefing, arquivos, profileData, checkAutoSteps])
+  }, [loading, briefing, arquivos, checkAutoSteps])
 
   const totalSteps = steps.length
   const completedSteps = progresso.size
@@ -324,42 +305,21 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 
                 {/* Botões de ação */}
                 <div className="flex items-center gap-2">
-                  {step.id === 2 ? (
-                    <div className="flex items-center gap-2">
-                      <ProfileAvatarUpload
-                        currentAvatarUrl={profileData?.avatar_url}
-                        userName={profileData?.nome_display || user?.email || 'Cliente'}
-                        userType="cliente"
-                        onAvatarChange={handleAvatarChange}
-                        size="sm"
-                        showEditButton={true}
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={step.action}
-                        className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                      >
-                        {profileData?.avatar_url ? 'Trocar' : 'Adicionar'}
-                      </Button>
-                    </div>
-                  ) : (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={step.action}
-                      className={`${
-                        isCompleted 
-                          ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
-                          : isNext
-                          ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
-                          : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      {step.actionText}
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={step.action}
+                    className={`${
+                      isCompleted 
+                        ? 'text-green-600 hover:text-green-700 hover:bg-green-50' 
+                        : isNext
+                        ? 'text-blue-600 hover:text-blue-700 hover:bg-blue-50'
+                        : 'text-gray-600 hover:text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    {step.actionText}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
                   
                   {/* Botão explícito de marcar/desmarcar */}
                   <Button

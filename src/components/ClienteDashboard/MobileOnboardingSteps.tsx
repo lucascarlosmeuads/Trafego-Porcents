@@ -2,16 +2,13 @@
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
-import { useProfileData } from '@/hooks/useProfileData'
 import { useClienteData } from '@/hooks/useClienteData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
-import { MobilePhotoUpload } from './MobilePhotoUpload'
 import { 
-  User, 
   MessageCircle, 
   FileText, 
   Upload, 
@@ -20,10 +17,7 @@ import {
   BarChart3,
   CheckCircle2,
   Clock,
-  ChevronRight,
-  Camera,
-  ArrowUp,
-  ArrowDown
+  ChevronRight
 } from 'lucide-react'
 
 interface MobileOnboardingStepsProps {
@@ -44,14 +38,8 @@ interface Step {
 
 export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProps) {
   const { user } = useAuth()
-  const { profileData, updateProfileData } = useProfileData('cliente')
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-  const [expandedStep, setExpandedStep] = React.useState<number | null>(null)
-
-  const handleAvatarChange = (newUrl: string | null) => {
-    updateProfileData({ avatar_url: newUrl })
-  }
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
@@ -71,16 +59,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
     },
     {
       id: 2,
-      title: 'Adicionar Foto de Perfil',
-      description: 'Adicione sua foto de perfil para personalizar sua conta',
-      icon: Camera,
-      action: () => setExpandedStep(expandedStep === 2 ? null : 2),
-      actionText: 'Adicionar Foto',
-      canCheck: true,
-      autoCheck: !!(profileData?.avatar_url)
-    },
-    {
-      id: 3,
       title: 'Enviar Materiais Criativos',
       description: 'Envie logos, fotos e materiais para criação dos criativos',
       icon: Upload,
@@ -90,7 +68,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       autoCheck: !!(arquivos && arquivos.length > 0)
     },
     {
-      id: 4,
+      id: 3,
       title: 'Conversar sobre Business Manager',
       description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
       icon: MessageCircle,
@@ -100,7 +78,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       chatMessage: 'Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'
     },
     {
-      id: 5,
+      id: 4,
       title: 'Assistir Tutorial da BM',
       description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
       icon: Play,
@@ -109,7 +87,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       canCheck: true
     },
     {
-      id: 6,
+      id: 5,
       title: 'Recarregar Saldo de Tráfego',
       description: 'Recarregue o saldo para tráfego pago na Business Manager',
       icon: CreditCard,
@@ -119,7 +97,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       chatMessage: 'Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'
     },
     {
-      id: 7,
+      id: 6,
       title: 'Finalizar Configurações',
       description: 'Finalize configurações e tire dúvidas com seu gestor',
       icon: MessageCircle,
@@ -129,7 +107,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       chatMessage: 'Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'
     },
     {
-      id: 8,
+      id: 7,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
@@ -137,7 +115,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       actionText: 'Ver Métricas',
       canCheck: true
     }
-  ], [profileData, briefing, arquivos, onTabChange, expandedStep])
+  ], [briefing, arquivos, onTabChange])
 
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
@@ -148,10 +126,10 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   }, [steps, progresso, togglePasso])
 
   React.useEffect(() => {
-    if (!loading && (briefing || arquivos || profileData)) {
+    if (!loading && (briefing || arquivos)) {
       checkAutoSteps()
     }
-  }, [loading, briefing, arquivos, profileData, checkAutoSteps])
+  }, [loading, briefing, arquivos, checkAutoSteps])
 
   const totalSteps = steps.length
   const completedSteps = progresso.size
@@ -245,7 +223,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
         {steps.map((step, index) => {
           const isCompleted = progresso.has(step.id)
           const isNext = step.id === nextStep?.id
-          const isExpanded = expandedStep === step.id
           
           return (
             <Card
@@ -301,56 +278,25 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                     </div>
                     <p className="text-gray-600 text-xs mt-1">{step.description}</p>
                   </div>
-                  
-                  {step.id === 2 && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={step.action}
-                      className="flex-shrink-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                    >
-                      {isExpanded ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                    </Button>
-                  )}
                 </div>
 
-                {/* Upload de Foto Expandido */}
-                {step.id === 2 && isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-200">
-                    <MobilePhotoUpload
-                      currentAvatarUrl={profileData?.avatar_url}
-                      userName={profileData?.nome_display || user?.email || 'Cliente'}
-                      userType="cliente"
-                      onAvatarChange={handleAvatarChange}
-                      onComplete={() => {
-                        setExpandedStep(null)
-                        if (!progresso.has(2)) {
-                          handleStepToggle(2)
-                        }
-                      }}
-                    />
-                  </div>
-                )}
-
                 {/* Botão de Ação */}
-                {step.id !== 2 && (
-                  <div className="mt-3">
-                    <Button
-                      onClick={step.action}
-                      className={`w-full ${
-                        isCompleted
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : isNext
-                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-                          : 'bg-gray-600 hover:bg-gray-700 text-white'
-                      } shadow-md`}
-                      size="sm"
-                    >
-                      {step.actionText}
-                      <ChevronRight className="h-4 w-4 ml-2" />
-                    </Button>
-                  </div>
-                )}
+                <div className="mt-3">
+                  <Button
+                    onClick={step.action}
+                    className={`w-full ${
+                      isCompleted
+                        ? 'bg-green-600 hover:bg-green-700 text-white'
+                        : isNext
+                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                        : 'bg-gray-600 hover:bg-gray-700 text-white'
+                    } shadow-md`}
+                    size="sm"
+                  >
+                    {step.actionText}
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </div>
 
                 {/* Indicador de Mensagem de Chat */}
                 {step.chatMessage && (
