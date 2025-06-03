@@ -1,19 +1,49 @@
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Cliente } from '@/lib/supabase'
 import { Calendar, Mail, Phone, User, Clock, RefreshCw, DollarSign } from 'lucide-react'
 import { DateFilters } from './DateFilters'
 import { useClientFilters } from '@/hooks/useClientFilters'
 
+interface ClienteSimples {
+  id: string
+  nome_cliente: string
+  telefone: string
+  email_cliente: string
+  vendedor: string
+  email_gestor: string
+  status_campanha: string
+  created_at: string
+}
+
 interface SellerClientsListProps {
-  clientes: Cliente[]
+  clientes: ClienteSimples[]
   loading: boolean
   onRefresh?: () => void
 }
 
 export function SellerClientsList({ clientes, loading, onRefresh }: SellerClientsListProps) {
-  const { dateFilter, setDateFilter, organizedClientes } = useClientFilters(clientes)
+  // Convert ClienteSimples to Cliente format for the filter hook
+  const clientesFormatted = clientes.map(cliente => ({
+    ...cliente,
+    data_venda: '',
+    data_limite: '',
+    link_grupo: '',
+    link_briefing: '',
+    link_criativo: '',
+    link_site: '',
+    numero_bm: '',
+    comissao_paga: false,
+    valor_comissao: 60,
+    site_status: 'pendente' as const,
+    descricao_problema: '',
+    saque_solicitado: false,
+    comissao: 'Pendente',
+    site_pago: false
+  }))
+
+  const { dateFilter, setDateFilter, organizedClientes } = useClientFilters(clientesFormatted)
 
   if (loading) {
     return (
@@ -119,7 +149,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
   // Calcular comissões (R$ 60,00 por cliente)
   const comissaoPorCliente = 60.00
 
-  const renderClienteCard = (cliente: Cliente, isToday = false) => (
+  const renderClienteCard = (cliente: ClienteSimples, isToday = false) => (
     <div key={cliente.id} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors ${isToday ? 'border-2 border-green-200 bg-green-50' : ''}`}>
       <div className="flex items-start justify-between">
         <div className="flex-1">
