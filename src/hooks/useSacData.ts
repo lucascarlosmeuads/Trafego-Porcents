@@ -22,6 +22,7 @@ export function useSacData() {
 
   const fetchSolicitacoes = async () => {
     try {
+      console.log('🔄 [useSacData] Buscando solicitações SAC...')
       setLoading(true)
       const { data, error } = await supabase
         .from('sac_clientes')
@@ -29,15 +30,16 @@ export function useSacData() {
         .order('created_at', { ascending: false })
 
       if (error) {
-        console.error('Erro ao buscar solicitações SAC:', error)
+        console.error('❌ [useSacData] Erro ao buscar solicitações SAC:', error)
         setError(error.message)
         return
       }
 
+      console.log('✅ [useSacData] Solicitações carregadas:', data?.length || 0)
       setSolicitacoes(data || [])
       setError(null)
     } catch (err) {
-      console.error('Erro inesperado:', err)
+      console.error('💥 [useSacData] Erro inesperado:', err)
       setError('Erro inesperado ao carregar dados')
     } finally {
       setLoading(false)
@@ -46,29 +48,70 @@ export function useSacData() {
 
   const updateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
     try {
-      const { error } = await supabase
+      console.log('🔄 [useSacData] Iniciando atualização de gestor:', {
+        solicitacaoId,
+        emailGestor,
+        nomeGestor
+      })
+
+      // Validar dados antes de enviar
+      if (!solicitacaoId || !emailGestor || !nomeGestor) {
+        throw new Error('Dados incompletos para atualização')
+      }
+
+      const { data, error } = await supabase
         .from('sac_clientes')
         .update({
           email_gestor: emailGestor,
           nome_gestor: nomeGestor
         })
         .eq('id', solicitacaoId)
+        .select() // Retornar os dados atualizados
 
       if (error) {
-        console.error('Erro ao atualizar gestor:', error)
+        console.error('❌ [useSacData] Erro ao atualizar gestor:', error)
         throw new Error(error.message)
       }
 
-      // Atualizar o estado local
+      console.log('✅ [useSacData] Gestor atualizado com sucesso:', data)
+
+      // Atualizar o estado local imediatamente
       setSolicitacoes(prev => prev.map(sol => 
         sol.id === solicitacaoId 
           ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
           : sol
       ))
 
-      return { success: true }
+      // Forçar refresh dos dados para garantir consistência
+      console.log('🔄 [useSacData] Recarregando dados para confirmar atualização...')
+      await fetchSolicitacoes()
+
+      return { success: true, data }
     } catch (err) {
-      console.error('Erro ao atualizar gestor:', err)
+      console.error('💥 [useSacData] Erro ao atualizar gestor:', err)
+      throw err
+    }
+  }
+
+  const getSolicitacoesByGestor = async (emailGestor: string) => {
+    try {
+      console.log('🔍 [useSacData] Buscando solicitações por gestor:', emailGestor)
+      
+      const { data, error } = await supabase
+        .from('sac_clientes')
+        .select('*')
+        .eq('email_gestor', emailGestor)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error('❌ [useSacData] Erro ao buscar por gestor:', error)
+        throw new Error(error.message)
+      }
+
+      console.log('✅ [useSacData] Solicitações encontradas para gestor:', data?.length || 0)
+      return data || []
+    } catch (err) {
+      console.error('💥 [useSacData] Erro ao buscar por gestor:', err)
       throw err
     }
   }
@@ -77,6 +120,7 @@ export function useSacData() {
     fetchSolicitacoes()
 
     // Setup realtime subscription
+    console.log('📡 [useSacData] Configurando subscription realtime...')
     const channel = supabase
       .channel('sac_changes')
       .on('postgres_changes', 
@@ -85,13 +129,15 @@ export function useSacData() {
           schema: 'public', 
           table: 'sac_clientes' 
         }, 
-        () => {
+        (payload) => {
+          console.log('📡 [useSacData] Mudança detectada via realtime:', payload)
           fetchSolicitacoes()
         }
       )
       .subscribe()
 
     return () => {
+      console.log('📡 [useSacData] Removendo subscription realtime...')
       supabase.removeChannel(channel)
     }
   }, [])
@@ -101,6 +147,7 @@ export function useSacData() {
     loading,
     error,
     refetch: fetchSolicitacoes,
-    updateGestor
+    updateGestor,
+    getSolicitacoesByGestor
   }
 }

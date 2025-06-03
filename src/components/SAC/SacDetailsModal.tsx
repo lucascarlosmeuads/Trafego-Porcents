@@ -98,14 +98,24 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
-    const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)
-    // Atualizar o estado local para refletir a mudança imediatamente
-    setCurrentSolicitacao(prev => ({
-      ...prev,
-      email_gestor: emailGestor,
-      nome_gestor: nomeGestor
-    }))
-    return result
+    console.log('🔄 [SacDetailsModal] Processando atualização de gestor...')
+    
+    try {
+      const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)
+      
+      // Atualizar o estado local para refletir a mudança imediatamente
+      setCurrentSolicitacao(prev => ({
+        ...prev,
+        email_gestor: emailGestor,
+        nome_gestor: nomeGestor
+      }))
+      
+      console.log('✅ [SacDetailsModal] Estado local atualizado com sucesso')
+      return result
+    } catch (error) {
+      console.error('❌ [SacDetailsModal] Erro ao atualizar gestor:', error)
+      throw error
+    }
   }
 
   const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
@@ -243,7 +253,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
               </CardContent>
             </Card>
 
-            {/* Gestor Responsável com Seletor */}
+            {/* Gestor Responsável com Seletor Melhorado */}
             <GestorSelector 
               solicitacao={currentSolicitacao}
               onUpdateGestor={handleUpdateGestor}

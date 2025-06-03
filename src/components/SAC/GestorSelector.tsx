@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Save, X, Loader2 } from 'lucide-react'
+import { User, Save, X, Loader2, RefreshCw } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useGestores } from '@/hooks/useGestores'
 import type { SacSolicitacao } from '@/hooks/useSacData'
@@ -24,6 +24,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
 
   const handleSave = async () => {
     if (!selectedGestorEmail || !selectedGestor) {
+      console.warn('⚠️ [GestorSelector] Tentativa de salvar sem gestor selecionado')
       toast({
         title: "Erro",
         description: "Por favor, selecione um gestor.",
@@ -33,29 +34,49 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
     }
 
     try {
+      console.log('💾 [GestorSelector] Iniciando salvamento:', {
+        solicitacaoId: solicitacao.id,
+        gestorEmail: selectedGestor.email,
+        gestorNome: selectedGestor.nome
+      })
+
       setSaving(true)
-      await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
+      
+      const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
+      
+      console.log('✅ [GestorSelector] Salvamento concluído:', result)
       
       toast({
         title: "Sucesso!",
-        description: "Gestor responsável atualizado com sucesso.",
+        description: `Gestor responsável atualizado para ${selectedGestor.nome}.`,
+        duration: 3000
       })
       
       setIsEditing(false)
     } catch (error) {
+      console.error('❌ [GestorSelector] Erro ao salvar:', error)
       toast({
         title: "Erro ao salvar",
-        description: "Não foi possível atualizar o gestor responsável.",
+        description: error instanceof Error ? error.message : "Não foi possível atualizar o gestor responsável.",
         variant: "destructive"
       })
+      
+      // Reverter seleção em caso de erro
+      setSelectedGestorEmail(solicitacao.email_gestor || '')
     } finally {
       setSaving(false)
     }
   }
 
   const handleCancel = () => {
+    console.log('↩️ [GestorSelector] Cancelando edição')
     setSelectedGestorEmail(solicitacao.email_gestor || '')
     setIsEditing(false)
+  }
+
+  const handleStartEdit = () => {
+    console.log('✏️ [GestorSelector] Iniciando edição')
+    setIsEditing(true)
   }
 
   if (loadingGestores) {
@@ -70,6 +91,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
         <CardContent className="space-y-4 bg-white">
           <div className="flex items-center justify-center py-8">
             <Loader2 className="h-6 w-6 animate-spin text-gray-500" />
+            <span className="ml-2 text-sm text-gray-500">Carregando gestores...</span>
           </div>
         </CardContent>
       </Card>
@@ -82,6 +104,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
         <CardTitle className="flex items-center gap-2 text-gray-800">
           <User className="h-5 w-5" />
           Gestor Responsável
+          {saving && <Loader2 className="h-4 w-4 animate-spin text-blue-500" />}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4 bg-white">
@@ -91,7 +114,14 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
               <label className="text-sm font-medium text-gray-600 block mb-2">
                 Selecionar Gestor
               </label>
-              <Select value={selectedGestorEmail} onValueChange={setSelectedGestorEmail}>
+              <Select 
+                value={selectedGestorEmail} 
+                onValueChange={(value) => {
+                  console.log('🎯 [GestorSelector] Gestor selecionado:', value)
+                  setSelectedGestorEmail(value)
+                }}
+                disabled={saving}
+              >
                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
                   <SelectValue placeholder="Escolha um gestor..." />
                 </SelectTrigger>
@@ -109,7 +139,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
               <Button 
                 onClick={handleSave}
                 disabled={saving || !selectedGestorEmail}
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
                 size="sm"
               >
                 {saving ? (
@@ -130,6 +160,7 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
                   onClick={handleCancel}
                   variant="outline"
                   size="sm"
+                  disabled={saving}
                   className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
                   <X className="h-4 w-4 mr-2" />
@@ -137,29 +168,38 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
                 </Button>
               )}
             </div>
+
+            {gestores.length === 0 && (
+              <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
+                ⚠️ Nenhum gestor ativo encontrado no sistema
+              </div>
+            )}
           </div>
         ) : (
           <div>
             {solicitacao.nome_gestor ? (
               <>
-                <div>
-                  <label className="text-sm font-medium text-gray-600">Nome do Gestor</label>
-                  <p className="text-lg font-semibold text-gray-900">{solicitacao.nome_gestor}</p>
-                </div>
-                
-                {solicitacao.email_gestor && (
+                <div className="space-y-2">
                   <div>
-                    <label className="text-sm font-medium text-gray-600">Email do Gestor</label>
-                    <p className="text-sm text-gray-800">{solicitacao.email_gestor}</p>
+                    <label className="text-sm font-medium text-gray-600">Nome do Gestor</label>
+                    <p className="text-lg font-semibold text-gray-900">{solicitacao.nome_gestor}</p>
                   </div>
-                )}
+                  
+                  {solicitacao.email_gestor && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-600">Email do Gestor</label>
+                      <p className="text-sm text-gray-800">{solicitacao.email_gestor}</p>
+                    </div>
+                  )}
+                </div>
 
                 <Button
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleStartEdit}
                   variant="outline"
                   size="sm"
                   className="mt-3 bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
                 >
+                  <RefreshCw className="h-4 w-4 mr-2" />
                   Alterar Gestor
                 </Button>
               </>
@@ -170,10 +210,11 @@ export function GestorSelector({ solicitacao, onUpdateGestor }: GestorSelectorPr
                 </div>
                 <p className="text-gray-500 mb-4">Nenhum gestor atribuído</p>
                 <Button
-                  onClick={() => setIsEditing(true)}
+                  onClick={handleStartEdit}
                   className="bg-blue-600 hover:bg-blue-700 text-white"
                   size="sm"
                 >
+                  <User className="h-4 w-4 mr-2" />
                   Atribuir Gestor
                 </Button>
               </div>
