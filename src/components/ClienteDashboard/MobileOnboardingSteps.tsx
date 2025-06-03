@@ -61,16 +61,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   const steps: Step[] = React.useMemo(() => [
     {
       id: 1,
-      title: 'Adicionar Foto de Perfil',
-      description: 'Adicione sua foto de perfil para personalizar sua conta',
-      icon: Camera,
-      action: () => setExpandedStep(expandedStep === 1 ? null : 1),
-      actionText: 'Adicionar Foto',
-      canCheck: true,
-      autoCheck: !!(profileData?.avatar_url)
-    },
-    {
-      id: 2,
       title: 'Preencher Formulário',
       description: 'Complete todas as informações sobre seu produto/serviço',
       icon: FileText,
@@ -78,6 +68,16 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       actionText: 'Preencher Formulário',
       canCheck: true,
       autoCheck: !!(briefing && briefing.nome_produto && briefing.descricao_resumida)
+    },
+    {
+      id: 2,
+      title: 'Adicionar Foto de Perfil',
+      description: 'Adicione sua foto de perfil para personalizar sua conta',
+      icon: Camera,
+      action: () => setExpandedStep(expandedStep === 2 ? null : 2),
+      actionText: 'Adicionar Foto',
+      canCheck: true,
+      autoCheck: !!(profileData?.avatar_url)
     },
     {
       id: 3,
@@ -168,11 +168,11 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   if (loading) {
     return (
       <div className="p-4">
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-white border-gray-200 shadow-lg">
           <CardContent className="p-6">
             <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-teal-500"></div>
-              <span className="ml-2 text-gray-400">Carregando progresso...</span>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+              <span className="ml-2 text-gray-600">Carregando progresso...</span>
             </div>
           </CardContent>
         </Card>
@@ -181,17 +181,24 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   }
 
   return (
-    <div className="p-4 space-y-4">
+    <div className="p-4 space-y-4 bg-gray-50 min-h-screen">
       {/* Header de Progresso */}
-      <Card className="bg-gray-900 border-gray-800">
+      <Card className="bg-white border-gray-200 shadow-lg">
         <CardHeader className="pb-4">
           <div className="flex items-center justify-between mb-3">
-            <CardTitle className="text-white text-lg">
+            <CardTitle className="text-gray-800 text-lg flex items-center gap-2">
+              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                <CheckCircle2 className="h-3 w-3 text-white" />
+              </div>
               Configuração da Campanha
             </CardTitle>
             <Badge 
               variant={completedSteps === totalSteps ? "default" : "secondary"}
-              className="text-sm"
+              className={`text-sm ${
+                completedSteps === totalSteps 
+                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
+                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+              }`}
             >
               {completedSteps}/{totalSteps}
             </Badge>
@@ -199,30 +206,30 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-400">Progresso</span>
-              <span className="text-teal-400 font-medium">{progressPercentage}%</span>
+              <span className="text-gray-600">Progresso</span>
+              <span className="text-blue-600 font-medium">{progressPercentage}%</span>
             </div>
-            <Progress value={progressPercentage} className="h-3" />
+            <Progress value={progressPercentage} className="h-3 bg-gray-200" />
           </div>
         </CardHeader>
       </Card>
 
       {/* Próximo Passo em Destaque */}
       {nextStep && (
-        <Card className="bg-gradient-to-r from-teal-900/30 to-blue-900/30 border border-teal-800/50">
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 shadow-lg">
           <CardContent className="p-4">
             <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-teal-400" />
-              <span className="text-sm text-teal-400 font-medium">Próximo passo:</span>
+              <Clock className="h-4 w-4 text-blue-600" />
+              <span className="text-sm text-blue-600 font-medium">Próximo passo:</span>
             </div>
             <div className="space-y-3">
               <div>
-                <h4 className="text-white font-medium text-lg">{nextStep.title}</h4>
-                <p className="text-gray-300 text-sm mt-1">{nextStep.description}</p>
+                <h4 className="text-gray-800 font-medium text-lg">{nextStep.title}</h4>
+                <p className="text-gray-600 text-sm mt-1">{nextStep.description}</p>
               </div>
               <Button
                 onClick={nextStep.action}
-                className="w-full bg-teal-600 hover:bg-teal-700 text-white py-3 text-base"
+                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 text-base shadow-lg"
                 size="lg"
               >
                 {nextStep.actionText}
@@ -243,12 +250,12 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
           return (
             <Card
               key={step.id}
-              className={`transition-all duration-200 ${
+              className={`transition-all duration-200 shadow-lg ${
                 isCompleted 
-                  ? 'bg-teal-900/20 border-teal-800/50' 
+                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
                   : isNext
-                  ? 'bg-blue-900/20 border-blue-800/50'
-                  : 'bg-gray-800/50 border-gray-700/50'
+                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
+                  : 'bg-white border-gray-200'
               }`}
             >
               <CardContent className="p-4">
@@ -257,44 +264,50 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
-                    className="data-[state=checked]:bg-teal-600 data-[state=checked]:border-teal-600 w-5 h-5 flex-shrink-0"
+                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 w-5 h-5 flex-shrink-0 border-2"
                   />
                   
                   {/* Numeração sempre visível */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 flex-shrink-0 ${
                     isCompleted 
-                      ? 'bg-teal-600 border-teal-600 text-white' 
+                      ? 'bg-green-600 border-green-600 text-white' 
                       : isNext
-                      ? 'bg-blue-600 border-blue-600 text-white'
-                      : 'bg-gray-700 border-gray-600 text-gray-300'
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 border-blue-600 text-white'
+                      : 'bg-gray-100 border-gray-300 text-gray-600'
                   }`}>
                     {index + 1}
                   </div>
                   
                   {/* Ícone */}
-                  <div className={`${isCompleted ? 'bg-teal-600' : isNext ? 'bg-blue-600' : 'bg-gray-600'} p-2 rounded-lg flex-shrink-0`}>
+                  <div className={`p-2 rounded-lg flex-shrink-0 ${
+                    isCompleted 
+                      ? 'bg-green-600' 
+                      : isNext 
+                      ? 'bg-gradient-to-r from-blue-600 to-purple-600' 
+                      : 'bg-gray-400'
+                  }`}>
                     <step.icon className="h-4 w-4 text-white" />
                   </div>
                   
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
-                      <h4 className={`font-medium text-sm ${isCompleted ? 'text-teal-300' : 'text-white'}`}>
+                      <h4 className={`font-medium text-sm ${isCompleted ? 'text-green-700' : 'text-gray-800'}`}>
                         {step.title}
                       </h4>
                       {/* Indicador de conclusão separado */}
                       {isCompleted && (
-                        <CheckCircle2 className="h-4 w-4 text-teal-400 flex-shrink-0" />
+                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
                       )}
                     </div>
-                    <p className="text-gray-400 text-xs mt-1">{step.description}</p>
+                    <p className="text-gray-600 text-xs mt-1">{step.description}</p>
                   </div>
                   
-                  {step.id === 1 && (
+                  {step.id === 2 && (
                     <Button
                       variant="ghost"
                       size="sm"
                       onClick={step.action}
-                      className="flex-shrink-0"
+                      className="flex-shrink-0 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
                     >
                       {isExpanded ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
                     </Button>
@@ -302,8 +315,8 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                 </div>
 
                 {/* Upload de Foto Expandido */}
-                {step.id === 1 && isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-gray-700">
+                {step.id === 2 && isExpanded && (
+                  <div className="mt-4 pt-4 border-t border-gray-200">
                     <MobilePhotoUpload
                       currentAvatarUrl={profileData?.avatar_url}
                       userName={profileData?.nome_display || user?.email || 'Cliente'}
@@ -311,8 +324,8 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                       onAvatarChange={handleAvatarChange}
                       onComplete={() => {
                         setExpandedStep(null)
-                        if (!progresso.has(1)) {
-                          handleStepToggle(1)
+                        if (!progresso.has(2)) {
+                          handleStepToggle(2)
                         }
                       }}
                     />
@@ -320,12 +333,17 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                 )}
 
                 {/* Botão de Ação */}
-                {step.id !== 1 && (
+                {step.id !== 2 && (
                   <div className="mt-3">
                     <Button
                       onClick={step.action}
-                      className="w-full"
-                      variant={isCompleted ? "outline" : "default"}
+                      className={`w-full ${
+                        isCompleted
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : isNext
+                          ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
+                          : 'bg-gray-600 hover:bg-gray-700 text-white'
+                      } shadow-md`}
                       size="sm"
                     >
                       {step.actionText}
@@ -336,14 +354,14 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
 
                 {/* Indicador de Mensagem de Chat */}
                 {step.chatMessage && (
-                  <p className="text-xs text-teal-400 mt-2 italic">
+                  <p className="text-xs text-blue-600 mt-2 italic">
                     💬 Mensagem será enviada automaticamente
                   </p>
                 )}
 
                 {/* Botões de Marcar/Desmarcar sempre visíveis */}
                 <div className="mt-3 flex items-center justify-between">
-                  <span className="text-xs text-gray-400">
+                  <span className="text-xs text-gray-600">
                     {isCompleted ? '✅ Concluído' : 'Pendente'}
                   </span>
                   <div className="flex gap-2">
@@ -351,10 +369,10 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                       variant="outline"
                       size="sm"
                       onClick={() => handleStepToggle(step.id)}
-                      className={`text-xs ${
+                      className={`text-xs border-2 ${
                         isCompleted 
-                          ? 'border-red-600 text-red-400 hover:bg-red-600 hover:text-white' 
-                          : 'border-teal-600 text-teal-400 hover:bg-teal-600 hover:text-white'
+                          ? 'border-green-600 text-green-600 hover:bg-green-600 hover:text-white' 
+                          : 'border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white'
                       }`}
                     >
                       {isCompleted ? 'Desmarcar' : 'Marcar'}
@@ -369,16 +387,18 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
 
       {/* Mensagem de Conclusão */}
       {completedSteps === totalSteps && (
-        <Card className="bg-gradient-to-r from-green-900/30 to-teal-900/30 border border-green-800/50">
+        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
           <CardContent className="p-6 text-center">
-            <CheckCircle2 className="h-12 w-12 text-green-400 mx-auto mb-3" />
-            <h3 className="text-green-300 font-semibold text-lg mb-2">Parabéns! 🎉</h3>
-            <p className="text-gray-300 text-sm mb-4">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-green-700 font-semibold text-lg mb-2">Parabéns! 🎉</h3>
+            <p className="text-gray-700 text-sm mb-4">
               Você completou todos os passos! Agora suas campanhas estão prontas para decolar!
             </p>
             <Button
               onClick={() => onTabChange('vendas')}
-              className="w-full bg-green-600 hover:bg-green-700 text-white py-3"
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 shadow-lg"
               size="lg"
             >
               Ver Métricas da Campanha
