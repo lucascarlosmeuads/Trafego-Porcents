@@ -6,6 +6,7 @@ import { useProfileData } from '@/hooks/useProfileData'
 import { ClientesTable } from './ClientesTable'
 import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
+import { GestorSacDashboard } from './SAC/GestorSacDashboard'
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -25,6 +26,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   console.log('👤 [GestorDashboard] User email:', user?.email)
   console.log('📊 [GestorDashboard] Total clientes:', clientes.length)
   console.log('⏳ [GestorDashboard] Loading:', loading)
+  console.log('🎯 [GestorDashboard] Active tab:', activeTab)
   console.log('⚡ [GestorDashboard] Usando componentes otimizados:', useOptimized)
   console.log('👤 [GestorDashboard] Profile data:', profileData)
 
@@ -33,7 +35,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   }
 
   const renderContent = () => {
-    if (loading) {
+    if (loading && (activeTab === 'dashboard' || activeTab === 'clientes')) {
       return (
         <div className="flex items-center justify-center h-64 bg-gray-950">
           <div className="text-center">
@@ -90,6 +92,8 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             <ClientesTable />
           </div>
         )
+      case 'sac':
+        return <GestorSacDashboard />
       case 'chat':
         return (
           <div className="bg-gray-950 min-h-screen">
