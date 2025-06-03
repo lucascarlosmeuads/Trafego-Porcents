@@ -35,7 +35,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
     const tipoLower = tipo.toLowerCase()
     if (tipoLower.includes('urgente') || tipoLower.includes('crítico')) {
       return {
-        border: 'border-red-200',
+        border: 'border-red-300',
         bg: 'bg-red-50',
         text: 'text-red-800',
         accent: 'border-l-red-500'
@@ -43,14 +43,14 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
     }
     if (tipoLower.includes('importante') || tipoLower.includes('alta')) {
       return {
-        border: 'border-orange-200',
+        border: 'border-orange-300',
         bg: 'bg-orange-50',
         text: 'text-orange-800',
         accent: 'border-l-orange-500'
       }
     }
     return {
-      border: 'border-blue-200',
+      border: 'border-blue-300',
       bg: 'bg-blue-50',
       text: 'text-blue-800',
       accent: 'border-l-blue-500'
@@ -98,13 +98,13 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border-gray-200">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Detalhes da Solicitação SAC
             </DialogTitle>
-            <Button variant="ghost" size="sm" onClick={onClose}>
+            <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -112,8 +112,8 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
 
         <div className="space-y-6">
           {/* Descrição do Problema - DESTAQUE PRINCIPAL */}
-          <Card className={`${priorityColors.border} ${priorityColors.bg} border-l-4 ${priorityColors.accent} shadow-lg`}>
-            <CardHeader className="pb-3">
+          <Card className={`bg-white border-2 ${priorityColors.border} border-l-4 ${priorityColors.accent} shadow-lg`}>
+            <CardHeader className="pb-3 bg-white">
               <CardTitle className={`flex items-center gap-3 text-lg ${priorityColors.text}`}>
                 <MessageSquare className="h-6 w-6" />
                 Descrição do Problema
@@ -122,16 +122,16 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 bg-white">
               <div className={`
                 relative p-6 bg-white rounded-lg border-2 ${priorityColors.border} 
                 shadow-inner min-h-[120px]
               `}>
                 <div className={`
-                  text-gray-800 font-medium leading-7 text-base
+                  text-gray-900 font-medium leading-7 text-base
                   ${isLongDescription && !isExpanded ? 'line-clamp-6' : ''}
                 `}>
-                  <p className="whitespace-pre-wrap break-words">
+                  <p className="whitespace-pre-wrap break-words text-gray-900">
                     {solicitacao.descricao}
                   </p>
                 </div>
@@ -142,7 +142,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                     size="sm"
                     variant="outline"
                     onClick={copyDescription}
-                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+                    className="flex items-center gap-2 text-gray-700 hover:text-gray-900 bg-white border-gray-300 hover:bg-gray-50"
                   >
                     <Copy className="h-4 w-4" />
                     Copiar Texto
@@ -153,7 +153,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                       size="sm"
                       variant="outline"
                       onClick={() => setIsExpanded(!isExpanded)}
-                      className="flex items-center gap-2 text-gray-700 hover:text-gray-900"
+                      className="flex items-center gap-2 text-gray-700 hover:text-gray-900 bg-white border-gray-300 hover:bg-gray-50"
                     >
                       <Expand className="h-4 w-4" />
                       {isExpanded ? 'Recolher' : 'Ver Completo'}
@@ -171,14 +171,14 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
           {/* Informações do Cliente e Detalhes */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Informações do Cliente */}
-            <Card className="border-gray-200">
-              <CardHeader>
+            <Card className="bg-white border-gray-200">
+              <CardHeader className="bg-white">
                 <CardTitle className="flex items-center gap-2 text-gray-800">
                   <User className="h-5 w-5" />
                   Informações do Cliente
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 bg-white">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Nome</label>
                   <p className="text-lg font-semibold text-gray-900">{solicitacao.nome}</p>
@@ -188,7 +188,12 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                   <label className="text-sm font-medium text-gray-600">Email</label>
                   <div className="flex items-center gap-2">
                     <p className="text-sm text-gray-800">{solicitacao.email}</p>
-                    <Button size="sm" variant="outline" onClick={sendEmail}>
+                    <Button 
+                      size="sm" 
+                      variant="outline" 
+                      onClick={sendEmail}
+                      className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+                    >
                       <Mail className="h-4 w-4 mr-1" />
                       Enviar Email
                     </Button>
@@ -203,7 +208,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                       size="sm" 
                       variant="outline" 
                       onClick={openWhatsApp} 
-                      className="text-green-600 border-green-600 hover:bg-green-50"
+                      className="text-green-600 border-green-600 hover:bg-green-50 bg-white"
                     >
                       <Phone className="h-4 w-4 mr-1" />
                       Abrir WhatsApp
@@ -211,7 +216,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-gray-200" />
 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Data da Solicitação</label>
@@ -224,14 +229,14 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
             </Card>
 
             {/* Informações do Gestor */}
-            <Card className="border-gray-200">
-              <CardHeader>
+            <Card className="bg-white border-gray-200">
+              <CardHeader className="bg-white">
                 <CardTitle className="flex items-center gap-2 text-gray-800">
                   <User className="h-5 w-5" />
                   Gestor Responsável
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-4 bg-white">
                 {solicitacao.nome_gestor ? (
                   <>
                     <div>
@@ -261,22 +266,37 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
 
         {/* Ações rápidas */}
         <div className="flex flex-wrap gap-3 pt-6 border-t border-gray-200 bg-gray-50 -mx-6 -mb-6 px-6 py-4 rounded-b-lg">
-          <Button onClick={openWhatsApp} className="bg-green-600 hover:bg-green-700">
+          <Button 
+            onClick={openWhatsApp} 
+            className="bg-green-600 hover:bg-green-700 text-white"
+          >
             <Phone className="h-4 w-4 mr-2" />
             Contatar via WhatsApp
           </Button>
           
-          <Button variant="outline" onClick={sendEmail}>
+          <Button 
+            variant="outline" 
+            onClick={sendEmail}
+            className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          >
             <Mail className="h-4 w-4 mr-2" />
             Enviar Email
           </Button>
 
-          <Button variant="outline" onClick={copyDescription}>
+          <Button 
+            variant="outline" 
+            onClick={copyDescription}
+            className="bg-white border-gray-300 text-gray-700 hover:bg-gray-50 hover:text-gray-900"
+          >
             <Copy className="h-4 w-4 mr-2" />
             Copiar Descrição
           </Button>
 
-          <Button variant="secondary" onClick={onClose} className="ml-auto">
+          <Button 
+            variant="secondary" 
+            onClick={onClose} 
+            className="ml-auto bg-gray-200 text-gray-700 hover:bg-gray-300"
+          >
             Fechar
           </Button>
         </div>
