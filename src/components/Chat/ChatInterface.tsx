@@ -3,8 +3,10 @@ import { useEffect, useRef } from 'react'
 import { MessageItem } from './MessageItem'
 import { MessageInput } from './MessageInput'
 import { useChatMessages } from '@/hooks/useChatMessages'
+import { useChatProfiles } from '@/hooks/useChatProfiles'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { ArrowLeft, User } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -53,6 +55,7 @@ export function ChatInterface({
   })
 
   const { mensagens, loading, enviarMensagem } = useChatMessages(emailClienteParam, emailGestorParam)
+  const { gestorProfile, clienteProfile, loading: profilesLoading } = useChatProfiles(emailCliente, emailGestor)
 
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
@@ -64,7 +67,46 @@ export function ChatInterface({
     await enviarMensagem(content, type, emailCliente)
   }
 
-  if (loading) {
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map(word => word.charAt(0))
+      .join('')
+      .toUpperCase()
+      .slice(0, 2)
+  }
+
+  // Função para obter dados do remetente da mensagem
+  const getSenderData = (mensagem: ChatMensagem) => {
+    if (mensagem.remetente === 'gestor') {
+      return {
+        avatar: gestorProfile?.avatar_url,
+        name: gestorProfile?.nome
+      }
+    } else {
+      return {
+        avatar: clienteProfile?.avatar_url,
+        name: clienteProfile?.nome
+      }
+    }
+  }
+
+  // Função para obter dados do próprio usuário
+  const getOwnUserData = () => {
+    if (isCliente) {
+      return {
+        avatar: clienteProfile?.avatar_url,
+        name: clienteProfile?.nome
+      }
+    } else {
+      return {
+        avatar: gestorProfile?.avatar_url,
+        name: gestorProfile?.nome
+      }
+    }
+  }
+
+  if (loading || profilesLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="text-center">
@@ -87,9 +129,12 @@ export function ChatInterface({
             )}
             
             <div className="flex items-center gap-2 flex-1">
-              <div className="h-10 w-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <User className="h-5 w-5 text-primary" />
-              </div>
+              <Avatar className="h-10 w-10">
+                <AvatarImage src={clienteProfile?.avatar_url || undefined} alt={nomeCliente} />
+                <AvatarFallback className="bg-primary/10 text-primary">
+                  {getInitials(nomeCliente)}
+                </AvatarFallback>
+              </Avatar>
               
               <div className="flex-1">
                 <h3 className="font-semibold text-card-foreground">{nomeCliente}</h3>
@@ -117,16 +162,23 @@ export function ChatInterface({
             </p>
           </div>
         ) : (
-          mensagens.map((mensagem) => (
-            <MessageItem
-              key={mensagem.id}
-              mensagem={mensagem}
-              isOwn={
-                (isCliente && mensagem.remetente === 'cliente') ||
-                ((isGestor || isAdmin) && mensagem.remetente === 'gestor')
-              }
-            />
-          ))
+          mensagens.map((mensagem) => {
+            const isOwn = (isCliente && mensagem.remetente === 'cliente') ||
+                          ((isGestor || isAdmin) && mensagem.remetente === 'gestor')
+            
+            const senderData = getSenderData(mensagem)
+            const ownData = getOwnUserData()
+            
+            return (
+              <MessageItem
+                key={mensagem.id}
+                mensagem={mensagem}
+                isOwn={isOwn}
+                senderAvatar={isOwn ? ownData.avatar : senderData.avatar}
+                senderName={isOwn ? ownData.name : senderData.name}
+              />
+            )
+          })
         )}
         <div ref={messagesEndRef} />
       </div>
