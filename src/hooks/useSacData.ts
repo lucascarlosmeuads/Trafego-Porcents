@@ -47,7 +47,8 @@ export function useSacData() {
 
   const updateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
     try {
-      console.log('🔄 [useSacData] Iniciando atualização de gestor:', {
+      console.log('🔄 [useSacData] === INÍCIO ATUALIZAÇÃO GESTOR ===')
+      console.log('🔄 [useSacData] Dados recebidos:', {
         solicitacaoId,
         emailGestor,
         nomeGestor,
@@ -86,30 +87,45 @@ export function useSacData() {
 
       console.log('✅ [useSacData] Registro encontrado:', existingRecord)
 
-      // Atualizar no banco
+      // Atualizar no banco - CORREÇÃO: Remover verificação restritiva do resultado
       console.log('💾 [useSacData] Executando UPDATE...')
-      const { data, error } = await supabase
+      const { error: updateError } = await supabase
         .from('sac_clientes')
         .update({
           email_gestor: emailGestor,
           nome_gestor: nomeGestor
         })
         .eq('id', solicitacaoId)
-        .select()
 
-      if (error) {
-        console.error('❌ [useSacData] Erro ao atualizar gestor:', error)
-        throw new Error(`Erro ao atualizar: ${error.message}`)
+      // CORREÇÃO: Verificar apenas se houve erro, não o resultado vazio
+      if (updateError) {
+        console.error('❌ [useSacData] Erro no UPDATE:', updateError)
+        throw new Error(`Erro ao atualizar: ${updateError.message}`)
       }
 
-      if (!data || data.length === 0) {
-        console.error('❌ [useSacData] Nenhuma linha foi atualizada')
-        console.error('   - ID usado:', solicitacaoId)
-        console.error('   - Registro existente:', existingRecord)
-        throw new Error('Nenhuma linha foi atualizada - erro interno')
+      console.log('✅ [useSacData] UPDATE executado sem erros')
+
+      // Verificar se a atualização foi realmente aplicada
+      console.log('🔍 [useSacData] Verificando se atualização foi aplicada...')
+      const { data: updatedRecord, error: verifyError } = await supabase
+        .from('sac_clientes')
+        .select('id, nome, email_gestor, nome_gestor')
+        .eq('id', solicitacaoId)
+        .single()
+
+      if (verifyError) {
+        console.error('❌ [useSacData] Erro ao verificar atualização:', verifyError)
+        throw new Error('Erro ao verificar se atualização foi aplicada')
       }
 
-      console.log('✅ [useSacData] Gestor atualizado com sucesso:', data[0])
+      if (!updatedRecord || updatedRecord.email_gestor !== emailGestor || updatedRecord.nome_gestor !== nomeGestor) {
+        console.error('❌ [useSacData] Atualização não foi aplicada corretamente')
+        console.error('   - Esperado:', { email_gestor: emailGestor, nome_gestor: nomeGestor })
+        console.error('   - Encontrado:', { email_gestor: updatedRecord?.email_gestor, nome_gestor: updatedRecord?.nome_gestor })
+        throw new Error('Atualização não foi aplicada corretamente no banco de dados')
+      }
+
+      console.log('✅ [useSacData] Verificação confirmada - dados atualizados:', updatedRecord)
 
       // Atualizar estado local imediatamente
       setSolicitacoes(prev => {
@@ -128,7 +144,7 @@ export function useSacData() {
         fetchSolicitacoes()
       }, 500)
 
-      return { success: true, data: data[0] }
+      return { success: true, data: updatedRecord }
     } catch (err) {
       console.error('💥 [useSacData] Erro ao atualizar gestor:', err)
       throw err

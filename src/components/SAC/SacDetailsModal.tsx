@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,7 +25,11 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
 
   // Sincronizar com mudanças na prop solicitacao
   useEffect(() => {
-    console.log('🔄 [SacDetailsModal] Props solicitacao mudou:', solicitacao)
+    console.log('🔄 [SacDetailsModal] Props solicitacao mudou:', {
+      id: solicitacao.id,
+      email_gestor: solicitacao.email_gestor,
+      nome_gestor: solicitacao.nome_gestor
+    })
     setCurrentSolicitacao(solicitacao)
   }, [solicitacao])
 
@@ -104,16 +107,27 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
-    console.log('🔄 [SacDetailsModal] === DEBUG UPDATE GESTOR ===')
-    console.log('🔄 [SacDetailsModal] solicitacaoId recebido:', solicitacaoId)
-    console.log('🔄 [SacDetailsModal] currentSolicitacao.id:', currentSolicitacao.id)
-    console.log('🔄 [SacDetailsModal] solicitacao original.id:', solicitacao.id)
-    console.log('🔄 [SacDetailsModal] emailGestor:', emailGestor)
-    console.log('🔄 [SacDetailsModal] nomeGestor:', nomeGestor)
+    console.log('🔄 [SacDetailsModal] === RECEBENDO CHAMADA PARA UPDATE ===')
+    console.log('🔄 [SacDetailsModal] Dados recebidos:', {
+      solicitacaoId,
+      emailGestor,
+      nomeGestor,
+      currentSolicitacao_id: currentSolicitacao.id,
+      solicitacao_original_id: solicitacao.id
+    })
+    
+    // Validação extra para garantir que temos dados consistentes
+    if (solicitacaoId !== currentSolicitacao.id) {
+      console.warn('⚠️ [SacDetailsModal] IDs não coincidem!', {
+        recebido: solicitacaoId,
+        atual: currentSolicitacao.id
+      })
+    }
     
     try {
+      console.log('🔄 [SacDetailsModal] Chamando updateGestor do hook...')
       const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)
-      console.log('✅ [SacDetailsModal] Atualização concluída:', result)
+      console.log('✅ [SacDetailsModal] Atualização concluída com sucesso:', result)
       return result
     } catch (error) {
       console.error('❌ [SacDetailsModal] Erro ao atualizar gestor:', error)
@@ -122,7 +136,16 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const handleGestorUpdated = (updatedSolicitacao: SacSolicitacao) => {
-    console.log('🔄 [SacDetailsModal] Atualizando estado local do modal:', updatedSolicitacao)
+    console.log('🔄 [SacDetailsModal] Atualizando estado local do modal:', {
+      anterior: {
+        email_gestor: currentSolicitacao.email_gestor,
+        nome_gestor: currentSolicitacao.nome_gestor
+      },
+      novo: {
+        email_gestor: updatedSolicitacao.email_gestor,
+        nome_gestor: updatedSolicitacao.nome_gestor
+      }
+    })
     setCurrentSolicitacao(updatedSolicitacao)
   }
 

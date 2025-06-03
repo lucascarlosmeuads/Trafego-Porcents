@@ -1,9 +1,8 @@
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { User, Save, X, Loader2, RefreshCw, CheckCircle } from 'lucide-react'
+import { User, Save, X, Loader2, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useGestores } from '@/hooks/useGestores'
 import type { SacSolicitacao } from '@/hooks/useSacData'
@@ -36,13 +35,15 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     }
 
     try {
-      console.log('💾 [GestorSelector] === DEBUG SALVAMENTO ===')
-      console.log('💾 [GestorSelector] Dados da solicitação completa:', solicitacao)
-      console.log('💾 [GestorSelector] ID da solicitação:', {
-        id: solicitacao.id,
-        tipo: typeof solicitacao.id,
-        comprimento: solicitacao.id?.length,
-        valido: !!solicitacao.id
+      console.log('💾 [GestorSelector] === INÍCIO SALVAMENTO ===')
+      console.log('💾 [GestorSelector] Solicitação completa:', {
+        ...solicitacao,
+        id_debug: {
+          valor: solicitacao.id,
+          tipo: typeof solicitacao.id,
+          comprimento: solicitacao.id?.length,
+          valido: !!solicitacao.id
+        }
       })
       console.log('💾 [GestorSelector] Gestor selecionado:', {
         email: selectedGestor.email,
@@ -50,18 +51,19 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
       })
 
       if (!solicitacao.id) {
-        throw new Error('ID da solicitação não encontrado')
+        throw new Error('ID da solicitação não encontrado - dados inconsistentes')
       }
 
       setSaving(true)
       
+      console.log('💾 [GestorSelector] Chamando onUpdateGestor...')
       const result = await onUpdateGestor(solicitacao.id, selectedGestor.email, selectedGestor.nome)
       
-      console.log('✅ [GestorSelector] Salvamento concluído:', result)
+      console.log('✅ [GestorSelector] Salvamento concluído com sucesso:', result)
       
       // Mostrar indicador de sucesso
       setJustSaved(true)
-      setTimeout(() => setJustSaved(false), 2000)
+      setTimeout(() => setJustSaved(false), 3000)
       
       // Notificar o componente pai sobre a atualização
       if (onGestorUpdated) {
@@ -77,16 +79,21 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
       toast({
         title: "Sucesso!",
         description: `Gestor responsável atualizado para ${selectedGestor.nome}.`,
-        duration: 3000
+        duration: 4000
       })
       
       setIsEditing(false)
     } catch (error) {
       console.error('❌ [GestorSelector] Erro ao salvar:', error)
+      
+      // Mensagem de erro mais específica
+      const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao salvar"
+      
       toast({
         title: "Erro ao salvar",
-        description: error instanceof Error ? error.message : "Não foi possível atualizar o gestor responsável.",
-        variant: "destructive"
+        description: errorMessage,
+        variant: "destructive",
+        duration: 6000
       })
       
       // Reverter seleção em caso de erro
@@ -199,8 +206,9 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
             </div>
 
             {gestores.length === 0 && (
-              <div className="text-sm text-amber-600 bg-amber-50 p-2 rounded">
-                ⚠️ Nenhum gestor ativo encontrado no sistema
+              <div className="flex items-center gap-2 text-sm text-amber-600 bg-amber-50 p-3 rounded">
+                <AlertTriangle className="h-4 w-4" />
+                Nenhum gestor ativo encontrado no sistema
               </div>
             )}
           </div>
