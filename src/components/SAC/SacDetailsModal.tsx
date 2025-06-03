@@ -9,6 +9,8 @@ import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useState } from 'react'
 import { useToast } from '@/hooks/use-toast'
+import { useSacData } from '@/hooks/useSacData'
+import { GestorSelector } from './GestorSelector'
 import type { SacSolicitacao } from '@/hooks/useSacData'
 
 interface SacDetailsModalProps {
@@ -18,7 +20,9 @@ interface SacDetailsModalProps {
 
 export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) {
   const { toast } = useToast()
+  const { updateGestor } = useSacData()
   const [isExpanded, setIsExpanded] = useState(false)
+  const [currentSolicitacao, setCurrentSolicitacao] = useState(solicitacao)
 
   const getTipoProblemaColor = (tipo: string) => {
     const tipoLower = tipo.toLowerCase()
@@ -62,24 +66,24 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const openWhatsApp = () => {
-    const phone = solicitacao.whatsapp.replace(/\D/g, '')
+    const phone = currentSolicitacao.whatsapp.replace(/\D/g, '')
     const message = encodeURIComponent(
-      `Olá ${solicitacao.nome}, vi sua solicitação de suporte e estou aqui para ajudar!`
+      `Olá ${currentSolicitacao.nome}, vi sua solicitação de suporte e estou aqui para ajudar!`
     )
     window.open(`https://wa.me/${phone}?text=${message}`, '_blank')
   }
 
   const sendEmail = () => {
-    const subject = encodeURIComponent(`Resposta à sua solicitação - ${solicitacao.tipo_problema}`)
+    const subject = encodeURIComponent(`Resposta à sua solicitação - ${currentSolicitacao.tipo_problema}`)
     const body = encodeURIComponent(
-      `Olá ${solicitacao.nome},\n\nRecebemos sua solicitação de suporte e estamos trabalhando para resolvê-la.\n\nDescrição do problema: ${solicitacao.descricao}\n\nAtenciosamente,\nEquipe de Suporte`
+      `Olá ${currentSolicitacao.nome},\n\nRecebemos sua solicitação de suporte e estamos trabalhando para resolvê-la.\n\nDescrição do problema: ${currentSolicitacao.descricao}\n\nAtenciosamente,\nEquipe de Suporte`
     )
-    window.location.href = `mailto:${solicitacao.email}?subject=${subject}&body=${body}`
+    window.location.href = `mailto:${currentSolicitacao.email}?subject=${subject}&body=${body}`
   }
 
   const copyDescription = async () => {
     try {
-      await navigator.clipboard.writeText(solicitacao.descricao)
+      await navigator.clipboard.writeText(currentSolicitacao.descricao)
       toast({
         title: "Texto copiado!",
         description: "A descrição foi copiada para a área de transferência.",
@@ -93,12 +97,23 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
     }
   }
 
-  const priorityColors = getPriorityColors(solicitacao.tipo_problema)
-  const isLongDescription = solicitacao.descricao.length > 300
+  const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
+    const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)
+    // Atualizar o estado local para refletir a mudança imediatamente
+    setCurrentSolicitacao(prev => ({
+      ...prev,
+      email_gestor: emailGestor,
+      nome_gestor: nomeGestor
+    }))
+    return result
+  }
+
+  const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
+  const isLongDescription = currentSolicitacao.descricao.length > 300
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border-gray-200">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border-gray-200 force-light-theme">
         <DialogHeader>
           <div className="flex items-center justify-between">
             <DialogTitle className="text-xl font-semibold text-gray-900">
@@ -117,8 +132,8 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
               <CardTitle className={`flex items-center gap-3 text-lg ${priorityColors.text}`}>
                 <MessageSquare className="h-6 w-6" />
                 Descrição do Problema
-                <Badge variant={getTipoProblemaColor(solicitacao.tipo_problema)} className="ml-auto">
-                  {solicitacao.tipo_problema}
+                <Badge variant={getTipoProblemaColor(currentSolicitacao.tipo_problema)} className="ml-auto">
+                  {currentSolicitacao.tipo_problema}
                 </Badge>
               </CardTitle>
             </CardHeader>
@@ -132,7 +147,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                   ${isLongDescription && !isExpanded ? 'line-clamp-6' : ''}
                 `}>
                   <p className="whitespace-pre-wrap break-words text-gray-900">
-                    {solicitacao.descricao}
+                    {currentSolicitacao.descricao}
                   </p>
                 </div>
                 
@@ -161,7 +176,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                   )}
                   
                   <div className="ml-auto text-xs text-gray-500">
-                    {solicitacao.descricao.length} caracteres
+                    {currentSolicitacao.descricao.length} caracteres
                   </div>
                 </div>
               </div>
@@ -181,13 +196,13 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
               <CardContent className="space-y-4 bg-white">
                 <div>
                   <label className="text-sm font-medium text-gray-600">Nome</label>
-                  <p className="text-lg font-semibold text-gray-900">{solicitacao.nome}</p>
+                  <p className="text-lg font-semibold text-gray-900">{currentSolicitacao.nome}</p>
                 </div>
 
                 <div>
                   <label className="text-sm font-medium text-gray-600">Email</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-800">{solicitacao.email}</p>
+                    <p className="text-sm text-gray-800">{currentSolicitacao.email}</p>
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -203,7 +218,7 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                 <div>
                   <label className="text-sm font-medium text-gray-600">WhatsApp</label>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-gray-800">{solicitacao.whatsapp}</p>
+                    <p className="text-sm text-gray-800">{currentSolicitacao.whatsapp}</p>
                     <Button 
                       size="sm" 
                       variant="outline" 
@@ -222,45 +237,17 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
                   <label className="text-sm font-medium text-gray-600">Data da Solicitação</label>
                   <div className="flex items-center gap-2 text-sm text-gray-800">
                     <Calendar className="h-4 w-4 text-gray-500" />
-                    {formatDate(solicitacao.data_envio)}
+                    {formatDate(currentSolicitacao.data_envio)}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Informações do Gestor */}
-            <Card className="bg-white border-gray-200">
-              <CardHeader className="bg-white">
-                <CardTitle className="flex items-center gap-2 text-gray-800">
-                  <User className="h-5 w-5" />
-                  Gestor Responsável
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 bg-white">
-                {solicitacao.nome_gestor ? (
-                  <>
-                    <div>
-                      <label className="text-sm font-medium text-gray-600">Nome do Gestor</label>
-                      <p className="text-lg font-semibold text-gray-900">{solicitacao.nome_gestor}</p>
-                    </div>
-                    
-                    {solicitacao.email_gestor && (
-                      <div>
-                        <label className="text-sm font-medium text-gray-600">Email do Gestor</label>
-                        <p className="text-sm text-gray-800">{solicitacao.email_gestor}</p>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <div className="text-center py-8">
-                    <div className="text-gray-400 mb-2">
-                      <User className="h-12 w-12 mx-auto opacity-50" />
-                    </div>
-                    <p className="text-gray-500">Nenhum gestor atribuído</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            {/* Gestor Responsável com Seletor */}
+            <GestorSelector 
+              solicitacao={currentSolicitacao}
+              onUpdateGestor={handleUpdateGestor}
+            />
           </div>
         </div>
 

@@ -44,6 +44,35 @@ export function useSacData() {
     }
   }
 
+  const updateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
+    try {
+      const { error } = await supabase
+        .from('sac_clientes')
+        .update({
+          email_gestor: emailGestor,
+          nome_gestor: nomeGestor
+        })
+        .eq('id', solicitacaoId)
+
+      if (error) {
+        console.error('Erro ao atualizar gestor:', error)
+        throw new Error(error.message)
+      }
+
+      // Atualizar o estado local
+      setSolicitacoes(prev => prev.map(sol => 
+        sol.id === solicitacaoId 
+          ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
+          : sol
+      ))
+
+      return { success: true }
+    } catch (err) {
+      console.error('Erro ao atualizar gestor:', err)
+      throw err
+    }
+  }
+
   useEffect(() => {
     fetchSolicitacoes()
 
@@ -71,6 +100,7 @@ export function useSacData() {
     solicitacoes,
     loading,
     error,
-    refetch: fetchSolicitacoes
+    refetch: fetchSolicitacoes,
+    updateGestor
   }
 }
