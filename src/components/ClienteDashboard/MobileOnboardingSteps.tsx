@@ -40,6 +40,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   const { user } = useAuth()
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
+  const [autoChecked, setAutoChecked] = React.useState<Set<number>>(new Set())
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
@@ -119,11 +120,12 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
 
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id)) {
+      if (step.autoCheck && !progresso.has(step.id) && !autoChecked.has(step.id)) {
         togglePasso(step.id)
+        setAutoChecked(prev => new Set(prev).add(step.id))
       }
     })
-  }, [steps, progresso, togglePasso])
+  }, [steps, progresso, togglePasso, autoChecked])
 
   React.useEffect(() => {
     if (!loading && (briefing || arquivos)) {
@@ -184,10 +186,10 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
           
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Progresso</span>
-              <span className="text-blue-600 font-medium">{progressPercentage}%</span>
+              <span className="text-gray-800 font-medium">Progresso</span>
+              <span className="text-blue-600 font-bold">{progressPercentage}%</span>
             </div>
-            <Progress value={progressPercentage} className="h-3 bg-gray-200" />
+            <Progress value={progressPercentage} className="h-3" />
           </div>
         </CardHeader>
       </Card>
@@ -241,7 +243,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
-                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 w-6 h-6 flex-shrink-0 border-2"
+                    className="w-6 h-6 flex-shrink-0 border-2"
                   />
                   
                   {/* Numeração */}
@@ -279,7 +281,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </div>
                 </div>
 
-                {/* Botão de Ação - sempre com texto branco */}
+                {/* Botão de Ação */}
                 <div className="mt-3">
                   <Button
                     onClick={step.action}

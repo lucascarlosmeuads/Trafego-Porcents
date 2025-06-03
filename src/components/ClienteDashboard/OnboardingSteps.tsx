@@ -41,6 +41,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
+  const [autoChecked, setAutoChecked] = React.useState<Set<number>>(new Set())
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
@@ -118,14 +119,15 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     }
   ], [briefing, arquivos, onTabChange])
 
-  // Auto-marcar passos baseado em dados existentes
+  // Auto-marcar passos baseado em dados existentes - apenas uma vez
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id)) {
+      if (step.autoCheck && !progresso.has(step.id) && !autoChecked.has(step.id)) {
         togglePasso(step.id)
+        setAutoChecked(prev => new Set(prev).add(step.id))
       }
     })
-  }, [steps, progresso, togglePasso])
+  }, [steps, progresso, togglePasso, autoChecked])
 
   React.useEffect(() => {
     if (!loading && (briefing || arquivos)) {
@@ -202,13 +204,13 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
         
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-600">Progresso geral</span>
-            <span className="text-blue-600 font-medium">{progressPercentage}%</span>
+            <span className="text-gray-800 font-medium">Progresso geral</span>
+            <span className="text-blue-600 font-bold">{progressPercentage}%</span>
           </div>
           {typeof progressPercentage === 'number' && !isNaN(progressPercentage) && (
             <Progress 
               value={progressPercentage} 
-              className="h-3 bg-gray-200"
+              className="h-3"
             />
           )}
         </div>
@@ -259,7 +261,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
-                    className="data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600 w-6 h-6 border-2"
+                    className="w-6 h-6 border-2"
                   />
                   
                   {/* Numeração */}
@@ -302,7 +304,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                   </div>
                 </div>
                 
-                {/* Botão de ação - sempre com texto branco */}
+                {/* Botão de ação */}
                 <div className="flex items-center">
                   <Button
                     onClick={step.action}
