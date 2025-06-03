@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { AdminAddClientModal } from './AdminDashboard/AdminAddClientModal'
 import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
@@ -22,7 +21,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   
   // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
   // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
-  const { clientes: gestorClientes, loading: clientesLoading, addCliente, refetch } = useManagerData(
+  const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
     user?.email || '', // userEmail: email do admin atual
     true, // isAdminUser: true para admin
     selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
@@ -100,14 +99,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
                 />
               </div>
             )}
-            
-            {/* Botão Adicionar Cliente - NOVO */}
-            <div className="flex justify-between items-center">
-              <h2 className="text-lg font-semibold">Clientes</h2>
-              <AdminAddClientModal 
-                onClienteAdicionado={addCliente}
-              />
-            </div>
             
             {/* Admin panel: Pass selectedManager directly for proper filtering */}
             <div className="w-full">
