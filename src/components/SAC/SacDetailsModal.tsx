@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Phone, Mail, Calendar, User, MessageSquare, X, Copy, Expand } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useSacData } from '@/hooks/useSacData'
 import { GestorSelector } from './GestorSelector'
@@ -23,6 +23,12 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   const { updateGestor } = useSacData()
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentSolicitacao, setCurrentSolicitacao] = useState(solicitacao)
+
+  // Sincronizar com mudanças na prop solicitacao
+  useEffect(() => {
+    console.log('🔄 [SacDetailsModal] Props solicitacao mudou:', solicitacao)
+    setCurrentSolicitacao(solicitacao)
+  }, [solicitacao])
 
   const getTipoProblemaColor = (tipo: string) => {
     const tipoLower = tipo.toLowerCase()
@@ -98,7 +104,12 @@ export function SacDetailsModal({ solicitacao, onClose }: SacDetailsModalProps) 
   }
 
   const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
-    console.log('🔄 [SacDetailsModal] Processando atualização de gestor...')
+    console.log('🔄 [SacDetailsModal] === DEBUG UPDATE GESTOR ===')
+    console.log('🔄 [SacDetailsModal] solicitacaoId recebido:', solicitacaoId)
+    console.log('🔄 [SacDetailsModal] currentSolicitacao.id:', currentSolicitacao.id)
+    console.log('🔄 [SacDetailsModal] solicitacao original.id:', solicitacao.id)
+    console.log('🔄 [SacDetailsModal] emailGestor:', emailGestor)
+    console.log('🔄 [SacDetailsModal] nomeGestor:', nomeGestor)
     
     try {
       const result = await updateGestor(solicitacaoId, emailGestor, nomeGestor)

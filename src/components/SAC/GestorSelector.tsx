@@ -36,11 +36,22 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     }
 
     try {
-      console.log('💾 [GestorSelector] Iniciando salvamento:', {
-        solicitacaoId: solicitacao.id,
-        gestorEmail: selectedGestor.email,
-        gestorNome: selectedGestor.nome
+      console.log('💾 [GestorSelector] === DEBUG SALVAMENTO ===')
+      console.log('💾 [GestorSelector] Dados da solicitação completa:', solicitacao)
+      console.log('💾 [GestorSelector] ID da solicitação:', {
+        id: solicitacao.id,
+        tipo: typeof solicitacao.id,
+        comprimento: solicitacao.id?.length,
+        valido: !!solicitacao.id
       })
+      console.log('💾 [GestorSelector] Gestor selecionado:', {
+        email: selectedGestor.email,
+        nome: selectedGestor.nome
+      })
+
+      if (!solicitacao.id) {
+        throw new Error('ID da solicitação não encontrado')
+      }
 
       setSaving(true)
       
@@ -54,11 +65,13 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
       
       // Notificar o componente pai sobre a atualização
       if (onGestorUpdated) {
-        onGestorUpdated({
+        const updatedSolicitacao = {
           ...solicitacao,
           email_gestor: selectedGestor.email,
           nome_gestor: selectedGestor.nome
-        })
+        }
+        console.log('🔄 [GestorSelector] Notificando componente pai:', updatedSolicitacao)
+        onGestorUpdated(updatedSolicitacao)
       }
       
       toast({

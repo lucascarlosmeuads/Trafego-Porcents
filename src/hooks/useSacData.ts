@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -51,7 +50,9 @@ export function useSacData() {
       console.log('🔄 [useSacData] Iniciando atualização de gestor:', {
         solicitacaoId,
         emailGestor,
-        nomeGestor
+        nomeGestor,
+        idType: typeof solicitacaoId,
+        idLength: solicitacaoId?.length
       })
 
       // Validar dados antes de enviar
@@ -59,7 +60,34 @@ export function useSacData() {
         throw new Error('Dados incompletos para atualização')
       }
 
+      // Validar formato UUID do ID
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+      if (!uuidRegex.test(solicitacaoId)) {
+        console.error('❌ [useSacData] ID inválido (não é UUID):', solicitacaoId)
+        throw new Error('ID da solicitação inválido')
+      }
+
+      // Verificar se o registro existe antes de tentar atualizar
+      console.log('🔍 [useSacData] Verificando se registro existe...')
+      const { data: existingRecord, error: checkError } = await supabase
+        .from('sac_clientes')
+        .select('id, nome, email_gestor, nome_gestor')
+        .eq('id', solicitacaoId)
+        .single()
+
+      if (checkError) {
+        console.error('❌ [useSacData] Erro ao verificar registro:', checkError)
+        throw new Error(`Registro não encontrado: ${checkError.message}`)
+      }
+
+      if (!existingRecord) {
+        throw new Error('Solicitação não encontrada no banco de dados')
+      }
+
+      console.log('✅ [useSacData] Registro encontrado:', existingRecord)
+
       // Atualizar no banco
+      console.log('💾 [useSacData] Executando UPDATE...')
       const { data, error } = await supabase
         .from('sac_clientes')
         .update({
@@ -71,27 +99,34 @@ export function useSacData() {
 
       if (error) {
         console.error('❌ [useSacData] Erro ao atualizar gestor:', error)
-        throw new Error(error.message)
+        throw new Error(`Erro ao atualizar: ${error.message}`)
       }
 
       if (!data || data.length === 0) {
-        throw new Error('Nenhuma linha foi atualizada - verifique se o ID existe')
+        console.error('❌ [useSacData] Nenhuma linha foi atualizada')
+        console.error('   - ID usado:', solicitacaoId)
+        console.error('   - Registro existente:', existingRecord)
+        throw new Error('Nenhuma linha foi atualizada - erro interno')
       }
 
-      console.log('✅ [useSacData] Gestor atualizado no banco:', data[0])
+      console.log('✅ [useSacData] Gestor atualizado com sucesso:', data[0])
 
-      // Atualizar estado local imediatamente para feedback instantâneo
-      setSolicitacoes(prev => prev.map(sol => 
-        sol.id === solicitacaoId 
-          ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
-          : sol
-      ))
+      // Atualizar estado local imediatamente
+      setSolicitacoes(prev => {
+        const updated = prev.map(sol => 
+          sol.id === solicitacaoId 
+            ? { ...sol, email_gestor: emailGestor, nome_gestor: nomeGestor }
+            : sol
+        )
+        console.log('🔄 [useSacData] Estado local atualizado')
+        return updated
+      })
 
       // Forçar um refresh completo para garantir consistência
       setTimeout(() => {
         console.log('🔄 [useSacData] Fazendo refresh após atualização...')
         fetchSolicitacoes()
-      }, 100)
+      }, 500)
 
       return { success: true, data: data[0] }
     } catch (err) {
