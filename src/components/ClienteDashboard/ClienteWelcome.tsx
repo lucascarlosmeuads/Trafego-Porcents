@@ -49,7 +49,7 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
     },
     {
       title: 'Chat com Gestor',
-      description: 'Tire dúvidas diretamente com sua equipe',
+      description: 'Entre em contato via chat no sistema para ser atendido pelo seu gestor e montar sua estratégia personalizada',
       icon: MessageCircle,
       action: () => onTabChange('chat'),
       color: 'bg-teal-500'
@@ -168,34 +168,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           </Card>
         ))}
       </div>
-
-      {/* Informações Importantes */}
-      <Card className="bg-gradient-to-r from-teal-900/20 to-blue-900/20 border-teal-800/50">
-        <CardContent className="p-6">
-          <div className="flex items-start space-x-4">
-            <div className="bg-teal-500 p-3 rounded-lg">
-              <MessageCircle className="h-6 w-6 text-white" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-white mb-2">
-                💬 Importante: Entre em contato via chat!
-              </h3>
-              <p className="text-gray-300 text-sm leading-relaxed">
-                Após fazer login, entre em contato via <strong>chat no sistema</strong> para ser atendido pelo seu gestor auxiliar 
-                que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
-              </p>
-              <div className="mt-4">
-                <Button 
-                  onClick={() => onTabChange('chat')}
-                  className="bg-teal-600 hover:bg-teal-700 text-white"
-                >
-                  Abrir Chat
-                </Button>
-              </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }
