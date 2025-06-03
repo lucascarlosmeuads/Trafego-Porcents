@@ -15,6 +15,8 @@ interface TableFiltersProps {
   setSearchTerm: (value: string) => void
   statusFilter: string
   setStatusFilter: (value: string) => void
+  comissaoFilter?: string
+  setComissaoFilter?: (value: string) => void
   siteStatusFilter?: string
   setSiteStatusFilter?: (value: string) => void
   showSiteStatusFilter?: boolean
@@ -50,6 +52,8 @@ export function TableFilters({
   setSearchTerm,
   statusFilter,
   setStatusFilter,
+  comissaoFilter = 'all',
+  setComissaoFilter,
   siteStatusFilter = 'all',
   setSiteStatusFilter,
   showSiteStatusFilter = false,
@@ -86,6 +90,13 @@ export function TableFilters({
     }
   }
 
+  const handleComissaoChange = (value: string) => {
+    console.log('💰 [TableFilters] Alterando filtro de comissão para:', value)
+    if (setComissaoFilter) {
+      setComissaoFilter(value)
+    }
+  }
+
   return (
     <div className="flex flex-col space-y-6 sm:flex-row sm:space-y-0 sm:space-x-6">
       {/* Campo de Busca com gradiente azul vibrante */}
@@ -102,7 +113,7 @@ export function TableFilters({
         </div>
       </div>
       
-      {/* Status da Campanha com gradiente verde vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status da Campanha com gradiente verde vibrante */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-green-500/15 to-emerald-500/15 rounded-xl border border-green-400/30 shadow-xl shadow-green-500/15 backdrop-blur-sm"></div>
         <Select value={statusFilter} onValueChange={handleStatusChange}>
@@ -124,7 +135,30 @@ export function TableFilters({
         </Select>
       </div>
 
-      {/* Status do Site com gradiente laranja vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Filtro de Comissão */}
+      {setComissaoFilter && (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/15 to-teal-500/15 rounded-xl border border-emerald-400/30 shadow-xl shadow-emerald-500/15 backdrop-blur-sm"></div>
+          <Select value={comissaoFilter} onValueChange={handleComissaoChange}>
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-emerald-400/40 text-white hover:border-emerald-300/60 focus:border-emerald-300 focus:ring-2 focus:ring-emerald-400/30 transition-all duration-300 rounded-xl">
+              <SelectValue placeholder="Status da comissão" className="font-medium" />
+            </SelectTrigger>
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
+              <SelectItem value="all" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                <span className="font-medium">Todas as Comissões</span>
+              </SelectItem>
+              <SelectItem value="pago" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                <span className="font-medium">Comissão Paga</span>
+              </SelectItem>
+              <SelectItem value="pendente" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                <span className="font-medium">Comissão Pendente</span>
+              </SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Status do Site com gradiente laranja vibrante */}
       {showSiteStatusFilter && setSiteStatusFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500/15 to-amber-500/15 rounded-xl border border-orange-400/30 shadow-xl shadow-orange-500/15 backdrop-blur-sm"></div>
@@ -143,7 +177,7 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status Criativo com gradiente roxo vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status Criativo com gradiente roxo vibrante */}
       {setCreativoFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/15 to-violet-500/15 rounded-xl border border-purple-400/30 shadow-xl shadow-purple-500/15 backdrop-blur-sm"></div>
@@ -162,7 +196,7 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status BM com gradiente ciano vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status BM com gradiente ciano vibrante */}
       {setBmFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/15 to-teal-500/15 rounded-xl border border-cyan-400/30 shadow-xl shadow-cyan-500/15 backdrop-blur-sm"></div>

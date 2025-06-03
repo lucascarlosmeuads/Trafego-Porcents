@@ -1,15 +1,12 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { supabase, Cliente } from '@/lib/supabase'
-import { useClienteOperations } from '@/hooks/useClienteOperations'
 
 interface UseManagerDataResult {
   clientes: Cliente[]
   loading: boolean
   error: string | null
   refetch: () => void
-  updateCliente: (id: string, field: string, value: string | boolean | number) => Promise<boolean>
-  addCliente: (clienteData: any) => Promise<any>
   currentManager: string | null
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
 }
@@ -133,8 +130,6 @@ export function useManagerData(
     }
   }, [userEmail, isAdminUser, selectedManager, filterType])
 
-  const { updateCliente, addCliente } = useClienteOperations(userEmail, isAdminUser, fetchData)
-
   useEffect(() => {
     fetchData()
   }, [fetchData])
@@ -144,8 +139,6 @@ export function useManagerData(
     loading,
     error,
     refetch: fetchData,
-    updateCliente,
-    addCliente,
     currentManager: selectedManager || null,
     setClientes,
   }

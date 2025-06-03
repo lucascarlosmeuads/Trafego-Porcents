@@ -72,7 +72,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
     totalClientes: clientes.length,
     filteredCount: filteredClientes.length,
     loading: clientesLoading,
-    error: error?.message
+    error: error
   })
 
   if (clientesLoading) {
@@ -85,7 +85,7 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
         <CardContent className="p-6">
           <div className="text-center text-red-600">
             <p className="font-medium">Erro ao carregar clientes</p>
-            <p className="text-sm mt-1">{error.message}</p>
+            <p className="text-sm mt-1">{error}</p>
           </div>
         </CardContent>
       </Card>
@@ -97,20 +97,19 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
 
   return (
     <div className="space-y-4 w-full">
-      <RealtimeStatus />
+      <RealtimeStatus isConnected={true} />
       
       <Card className="w-full">
         <CardContent className="p-0">
           <div className="space-y-4 p-4">
             <TableFilters
               searchTerm={searchTerm}
-              onSearchChange={setSearchTerm}
+              setSearchTerm={setSearchTerm}
               statusFilter={statusFilter}
-              onStatusChange={setStatusFilter}
+              setStatusFilter={setStatusFilter}
               comissaoFilter={comissaoFilter}
-              onComissaoChange={setComissaoFilter}
-              totalClientes={clientes.length}
-              filteredCount={filteredClientes.length}
+              setComissaoFilter={setComissaoFilter}
+              getStatusColor={getStatusColor}
             />
           </div>
           
@@ -129,16 +128,37 @@ export function ClientesTable({ selectedManager }: ClientesTableProps) {
                   />
                 )}
                 
-                {filteredClientes.map((cliente) => (
+                {filteredClientes.map((cliente, index) => (
                   <ClienteRow
                     key={cliente.id}
                     cliente={cliente}
-                    onUpdate={() => {
-                      console.log('🔄 [ClientesTable] Cliente atualizado - fazendo refresh')
+                    selectedManager={selectedManager || ''}
+                    index={index}
+                    isAdmin={isAdmin}
+                    showEmailGestor={isAdmin}
+                    showSitePagoCheckbox={true}
+                    updatingStatus={null}
+                    editingLink={null}
+                    linkValue=""
+                    setLinkValue={() => {}}
+                    editingBM={null}
+                    bmValue=""
+                    setBmValue={() => {}}
+                    getStatusColor={getStatusColor}
+                    onStatusChange={() => {}}
+                    onSiteStatusChange={() => {}}
+                    onLinkEdit={() => {}}
+                    onLinkSave={async () => false}
+                    onLinkCancel={() => {}}
+                    onBMEdit={() => {}}
+                    onBMSave={() => {}}
+                    onBMCancel={() => {}}
+                    onComissionUpdate={() => {
+                      console.log('🔄 [ClientesTable] Comissão atualizada - fazendo refresh')
                       setRefreshTrigger(prev => prev + 1)
                       refetch()
                     }}
-                    getStatusColor={getStatusColor}
+                    onSitePagoChange={() => {}}
                   />
                 ))}
                 
