@@ -2,6 +2,7 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
+import { OnboardingSteps } from './OnboardingSteps'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Upload, TrendingUp, Play, MessageCircle, User, Settings } from 'lucide-react'
@@ -125,6 +126,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         </CardContent>
       </Card>
 
+      {/* Componente de Onboarding Interativo */}
+      <OnboardingSteps onTabChange={onTabChange} />
+
       {/* Grid de Ações Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {quickActions.map((action, index) => (
@@ -175,36 +179,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
                   Abrir Chat
                 </Button>
               </div>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Próximos Passos */}
-      <Card className="bg-gray-900 border-gray-800">
-        <CardHeader>
-          <CardTitle className="text-white">📋 Próximos Passos</CardTitle>
-          <CardDescription className="text-gray-400">
-            Siga estes passos para configurar sua campanha
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3">
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-teal-500 text-white text-xs flex items-center justify-center font-bold">1</div>
-              <span className="text-gray-300">Entre em contato via chat no sistema</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">2</div>
-              <span className="text-gray-400">Preencha o briefing com as informações do seu projeto</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">3</div>
-              <span className="text-gray-400">Envie seus materiais (logos, fotos, vídeos)</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-6 h-6 rounded-full bg-gray-600 text-white text-xs flex items-center justify-center font-bold">4</div>
-              <span className="text-gray-400">Aguarde a criação do grupo (máximo 1 dia)</span>
             </div>
           </div>
         </CardContent>
