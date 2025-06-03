@@ -17,7 +17,8 @@ import {
   BarChart3,
   CheckCircle2,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Calendar
 } from 'lucide-react'
 
 interface MobileOnboardingStepsProps {
@@ -40,7 +41,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   const { user } = useAuth()
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-  const [autoChecked, setAutoChecked] = React.useState<Set<number>>(new Set())
+  const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
 
   const openChatWithMessage = (message: string) => {
     onTabChange('chat')
@@ -120,12 +121,11 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
 
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id) && !autoChecked.has(step.id)) {
+      if (step.autoCheck && !progresso.has(step.id) && !userManuallyUnchecked.has(step.id)) {
         togglePasso(step.id)
-        setAutoChecked(prev => new Set(prev).add(step.id))
       }
     })
-  }, [steps, progresso, togglePasso, autoChecked])
+  }, [steps, progresso, togglePasso, userManuallyUnchecked])
 
   React.useEffect(() => {
     if (!loading && (briefing || arquivos)) {
@@ -142,8 +142,12 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   }, [steps, progresso])
 
   const handleStepToggle = React.useCallback(async (stepId: number) => {
+    const step = steps.find(s => s.id === stepId)
+    if (step?.autoCheck && progresso.has(stepId)) {
+      setUserManuallyUnchecked(prev => new Set(prev).add(stepId))
+    }
     await togglePasso(stepId)
-  }, [togglePasso])
+  }, [togglePasso, steps, progresso])
 
   if (loading) {
     return (
@@ -239,14 +243,12 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
             >
               <CardContent className="p-4">
                 <div className="flex items-center space-x-3">
-                  {/* Checkbox principal - maior e mais visível */}
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
                     className="w-6 h-6 flex-shrink-0 border-2"
                   />
                   
-                  {/* Numeração */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 flex-shrink-0 ${
                     isCompleted 
                       ? 'bg-green-600 border-green-600 text-white' 
@@ -257,7 +259,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                     {index + 1}
                   </div>
                   
-                  {/* Ícone */}
                   <div className={`p-2 rounded-lg flex-shrink-0 ${
                     isCompleted 
                       ? 'bg-green-600' 
@@ -281,7 +282,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </div>
                 </div>
 
-                {/* Botão de Ação */}
                 <div className="mt-3">
                   <Button
                     onClick={step.action}
@@ -299,7 +299,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                   </Button>
                 </div>
 
-                {/* Indicador de Mensagem de Chat */}
                 {step.chatMessage && (
                   <p className="text-xs text-blue-600 mt-2 italic">
                     💬 Mensagem será enviada automaticamente
@@ -310,6 +309,20 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
           )
         })}
       </div>
+
+      {/* Mensagem de Tranquilização */}
+      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-lg">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            <span className="text-blue-800 font-medium text-sm">Fique tranquilo!</span>
+          </div>
+          <p className="text-gray-700 text-xs leading-relaxed">
+            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão de todos os passos. 
+            É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
+          </p>
+        </CardContent>
+      </Card>
 
       {/* Mensagem de Conclusão */}
       {completedSteps === totalSteps && (

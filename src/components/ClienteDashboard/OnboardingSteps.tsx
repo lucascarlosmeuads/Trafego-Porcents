@@ -18,7 +18,8 @@ import {
   ArrowLeft,
   CheckCircle2,
   Clock,
-  ChevronRight
+  ChevronRight,
+  Calendar
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
@@ -34,19 +35,13 @@ interface Step {
   actionText: string
   canCheck: boolean
   autoCheck?: boolean
-  chatMessage?: string
 }
 
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-  const [autoChecked, setAutoChecked] = React.useState<Set<number>>(new Set())
-
-  const openChatWithMessage = (message: string) => {
-    onTabChange('chat')
-    console.log('Mensagem para enviar no chat:', message)
-  }
+  const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
 
   const steps: Step[] = React.useMemo(() => [
     {
@@ -74,10 +69,9 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       title: 'Conversar sobre Business Manager',
       description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
       icon: MessageCircle,
-      action: () => openChatWithMessage('Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'),
-      actionText: 'Conversar no Chat',
-      canCheck: true,
-      chatMessage: 'Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'
+      action: () => onTabChange('chat'),
+      actionText: 'Acessar Chat',
+      canCheck: true
     },
     {
       id: 4,
@@ -93,20 +87,18 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       title: 'Recarregar Saldo de Tráfego',
       description: 'Recarregue o saldo para tráfego pago na Business Manager',
       icon: CreditCard,
-      action: () => openChatWithMessage('Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'),
-      actionText: 'Conversar sobre Saldo',
-      canCheck: true,
-      chatMessage: 'Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'
+      action: () => onTabChange('chat'),
+      actionText: 'Acessar Chat',
+      canCheck: true
     },
     {
       id: 6,
       title: 'Finalizar Configurações',
       description: 'Finalize configurações e tire dúvidas com seu gestor',
       icon: MessageCircle,
-      action: () => openChatWithMessage('Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'),
-      actionText: 'Conversar com Gestor',
-      canCheck: true,
-      chatMessage: 'Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'
+      action: () => onTabChange('chat'),
+      actionText: 'Acessar Chat',
+      canCheck: true
     },
     {
       id: 7,
@@ -119,15 +111,13 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     }
   ], [briefing, arquivos, onTabChange])
 
-  // Auto-marcar passos baseado em dados existentes - apenas uma vez
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id) && !autoChecked.has(step.id)) {
+      if (step.autoCheck && !progresso.has(step.id) && !userManuallyUnchecked.has(step.id)) {
         togglePasso(step.id)
-        setAutoChecked(prev => new Set(prev).add(step.id))
       }
     })
-  }, [steps, progresso, togglePasso, autoChecked])
+  }, [steps, progresso, togglePasso, userManuallyUnchecked])
 
   React.useEffect(() => {
     if (!loading && (briefing || arquivos)) {
@@ -139,13 +129,13 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const completedSteps = progresso.size
   const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
 
-  const nextStep = React.useMemo(() => {
-    return steps.find(step => !progresso.has(step.id))
-  }, [steps, progresso])
-
   const handleStepToggle = React.useCallback(async (stepId: number) => {
+    const step = steps.find(s => s.id === stepId)
+    if (step?.autoCheck && progresso.has(stepId)) {
+      setUserManuallyUnchecked(prev => new Set(prev).add(stepId))
+    }
     await togglePasso(stepId)
-  }, [togglePasso])
+  }, [togglePasso, steps, progresso])
 
   const handleBackToOverview = () => {
     onTabChange('overview')
@@ -217,33 +207,9 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       </CardHeader>
       
       <CardContent className="space-y-4">
-        {nextStep && (
-          <div className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center gap-2 mb-2">
-              <Clock className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-600 font-medium">Próximo passo:</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <h4 className="text-gray-800 font-medium">{nextStep.title}</h4>
-                <p className="text-gray-600 text-sm">{nextStep.description}</p>
-              </div>
-              <Button
-                onClick={nextStep.action}
-                className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg"
-                size="sm"
-              >
-                {nextStep.actionText}
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </Button>
-            </div>
-          </div>
-        )}
-
         <div className="space-y-3">
           {steps.map((step, index) => {
             const isCompleted = progresso.has(step.id)
-            const isNext = step.id === nextStep?.id
             
             return (
               <div
@@ -251,36 +217,27 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all duration-200 ${
                   isCompleted 
                     ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-                    : isNext
-                    ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
                     : 'bg-white border-gray-200 hover:border-gray-300'
                 } shadow-sm hover:shadow-md`}
               >
                 <div className="flex items-center space-x-3 flex-1">
-                  {/* Checkbox principal - maior e mais visível */}
                   <Checkbox
                     checked={isCompleted}
                     onCheckedChange={() => handleStepToggle(step.id)}
                     className="w-6 h-6 border-2"
                   />
                   
-                  {/* Numeração */}
                   <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
                     isCompleted 
                       ? 'bg-green-600 border-green-600 text-white' 
-                      : isNext
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 border-blue-600 text-white'
                       : 'bg-gray-100 border-gray-300 text-gray-600'
                   }`}>
                     {index + 1}
                   </div>
                   
-                  {/* Ícone do passo */}
                   <div className={`p-2 rounded-lg ${
                     isCompleted 
                       ? 'bg-green-600' 
-                      : isNext 
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600' 
                       : 'bg-gray-400'
                   }`}>
                     <step.icon className="h-4 w-4 text-white" />
@@ -296,23 +253,15 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                       )}
                     </div>
                     <p className="text-gray-600 text-sm">{step.description}</p>
-                    {step.chatMessage && (
-                      <p className="text-xs text-blue-600 mt-1 italic">
-                        💬 Mensagem será enviada automaticamente no chat
-                      </p>
-                    )}
                   </div>
                 </div>
                 
-                {/* Botão de ação */}
                 <div className="flex items-center">
                   <Button
                     onClick={step.action}
                     className={`${
                       isCompleted 
                         ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : isNext
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
                         : 'bg-gray-600 hover:bg-gray-700 text-white'
                     } shadow-md`}
                     size="sm"
@@ -324,6 +273,18 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
               </div>
             )
           })}
+        </div>
+
+        {/* Mensagem de Tranquilização */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            <span className="text-blue-800 font-medium">Fique tranquilo!</span>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed">
+            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão de todos os passos. 
+            É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
+          </p>
         </div>
 
         {completedSteps === totalSteps && (
