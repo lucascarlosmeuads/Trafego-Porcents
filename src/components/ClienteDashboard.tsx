@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { ClienteWelcome } from './ClienteDashboard/ClienteWelcome'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
@@ -11,18 +12,21 @@ import { ClienteChat } from './Chat/ClienteChat'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
+import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 
 export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
   const [activeTab, setActiveTab] = useState('overview')
   const { cliente, briefing, vendas, arquivos, loading: dataLoading, refetch } = useClienteData(user?.email || '')
+  const isMobile = useIsMobile()
 
   console.log('🔍 [ClienteDashboard] === DEBUGGING PAINEL DO CLIENTE ===')
   console.log('🔍 [ClienteDashboard] Estado da autenticação:', { 
     user: user?.email, 
     authLoading, 
     dataLoading,
-    activeTab
+    activeTab,
+    isMobile
   })
 
   // Show loading while authentication is being checked
@@ -109,6 +113,22 @@ export function ClienteDashboard() {
     }
   }
 
+  // Layout mobile otimizado
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gray-950">
+        <MobileHeader activeTab={activeTab} />
+        
+        <main className="pb-20">
+          {renderContent()}
+        </main>
+        
+        <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
+    )
+  }
+
+  // Layout desktop mantido igual
   return (
     <SidebarProvider defaultOpen={false}>
       <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>

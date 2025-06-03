@@ -1,8 +1,10 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { OnboardingSteps } from './OnboardingSteps'
+import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Upload, TrendingUp, Play, MessageCircle, User, Settings } from 'lucide-react'
@@ -14,6 +16,7 @@ interface ClienteWelcomeProps {
 export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const { user } = useAuth()
   const { profileData, updateProfileData } = useProfileData('cliente')
+  const isMobile = useIsMobile()
 
   const quickActions = [
     {
@@ -57,6 +60,16 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
     updateProfileData({ avatar_url: newUrl })
   }
 
+  // Se for mobile, usar componente simplificado
+  if (isMobile) {
+    return (
+      <div className="pb-20"> {/* Espaço para navegação inferior */}
+        <MobileOnboardingSteps onTabChange={onTabChange} />
+      </div>
+    )
+  }
+
+  // Versão desktop mantida igual
   return (
     <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
       {/* Header de Boas-vindas */}
