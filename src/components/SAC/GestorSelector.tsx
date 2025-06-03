@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -21,11 +22,19 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
   const [saving, setSaving] = useState(false)
   const [justSaved, setJustSaved] = useState(false)
 
+  // Encontrar o gestor selecionado pelo email
   const selectedGestor = gestores.find(g => g.email === selectedGestorEmail)
+
+  console.log('🔍 [GestorSelector] === DEBUG SELEÇÃO DE GESTOR ===')
+  console.log('🔍 [GestorSelector] Email selecionado:', selectedGestorEmail)
+  console.log('🔍 [GestorSelector] Gestor encontrado:', selectedGestor)
+  console.log('🔍 [GestorSelector] Lista completa de gestores:', gestores)
 
   const handleSave = async () => {
     if (!selectedGestorEmail || !selectedGestor) {
       console.warn('⚠️ [GestorSelector] Tentativa de salvar sem gestor selecionado')
+      console.warn('⚠️ [GestorSelector] selectedGestorEmail:', selectedGestorEmail)
+      console.warn('⚠️ [GestorSelector] selectedGestor:', selectedGestor)
       toast({
         title: "Erro",
         description: "Por favor, selecione um gestor.",
@@ -36,18 +45,10 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
 
     try {
       console.log('💾 [GestorSelector] === INÍCIO SALVAMENTO ===')
-      console.log('💾 [GestorSelector] Solicitação completa:', {
-        ...solicitacao,
-        id_debug: {
-          valor: solicitacao.id,
-          tipo: typeof solicitacao.id,
-          comprimento: solicitacao.id?.length,
-          valido: !!solicitacao.id
-        }
-      })
-      console.log('💾 [GestorSelector] Gestor selecionado:', {
-        email: selectedGestor.email,
-        nome: selectedGestor.nome
+      console.log('💾 [GestorSelector] Dados que serão salvos:', {
+        solicitacaoId: solicitacao.id,
+        emailGestor: selectedGestor.email,
+        nomeGestor: selectedGestor.nome
       })
 
       if (!solicitacao.id) {
@@ -114,6 +115,16 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
     setIsEditing(true)
   }
 
+  const handleGestorChange = (email: string) => {
+    console.log('🎯 [GestorSelector] === MUDANÇA DE SELEÇÃO ===')
+    console.log('🎯 [GestorSelector] Email selecionado:', email)
+    
+    const gestorSelecionado = gestores.find(g => g.email === email)
+    console.log('🎯 [GestorSelector] Gestor correspondente:', gestorSelecionado)
+    
+    setSelectedGestorEmail(email)
+  }
+
   if (loadingGestores) {
     return (
       <Card className="bg-white border-gray-200">
@@ -152,23 +163,33 @@ export function GestorSelector({ solicitacao, onUpdateGestor, onGestorUpdated }:
               </label>
               <Select 
                 value={selectedGestorEmail} 
-                onValueChange={(value) => {
-                  console.log('🎯 [GestorSelector] Gestor selecionado:', value)
-                  setSelectedGestorEmail(value)
-                }}
+                onValueChange={handleGestorChange}
                 disabled={saving}
               >
                 <SelectTrigger className="bg-white border-gray-300 text-gray-900">
-                  <SelectValue placeholder="Escolha um gestor..." />
+                  <SelectValue placeholder="Escolha um gestor...">
+                    {selectedGestor ? selectedGestor.nome : "Escolha um gestor..."}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent className="bg-white border-gray-200">
                   {gestores.map((gestor) => (
                     <SelectItem key={gestor.id} value={gestor.email} className="text-gray-900">
-                      {gestor.nome}
+                      <div className="flex flex-col">
+                        <span className="font-medium">{gestor.nome}</span>
+                        <span className="text-xs text-gray-500">{gestor.email}</span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              
+              {/* Debug info - mostrar email/nome selecionado */}
+              {selectedGestor && (
+                <div className="mt-2 p-2 bg-gray-50 rounded text-xs">
+                  <div><strong>Email:</strong> {selectedGestor.email}</div>
+                  <div><strong>Nome:</strong> {selectedGestor.nome}</div>
+                </div>
+              )}
             </div>
 
             <div className="flex gap-2">
