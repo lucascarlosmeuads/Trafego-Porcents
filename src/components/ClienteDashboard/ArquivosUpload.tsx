@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { format } from 'date-fns'
@@ -66,33 +67,57 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
       await Promise.all(
         files.map(async (file) => {
           const fileExt = file.name.split('.').pop()
-          const filePath = `uploads/${emailCliente}/${Date.now()}-${file.name.replace(
-            `.${fileExt}`,
-            ''
-          )}.${fileExt}`
+          const fileName = file.name.replace(`.${fileExt}`, '')
+          const timestamp = Date.now()
+          const filePath = `uploads/${emailCliente}/${timestamp}-${fileName}.${fileExt}`
 
-          const { error } = await supabase.storage.from('cliente-arquivos').upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
+          console.log('📤 [ArquivosUpload] Iniciando upload:', {
+            fileName: file.name,
+            fileType: file.type,
+            fileSize: file.size,
+            filePath: filePath
           })
 
-          if (error) {
-            throw error
+          // Upload para o Storage
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('cliente-arquivos')
+            .upload(filePath, file, {
+              cacheControl: '3600',
+              upsert: false
+            })
+
+          if (uploadError) {
+            console.error('❌ [ArquivosUpload] Erro no upload para storage:', uploadError)
+            throw uploadError
           }
 
-          const url = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/cliente-arquivos/${filePath}`
+          console.log('✅ [ArquivosUpload] Upload para storage concluído:', uploadData)
 
-          const { error: dbError } = await supabase.from('cliente_arquivos').insert({
-            email_cliente: emailCliente,
-            nome_arquivo: file.name,
-            url_arquivo: url,
-            data_upload: new Date().toISOString(),
-            descricao: descricao
-          })
+          // Gerar URL pública
+          const { data: { publicUrl } } = supabase.storage
+            .from('cliente-arquivos')
+            .getPublicUrl(filePath)
+
+          console.log('🔗 [ArquivosUpload] URL gerada:', publicUrl)
+
+          // Inserir registro no banco de dados (tabela correta: arquivos_cliente)
+          const { error: dbError } = await supabase
+            .from('arquivos_cliente')
+            .insert({
+              email_cliente: emailCliente,
+              nome_arquivo: file.name,
+              tipo_arquivo: file.type,
+              caminho_arquivo: filePath,
+              tamanho_arquivo: file.size,
+              author_type: 'cliente'
+            })
 
           if (dbError) {
+            console.error('❌ [ArquivosUpload] Erro ao inserir no banco:', dbError)
             throw dbError
           }
+
+          console.log('✅ [ArquivosUpload] Registro inserido no banco com sucesso')
         })
       )
 
@@ -106,7 +131,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
       setDescricao('')
       onArquivosUpdated()
     } catch (error: any) {
-      console.error('Erro ao enviar arquivos:', error)
+      console.error('💥 [ArquivosUpload] Erro no processo de upload:', error)
       toast({
         title: 'Erro ao enviar arquivos',
         description: error.message || 'Ocorreu um erro ao enviar os arquivos. Tente novamente.',
