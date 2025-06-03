@@ -3,7 +3,7 @@ import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Camera, Upload, Trash2, User } from 'lucide-react'
+import { Camera, Upload, Trash2, User, Loader2 } from 'lucide-react'
 import { useProfilePicture } from '@/hooks/useProfilePicture'
 
 interface ProfileAvatarUploadProps {
@@ -47,9 +47,23 @@ export function ProfileAvatarUpload({
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
     if (file) {
+      console.log('📁 [ProfileAvatarUpload] Arquivo selecionado:', file.name, file.type, file.size)
+      
+      // Validar arquivo antes de criar preview
+      if (!file.type.startsWith('image/')) {
+        console.error('❌ [ProfileAvatarUpload] Tipo de arquivo inválido:', file.type)
+        return
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        console.error('❌ [ProfileAvatarUpload] Arquivo muito grande:', file.size)
+        return
+      }
+      
       setSelectedFile(file)
       const reader = new FileReader()
       reader.onload = (e) => {
+        console.log('👁️ [ProfileAvatarUpload] Preview criado')
         setPreviewUrl(e.target?.result as string)
       }
       reader.readAsDataURL(file)
@@ -57,29 +71,54 @@ export function ProfileAvatarUpload({
   }
 
   const handleUpload = async () => {
-    if (!selectedFile) return
+    if (!selectedFile) {
+      console.warn('⚠️ [ProfileAvatarUpload] Nenhum arquivo selecionado')
+      return
+    }
+
+    console.log('🚀 [ProfileAvatarUpload] Iniciando upload...', {
+      fileName: selectedFile.name,
+      userType,
+      userName
+    })
 
     const newUrl = await uploadProfilePicture(selectedFile, userType)
     if (newUrl) {
+      console.log('✅ [ProfileAvatarUpload] Upload bem-sucedido:', newUrl)
       onAvatarChange?.(newUrl)
       setOpen(false)
       setPreviewUrl(null)
       setSelectedFile(null)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    } else {
+      console.error('❌ [ProfileAvatarUpload] Upload falhou')
     }
   }
 
   const handleDelete = async () => {
+    console.log('🗑️ [ProfileAvatarUpload] Iniciando remoção de foto...')
     const success = await deleteProfilePicture(userType)
     if (success) {
+      console.log('✅ [ProfileAvatarUpload] Foto removida com sucesso')
       onAvatarChange?.(null)
       setOpen(false)
+    } else {
+      console.error('❌ [ProfileAvatarUpload] Falha ao remover foto')
     }
   }
 
   const handleCancel = () => {
+    console.log('↩️ [ProfileAvatarUpload] Upload cancelado')
     setPreviewUrl(null)
     setSelectedFile(null)
     setOpen(false)
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = ''
+    }
   }
 
   return (
@@ -99,8 +138,13 @@ export function ProfileAvatarUpload({
                 size="sm"
                 variant="secondary"
                 className="absolute -bottom-1 -right-1 h-6 w-6 rounded-full p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                disabled={uploading}
               >
-                <Camera className="h-3 w-3" />
+                {uploading ? (
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                ) : (
+                  <Camera className="h-3 w-3" />
+                )}
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
@@ -124,6 +168,7 @@ export function ProfileAvatarUpload({
                   accept="image/*"
                   onChange={handleFileSelect}
                   className="hidden"
+                  disabled={uploading}
                 />
 
                 <div className="flex gap-2">
@@ -144,7 +189,11 @@ export function ProfileAvatarUpload({
                       disabled={uploading}
                       className="text-red-600 hover:text-red-700"
                     >
-                      <Trash2 className="h-4 w-4" />
+                      {uploading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="h-4 w-4" />
+                      )}
                     </Button>
                   )}
                 </div>
@@ -156,7 +205,14 @@ export function ProfileAvatarUpload({
                       disabled={uploading}
                       className="flex-1"
                     >
-                      {uploading ? "Uploading..." : "Salvar Foto"}
+                      {uploading ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Salvando...
+                        </>
+                      ) : (
+                        "Salvar Foto"
+                      )}
                     </Button>
                     <Button
                       variant="outline"
@@ -171,6 +227,12 @@ export function ProfileAvatarUpload({
                 <p className="text-xs text-gray-500 text-center">
                   Formatos aceitos: JPG, PNG, GIF. Máximo 5MB.
                 </p>
+                
+                {uploading && (
+                  <div className="text-center text-sm text-blue-600">
+                    ⏳ Fazendo upload da foto...
+                  </div>
+                )}
               </div>
             </DialogContent>
           </Dialog>

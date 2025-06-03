@@ -16,6 +16,7 @@ export function useProfilePicture(): UseProfilePictureReturn {
 
   const uploadProfilePicture = async (file: File, userType: 'gestor' | 'cliente'): Promise<string | null> => {
     if (!user?.email) {
+      console.error('❌ [useProfilePicture] Usuário não autenticado')
       toast({
         title: "Erro",
         description: "Usuário não autenticado",
@@ -24,6 +25,7 @@ export function useProfilePicture(): UseProfilePictureReturn {
       return null
     }
 
+    console.log('🔄 [useProfilePicture] Iniciando upload para:', { email: user.email, userType })
     setUploading(true)
 
     try {
@@ -36,37 +38,50 @@ export function useProfilePicture(): UseProfilePictureReturn {
         throw new Error('Arquivo muito grande. Máximo 5MB')
       }
 
-      // Gerar nome único para o arquivo usando email como identificador
+      // Gerar nome único usando email como identificador (sanitizado)
       const fileExt = file.name.split('.').pop()
       const sanitizedEmail = user.email.replace(/[^a-zA-Z0-9]/g, '_')
       const fileName = `${sanitizedEmail}/avatar.${fileExt}`
 
-      console.log('🔄 [useProfilePicture] Fazendo upload:', fileName)
+      console.log('📁 [useProfilePicture] Nome do arquivo:', fileName)
+
+      // Primeiro, tentar deletar arquivo existente (se houver)
+      try {
+        await supabase.storage
+          .from('profile-pictures')
+          .remove([fileName])
+        console.log('🗑️ [useProfilePicture] Arquivo anterior removido (se existia)')
+      } catch (deleteError) {
+        console.log('ℹ️ [useProfilePicture] Nenhum arquivo anterior para deletar ou erro ignorável:', deleteError)
+      }
 
       // Upload para o Supabase Storage
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('profile-pictures')
         .upload(fileName, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
+          contentType: file.type
         })
 
       if (uploadError) {
         console.error('❌ [useProfilePicture] Erro no upload:', uploadError)
-        throw uploadError
+        throw new Error(`Erro no upload: ${uploadError.message}`)
       }
 
-      console.log('✅ [useProfilePicture] Upload realizado:', uploadData)
+      console.log('✅ [useProfilePicture] Upload realizado com sucesso:', uploadData)
 
       // Obter URL pública
       const { data: { publicUrl } } = supabase.storage
         .from('profile-pictures')
         .getPublicUrl(fileName)
 
-      console.log('✅ [useProfilePicture] URL pública:', publicUrl)
+      console.log('🔗 [useProfilePicture] URL pública gerada:', publicUrl)
 
       // Atualizar no banco de dados
       if (userType === 'gestor') {
+        console.log('📝 [useProfilePicture] Atualizando tabela gestores...')
+        
         const { error: updateError } = await supabase
           .from('gestores')
           .update({ avatar_url: publicUrl })
@@ -74,9 +89,13 @@ export function useProfilePicture(): UseProfilePictureReturn {
 
         if (updateError) {
           console.error('❌ [useProfilePicture] Erro ao atualizar gestor:', updateError)
-          throw updateError
+          throw new Error(`Erro ao atualizar perfil: ${updateError.message}`)
         }
+        
+        console.log('✅ [useProfilePicture] Tabela gestores atualizada com sucesso')
       } else {
+        console.log('📝 [useProfilePicture] Atualizando tabela cliente_profiles...')
+        
         // Para clientes, criar ou atualizar perfil
         const { error: upsertError } = await supabase
           .from('cliente_profiles')
@@ -87,8 +106,10 @@ export function useProfilePicture(): UseProfilePictureReturn {
 
         if (upsertError) {
           console.error('❌ [useProfilePicture] Erro ao atualizar cliente:', upsertError)
-          throw upsertError
+          throw new Error(`Erro ao atualizar perfil: ${upsertError.message}`)
         }
+        
+        console.log('✅ [useProfilePicture] Tabela cliente_profiles atualizada com sucesso')
       }
 
       toast({
@@ -96,13 +117,20 @@ export function useProfilePicture(): UseProfilePictureReturn {
         description: "Foto de perfil atualizada com sucesso"
       })
 
+      console.log('🎉 [useProfilePicture] Upload completo com sucesso!')
       return publicUrl
 
     } catch (error: any) {
-      console.error('❌ [useProfilePicture] Erro geral:', error)
+      console.error('❌ [useProfilePicture] Erro geral no upload:', {
+        message: error.message,
+        details: error,
+        userType,
+        userEmail: user.email
+      })
+      
       toast({
-        title: "Erro",
-        description: error.message || "Erro ao fazer upload da foto",
+        title: "Erro no Upload",
+        description: error.message || "Erro ao fazer upload da foto. Tente novamente.",
         variant: "destructive"
       })
       return null
@@ -112,29 +140,56 @@ export function useProfilePicture(): UseProfilePictureReturn {
   }
 
   const deleteProfilePicture = async (userType: 'gestor' | 'cliente'): Promise<boolean> => {
-    if (!user?.email) return false
+    if (!user?.email) {
+      console.error('❌ [useProfilePicture] Usuário não autenticado para deletar')
+      return false
+    }
+
+    console.log('🗑️ [useProfilePicture] Deletando foto de perfil:', { email: user.email, userType })
 
     try {
-      // Remover do storage
+      // Gerar nome do arquivo para deletar
       const sanitizedEmail = user.email.replace(/[^a-zA-Z0-9]/g, '_')
-      const fileName = `${sanitizedEmail}/avatar.jpg`
-      await supabase.storage
-        .from('profile-pictures')
-        .remove([fileName])
+      
+      // Tentar deletar diferentes extensões possíveis
+      const possibleExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp']
+      
+      for (const ext of possibleExtensions) {
+        const fileName = `${sanitizedEmail}/avatar.${ext}`
+        try {
+          await supabase.storage
+            .from('profile-pictures')
+            .remove([fileName])
+          console.log(`🗑️ [useProfilePicture] Arquivo ${fileName} removido`)
+        } catch (error) {
+          // Ignorar erros de arquivo não encontrado
+          console.log(`ℹ️ [useProfilePicture] Arquivo ${fileName} não encontrado ou já removido`)
+        }
+      }
 
       // Atualizar no banco
       if (userType === 'gestor') {
-        await supabase
+        const { error: updateError } = await supabase
           .from('gestores')
           .update({ avatar_url: null })
           .eq('email', user.email)
+          
+        if (updateError) {
+          console.error('❌ [useProfilePicture] Erro ao limpar avatar_url do gestor:', updateError)
+          throw updateError
+        }
       } else {
-        await supabase
+        const { error: updateError } = await supabase
           .from('cliente_profiles')
           .upsert({
             email_cliente: user.email,
             avatar_url: null
           })
+          
+        if (updateError) {
+          console.error('❌ [useProfilePicture] Erro ao limpar avatar_url do cliente:', updateError)
+          throw updateError
+        }
       }
 
       toast({
@@ -142,9 +197,15 @@ export function useProfilePicture(): UseProfilePictureReturn {
         description: "Foto de perfil removida"
       })
 
+      console.log('✅ [useProfilePicture] Foto deletada com sucesso')
       return true
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ [useProfilePicture] Erro ao remover foto:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao remover foto de perfil",
+        variant: "destructive"
+      })
       return false
     }
   }
