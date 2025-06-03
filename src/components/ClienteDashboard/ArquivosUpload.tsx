@@ -29,6 +29,19 @@ interface ArquivosUploadProps {
   onBack?: () => void
 }
 
+// Função para sanitizar nomes de arquivos
+const sanitizeFileName = (fileName: string): string => {
+  // Remove ou substitui caracteres problemáticos
+  return fileName
+    .normalize('NFD') // Normaliza acentos
+    .replace(/[\u0300-\u036f]/g, '') // Remove diacríticos (acentos)
+    .replace(/[^a-zA-Z0-9.-]/g, '_') // Substitui caracteres especiais por underscore
+    .replace(/_+/g, '_') // Remove underscores duplicados
+    .replace(/^_+|_+$/g, '') // Remove underscores no início e fim
+    .replace(/\s+/g, '_') // Substitui espaços por underscore
+    .toLowerCase() // Converte para minúsculas
+}
+
 export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBack }: ArquivosUploadProps) {
   const [files, setFiles] = useState<File[]>([])
   const [uploading, setUploading] = useState(false)
@@ -67,12 +80,16 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
       await Promise.all(
         files.map(async (file) => {
           const fileExt = file.name.split('.').pop()
-          const fileName = file.name.replace(`.${fileExt}`, '')
+          const originalFileName = file.name.replace(`.${fileExt}`, '')
+          
+          // Sanitizar o nome do arquivo
+          const sanitizedFileName = sanitizeFileName(originalFileName)
           const timestamp = Date.now()
-          const filePath = `uploads/${emailCliente}/${timestamp}-${fileName}.${fileExt}`
+          const filePath = `uploads/${emailCliente}/${timestamp}-${sanitizedFileName}.${fileExt}`
 
           console.log('📤 [ArquivosUpload] Iniciando upload:', {
-            fileName: file.name,
+            originalFileName: file.name,
+            sanitizedFileName: `${sanitizedFileName}.${fileExt}`,
             fileType: file.type,
             fileSize: file.size,
             filePath: filePath
@@ -105,7 +122,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
             .from('arquivos_cliente')
             .insert({
               email_cliente: emailCliente,
-              nome_arquivo: file.name,
+              nome_arquivo: file.name, // Mantém o nome original para exibição
               tipo_arquivo: file.type,
               caminho_arquivo: filePath,
               tamanho_arquivo: file.size,
