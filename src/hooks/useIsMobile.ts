@@ -6,7 +6,12 @@ export function useIsMobile(breakpoint: number = 768) {
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth < breakpoint)
+      // Verificar tanto o tamanho da tela quanto user agent para melhor detecção
+      const screenIsMobile = window.innerWidth < breakpoint
+      const userAgentIsMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)
+      
+      // Considerar mobile se QUALQUER uma das condições for verdadeira
+      setIsMobile(screenIsMobile || userAgentIsMobile)
     }
 
     // Check initial
