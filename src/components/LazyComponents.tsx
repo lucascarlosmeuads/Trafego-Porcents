@@ -1,3 +1,4 @@
+
 import { lazy } from 'react'
 
 // Dashboard Components
@@ -12,3 +13,8 @@ export const LazyAdminChatLayoutSplit = lazy(() => import('./Chat/AdminChatLayou
 // Other Components
 export const LazyStatusFunnelDashboard = lazy(() => import('./Dashboard/StatusFunnelDashboard').then(m => ({ default: m.StatusFunnelDashboard })))
 export const LazyDocumentationViewer = lazy(() => import('./Documentation').then(m => ({ default: m.DocumentationViewer })))
+
+// NEW: Admin Dashboard specific lazy components
+export const LazyAdminDashboardMetrics = lazy(() => import('./AdminDashboard/AdminDashboardMetrics').then(m => ({ default: m.AdminDashboardMetrics })))
+export const LazyClientesTable = lazy(() => import('./ClientesTable').then(m => ({ default: m.ClientesTable })))
+export const LazyGestoresManagement = lazy(() => import('./GestoresManagement').then(m => ({ default: m.GestoresManagement })))

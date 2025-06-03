@@ -1,13 +1,17 @@
 
 import React, { useState, useEffect, Suspense, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { ClientesTable } from './ClientesTable'
-import { GestoresManagement } from './GestoresManagement'
-import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
-import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
+import { LoadingFallback, MetricsLoadingFallback, TableLoadingFallback } from './LoadingFallback'
+import { 
+  LazyAdminDashboardMetrics, 
+  LazyClientesTable, 
+  LazyGestoresManagement,
+  LazyStatusFunnelDashboard, 
+  LazyDocumentationViewer, 
+  LazyAdminChatLayoutSplit 
+} from './LazyComponents'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -17,8 +21,6 @@ interface AdminDashboardProps {
 
 // MEMOIZAÇÃO: Memoizar componentes que não mudam frequentemente
 const MemoizedManagerSelector = React.memo(ManagerSelector)
-const MemoizedClientesTable = React.memo(ClientesTable)
-const MemoizedGestoresManagement = React.memo(GestoresManagement)
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
@@ -63,7 +65,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   const renderContent = () => {
     // Gerenciamento de gestores
     if (selectedManager === '__GESTORES__') {
-      return <MemoizedGestoresManagement />
+      return (
+        <Suspense fallback={<TableLoadingFallback />}>
+          <LazyGestoresManagement />
+        </Suspense>
+      )
     }
     
     // Navegação por abas
@@ -76,8 +82,10 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               <MemoizedManagerSelector {...managerSelectorProps} />
             </div>
             
-            {/* Métricas do Admin - CORREÇÃO: Passar clientes corretos */}
-            <AdminDashboardMetrics {...adminDashboardMetricsProps} />
+            {/* Métricas do Admin - LAZY LOADING */}
+            <Suspense fallback={<MetricsLoadingFallback />}>
+              <LazyAdminDashboardMetrics {...adminDashboardMetricsProps} />
+            </Suspense>
           </div>
         )
 
@@ -106,9 +114,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* Admin panel: Pass selectedManager directly for proper filtering */}
+            {/* Admin panel: Pass selectedManager directly for proper filtering - LAZY LOADING */}
             <div className="w-full">
-              <MemoizedClientesTable selectedManager={selectedManager} />
+              <Suspense fallback={<TableLoadingFallback />}>
+                <LazyClientesTable selectedManager={selectedManager} />
+              </Suspense>
             </div>
           </div>
         )
