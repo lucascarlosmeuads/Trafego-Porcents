@@ -1,4 +1,4 @@
-
+import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
 import { useProfileData } from '@/hooks/useProfileData'
