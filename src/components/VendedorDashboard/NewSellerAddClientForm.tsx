@@ -16,9 +16,13 @@ interface GestorOption {
   email: string
 }
 
-export function NewSellerAddClientForm() {
+interface NewSellerAddClientFormProps {
+  onClientAdded?: () => void
+}
+
+export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientFormProps) {
   const { user } = useAuth()
-  const { addCliente, refetch } = useSimpleSellerData(user?.email || '')
+  const { addCliente } = useSimpleSellerData(user?.email || '')
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
   const [copied, setCopied] = useState(false)
@@ -167,8 +171,11 @@ export function NewSellerAddClientForm() {
           email_gestor: ''
         })
         
-        // Recarregar dados
-        await refetch()
+        // Chamar callback para atualizar a lista no dashboard pai
+        if (onClientAdded) {
+          console.log("🔄 [NewSellerAddClientForm] Chamando callback onClientAdded")
+          onClientAdded()
+        }
         
         // Mostrar mensagem de sucesso
         toast({
