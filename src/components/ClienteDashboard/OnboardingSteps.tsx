@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
@@ -42,7 +43,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
 
   // Definir os passos do onboarding
-  const steps: Step[] = [
+  const steps: Step[] = React.useMemo(() => [
     {
       id: 1,
       title: 'Configurar Perfil Completo',
@@ -100,35 +101,37 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       actionText: 'Ver Tutoriais',
       canCheck: true
     }
-  ]
+  ], [profileData, briefing, arquivos, onTabChange])
 
   // Auto-marcar passos baseado em dados existentes
-  const checkAutoSteps = () => {
+  const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
       if (step.autoCheck && !progresso.has(step.id)) {
         togglePasso(step.id)
       }
     })
-  }
+  }, [steps, progresso, togglePasso])
 
   // Executar auto-check quando dados carregarem
   React.useEffect(() => {
     if (!loading && (briefing || arquivos || profileData)) {
       checkAutoSteps()
     }
-  }, [loading, briefing, arquivos, profileData])
+  }, [loading, briefing, arquivos, profileData, checkAutoSteps])
 
   // Calcular progresso
   const totalSteps = steps.length
   const completedSteps = progresso.size
-  const progressPercentage = (completedSteps / totalSteps) * 100
+  const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
 
   // Encontrar próximo passo
-  const nextStep = steps.find(step => !progresso.has(step.id))
+  const nextStep = React.useMemo(() => {
+    return steps.find(step => !progresso.has(step.id))
+  }, [steps, progresso])
 
-  const handleStepToggle = async (stepId: number) => {
+  const handleStepToggle = React.useCallback(async (stepId: number) => {
     await togglePasso(stepId)
-  }
+  }, [togglePasso])
 
   if (loading) {
     return (
@@ -168,12 +171,14 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
         <div className="space-y-2">
           <div className="flex justify-between text-sm">
             <span className="text-gray-400">Progresso geral</span>
-            <span className="text-teal-400 font-medium">{Math.round(progressPercentage)}%</span>
+            <span className="text-teal-400 font-medium">{progressPercentage}%</span>
           </div>
-          <Progress 
-            value={progressPercentage} 
-            className="h-2"
-          />
+          {typeof progressPercentage === 'number' && !isNaN(progressPercentage) && (
+            <Progress 
+              value={progressPercentage} 
+              className="h-2"
+            />
+          )}
         </div>
       </CardHeader>
       
@@ -207,7 +212,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           {steps.map((step, index) => {
             const isCompleted = progresso.has(step.id)
             const isNext = step.id === nextStep?.id
-            const isPrevious = index < steps.findIndex(s => s.id === nextStep?.id)
             
             return (
               <div
