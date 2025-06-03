@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
 import { useSitePagoUpdate } from '@/hooks/useSitePagoUpdate'
+import { useTablePagination } from '@/hooks/useTablePagination'
 import { supabase } from '@/lib/supabase'
 import { RefreshCw, Users, UserX } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -20,6 +21,7 @@ import { TableFilters } from './ClientesTable/TableFilters'
 import { TableActions } from './ClientesTable/TableActions'
 import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
+import { TablePagination } from './ClientesTable/TablePagination'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -528,71 +530,97 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     refetch()
   }
 
-  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => (
-    <div className="space-y-4">
-      <div className="lg:hidden">
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-2">
-          <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
-            <span>📱 Deslize horizontalmente para ver todas as colunas</span>
+  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => {
+    // Initialize pagination for the current cliente list
+    const {
+      currentPage,
+      itemsPerPage,
+      totalItems,
+      paginatedData,
+      handlePageChange,
+      handleItemsPerPageChange
+    } = useTablePagination({ 
+      data: clientesList,
+      initialItemsPerPage: 50 
+    })
+
+    return (
+      <div className="space-y-4">
+        <div className="lg:hidden">
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-2 mb-2">
+            <div className="flex items-center justify-center gap-2 text-blue-600 text-xs">
+              <span>📱 Deslize horizontalmente para ver todas as colunas</span>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div className="border rounded-lg overflow-hidden bg-card border-border">
-        <div className="overflow-x-auto">
-          <div className="min-w-[800px]">
-            <Table className="table-dark">
-              <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
-              <TableBody>
-                {clientesList.length === 0 ? (
-                  <TableRow className="border-border hover:bg-muted/20">
-                    <TableCell colSpan={isAdmin || isSitesContext ? 12 : 11} className="text-center py-8 text-white">
-                      {isInactive 
-                        ? `Nenhum cliente inativo encontrado`
-                        : clientes.length === 0 
-                          ? `Nenhum cliente encontrado`
-                          : `Nenhum cliente corresponde aos filtros aplicados`
-                      }
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  clientesList.map((cliente, index) => (
-                    <ClienteRow
-                      key={`${emailToUse}-${cliente.id}-${index}`}
-                      cliente={cliente}
-                      selectedManager={currentManager || selectedManager || 'Próprios dados'}
-                      index={index}
-                      isAdmin={isAdmin}
-                      showEmailGestor={isSitesContext}
-                      showSitePagoCheckbox={showSitePagoCheckbox}
-                      updatingStatus={updatingStatus}
-                      editingLink={editingLink}
-                      linkValue={linkValue}
-                      setLinkValue={setLinkValue}
-                      editingBM={editingBM}
-                      bmValue={bmValue}
-                      setBmValue={setBmValue}
-                      getStatusColor={getStatusColor}
-                      onStatusChange={handleStatusChange}
-                      onSiteStatusChange={handleSiteStatusChange}
-                      onLinkEdit={handleLinkEdit}
-                      onLinkSave={handleLinkSave}
-                      onLinkCancel={handleLinkCancel}
-                      onBMEdit={handleBMEdit}
-                      onBMSave={handleBMSave}
-                      onBMCancel={handleBMCancel}
-                      onComissionUpdate={handleComissionUpdate}
-                      onSitePagoChange={handleSitePagoChange}
-                    />
-                  ))
-                )}
-              </TableBody>
-            </Table>
+        
+        <div className="border rounded-lg overflow-hidden bg-card border-border">
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              <Table className="table-dark">
+                <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
+                <TableBody>
+                  {paginatedData.length === 0 ? (
+                    <TableRow className="border-border hover:bg-muted/20">
+                      <TableCell colSpan={isAdmin || isSitesContext ? 12 : 11} className="text-center py-8 text-white">
+                        {isInactive 
+                          ? `Nenhum cliente inativo encontrado`
+                          : clientes.length === 0 
+                            ? `Nenhum cliente encontrado`
+                            : `Nenhum cliente corresponde aos filtros aplicados`
+                        }
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    paginatedData.map((cliente, index) => (
+                      <ClienteRow
+                        key={`${emailToUse}-${cliente.id}-${currentPage}-${index}`}
+                        cliente={cliente}
+                        selectedManager={currentManager || selectedManager || 'Próprios dados'}
+                        index={(currentPage - 1) * itemsPerPage + index}
+                        isAdmin={isAdmin}
+                        showEmailGestor={isSitesContext}
+                        showSitePagoCheckbox={showSitePagoCheckbox}
+                        updatingStatus={updatingStatus}
+                        editingLink={editingLink}
+                        linkValue={linkValue}
+                        setLinkValue={setLinkValue}
+                        editingBM={editingBM}
+                        bmValue={bmValue}
+                        setBmValue={setBmValue}
+                        getStatusColor={getStatusColor}
+                        onStatusChange={handleStatusChange}
+                        onSiteStatusChange={handleSiteStatusChange}
+                        onLinkEdit={handleLinkEdit}
+                        onLinkSave={handleLinkSave}
+                        onLinkCancel={handleLinkCancel}
+                        onBMEdit={handleBMEdit}
+                        onBMSave={handleBMSave}
+                        onBMCancel={handleBMCancel}
+                        onComissionUpdate={handleComissionUpdate}
+                        onSitePagoChange={handleSitePagoChange}
+                      />
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </div>
+
+        {/* Add pagination controls */}
+        {totalItems > 0 && (
+          <TablePagination
+            currentPage={currentPage}
+            totalItems={totalItems}
+            itemsPerPage={itemsPerPage}
+            onPageChange={handlePageChange}
+            onItemsPerPageChange={handleItemsPerPageChange}
+          />
+        )}
       </div>
-    </div>
-  )
+    )
+  }
 
   useEffect(() => {
     const checkConnection = () => {
