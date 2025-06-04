@@ -66,7 +66,8 @@ export function SugestoesDashboard() {
     switch (status) {
       case 'pendente': return 'bg-yellow-100 text-yellow-800'
       case 'respondida': return 'bg-green-100 text-green-800'
-      case 'em_analise': return 'bg-blue-100 text-blue-800'
+      case 'concluida': return 'bg-blue-100 text-blue-800'
+      case 'em_analise': return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -205,7 +206,8 @@ export function SugestoesDashboard() {
                   <h3 className="text-lg font-semibold text-white">{sugestao.titulo}</h3>
                   <Badge className={getStatusColor(sugestao.status)}>
                     {sugestao.status === 'pendente' && <Clock className="h-3 w-3 mr-1" />}
-                    {sugestao.status === 'respondida' && <CheckCircle className="h-3 w-3 mr-1" />}
+                    {sugestao.status === 'respondida' && <MessageCircle className="h-3 w-3 mr-1" />}
+                    {sugestao.status === 'concluida' && <CheckCircle className="h-3 w-3 mr-1" />}
                     {sugestao.status === 'pendente' ? 'Pendente' : 'Respondida'}
                   </Badge>
                 </div>

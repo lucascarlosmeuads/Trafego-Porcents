@@ -454,6 +454,8 @@ export type Database = {
       sugestoes_melhorias: {
         Row: {
           categoria: string
+          concluido_em: string | null
+          concluido_por: string | null
           created_at: string
           descricao: string
           gestor_email: string
@@ -468,6 +470,8 @@ export type Database = {
         }
         Insert: {
           categoria: string
+          concluido_em?: string | null
+          concluido_por?: string | null
           created_at?: string
           descricao: string
           gestor_email: string
@@ -482,6 +486,8 @@ export type Database = {
         }
         Update: {
           categoria?: string
+          concluido_em?: string | null
+          concluido_por?: string | null
           created_at?: string
           descricao?: string
           gestor_email?: string

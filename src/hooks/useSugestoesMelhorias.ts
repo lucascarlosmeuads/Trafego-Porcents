@@ -14,6 +14,8 @@ interface SugestaoMelhoria {
   gestor_nome: string
   resposta_admin?: string | null
   respondido_em?: string | null
+  concluido_em?: string | null
+  concluido_por?: string | null
   created_at: string
   updated_at: string
 }
@@ -92,7 +94,6 @@ export function useSugestoesMelhorias() {
       }
 
       console.log('✅ [useSugestoesMelhorias] Sugestão criada com sucesso')
-      // Não recarregar automaticamente, deixar componente controlar
       return true
     } catch (error) {
       console.error('❌ [useSugestoesMelhorias] Erro ao criar sugestão:', error)
@@ -122,7 +123,6 @@ export function useSugestoesMelhorias() {
       }
 
       console.log('✅ [useSugestoesMelhorias] Sugestão respondida com sucesso')
-      // Não recarregar automaticamente, deixar componente controlar
       return true
     } catch (error) {
       console.error('❌ [useSugestoesMelhorias] Erro ao responder sugestão:', error)
@@ -130,8 +130,32 @@ export function useSugestoesMelhorias() {
     }
   }
 
-  // Remover o useEffect automático que causava problemas
-  // Deixar cada componente controlar quando buscar os dados
+  // Marcar sugestão como concluída (apenas admin)
+  const marcarComoConcluida = async (id: string) => {
+    try {
+      console.log('✅ [useSugestoesMelhorias] Marcando sugestão como concluída:', id)
+      
+      const { error } = await supabase
+        .from('sugestoes_melhorias')
+        .update({
+          status: 'concluida',
+          concluido_em: new Date().toISOString(),
+          concluido_por: user?.email || 'admin'
+        })
+        .eq('id', id)
+
+      if (error) {
+        console.error('❌ [useSugestoesMelhorias] Erro ao marcar como concluída:', error)
+        return false
+      }
+
+      console.log('✅ [useSugestoesMelhorias] Sugestão marcada como concluída com sucesso')
+      return true
+    } catch (error) {
+      console.error('❌ [useSugestoesMelhorias] Erro ao marcar como concluída:', error)
+      return false
+    }
+  }
 
   return {
     sugestoes,
@@ -139,6 +163,7 @@ export function useSugestoesMelhorias() {
     submitting,
     criarSugestao,
     responderSugestao,
+    marcarComoConcluida,
     fetchSugestoes
   }
 }

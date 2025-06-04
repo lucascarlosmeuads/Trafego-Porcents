@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useSugestoesMelhorias } from '@/hooks/useSugestoesMelhorias'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -5,16 +6,17 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Lightbulb, MessageCircle, Clock, CheckCircle, User, Filter } from 'lucide-react'
+import { Lightbulb, MessageCircle, Clock, CheckCircle, User, Filter, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
 export function AdminSugestoes() {
-  const { sugestoes, loading, fetchSugestoes, responderSugestao } = useSugestoesMelhorias()
+  const { sugestoes, loading, fetchSugestoes, responderSugestao, marcarComoConcluida } = useSugestoesMelhorias()
   const { toast } = useToast()
   const [filtroStatus, setFiltroStatus] = useState('todas')
   const [respostaAberta, setRespostaAberta] = useState<string | null>(null)
   const [respostaTexto, setRespostaTexto] = useState('')
   const [enviandoResposta, setEnviandoResposta] = useState(false)
+  const [marcandoConcluida, setMarcandoConcluida] = useState<string | null>(null)
 
   useEffect(() => {
     console.log('🔍 [AdminSugestoes] Componente montado, buscando sugestões...')
@@ -64,11 +66,34 @@ export function AdminSugestoes() {
     setEnviandoResposta(false)
   }
 
+  const handleMarcarConcluida = async (id: string) => {
+    setMarcandoConcluida(id)
+    const success = await marcarComoConcluida(id)
+    
+    if (success) {
+      toast({
+        title: "Sugestão concluída!",
+        description: "A sugestão foi marcada como concluída.",
+        variant: "default"
+      })
+      // Recarregar sugestões após marcar como concluída
+      fetchSugestoes(true)
+    } else {
+      toast({
+        title: "Erro ao concluir",
+        description: "Não foi possível marcar como concluída. Tente novamente.",
+        variant: "destructive"
+      })
+    }
+    setMarcandoConcluida(null)
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'pendente': return 'bg-yellow-100 text-yellow-800'
       case 'respondida': return 'bg-green-100 text-green-800'
-      case 'em_analise': return 'bg-blue-100 text-blue-800'
+      case 'concluida': return 'bg-blue-100 text-blue-800'
+      case 'em_analise': return 'bg-purple-100 text-purple-800'
       default: return 'bg-gray-100 text-gray-800'
     }
   }
@@ -118,13 +143,14 @@ export function AdminSugestoes() {
               <SelectItem value="todas">Todas</SelectItem>
               <SelectItem value="pendente">Pendentes</SelectItem>
               <SelectItem value="respondida">Respondidas</SelectItem>
+              <SelectItem value="concluida">Concluídas</SelectItem>
             </SelectContent>
           </Select>
         </div>
       </div>
 
       {/* Estatísticas rápidas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
@@ -140,10 +166,22 @@ export function AdminSugestoes() {
         <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <MessageCircle className="h-8 w-8 text-green-500" />
               <div>
                 <p className="text-2xl font-bold text-white">{sugestoes.filter(s => s.status === 'respondida').length}</p>
                 <p className="text-sm text-gray-400">Respondidas</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900 border-gray-800">
+          <CardContent className="p-4">
+            <div className="flex items-center gap-3">
+              <Check className="h-8 w-8 text-blue-500" />
+              <div>
+                <p className="text-2xl font-bold text-white">{sugestoes.filter(s => s.status === 'concluida').length}</p>
+                <p className="text-sm text-gray-400">Concluídas</p>
               </div>
             </div>
           </CardContent>
@@ -152,7 +190,7 @@ export function AdminSugestoes() {
         <Card className="bg-gray-900 border-gray-800">
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
-              <Lightbulb className="h-8 w-8 text-blue-500" />
+              <Lightbulb className="h-8 w-8 text-purple-500" />
               <div>
                 <p className="text-2xl font-bold text-white">{sugestoes.length}</p>
                 <p className="text-sm text-gray-400">Total</p>
@@ -186,7 +224,10 @@ export function AdminSugestoes() {
                         <span>{sugestao.gestor_nome}</span>
                       </div>
                       <Badge className={getStatusColor(sugestao.status)}>
-                        {sugestao.status === 'pendente' ? 'Pendente' : 'Respondida'}
+                        {sugestao.status === 'pendente' && 'Pendente'}
+                        {sugestao.status === 'respondida' && 'Respondida'}
+                        {sugestao.status === 'concluida' && 'Concluída'}
+                        {sugestao.status === 'em_analise' && 'Em Análise'}
                       </Badge>
                       <Badge className={getPrioridadeColor(sugestao.prioridade)}>
                         {sugestao.prioridade}
@@ -202,8 +243,8 @@ export function AdminSugestoes() {
                 
                 <p className="text-gray-300 mb-4">{sugestao.descricao}</p>
 
-                {sugestao.resposta_admin ? (
-                  <div className="bg-gray-800 border border-gray-700 rounded-lg p-4">
+                {sugestao.resposta_admin && (
+                  <div className="bg-gray-800 border border-gray-700 rounded-lg p-4 mb-4">
                     <div className="flex items-center gap-2 mb-2">
                       <MessageCircle className="h-4 w-4 text-green-400" />
                       <span className="text-sm font-medium text-green-400">Sua Resposta:</span>
@@ -213,7 +254,21 @@ export function AdminSugestoes() {
                       Respondido em: {new Date(sugestao.respondido_em!).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
-                ) : (
+                )}
+
+                {sugestao.status === 'concluida' && (
+                  <div className="bg-blue-900/20 border border-blue-700 rounded-lg p-4 mb-4">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Check className="h-4 w-4 text-blue-400" />
+                      <span className="text-sm font-medium text-blue-400">Concluída:</span>
+                    </div>
+                    <p className="text-xs text-gray-400">
+                      Marcada como concluída em: {new Date(sugestao.concluido_em!).toLocaleDateString('pt-BR')}
+                    </p>
+                  </div>
+                )}
+
+                {sugestao.status === 'pendente' && (
                   <div className="space-y-3">
                     {respostaAberta === sugestao.id ? (
                       <div className="space-y-3">
@@ -254,6 +309,25 @@ export function AdminSugestoes() {
                         Responder
                       </Button>
                     )}
+                  </div>
+                )}
+
+                {sugestao.status === 'respondida' && (
+                  <div className="mt-4">
+                    <Button 
+                      onClick={() => handleMarcarConcluida(sugestao.id)}
+                      disabled={marcandoConcluida === sugestao.id}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {marcandoConcluida === sugestao.id ? (
+                        <>Marcando...</>
+                      ) : (
+                        <>
+                          <Check className="h-4 w-4 mr-2" />
+                          Marcar como Concluída
+                        </>
+                      )}
+                    </Button>
                   </div>
                 )}
               </CardContent>
