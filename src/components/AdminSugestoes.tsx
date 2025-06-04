@@ -268,6 +268,7 @@ export function AdminSugestoes() {
                   </div>
                 )}
 
+                {/* Actions for pendente status */}
                 {sugestao.status === 'pendente' && (
                   <div className="space-y-3">
                     {respostaAberta === sugestao.id ? (
@@ -300,18 +301,36 @@ export function AdminSugestoes() {
                         </div>
                       </div>
                     ) : (
-                      <Button 
-                        onClick={() => setRespostaAberta(sugestao.id)}
-                        variant="outline"
-                        className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
-                      >
-                        <MessageCircle className="h-4 w-4 mr-2" />
-                        Responder
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button 
+                          onClick={() => setRespostaAberta(sugestao.id)}
+                          variant="outline"
+                          className="border-blue-600 text-blue-400 hover:bg-blue-600 hover:text-white"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Responder
+                        </Button>
+                        
+                        <Button 
+                          onClick={() => handleMarcarConcluida(sugestao.id)}
+                          disabled={marcandoConcluida === sugestao.id}
+                          className="bg-blue-600 hover:bg-blue-700"
+                        >
+                          {marcandoConcluida === sugestao.id ? (
+                            <>Marcando...</>
+                          ) : (
+                            <>
+                              <Check className="h-4 w-4 mr-2" />
+                              Marcar como Concluída
+                            </>
+                          )}
+                        </Button>
+                      </div>
                     )}
                   </div>
                 )}
 
+                {/* Actions for respondida status */}
                 {sugestao.status === 'respondida' && (
                   <div className="mt-4">
                     <Button 
