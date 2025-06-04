@@ -451,6 +451,51 @@ export type Database = {
           },
         ]
       }
+      sugestoes_melhorias: {
+        Row: {
+          categoria: string
+          created_at: string
+          descricao: string
+          gestor_email: string
+          gestor_nome: string
+          id: string
+          prioridade: string
+          respondido_em: string | null
+          resposta_admin: string | null
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          categoria: string
+          created_at?: string
+          descricao: string
+          gestor_email: string
+          gestor_nome: string
+          id?: string
+          prioridade?: string
+          respondido_em?: string | null
+          resposta_admin?: string | null
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string
+          descricao?: string
+          gestor_email?: string
+          gestor_nome?: string
+          id?: string
+          prioridade?: string
+          respondido_em?: string | null
+          resposta_admin?: string | null
+          status?: string
+          titulo?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       todos_clientes: {
         Row: {
           comissao: string | null

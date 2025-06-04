@@ -20,13 +20,30 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
+    // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - MOVIDA PARA CIMA
+    console.log('🔍 [authHelpers] Verificando se é criador de sites autorizado...')
+    const emailsAutorizadosSites = [
+      'criadordesite@trafegoporcents.com'
+    ]
+    
+    if (emailsAutorizadosSites.includes(normalizedEmail)) {
+      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (email autorizado na whitelist)')
+      console.log('🌐 [authHelpers] 🎯 Email específico autorizado:', normalizedEmail)
+      console.log('🔒 [authHelpers] WHITELIST DE SITES:', emailsAutorizadosSites)
+      return 'sites'
+    } else {
+      console.log('❌ [authHelpers] Email NÃO está na whitelist de criadores de sites')
+      console.log('🔒 [authHelpers] Emails autorizados para sites:', emailsAutorizadosSites)
+      console.log('🚫 [authHelpers] Email testado:', normalizedEmail)
+    }
+
     // Verificação para vendedores
     if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
       console.log('💼 [authHelpers] Usuário é VENDEDOR (vendedor*@trafegoporcents.com)')
       return 'vendedor'
     }
 
-    // Verificação para gestores (@trafegoporcents.com mas não vendedor)
+    // Verificação para gestores (@trafegoporcents.com mas não vendedor e não criador de sites)
     if (normalizedEmail.includes('@trafegoporcents.com')) {
       console.log('👨‍💼 [authHelpers] Usuário é GESTOR (domínio @trafegoporcents.com)')
       return 'gestor'
@@ -83,32 +100,15 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'gestor'
     }
 
-    // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - APENAS EMAIL ESPECÍFICO
-    console.log('🔍 [authHelpers] Verificando se é criador de sites autorizado...')
-    const emailsAutorizadosSites = [
-      'criadordesite@trafegoporcents.com'
-    ]
-    
-    if (emailsAutorizadosSites.includes(normalizedEmail)) {
-      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (email autorizado na whitelist)')
-      console.log('🌐 [authHelpers] 🎯 Email específico autorizado:', normalizedEmail)
-      console.log('🔒 [authHelpers] WHITELIST DE SITES:', emailsAutorizadosSites)
-      return 'sites'
-    } else {
-      console.log('❌ [authHelpers] Email NÃO está na whitelist de criadores de sites')
-      console.log('🔒 [authHelpers] Emails autorizados para sites:', emailsAutorizadosSites)
-      console.log('🚫 [authHelpers] Email testado:', normalizedEmail)
-    }
-
     console.log('❌ [authHelpers] USUÁRIO NÃO AUTORIZADO')
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
     console.log('❌ [authHelpers] Resumo das verificações:')
     console.log('   - Admin (@admin): NÃO')
+    console.log('   - Sites (whitelist específica): NÃO AUTORIZADO')
     console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
     console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
     console.log('   - Cliente (tabela todos_clientes): NÃO ENCONTRADO')
     console.log('   - Gestor (tabela gestores): NÃO ENCONTRADO OU INATIVO')
-    console.log('   - Sites (whitelist específica): NÃO AUTORIZADO')
     
     return 'unauthorized'
 
