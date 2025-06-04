@@ -1,142 +1,88 @@
-import { useState, useEffect, Suspense } from 'react'
-import { useAuth } from '@/hooks/useAuth'
+
+import { useState } from 'react'
+import { ManagerSidebar } from '@/components/ManagerSidebar'
+import { ClientesTable } from '@/components/ClientesTable'
+import { GestoresManagement } from '@/components/GestoresManagement'
+import { AdminChatLayoutSplit } from '@/components/Chat/AdminChatLayoutSplit'
+import { SacDashboard } from '@/components/SAC/SacDashboard'
+import { AdminSugestoes } from '@/components/Sugestoes/AdminSugestoes'
+import { SitesDashboard } from '@/components/SitesDashboard'
+import { DocumentationViewer } from '@/components/Documentation/DocumentationViewer'
+import { StatusFunnelDashboard } from '@/components/Dashboard/StatusFunnelDashboard'
+import { AdminDashboardMetrics } from '@/components/AdminDashboard/AdminDashboardMetrics'
+import { OptimizedAdminDashboard } from '@/components/AdminDashboard/OptimizedAdminDashboard'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
-import { ClientesTable } from './ClientesTable'
-import { GestoresManagement } from './GestoresManagement'
-import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
-import { LoadingFallback } from './LoadingFallback'
-import { ManagerSelector } from './ManagerSelector'
-import { useManagerData } from '@/hooks/useManagerData'
-import { SacDashboard } from './SAC/SacDashboard'
-import { LazyRelatorioSacGestores } from './LazyComponents'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Settings, FileText } from 'lucide-react'
 
-interface AdminDashboardProps {
-  selectedManager: string | null
-  onManagerSelect: (manager: string | null) => void
-  activeTab: string
-}
-
-export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
-  const { user, isAdmin } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const { useOptimized } = useOptimizedComponents()
-  
-  // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
-  // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
-  const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
-    user?.email || '', // userEmail: email do admin atual
-    true, // isAdminUser: true para admin
-    selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
-  )
-
-  console.log('🔍 [AdminDashboard] === DEBUG ADMIN DASHBOARD ===')
-  console.log('👤 [AdminDashboard] Admin user email:', user?.email)
-  console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
-  console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
-  console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
-  console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
-
-  useEffect(() => {
-    if (user && isAdmin) {
-      setLoading(false)
-    }
-  }, [user, isAdmin])
-
-  if (loading) {
-    return <LoadingFallback />
-  }
+export function AdminDashboard() {
+  const [activeView, setActiveView] = useState('dashboard')
+  const { shouldUseOptimized } = useOptimizedComponents()
 
   const renderContent = () => {
-    // Gerenciamento de gestores
-    if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
-    }
-    
-    // Navegação por abas
-    switch (activeTab) {
+    switch (activeView) {
       case 'dashboard':
-        return (
-          <div className="space-y-6">
-            {/* Seletor de gestores */}
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
-            </div>
-            
-            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
-            {useOptimized ? (
-              <OptimizedAdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            ) : (
-              <AdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            )}
-          </div>
-        )
-
+        return shouldUseOptimized ? <OptimizedAdminDashboard /> : <AdminDashboardMetrics />
+      case 'clientes':
+        return <ClientesTable />
+      case 'gestores':
+        return <GestoresManagement />
+      case 'chat-admin':
+        return <AdminChatLayoutSplit />
       case 'sac':
         return <SacDashboard />
-
-      case 'sac-relatorio':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyRelatorioSacGestores />
-          </Suspense>
-        )
-
+      case 'sugestoes':
+        return <AdminSugestoes />
+      case 'relatorios':
+        return <StatusFunnelDashboard />
+      case 'sites':
+        return <SitesDashboard />
       case 'documentacao':
+        return <DocumentationViewer />
+      case 'configuracoes':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyDocumentationViewer />
-          </Suspense>
-        )
-
-      case 'chat':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyAdminChatLayoutSplit />
-          </Suspense>
-        )
-      
-      case 'clientes':
-      default:
-        return (
-          <div className="space-y-4 w-full">
-            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
-            {selectedManager !== '__GESTORES__' && (
-              <div className="bg-card border rounded-lg p-4">
-                <ManagerSelector 
-                  selectedManager={selectedManager}
-                  onManagerSelect={onManagerSelect}
-                  isAdminContext={true}
-                />
-              </div>
-            )}
-            
-            {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <div className="w-full">
-              <ClientesTable selectedManager={selectedManager} />
+          <div className="space-y-6">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <Settings className="h-8 w-8 text-gray-600" />
+                Configurações do Sistema
+              </h1>
+              <p className="text-gray-600 mt-2">
+                Configurações gerais e parâmetros do sistema
+              </p>
             </div>
+            <Card>
+              <CardHeader>
+                <CardTitle>Configurações Gerais</CardTitle>
+                <CardDescription>
+                  Configurações básicas do sistema
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600">
+                  Em breve: configurações de sistema, parâmetros globais e customizações.
+                </p>
+              </CardContent>
+            </Card>
           </div>
         )
+      default:
+        return shouldUseOptimized ? <OptimizedAdminDashboard /> : <AdminDashboardMetrics />
     }
   }
 
   return (
-    <div className="w-full">
-      {renderContent()}
+    <div className="flex h-screen bg-gray-50">
+      <ManagerSidebar 
+        activeView={activeView} 
+        onViewChange={setActiveView}
+        userType="admin"
+      />
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-8">
+          {renderContent()}
+        </div>
+      </main>
     </div>
   )
 }
-
-// Add default export for lazy loading
-export default AdminDashboard
