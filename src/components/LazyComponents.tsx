@@ -1,19 +1,55 @@
+import { lazy, Suspense } from 'react'
+import { LoadingFallback } from './LoadingFallback'
+import { SacDashboard } from './SAC/SacDashboard'
+import { AdminChatLayoutSplit } from './AdminChatLayoutSplit'
+import { DocumentationViewer } from './DocumentationViewer'
+import { StatusFunnelDashboard } from './StatusFunnelDashboard'
 
-import { lazy } from 'react'
+// Lazy components
+const ClientesTable = lazy(() => import('./ClientesTable').then(module => ({ default: module.ClientesTable })))
+const GestoresManagement = lazy(() => import('./GestoresManagement').then(module => ({ default: module.GestoresManagement })))
 
-// Dashboard Components
-export const LazyAdminDashboard = lazy(() => import('./AdminDashboard').then(m => ({ default: m.AdminDashboard })))
-export const LazyGestorDashboard = lazy(() => import('./GestorDashboard').then(m => ({ default: m.GestorDashboard })))
-export const LazyClienteDashboard = lazy(() => import('./ClienteDashboard').then(m => ({ default: m.ClienteDashboard })))
+export const LazyClientesTable = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <ClientesTable />
+  </Suspense>
+)
 
-// Optimized Dashboard Components (ETAPA 1)
-export const LazyOptimizedAdminDashboard = lazy(() => import('./AdminDashboard/OptimizedAdminDashboard').then(m => ({ default: m.OptimizedAdminDashboard })))
-export const LazyOptimizedGestorDashboard = lazy(() => import('./GestorDashboard/OptimizedGestorDashboard').then(m => ({ default: m.OptimizedGestorDashboard })))
+export const LazyGestoresManagement = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <GestoresManagement />
+  </Suspense>
+)
 
-// Chat Components  
-export const LazyChatLayoutSplit = lazy(() => import('./Chat/ChatLayoutSplit').then(m => ({ default: m.ChatLayoutSplit })))
-export const LazyAdminChatLayoutSplit = lazy(() => import('./Chat/AdminChatLayoutSplit').then(m => ({ default: m.AdminChatLayoutSplit })))
+export const LazySacDashboard = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <SacDashboard />
+  </Suspense>
+)
 
-// Other Components
-export const LazyStatusFunnelDashboard = lazy(() => import('./Dashboard/StatusFunnelDashboard').then(m => ({ default: m.StatusFunnelDashboard })))
-export const LazyDocumentationViewer = lazy(() => import('./Documentation').then(m => ({ default: m.DocumentationViewer })))
+export const LazyAdminChatLayoutSplit = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <AdminChatLayoutSplit />
+  </Suspense>
+)
+
+export const LazyDocumentationViewer = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <DocumentationViewer />
+  </Suspense>
+)
+
+export const LazyStatusFunnelDashboard = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <StatusFunnelDashboard />
+  </Suspense>
+)
+
+// Lazy component para o relatório SAC
+const SacGestorReport = lazy(() => import('@/components/SAC/SacGestorReport').then(module => ({ default: module.SacGestorReport })))
+
+export const LazyRelatorioSacGestores = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <SacGestorReport />
+  </Suspense>
+)

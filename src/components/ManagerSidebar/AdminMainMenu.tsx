@@ -1,167 +1,66 @@
-
-import { Button } from '@/components/ui/button'
-import { 
-  BarChart3, 
-  Users, 
-  Settings, 
-  Book,
-  MessageCircle
-} from 'lucide-react'
+import { BarChart, Users, MessageSquare, FileText, BookOpen, MessageCircle } from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
-  selectedManager: string | null
-  onTabChange: (tab: string) => void
-  onManagerSelect: (manager: string | null) => void
-  problemasPendentes: number
-  isCollapsed?: boolean
+  onTabSelect: (tab: string) => void
 }
 
-export function AdminMainMenu({ 
-  activeTab, 
-  selectedManager, 
-  onTabChange, 
-  onManagerSelect,
-  problemasPendentes,
-  isCollapsed = false
-}: AdminMainMenuProps) {
-
-  // Menus ativos no painel Admin
+export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: BarChart3,
-      onClick: () => onTabChange('dashboard'),
-      color: 'from-blue-500 to-blue-600',
-      description: 'Visão geral do sistema'
+      icon: BarChart,
+      description: 'Visão geral e métricas'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      onClick: () => onTabChange('clientes'),
-      color: 'from-green-500 to-green-600',
       description: 'Gerenciar todos os clientes'
     },
     {
       id: 'sac',
       label: 'SAC',
-      icon: MessageCircle,
-      onClick: () => onTabChange('sac'),
-      color: 'from-red-500 to-red-600',
-      description: 'Suporte ao cliente',
-      badge: problemasPendentes > 0 ? problemasPendentes : undefined
+      icon: MessageSquare,
+      description: 'Suporte ao Cliente'
+    },
+    {
+      id: 'sac-relatorio',
+      label: 'Relatório SAC',
+      icon: FileText,
+      description: 'Análise de SACs por gestor'
     },
     {
       id: 'chat',
       label: 'Chat',
       icon: MessageCircle,
-      onClick: () => onTabChange('chat'),
-      color: 'from-purple-500 to-purple-600',
-      description: 'Conversas e suporte'
+      description: 'Sistema de mensagens'
     },
     {
       id: 'documentacao',
       label: 'Documentação',
-      icon: Book,
-      onClick: () => onTabChange('documentacao'),
-      color: 'from-orange-500 to-orange-600',
+      icon: BookOpen,
       description: 'Guias e manuais'
     }
   ]
 
   return (
-    <nav className="space-y-4">
-      {/* Menu Principal */}
-      <div className="space-y-3">
-        {menuItems.map((item) => {
-          const isActive = activeTab === item.id
-          
-          return (
-            <Button
-              key={item.id}
-              variant="ghost"
-              className={`
-                ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
-                ${isActive 
-                  ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
-                  : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
-                }
-                transition-all duration-200 h-auto py-3 group relative
-              `}
-              onClick={item.onClick}
-              title={isCollapsed ? item.label : ''}
-            >
-              <div className={`
-                ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
-                rounded-lg flex items-center justify-center
-                ${isActive 
-                  ? `bg-gradient-to-r ${item.color} shadow-md` 
-                  : 'bg-gray-800/60 group-hover:bg-gray-700/80'
-                }
-                transition-all duration-200
-              `}>
-                <item.icon className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
-              </div>
-              
-              {!isCollapsed && (
-                <div className="flex flex-col items-start text-left flex-1">
-                  <span className="font-medium text-sm leading-tight">{item.label}</span>
-                  <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
-                </div>
-              )}
-
-              {/* Badge para notificações */}
-              {item.badge && (
-                <div className={`
-                  ${isCollapsed ? 'absolute -top-1 -right-1' : 'ml-auto'}
-                  min-w-[20px] h-5 bg-red-500 text-white text-xs rounded-full 
-                  flex items-center justify-center px-1.5 font-medium
-                `}>
-                  {item.badge}
-                </div>
-              )}
-            </Button>
-          )
-        })}
-      </div>
-
-      {/* Seção Gestores */}
-      <div className="pt-4 border-t border-gray-700/50">
-        <Button
-          variant="ghost"
-          className={`
-            ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
-            ${selectedManager === '__GESTORES__' 
-              ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
-              : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
-            }
-            transition-all duration-200 h-auto py-3 group
-          `}
-          onClick={() => onManagerSelect('__GESTORES__')}
-          title={isCollapsed ? 'Gestores' : ''}
+    <div className="flex flex-col space-y-1">
+      {menuItems.map(item => (
+        <button
+          key={item.id}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1
+            ${activeTab === item.id
+              ? 'bg-secondary text-secondary-foreground'
+              : 'hover:bg-muted/50 text-muted-foreground'
+            }`}
+          onClick={() => onTabSelect(item.id)}
         >
-          <div className={`
-            ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
-            rounded-lg flex items-center justify-center
-            ${selectedManager === '__GESTORES__' 
-              ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 shadow-md' 
-              : 'bg-gray-800/60 group-hover:bg-gray-700/80'
-            }
-            transition-all duration-200
-          `}>
-            <Settings className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
-          </div>
-          
-          {!isCollapsed && (
-            <div className="flex flex-col items-start text-left">
-              <span className="font-medium text-sm leading-tight">Gestores</span>
-              <span className="text-xs text-gray-400 leading-tight mt-0.5">Gerenciar equipe</span>
-            </div>
-          )}
-        </Button>
-      </div>
-    </nav>
+          <item.icon className="h-4 w-4" />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </div>
   )
 }

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
@@ -11,6 +10,7 @@ import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
+import { LazyRelatorioSacGestores } from './LazyComponents'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -85,6 +85,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'sac':
         return <SacDashboard />
+
+      case 'sac-relatorio':
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyRelatorioSacGestores />
+          </Suspense>
+        )
 
       case 'documentacao':
         return (
