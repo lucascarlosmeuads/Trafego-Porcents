@@ -1,106 +1,163 @@
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { ManagerSidebar } from '@/components/ManagerSidebar'
-import { ClientesTable } from '@/components/ClientesTable'
-import { AdicionarClienteModal } from '@/components/AdicionarClienteModal'
-import { BriefingsPanel } from '@/components/BriefingsPanel'
-import { ChatLayoutSplit } from '@/components/Chat/ChatLayoutSplit'
-import { GestorSacDashboard } from '@/components/SAC/GestorSacDashboard'
-import { SugestoesDashboard } from '@/components/Sugestoes/SugestoesDashboard'
-import { ProfileSettings } from '@/components/ProfileSettings'
-import { DashboardMetrics } from '@/components/GestorDashboard/DashboardMetrics'
-import { OptimizedGestorDashboard } from '@/components/GestorDashboard/OptimizedGestorDashboard'
-import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
-import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
-import { BookOpen, HelpCircle } from 'lucide-react'
+import { useManagerData } from '@/hooks/useManagerData'
+import { useProfileData } from '@/hooks/useProfileData'
+import { ClientesTable } from './ClientesTable'
+import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
+import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
+import { GestorSacDashboard } from './SAC/GestorSacDashboard'
+import { ProfileAvatarUpload } from './ProfileAvatarUpload'
+import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
+import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
+import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { User } from 'lucide-react'
 
-export function GestorDashboard() {
-  const [activeView, setActiveView] = useState('dashboard')
-  const [selectedManager, setSelectedManager] = useState<string | null>(null)
-  const [showAddClientModal, setShowAddClientModal] = useState(false)
-  const { shouldUseOptimized } = useOptimizedComponents()
+interface GestorDashboardProps {
+  activeTab: string
+}
+
+export function GestorDashboard({ activeTab }: GestorDashboardProps) {
   const { user } = useAuth()
-  
-  // Get clientes data for the metrics
-  const { clientes } = useManagerData(user?.email || '')
+  const { clientes, loading } = useManagerData(user?.email || '')
+  const { profileData, updateProfileData } = useProfileData('gestor')
+  const { useOptimized } = useOptimizedComponents()
+
+  console.log('🔍 [GestorDashboard] === DEBUG GESTOR DASHBOARD ===')
+  console.log('👤 [GestorDashboard] User email:', user?.email)
+  console.log('📊 [GestorDashboard] Total clientes:', clientes.length)
+  console.log('⏳ [GestorDashboard] Loading:', loading)
+  console.log('🎯 [GestorDashboard] Active tab:', activeTab)
+  console.log('⚡ [GestorDashboard] Usando componentes otimizados:', useOptimized)
+  console.log('👤 [GestorDashboard] Profile data:', profileData)
+
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
 
   const renderContent = () => {
-    switch (activeView) {
+    if (loading && (activeTab === 'dashboard' || activeTab === 'clientes')) {
+      return (
+        <div className="flex items-center justify-center h-64 bg-gray-950">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+            <p className="text-gray-300">Carregando dados...</p>
+          </div>
+        </div>
+      )
+    }
+
+    switch (activeTab) {
       case 'dashboard':
-        return shouldUseOptimized ? (
-          <OptimizedGestorDashboard activeTab={activeView} />
-        ) : (
-          <DashboardMetrics clientes={clientes} />
-        )
-      case 'clientes':
-        return <ClientesTable />
-      case 'adicionar':
-        return <AdicionarClienteModal onClose={() => setActiveView('clientes')} />
-      case 'briefings':
-        return <BriefingsPanel />
-      case 'chat':
-        return <ChatLayoutSplit />
-      case 'sac-gestor':
-        return <GestorSacDashboard />
-      case 'sugestoes':
-        return <SugestoesDashboard />
-      case 'perfil':
-        return <ProfileSettings userType="gestor" />
-      case 'suporte':
         return (
           <div className="space-y-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <HelpCircle className="h-8 w-8 text-blue-500" />
-                Central de Suporte
-              </h1>
-              <p className="text-gray-600 mt-2">
-                Encontre ajuda e documentação do sistema
-              </p>
-            </div>
-            <Card>
+            {/* Avisos Importantes para Gestores */}
+            <AvisoSistemasSAC />
+            <AvisoMudancaStatus />
+            
+            {/* Seção de Perfil */}
+            <Card className="bg-gray-900 border-gray-800">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="h-5 w-5" />
-                  Documentação
+                <CardTitle className="text-white flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Seu Perfil
                 </CardTitle>
-                <CardDescription>
-                  Acesse guias e manuais do sistema
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600">
-                  Em breve: documentação completa, tutoriais em vídeo e FAQ.
-                </p>
+                <div className="flex items-center space-x-4">
+                  <ProfileAvatarUpload
+                    currentAvatarUrl={profileData?.avatar_url}
+                    userName={profileData?.nome_display || user?.email || 'Gestor'}
+                    userType="gestor"
+                    onAvatarChange={handleAvatarChange}
+                    size="lg"
+                    showEditButton={true}
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {profileData?.nome_display || 'Gestor'}
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      {user?.email}
+                    </p>
+                    <p className="text-purple-400 text-xs">
+                      ✅ Gestor ativo
+                    </p>
+                  </div>
+                </div>
               </CardContent>
             </Card>
+            
+            <GamifiedMetrics clientes={clientes} />
+          </div>
+        )
+      case 'clientes':
+        return (
+          <div className="bg-gray-950 min-h-screen">
+            <ClientesTable />
+          </div>
+        )
+      case 'sac':
+        return <GestorSacDashboard />
+      case 'chat':
+        return (
+          <div className="bg-gray-950 min-h-screen">
+            <ChatLayoutSplit />
           </div>
         )
       default:
-        return shouldUseOptimized ? (
-          <OptimizedGestorDashboard activeTab={activeView} />
-        ) : (
-          <DashboardMetrics clientes={clientes} />
+        return (
+          <div className="space-y-6">
+            {/* Avisos Importantes para Gestores */}
+            <AvisoSistemasSAC />
+            <AvisoMudancaStatus />
+            
+            {/* Seção de Perfil */}
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <User className="h-5 w-5" />
+                  Seu Perfil
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-4">
+                  <ProfileAvatarUpload
+                    currentAvatarUrl={profileData?.avatar_url}
+                    userName={profileData?.nome_display || user?.email || 'Gestor'}
+                    userType="gestor"
+                    onAvatarChange={handleAvatarChange}
+                    size="lg"
+                    showEditButton={true}
+                  />
+                  <div>
+                    <h3 className="text-lg font-semibold text-white">
+                      {profileData?.nome_display || 'Gestor'}
+                    </h3>
+                    <p className="text-gray-400 text-sm">
+                      {user?.email}
+                    </p>
+                    <p className="text-purple-400 text-xs">
+                      ✅ Gestor ativo
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+            
+            <GamifiedMetrics clientes={clientes} />
+          </div>
         )
     }
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
-      <ManagerSidebar 
-        selectedManager={selectedManager}
-        onManagerSelect={setSelectedManager}
-        activeTab={activeView}
-        onTabChange={setActiveView}
-      />
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-8">
-          {renderContent()}
-        </div>
-      </main>
+    <div className="bg-gray-950 min-h-screen p-6">
+      {renderContent()}
     </div>
   )
 }
+
+// Add default export for lazy loading
+export default GestorDashboard

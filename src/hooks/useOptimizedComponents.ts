@@ -8,12 +8,12 @@ import { useMemo } from 'react'
 export function useOptimizedComponents() {
   // Por enquanto, sempre usar os componentes otimizados
   // Mais tarde pode ser controlado por feature flag ou configuração
-  const shouldUseOptimized = useMemo(() => true, [])
+  const useOptimized = useMemo(() => true, [])
   
-  console.log('⚡ [useOptimizedComponents] Usando componentes otimizados:', shouldUseOptimized)
+  console.log('⚡ [useOptimizedComponents] Usando componentes otimizados:', useOptimized)
   
   return {
-    shouldUseOptimized,
+    useOptimized,
     // Método para alternar (para futuras implementações)
     toggleOptimized: () => {
       console.log('🔄 [useOptimizedComponents] Toggle de otimização não implementado ainda')

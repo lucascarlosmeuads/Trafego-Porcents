@@ -18,10 +18,6 @@ const StatusFunnelDashboard = lazy(() => import('./Dashboard/StatusFunnelDashboa
 // Lazy component para o relatório SAC
 const SacGestorReport = lazy(() => import('@/components/SAC/SacGestorReport').then(module => ({ default: module.SacGestorReport })))
 
-// Lazy components para sugestões
-const SugestoesDashboard = lazy(() => import('./Sugestoes/SugestoesDashboard').then(module => ({ default: module.SugestoesDashboard })))
-const AdminSugestoes = lazy(() => import('./Sugestoes/AdminSugestoes').then(module => ({ default: module.AdminSugestoes })))
-
 // Exports dos componentes lazy principais
 export const LazyAdminDashboard = (props: any) => (
   <Suspense fallback={<LoadingFallback />}>
@@ -80,17 +76,5 @@ export const LazyStatusFunnelDashboard = () => (
 export const LazyRelatorioSacGestores = () => (
   <Suspense fallback={<LoadingFallback />}>
     <SacGestorReport />
-  </Suspense>
-)
-
-export const LazySugestoesDashboard = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <SugestoesDashboard />
-  </Suspense>
-)
-
-export const LazyAdminSugestoes = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <AdminSugestoes />
   </Suspense>
 )

@@ -1,137 +1,71 @@
 
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { 
-  BarChart3, 
-  Users, 
-  UserCheck, 
-  MessageSquare, 
-  Headphones,
-  Lightbulb,
-  FileText,
-  Settings,
-  HelpCircle,
-  Globe
-} from 'lucide-react'
-import { useSugestoesMelhorias } from '@/hooks/useSugestoesMelhorias'
+import { BarChart, Users, MessageSquare, FileText, BookOpen, MessageCircle } from 'lucide-react'
 
 interface AdminMainMenuProps {
-  activeView: string
-  onViewChange: (view: string) => void
+  activeTab: string
+  onTabSelect: (tab: string) => void
+  selectedManager?: string | null
+  problemasPendentes?: number
+  onTabChange?: (tab: string) => void
+  onManagerSelect?: (manager: string | null) => void
+  isCollapsed?: boolean
 }
 
-export function AdminMainMenu({ activeView, onViewChange }: AdminMainMenuProps) {
-  const { sugestoes } = useSugestoesMelhorias()
-  
-  // Contar sugestões que precisam de atenção (pendentes + em análise)
-  const sugestoesPendentes = sugestoes.filter(s => 
-    s.status === 'pendente' || s.status === 'em_analise'
-  ).length
-
+export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: BarChart3,
-      description: 'Visão geral do sistema'
+      icon: BarChart,
+      description: 'Visão geral e métricas'
     },
     {
       id: 'clientes',
-      label: 'Todos os Clientes',
+      label: 'Clientes',
       icon: Users,
       description: 'Gerenciar todos os clientes'
     },
     {
-      id: 'gestores',
-      label: 'Gestores',
-      icon: UserCheck,
-      description: 'Administrar gestores'
-    },
-    {
-      id: 'chat-admin',
-      label: 'Chat Administrativo',
-      icon: MessageSquare,
-      description: 'Monitorar conversas'
-    },
-    {
       id: 'sac',
-      label: 'SAC - Suporte',
-      icon: Headphones,
-      description: 'Central de atendimento'
+      label: 'SAC',
+      icon: MessageSquare,
+      description: 'Suporte ao Cliente'
     },
     {
-      id: 'sugestoes',
-      label: 'Sugestões',
-      icon: Lightbulb,
-      description: 'Melhorias sugeridas pelos gestores',
-      badge: sugestoesPendentes > 0 ? sugestoesPendentes : undefined,
-      badgeVariant: 'destructive' as const
-    },
-    {
-      id: 'relatorios',
-      label: 'Relatórios',
+      id: 'sac-relatorio',
+      label: 'Relatório SAC',
       icon: FileText,
-      description: 'Relatórios e métricas'
+      description: 'Análise de SACs por gestor'
     },
     {
-      id: 'sites',
-      label: 'Gestão de Sites',
-      icon: Globe,
-      description: 'Administrar criação de sites'
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageCircle,
+      description: 'Sistema de mensagens'
     },
     {
       id: 'documentacao',
       label: 'Documentação',
-      icon: HelpCircle,
+      icon: BookOpen,
       description: 'Guias e manuais'
-    },
-    {
-      id: 'configuracoes',
-      label: 'Configurações',
-      icon: Settings,
-      description: 'Configurações do sistema'
     }
   ]
 
   return (
-    <div className="space-y-2">
-      {menuItems.map((item, index) => (
-        <div key={item.id}>
-          <Button
-            variant={activeView === item.id ? 'default' : 'ghost'}
-            className={`w-full justify-start h-auto p-3 ${
-              activeView === item.id 
-                ? 'bg-blue-600 text-white shadow-md' 
-                : 'hover:bg-gray-100 text-gray-700'
+    <div className="flex flex-col space-y-1">
+      {menuItems.map(item => (
+        <button
+          key={item.id}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1
+            ${activeTab === item.id
+              ? 'bg-secondary text-secondary-foreground'
+              : 'hover:bg-muted/50 text-muted-foreground'
             }`}
-            onClick={() => onViewChange(item.id)}
-          >
-            <div className="flex items-center gap-3 w-full">
-              <item.icon className="h-5 w-5 flex-shrink-0" />
-              <div className="flex-1 text-left">
-                <div className="flex items-center justify-between">
-                  <span className="font-medium">{item.label}</span>
-                  {item.badge && (
-                    <Badge variant={item.badgeVariant || 'default'} className="ml-2">
-                      {item.badge}
-                    </Badge>
-                  )}
-                </div>
-                <div className={`text-xs mt-1 ${
-                  activeView === item.id ? 'text-blue-100' : 'text-gray-500'
-                }`}>
-                  {item.description}
-                </div>
-              </div>
-            </div>
-          </Button>
-          
-          {/* Separadores em pontos específicos */}
-          {(index === 2 || index === 5 || index === 7) && (
-            <Separator className="my-3" />
-          )}
-        </div>
+          onClick={() => onTabSelect(item.id)}
+        >
+          <item.icon className="h-4 w-4" />
+          <span>{item.label}</span>
+        </button>
       ))}
     </div>
   )
