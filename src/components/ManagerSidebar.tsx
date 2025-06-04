@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
@@ -166,15 +167,13 @@ export function ManagerSidebar({
       <div className="p-4 flex-1">
         {isAdmin ? (
           <AdminMainMenu
-            activeTab={activeTab}
-            onTabSelect={onTabChange}
+            activeView={activeTab}
+            onViewChange={onTabChange}
           />
         ) : (
           <GestorMenu
-            activeTab={activeTab}
-            onTabChange={onTabChange}
-            problemasPendentes={problemasPendentes}
-            isCollapsed={isCollapsed}
+            activeView={activeTab}
+            onViewChange={onTabChange}
           />
         )}
       </div>

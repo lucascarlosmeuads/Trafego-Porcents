@@ -12,17 +12,32 @@ import { StatusFunnelDashboard } from '@/components/Dashboard/StatusFunnelDashbo
 import { AdminDashboardMetrics } from '@/components/AdminDashboard/AdminDashboardMetrics'
 import { OptimizedAdminDashboard } from '@/components/AdminDashboard/OptimizedAdminDashboard'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
+import { useManagerData } from '@/hooks/useManagerData'
+import { useAuth } from '@/hooks/useAuth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Settings, FileText } from 'lucide-react'
 
 export function AdminDashboard() {
   const [activeView, setActiveView] = useState('dashboard')
+  const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const { shouldUseOptimized } = useOptimizedComponents()
+  const { user } = useAuth()
+  
+  // Get clientes data for the metrics
+  const { clientes } = useManagerData(user?.email || '', true, selectedManager)
 
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return shouldUseOptimized ? <OptimizedAdminDashboard /> : <AdminDashboardMetrics />
+        return shouldUseOptimized ? (
+          <OptimizedAdminDashboard 
+            selectedManager={selectedManager}
+            onManagerSelect={setSelectedManager}
+            activeTab={activeView}
+          />
+        ) : (
+          <AdminDashboardMetrics clientes={clientes} selectedManager={selectedManager} />
+        )
       case 'clientes':
         return <ClientesTable />
       case 'gestores':
@@ -67,16 +82,25 @@ export function AdminDashboard() {
           </div>
         )
       default:
-        return shouldUseOptimized ? <OptimizedAdminDashboard /> : <AdminDashboardMetrics />
+        return shouldUseOptimized ? (
+          <OptimizedAdminDashboard 
+            selectedManager={selectedManager}
+            onManagerSelect={setSelectedManager}
+            activeTab={activeView}
+          />
+        ) : (
+          <AdminDashboardMetrics clientes={clientes} selectedManager={selectedManager} />
+        )
     }
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
       <ManagerSidebar 
-        activeView={activeView} 
-        onViewChange={setActiveView}
-        userType="admin"
+        selectedManager={selectedManager}
+        onManagerSelect={setSelectedManager}
+        activeTab={activeView}
+        onTabChange={setActiveView}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">

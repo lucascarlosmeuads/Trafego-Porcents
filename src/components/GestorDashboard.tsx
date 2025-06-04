@@ -13,20 +13,32 @@ import { ProfileSettings } from '@/components/ProfileSettings'
 import { DashboardMetrics } from '@/components/GestorDashboard/DashboardMetrics'
 import { OptimizedGestorDashboard } from '@/components/GestorDashboard/OptimizedGestorDashboard'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
+import { useManagerData } from '@/hooks/useManagerData'
+import { useAuth } from '@/hooks/useAuth'
 import { BookOpen, HelpCircle } from 'lucide-react'
 
 export function GestorDashboard() {
   const [activeView, setActiveView] = useState('dashboard')
+  const [selectedManager, setSelectedManager] = useState<string | null>(null)
+  const [showAddClientModal, setShowAddClientModal] = useState(false)
   const { shouldUseOptimized } = useOptimizedComponents()
+  const { user } = useAuth()
+  
+  // Get clientes data for the metrics
+  const { clientes } = useManagerData(user?.email || '')
 
   const renderContent = () => {
     switch (activeView) {
       case 'dashboard':
-        return shouldUseOptimized ? <OptimizedGestorDashboard /> : <DashboardMetrics />
+        return shouldUseOptimized ? (
+          <OptimizedGestorDashboard activeTab={activeView} />
+        ) : (
+          <DashboardMetrics clientes={clientes} />
+        )
       case 'clientes':
         return <ClientesTable />
       case 'adicionar':
-        return <AdicionarClienteModal isOpen={true} onClose={() => setActiveView('clientes')} />
+        return <AdicionarClienteModal onClose={() => setActiveView('clientes')} />
       case 'briefings':
         return <BriefingsPanel />
       case 'chat':
@@ -36,7 +48,7 @@ export function GestorDashboard() {
       case 'sugestoes':
         return <SugestoesDashboard />
       case 'perfil':
-        return <ProfileSettings />
+        return <ProfileSettings userType="gestor" />
       case 'suporte':
         return (
           <div className="space-y-6">
@@ -68,16 +80,21 @@ export function GestorDashboard() {
           </div>
         )
       default:
-        return shouldUseOptimized ? <OptimizedGestorDashboard /> : <DashboardMetrics />
+        return shouldUseOptimized ? (
+          <OptimizedGestorDashboard activeTab={activeView} />
+        ) : (
+          <DashboardMetrics clientes={clientes} />
+        )
     }
   }
 
   return (
     <div className="flex h-screen bg-gray-50">
       <ManagerSidebar 
-        activeView={activeView} 
-        onViewChange={setActiveView}
-        userType="gestor"
+        selectedManager={selectedManager}
+        onManagerSelect={setSelectedManager}
+        activeTab={activeView}
+        onTabChange={setActiveView}
       />
       <main className="flex-1 overflow-y-auto">
         <div className="p-8">
