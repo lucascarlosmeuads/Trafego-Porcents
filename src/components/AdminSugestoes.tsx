@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useSugestoesMelhorias } from '@/hooks/useSugestoesMelhorias'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -8,8 +7,10 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Lightbulb, MessageCircle, Clock, CheckCircle, User, Filter, Check } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
+import { useAuth } from '@/hooks/useAuth'
 
 export function AdminSugestoes() {
+  const { user } = useAuth()
   const { sugestoes, loading, fetchSugestoes, responderSugestao, marcarComoConcluida } = useSugestoesMelhorias()
   const { toast } = useToast()
   const [filtroStatus, setFiltroStatus] = useState('todas')
@@ -20,12 +21,14 @@ export function AdminSugestoes() {
 
   useEffect(() => {
     console.log('🔍 [AdminSugestoes] Componente montado, buscando sugestões...')
+    console.log('🔍 [AdminSugestoes] User:', user?.email)
     fetchSugestoes(true) // true = buscar todas as sugestões (modo admin)
   }, [])
 
   console.log('📊 [AdminSugestoes] Estado atual:')
   console.log('  - Loading:', loading)
   console.log('  - Total sugestões:', sugestoes.length)
+  console.log('  - User email:', user?.email)
   console.log('  - Sugestões:', sugestoes)
 
   const sugestoesFiltradas = sugestoes.filter(sugestao => {
@@ -34,6 +37,15 @@ export function AdminSugestoes() {
   })
 
   const handleResponder = async (id: string) => {
+    if (!user?.email) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para responder sugestões.",
+        variant: "destructive"
+      })
+      return
+    }
+
     if (!respostaTexto.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -44,6 +56,8 @@ export function AdminSugestoes() {
     }
 
     setEnviandoResposta(true)
+    console.log('📤 [AdminSugestoes] Enviando resposta para sugestão:', id)
+    
     const success = await responderSugestao(id, respostaTexto)
     
     if (success) {
@@ -59,7 +73,7 @@ export function AdminSugestoes() {
     } else {
       toast({
         title: "Erro ao responder",
-        description: "Não foi possível enviar a resposta. Tente novamente.",
+        description: "Não foi possível enviar a resposta. Verifique sua autenticação e tente novamente.",
         variant: "destructive"
       })
     }
@@ -67,7 +81,29 @@ export function AdminSugestoes() {
   }
 
   const handleMarcarConcluida = async (id: string) => {
+    if (!user?.email) {
+      toast({
+        title: "Erro de autenticação",
+        description: "Você precisa estar logado para marcar sugestões como concluídas.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Verificar se é admin
+    if (!user.email.includes('@admin')) {
+      toast({
+        title: "Acesso negado",
+        description: "Apenas administradores podem marcar sugestões como concluídas.",
+        variant: "destructive"
+      })
+      return
+    }
+
     setMarcandoConcluida(id)
+    console.log('✅ [AdminSugestoes] Marcando sugestão como concluída:', id)
+    console.log('✅ [AdminSugestoes] User email:', user.email)
+    
     const success = await marcarComoConcluida(id)
     
     if (success) {
@@ -81,7 +117,7 @@ export function AdminSugestoes() {
     } else {
       toast({
         title: "Erro ao concluir",
-        description: "Não foi possível marcar como concluída. Tente novamente.",
+        description: "Não foi possível marcar como concluída. Verifique sua autenticação e permissões.",
         variant: "destructive"
       })
     }
@@ -116,6 +152,23 @@ export function AdminSugestoes() {
     )
   }
 
+  // Verificar se usuário está autenticado
+  if (!user?.email) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Card className="bg-gray-900 border-gray-800 max-w-md">
+          <CardContent className="p-8 text-center">
+            <User className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+            <p className="text-gray-400 mb-4">Você precisa estar logado para acessar as sugestões.</p>
+            <Button onClick={() => window.location.reload()} variant="outline" className="border-gray-600 text-gray-300">
+              Recarregar Página
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -127,6 +180,7 @@ export function AdminSugestoes() {
           <div>
             <h1 className="text-2xl font-bold text-white">Sugestões dos Gestores</h1>
             <p className="text-gray-400">Gerencie e responda as sugestões de melhorias</p>
+            <p className="text-xs text-gray-500">Logado como: {user.email}</p>
           </div>
         </div>
         

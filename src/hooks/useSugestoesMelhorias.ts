@@ -33,6 +33,12 @@ export function useSugestoesMelhorias() {
       console.log('🔍 [useSugestoesMelhorias] Buscando sugestões, isAdmin:', isAdmin)
       console.log('🔍 [useSugestoesMelhorias] User email:', user?.email)
       
+      // Verificar se usuário está autenticado
+      if (!user?.email) {
+        console.error('❌ [useSugestoesMelhorias] Usuário não autenticado')
+        return
+      }
+      
       let query = supabase
         .from('sugestoes_melhorias')
         .select('*')
@@ -70,7 +76,10 @@ export function useSugestoesMelhorias() {
     categoria: string
     prioridade: string
   }) => {
-    if (!user?.email) return false
+    if (!user?.email) {
+      console.error('❌ [useSugestoesMelhorias] Usuário não autenticado para criar sugestão')
+      return false
+    }
 
     try {
       setSubmitting(true)
@@ -105,8 +114,18 @@ export function useSugestoesMelhorias() {
 
   // Responder sugestão (apenas admin)
   const responderSugestao = async (id: string, resposta: string) => {
+    if (!user?.email) {
+      console.error('❌ [useSugestoesMelhorias] Usuário não autenticado para responder sugestão')
+      return false
+    }
+
     try {
       console.log('💬 [useSugestoesMelhorias] Respondendo sugestão:', id)
+      console.log('💬 [useSugestoesMelhorias] User email:', user.email)
+      
+      // Verificar sessão atual antes da operação
+      const { data: session } = await supabase.auth.getSession()
+      console.log('💬 [useSugestoesMelhorias] Sessão atual:', session?.session?.user?.email)
       
       const { error } = await supabase
         .from('sugestoes_melhorias')
@@ -119,6 +138,12 @@ export function useSugestoesMelhorias() {
 
       if (error) {
         console.error('❌ [useSugestoesMelhorias] Erro ao responder sugestão:', error)
+        console.error('❌ [useSugestoesMelhorias] Detalhes do erro:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         return false
       }
 
@@ -132,20 +157,45 @@ export function useSugestoesMelhorias() {
 
   // Marcar sugestão como concluída (apenas admin)
   const marcarComoConcluida = async (id: string) => {
+    if (!user?.email) {
+      console.error('❌ [useSugestoesMelhorias] Usuário não autenticado para marcar como concluída')
+      return false
+    }
+
     try {
       console.log('✅ [useSugestoesMelhorias] Marcando sugestão como concluída:', id)
+      console.log('✅ [useSugestoesMelhorias] User email:', user.email)
+      
+      // Verificar sessão atual antes da operação
+      const { data: session } = await supabase.auth.getSession()
+      console.log('✅ [useSugestoesMelhorias] Sessão atual:', session?.session?.user?.email)
+      
+      // Verificar se é admin antes de tentar a operação
+      const isAdminEmail = user.email.includes('@admin')
+      console.log('✅ [useSugestoesMelhorias] É admin?', isAdminEmail)
+      
+      if (!isAdminEmail) {
+        console.error('❌ [useSugestoesMelhorias] Usuário não é admin, operação negada')
+        return false
+      }
       
       const { error } = await supabase
         .from('sugestoes_melhorias')
         .update({
           status: 'concluida',
           concluido_em: new Date().toISOString(),
-          concluido_por: user?.email || 'admin'
+          concluido_por: user.email
         })
         .eq('id', id)
 
       if (error) {
         console.error('❌ [useSugestoesMelhorias] Erro ao marcar como concluída:', error)
+        console.error('❌ [useSugestoesMelhorias] Detalhes do erro:', {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
         return false
       }
 
