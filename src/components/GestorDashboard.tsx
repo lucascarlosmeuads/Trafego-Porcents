@@ -7,6 +7,7 @@ import { ClientesTable } from './ClientesTable'
 import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 import { GestorSacDashboard } from './SAC/GestorSacDashboard'
+import { SugestoesDashboard } from './SugestoesDashboard'
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
 import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
@@ -104,6 +105,12 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return (
           <div className="bg-gray-950 min-h-screen">
             <ChatLayoutSplit />
+          </div>
+        )
+      case 'sugestoes':
+        return (
+          <div className="bg-gray-950 min-h-screen p-6">
+            <SugestoesDashboard />
           </div>
         )
       default:
