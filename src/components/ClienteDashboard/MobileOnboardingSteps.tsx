@@ -9,11 +9,10 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { 
-  MessageCircle, 
   FileText, 
   Upload, 
   Play,
-  CreditCard,
+  Headphones,
   BarChart3,
   CheckCircle2,
   Clock,
@@ -34,7 +33,6 @@ interface Step {
   actionText: string
   canCheck: boolean
   autoCheck?: boolean
-  chatMessage?: string
 }
 
 export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProps) {
@@ -42,11 +40,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
   const { briefing, arquivos } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
   const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
-
-  const openChatWithMessage = (message: string) => {
-    onTabChange('chat')
-    console.log('Mensagem para enviar no chat:', message)
-  }
 
   const steps: Step[] = React.useMemo(() => [
     {
@@ -71,16 +64,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
     },
     {
       id: 3,
-      title: 'Conversar sobre Business Manager',
-      description: 'Converse com seu gestor sobre configuração da BM e forneça email para liberação',
-      icon: MessageCircle,
-      action: () => openChatWithMessage('Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'),
-      actionText: 'Conversar no Chat',
-      canCheck: true,
-      chatMessage: 'Olá! Preciso configurar minha Business Manager. Qual email devo usar para liberar o acesso?'
-    },
-    {
-      id: 4,
       title: 'Assistir Tutorial da BM',
       description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
       icon: Play,
@@ -89,27 +72,16 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       canCheck: true
     },
     {
+      id: 4,
+      title: 'Contatar Suporte se Necessário',
+      description: 'Entre em contato via SAC para tirar dúvidas ou solicitar ajuda',
+      icon: Headphones,
+      action: () => onTabChange('suporte'),
+      actionText: 'Acessar Suporte',
+      canCheck: true
+    },
+    {
       id: 5,
-      title: 'Recarregar Saldo de Tráfego',
-      description: 'Recarregue o saldo para tráfego pago na Business Manager',
-      icon: CreditCard,
-      action: () => openChatWithMessage('Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'),
-      actionText: 'Conversar sobre Saldo',
-      canCheck: true,
-      chatMessage: 'Já configurei minha BM conforme o tutorial. Como faço para recarregar o saldo de tráfego pago?'
-    },
-    {
-      id: 6,
-      title: 'Finalizar Configurações',
-      description: 'Finalize configurações e tire dúvidas com seu gestor',
-      icon: MessageCircle,
-      action: () => openChatWithMessage('Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'),
-      actionText: 'Conversar com Gestor',
-      canCheck: true,
-      chatMessage: 'Finalizei as configurações anteriores. Estou pronto para iniciar as campanhas. Há mais alguma coisa que preciso fazer?'
-    },
-    {
-      id: 7,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
@@ -298,12 +270,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
                     <ChevronRight className="h-4 w-4 ml-2" />
                   </Button>
                 </div>
-
-                {step.chatMessage && (
-                  <p className="text-xs text-blue-600 mt-2 italic">
-                    💬 Mensagem será enviada automaticamente
-                  </p>
-                )}
               </CardContent>
             </Card>
           )
