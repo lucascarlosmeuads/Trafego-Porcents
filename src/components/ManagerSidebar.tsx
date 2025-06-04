@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
@@ -168,11 +167,7 @@ export function ManagerSidebar({
         {isAdmin ? (
           <AdminMainMenu
             activeTab={activeTab}
-            selectedManager={selectedManager}
-            problemasPendentes={problemasPendentes}
-            onTabChange={onTabChange}
-            onManagerSelect={onManagerSelect}
-            isCollapsed={isCollapsed}
+            onTabSelect={onTabChange}
           />
         ) : (
           <GestorMenu

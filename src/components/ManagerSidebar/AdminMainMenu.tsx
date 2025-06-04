@@ -1,8 +1,14 @@
+
 import { BarChart, Users, MessageSquare, FileText, BookOpen, MessageCircle } from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
   onTabSelect: (tab: string) => void
+  selectedManager?: string | null
+  problemasPendentes?: number
+  onTabChange?: (tab: string) => void
+  onManagerSelect?: (manager: string | null) => void
+  isCollapsed?: boolean
 }
 
 export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
