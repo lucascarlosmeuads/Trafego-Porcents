@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useSugestoesMelhorias } from '@/hooks/useSugestoesMelhorias'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -18,8 +17,14 @@ export function AdminSugestoes() {
   const [enviandoResposta, setEnviandoResposta] = useState(false)
 
   useEffect(() => {
+    console.log('🔍 [AdminSugestoes] Componente montado, buscando sugestões...')
     fetchSugestoes(true) // true = buscar todas as sugestões (modo admin)
   }, [])
+
+  console.log('📊 [AdminSugestoes] Estado atual:')
+  console.log('  - Loading:', loading)
+  console.log('  - Total sugestões:', sugestoes.length)
+  console.log('  - Sugestões:', sugestoes)
 
   const sugestoesFiltradas = sugestoes.filter(sugestao => {
     if (filtroStatus === 'todas') return true
@@ -47,6 +52,8 @@ export function AdminSugestoes() {
       })
       setRespostaAberta(null)
       setRespostaTexto('')
+      // Recarregar sugestões após responder
+      fetchSugestoes(true)
     } else {
       toast({
         title: "Erro ao responder",

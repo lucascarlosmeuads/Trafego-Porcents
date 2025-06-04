@@ -28,6 +28,9 @@ export function useSugestoesMelhorias() {
   const fetchSugestoes = async (isAdmin = false) => {
     try {
       setLoading(true)
+      console.log('🔍 [useSugestoesMelhorias] Buscando sugestões, isAdmin:', isAdmin)
+      console.log('🔍 [useSugestoesMelhorias] User email:', user?.email)
+      
       let query = supabase
         .from('sugestoes_melhorias')
         .select('*')
@@ -35,19 +38,24 @@ export function useSugestoesMelhorias() {
 
       // Se não for admin, filtrar apenas as sugestões do gestor atual
       if (!isAdmin && user?.email) {
+        console.log('🔍 [useSugestoesMelhorias] Filtrando por gestor:', user.email)
         query = query.eq('gestor_email', user.email)
+      } else if (isAdmin) {
+        console.log('🔍 [useSugestoesMelhorias] Buscando TODAS as sugestões (modo admin)')
       }
 
       const { data, error } = await query
 
       if (error) {
-        console.error('Erro ao buscar sugestões:', error)
+        console.error('❌ [useSugestoesMelhorias] Erro ao buscar sugestões:', error)
         return
       }
 
+      console.log('✅ [useSugestoesMelhorias] Sugestões encontradas:', data?.length || 0)
+      console.log('📋 [useSugestoesMelhorias] Dados:', data)
       setSugestoes(data || [])
     } catch (error) {
-      console.error('Erro ao buscar sugestões:', error)
+      console.error('❌ [useSugestoesMelhorias] Erro ao buscar sugestões:', error)
     } finally {
       setLoading(false)
     }
@@ -64,6 +72,8 @@ export function useSugestoesMelhorias() {
 
     try {
       setSubmitting(true)
+      console.log('📝 [useSugestoesMelhorias] Criando nova sugestão:', dados)
+      
       const { error } = await supabase
         .from('sugestoes_melhorias')
         .insert({
@@ -77,14 +87,15 @@ export function useSugestoesMelhorias() {
         })
 
       if (error) {
-        console.error('Erro ao criar sugestão:', error)
+        console.error('❌ [useSugestoesMelhorias] Erro ao criar sugestão:', error)
         return false
       }
 
-      await fetchSugestoes(false) // Atualizar lista
+      console.log('✅ [useSugestoesMelhorias] Sugestão criada com sucesso')
+      // Não recarregar automaticamente, deixar componente controlar
       return true
     } catch (error) {
-      console.error('Erro ao criar sugestão:', error)
+      console.error('❌ [useSugestoesMelhorias] Erro ao criar sugestão:', error)
       return false
     } finally {
       setSubmitting(false)
@@ -94,6 +105,8 @@ export function useSugestoesMelhorias() {
   // Responder sugestão (apenas admin)
   const responderSugestao = async (id: string, resposta: string) => {
     try {
+      console.log('💬 [useSugestoesMelhorias] Respondendo sugestão:', id)
+      
       const { error } = await supabase
         .from('sugestoes_melhorias')
         .update({
@@ -104,23 +117,21 @@ export function useSugestoesMelhorias() {
         .eq('id', id)
 
       if (error) {
-        console.error('Erro ao responder sugestão:', error)
+        console.error('❌ [useSugestoesMelhorias] Erro ao responder sugestão:', error)
         return false
       }
 
-      await fetchSugestoes(true) // Atualizar lista
+      console.log('✅ [useSugestoesMelhorias] Sugestão respondida com sucesso')
+      // Não recarregar automaticamente, deixar componente controlar
       return true
     } catch (error) {
-      console.error('Erro ao responder sugestão:', error)
+      console.error('❌ [useSugestoesMelhorias] Erro ao responder sugestão:', error)
       return false
     }
   }
 
-  useEffect(() => {
-    if (user?.email) {
-      fetchSugestoes(false)
-    }
-  }, [user?.email])
+  // Remover o useEffect automático que causava problemas
+  // Deixar cada componente controlar quando buscar os dados
 
   return {
     sugestoes,

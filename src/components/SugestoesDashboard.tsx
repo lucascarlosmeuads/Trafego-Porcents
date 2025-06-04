@@ -1,5 +1,4 @@
-
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useSugestoesMelhorias } from '@/hooks/useSugestoesMelhorias'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -11,7 +10,7 @@ import { Lightbulb, Plus, Clock, CheckCircle, MessageCircle } from 'lucide-react
 import { useToast } from '@/hooks/use-toast'
 
 export function SugestoesDashboard() {
-  const { sugestoes, loading, submitting, criarSugestao } = useSugestoesMelhorias()
+  const { sugestoes, loading, submitting, criarSugestao, fetchSugestoes } = useSugestoesMelhorias()
   const { toast } = useToast()
   const [showForm, setShowForm] = useState(false)
   const [formData, setFormData] = useState({
@@ -20,6 +19,15 @@ export function SugestoesDashboard() {
     categoria: '',
     prioridade: 'media'
   })
+
+  useEffect(() => {
+    console.log('🔍 [SugestoesDashboard] Componente montado, buscando sugestões do gestor...')
+    fetchSugestoes(false) // false = buscar apenas sugestões do gestor atual
+  }, [])
+
+  console.log('📊 [SugestoesDashboard] Estado atual:')
+  console.log('  - Loading:', loading)
+  console.log('  - Total sugestões:', sugestoes.length)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -43,6 +51,8 @@ export function SugestoesDashboard() {
       })
       setFormData({ titulo: '', descricao: '', categoria: '', prioridade: 'media' })
       setShowForm(false)
+      // Recarregar sugestões após criar
+      fetchSugestoes(false)
     } else {
       toast({
         title: "Erro ao enviar",
