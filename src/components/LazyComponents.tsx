@@ -11,6 +11,10 @@ const ClienteDashboard = lazy(() => import('./ClienteDashboard').then(module => 
 const ClientesTable = lazy(() => import('./ClientesTable').then(module => ({ default: module.ClientesTable })))
 const GestoresManagement = lazy(() => import('./GestoresManagement').then(module => ({ default: module.GestoresManagement })))
 
+// Lazy components adicionais
+const DocumentationViewer = lazy(() => import('./Documentation/DocumentationViewer').then(module => ({ default: module.DocumentationViewer })))
+const StatusFunnelDashboard = lazy(() => import('./Dashboard/StatusFunnelDashboard').then(module => ({ default: module.StatusFunnelDashboard })))
+
 // Lazy component para o relatório SAC
 const SacGestorReport = lazy(() => import('@/components/SAC/SacGestorReport').then(module => ({ default: module.SacGestorReport })))
 
@@ -54,6 +58,18 @@ export const LazySacDashboard = () => (
 export const LazyAdminChatLayoutSplit = () => (
   <Suspense fallback={<LoadingFallback />}>
     <AdminChatLayoutSplit />
+  </Suspense>
+)
+
+export const LazyDocumentationViewer = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <DocumentationViewer />
+  </Suspense>
+)
+
+export const LazyStatusFunnelDashboard = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <StatusFunnelDashboard />
   </Suspense>
 )
 
