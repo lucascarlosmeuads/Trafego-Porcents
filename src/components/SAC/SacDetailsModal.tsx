@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Phone, Mail, Calendar, User, MessageSquare, X, Copy, Expand, CheckCircle, Clock, AlertCircle } from 'lucide-react'
+import { Phone, Mail, Calendar, User, MessageSquare, X, Copy, Expand, CheckCircle, Clock, AlertCircle, Shield } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useState, useEffect } from 'react'
@@ -23,7 +23,7 @@ interface SacDetailsModalProps {
 export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: SacDetailsModalProps) {
   const { toast } = useToast()
   const { updateGestor, marcarComoConcluido } = useSacData()
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentSolicitacao, setCurrentSolicitacao] = useState(solicitacao)
   const [isMarking, setIsMarking] = useState(false)
@@ -149,10 +149,28 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
   }
 
   const handleMarcarComoConcluido = async () => {
-    if (!user?.email || !currentSolicitacao.nome_gestor) {
+    if (!user?.email) {
       toast({
         title: "Erro",
-        description: "Não foi possível identificar o gestor responsável.",
+        description: "Não foi possível identificar o usuário.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    // Determinar nome do responsável pela conclusão
+    let nomeResponsavel = ''
+    
+    if (isAdmin) {
+      // Se é admin, usar "Admin" como nome
+      nomeResponsavel = 'Admin'
+    } else if (currentSolicitacao.nome_gestor) {
+      // Se é gestor, usar o nome do gestor
+      nomeResponsavel = currentSolicitacao.nome_gestor
+    } else {
+      toast({
+        title: "Erro",
+        description: "Não foi possível identificar o responsável pela conclusão.",
         variant: "destructive"
       })
       return
@@ -161,17 +179,18 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
     try {
       setIsMarking(true)
       console.log('✅ [SacDetailsModal] Marcando SAC como concluído...')
+      console.log('👤 [SacDetailsModal] Usuário:', isAdmin ? 'Admin' : 'Gestor', user.email)
       
       const result = await marcarComoConcluido(
         currentSolicitacao.id,
         user.email,
-        currentSolicitacao.nome_gestor
+        nomeResponsavel
       )
 
       if (result.success) {
         toast({
           title: "Sucesso!",
-          description: "SAC marcado como concluído com sucesso.",
+          description: `SAC marcado como concluído por ${isAdmin ? 'Admin' : 'Gestor'}.`,
         })
 
         // Atualizar estado local
@@ -245,7 +264,12 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
 
   const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
   const isLongDescription = currentSolicitacao.descricao.length > 300
-  const podeMarcarComoConcluido = currentSolicitacao.status !== 'concluido' && currentSolicitacao.email_gestor === user?.email
+  
+  // Lógica de permissão atualizada para incluir admin
+  const podeMarcarComoConcluido = currentSolicitacao.status !== 'concluido' && (
+    isAdmin || // Admin pode marcar qualquer SAC como concluído
+    currentSolicitacao.email_gestor === user?.email // Gestor pode marcar apenas SACs assignados para ele
+  )
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
@@ -258,6 +282,12 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
                 {getStatusIcon(currentSolicitacao.status)}
                 <span className="ml-1">{getStatusLabel(currentSolicitacao.status)}</span>
               </Badge>
+              {isAdmin && (
+                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-300">
+                  <Shield className="h-3 w-3 mr-1" />
+                  Admin
+                </Badge>
+              )}
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
               <X className="h-4 w-4" />
@@ -276,6 +306,12 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
                     <h3 className="font-semibold text-green-800">SAC Concluído</h3>
                     <p className="text-sm text-green-700">
                       Marcado como concluído em {formatDate(currentSolicitacao.concluido_em)} por {currentSolicitacao.concluido_por}
+                      {currentSolicitacao.concluido_por === 'Admin' && (
+                        <Badge variant="outline" className="ml-2 text-xs bg-blue-50 text-blue-700 border-blue-300">
+                          <Shield className="h-3 w-3 mr-1" />
+                          Administrador
+                        </Badge>
+                      )}
                     </p>
                   </div>
                 </div>
@@ -340,7 +376,7 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
                       className="bg-green-600 hover:bg-green-700 text-white ml-auto"
                     >
                       <CheckCircle className="h-4 w-4 mr-1" />
-                      {isMarking ? 'Marcando...' : 'Marcar como Concluído'}
+                      {isMarking ? 'Marcando...' : `Marcar como Concluído ${isAdmin ? '(Admin)' : ''}`}
                     </Button>
                   )}
                   
@@ -456,7 +492,7 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
               className="bg-green-600 hover:bg-green-700 text-white"
             >
               <CheckCircle className="h-4 w-4 mr-2" />
-              {isMarking ? 'Marcando...' : 'Marcar como Concluído'}
+              {isMarking ? 'Marcando...' : `Marcar como Concluído ${isAdmin ? '(Admin)' : ''}`}
             </Button>
           )}
 
