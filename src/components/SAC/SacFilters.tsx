@@ -10,12 +10,14 @@ import type { SacSolicitacao } from '@/hooks/useSacData'
 interface SacFiltersProps {
   solicitacoes: SacSolicitacao[]
   onFilterChange: (filtered: SacSolicitacao[]) => void
+  defaultStatusFilter?: 'ativos' | 'concluidos' | 'todos'
 }
 
-export function SacFilters({ solicitacoes, onFilterChange }: SacFiltersProps) {
+export function SacFilters({ solicitacoes, onFilterChange, defaultStatusFilter = 'ativos' }: SacFiltersProps) {
   const [searchTerm, setSearchTerm] = useState('')
   const [tipoProblema, setTipoProblema] = useState<string>('all')
   const [gestor, setGestor] = useState<string>('all')
+  const [statusFilter, setStatusFilter] = useState<string>(defaultStatusFilter)
 
   // Extrair tipos únicos de problema
   const tiposProblema = Array.from(
@@ -30,6 +32,14 @@ export function SacFilters({ solicitacoes, onFilterChange }: SacFiltersProps) {
   // Aplicar filtros
   useEffect(() => {
     let filtered = [...solicitacoes]
+
+    // Filtro de status (novo)
+    if (statusFilter === 'ativos') {
+      filtered = filtered.filter(s => s.status === 'aberto' || s.status === 'em_andamento')
+    } else if (statusFilter === 'concluidos') {
+      filtered = filtered.filter(s => s.status === 'concluido')
+    }
+    // Se statusFilter === 'todos', não filtra por status
 
     // Filtro de busca
     if (searchTerm) {
@@ -53,15 +63,16 @@ export function SacFilters({ solicitacoes, onFilterChange }: SacFiltersProps) {
     }
 
     onFilterChange(filtered)
-  }, [searchTerm, tipoProblema, gestor, solicitacoes, onFilterChange])
+  }, [searchTerm, tipoProblema, gestor, statusFilter, solicitacoes, onFilterChange])
 
   const clearFilters = () => {
     setSearchTerm('')
     setTipoProblema('all')
     setGestor('all')
+    setStatusFilter(defaultStatusFilter)
   }
 
-  const hasActiveFilters = searchTerm || tipoProblema !== 'all' || gestor !== 'all'
+  const hasActiveFilters = searchTerm || tipoProblema !== 'all' || gestor !== 'all' || statusFilter !== defaultStatusFilter
 
   return (
     <Card>
@@ -77,6 +88,18 @@ export function SacFilters({ solicitacoes, onFilterChange }: SacFiltersProps) {
               className="pl-10"
             />
           </div>
+
+          {/* Filtro por status */}
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full lg:w-[160px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="ativos">Ativos</SelectItem>
+              <SelectItem value="concluidos">Concluídos</SelectItem>
+              <SelectItem value="todos">Todos</SelectItem>
+            </SelectContent>
+          </Select>
 
           {/* Filtro por tipo de problema */}
           <Select value={tipoProblema} onValueChange={setTipoProblema}>

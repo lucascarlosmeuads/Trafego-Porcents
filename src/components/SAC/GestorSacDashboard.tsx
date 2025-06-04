@@ -6,7 +6,8 @@ import { SacDetailsModal } from './SacDetailsModal'
 import { useGestorSacData } from '@/hooks/useGestorSacData'
 import { LoadingFallback } from '@/components/LoadingFallback'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AlertCircle, Users, Clock, Headphones, User } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AlertCircle, Users, Clock, Headphones, User, CheckCircle } from 'lucide-react'
 import type { SacSolicitacao } from '@/hooks/useSacData'
 
 export function GestorSacDashboard() {
@@ -18,12 +19,15 @@ export function GestorSacDashboard() {
     totalSolicitacoes,
     solicitacoesHoje,
     problemasUrgentes,
+    solicitacoesAbertas,
+    solicitacoesConcluidas,
     updateGestor,
     updateSolicitacaoLocal 
   } = useGestorSacData()
   
   const [filteredSolicitacoes, setFilteredSolicitacoes] = useState<SacSolicitacao[]>([])
   const [selectedSolicitacao, setSelectedSolicitacao] = useState<SacSolicitacao | null>(null)
+  const [activeTab, setActiveTab] = useState<string>('ativos')
 
   if (loading) {
     return <LoadingFallback />
@@ -46,12 +50,21 @@ export function GestorSacDashboard() {
     console.log('🔄 [GestorSacDashboard] Solicitação atualizada:', updatedSolicitacao.id)
     updateSolicitacaoLocal(updatedSolicitacao.id, {
       email_gestor: updatedSolicitacao.email_gestor,
-      nome_gestor: updatedSolicitacao.nome_gestor
+      nome_gestor: updatedSolicitacao.nome_gestor,
+      status: updatedSolicitacao.status,
+      concluido_em: updatedSolicitacao.concluido_em,
+      concluido_por: updatedSolicitacao.concluido_por
     })
 
     // Atualizar a solicitação selecionada se for a mesma
     if (selectedSolicitacao && selectedSolicitacao.id === updatedSolicitacao.id) {
       setSelectedSolicitacao(updatedSolicitacao)
+    }
+
+    // Se foi marcado como concluído e estamos na aba "ativos", forçar atualização da lista
+    if (updatedSolicitacao.status === 'concluido' && activeTab === 'ativos') {
+      console.log('🔄 [GestorSacDashboard] SAC concluído - atualizando lista de ativos')
+      // A lista será automaticamente filtrada pelos filtros
     }
   }
 
@@ -63,6 +76,9 @@ export function GestorSacDashboard() {
     const updatedSolicitacao = solicitacoes.find(s => s.id === solicitacao.id) || solicitacao
     setSelectedSolicitacao(updatedSolicitacao)
   }
+
+  // Calcular solicitações ativas (aberto + em andamento)
+  const solicitacoesAtivas = solicitacoes.filter(s => s.status === 'aberto' || s.status === 'em_andamento').length
 
   return (
     <div className="space-y-6 bg-gray-950 min-h-screen p-6">
@@ -79,7 +95,7 @@ export function GestorSacDashboard() {
       </div>
 
       {/* Métricas do Gestor */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-gray-300">Minhas Solicitações</CardTitle>
@@ -93,12 +109,12 @@ export function GestorSacDashboard() {
 
         <Card className="bg-gray-900 border-gray-800">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-gray-300">Hoje</CardTitle>
-            <Clock className="h-4 w-4 text-green-400" />
+            <CardTitle className="text-sm font-medium text-gray-300">SACs Ativos</CardTitle>
+            <Clock className="h-4 w-4 text-blue-400" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-white">{solicitacoesHoje}</div>
-            <CardDescription className="text-gray-500">Solicitações de hoje</CardDescription>
+            <div className="text-2xl font-bold text-blue-400">{solicitacoesAtivas}</div>
+            <CardDescription className="text-gray-500">Abertos e em andamento</CardDescription>
           </CardContent>
         </Card>
 
@@ -110,6 +126,17 @@ export function GestorSacDashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-red-400">{problemasUrgentes}</div>
             <CardDescription className="text-gray-500">Requerem atenção imediata</CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-gray-900 border-gray-800">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-gray-300">Concluídos</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-400">{solicitacoesConcluidas}</div>
+            <CardDescription className="text-gray-500">SACs finalizados</CardDescription>
           </CardContent>
         </Card>
       </div>
@@ -131,17 +158,53 @@ export function GestorSacDashboard() {
         </Card>
       ) : (
         <>
-          {/* Filtros */}
-          <SacFilters 
-            solicitacoes={solicitacoes}
-            onFilterChange={setFilteredSolicitacoes}
-          />
+          {/* Abas para separar ativos e concluídos */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full grid-cols-2 bg-gray-800 border-gray-700">
+              <TabsTrigger 
+                value="ativos" 
+                className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-300"
+              >
+                SACs Ativos ({solicitacoesAtivas})
+              </TabsTrigger>
+              <TabsTrigger 
+                value="concluidos"
+                className="data-[state=active]:bg-gray-700 data-[state=active]:text-white text-gray-300"
+              >
+                SACs Concluídos ({solicitacoesConcluidas})
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Tabela */}
-          <SacTable 
-            solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes}
-            onViewDetails={handleViewDetails}
-          />
+            <TabsContent value="ativos" className="space-y-4">
+              {/* Filtros para SACs ativos */}
+              <SacFilters 
+                solicitacoes={solicitacoes}
+                onFilterChange={setFilteredSolicitacoes}
+                defaultStatusFilter="ativos"
+              />
+
+              {/* Tabela de SACs ativos */}
+              <SacTable 
+                solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes.filter(s => s.status === 'aberto' || s.status === 'em_andamento')}
+                onViewDetails={handleViewDetails}
+              />
+            </TabsContent>
+
+            <TabsContent value="concluidos" className="space-y-4">
+              {/* Filtros para SACs concluídos */}
+              <SacFilters 
+                solicitacoes={solicitacoes}
+                onFilterChange={setFilteredSolicitacoes}
+                defaultStatusFilter="concluidos"
+              />
+
+              {/* Tabela de SACs concluídos */}
+              <SacTable 
+                solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes.filter(s => s.status === 'concluido')}
+                onViewDetails={handleViewDetails}
+              />
+            </TabsContent>
+          </Tabs>
         </>
       )}
 

@@ -6,12 +6,14 @@ import { SacDetailsModal } from './SacDetailsModal'
 import { useSacData, type SacSolicitacao } from '@/hooks/useSacData'
 import { LoadingFallback } from '@/components/LoadingFallback'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, Users, Clock, CheckCircle } from 'lucide-react'
 
 export function SacDashboard() {
   const { solicitacoes, loading, error, updateSolicitacaoLocal } = useSacData()
   const [filteredSolicitacoes, setFilteredSolicitacoes] = useState<SacSolicitacao[]>([])
   const [selectedSolicitacao, setSelectedSolicitacao] = useState<SacSolicitacao | null>(null)
+  const [activeTab, setActiveTab] = useState<string>('ativos')
 
   if (loading) {
     return <LoadingFallback />
@@ -53,6 +55,12 @@ export function SacDashboard() {
       console.log('🔄 [SacDashboard] Atualizando solicitação selecionada')
       setSelectedSolicitacao(updatedSolicitacao)
     }
+
+    // Se foi marcado como concluído e estamos na aba "ativos", forçar atualização da lista
+    if (updatedSolicitacao.status === 'concluido' && activeTab === 'ativos') {
+      console.log('🔄 [SacDashboard] SAC concluído - atualizando lista de ativos')
+      // A lista será automaticamente filtrada pelos filtros
+    }
   }
 
   // Função para abrir detalhes de uma solicitação
@@ -73,6 +81,7 @@ export function SacDashboard() {
 
   // Calcular métricas
   const totalSolicitacoes = solicitacoes.length
+  const solicitacoesAtivas = solicitacoes.filter(s => s.status === 'aberto' || s.status === 'em_andamento').length
   const solicitacoesHoje = solicitacoes.filter(s => {
     const hoje = new Date().toDateString()
     const dataSolicitacao = new Date(s.created_at).toDateString()
@@ -80,8 +89,9 @@ export function SacDashboard() {
   }).length
 
   const problemasUrgentes = solicitacoes.filter(s => 
-    s.tipo_problema.toLowerCase().includes('urgente') || 
-    s.tipo_problema.toLowerCase().includes('crítico')
+    (s.status === 'aberto' || s.status === 'em_andamento') &&
+    (s.tipo_problema.toLowerCase().includes('urgente') || 
+     s.tipo_problema.toLowerCase().includes('crítico'))
   ).length
 
   const solicitacoesConcluidas = solicitacoes.filter(s => s.status === 'concluido').length
@@ -111,12 +121,12 @@ export function SacDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Hoje</CardTitle>
-            <Clock className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">SACs Ativos</CardTitle>
+            <Clock className="h-4 w-4 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{solicitacoesHoje}</div>
-            <CardDescription>Solicitações de hoje</CardDescription>
+            <div className="text-2xl font-bold text-blue-600">{solicitacoesAtivas}</div>
+            <CardDescription>Abertos e em andamento</CardDescription>
           </CardContent>
         </Card>
 
@@ -143,17 +153,47 @@ export function SacDashboard() {
         </Card>
       </div>
 
-      {/* Filtros */}
-      <SacFilters 
-        solicitacoes={solicitacoes}
-        onFilterChange={setFilteredSolicitacoes}
-      />
+      {/* Abas para separar ativos e concluídos */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="ativos">
+            SACs Ativos ({solicitacoesAtivas})
+          </TabsTrigger>
+          <TabsTrigger value="concluidos">
+            SACs Concluídos ({solicitacoesConcluidas})
+          </TabsTrigger>
+        </TabsList>
 
-      {/* Tabela */}
-      <SacTable 
-        solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes}
-        onViewDetails={handleViewDetails}
-      />
+        <TabsContent value="ativos" className="space-y-4">
+          {/* Filtros para SACs ativos */}
+          <SacFilters 
+            solicitacoes={solicitacoes}
+            onFilterChange={setFilteredSolicitacoes}
+            defaultStatusFilter="ativos"
+          />
+
+          {/* Tabela de SACs ativos */}
+          <SacTable 
+            solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes.filter(s => s.status === 'aberto' || s.status === 'em_andamento')}
+            onViewDetails={handleViewDetails}
+          />
+        </TabsContent>
+
+        <TabsContent value="concluidos" className="space-y-4">
+          {/* Filtros para SACs concluídos */}
+          <SacFilters 
+            solicitacoes={solicitacoes}
+            onFilterChange={setFilteredSolicitacoes}
+            defaultStatusFilter="concluidos"
+          />
+
+          {/* Tabela de SACs concluídos */}
+          <SacTable 
+            solicitacoes={filteredSolicitacoes.length > 0 ? filteredSolicitacoes : solicitacoes.filter(s => s.status === 'concluido')}
+            onViewDetails={handleViewDetails}
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de detalhes */}
       {selectedSolicitacao && (
