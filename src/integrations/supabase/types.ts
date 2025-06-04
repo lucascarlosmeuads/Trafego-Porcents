@@ -358,6 +358,8 @@ export type Database = {
       }
       sac_clientes: {
         Row: {
+          concluido_em: string | null
+          concluido_por: string | null
           created_at: string
           data_envio: string
           descricao: string
@@ -366,10 +368,13 @@ export type Database = {
           id: string
           nome: string
           nome_gestor: string | null
+          status: string | null
           tipo_problema: string
           whatsapp: string
         }
         Insert: {
+          concluido_em?: string | null
+          concluido_por?: string | null
           created_at?: string
           data_envio?: string
           descricao: string
@@ -378,10 +383,13 @@ export type Database = {
           id?: string
           nome: string
           nome_gestor?: string | null
+          status?: string | null
           tipo_problema: string
           whatsapp: string
         }
         Update: {
+          concluido_em?: string | null
+          concluido_por?: string | null
           created_at?: string
           data_envio?: string
           descricao?: string
@@ -390,6 +398,7 @@ export type Database = {
           id?: string
           nome?: string
           nome_gestor?: string | null
+          status?: string | null
           tipo_problema?: string
           whatsapp?: string
         }

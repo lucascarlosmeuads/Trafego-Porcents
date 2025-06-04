@@ -35,13 +35,17 @@ export function SacDashboard() {
     console.log('🔄 [SacDashboard] Solicitação atualizada:', {
       id: updatedSolicitacao.id,
       email_gestor: updatedSolicitacao.email_gestor,
-      nome_gestor: updatedSolicitacao.nome_gestor
+      nome_gestor: updatedSolicitacao.nome_gestor,
+      status: updatedSolicitacao.status
     })
 
     // Atualizar no hook global
     updateSolicitacaoLocal(updatedSolicitacao.id, {
       email_gestor: updatedSolicitacao.email_gestor,
-      nome_gestor: updatedSolicitacao.nome_gestor
+      nome_gestor: updatedSolicitacao.nome_gestor,
+      status: updatedSolicitacao.status,
+      concluido_em: updatedSolicitacao.concluido_em,
+      concluido_por: updatedSolicitacao.concluido_por
     })
 
     // Atualizar a solicitação selecionada se for a mesma
@@ -60,7 +64,8 @@ export function SacDashboard() {
     console.log('🔍 [SacDashboard] Versão atualizada encontrada:', {
       id: updatedSolicitacao.id,
       email_gestor: updatedSolicitacao.email_gestor,
-      nome_gestor: updatedSolicitacao.nome_gestor
+      nome_gestor: updatedSolicitacao.nome_gestor,
+      status: updatedSolicitacao.status
     })
     
     setSelectedSolicitacao(updatedSolicitacao)
@@ -79,6 +84,8 @@ export function SacDashboard() {
     s.tipo_problema.toLowerCase().includes('crítico')
   ).length
 
+  const solicitacoesConcluidas = solicitacoes.filter(s => s.status === 'concluido').length
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -90,7 +97,7 @@ export function SacDashboard() {
       </div>
 
       {/* Métricas */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Solicitações</CardTitle>
@@ -121,6 +128,17 @@ export function SacDashboard() {
           <CardContent>
             <div className="text-2xl font-bold text-red-600">{problemasUrgentes}</div>
             <CardDescription>Requerem atenção imediata</CardDescription>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Concluídas</CardTitle>
+            <CheckCircle className="h-4 w-4 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{solicitacoesConcluidas}</div>
+            <CardDescription>SACs finalizados com sucesso</CardDescription>
           </CardContent>
         </Card>
       </div>

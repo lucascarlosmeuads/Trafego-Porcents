@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Eye, Phone, Mail, Calendar } from 'lucide-react'
+import { Eye, Phone, Mail, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -36,6 +36,42 @@ export function SacTable({ solicitacoes, onViewDetails }: SacTableProps) {
     return 'outline'
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return 'default'
+      case 'em_andamento':
+        return 'secondary'
+      case 'aberto':
+      default:
+        return 'destructive'
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return <CheckCircle className="h-3 w-3" />
+      case 'em_andamento':
+        return <Clock className="h-3 w-3" />
+      case 'aberto':
+      default:
+        return <AlertCircle className="h-3 w-3" />
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return 'Concluído'
+      case 'em_andamento':
+        return 'Em Andamento'
+      case 'aberto':
+      default:
+        return 'Aberto'
+    }
+  }
+
   const formatDate = (dateString: string) => {
     return format(new Date(dateString), 'dd/MM/yyyy HH:mm', { locale: ptBR })
   }
@@ -53,9 +89,15 @@ export function SacTable({ solicitacoes, onViewDetails }: SacTableProps) {
                     <h3 className="font-semibold text-lg">{solicitacao.nome}</h3>
                     <p className="text-sm text-gray-600">{solicitacao.email}</p>
                   </div>
-                  <Badge variant={getTipoProblemaColor(solicitacao.tipo_problema)}>
-                    {solicitacao.tipo_problema}
-                  </Badge>
+                  <div className="flex flex-col gap-1 items-end">
+                    <Badge variant={getTipoProblemaColor(solicitacao.tipo_problema)}>
+                      {solicitacao.tipo_problema}
+                    </Badge>
+                    <Badge variant={getStatusColor(solicitacao.status)} className="text-xs">
+                      {getStatusIcon(solicitacao.status)}
+                      <span className="ml-1">{getStatusLabel(solicitacao.status)}</span>
+                    </Badge>
+                  </div>
                 </div>
 
                 {/* Informações principais */}
@@ -81,6 +123,13 @@ export function SacTable({ solicitacoes, onViewDetails }: SacTableProps) {
                     <div className="flex items-center gap-2 text-sm">
                       <Mail className="h-4 w-4 text-gray-500" />
                       <span>Gestor: {solicitacao.nome_gestor}</span>
+                    </div>
+                  )}
+
+                  {solicitacao.status === 'concluido' && solicitacao.concluido_em && (
+                    <div className="flex items-center gap-2 text-sm text-green-600">
+                      <CheckCircle className="h-4 w-4" />
+                      <span>Concluído em {formatDate(solicitacao.concluido_em)} por {solicitacao.concluido_por}</span>
                     </div>
                   )}
                 </div>
@@ -144,6 +193,7 @@ export function SacTable({ solicitacoes, onViewDetails }: SacTableProps) {
             <TableHead>Email</TableHead>
             <TableHead>WhatsApp</TableHead>
             <TableHead>Tipo</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead>Gestor</TableHead>
             <TableHead>Ações</TableHead>
           </TableRow>
@@ -178,8 +228,19 @@ export function SacTable({ solicitacoes, onViewDetails }: SacTableProps) {
                   {solicitacao.tipo_problema}
                 </Badge>
               </TableCell>
+              <TableCell>
+                <Badge variant={getStatusColor(solicitacao.status)} className="text-xs">
+                  {getStatusIcon(solicitacao.status)}
+                  <span className="ml-1">{getStatusLabel(solicitacao.status)}</span>
+                </Badge>
+              </TableCell>
               <TableCell className="text-sm">
                 {solicitacao.nome_gestor || '-'}
+                {solicitacao.status === 'concluido' && solicitacao.concluido_em && (
+                  <div className="text-xs text-green-600">
+                    Concluído em {formatDate(solicitacao.concluido_em)}
+                  </div>
+                )}
               </TableCell>
               <TableCell>
                 <Button

@@ -5,7 +5,7 @@ import { useSacData, type SacSolicitacao } from '@/hooks/useSacData'
 
 export function useGestorSacData() {
   const { user } = useAuth()
-  const { getSolicitacoesByGestor, updateGestor } = useSacData()
+  const { getSolicitacoesByGestor, updateGestor, marcarComoConcluido } = useSacData()
   const [solicitacoes, setSolicitacoes] = useState<SacSolicitacao[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -63,6 +63,9 @@ export function useGestorSacData() {
     s.tipo_problema.toLowerCase().includes('crítico')
   ).length
 
+  const solicitacoesAbertas = solicitacoes.filter(s => s.status === 'aberto').length
+  const solicitacoesConcluidas = solicitacoes.filter(s => s.status === 'concluido').length
+
   return {
     solicitacoes,
     loading,
@@ -71,8 +74,11 @@ export function useGestorSacData() {
     totalSolicitacoes,
     solicitacoesHoje,
     problemasUrgentes,
+    solicitacoesAbertas,
+    solicitacoesConcluidas,
     refetch: fetchGestorSolicitacoes,
     updateGestor,
-    updateSolicitacaoLocal
+    updateSolicitacaoLocal,
+    marcarComoConcluido
   }
 }

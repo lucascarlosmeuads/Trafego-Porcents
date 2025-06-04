@@ -13,6 +13,9 @@ export interface SacSolicitacao {
   nome_gestor: string | null
   data_envio: string
   created_at: string
+  status: 'aberto' | 'em_andamento' | 'concluido'
+  concluido_em: string | null
+  concluido_por: string | null
 }
 
 export function useSacData() {
@@ -118,6 +121,57 @@ export function useSacData() {
     }
   }
 
+  const marcarComoConcluido = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
+    try {
+      console.log('✅ [useSacData] === MARCANDO SAC COMO CONCLUÍDO ===')
+      console.log('✅ [useSacData] Dados:', { solicitacaoId, emailGestor, nomeGestor })
+
+      const { error: updateError } = await supabase
+        .from('sac_clientes')
+        .update({
+          status: 'concluido',
+          concluido_em: new Date().toISOString(),
+          concluido_por: nomeGestor
+        })
+        .eq('id', solicitacaoId)
+
+      if (updateError) {
+        console.error('❌ [useSacData] Erro ao marcar como concluído:', updateError)
+        throw new Error(`Falha ao marcar como concluído: ${updateError.message}`)
+      }
+
+      // Buscar dados atualizados
+      const { data: updatedData, error: selectError } = await supabase
+        .from('sac_clientes')
+        .select('*')
+        .eq('id', solicitacaoId)
+        .single()
+
+      if (selectError || !updatedData) {
+        throw new Error('Erro ao verificar atualização')
+      }
+
+      console.log('✅ [useSacData] SAC marcado como concluído com sucesso')
+
+      // Atualizar estado local
+      setSolicitacoes(prev => prev.map(sol => 
+        sol.id === solicitacaoId 
+          ? { ...sol, status: 'concluido', concluido_em: updatedData.concluido_em, concluido_por: updatedData.concluido_por }
+          : sol
+      ))
+
+      return { 
+        success: true, 
+        data: updatedData,
+        message: 'SAC marcado como concluído com sucesso'
+      }
+
+    } catch (err) {
+      console.error('💥 [useSacData] Erro ao marcar como concluído:', err)
+      throw new Error(err instanceof Error ? err.message : 'Erro desconhecido ao marcar como concluído')
+    }
+  }
+
   const getSolicitacoesByGestor = async (emailGestor: string) => {
     try {
       console.log('🔍 [useSacData] Buscando solicitações por gestor:', emailGestor)
@@ -192,6 +246,7 @@ export function useSacData() {
     refetch: fetchSolicitacoes,
     updateGestor,
     getSolicitacoesByGestor,
-    updateSolicitacaoLocal
+    updateSolicitacaoLocal,
+    marcarComoConcluido
   }
 }

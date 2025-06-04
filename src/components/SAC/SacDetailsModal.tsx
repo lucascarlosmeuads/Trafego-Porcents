@@ -1,14 +1,16 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Separator } from '@/components/ui/separator'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Phone, Mail, Calendar, User, MessageSquare, X, Copy, Expand } from 'lucide-react'
+import { Phone, Mail, Calendar, User, MessageSquare, X, Copy, Expand, CheckCircle, Clock, AlertCircle } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { useState, useEffect } from 'react'
 import { useToast } from '@/hooks/use-toast'
 import { useSacData } from '@/hooks/useSacData'
+import { useAuth } from '@/hooks/useAuth'
 import { GestorSelector } from './GestorSelector'
 import type { SacSolicitacao } from '@/hooks/useSacData'
 
@@ -20,16 +22,19 @@ interface SacDetailsModalProps {
 
 export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: SacDetailsModalProps) {
   const { toast } = useToast()
-  const { updateGestor } = useSacData()
+  const { updateGestor, marcarComoConcluido } = useSacData()
+  const { user } = useAuth()
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentSolicitacao, setCurrentSolicitacao] = useState(solicitacao)
+  const [isMarking, setIsMarking] = useState(false)
 
   // Sincronizar com mudanças na prop solicitacao
   useEffect(() => {
     console.log('🔄 [SacDetailsModal] Props solicitacao mudou:', {
       id: solicitacao.id,
       email_gestor: solicitacao.email_gestor,
-      nome_gestor: solicitacao.nome_gestor
+      nome_gestor: solicitacao.nome_gestor,
+      status: solicitacao.status
     })
     setCurrentSolicitacao(solicitacao)
   }, [solicitacao])
@@ -43,6 +48,42 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
       return 'secondary'
     }
     return 'outline'
+  }
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return 'default'
+      case 'em_andamento':
+        return 'secondary'
+      case 'aberto':
+      default:
+        return 'destructive'
+    }
+  }
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return <CheckCircle className="h-4 w-4" />
+      case 'em_andamento':
+        return <Clock className="h-4 w-4" />
+      case 'aberto':
+      default:
+        return <AlertCircle className="h-4 w-4" />
+    }
+  }
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'concluido':
+        return 'Concluído'
+      case 'em_andamento':
+        return 'Em Andamento'
+      case 'aberto':
+      default:
+        return 'Aberto'
+    }
   }
 
   const getPriorityColors = (tipo: string) => {
@@ -107,6 +148,59 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
     }
   }
 
+  const handleMarcarComoConcluido = async () => {
+    if (!user?.email || !currentSolicitacao.nome_gestor) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível identificar o gestor responsável.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      setIsMarking(true)
+      console.log('✅ [SacDetailsModal] Marcando SAC como concluído...')
+      
+      const result = await marcarComoConcluido(
+        currentSolicitacao.id,
+        user.email,
+        currentSolicitacao.nome_gestor
+      )
+
+      if (result.success) {
+        toast({
+          title: "Sucesso!",
+          description: "SAC marcado como concluído com sucesso.",
+        })
+
+        // Atualizar estado local
+        const updatedSolicitacao = {
+          ...currentSolicitacao,
+          status: 'concluido' as const,
+          concluido_em: result.data.concluido_em,
+          concluido_por: result.data.concluido_por
+        }
+        
+        setCurrentSolicitacao(updatedSolicitacao)
+        
+        // Notificar componente pai
+        if (onSolicitacaoUpdated) {
+          onSolicitacaoUpdated(updatedSolicitacao)
+        }
+      }
+    } catch (error) {
+      console.error('❌ [SacDetailsModal] Erro ao marcar como concluído:', error)
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido ao marcar como concluído",
+        variant: "destructive"
+      })
+    } finally {
+      setIsMarking(false)
+    }
+  }
+
   const handleUpdateGestor = async (solicitacaoId: string, emailGestor: string, nomeGestor: string) => {
     console.log('🔄 [SacDetailsModal] === CHAMADA PARA ATUALIZAR GESTOR ===')
     console.log('🔄 [SacDetailsModal] Dados recebidos:', {
@@ -151,14 +245,19 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
 
   const priorityColors = getPriorityColors(currentSolicitacao.tipo_problema)
   const isLongDescription = currentSolicitacao.descricao.length > 300
+  const podeMarcarComoConcluido = currentSolicitacao.status !== 'concluido' && currentSolicitacao.email_gestor === user?.email
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto bg-white text-gray-900 border-gray-200 force-light-theme">
         <DialogHeader>
           <div className="flex items-center justify-between">
-            <DialogTitle className="text-xl font-semibold text-gray-900">
+            <DialogTitle className="text-xl font-semibold text-gray-900 flex items-center gap-3">
               Detalhes da Solicitação SAC
+              <Badge variant={getStatusColor(currentSolicitacao.status)} className="text-sm">
+                {getStatusIcon(currentSolicitacao.status)}
+                <span className="ml-1">{getStatusLabel(currentSolicitacao.status)}</span>
+              </Badge>
             </DialogTitle>
             <Button variant="ghost" size="sm" onClick={onClose} className="text-gray-600 hover:text-gray-900 hover:bg-gray-100">
               <X className="h-4 w-4" />
@@ -167,6 +266,23 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
         </DialogHeader>
 
         <div className="space-y-6">
+          {/* Status de conclusão se concluído */}
+          {currentSolicitacao.status === 'concluido' && currentSolicitacao.concluido_em && (
+            <Card className="bg-green-50 border-green-200">
+              <CardContent className="p-4">
+                <div className="flex items-center gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                  <div>
+                    <h3 className="font-semibold text-green-800">SAC Concluído</h3>
+                    <p className="text-sm text-green-700">
+                      Marcado como concluído em {formatDate(currentSolicitacao.concluido_em)} por {currentSolicitacao.concluido_por}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
           {/* Descrição do Problema - DESTAQUE PRINCIPAL */}
           <Card className={`bg-white border-2 ${priorityColors.border} border-l-4 ${priorityColors.accent} shadow-lg`}>
             <CardHeader className="pb-3 bg-white">
@@ -213,6 +329,18 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
                     >
                       <Expand className="h-4 w-4" />
                       {isExpanded ? 'Recolher' : 'Ver Completo'}
+                    </Button>
+                  )}
+                  
+                  {podeMarcarComoConcluido && (
+                    <Button
+                      size="sm"
+                      onClick={handleMarcarComoConcluido}
+                      disabled={isMarking}
+                      className="bg-green-600 hover:bg-green-700 text-white ml-auto"
+                    >
+                      <CheckCircle className="h-4 w-4 mr-1" />
+                      {isMarking ? 'Marcando...' : 'Marcar como Concluído'}
                     </Button>
                   )}
                   
@@ -320,6 +448,17 @@ export function SacDetailsModal({ solicitacao, onClose, onSolicitacaoUpdated }: 
             <Copy className="h-4 w-4 mr-2" />
             Copiar Descrição
           </Button>
+
+          {podeMarcarComoConcluido && (
+            <Button
+              onClick={handleMarcarComoConcluido}
+              disabled={isMarking}
+              className="bg-green-600 hover:bg-green-700 text-white"
+            >
+              <CheckCircle className="h-4 w-4 mr-2" />
+              {isMarking ? 'Marcando...' : 'Marcar como Concluído'}
+            </Button>
+          )}
 
           <Button 
             variant="secondary" 
