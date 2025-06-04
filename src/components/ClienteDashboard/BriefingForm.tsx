@@ -17,7 +17,24 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, CheckCircle } from 'lucide-react'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
+import { 
+  ArrowLeft, 
+  CheckCircle, 
+  FileText, 
+  Users, 
+  Lightbulb, 
+  Star, 
+  DollarSign, 
+  MessageSquare,
+  Sparkles
+} from 'lucide-react'
 
 const briefingFormSchema = z.object({
   nome_produto: z.string().min(2, {
@@ -158,177 +175,257 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
   }
 
   return (
-    <div className="space-y-6">
-      {/* Botão de voltar para desktop */}
-      {onBack && (
-        <div className="hidden md:block">
-          <Button
-            variant="ghost"
-            onClick={onBack}
-            className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Painel Principal
-          </Button>
-        </div>
-      )}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            {success ? (
-              <CheckCircle className="w-5 h-5 text-green-500 mr-2" />
-            ) : null}
-            Briefing do Produto/Serviço
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="nome_produto"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome do Produto/Serviço</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Curso de Marketing Digital" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="publico_alvo"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Público Alvo</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="descricao_resumida"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Descrição Resumida do Produto/Serviço</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="diferencial"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Diferencial do Produto/Serviço</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="investimento_diario"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Investimento Diário (R$)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        step="0.01" 
-                        placeholder="Ex: 50.00"
-                        {...field}
-                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="comissao_aceita"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Aceita trabalhar por comissão?</FormLabel>
-                    <FormControl>
-                      <select 
-                        {...field} 
-                        className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      >
-                        <option value="">Selecione uma opção</option>
-                        <option value="sim">Sim</option>
-                        <option value="nao">Não</option>
-                      </select>
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <FormField
-                control={form.control}
-                name="observacoes_finais"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Observações Finais (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea
-                        placeholder="Ex: Informações adicionais que considera importante para a campanha."
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              
-              <Button type="submit" disabled={isSubmitting} className="w-full">
-                {isSubmitting ? "Salvando..." : "Salvar Briefing"}
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      <div className="max-w-4xl mx-auto p-4 md:p-6 space-y-6">
+        {/* Header com gradiente */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
+          <div className="flex items-center justify-between mb-4">
+            {onBack && (
+              <Button
+                variant="ghost"
+                onClick={onBack}
+                className="text-white hover:text-blue-200 hover:bg-white/10 rounded-xl"
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                <span className="hidden md:inline">Voltar ao Painel</span>
+                <span className="md:hidden">Voltar</span>
               </Button>
-            </form>
-          </Form>
-        </CardContent>
-      </Card>
-
-      {/* Botão de voltar para mobile */}
-      {onBack && (
-        <div className="md:hidden pt-4 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={onBack}
-            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Painel Principal
-          </Button>
+            )}
+            <div className="flex items-center gap-2 ml-auto">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-medium">Tráfego Porcents</span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-3 mb-2">
+            {success ? (
+              <CheckCircle className="w-6 h-6 text-green-300" />
+            ) : (
+              <FileText className="w-6 h-6 text-blue-200" />
+            )}
+            <h1 className="text-2xl md:text-3xl font-bold">
+              Briefing do Produto
+            </h1>
+          </div>
+          <p className="text-blue-100 text-sm md:text-base">
+            Conte-nos tudo sobre seu produto ou serviço para criarmos campanhas incríveis
+          </p>
         </div>
-      )}
+
+        {/* Formulário */}
+        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl overflow-hidden">
+          <CardContent className="p-6 md:p-8">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                {/* Nome do Produto */}
+                <FormField
+                  control={form.control}
+                  name="nome_produto"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <FileText className="h-4 w-4 text-blue-600" />
+                        Nome do Produto/Serviço
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ex: Curso de Marketing Digital" 
+                          className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all"
+                          {...field} 
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Público Alvo */}
+                <FormField
+                  control={form.control}
+                  name="publico_alvo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <Users className="h-4 w-4 text-purple-600" />
+                        Público Alvo
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Descrição Resumida */}
+                <FormField
+                  control={form.control}
+                  name="descricao_resumida"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <MessageSquare className="h-4 w-4 text-green-600" />
+                        Descrição Resumida do Produto/Serviço
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Diferencial */}
+                <FormField
+                  control={form.control}
+                  name="diferencial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <Star className="h-4 w-4 text-yellow-600" />
+                        Diferencial do Produto/Serviço
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Investimento Diário */}
+                <FormField
+                  control={form.control}
+                  name="investimento_diario"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <DollarSign className="h-4 w-4 text-green-600" />
+                        Investimento Diário (R$)
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          type="number" 
+                          step="0.01" 
+                          placeholder="Ex: 50.00"
+                          className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all"
+                          {...field}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Comissão Aceita */}
+                <FormField
+                  control={form.control}
+                  name="comissao_aceita"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <Lightbulb className="h-4 w-4 text-orange-600" />
+                        Aceita trabalhar por comissão?
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl transition-all">
+                            <SelectValue placeholder="Selecione uma opção" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent className="bg-white border-gray-200 shadow-xl rounded-xl">
+                          <SelectItem value="sim" className="hover:bg-green-50 rounded-lg">
+                            Sim, aceito trabalhar por comissão
+                          </SelectItem>
+                          <SelectItem value="nao" className="hover:bg-red-50 rounded-lg">
+                            Não, prefiro pagamento fixo
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Observações Finais */}
+                <FormField
+                  control={form.control}
+                  name="observacoes_finais"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
+                        <MessageSquare className="h-4 w-4 text-indigo-600" />
+                        Observações Finais (Opcional)
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Informações adicionais que considera importante para a campanha."
+                          className="min-h-[80px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* Botão de Submit */}
+                <div className="pt-4">
+                  <Button 
+                    type="submit" 
+                    disabled={isSubmitting} 
+                    className="w-full h-14 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-[1.02]"
+                  >
+                    {isSubmitting ? (
+                      <div className="flex items-center gap-2">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        Salvando Briefing...
+                      </div>
+                    ) : success ? (
+                      <div className="flex items-center gap-2">
+                        <CheckCircle className="h-5 w-5" />
+                        Briefing Salvo!
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <Sparkles className="h-5 w-5" />
+                        Salvar Briefing
+                      </div>
+                    )}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+
+        {/* Botão de voltar para mobile */}
+        {onBack && (
+          <div className="md:hidden">
+            <Button
+              variant="outline"
+              onClick={onBack}
+              className="w-full h-12 border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar ao Painel Principal
+            </Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
