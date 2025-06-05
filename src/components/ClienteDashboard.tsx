@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
@@ -27,17 +26,18 @@ export function ClienteDashboard() {
     authLoading, 
     dataLoading,
     activeTab,
-    isMobile
+    isMobile,
+    userAgent: navigator.userAgent
   })
 
   // Show loading while authentication is being checked
   if (authLoading) {
     console.log('⏳ [ClienteDashboard] Mostrando loading de autenticação')
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#0a0a0a'}}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
-          <p className="text-trafego-text-secondary">Verificando autenticação...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-600">Verificando autenticação...</p>
         </div>
       </div>
     )
@@ -47,9 +47,9 @@ export function ClienteDashboard() {
   if (!user) {
     console.log('❌ [ClienteDashboard] Usuário não autenticado, redirecionando...')
     return (
-      <div className="min-h-screen flex items-center justify-center" style={{backgroundColor: '#0a0a0a'}}>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="text-center">
-          <p className="text-trafego-text-secondary">Redirecionando para login...</p>
+          <p className="text-gray-600">Redirecionando para login...</p>
         </div>
       </div>
     )
@@ -67,8 +67,8 @@ export function ClienteDashboard() {
       return (
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-trafego-accent-primary mx-auto mb-2"></div>
-            <p className="text-trafego-text-secondary">Carregando dados...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+            <p className="text-gray-600">Carregando dados...</p>
           </div>
         </div>
       )
@@ -139,15 +139,15 @@ export function ClienteDashboard() {
     }
   }
 
-  // Layout mobile otimizado - SEM SidebarProvider
+  // Layout mobile otimizado
   if (isMobile) {
     return (
-      <div className="min-h-screen bg-gray-950">
-        <div className="flex items-center justify-between p-4 bg-gray-900 border-b border-gray-800">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
           <div className="flex items-center gap-3">
             <div className="relative group">
-              <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20"></div>
-              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-3 py-2 text-sm">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-20"></div>
+              <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold px-3 py-2 text-sm">
                 <span>Tráfego</span>
                 <span className="text-orange-300">Porcents</span>
               </div>
@@ -155,7 +155,7 @@ export function ClienteDashboard() {
           </div>
           
           <div className="flex items-center gap-3">
-            <div className="text-white text-sm font-medium">
+            <div className="text-gray-800 text-sm font-medium">
               {activeTab === 'overview' && 'Painel Principal'}
               {activeTab === 'briefing' && 'Briefing'}
               {activeTab === 'arquivos' && 'Materiais'}
@@ -167,7 +167,7 @@ export function ClienteDashboard() {
           </div>
         </div>
         
-        <main className="pb-20">
+        <main className="pb-20 min-h-screen">
           {renderContent()}
         </main>
         

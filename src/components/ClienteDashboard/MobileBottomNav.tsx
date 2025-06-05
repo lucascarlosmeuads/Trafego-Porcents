@@ -22,7 +22,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-gray-900 border-t border-gray-800 z-50 md:hidden">
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden shadow-lg">
       <div className="grid grid-cols-5 h-16">
         {navItems.map((item) => {
           const isActive = activeTab === item.id
@@ -31,14 +31,19 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center justify-center space-y-1 transition-colors ${
+              className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 ${
                 isActive 
-                  ? 'text-teal-400 bg-teal-900/20' 
-                  : 'text-gray-400 hover:text-gray-300'
+                  ? 'text-blue-600 bg-gradient-to-t from-blue-50 to-transparent scale-105' 
+                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <item.icon className="h-5 w-5" />
-              <span className="text-xs font-medium">{item.label}</span>
+              <item.icon className={`h-5 w-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+              <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
+                {item.label}
+              </span>
+              {isActive && (
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-full" />
+              )}
             </button>
           )
         })}

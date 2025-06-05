@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -5,11 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { useToast } from '@/hooks/use-toast'
 import { ForgotPasswordForm } from '@/components/ForgotPasswordForm'
+import { Eye, EyeOff, Loader2, Smartphone } from 'lucide-react'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const { signIn } = useAuth()
   const { toast } = useToast()
@@ -20,11 +23,9 @@ export function LoginForm() {
 
     console.log('🔐 [LoginForm] === INICIANDO PROCESSO DE LOGIN ===')
     console.log('📧 [LoginForm] Email:', email)
+    console.log('📱 [LoginForm] Mobile User Agent:', navigator.userAgent)
 
     try {
-      // Login flow
-      console.log('🔑 [LoginForm] Tentando fazer login...')
-      
       if (!email || !password) {
         toast({
           title: "Erro",
@@ -39,7 +40,6 @@ export function LoginForm() {
       if (error) {
         console.error('❌ [LoginForm] Erro de login:', error)
         
-        // Mensagens de erro mais específicas para login
         let errorMessage = "Email ou senha incorretos. Verifique suas credenciais."
         
         if (error.message.includes('Invalid login credentials')) {
@@ -68,7 +68,7 @@ export function LoginForm() {
       console.error('💥 [LoginForm] Erro inesperado:', error)
       toast({
         title: "Erro",
-        description: "Algo deu errado. Tente novamente.",
+        description: "Algo deu errado. Verifique sua conexão e tente novamente.",
         variant: "destructive"
       })
     } finally {
@@ -78,29 +78,33 @@ export function LoginForm() {
 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
         <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+        <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-6">
             <img 
               src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png"
               alt="Tráfego Porcents Logo" 
-              className="h-32 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
-          <CardTitle className="text-2xl font-bold">Painel de Gestão</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-2xl font-bold text-gray-800">Painel de Gestão</CardTitle>
+          <CardDescription className="text-gray-600">
             Entre com suas credenciais
           </CardDescription>
+          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-blue-600">
+            <Smartphone className="h-4 w-4" />
+            <span>Otimizado para mobile</span>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <Input
@@ -109,31 +113,53 @@ export function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full"
+                className="w-full h-12 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base"
                 disabled={loading}
+                autoComplete="email"
+                inputMode="email"
               />
             </div>
-            <div>
+            <div className="relative">
               <Input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Senha"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full"
+                className="w-full h-12 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base pr-12"
                 minLength={6}
                 disabled={loading}
+                autoComplete="current-password"
               />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                disabled={loading}
+              >
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+              </button>
             </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? 'Processando...' : 'Entrar'}
+            <Button 
+              type="submit" 
+              className="w-full h-12 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-xl shadow-lg text-base" 
+              disabled={loading}
+            >
+              {loading ? (
+                <div className="flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Processando...
+                </div>
+              ) : (
+                'Entrar'
+              )}
             </Button>
             
-            <div className="text-center">
+            <div className="text-center pt-2">
               <Button
                 type="button"
                 variant="link"
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-blue-600 hover:text-blue-800 h-auto p-0"
                 onClick={() => setShowForgotPassword(true)}
                 disabled={loading}
               >

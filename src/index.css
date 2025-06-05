@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -113,6 +112,38 @@
 
 /* Componentes com melhor contraste */
 @layer components {
+  /* Mobile-first optimizations */
+  .mobile-safe {
+    background-color: white !important;
+    color: #1f2937 !important;
+  }
+  
+  .mobile-input {
+    background-color: white !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+  
+  .mobile-input:focus {
+    border-color: #3b82f6 !important;
+    outline: 2px solid rgba(59, 130, 246, 0.2) !important;
+  }
+  
+  .mobile-button {
+    min-height: 44px !important; /* iOS touch target minimum */
+    font-size: 16px !important;
+    background-color: white !important;
+    color: #1f2937 !important;
+    border: 1px solid #d1d5db !important;
+  }
+  
+  .mobile-safe-nav {
+    background-color: white !important;
+    border-color: #e5e7eb !important;
+    box-shadow: 0 -4px 6px -1px rgb(0 0 0 / 0.1) !important;
+  }
+  
   .text-contrast {
     color: hsl(var(--text-primary));
   }
@@ -264,25 +295,50 @@
 
   /* Mobile specific improvements */
   @media (max-width: 768px) {
+    /* Prevent zoom on input focus in iOS */
+    input[type="email"],
+    input[type="password"],
+    input[type="text"],
+    input[type="number"],
+    textarea,
+    select {
+      font-size: 16px !important;
+    }
+    
     .mobile-text {
       font-size: 16px;
       line-height: 1.5;
-      color: hsl(var(--foreground)) !important;
+      color: #1f2937 !important;
     }
     
     .mobile-header {
       font-size: 18px;
       font-weight: 600;
-      color: hsl(var(--foreground)) !important;
+      color: #1f2937 !important;
       margin-bottom: 8px;
     }
     
     .mobile-button {
       min-height: 44px;
       font-size: 16px;
-      color: hsl(var(--primary-foreground)) !important;
-      background-color: hsl(var(--primary));
-      border: 1px solid hsl(var(--border));
+      color: #1f2937 !important;
+      background-color: white;
+      border: 1px solid #d1d5db;
+    }
+    
+    /* Prevent black screens */
+    .mobile-container {
+      background-color: white !important;
+      min-height: 100vh;
+    }
+    
+    /* Better touch targets */
+    button, 
+    [role="button"],
+    input[type="submit"],
+    input[type="button"] {
+      min-height: 44px;
+      min-width: 44px;
     }
   }
 }
