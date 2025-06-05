@@ -86,22 +86,28 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-md bg-white/90 backdrop-blur-sm border-0 shadow-xl">
+      <Card className="w-full max-w-md bg-white border border-gray-200 shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-6">
             <img 
               src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png"
               alt="Tráfego Porcents Logo" 
               className="h-24 w-auto object-contain"
+              onError={(e) => {
+                console.log('Erro ao carregar logo:', e)
+                e.currentTarget.style.display = 'none'
+              }}
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-800">Painel de Gestão</CardTitle>
-          <CardDescription className="text-gray-600">
+          <CardTitle className="text-2xl font-bold text-gray-900 !text-gray-900">
+            Painel de Gestão
+          </CardTitle>
+          <CardDescription className="text-gray-700 !text-gray-700">
             Entre com suas credenciais
           </CardDescription>
           <div className="flex items-center justify-center gap-2 mt-2 text-sm text-blue-600">
             <Smartphone className="h-4 w-4" />
-            <span>Otimizado para mobile</span>
+            <span className="text-blue-600 !text-blue-600">Otimizado para mobile</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -113,7 +119,7 @@ export function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base"
+                className="w-full h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base text-gray-900 placeholder:text-gray-500"
                 disabled={loading}
                 autoComplete="email"
                 inputMode="email"
@@ -126,7 +132,7 @@ export function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-12 bg-white border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base pr-12"
+                className="w-full h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base pr-12 text-gray-900 placeholder:text-gray-500"
                 minLength={6}
                 disabled={loading}
                 autoComplete="current-password"
@@ -134,7 +140,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors"
                 disabled={loading}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -148,10 +154,10 @@ export function LoginForm() {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Processando...
+                  <span className="text-white">Processando...</span>
                 </div>
               ) : (
-                'Entrar'
+                <span className="text-white">Entrar</span>
               )}
             </Button>
             
@@ -159,7 +165,7 @@ export function LoginForm() {
               <Button
                 type="button"
                 variant="link"
-                className="text-sm text-blue-600 hover:text-blue-800 h-auto p-0"
+                className="text-sm text-blue-600 hover:text-blue-800 h-auto p-0 !text-blue-600"
                 onClick={() => setShowForgotPassword(true)}
                 disabled={loading}
               >
