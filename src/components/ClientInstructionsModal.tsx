@@ -24,7 +24,9 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 🔗 Acesse: https://login.trafegoporcents.com
 
-💬 IMPORTANTE: Após fazer login, entre em contato via chat no sistema para ser atendido pelo seu gestor auxiliar que vai montar sua estratégia personalizada baseada na estratégia oficial da Tráfego Porcents.
+Esse processo completo leva até 15 dias úteis, justamente pra garantir que tudo saia alinhado com seu público e com os melhores resultados.
+
+Mas fica tranquilo que dependendo do seu projeto é bem mais rápido que isso, pedimos esse prazo pra garantirmos que não vamos atrasar e que vamos fazer com qualidade. Vou te atualizando em cada etapa, e qualquer dúvida ou ideia que surgir, estamos por aqui!
 
 O passo a passo com as instruções vai estar logo na primeira tela assim que logar. Seja bem-vindo!
 
