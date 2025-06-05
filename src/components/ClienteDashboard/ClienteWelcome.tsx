@@ -1,23 +1,14 @@
 
-import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { 
-  FileText, 
-  Upload, 
-  TrendingUp, 
-  Play,
-  Headphones,
-  CheckCircle,
-  Clock,
-  AlertCircle,
-  Eye,
-  Folder
-} from 'lucide-react'
-import { BriefingMaterialsModal } from '@/components/ClientesTable/BriefingMaterialsModal'
 import { useAuth } from '@/hooks/useAuth'
-import { useClienteData } from '@/hooks/useClienteData'
+import { useProfileData } from '@/hooks/useProfileData'
+import { useIsMobile } from '@/hooks/useIsMobile'
+import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
+import { OnboardingSteps } from './OnboardingSteps'
+import { MobileOnboardingSteps } from './MobileOnboardingSteps'
+import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { FileText, Upload, TrendingUp, Play, Headphones, User, Settings } from 'lucide-react'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
@@ -25,197 +16,163 @@ interface ClienteWelcomeProps {
 
 export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const { user } = useAuth()
-  const { briefing, arquivos, vendas, loading } = useClienteData(user?.email || '')
+  const { profileData, updateProfileData } = useProfileData('cliente')
+  const isMobile = useIsMobile()
 
-  console.log('🔍 [ClienteWelcome] Dados carregados:', {
-    email: user?.email,
-    temBriefing: !!briefing,
-    arquivosCount: arquivos.length,
-    vendasCount: vendas.length,
-    loading
-  })
-
-  const getBriefingStatus = () => {
-    if (loading) return { text: 'Carregando...', color: 'bg-yellow-100 text-yellow-800', icon: Clock }
-    if (!briefing) return { text: 'Pendente', color: 'bg-red-100 text-red-800', icon: AlertCircle }
-    return { text: 'Preenchido', color: 'bg-green-100 text-green-800', icon: CheckCircle }
-  }
-
-  const briefingStatus = getBriefingStatus()
-
-  const cards = [
+  const quickActions = [
     {
-      title: 'Briefing do Produto',
-      description: 'Preencha as informações sobre seu produto/serviço',
+      title: 'Preencher Briefing',
+      description: 'Complete as informações do seu projeto',
       icon: FileText,
-      action: 'briefing',
-      status: briefingStatus,
-      showMaterials: !!briefing
+      action: () => onTabChange('briefing'),
+      color: 'bg-blue-500'
     },
     {
-      title: 'Materiais e Arquivos',
-      description: 'Envie logos, imagens e outros materiais',
+      title: 'Enviar Materiais',
+      description: 'Faça upload de logos, fotos e outros materiais',
       icon: Upload,
-      action: 'arquivos',
-      status: {
-        text: `${arquivos.length} arquivo(s)`,
-        color: arquivos.length > 0 ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-800',
-        icon: Upload
-      },
-      showMaterials: arquivos.length > 0
+      action: () => onTabChange('arquivos'),
+      color: 'bg-green-500'
     },
     {
-      title: 'Vendas Realizadas',
-      description: 'Acompanhe seus resultados de vendas',
+      title: 'Registrar Vendas',
+      description: 'Acompanhe o desempenho das suas campanhas',
       icon: TrendingUp,
-      action: 'vendas',
-      status: {
-        text: `${vendas.length} venda(s)`,
-        color: vendas.length > 0 ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800',
-        icon: TrendingUp
-      }
+      action: () => onTabChange('vendas'),
+      color: 'bg-purple-500'
     },
     {
-      title: 'Tutoriais',
+      title: 'Assistir Tutoriais',
       description: 'Aprenda com nossos vídeos explicativos',
       icon: Play,
-      action: 'tutoriais',
-      status: {
-        text: 'Disponível',
-        color: 'bg-purple-100 text-purple-800',
-        icon: Play
-      }
+      action: () => onTabChange('tutoriais'),
+      color: 'bg-orange-500'
     },
     {
       title: 'Suporte Rápido',
-      description: 'Tire suas dúvidas e receba ajuda',
+      description: 'Acesse nossa central de atendimento via SAC para tirar dúvidas e receber suporte',
       icon: Headphones,
-      action: 'suporte',
-      status: {
-        text: 'Online',
-        color: 'bg-green-100 text-green-800',
-        icon: Headphones
-      }
+      action: () => onTabChange('suporte'),
+      color: 'bg-teal-500'
     }
   ]
 
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
+
+  // Se for mobile, usar componente simplificado
+  if (isMobile) {
+    return (
+      <div className="pb-20"> {/* Espaço para navegação inferior */}
+        <AvisoMudancaAtendimento />
+        <MobileOnboardingSteps onTabChange={onTabChange} />
+      </div>
+    )
+  }
+
+  // Versão desktop mantida igual
   return (
-    <div className="space-y-6 p-4 md:p-6">
+    <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
       {/* Header de Boas-vindas */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white shadow-xl">
-        <h1 className="text-2xl md:text-3xl font-bold mb-2">
-          Bem-vindo ao seu Painel! 🚀
+      <div className="text-center space-y-4">
+        <div className="inline-block">
+          <div className="relative group cursor-pointer mb-4">
+            <div className="absolute inset-0 bg-gradient-hero rounded-2xl blur-lg opacity-30 group-hover:opacity-50 transition-opacity duration-300"></div>
+            <div className="relative bg-gradient-hero text-white rounded-2xl font-bold px-8 py-4 text-2xl transition-transform duration-300 hover:scale-105">
+              <span>Tráfego</span>
+              <span className="text-orange-300">Porcents</span>
+            </div>
+          </div>
+        </div>
+        
+        <h1 className="text-3xl font-bold text-white">
+          Bem-vindo ao seu painel! 🎉
         </h1>
-        <p className="text-blue-100 text-sm md:text-base opacity-90">
-          Gerencie suas campanhas, materiais e acompanhe seus resultados
+        <p className="text-gray-400 max-w-2xl mx-auto">
+          Aqui você pode acompanhar o progresso da sua campanha, enviar materiais, 
+          preencher o briefing e muito mais. Vamos começar?
         </p>
       </div>
 
-      {/* Cards de Ações Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {cards.map((card) => {
-          const StatusIcon = card.status.icon
-          
-          return (
-            <Card key={card.action} className="hover:shadow-lg transition-all duration-200 border-0 shadow-md bg-white/80 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
-                      <card.icon className="w-5 h-5 text-white" />
-                    </div>
-                    <div>
-                      <CardTitle className="text-lg font-semibold text-gray-800">
-                        {card.title}
-                      </CardTitle>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className={`${card.status.color} border-0 font-medium`}>
-                    <StatusIcon className="w-3 h-3 mr-1" />
-                    {card.status.text}
-                  </Badge>
-                  
-                  {/* Botão para ver materiais quando disponível */}
-                  {card.showMaterials && (
-                    <BriefingMaterialsModal
-                      emailCliente={user?.email || ''}
-                      nomeCliente={user?.email?.split('@')[0] || 'Cliente'}
-                      filterType={card.action === 'briefing' ? 'briefing' : 'creative'}
-                      trigger={
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="h-7 px-2 text-xs border-gray-300 hover:bg-gray-50"
-                        >
-                          <Folder className="w-3 h-3 mr-1" />
-                          Ver Materiais
-                        </Button>
-                      }
-                    />
-                  )}
-                </div>
-              </CardHeader>
-              
-              <CardContent className="pt-0">
-                <p className="text-sm text-gray-600 mb-4">
-                  {card.description}
-                </p>
-                
-                <Button 
-                  onClick={() => onTabChange(card.action)}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0 shadow-md hover:shadow-lg transition-all duration-200"
-                >
-                  {card.action === 'briefing' && !briefing && 'Preencher Briefing'}
-                  {card.action === 'briefing' && briefing && 'Ver/Editar Briefing'}
-                  {card.action === 'arquivos' && 'Gerenciar Arquivos'}
-                  {card.action === 'vendas' && 'Ver Vendas'}
-                  {card.action === 'tutoriais' && 'Assistir Tutoriais'}
-                  {card.action === 'suporte' && 'Obter Suporte'}
-                </Button>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+      {/* Aviso de Mudança */}
+      <AvisoMudancaAtendimento />
 
-      {/* Resumo Rápido */}
-      <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-md">
+      {/* Seção de Perfil */}
+      <Card className="bg-gray-900 border-gray-800">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-gray-800">
-            <Eye className="w-5 h-5 text-blue-600" />
-            Resumo da Conta
+          <CardTitle className="text-white flex items-center gap-2">
+            <User className="h-5 w-5" />
+            Seu Perfil
           </CardTitle>
+          <CardDescription className="text-gray-400">
+            Gerencie suas informações pessoais e foto de perfil
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-            <div className="p-3 bg-blue-50 rounded-lg">
-              <div className="text-2xl font-bold text-blue-600">
-                {briefing ? '1' : '0'}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <ProfileAvatarUpload
+                currentAvatarUrl={profileData?.avatar_url}
+                userName={profileData?.nome_display || user?.email || 'Cliente'}
+                userType="cliente"
+                onAvatarChange={handleAvatarChange}
+                size="lg"
+                showEditButton={true}
+              />
+              <div>
+                <h3 className="text-lg font-semibold text-white">
+                  {profileData?.nome_display || 'Cliente'}
+                </h3>
+                <p className="text-gray-400 text-sm">
+                  {user?.email}
+                </p>
+                <p className="text-teal-400 text-xs">
+                  ✅ Conta ativa
+                </p>
               </div>
-              <div className="text-xs text-blue-600 font-medium">Briefing</div>
             </div>
-            <div className="p-3 bg-purple-50 rounded-lg">
-              <div className="text-2xl font-bold text-purple-600">
-                {arquivos.length}
-              </div>
-              <div className="text-xs text-purple-600 font-medium">Arquivos</div>
-            </div>
-            <div className="p-3 bg-green-50 rounded-lg">
-              <div className="text-2xl font-bold text-green-600">
-                {vendas.length}
-              </div>
-              <div className="text-xs text-green-600 font-medium">Vendas</div>
-            </div>
-            <div className="p-3 bg-orange-50 rounded-lg">
-              <div className="text-2xl font-bold text-orange-600">100%</div>
-              <div className="text-xs text-orange-600 font-medium">Suporte</div>
-            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-gray-700 text-gray-300 hover:text-white"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Configurações
+            </Button>
           </div>
         </CardContent>
       </Card>
+
+      {/* Componente de Onboarding Interativo */}
+      <OnboardingSteps onTabChange={onTabChange} />
+
+      {/* Grid de Ações Rápidas */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {quickActions.map((action, index) => (
+          <Card 
+            key={index} 
+            className="bg-gray-900 border-gray-800 hover:border-gray-700 transition-all duration-200 cursor-pointer group"
+            onClick={action.action}
+          >
+            <CardContent className="p-6">
+              <div className="flex items-start space-x-4">
+                <div className={`${action.color} p-3 rounded-lg group-hover:scale-110 transition-transform duration-200`}>
+                  <action.icon className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-white group-hover:text-teal-400 transition-colors">
+                    {action.title}
+                  </h3>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {action.description}
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
     </div>
   )
 }

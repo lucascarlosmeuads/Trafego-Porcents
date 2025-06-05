@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
-import { CheckCircle, Paperclip, Upload, X, ArrowLeft, Folder, Eye } from 'lucide-react'
+import { CheckCircle, Paperclip, Upload, X, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -13,8 +13,6 @@ import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { supabase } from '@/lib/supabase'
-import { BriefingMaterialsModal } from '@/components/ClientesTable/BriefingMaterialsModal'
-import { useAuth } from '@/hooks/useAuth'
 
 interface ArquivoCliente {
   id: string
@@ -49,7 +47,6 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
   const [uploading, setUploading] = useState(false)
   const [descricao, setDescricao] = useState('')
   const { toast } = useToast()
-  const { user } = useAuth()
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -184,27 +181,10 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5" />
-              Envio de Arquivos e Materiais
-            </CardTitle>
-            
-            {/* Botão para ver todos os materiais */}
-            {arquivos.length > 0 && (
-              <BriefingMaterialsModal
-                emailCliente={emailCliente}
-                nomeCliente={user?.email?.split('@')[0] || 'Cliente'}
-                filterType="creative"
-                trigger={
-                  <Button variant="outline" size="sm" className="flex items-center gap-2">
-                    <Folder className="w-4 h-4" />
-                    Ver Todos os Materiais
-                  </Button>
-                }
-              />
-            )}
-          </div>
+          <CardTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5" />
+            Envio de Arquivos e Materiais
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <p className="text-muted-foreground">
@@ -270,29 +250,12 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
           <Separator />
 
           <div>
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-md font-medium">Arquivos Enviados Anteriormente</h3>
-              {arquivos.length > 3 && (
-                <BriefingMaterialsModal
-                  emailCliente={emailCliente}
-                  nomeCliente={user?.email?.split('@')[0] || 'Cliente'}
-                  filterType="creative"
-                  trigger={
-                    <Button variant="ghost" size="sm" className="text-blue-600 hover:text-blue-800">
-                      <Eye className="w-4 h-4 mr-1" />
-                      Ver todos ({arquivos.length})
-                    </Button>
-                  }
-                />
-              )}
-            </div>
-            
+            <h3 className="text-md font-medium">Arquivos Enviados Anteriormente</h3>
             {arquivos.length === 0 ? (
               <p className="text-muted-foreground mt-2">Nenhum arquivo enviado ainda.</p>
             ) : (
               <div className="mt-4 space-y-3">
-                {/* Mostrar apenas os 3 primeiros arquivos */}
-                {arquivos.slice(0, 3).map((arquivo) => (
+                {arquivos.map((arquivo) => (
                   <Card key={arquivo.id}>
                     <CardContent className="flex items-start justify-between p-4">
                       <div className="space-y-1">
@@ -318,22 +281,6 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
                     </CardContent>
                   </Card>
                 ))}
-                
-                {arquivos.length > 3 && (
-                  <div className="text-center py-2">
-                    <BriefingMaterialsModal
-                      emailCliente={emailCliente}
-                      nomeCliente={user?.email?.split('@')[0] || 'Cliente'}
-                      filterType="creative"
-                      trigger={
-                        <Button variant="outline" className="text-blue-600 hover:text-blue-800">
-                          <Folder className="w-4 h-4 mr-2" />
-                          Ver mais {arquivos.length - 3} arquivo(s)
-                        </Button>
-                      }
-                    />
-                  </div>
-                )}
               </div>
             )}
           </div>
