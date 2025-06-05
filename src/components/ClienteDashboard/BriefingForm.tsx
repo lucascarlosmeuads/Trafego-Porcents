@@ -16,12 +16,15 @@ import {
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { 
   ArrowLeft, 
   CheckCircle, 
   FileText, 
-  Sparkles
+  Sparkles,
+  AlertCircle
 } from 'lucide-react'
 
 const briefingFormSchema = z.object({
@@ -40,8 +43,20 @@ const briefingFormSchema = z.object({
   diferencial: z.string().min(10, {
     message: "Diferencial do produto precisa ter pelo menos 10 caracteres.",
   }),
+  quer_site: z.enum(['sim', 'nao'], {
+    required_error: "Por favor, selecione se você quer um site.",
+  }),
+  nome_marca: z.string().optional(),
   observacoes_finais: z.string().optional(),
-})
+}).refine((data) => {
+  if (data.quer_site === 'sim' && (!data.nome_marca || data.nome_marca.trim().length < 2)) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Nome da marca é obrigatório quando você quer um site.",
+  path: ["nome_marca"],
+});
 
 interface BriefingCliente {
   nome_produto: string
@@ -49,6 +64,8 @@ interface BriefingCliente {
   descricao_resumida: string
   diferencial: string
   investimento_diario: number
+  quer_site: boolean
+  nome_marca?: string | null
   observacoes_finais?: string | null
 }
 
@@ -76,9 +93,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
       descricao_resumida: briefing?.descricao_resumida || "",
       publico_alvo: briefing?.publico_alvo || "",
       diferencial: briefing?.diferencial || "",
+      quer_site: briefing?.quer_site ? 'sim' : 'nao',
+      nome_marca: briefing?.nome_marca || "",
       observacoes_finais: briefing?.observacoes_finais || "",
     },
   })
+
+  const watchQuerSite = form.watch('quer_site')
 
   useEffect(() => {
     if (briefing) {
@@ -89,6 +110,8 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
         descricao_resumida: briefing.descricao_resumida || "",
         publico_alvo: briefing.publico_alvo || "",
         diferencial: briefing.diferencial || "",
+        quer_site: briefing.quer_site ? 'sim' : 'nao',
+        nome_marca: briefing.nome_marca || "",
         observacoes_finais: briefing.observacoes_finais || "",
       })
     }
@@ -110,6 +133,8 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
         descricao_resumida: values.descricao_resumida.trim(),
         publico_alvo: values.publico_alvo.trim(),
         diferencial: values.diferencial.trim(),
+        quer_site: values.quer_site === 'sim',
+        nome_marca: values.quer_site === 'sim' ? values.nome_marca?.trim() || null : null,
         observacoes_finais: values.observacoes_finais?.trim() || null,
       }
 
@@ -206,13 +231,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="nome_produto"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         📦 Nome do Produto/Serviço
                       </FormLabel>
                       <FormControl>
                         <Input 
                           placeholder="Ex: Curso de Marketing Digital" 
-                          className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all"
+                          className="h-12 border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all text-gray-800"
                           {...field} 
                         />
                       </FormControl>
@@ -227,7 +252,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="investimento_diario"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         💰 Investimento Diário (R$)
                       </FormLabel>
                       <FormControl>
@@ -235,7 +260,7 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                           type="number" 
                           step="0.01" 
                           placeholder="Ex: 50.00"
-                          className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all"
+                          className="h-12 border-gray-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all text-gray-800"
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
@@ -251,13 +276,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="descricao_resumida"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         📝 Descrição Resumida do Produto/Serviço
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all resize-none"
+                          className="min-h-[100px] border-gray-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all resize-none text-gray-800"
                           {...field}
                         />
                       </FormControl>
@@ -272,13 +297,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="publico_alvo"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         🎯 Público-Alvo
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all resize-none"
+                          className="min-h-[100px] border-gray-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all resize-none text-gray-800"
                           {...field}
                         />
                       </FormControl>
@@ -293,13 +318,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="diferencial"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         ⭐ Diferencial do Produto/Serviço
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl transition-all resize-none"
+                          className="min-h-[100px] border-gray-200 bg-white focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl transition-all resize-none text-gray-800"
                           {...field}
                         />
                       </FormControl>
@@ -307,6 +332,81 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                     </FormItem>
                   )}
                 />
+
+                {/* 🌐 Quer Site */}
+                <FormField
+                  control={form.control}
+                  name="quer_site"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
+                        🌐 Você quer um site?
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="sim" id="site-sim" />
+                            <Label htmlFor="site-sim" className="text-gray-700 cursor-pointer">
+                              Sim, quero um site
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="nao" id="site-nao" />
+                            <Label htmlFor="site-nao" className="text-gray-700 cursor-pointer">
+                              Não, não quero um site
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 🏷️ Nome da Marca - Aparece apenas se quer site */}
+                {watchQuerSite === 'sim' && (
+                  <>
+                    <FormField
+                      control={form.control}
+                      name="nome_marca"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
+                            🏷️ Nome da Marca
+                          </FormLabel>
+                          <FormControl>
+                            <Input 
+                              placeholder="Ex: Minha Empresa Digital" 
+                              className="h-12 border-gray-200 bg-white focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl transition-all text-gray-800"
+                              {...field} 
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Aviso sobre upload da logo */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                      <div className="flex items-start gap-3">
+                        <AlertCircle className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="text-blue-800 font-medium text-sm">
+                            📤 Importante: Envio da Logo
+                          </p>
+                          <p className="text-blue-700 text-sm mt-1">
+                            Como você quer um site, não esqueça de enviar a logo da sua marca na seção "Materiais" do sistema. 
+                            Isso é essencial para criarmos seu site com a identidade visual correta.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
                 
                 {/* 💬 Observações Finais */}
                 <FormField
@@ -314,13 +414,13 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   name="observacoes_finais"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
                         💬 Observações Finais (Opcional)
                       </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Ex: Informações adicionais que considera importante para a campanha."
-                          className="min-h-[80px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl transition-all resize-none"
+                          className="min-h-[80px] border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl transition-all resize-none text-gray-800"
                           {...field}
                         />
                       </FormControl>

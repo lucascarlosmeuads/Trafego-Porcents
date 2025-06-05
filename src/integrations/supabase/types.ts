@@ -52,9 +52,11 @@ export type Database = {
           id: string
           investimento_diario: number | null
           liberar_edicao: boolean | null
+          nome_marca: string | null
           nome_produto: string
           observacoes_finais: string | null
           publico_alvo: string | null
+          quer_site: boolean | null
           updated_at: string
         }
         Insert: {
@@ -66,9 +68,11 @@ export type Database = {
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
+          nome_marca?: string | null
           nome_produto: string
           observacoes_finais?: string | null
           publico_alvo?: string | null
+          quer_site?: boolean | null
           updated_at?: string
         }
         Update: {
@@ -80,9 +84,11 @@ export type Database = {
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
+          nome_marca?: string | null
           nome_produto?: string
           observacoes_finais?: string | null
           publico_alvo?: string | null
+          quer_site?: boolean | null
           updated_at?: string
         }
         Relationships: []

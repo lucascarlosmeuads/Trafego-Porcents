@@ -1,10 +1,9 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Eye, AlertCircle, RefreshCw } from 'lucide-react'
+import { FileText, Eye, AlertCircle, RefreshCw, Globe, Tag } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface BriefingData {
@@ -14,6 +13,8 @@ interface BriefingData {
   publico_alvo: string
   diferencial: string
   investimento_diario: number
+  quer_site: boolean
+  nome_marca: string | null
   comissao_aceita: string
   observacoes_finais: string
   created_at: string
@@ -233,45 +234,71 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Nome do Produto/Serviço</h4>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">📦 Nome do Produto/Serviço</h4>
                   <p className="text-foreground">{briefingData.nome_produto || 'Não informado'}</p>
                 </div>
 
                 <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Descrição Resumida</h4>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">💰 Investimento Diário</h4>
+                  <p className="text-foreground">
+                    {briefingData.investimento_diario 
+                      ? `R$ ${Number(briefingData.investimento_diario).toFixed(2)}`
+                      : 'Não informado'
+                    }
+                  </p>
+                </div>
+
+                <div>
+                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">📝 Descrição Resumida</h4>
                   <p className="text-foreground">{briefingData.descricao_resumida || 'Não informado'}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Público Alvo</h4>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Público Alvo</h4>
                     <p className="text-foreground">{briefingData.publico_alvo || 'Não informado'}</p>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Diferencial</h4>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">⭐ Diferencial</h4>
                     <p className="text-foreground">{briefingData.diferencial || 'Não informado'}</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Investimento Diário</h4>
-                    <p className="text-foreground">
-                      {briefingData.investimento_diario 
-                        ? `R$ ${Number(briefingData.investimento_diario).toFixed(2)}`
-                        : 'Não informado'
-                      }
-                    </p>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Comissão Aceita</h4>
-                    <p className="text-foreground">{briefingData.comissao_aceita || 'Não informado'}</p>
+                {/* Nova seção para Site */}
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
+                    <Globe className="w-4 h-4" />
+                    🌐 Informações do Site
+                  </h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-xs text-blue-600 font-medium mb-1">Quer Site?</p>
+                      <Badge 
+                        variant={briefingData.quer_site ? "default" : "secondary"}
+                        className={briefingData.quer_site ? "bg-green-500 hover:bg-green-600" : ""}
+                      >
+                        {briefingData.quer_site ? "✅ Sim" : "❌ Não"}
+                      </Badge>
+                    </div>
+                    {briefingData.quer_site && (
+                      <div>
+                        <p className="text-xs text-blue-600 font-medium mb-1">🏷️ Nome da Marca</p>
+                        <p className="text-blue-800 font-medium">
+                          {briefingData.nome_marca || 'Não informado'}
+                        </p>
+                        {briefingData.nome_marca && (
+                          <p className="text-xs text-blue-600 mt-1">
+                            ⚠️ Cliente deve enviar logo na seção Materiais
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {briefingData.observacoes_finais && (
                   <div>
-                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">Observações Finais</h4>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">💬 Observações Finais</h4>
                     <p className="text-foreground">{briefingData.observacoes_finais}</p>
                   </div>
                 )}
