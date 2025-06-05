@@ -17,22 +17,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import { 
   ArrowLeft, 
   CheckCircle, 
   FileText, 
-  Users, 
-  Lightbulb, 
-  Star, 
-  DollarSign, 
-  MessageSquare,
   Sparkles
 } from 'lucide-react'
 
@@ -40,20 +28,19 @@ const briefingFormSchema = z.object({
   nome_produto: z.string().min(2, {
     message: "Nome do produto precisa ter pelo menos 2 caracteres.",
   }),
-  publico_alvo: z.string().min(10, {
-    message: "Público alvo precisa ter pelo menos 10 caracteres.",
+  investimento_diario: z.number().min(0.01, {
+    message: "Investimento diário deve ser maior que R$ 0,01.",
   }),
   descricao_resumida: z.string().min(10, {
     message: "Descrição resumida precisa ter pelo menos 10 caracteres.",
   }),
+  publico_alvo: z.string().min(10, {
+    message: "Público alvo precisa ter pelo menos 10 caracteres.",
+  }),
   diferencial: z.string().min(10, {
     message: "Diferencial do produto precisa ter pelo menos 10 caracteres.",
   }),
-  investimento_diario: z.number().min(0.01, {
-    message: "Investimento diário deve ser maior que R$ 0,01.",
-  }),
   observacoes_finais: z.string().optional(),
-  comissao_aceita: z.enum(['sim', 'nao']).optional(),
 })
 
 interface BriefingCliente {
@@ -63,7 +50,6 @@ interface BriefingCliente {
   diferencial: string
   investimento_diario: number
   observacoes_finais?: string | null
-  comissao_aceita?: string | null
 }
 
 interface BriefingFormProps {
@@ -86,12 +72,11 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
     resolver: zodResolver(briefingFormSchema),
     defaultValues: {
       nome_produto: briefing?.nome_produto || "",
-      publico_alvo: briefing?.publico_alvo || "",
-      descricao_resumida: briefing?.descricao_resumida || "",
-      diferencial: briefing?.diferencial || "",
       investimento_diario: briefing?.investimento_diario || 0,
+      descricao_resumida: briefing?.descricao_resumida || "",
+      publico_alvo: briefing?.publico_alvo || "",
+      diferencial: briefing?.diferencial || "",
       observacoes_finais: briefing?.observacoes_finais || "",
-      comissao_aceita: briefing?.comissao_aceita as 'sim' | 'nao' || undefined,
     },
   })
 
@@ -100,12 +85,11 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
       console.log('🔄 [BriefingForm] Resetando formulário com dados do briefing')
       form.reset({
         nome_produto: briefing.nome_produto || "",
-        publico_alvo: briefing.publico_alvo || "",
-        descricao_resumida: briefing.descricao_resumida || "",
-        diferencial: briefing.diferencial || "",
         investimento_diario: briefing.investimento_diario || 0,
+        descricao_resumida: briefing.descricao_resumida || "",
+        publico_alvo: briefing.publico_alvo || "",
+        diferencial: briefing.diferencial || "",
         observacoes_finais: briefing.observacoes_finais || "",
-        comissao_aceita: briefing.comissao_aceita as 'sim' | 'nao' || undefined,
       })
     }
   }, [briefing, form])
@@ -122,12 +106,11 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
       const briefingData = {
         email_cliente: emailCliente.trim().toLowerCase(),
         nome_produto: values.nome_produto.trim(),
-        publico_alvo: values.publico_alvo.trim(),
-        descricao_resumida: values.descricao_resumida.trim(),
-        diferencial: values.diferencial.trim(),
         investimento_diario: values.investimento_diario,
+        descricao_resumida: values.descricao_resumida.trim(),
+        publico_alvo: values.publico_alvo.trim(),
+        diferencial: values.diferencial.trim(),
         observacoes_finais: values.observacoes_finais?.trim() || null,
-        comissao_aceita: values.comissao_aceita || null,
       }
 
       console.log('💾 [BriefingForm] Dados preparados para salvar:', briefingData)
@@ -217,15 +200,14 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
           <CardContent className="p-6 md:p-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                {/* Nome do Produto */}
+                {/* 📦 Nome do Produto */}
                 <FormField
                   control={form.control}
                   name="nome_produto"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <FileText className="h-4 w-4 text-blue-600" />
-                        Nome do Produto/Serviço
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        📦 Nome do Produto/Serviço
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -238,82 +220,15 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                     </FormItem>
                   )}
                 />
-                
-                {/* Público Alvo */}
-                <FormField
-                  control={form.control}
-                  name="publico_alvo"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <Users className="h-4 w-4 text-purple-600" />
-                        Público Alvo
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Descrição Resumida */}
-                <FormField
-                  control={form.control}
-                  name="descricao_resumida"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <MessageSquare className="h-4 w-4 text-green-600" />
-                        Descrição Resumida do Produto/Serviço
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                {/* Diferencial */}
-                <FormField
-                  control={form.control}
-                  name="diferencial"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <Star className="h-4 w-4 text-yellow-600" />
-                        Diferencial do Produto/Serviço
-                      </FormLabel>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
-                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl transition-all resize-none"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
 
-                {/* Investimento Diário */}
+                {/* 💰 Investimento Diário */}
                 <FormField
                   control={form.control}
                   name="investimento_diario"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <DollarSign className="h-4 w-4 text-green-600" />
-                        Investimento Diário (R$)
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        💰 Investimento Diário (R$)
                       </FormLabel>
                       <FormControl>
                         <Input 
@@ -330,45 +245,77 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                   )}
                 />
 
-                {/* Comissão Aceita */}
+                {/* 📝 Descrição Resumida */}
                 <FormField
                   control={form.control}
-                  name="comissao_aceita"
+                  name="descricao_resumida"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <Lightbulb className="h-4 w-4 text-orange-600" />
-                        Aceita trabalhar por comissão?
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        📝 Descrição Resumida do Produto/Serviço
                       </FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger className="h-12 border-gray-200 bg-white/70 backdrop-blur-sm focus:border-orange-500 focus:ring-2 focus:ring-orange-200 rounded-xl transition-all">
-                            <SelectValue placeholder="Selecione uma opção" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent className="bg-white border-gray-200 shadow-xl rounded-xl">
-                          <SelectItem value="sim" className="hover:bg-green-50 rounded-lg">
-                            Sim, aceito trabalhar por comissão
-                          </SelectItem>
-                          <SelectItem value="nao" className="hover:bg-red-50 rounded-lg">
-                            Não, prefiro pagamento fixo
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas, certificado e suporte personalizado."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
                 
-                {/* Observações Finais */}
+                {/* 🎯 Público Alvo */}
+                <FormField
+                  control={form.control}
+                  name="publico_alvo"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        🎯 Público-Alvo
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital e vendas online, residentes no Brasil."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* ⭐ Diferencial */}
+                <FormField
+                  control={form.control}
+                  name="diferencial"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        ⭐ Diferencial do Produto/Serviço
+                      </FormLabel>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Ex: Único curso que oferece mentorias 1:1 semanais, metodologia testada por mais de 1000 alunos."
+                          className="min-h-[100px] border-gray-200 bg-white/70 backdrop-blur-sm focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl transition-all resize-none"
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                {/* 💬 Observações Finais */}
                 <FormField
                   control={form.control}
                   name="observacoes_finais"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold">
-                        <MessageSquare className="h-4 w-4 text-indigo-600" />
-                        Observações Finais (Opcional)
+                      <FormLabel className="flex items-center gap-2 text-gray-700 font-semibold text-base">
+                        💬 Observações Finais (Opcional)
                       </FormLabel>
                       <FormControl>
                         <Textarea
