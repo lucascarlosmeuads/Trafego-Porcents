@@ -57,6 +57,7 @@ export type Database = {
           observacoes_finais: string | null
           publico_alvo: string | null
           quer_site: boolean | null
+          resumo_conversa_vendedor: string | null
           updated_at: string
         }
         Insert: {
@@ -73,6 +74,7 @@ export type Database = {
           observacoes_finais?: string | null
           publico_alvo?: string | null
           quer_site?: boolean | null
+          resumo_conversa_vendedor?: string | null
           updated_at?: string
         }
         Update: {
@@ -89,6 +91,7 @@ export type Database = {
           observacoes_finais?: string | null
           publico_alvo?: string | null
           quer_site?: boolean | null
+          resumo_conversa_vendedor?: string | null
           updated_at?: string
         }
         Relationships: []

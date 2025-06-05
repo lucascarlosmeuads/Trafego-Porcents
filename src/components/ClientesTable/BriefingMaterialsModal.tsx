@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2 } from 'lucide-react'
+import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -20,6 +20,9 @@ interface BriefingData {
   observacoes_finais: string
   created_at: string
   updated_at: string
+  quer_site: boolean
+  nome_marca: string
+  resumo_conversa_vendedor: string
 }
 
 interface ArquivoCliente {
@@ -82,7 +85,8 @@ export function BriefingMaterialsModal({
         dados: briefingData ? {
           produto: briefingData.nome_produto,
           investimento: briefingData.investimento_diario,
-          criado_em: briefingData.created_at
+          criado_em: briefingData.created_at,
+          resumo_conversa: briefingData.resumo_conversa_vendedor ? 'SIM' : 'NÃO'
         } : null
       })
 
@@ -470,6 +474,19 @@ export function BriefingMaterialsModal({
                           <span>• Atualizado em {new Date(briefing.updated_at).toLocaleDateString('pt-BR')}</span>
                         )}
                       </div>
+
+                      {/* RESUMO DA CONVERSA COM VENDEDOR - NOVO CAMPO */}
+                      {briefing.resumo_conversa_vendedor && (
+                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+                          <h4 className="font-semibold text-sm mb-2 text-blue-700 flex items-center gap-2">
+                            <MessageSquare className="w-4 h-4" />
+                            💬 Resumo da Conversa com Vendedor
+                          </h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
+                            {briefing.resumo_conversa_vendedor}
+                          </p>
+                        </div>
+                      )}
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
@@ -484,6 +501,26 @@ export function BriefingMaterialsModal({
                             R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
                           </p>
                         </div>
+                      </div>
+
+                      {/* VOCÊ QUER UM SITE? - NOVO CAMPO */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">🌐 Você quer um site?</h4>
+                          <div className="bg-white p-3 rounded border border-green-200">
+                            <Badge variant={briefing.quer_site ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
+                              {briefing.quer_site ? '✅ Sim' : '❌ Não'}
+                            </Badge>
+                          </div>
+                        </div>
+                        {briefing.quer_site && briefing.nome_marca && (
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-green-700">🏷️ Nome da Marca</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                              {briefing.nome_marca}
+                            </p>
+                          </div>
+                        )}
                       </div>
                       
                       <div>

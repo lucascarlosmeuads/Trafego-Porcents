@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
@@ -32,7 +33,8 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
     email_cliente: '',
     telefone: '',
     senha: 'parceriadesucesso',
-    email_gestor: ''
+    email_gestor: '',
+    resumo_conversa_vendedor: ''
   })
 
   // Verificar autenticação
@@ -162,13 +164,39 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
       if (result && typeof result === 'object' && result.success) {
         console.log("🟢 [NewSellerAddClientForm] === CLIENTE CRIADO COM SUCESSO ===")
         
+        // Salvar resumo da conversa no briefing se foi preenchido
+        if (formData.resumo_conversa_vendedor.trim()) {
+          console.log("📝 [NewSellerAddClientForm] Salvando resumo da conversa no briefing...")
+          
+          try {
+            const { error: briefingError } = await supabase
+              .from('briefings_cliente')
+              .upsert({
+                email_cliente: formData.email_cliente.toLowerCase().trim(),
+                resumo_conversa_vendedor: formData.resumo_conversa_vendedor.trim(),
+                nome_produto: 'Tráfego Pago', // Valor padrão
+              }, {
+                onConflict: 'email_cliente'
+              })
+
+            if (briefingError) {
+              console.error("❌ [NewSellerAddClientForm] Erro ao salvar resumo:", briefingError)
+            } else {
+              console.log("✅ [NewSellerAddClientForm] Resumo da conversa salvo com sucesso!")
+            }
+          } catch (briefingError) {
+            console.error("💥 [NewSellerAddClientForm] Erro crítico ao salvar resumo:", briefingError)
+          }
+        }
+        
         // Limpar formulário
         setFormData({
           nome_cliente: '',
           email_cliente: '',
           telefone: '',
           senha: 'parceriadesucesso',
-          email_gestor: ''
+          email_gestor: '',
+          resumo_conversa_vendedor: ''
         })
         
         // Chamar callback para atualizar a lista no dashboard pai
@@ -349,6 +377,20 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="resumo_conversa_vendedor">Resumo da Conversa com o Cliente</Label>
+            <Textarea
+              id="resumo_conversa_vendedor"
+              value={formData.resumo_conversa_vendedor}
+              onChange={(e) => setFormData(prev => ({ ...prev, resumo_conversa_vendedor: e.target.value }))}
+              placeholder="Descreva brevemente como foi a conversa com o cliente, principais objeções superadas, expectativas demonstradas, etc."
+              rows={4}
+            />
+            <p className="text-sm text-muted-foreground">
+              📝 Campo opcional. Este resumo ajudará o gestor a entender melhor o contexto da venda.
+            </p>
           </div>
 
           <div className="grid gap-2">

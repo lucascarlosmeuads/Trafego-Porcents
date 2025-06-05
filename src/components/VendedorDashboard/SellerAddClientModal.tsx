@@ -3,12 +3,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Plus, Copy, Check } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
+import { supabase } from '@/integrations/supabase/client'
 
 interface SellerAddClientModalProps {
   onClienteAdicionado: (clienteData: any) => Promise<any>
@@ -27,7 +29,8 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     telefone: '',
     email_cliente: '',
     status_campanha: 'Cliente Novo',
-    data_venda: new Date().toISOString().split('T')[0]
+    data_venda: new Date().toISOString().split('T')[0],
+    resumo_conversa_vendedor: ''
   })
 
   const managerOptions = [
@@ -144,13 +147,39 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         console.log("🟢 [SellerAddClientModal] === CLIENTE CRIADO COM SUCESSO ===")
         console.log("🟢 [SellerAddClientModal] Resultado:", result)
         
+        // Salvar resumo da conversa no briefing se foi preenchido
+        if (formData.resumo_conversa_vendedor.trim()) {
+          console.log("📝 [SellerAddClientModal] Salvando resumo da conversa no briefing...")
+          
+          try {
+            const { error: briefingError } = await supabase
+              .from('briefings_cliente')
+              .upsert({
+                email_cliente: formData.email_cliente.toLowerCase().trim(),
+                resumo_conversa_vendedor: formData.resumo_conversa_vendedor.trim(),
+                nome_produto: 'Tráfego Pago', // Valor padrão
+              }, {
+                onConflict: 'email_cliente'
+              })
+
+            if (briefingError) {
+              console.error("❌ [SellerAddClientModal] Erro ao salvar resumo:", briefingError)
+            } else {
+              console.log("✅ [SellerAddClientModal] Resumo da conversa salvo com sucesso!")
+            }
+          } catch (briefingError) {
+            console.error("💥 [SellerAddClientModal] Erro crítico ao salvar resumo:", briefingError)
+          }
+        }
+        
         // Limpar formulário
         setFormData({
           nome_cliente: '',
           telefone: '',
           email_cliente: '',
           status_campanha: 'Cliente Novo',
-          data_venda: new Date().toISOString().split('T')[0]
+          data_venda: new Date().toISOString().split('T')[0],
+          resumo_conversa_vendedor: ''
         })
         setSelectedGestor('')
         setOpen(false)
@@ -295,6 +324,20 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="resumo_conversa_vendedor">Resumo da Conversa com o Cliente</Label>
+              <Textarea
+                id="resumo_conversa_vendedor"
+                value={formData.resumo_conversa_vendedor}
+                onChange={(e) => setFormData(prev => ({ ...prev, resumo_conversa_vendedor: e.target.value }))}
+                placeholder="Descreva brevemente como foi a conversa com o cliente, principais objeções superadas, expectativas demonstradas, etc."
+                rows={3}
+              />
+              <p className="text-yellow-700 text-xs">
+                📝 Campo opcional. Este resumo ajudará o gestor a entender melhor o contexto da venda.
+              </p>
             </div>
             
             <div className="grid gap-2">
