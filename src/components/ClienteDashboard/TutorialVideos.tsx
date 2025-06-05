@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -117,16 +116,6 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
                   <p className="ml-8 text-gray-700">
                     Você nos passa <strong>seu email e senha do Facebook</strong> para que possamos acessar e fazer os anúncios.
                   </p>
-                </div>
-
-                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                  <p className="font-medium text-blue-800 mb-2">💬 Como Pedir no Grupo:</p>
-                  <div className="text-blue-700 bg-white/70 rounded p-2 font-mono text-xs">
-                    "@[nome do seu gestor] preciso configurar anúncios no Facebook.<br/>
-                    Escolho a OPÇÃO 1: meu email é [seu-email@exemplo.com]<br/>
-                    OU<br/>
-                    Escolho a OPÇÃO 2: vou enviar login e senha no privado"
-                  </div>
                 </div>
 
                 <p className="font-medium text-orange-800">
