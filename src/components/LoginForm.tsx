@@ -78,21 +78,21 @@ export function LoginForm() {
 
   if (showForgotPassword) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
         <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black p-4">
       <Card className="w-full max-w-md bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-6">
             <img 
               src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png"
               alt="Tráfego Porcents Logo" 
-              className="h-24 w-auto object-contain"
+              className="h-32 w-auto object-contain"
               onError={(e) => {
                 console.log('Erro ao carregar logo:', e)
                 e.currentTarget.style.display = 'none'
@@ -119,7 +119,7 @@ export function LoginForm() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base text-gray-900 placeholder:text-gray-500"
+                className="w-full h-12 bg-gray-700 border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base text-white placeholder:text-gray-400"
                 disabled={loading}
                 autoComplete="email"
                 inputMode="email"
@@ -132,7 +132,7 @@ export function LoginForm() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
-                className="w-full h-12 bg-white border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base pr-12 text-gray-900 placeholder:text-gray-500"
+                className="w-full h-12 bg-gray-700 border-gray-600 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl text-base pr-12 text-white placeholder:text-gray-400"
                 minLength={6}
                 disabled={loading}
                 autoComplete="current-password"
@@ -140,7 +140,7 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-600 hover:text-gray-800 transition-colors"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-200 transition-colors"
                 disabled={loading}
               >
                 {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
