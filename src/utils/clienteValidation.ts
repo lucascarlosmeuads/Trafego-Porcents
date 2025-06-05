@@ -1,20 +1,14 @@
-
-// Função para verificar se o usuário é criador de sites - OTIMIZADA
+// Função para verificar se o usuário é criador de sites - CORRIGIDA
 export const isSitesUser = (email: string): boolean => {
   const normalizedEmail = email.toLowerCase().trim()
   console.log('🌐 [clienteValidation] Verificando criador de sites:', normalizedEmail)
   
-  const isSites = normalizedEmail === 'criadordesite@trafegoporcents.com' ||
-         normalizedEmail.includes('criador') || 
-         normalizedEmail.includes('site') || 
-         normalizedEmail.includes('webdesign') ||
-         normalizedEmail.includes('sites') ||
-         normalizedEmail.includes('web') ||
-         normalizedEmail.includes('design') ||
-         normalizedEmail.includes('developer') ||
-         normalizedEmail.includes('dev')
+  // APENAS o email específico autorizado para criador de sites
+  const isSites = normalizedEmail === 'criadordesite@trafegoporcents.com'
   
   console.log('🌐 [clienteValidation] É criador de sites:', isSites)
+  console.log('🔒 [clienteValidation] Email autorizado único:', 'criadordesite@trafegoporcents.com')
+  
   return isSites
 }
 
