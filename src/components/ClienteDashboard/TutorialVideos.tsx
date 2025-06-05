@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Play, FileVideo, ArrowLeft, Users, AlertCircle } from 'lucide-react'
+import { Play, FileVideo, ArrowLeft, Users, AlertCircle, Mail, Key } from 'lucide-react'
 import { useState } from 'react'
 
 interface TutorialVideosProps {
@@ -77,7 +77,7 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
         </div>
       )}
 
-      {/* Aviso sobre Liberação da Business Manager */}
+      {/* Aviso simplificado sobre Liberação para Anúncios no Facebook */}
       <Card className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200">
         <CardContent className="p-6">
           <div className="flex items-start gap-3">
@@ -85,22 +85,52 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
               <Users className="h-5 w-5 text-orange-600" />
             </div>
             <div className="flex-1">
-              <h3 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+              <h3 className="font-semibold text-orange-800 mb-3 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                Importante: Liberação da Business Manager
+                📢 IMPORTANTE: Para Fazer Anúncios no Facebook
               </h3>
-              <div className="space-y-2 text-sm text-orange-700 leading-relaxed">
-                <p>
-                  Para liberar o email da sua <strong>Business Manager do Facebook</strong>, você precisa 
-                  solicitar no <strong>grupo junto com seu gestor responsável</strong>.
+              
+              <div className="space-y-4 text-sm text-orange-700">
+                <p className="font-medium text-base">
+                  Para conseguirmos fazer seus anúncios no Facebook, você precisa escolher <strong>UMA das 2 opções abaixo:</strong>
                 </p>
-                <p>
-                  <strong>Não solicite por outros canais</strong> - apenas no grupo onde seu gestor está presente 
-                  para agilizar o processo e evitar confusões.
-                </p>
-                <p className="font-medium">
-                  📱 <strong>Como fazer:</strong> Envie uma mensagem no grupo mencionando "@[nome do seu gestor] 
-                  preciso liberar o email da BM: [seu-email@exemplo.com]"
+                
+                {/* Opção 1 */}
+                <div className="bg-white/50 rounded-lg p-4 border border-orange-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xs">1</div>
+                    <Mail className="h-4 w-4 text-blue-600" />
+                    <span className="font-semibold text-blue-800">OPÇÃO 1: Dar Permissão por Email</span>
+                  </div>
+                  <p className="ml-8 text-gray-700">
+                    Você nos passa <strong>apenas o seu email</strong> e nós pedimos permissão pro Facebook para fazer anúncios na sua conta.
+                  </p>
+                </div>
+
+                {/* Opção 2 */}
+                <div className="bg-white/50 rounded-lg p-4 border border-orange-200">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-6 h-6 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs">2</div>
+                    <Key className="h-4 w-4 text-green-600" />
+                    <span className="font-semibold text-green-800">OPÇÃO 2: Passar Login e Senha</span>
+                  </div>
+                  <p className="ml-8 text-gray-700">
+                    Você nos passa <strong>seu email e senha do Facebook</strong> para que possamos acessar e fazer os anúncios.
+                  </p>
+                </div>
+
+                <div className="bg-blue-50 rounded-lg p-3 border border-blue-200">
+                  <p className="font-medium text-blue-800 mb-2">💬 Como Pedir no Grupo:</p>
+                  <div className="text-blue-700 bg-white/70 rounded p-2 font-mono text-xs">
+                    "@[nome do seu gestor] preciso configurar anúncios no Facebook.<br/>
+                    Escolho a OPÇÃO 1: meu email é [seu-email@exemplo.com]<br/>
+                    OU<br/>
+                    Escolho a OPÇÃO 2: vou enviar login e senha no privado"
+                  </div>
+                </div>
+
+                <p className="font-medium text-orange-800">
+                  ⚠️ <strong>IMPORTANTE:</strong> Só peça isso no grupo onde seu gestor está presente. Não use outros canais!
                 </p>
               </div>
             </div>
