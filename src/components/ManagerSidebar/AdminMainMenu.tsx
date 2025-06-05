@@ -1,5 +1,5 @@
 
-import { BarChart, Users, MessageSquare, FileText, BookOpen, MessageCircle, Lightbulb } from 'lucide-react'
+import { BarChart, Users, MessageSquare, FileText, BookOpen, Lightbulb } from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
@@ -36,12 +36,6 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
       label: 'Relatório SAC',
       icon: FileText,
       description: 'Análise de SACs por gestor'
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: MessageCircle,
-      description: 'Sistema de mensagens'
     },
     {
       id: 'sugestoes',
