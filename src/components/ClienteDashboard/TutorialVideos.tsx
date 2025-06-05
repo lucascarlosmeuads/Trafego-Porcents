@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Play, FileVideo, ArrowLeft } from 'lucide-react'
+import { Play, FileVideo, ArrowLeft, Users, AlertCircle } from 'lucide-react'
 import { useState } from 'react'
 
 interface TutorialVideosProps {
@@ -76,6 +76,37 @@ export function TutorialVideos({ onBack }: TutorialVideosProps) {
           </Button>
         </div>
       )}
+
+      {/* Aviso sobre Liberação da Business Manager */}
+      <Card className="bg-gradient-to-r from-orange-50 to-red-50 border border-orange-200">
+        <CardContent className="p-6">
+          <div className="flex items-start gap-3">
+            <div className="p-2 bg-orange-100 rounded-lg">
+              <Users className="h-5 w-5 text-orange-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-orange-800 mb-2 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Importante: Liberação da Business Manager
+              </h3>
+              <div className="space-y-2 text-sm text-orange-700 leading-relaxed">
+                <p>
+                  Para liberar o email da sua <strong>Business Manager do Facebook</strong>, você precisa 
+                  solicitar no <strong>grupo junto com seu gestor responsável</strong>.
+                </p>
+                <p>
+                  <strong>Não solicite por outros canais</strong> - apenas no grupo onde seu gestor está presente 
+                  para agilizar o processo e evitar confusões.
+                </p>
+                <p className="font-medium">
+                  📱 <strong>Como fazer:</strong> Envie uma mensagem no grupo mencionando "@[nome do seu gestor] 
+                  preciso liberar o email da BM: [seu-email@exemplo.com]"
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <Card>
         <CardHeader>

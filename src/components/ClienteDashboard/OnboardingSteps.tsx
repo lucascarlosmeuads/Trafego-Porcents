@@ -1,3 +1,4 @@
+
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
@@ -10,7 +11,6 @@ import { Badge } from '@/components/ui/badge'
 import { 
   FileText, 
   Upload, 
-  Play,
   BarChart3,
   Headphones,
   ArrowLeft,
@@ -64,15 +64,6 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     },
     {
       id: 3,
-      title: 'Assistir Tutorial da BM',
-      description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
-      icon: Play,
-      action: () => onTabChange('tutoriais'),
-      actionText: 'Ver Tutoriais',
-      canCheck: true
-    },
-    {
-      id: 4,
       title: 'Contatar Suporte se Necessário',
       description: 'Entre em contato via SAC para tirar dúvidas ou solicitar ajuda',
       icon: Headphones,
@@ -81,7 +72,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
       canCheck: true
     },
     {
-      id: 5,
+      id: 4,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
@@ -156,7 +147,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 Guia de Configuração
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Siga estes 5 passos para configurar sua campanha corretamente
+                Siga estes 4 passos para configurar sua campanha corretamente
               </CardDescription>
             </div>
           </div>

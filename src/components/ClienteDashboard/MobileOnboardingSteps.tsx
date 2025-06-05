@@ -11,7 +11,6 @@ import { Badge } from '@/components/ui/badge'
 import { 
   FileText, 
   Upload, 
-  Play,
   Headphones,
   BarChart3,
   CheckCircle2,
@@ -64,15 +63,6 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
     },
     {
       id: 3,
-      title: 'Assistir Tutorial da BM',
-      description: 'Aprenda como liberar status da BM e pré-configurar sua conta',
-      icon: Play,
-      action: () => onTabChange('tutoriais'),
-      actionText: 'Ver Tutoriais',
-      canCheck: true
-    },
-    {
-      id: 4,
       title: 'Contatar Suporte se Necessário',
       description: 'Entre em contato via SAC para tirar dúvidas ou solicitar ajuda',
       icon: Headphones,
@@ -81,7 +71,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
       canCheck: true
     },
     {
-      id: 5,
+      id: 4,
       title: 'Analisar Métricas',
       description: 'Acompanhe o desempenho da sua campanha',
       icon: BarChart3,
