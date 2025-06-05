@@ -41,6 +41,9 @@ export interface BriefingCliente {
   liberar_edicao: boolean | null
   created_at: string
   updated_at: string
+  // Novos campos adicionados
+  quer_site: boolean | null
+  nome_marca: string | null
   // New strategic briefing fields
   faixa_etaria: string | null
   genero: string | null
