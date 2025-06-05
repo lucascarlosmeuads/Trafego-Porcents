@@ -4,7 +4,8 @@ import {
   FileText, 
   Upload, 
   TrendingUp, 
-  Headphones 
+  Headphones,
+  FileVideo
 } from 'lucide-react'
 
 interface MobileBottomNavProps {
@@ -17,13 +18,14 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
     { id: 'overview', label: 'Início', icon: Home },
     { id: 'briefing', label: 'Form', icon: FileText },
     { id: 'arquivos', label: 'Files', icon: Upload },
+    { id: 'tutoriais', label: 'Tutoriais', icon: FileVideo },
     { id: 'vendas', label: 'Vendas', icon: TrendingUp },
     { id: 'suporte', label: 'Suporte', icon: Headphones },
   ]
 
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden shadow-lg">
-      <div className="grid grid-cols-5 h-16">
+      <div className="grid grid-cols-6 h-16">
         {navItems.map((item) => {
           const isActive = activeTab === item.id
           
@@ -37,12 +39,12 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
                   : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
               }`}
             >
-              <item.icon className={`h-5 w-5 ${isActive ? 'scale-110' : ''} transition-transform`} />
+              <item.icon className={`h-4 w-4 ${isActive ? 'scale-110' : ''} transition-transform`} />
               <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
                 {item.label}
               </span>
               {isActive && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-8 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-full" />
+                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-full" />
               )}
             </button>
           )

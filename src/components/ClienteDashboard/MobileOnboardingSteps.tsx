@@ -64,7 +64,7 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
     {
       id: 3,
       title: 'Contatar Suporte se Necessário',
-      description: 'Entre em contato via SAC para tirar dúvidas ou solicitar ajuda',
+      description: 'Notifique seu gestor que você concluiu as etapas 1 e 2. Isso abre um chamado no painel do gestor para que ele possa te dar a atenção devida',
       icon: Headphones,
       action: () => onTabChange('suporte'),
       actionText: 'Acessar Suporte',
