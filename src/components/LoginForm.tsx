@@ -86,7 +86,7 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
-      <Card className="w-full max-w-md bg-white border border-gray-200 shadow-xl">
+      <Card className="w-full max-w-md bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700 shadow-xl">
         <CardHeader className="text-center pb-4">
           <div className="flex justify-center mb-6">
             <img 
@@ -99,15 +99,15 @@ export function LoginForm() {
               }}
             />
           </div>
-          <CardTitle className="text-2xl font-bold text-gray-900 !text-gray-900">
+          <CardTitle className="text-2xl font-bold text-white">
             Painel de Gestão
           </CardTitle>
-          <CardDescription className="text-gray-700 !text-gray-700">
+          <CardDescription className="text-gray-300">
             Entre com suas credenciais
           </CardDescription>
-          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-blue-600">
+          <div className="flex items-center justify-center gap-2 mt-2 text-sm text-blue-400">
             <Smartphone className="h-4 w-4" />
-            <span className="text-blue-600 !text-blue-600">Otimizado para mobile</span>
+            <span className="text-blue-400">Otimizado para mobile</span>
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -165,7 +165,7 @@ export function LoginForm() {
               <Button
                 type="button"
                 variant="link"
-                className="text-sm text-blue-600 hover:text-blue-800 h-auto p-0 !text-blue-600"
+                className="text-sm text-blue-400 hover:text-blue-300 h-auto p-0"
                 onClick={() => setShowForgotPassword(true)}
                 disabled={loading}
               >
