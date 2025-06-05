@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -13,7 +14,7 @@ interface BriefingData {
   publico_alvo: string
   diferencial: string
   investimento_diario: number
-  quer_site: boolean
+  quer_site: boolean | null
   nome_marca: string | null
   comissao_aceita: string
   observacoes_finais: string
@@ -264,37 +265,39 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
                   </div>
                 </div>
 
-                {/* Nova seção para Site */}
-                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                  <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
-                    <Globe className="w-4 h-4" />
-                    🌐 Informações do Site
-                  </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-xs text-blue-600 font-medium mb-1">Quer Site?</p>
-                      <Badge 
-                        variant={briefingData.quer_site ? "default" : "secondary"}
-                        className={briefingData.quer_site ? "bg-green-500 hover:bg-green-600" : ""}
-                      >
-                        {briefingData.quer_site ? "✅ Sim" : "❌ Não"}
-                      </Badge>
-                    </div>
-                    {briefingData.quer_site && (
+                {/* Seção para Site - Sempre mostrar quando há dados ou quando quer_site não é null */}
+                {(briefingData.quer_site !== null || briefingData.nome_marca) && (
+                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                    <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
+                      <Globe className="w-4 h-4" />
+                      🌐 Informações do Site
+                    </h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-blue-600 font-medium mb-1">🏷️ Nome da Marca</p>
-                        <p className="text-blue-800 font-medium">
-                          {briefingData.nome_marca || 'Não informado'}
-                        </p>
-                        {briefingData.nome_marca && (
-                          <p className="text-xs text-blue-600 mt-1">
-                            ⚠️ Cliente deve enviar logo na seção Materiais
-                          </p>
-                        )}
+                        <p className="text-xs text-blue-600 font-medium mb-1">Quer Site?</p>
+                        <Badge 
+                          variant={briefingData.quer_site ? "default" : "secondary"}
+                          className={briefingData.quer_site ? "bg-green-500 hover:bg-green-600" : ""}
+                        >
+                          {briefingData.quer_site === true ? "✅ Sim" : briefingData.quer_site === false ? "❌ Não" : "❓ Não respondido"}
+                        </Badge>
                       </div>
-                    )}
+                      {briefingData.quer_site && (
+                        <div>
+                          <p className="text-xs text-blue-600 font-medium mb-1">🏷️ Nome da Marca</p>
+                          <p className="text-blue-800 font-medium">
+                            {briefingData.nome_marca || 'Não informado'}
+                          </p>
+                          {briefingData.nome_marca && (
+                            <p className="text-xs text-blue-600 mt-1">
+                              ⚠️ Cliente deve enviar logo na seção Materiais
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {briefingData.observacoes_finais && (
                   <div>
