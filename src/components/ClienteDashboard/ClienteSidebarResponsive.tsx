@@ -21,7 +21,8 @@ import {
   TrendingUp, 
   Play, 
   Headphones, 
-  LogOut 
+  LogOut,
+  BarChart3
 } from 'lucide-react'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 
@@ -38,6 +39,7 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
     { id: 'overview', label: 'Visão Geral', icon: Home },
     { id: 'briefing', label: 'Briefing', icon: FileText },
     { id: 'arquivos', label: 'Materiais', icon: Upload },
+    { id: 'meta-ads', label: 'Meta Ads', icon: BarChart3 },
     { id: 'vendas', label: 'Vendas', icon: TrendingUp },
     { id: 'tutoriais', label: 'Tutoriais', icon: Play },
     { id: 'suporte', label: 'Suporte', icon: Headphones },
