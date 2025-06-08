@@ -25,7 +25,7 @@ export function Dashboard() {
     isCliente,
     isVendedor,
     isSites,
-    isRelatorios, // NOVO: Incluir isRelatorios
+    isRelatorios,
     signOut
   } = useAuth()
 
@@ -34,24 +34,27 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
-  console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
-  console.log('🔍 [Dashboard] Estado de autenticação:', {
-    userEmail: user?.email,
-    userEmailRaw: user?.email ? `"${user.email}"` : 'null',
-    loading,
+  console.log('🚨 [Dashboard] === DEBUGGING COMPLETO ===')
+  console.log('🚨 [Dashboard] URL atual:', window.location.href)
+  console.log('🚨 [Dashboard] Usuário:', user?.email)
+  console.log('🚨 [Dashboard] Loading:', loading)
+  console.log('🚨 [Dashboard] Tipos de usuário:', {
     isAdmin,
     isGestor,
     isCliente,
     isVendedor,
     isSites,
-    isRelatorios // NOVO: Debug para relatórios
+    isRelatorios
   })
 
-  // NOVO: Redirecionamento automático para usuários de relatórios
+  // NOVO: Redirecionamento imediato para relatórios
   useEffect(() => {
+    console.log('🚨 [Dashboard] useEffect triggered:', { loading, user: !!user, isRelatorios })
+    
     if (!loading && user && isRelatorios) {
-      console.log('📊 [Dashboard] Usuário de relatórios detectado, redirecionando para /admin-relatorios')
-      navigate('/admin-relatorios')
+      console.log('🚨 [Dashboard] REDIRECIONANDO para /admin-relatorios')
+      console.log('🚨 [Dashboard] Navegando de:', window.location.pathname)
+      navigate('/admin-relatorios', { replace: true })
       return
     }
   }, [loading, user, isRelatorios, navigate])
@@ -63,48 +66,43 @@ export function Dashboard() {
   }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios])
 
   const handleSignOut = async () => {
-    console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
+    console.log('🚪 [Dashboard] Iniciando logout')
     setLoggingOut(true)
     
     try {
       await signOut()
     } catch (error) {
-      console.error('❌ [Dashboard] Erro no logout, forçando redirecionamento:', error)
-      // Fallback: forçar redirecionamento mesmo com erro
+      console.error('❌ [Dashboard] Erro no logout:', error)
       window.location.href = '/'
     }
   }
 
   if (loading) {
-    console.log('⏳ [Dashboard] Mostrando loading geral')
+    console.log('⏳ [Dashboard] Mostrando loading...')
     return <LoadingFallback />
   }
 
   if (!user) {
-    console.log('❌ [Dashboard] Usuário não autenticado')
+    console.log('❌ [Dashboard] Usuário não autenticado, redirecionando para login')
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-lg">Usuário não autenticado</div>
+        <div className="text-lg">Redirecionando para login...</div>
       </div>
     )
   }
 
-  // NOVO: Se for usuário de relatórios, não mostrar nada aqui (será redirecionado)
+  // Se for usuário de relatórios, mostrar loading enquanto redireciona
   if (isRelatorios) {
-    console.log('📊 [Dashboard] Usuário de relatórios, aguardando redirecionamento...')
-    return <LoadingFallback />
+    console.log('📊 [Dashboard] Usuário de relatórios detectado, aguardando redirecionamento...')
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+          <p className="text-gray-300">Redirecionando para painel de relatórios...</p>
+        </div>
+      </div>
+    )
   }
-
-  // Debug: Mostrar qual é o email exato que está sendo processado
-  console.log('🎯 [Dashboard] Email do usuário para verificação:', `"${user.email}"`)
-  console.log('🎯 [Dashboard] Tipos de usuário detectados:', {
-    isAdmin: isAdmin ? '✅' : '❌',
-    isGestor: isGestor ? '✅' : '❌', 
-    isCliente: isCliente ? '✅' : '❌',
-    isVendedor: isVendedor ? '✅' : '❌',
-    isSites: isSites ? '✅' : '❌',
-    isRelatorios: isRelatorios ? '✅' : '❌' // NOVO: Debug para relatórios
-  })
 
   // Cliente Dashboard
   if (isCliente) {
@@ -116,21 +114,19 @@ export function Dashboard() {
     )
   }
 
-  // Vendedor Dashboards (não lazy por enquanto para evitar erros)
+  // Vendedor Dashboards
   if (isVendedor) {
     console.log('✅ [Dashboard] Direcionando para VendedorDashboard')
     const isSimpleVendedor = user.email?.includes('simple') || false
     
     if (isSimpleVendedor) {
-      console.log('🎯 [Dashboard] Usuário é vendedor simples')
       return <SimpleVendedorDashboard />
     }
     
-    console.log('🎯 [Dashboard] Usuário é vendedor padrão')
     return <VendedorDashboard />
   }
 
-  // Sites Dashboard (não lazy por enquanto)
+  // Sites Dashboard
   if (isSites) {
     console.log('✅ [Dashboard] Direcionando para SitesDashboard')
     return <SitesDashboard />
@@ -151,7 +147,6 @@ export function Dashboard() {
         <div className="flex-1 overflow-auto min-h-screen">
           <div className="p-6 w-full max-w-full">
             <Suspense fallback={<LoadingFallback />}>
-              {/* Admin Dashboard */}
               {isAdmin && (
                 <LazyAdminDashboard
                   selectedManager={selectedManager}
@@ -160,7 +155,6 @@ export function Dashboard() {
                 />
               )}
               
-              {/* Gestor Dashboard */}
               {isGestor && (
                 <LazyGestorDashboard activeTab={activeTab} />
               )}
@@ -171,10 +165,7 @@ export function Dashboard() {
     )
   }
 
-  console.log('❌ [Dashboard] Tipo de usuário não autorizado')
-  console.log('❌ [Dashboard] Detalhes para debug:')
-  console.log('   - Email:', user.email)
-  console.log('   - Todos os tipos são false, verificar authHelpers.ts')
+  console.log('❌ [Dashboard] Tipo de usuário não reconhecido')
   
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50" style={{backgroundColor: '#0a0a0a'}}>
@@ -196,6 +187,9 @@ export function Dashboard() {
               <div className="text-sm text-gray-500 bg-gray-800 p-3 rounded border">
                 <p className="font-mono break-all">
                   Email: {user.email}
+                </p>
+                <p className="font-mono text-xs mt-2">
+                  isRelatorios: {isRelatorios ? 'true' : 'false'}
                 </p>
               </div>
             </div>

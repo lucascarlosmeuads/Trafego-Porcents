@@ -1,4 +1,3 @@
-
 import { useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthState } from '@/hooks/useAuthState'
@@ -17,7 +16,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isCliente,
     isVendedor,
     isSites,
-    isRelatorios, // NOVO
+    isRelatorios,
     currentManagerName,
     updateUserType,
     resetUserState
@@ -25,28 +24,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Função otimizada para evitar loops
   const handleAuthChange = useCallback(async (event: string, session: any) => {
-    console.log('🔄 [useAuth] Auth state changed:', event, session?.user?.email || 'nenhum usuário')
+    console.log('🚨 [useAuth] Auth change:', event, session?.user?.email || 'nenhum')
     
-    // Atualizar estado do usuário imediatamente (síncrono)
+    // Atualizar estado do usuário imediatamente
     setUser(session?.user ?? null)
     
     if (session?.user?.email) {
-      console.log('✅ [useAuth] Usuário AUTENTICADO:', session.user.email)
-      console.log('🔍 [useAuth] Determinando tipo de usuário baseado apenas em autenticação válida')
+      console.log('🚨 [useAuth] Usuário autenticado:', session.user.email)
+      console.log('🚨 [useAuth] Iniciando determinação de tipo...')
       
-      // Usar setTimeout para evitar deadlock no onAuthStateChange
+      // Usar setTimeout para evitar deadlock
       setTimeout(async () => {
         try {
           await updateUserType(session.user.email)
+          console.log('🚨 [useAuth] Tipo de usuário atualizado')
         } catch (error) {
-          console.error('❌ [useAuth] Erro ao atualizar tipo de usuário:', error)
-          // Em caso de erro, não travar - permitir que o usuário continue
+          console.error('❌ [useAuth] Erro ao atualizar tipo:', error)
         } finally {
           setLoading(false)
         }
       }, 0)
     } else {
-      console.log('❌ [useAuth] Nenhum usuário autenticado')
+      console.log('🚨 [useAuth] Nenhum usuário autenticado')
       resetUserState()
       setLoading(false)
     }
@@ -55,10 +54,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let mounted = true
     
-    // Configuração do listener PRIMEIRO
+    // Configuração do listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(handleAuthChange)
 
-    // Verificação inicial da sessão existente
+    // Verificação inicial da sessão
     const checkInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
@@ -70,7 +69,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         if (mounted) {
-          console.log('🔍 [useAuth] Sessão inicial verificada:', session?.user?.email || 'nenhuma')
+          console.log('🚨 [useAuth] Sessão inicial:', session?.user?.email || 'nenhuma')
           setUser(session?.user ?? null)
           
           if (session?.user?.email) {
@@ -83,7 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setLoading(false)
         }
       } catch (error) {
-        console.error('❌ [useAuth] Erro crítico na inicialização:', error)
+        console.error('❌ [useAuth] Erro crítico:', error)
         if (mounted) {
           setLoading(false)
         }
@@ -92,17 +91,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     checkInitialSession()
 
-    // Cleanup
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, []) // Dependências vazias para evitar loops
+  }, [])
 
   const signIn = async (email: string, password: string) => {
-    console.log('🔐 [useAuth] === PROCESSO DE LOGIN ===')
-    console.log('📧 [useAuth] Email:', email)
-    console.log('🔍 [useAuth] Validação baseada APENAS no Supabase Auth')
+    console.log('🚨 [useAuth] === LOGIN ===')
+    console.log('🚨 [useAuth] Email:', email)
     setLoading(true)
     
     try {
@@ -112,20 +109,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       
       if (error) {
-        console.error('❌ [useAuth] Falha na autenticação Supabase:', error.message)
-        console.error('🔥 [useAuth] Código do erro:', error.code)
+        console.error('❌ [useAuth] Erro no login:', error.message)
         setLoading(false)
         return { error }
       }
       
       if (data.user) {
-        console.log('✅ [useAuth] Login bem-sucedido para:', data.user.email)
-        console.log('🎯 [useAuth] Usuário autenticado via Supabase Auth')
+        console.log('🚨 [useAuth] Login bem-sucedido:', data.user.email)
       }
       
       return { error: null }
     } catch (error) {
-      console.error('❌ [useAuth] Erro inesperado no login:', error)
+      console.error('❌ [useAuth] Erro inesperado:', error)
       setLoading(false)
       return { error }
     }
@@ -200,10 +195,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  console.log('🔍 [useAuth] === ESTADO ATUAL ===')
-  console.log('🔍 [useAuth] Usuário:', user?.email)
-  console.log('🔍 [useAuth] Loading:', loading)
-  console.log('🔍 [useAuth] Tipos de usuário:', {
+  console.log('🚨 [useAuth] === ESTADO FINAL ===')
+  console.log('🚨 [useAuth] Email:', user?.email)
+  console.log('🚨 [useAuth] Loading:', loading)
+  console.log('🚨 [useAuth] isRelatorios:', isRelatorios)
+  console.log('🚨 [useAuth] Todos os tipos:', {
     isAdmin,
     isGestor,
     isCliente,
@@ -224,7 +220,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isCliente,
       isVendedor,
       isSites,
-      isRelatorios, // NOVO
+      isRelatorios,
       currentManagerName
     }}>
       {children}
