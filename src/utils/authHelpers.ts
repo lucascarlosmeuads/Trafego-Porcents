@@ -5,7 +5,7 @@ export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()
 }
 
-export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'unauthorized' | 'error'> => {
+export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
   console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
   console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
@@ -18,6 +18,12 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     if (normalizedEmail.includes('@admin')) {
       console.log('👑 [authHelpers] Usuário é ADMIN (domínio @admin)')
       return 'admin'
+    }
+
+    // VERIFICAÇÃO PARA RELATÓRIOS - NOVA FUNCIONALIDADE
+    if (normalizedEmail.includes('@relatorios.com')) {
+      console.log('📊 [authHelpers] Usuário é RELATÓRIOS (domínio @relatorios.com)')
+      return 'relatorios'
     }
 
     // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - MOVIDA PARA CIMA
@@ -104,6 +110,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
     console.log('❌ [authHelpers] Resumo das verificações:')
     console.log('   - Admin (@admin): NÃO')
+    console.log('   - Relatórios (@relatorios.com): NÃO')
     console.log('   - Sites (whitelist específica): NÃO AUTORIZADO')
     console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
     console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
@@ -121,6 +128,11 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
 
 export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
+  
+  // Para usuários de relatórios, retornar nome específico
+  if (normalizedEmail.includes('@relatorios.com')) {
+    return 'Analista de Relatórios'
+  }
   
   // Para usuários de sites, retornar nome específico APENAS para emails autorizados
   const emailsAutorizadosSites = [

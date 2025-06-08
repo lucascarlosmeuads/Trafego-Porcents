@@ -5,12 +5,12 @@ import { AdminRelatoriosHeader } from '@/components/AdminRelatorios/AdminRelator
 import { MetaAdsAdminForm } from '@/components/AdminRelatorios/MetaAdsAdminForm'
 import { MetaAdsAdminReport } from '@/components/AdminRelatorios/MetaAdsAdminReport'
 import { Card, CardContent } from '@/components/ui/card'
-import { Shield, AlertTriangle } from 'lucide-react'
+import { BarChart3, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
 
 export function AdminRelatorios() {
-  const { user, loading: authLoading, isAdmin } = useAuth()
+  const { user, loading: authLoading, isRelatorios } = useAuth()
   const navigate = useNavigate()
   const {
     config,
@@ -23,7 +23,7 @@ export function AdminRelatorios() {
     handleLoadReport
   } = useAdminMetaAds()
 
-  // Verificação de autenticação e permissão admin
+  // Verificação de autenticação e permissão específica para relatórios
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
@@ -35,15 +35,15 @@ export function AdminRelatorios() {
     )
   }
 
-  if (!user || !isAdmin) {
+  if (!user || !isRelatorios) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <Card className="bg-red-900/20 border-red-500/30 max-w-md">
           <CardContent className="p-6 text-center">
             <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Acesso Negado</h2>
+            <h2 className="text-xl font-bold text-white mb-2">Acesso Restrito</h2>
             <p className="text-gray-300 mb-4">
-              Este painel é exclusivo para administradores.
+              Este painel é exclusivo para analistas de relatórios (@relatorios.com).
             </p>
             <Button onClick={() => navigate('/')} variant="outline">
               Voltar ao Sistema
@@ -59,12 +59,12 @@ export function AdminRelatorios() {
       <AdminRelatoriosHeader />
       
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header com proteção */}
+        {/* Header com proteção específica para relatórios */}
         <div className="flex items-center gap-3 mb-6">
-          <Shield className="h-8 w-8 text-purple-400" />
+          <BarChart3 className="h-8 w-8 text-purple-400" />
           <div>
-            <h1 className="text-3xl font-bold text-white">Relatórios Admin</h1>
-            <p className="text-gray-400">Análise exclusiva de campanhas Meta Ads</p>
+            <h1 className="text-3xl font-bold text-white">Painel de Relatórios Meta Ads</h1>
+            <p className="text-gray-400">Análise exclusiva para equipe de relatórios</p>
           </div>
         </div>
 
