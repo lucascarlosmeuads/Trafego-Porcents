@@ -23,8 +23,15 @@ export function AdminRelatorios() {
     handleLoadReport
   } = useAdminMetaAds()
 
+  // LOGS DETALHADOS PARA DEBUG
+  console.log('📊 [AdminRelatorios] === ESTADO DE AUTENTICAÇÃO ===')
+  console.log('📊 [AdminRelatorios] user:', user?.email || 'nenhum')
+  console.log('📊 [AdminRelatorios] authLoading:', authLoading)
+  console.log('📊 [AdminRelatorios] isRelatorios:', isRelatorios)
+
   // Verificação de autenticação e permissão específica para relatórios
   if (authLoading) {
+    console.log('⏳ [AdminRelatorios] Aguardando autenticação...')
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -36,6 +43,12 @@ export function AdminRelatorios() {
   }
 
   if (!user || !isRelatorios) {
+    console.log('❌ [AdminRelatorios] Acesso negado!')
+    console.log('❌ [AdminRelatorios] user exists:', !!user)
+    console.log('❌ [AdminRelatorios] user email:', user?.email || 'nenhum')
+    console.log('❌ [AdminRelatorios] isRelatorios:', isRelatorios)
+    console.log('❌ [AdminRelatorios] Motivo: Usuário não é do tipo "relatorios"')
+    
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <Card className="bg-red-900/20 border-red-500/30 max-w-md">
@@ -45,6 +58,9 @@ export function AdminRelatorios() {
             <p className="text-gray-300 mb-4">
               Este painel é exclusivo para analistas de relatórios (@relatorios.com).
             </p>
+            <div className="text-xs text-gray-500 mb-4 p-2 bg-gray-800 rounded">
+              Debug: Email={user?.email || 'nenhum'}, isRelatorios={String(isRelatorios)}
+            </div>
             <Button onClick={() => navigate('/')} variant="outline">
               Voltar ao Sistema
             </Button>
@@ -53,6 +69,8 @@ export function AdminRelatorios() {
       </div>
     )
   }
+
+  console.log('✅ [AdminRelatorios] Acesso autorizado! Renderizando painel...')
 
   return (
     <div className="min-h-screen bg-gray-950">
@@ -66,6 +84,13 @@ export function AdminRelatorios() {
             <h1 className="text-3xl font-bold text-white">Painel de Relatórios Meta Ads</h1>
             <p className="text-gray-400">Análise exclusiva para equipe de relatórios</p>
           </div>
+        </div>
+
+        {/* Debug info para desenvolvimento */}
+        <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
+          <p className="text-green-400 text-sm">
+            ✅ Acesso autorizado para: {user.email} | Tipo: Relatórios
+          </p>
         </div>
 
         {/* Formulário de configuração */}

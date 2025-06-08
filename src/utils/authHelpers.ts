@@ -20,10 +20,19 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // VERIFICAÇÃO PARA RELATÓRIOS - NOVA FUNCIONALIDADE
+    // VERIFICAÇÃO PARA RELATÓRIOS - NOVA FUNCIONALIDADE - DEBUG DETALHADO
+    console.log('📊 [authHelpers] === VERIFICANDO DOMÍNIO @relatorios.com ===')
+    console.log('📊 [authHelpers] Email normalizado para verificação:', `"${normalizedEmail}"`)
+    console.log('📊 [authHelpers] Testando .includes("@relatorios.com"):', normalizedEmail.includes('@relatorios.com'))
+    console.log('📊 [authHelpers] Resultado do teste:', normalizedEmail.includes('@relatorios.com') ? 'PASSOU ✅' : 'FALHOU ❌')
+    
     if (normalizedEmail.includes('@relatorios.com')) {
-      console.log('📊 [authHelpers] Usuário é RELATÓRIOS (domínio @relatorios.com)')
+      console.log('📊 [authHelpers] ✅ USUÁRIO É RELATÓRIOS (domínio @relatorios.com)')
+      console.log('📊 [authHelpers] 🎯 RETORNANDO "relatorios"')
       return 'relatorios'
+    } else {
+      console.log('📊 [authHelpers] ❌ Email NÃO contém @relatorios.com')
+      console.log('📊 [authHelpers] 🔍 Continuando verificações...')
     }
 
     // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - MOVIDA PARA CIMA
@@ -110,7 +119,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
     console.log('❌ [authHelpers] Resumo das verificações:')
     console.log('   - Admin (@admin): NÃO')
-    console.log('   - Relatórios (@relatorios.com): NÃO')
+    console.log('   - Relatórios (@relatorios.com): TESTADO E FALHOU')
     console.log('   - Sites (whitelist específica): NÃO AUTORIZADO')
     console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
     console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
@@ -131,6 +140,7 @@ export const getManagerName = async (email: string): Promise<string> => {
   
   // Para usuários de relatórios, retornar nome específico
   if (normalizedEmail.includes('@relatorios.com')) {
+    console.log('📊 [authHelpers] Retornando nome para usuário de relatórios')
     return 'Analista de Relatórios'
   }
   
