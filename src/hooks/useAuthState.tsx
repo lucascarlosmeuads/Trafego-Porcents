@@ -17,7 +17,6 @@ interface UseAuthState {
   isCliente: boolean
   isVendedor: boolean
   isSites: boolean
-  isRelatorios: boolean
   currentManagerName: string
   setCurrentManagerName: React.Dispatch<React.SetStateAction<string>>
   updateUserType: (email: string) => Promise<void>
@@ -31,28 +30,37 @@ export function useAuthState(): UseAuthState {
   const [currentManagerName, setCurrentManagerName] = useState<string>('')
 
   const resetUserState = useCallback(() => {
-    console.log('🧹 [useAuthState] Resetando estado do usuário')
     setUser(null)
     setUserType('unauthorized')
     setCurrentManagerName('')
   }, [setUser, setUserType, setCurrentManagerName])
 
   const updateUserType = useCallback(async (email: string) => {
-    console.log('🔍 [useAuthState] Determinando tipo de usuário para:', email)
+    console.log('🔍 [useAuthState] === DETERMINANDO TIPO DE USUÁRIO ===')
+    console.log('🔍 [useAuthState] Email recebido:', `"${email}"`)
     
     try {
+      console.log('🔄 [useAuthState] Chamando checkUserType...')
       const tipoUsuario = await checkUserType(email)
       console.log('✅ [useAuthState] Tipo determinado:', tipoUsuario)
       
       setUserType(tipoUsuario)
 
       // Buscar o nome do usuário
+      console.log('🔄 [useAuthState] Buscando nome do usuário...')
       const nomeUsuario = await getManagerName(email)
       console.log('✅ [useAuthState] Nome encontrado:', nomeUsuario)
       setCurrentManagerName(nomeUsuario)
 
+      // Log final do resultado
+      console.log('🎯 [useAuthState] RESULTADO FINAL:')
+      console.log('   - Email:', email)
+      console.log('   - Tipo:', tipoUsuario)
+      console.log('   - Nome:', nomeUsuario)
+      console.log('   - Acesso autorizado:', tipoUsuario !== 'unauthorized' && tipoUsuario !== 'error')
+
     } catch (error) {
-      console.error('❌ [useAuthState] Erro ao determinar tipo de usuário:', error)
+      console.error('❌ [useAuthState] Erro CRÍTICO ao determinar tipo de usuário:', error)
       setUserType('error')
       setCurrentManagerName('')
     }
@@ -64,15 +72,6 @@ export function useAuthState(): UseAuthState {
   const isCliente = userType === 'cliente'
   const isVendedor = userType === 'vendedor'
   const isSites = userType === 'sites'
-  const isRelatorios = userType === 'relatorios'
-
-  // Debug simples para relatórios
-  useEffect(() => {
-    if (user?.email?.includes('@relatorios.com')) {
-      console.log('📊 [useAuthState] Usuário @relatorios.com detectado:', user.email)
-      console.log('📊 [useAuthState] isRelatorios:', isRelatorios)
-    }
-  }, [user, isRelatorios])
 
   return {
     user,
@@ -86,7 +85,6 @@ export function useAuthState(): UseAuthState {
     isCliente,
     isVendedor,
     isSites,
-    isRelatorios,
     currentManagerName,
     setCurrentManagerName,
     updateUserType,
