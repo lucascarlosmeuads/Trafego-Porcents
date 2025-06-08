@@ -38,40 +38,21 @@ export function useAuthState(): UseAuthState {
   }, [setUser, setUserType, setCurrentManagerName])
 
   const updateUserType = useCallback(async (email: string) => {
-    console.log('🔍 [useAuthState] === DETERMINANDO TIPO DE USUÁRIO ===')
-    console.log('🔍 [useAuthState] Email recebido:', `"${email}"`)
+    console.log('🔍 [useAuthState] Determinando tipo de usuário para:', email)
     
     try {
-      console.log('🔄 [useAuthState] Chamando checkUserType...')
       const tipoUsuario = await checkUserType(email)
       console.log('✅ [useAuthState] Tipo determinado:', tipoUsuario)
       
-      console.log('📊 [useAuthState] === ATUALIZANDO ESTADO ===')
-      console.log('📊 [useAuthState] Setando userType para:', tipoUsuario)
       setUserType(tipoUsuario)
 
       // Buscar o nome do usuário
-      console.log('🔄 [useAuthState] Buscando nome do usuário...')
       const nomeUsuario = await getManagerName(email)
       console.log('✅ [useAuthState] Nome encontrado:', nomeUsuario)
       setCurrentManagerName(nomeUsuario)
 
-      // Log final do resultado
-      console.log('🎯 [useAuthState] RESULTADO FINAL:')
-      console.log('   - Email:', email)
-      console.log('   - Tipo:', tipoUsuario)
-      console.log('   - Nome:', nomeUsuario)
-      console.log('   - Acesso autorizado:', tipoUsuario !== 'unauthorized' && tipoUsuario !== 'error')
-
-      // LOG ESPECÍFICO PARA RELATÓRIOS
-      if (tipoUsuario === 'relatorios') {
-        console.log('📊 [useAuthState] 🎉 USUÁRIO DE RELATÓRIOS CONFIRMADO!')
-        console.log('📊 [useAuthState] ✅ Deve ter acesso ao painel /admin-relatorios')
-        console.log('📊 [useAuthState] 🔗 Para acessar: navegue diretamente para /admin-relatorios')
-      }
-
     } catch (error) {
-      console.error('❌ [useAuthState] Erro CRÍTICO ao determinar tipo de usuário:', error)
+      console.error('❌ [useAuthState] Erro ao determinar tipo de usuário:', error)
       setUserType('error')
       setCurrentManagerName('')
     }
@@ -85,27 +66,13 @@ export function useAuthState(): UseAuthState {
   const isSites = userType === 'sites'
   const isRelatorios = userType === 'relatorios'
 
-  // Debug dos tipos computados
+  // Debug simples para relatórios
   useEffect(() => {
-    if (user?.email) {
-      console.log('🔍 [useAuthState] === STATUS ATUAL ===')
-      console.log('🔍 [useAuthState] Email logado:', user.email)
-      console.log('🔍 [useAuthState] userType:', userType)
-      console.log('🔍 [useAuthState] isRelatorios:', isRelatorios)
-      
-      if (user.email.includes('@relatorios.com')) {
-        console.log('📊 [useAuthState] 🎯 USUÁRIO @relatorios.com DETECTADO!')
-        console.log('📊 [useAuthState] ✅ Deveria ter acesso total ao /admin-relatorios')
-        console.log('📊 [useAuthState] 🔧 isRelatorios atual:', isRelatorios)
-        
-        if (!isRelatorios && userType !== 'relatorios') {
-          console.log('⚠️ [useAuthState] PROBLEMA: Usuário @relatorios.com NÃO está sendo reconhecido!')
-          console.log('⚠️ [useAuthState] Forçando re-verificação...')
-          setTimeout(() => updateUserType(user.email), 100)
-        }
-      }
+    if (user?.email?.includes('@relatorios.com')) {
+      console.log('📊 [useAuthState] Usuário @relatorios.com detectado:', user.email)
+      console.log('📊 [useAuthState] isRelatorios:', isRelatorios)
     }
-  }, [user, userType, isRelatorios, updateUserType])
+  }, [user, isRelatorios])
 
   return {
     user,

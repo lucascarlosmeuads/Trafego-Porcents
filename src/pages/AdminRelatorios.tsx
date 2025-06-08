@@ -25,7 +25,6 @@ export function AdminRelatorios() {
 
   // Aguardar autenticação
   if (authLoading) {
-    console.log('⏳ [AdminRelatorios] Aguardando autenticação...')
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <div className="text-center">
@@ -36,21 +35,15 @@ export function AdminRelatorios() {
     )
   }
 
-  // Verificação de acesso simplificada e otimizada
+  // Verificação de acesso simples
   const emailUsuario = user?.email || ''
   const temAcessoRelatorios = emailUsuario.includes('@relatorios.com')
   
-  console.log('📊 [AdminRelatorios] === VERIFICAÇÃO DE ACESSO ===')
   console.log('📊 [AdminRelatorios] Email:', emailUsuario)
-  console.log('📊 [AdminRelatorios] Contém @relatorios.com:', temAcessoRelatorios)
-  console.log('📊 [AdminRelatorios] isRelatorios (hook):', isRelatorios)
   console.log('📊 [AdminRelatorios] Acesso autorizado:', temAcessoRelatorios || isRelatorios)
 
   // Bloquear acesso se não for usuário de relatórios
   if (!user || (!temAcessoRelatorios && !isRelatorios)) {
-    console.log('❌ [AdminRelatorios] ACESSO NEGADO!')
-    console.log('❌ [AdminRelatorios] Motivo: Email não contém @relatorios.com')
-    
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
         <Card className="bg-red-900/20 border-red-500/30 max-w-md">
@@ -72,14 +65,12 @@ export function AdminRelatorios() {
     )
   }
 
-  console.log('✅ [AdminRelatorios] ACESSO AUTORIZADO! Renderizando painel...')
-
   return (
     <div className="min-h-screen bg-gray-950">
       <AdminRelatoriosHeader />
       
       <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Header com confirmação de acesso */}
+        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <BarChart3 className="h-8 w-8 text-purple-400" />
           <div>
@@ -88,7 +79,7 @@ export function AdminRelatorios() {
           </div>
         </div>
 
-        {/* Confirmação de acesso autorizado */}
+        {/* Confirmação de acesso */}
         <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-4 mb-6">
           <div className="flex items-center gap-2">
             <CheckCircle className="h-5 w-5 text-green-400" />

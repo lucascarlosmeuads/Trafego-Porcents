@@ -6,47 +6,39 @@ export const normalizeEmail = (email: string): string => {
 }
 
 export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'unauthorized' | 'error'> => {
-  console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
-  console.log('🔍 [authHelpers] Email recebido:', `"${email}"`)
+  console.log('🔍 [authHelpers] Verificando tipo para:', email)
   
   const normalizedEmail = normalizeEmail(email)
-  console.log('🔍 [authHelpers] Email normalizado:', `"${normalizedEmail}"`)
   
   try {
-    // VERIFICAÇÃO PARA RELATÓRIOS - PRIORIDADE MÁXIMA
-    console.log('📊 [authHelpers] === TESTANDO @relatorios.com ===')
-    console.log('📊 [authHelpers] Email para teste:', `"${normalizedEmail}"`)
-    console.log('📊 [authHelpers] Contém @relatorios.com?', normalizedEmail.includes('@relatorios.com'))
-    
+    // RELATÓRIOS - primeira prioridade
     if (normalizedEmail.includes('@relatorios.com')) {
-      console.log('📊 [authHelpers] ✅ SUCESSO! Email contém @relatorios.com')
-      console.log('📊 [authHelpers] 🎯 RETORNANDO: "relatorios"')
-      console.log('📊 [authHelpers] 🚀 Usuário tem acesso total ao painel /admin-relatorios')
+      console.log('📊 [authHelpers] Usuário de relatórios confirmado')
       return 'relatorios'
     }
 
-    // Admin - segunda prioridade
+    // Admin
     if (normalizedEmail.includes('@admin')) {
-      console.log('👑 [authHelpers] Usuário é ADMIN (domínio @admin)')
+      console.log('👑 [authHelpers] Usuário admin confirmado')
       return 'admin'
     }
 
-    // Sites - verificação específica
+    // Sites
     const emailsAutorizadosSites = ['criadordesite@trafegoporcents.com']
     if (emailsAutorizadosSites.includes(normalizedEmail)) {
-      console.log('🌐 [authHelpers] Usuário é SITES (email autorizado)')
+      console.log('🌐 [authHelpers] Usuário de sites confirmado')
       return 'sites'
     }
 
     // Vendedores
     if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('💼 [authHelpers] Usuário é VENDEDOR')
+      console.log('💼 [authHelpers] Usuário vendedor confirmado')
       return 'vendedor'
     }
 
     // Gestores @trafegoporcents.com
     if (normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('👨‍💼 [authHelpers] Usuário é GESTOR (domínio @trafegoporcents.com)')
+      console.log('👨‍💼 [authHelpers] Usuário gestor confirmado')
       return 'gestor'
     }
 
@@ -59,7 +51,7 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       .single()
 
     if (!clienteError && cliente) {
-      console.log('✅ [authHelpers] Cliente encontrado na tabela')
+      console.log('✅ [authHelpers] Cliente encontrado')
       return 'cliente'
     }
 
@@ -72,16 +64,15 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       .single()
 
     if (!gestorError && gestor && gestor.ativo) {
-      console.log('✅ [authHelpers] Gestor encontrado na tabela')
+      console.log('✅ [authHelpers] Gestor encontrado')
       return 'gestor'
     }
 
-    console.log('❌ [authHelpers] USUÁRIO NÃO AUTORIZADO')
-    console.log('❌ [authHelpers] Nenhuma verificação passou para:', normalizedEmail)
+    console.log('❌ [authHelpers] Usuário não autorizado')
     return 'unauthorized'
 
   } catch (error) {
-    console.error('❌ [authHelpers] ERRO CRÍTICO:', error)
+    console.error('❌ [authHelpers] Erro:', error)
     return 'error'
   }
 }
@@ -91,7 +82,6 @@ export const getManagerName = async (email: string): Promise<string> => {
   
   // Para usuários de relatórios
   if (normalizedEmail.includes('@relatorios.com')) {
-    console.log('📊 [authHelpers] Nome para usuário de relatórios: "Analista de Relatórios"')
     return 'Analista de Relatórios'
   }
   
