@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
@@ -9,7 +8,6 @@ import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { SuporteRapido } from './ClienteDashboard/SuporteRapido'
-import { MetaAdsInterface } from './MetaAds/MetaAdsInterface'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
@@ -64,7 +62,7 @@ export function ClienteDashboard() {
   const renderContent = () => {
     console.log('🎯 [ClienteDashboard] renderContent() chamado com activeTab:', activeTab)
     
-    if (dataLoading && ['overview', 'briefing', 'arquivos', 'vendas'].includes(activeTab)) {
+    if (dataLoading) {
       console.log('⏳ [ClienteDashboard] Mostrando loading de dados')
       return (
         <div className="flex items-center justify-center h-64">
@@ -111,8 +109,6 @@ export function ClienteDashboard() {
             onBack={handleBackToOverview}
           />
         )
-      case 'meta-ads':
-        return <MetaAdsInterface onBack={handleBackToOverview} />
       case 'vendas':
         // Convert vendas from useClienteData format to VendasManager format
         const vendasForManager = vendas.map(venda => ({
@@ -163,7 +159,6 @@ export function ClienteDashboard() {
               {activeTab === 'overview' && 'Painel Principal'}
               {activeTab === 'briefing' && 'Briefing'}
               {activeTab === 'arquivos' && 'Materiais'}
-              {activeTab === 'meta-ads' && 'Meta Ads'}
               {activeTab === 'vendas' && 'Vendas'}
               {activeTab === 'tutoriais' && 'Tutoriais'}
               {activeTab === 'suporte' && 'Suporte'}

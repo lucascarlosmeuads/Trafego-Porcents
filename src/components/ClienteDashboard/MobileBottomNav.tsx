@@ -5,7 +5,7 @@ import {
   Upload, 
   TrendingUp, 
   Headphones,
-  BarChart3
+  FileVideo
 } from 'lucide-react'
 
 interface MobileBottomNavProps {
@@ -18,7 +18,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
     { id: 'overview', label: 'Início', icon: Home },
     { id: 'briefing', label: 'Form', icon: FileText },
     { id: 'arquivos', label: 'Files', icon: Upload },
-    { id: 'meta-ads', label: 'Meta Ads', icon: BarChart3 },
+    { id: 'tutoriais', label: 'Tutoriais', icon: FileVideo },
     { id: 'vendas', label: 'Vendas', icon: TrendingUp },
     { id: 'suporte', label: 'Suporte', icon: Headphones },
   ]

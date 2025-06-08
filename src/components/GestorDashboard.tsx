@@ -8,7 +8,6 @@ import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
 import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 import { GestorSacDashboard } from './SAC/GestorSacDashboard'
 import { SugestoesDashboard } from './SugestoesDashboard'
-import { MetaAdsGestor } from './MetaAds/MetaAdsGestor'
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
 import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
@@ -98,12 +97,6 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return (
           <div className="bg-gray-950 min-h-screen">
             <ClientesTable />
-          </div>
-        )
-      case 'meta-ads':
-        return (
-          <div className="bg-gray-950 min-h-screen">
-            <MetaAdsGestor />
           </div>
         )
       case 'sac':

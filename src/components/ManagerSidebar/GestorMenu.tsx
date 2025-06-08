@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Headphones, Lightbulb, TrendingUp } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface GestorMenuProps {
@@ -24,13 +24,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       icon: Users,
       description: 'Gerenciar clientes',
       color: 'from-green-500 to-green-600'
-    },
-    {
-      id: 'meta-ads',
-      label: 'Meta Ads',
-      icon: TrendingUp,
-      description: 'Relatórios Meta API',
-      color: 'from-purple-500 to-purple-600'
     },
     {
       id: 'sac',
