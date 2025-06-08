@@ -5,13 +5,10 @@ import { AdminRelatoriosHeader } from '@/components/AdminRelatorios/AdminRelator
 import { MetaAdsAdminForm } from '@/components/AdminRelatorios/MetaAdsAdminForm'
 import { MetaAdsAdminReport } from '@/components/AdminRelatorios/MetaAdsAdminReport'
 import { Card, CardContent } from '@/components/ui/card'
-import { BarChart3, AlertTriangle, CheckCircle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
+import { BarChart3, CheckCircle } from 'lucide-react'
 
 export function AdminRelatorios() {
-  const { user, loading: authLoading, isRelatorios } = useAuth()
-  const navigate = useNavigate()
+  const { user, loading: authLoading } = useAuth()
   const {
     config,
     reportData,
@@ -35,35 +32,23 @@ export function AdminRelatorios() {
     )
   }
 
-  // Verificação de acesso simples
-  const emailUsuario = user?.email || ''
-  const temAcessoRelatorios = emailUsuario.includes('@relatorios.com')
-  
-  console.log('📊 [AdminRelatorios] Email:', emailUsuario)
-  console.log('📊 [AdminRelatorios] Acesso autorizado:', temAcessoRelatorios || isRelatorios)
-
-  // Bloquear acesso se não for usuário de relatórios
-  if (!user || (!temAcessoRelatorios && !isRelatorios)) {
+  // Se não tem usuário, será redirecionado pelo Dashboard
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <Card className="bg-red-900/20 border-red-500/30 max-w-md">
-          <CardContent className="p-6 text-center">
-            <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-white mb-2">Acesso Restrito</h2>
-            <p className="text-gray-300 mb-4">
-              Este painel é exclusivo para analistas de relatórios (@relatorios.com).
-            </p>
-            <div className="text-xs text-gray-500 mb-4 p-2 bg-gray-800 rounded">
-              Email atual: {emailUsuario || 'nenhum'}
-            </div>
-            <Button onClick={() => navigate('/')} variant="outline">
-              Voltar ao Sistema
-            </Button>
-          </CardContent>
-        </Card>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400 mx-auto mb-2"></div>
+          <p className="text-gray-300">Redirecionando...</p>
+        </div>
       </div>
     )
   }
+
+  const emailUsuario = user?.email || ''
+  
+  console.log('📊 [AdminRelatorios] === ACESSO SIMPLIFICADO ===')
+  console.log('📊 [AdminRelatorios] Email:', emailUsuario)
+  console.log('📊 [AdminRelatorios] Acesso direto para usuários @relatorios.com')
 
   return (
     <div className="min-h-screen bg-gray-950">

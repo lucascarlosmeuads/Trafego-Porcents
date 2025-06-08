@@ -1,6 +1,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useNavigate } from 'react-router-dom'
 import { 
   LazyAdminDashboard, 
   LazyGestorDashboard, 
@@ -24,9 +25,11 @@ export function Dashboard() {
     isCliente,
     isVendedor,
     isSites,
+    isRelatorios, // NOVO: Incluir isRelatorios
     signOut
   } = useAuth()
 
+  const navigate = useNavigate()
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
@@ -40,14 +43,24 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites
+    isSites,
+    isRelatorios // NOVO: Debug para relatórios
   })
+
+  // NOVO: Redirecionamento automático para usuários de relatórios
+  useEffect(() => {
+    if (!loading && user && isRelatorios) {
+      console.log('📊 [Dashboard] Usuário de relatórios detectado, redirecionando para /admin-relatorios')
+      navigate('/admin-relatorios')
+      return
+    }
+  }, [loading, user, isRelatorios, navigate])
 
   // Reset tab when user type changes
   useEffect(() => {
     setActiveTab('dashboard')
     setSelectedManager(null)
-  }, [isAdmin, isGestor, isCliente, isVendedor, isSites])
+  }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios])
 
   const handleSignOut = async () => {
     console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
@@ -76,6 +89,12 @@ export function Dashboard() {
     )
   }
 
+  // NOVO: Se for usuário de relatórios, não mostrar nada aqui (será redirecionado)
+  if (isRelatorios) {
+    console.log('📊 [Dashboard] Usuário de relatórios, aguardando redirecionamento...')
+    return <LoadingFallback />
+  }
+
   // Debug: Mostrar qual é o email exato que está sendo processado
   console.log('🎯 [Dashboard] Email do usuário para verificação:', `"${user.email}"`)
   console.log('🎯 [Dashboard] Tipos de usuário detectados:', {
@@ -83,7 +102,8 @@ export function Dashboard() {
     isGestor: isGestor ? '✅' : '❌', 
     isCliente: isCliente ? '✅' : '❌',
     isVendedor: isVendedor ? '✅' : '❌',
-    isSites: isSites ? '✅' : '❌'
+    isSites: isSites ? '✅' : '❌',
+    isRelatorios: isRelatorios ? '✅' : '❌' // NOVO: Debug para relatórios
   })
 
   // Cliente Dashboard
