@@ -67,6 +67,7 @@ export function useAuthState(): UseAuthState {
       if (tipoUsuario === 'relatorios') {
         console.log('📊 [useAuthState] 🎉 USUÁRIO DE RELATÓRIOS CONFIRMADO!')
         console.log('📊 [useAuthState] ✅ Deve ter acesso ao painel /admin-relatorios')
+        console.log('📊 [useAuthState] 🔗 Para acessar: navegue diretamente para /admin-relatorios')
       }
 
     } catch (error) {
@@ -76,7 +77,7 @@ export function useAuthState(): UseAuthState {
     }
   }, [])
 
-  // Computed properties - COM LOGS PARA DEBUG
+  // Computed properties
   const isAdmin = userType === 'admin'
   const isGestor = userType === 'gestor'
   const isCliente = userType === 'cliente'
@@ -84,17 +85,27 @@ export function useAuthState(): UseAuthState {
   const isSites = userType === 'sites'
   const isRelatorios = userType === 'relatorios'
 
-  // LOG DOS TIPOS COMPUTADOS
+  // Debug dos tipos computados
   useEffect(() => {
-    console.log('🔍 [useAuthState] === TIPOS COMPUTADOS ===')
-    console.log('🔍 [useAuthState] userType atual:', userType)
-    console.log('🔍 [useAuthState] isRelatorios:', isRelatorios)
-    console.log('🔍 [useAuthState] isAdmin:', isAdmin)
-    console.log('🔍 [useAuthState] isGestor:', isGestor)
-    console.log('🔍 [useAuthState] isCliente:', isCliente)
-    console.log('🔍 [useAuthState] isVendedor:', isVendedor)
-    console.log('🔍 [useAuthState] isSites:', isSites)
-  }, [userType, isRelatorios, isAdmin, isGestor, isCliente, isVendedor, isSites])
+    if (user?.email) {
+      console.log('🔍 [useAuthState] === STATUS ATUAL ===')
+      console.log('🔍 [useAuthState] Email logado:', user.email)
+      console.log('🔍 [useAuthState] userType:', userType)
+      console.log('🔍 [useAuthState] isRelatorios:', isRelatorios)
+      
+      if (user.email.includes('@relatorios.com')) {
+        console.log('📊 [useAuthState] 🎯 USUÁRIO @relatorios.com DETECTADO!')
+        console.log('📊 [useAuthState] ✅ Deveria ter acesso total ao /admin-relatorios')
+        console.log('📊 [useAuthState] 🔧 isRelatorios atual:', isRelatorios)
+        
+        if (!isRelatorios && userType !== 'relatorios') {
+          console.log('⚠️ [useAuthState] PROBLEMA: Usuário @relatorios.com NÃO está sendo reconhecido!')
+          console.log('⚠️ [useAuthState] Forçando re-verificação...')
+          setTimeout(() => updateUserType(user.email), 100)
+        }
+      }
+    }
+  }, [user, userType, isRelatorios, updateUserType])
 
   return {
     user,
