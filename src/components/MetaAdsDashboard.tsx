@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useMetaAdsConfig } from '@/hooks/useMetaAdsConfig'
@@ -17,7 +16,8 @@ import {
   Eye, 
   AlertCircle, 
   CheckCircle, 
-  Loader2 
+  Loader2,
+  RefreshCw 
 } from 'lucide-react'
 
 export function MetaAdsDashboard() {
@@ -29,11 +29,16 @@ export function MetaAdsDashboard() {
     saving, 
     saveConfig, 
     testConnection, 
+    fetchCampaigns,
+    fetchInsights,
+    campaigns,
+    insights,
     isConfigured 
   } = useMetaAdsConfig()
   
   const [isConfiguring, setIsConfiguring] = useState(false)
   const [testing, setTesting] = useState(false)
+  const [loadingData, setLoadingData] = useState(false)
 
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -51,7 +56,7 @@ export function MetaAdsDashboard() {
 
   const handleTestConnection = async () => {
     setTesting(true)
-    console.log('🔗 [MetaAdsDashboard] Testando conexão...')
+    console.log('🔗 [MetaAdsDashboard] Testando conexão real...')
     
     const result = await testConnection()
     
@@ -62,6 +67,25 @@ export function MetaAdsDashboard() {
     }
     
     setTesting(false)
+  }
+
+  const handleLoadData = async () => {
+    setLoadingData(true)
+    console.log('📊 [MetaAdsDashboard] Carregando dados do Meta Ads...')
+    
+    // Buscar campanhas e insights em paralelo
+    const [campaignsResult, insightsResult] = await Promise.all([
+      fetchCampaigns(),
+      fetchInsights()
+    ])
+    
+    if (campaignsResult.success && insightsResult.success) {
+      toast.success('Dados carregados com sucesso!')
+    } else {
+      toast.error('Erro ao carregar alguns dados')
+    }
+    
+    setLoadingData(false)
   }
 
   if (loading) {
@@ -150,9 +174,11 @@ export function MetaAdsDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">--</div>
+                  <div className="text-2xl font-bold text-white">
+                    {campaigns.length > 0 ? campaigns.filter(c => c.status === 'ACTIVE').length : '--'}
+                  </div>
                   <p className="text-xs text-gray-500">
-                    {isConfigured ? 'Em breve disponível' : 'Configure primeiro o Meta Ads'}
+                    {isConfigured ? `${campaigns.length} campanhas no total` : 'Configure primeiro o Meta Ads'}
                   </p>
                 </CardContent>
               </Card>
@@ -161,13 +187,15 @@ export function MetaAdsDashboard() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-sm text-gray-400 flex items-center gap-2">
                     <Eye className="h-4 w-4" />
-                    Últimos Dados
+                    Gastos (7 dias)
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold text-white">--</div>
+                  <div className="text-2xl font-bold text-white">
+                    {insights.length > 0 ? `$${insights[0]?.spend || '0'}` : '--'}
+                  </div>
                   <p className="text-xs text-gray-500">
-                    {isConfigured ? 'Em breve disponível' : 'Nenhum dado disponível'}
+                    {isConfigured ? 'Últimos 7 dias' : 'Nenhum dado disponível'}
                   </p>
                 </CardContent>
               </Card>
@@ -213,23 +241,79 @@ export function MetaAdsDashboard() {
 
               <Card className="bg-gray-900 border-gray-800">
                 <CardHeader>
-                  <CardTitle className="text-white">Relatórios e Dados</CardTitle>
+                  <CardTitle className="text-white">Dados e Relatórios</CardTitle>
                   <p className="text-gray-400 text-sm">
-                    Visualize métricas, campanhas e performance dos anúncios
+                    Carregue e visualize dados reais das suas campanhas do Meta Ads
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    variant="outline" 
-                    disabled={!isConfigured}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
-                  >
-                    <BarChart3 className="h-4 w-4 mr-2" />
-                    {isConfigured ? 'Ver Relatórios (Em breve)' : 'Ver Relatórios (Configure primeiro)'}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={handleLoadData}
+                      disabled={!isConfigured || loadingData}
+                      className="bg-green-600 hover:bg-green-700 text-white disabled:opacity-50"
+                    >
+                      {loadingData ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                      )}
+                      {loadingData ? 'Carregando...' : 'Carregar Dados'}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      disabled={!isConfigured || campaigns.length === 0}
+                      className="border-gray-600 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
+                    >
+                      <BarChart3 className="h-4 w-4 mr-2" />
+                      Ver Relatórios
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             </div>
+
+            {/* Data Tables */}
+            {campaigns.length > 0 && (
+              <div className="mt-8">
+                <Card className="bg-gray-900 border-gray-800">
+                  <CardHeader>
+                    <CardTitle className="text-white">Campanhas Ativas</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-700">
+                            <th className="text-left py-2 text-gray-400">Nome</th>
+                            <th className="text-left py-2 text-gray-400">Status</th>
+                            <th className="text-left py-2 text-gray-400">Objetivo</th>
+                            <th className="text-left py-2 text-gray-400">Criada em</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {campaigns.map((campaign) => (
+                            <tr key={campaign.id} className="border-b border-gray-800">
+                              <td className="py-2 text-white">{campaign.name}</td>
+                              <td className="py-2">
+                                <Badge variant={campaign.status === 'ACTIVE' ? 'default' : 'secondary'}>
+                                  {campaign.status}
+                                </Badge>
+                              </td>
+                              <td className="py-2 text-gray-300">{campaign.objective}</td>
+                              <td className="py-2 text-gray-300">
+                                {new Date(campaign.created_time).toLocaleDateString('pt-BR')}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            )}
           </>
         ) : (
           /* Configuração Form */

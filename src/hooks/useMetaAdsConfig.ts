@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -8,6 +7,23 @@ interface MetaAdsConfig {
   appSecret: string
   accessToken: string
   adAccountId: string
+}
+
+interface CampaignData {
+  id: string
+  name: string
+  status: string
+  objective: string
+  created_time: string
+}
+
+interface InsightData {
+  impressions: string
+  clicks: string
+  spend: string
+  cpm: string
+  cpc: string
+  ctr: string
 }
 
 export function useMetaAdsConfig() {
@@ -20,6 +36,8 @@ export function useMetaAdsConfig() {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [campaigns, setCampaigns] = useState<CampaignData[]>([])
+  const [insights, setInsights] = useState<InsightData[]>([])
 
   // Carregar configuração existente
   useEffect(() => {
@@ -93,17 +111,82 @@ export function useMetaAdsConfig() {
   }
 
   const testConnection = async () => {
-    console.log('🔗 [useMetaAdsConfig] Testando conexão com Meta Ads...')
-    // TODO: Implementar teste real da API do Meta Ads
-    // Por enquanto, simular sucesso se todos os campos estão preenchidos
-    const isValid = config.appId && config.appSecret && config.accessToken && config.adAccountId
+    console.log('🔗 [useMetaAdsConfig] Testando conexão real com Meta Ads...')
     
-    if (isValid) {
-      console.log('✅ [useMetaAdsConfig] Simulação: Conexão OK')
-      return { success: true, message: 'Conexão simulada com sucesso!' }
-    } else {
-      console.log('❌ [useMetaAdsConfig] Campos obrigatórios não preenchidos')
-      return { success: false, message: 'Preencha todos os campos obrigatórios' }
+    try {
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: {
+          action: 'test_connection',
+          config: config
+        }
+      })
+
+      if (error) {
+        console.error('❌ [useMetaAdsConfig] Erro na edge function:', error)
+        return { success: false, message: 'Erro na conexão com o servidor' }
+      }
+
+      console.log('✅ [useMetaAdsConfig] Resposta da API:', data)
+      return data
+    } catch (error) {
+      console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
+      return { success: false, message: 'Erro inesperado na conexão' }
+    }
+  }
+
+  const fetchCampaigns = async () => {
+    console.log('📊 [useMetaAdsConfig] Buscando campanhas...')
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: {
+          action: 'get_campaigns',
+          config: config
+        }
+      })
+
+      if (error) {
+        console.error('❌ [useMetaAdsConfig] Erro ao buscar campanhas:', error)
+        return { success: false, message: 'Erro ao buscar campanhas' }
+      }
+
+      if (data.success) {
+        setCampaigns(data.campaigns)
+        console.log('✅ [useMetaAdsConfig] Campanhas carregadas:', data.campaigns.length)
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
+      return { success: false, message: 'Erro inesperado ao buscar campanhas' }
+    }
+  }
+
+  const fetchInsights = async () => {
+    console.log('📈 [useMetaAdsConfig] Buscando insights...')
+    
+    try {
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: {
+          action: 'get_insights',
+          config: config
+        }
+      })
+
+      if (error) {
+        console.error('❌ [useMetaAdsConfig] Erro ao buscar insights:', error)
+        return { success: false, message: 'Erro ao buscar insights' }
+      }
+
+      if (data.success) {
+        setInsights(data.insights)
+        console.log('✅ [useMetaAdsConfig] Insights carregados:', data.insights.length)
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
+      return { success: false, message: 'Erro inesperado ao buscar insights' }
     }
   }
 
@@ -116,6 +199,10 @@ export function useMetaAdsConfig() {
     saving,
     saveConfig,
     testConnection,
+    fetchCampaigns,
+    fetchInsights,
+    campaigns,
+    insights,
     isConfigured
   }
 }
