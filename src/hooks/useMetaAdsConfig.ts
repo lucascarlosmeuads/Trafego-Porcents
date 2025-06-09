@@ -38,6 +38,7 @@ export function useMetaAdsConfig() {
   const [saving, setSaving] = useState(false)
   const [campaigns, setCampaigns] = useState<CampaignData[]>([])
   const [insights, setInsights] = useState<InsightData[]>([])
+  const [lastError, setLastError] = useState<string>('')
 
   // Carregar configuração existente
   useEffect(() => {
@@ -111,7 +112,8 @@ export function useMetaAdsConfig() {
   }
 
   const testConnection = async () => {
-    console.log('🔗 [useMetaAdsConfig] Testando conexão real com Meta Ads...')
+    console.log('🔗 [useMetaAdsConfig] === INICIANDO TESTE DE CONEXÃO ===')
+    setLastError('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -123,19 +125,30 @@ export function useMetaAdsConfig() {
 
       if (error) {
         console.error('❌ [useMetaAdsConfig] Erro na edge function:', error)
-        return { success: false, message: 'Erro na conexão com o servidor' }
+        const errorMsg = 'Erro na conexão com o servidor'
+        setLastError(errorMsg)
+        return { success: false, message: errorMsg }
       }
 
       console.log('✅ [useMetaAdsConfig] Resposta da API:', data)
+      
+      if (!data.success) {
+        setLastError(data.message)
+        console.error('❌ [useMetaAdsConfig] Teste falhou:', data.message)
+      }
+      
       return data
     } catch (error) {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
-      return { success: false, message: 'Erro inesperado na conexão' }
+      const errorMsg = 'Erro inesperado na conexão'
+      setLastError(errorMsg)
+      return { success: false, message: errorMsg }
     }
   }
 
   const fetchCampaigns = async () => {
-    console.log('📊 [useMetaAdsConfig] Buscando campanhas...')
+    console.log('📊 [useMetaAdsConfig] === BUSCANDO CAMPANHAS ===')
+    setLastError('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -147,23 +160,31 @@ export function useMetaAdsConfig() {
 
       if (error) {
         console.error('❌ [useMetaAdsConfig] Erro ao buscar campanhas:', error)
-        return { success: false, message: 'Erro ao buscar campanhas' }
+        const errorMsg = 'Erro ao buscar campanhas'
+        setLastError(errorMsg)
+        return { success: false, message: errorMsg }
       }
 
       if (data.success) {
         setCampaigns(data.campaigns)
         console.log('✅ [useMetaAdsConfig] Campanhas carregadas:', data.campaigns.length)
+      } else {
+        setLastError(data.message)
+        console.error('❌ [useMetaAdsConfig] Erro nas campanhas:', data.message)
       }
 
       return data
     } catch (error) {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
-      return { success: false, message: 'Erro inesperado ao buscar campanhas' }
+      const errorMsg = 'Erro inesperado ao buscar campanhas'
+      setLastError(errorMsg)
+      return { success: false, message: errorMsg }
     }
   }
 
   const fetchInsights = async () => {
-    console.log('📈 [useMetaAdsConfig] Buscando insights...')
+    console.log('📈 [useMetaAdsConfig] === BUSCANDO INSIGHTS ===')
+    setLastError('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -175,18 +196,25 @@ export function useMetaAdsConfig() {
 
       if (error) {
         console.error('❌ [useMetaAdsConfig] Erro ao buscar insights:', error)
-        return { success: false, message: 'Erro ao buscar insights' }
+        const errorMsg = 'Erro ao buscar insights'
+        setLastError(errorMsg)
+        return { success: false, message: errorMsg }
       }
 
       if (data.success) {
         setInsights(data.insights)
         console.log('✅ [useMetaAdsConfig] Insights carregados:', data.insights.length)
+      } else {
+        setLastError(data.message)
+        console.error('❌ [useMetaAdsConfig] Erro nos insights:', data.message)
       }
 
       return data
     } catch (error) {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
-      return { success: false, message: 'Erro inesperado ao buscar insights' }
+      const errorMsg = 'Erro inesperado ao buscar insights'
+      setLastError(errorMsg)
+      return { success: false, message: errorMsg }
     }
   }
 
@@ -203,6 +231,7 @@ export function useMetaAdsConfig() {
     fetchInsights,
     campaigns,
     insights,
-    isConfigured
+    isConfigured,
+    lastError
   }
 }

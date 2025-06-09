@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useMetaAdsConfig } from '@/hooks/useMetaAdsConfig'
@@ -7,6 +8,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { toast } from 'sonner'
 import { 
   LogOut, 
@@ -17,7 +19,8 @@ import {
   AlertCircle, 
   CheckCircle, 
   Loader2,
-  RefreshCw 
+  RefreshCw,
+  AlertTriangle
 } from 'lucide-react'
 
 export function MetaAdsDashboard() {
@@ -33,7 +36,8 @@ export function MetaAdsDashboard() {
     fetchInsights,
     campaigns,
     insights,
-    isConfigured 
+    isConfigured,
+    lastError
   } = useMetaAdsConfig()
   
   const [isConfiguring, setIsConfiguring] = useState(false)
@@ -56,14 +60,14 @@ export function MetaAdsDashboard() {
 
   const handleTestConnection = async () => {
     setTesting(true)
-    console.log('🔗 [MetaAdsDashboard] Testando conexão real...')
+    console.log('🔗 [MetaAdsDashboard] === INICIANDO TESTE DE CONEXÃO ===')
     
     const result = await testConnection()
     
     if (result.success) {
-      toast.success(result.message)
+      toast.success('✅ ' + result.message)
     } else {
-      toast.error(result.message)
+      toast.error('❌ ' + result.message)
     }
     
     setTesting(false)
@@ -71,7 +75,7 @@ export function MetaAdsDashboard() {
 
   const handleLoadData = async () => {
     setLoadingData(true)
-    console.log('📊 [MetaAdsDashboard] Carregando dados do Meta Ads...')
+    console.log('📊 [MetaAdsDashboard] === CARREGANDO DADOS ===')
     
     // Buscar campanhas e insights em paralelo
     const [campaignsResult, insightsResult] = await Promise.all([
@@ -79,10 +83,16 @@ export function MetaAdsDashboard() {
       fetchInsights()
     ])
     
-    if (campaignsResult.success && insightsResult.success) {
-      toast.success('Dados carregados com sucesso!')
+    let successCount = 0
+    if (campaignsResult.success) successCount++
+    if (insightsResult.success) successCount++
+    
+    if (successCount === 2) {
+      toast.success('✅ Todos os dados carregados com sucesso!')
+    } else if (successCount === 1) {
+      toast.warning('⚠️ Alguns dados foram carregados')
     } else {
-      toast.error('Erro ao carregar alguns dados')
+      toast.error('❌ Erro ao carregar dados')
     }
     
     setLoadingData(false)
@@ -135,6 +145,16 @@ export function MetaAdsDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
+        {/* Error Alert */}
+        {lastError && (
+          <Alert className="mb-6 border-red-800 bg-red-950/50">
+            <AlertTriangle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-300">
+              <strong>Erro detectado:</strong> {lastError}
+            </AlertDescription>
+          </Alert>
+        )}
+
         {!isConfiguring ? (
           <>
             {/* Status Cards */}
@@ -363,6 +383,9 @@ export function MetaAdsDashboard() {
                     className="bg-gray-800 border-gray-700 text-white"
                     required
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Token deve ter permissões: ads_read, ads_management
+                  </p>
                 </div>
 
                 <div>
@@ -377,7 +400,7 @@ export function MetaAdsDashboard() {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Formato: act_XXXXXXXXXX (inclua o prefixo 'act_')
+                    <strong>IMPORTANTE:</strong> Deve começar com 'act_' (exemplo: act_1234567890)
                   </p>
                 </div>
 
