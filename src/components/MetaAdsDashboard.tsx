@@ -1,36 +1,78 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useMetaAdsConfig } from '@/hooks/useMetaAdsConfig'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { Badge } from '@/components/ui/badge'
-import { LogOut, Settings, BarChart3, TrendingUp, Eye, AlertCircle } from 'lucide-react'
+import { toast } from 'sonner'
+import { 
+  LogOut, 
+  Settings, 
+  BarChart3, 
+  TrendingUp, 
+  Eye, 
+  AlertCircle, 
+  CheckCircle, 
+  Loader2 
+} from 'lucide-react'
 
 export function MetaAdsDashboard() {
   const { user, signOut, currentManagerName } = useAuth()
-  const [isConfiguring, setIsConfiguring] = useState(false)
+  const { 
+    config, 
+    setConfig, 
+    loading, 
+    saving, 
+    saveConfig, 
+    testConnection, 
+    isConfigured 
+  } = useMetaAdsConfig()
   
-  // Estados para configuração do Meta Ads
-  const [config, setConfig] = useState({
-    appId: '',
-    appSecret: '',
-    accessToken: '',
-    adAccountId: ''
-  })
+  const [isConfiguring, setIsConfiguring] = useState(false)
+  const [testing, setTesting] = useState(false)
 
-  const handleConfigSubmit = (e: React.FormEvent) => {
+  const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('📊 [MetaAdsDashboard] Configuração enviada:', config)
-    // TODO: Implementar salvamento da configuração
-    setIsConfiguring(false)
+    console.log('📊 [MetaAdsDashboard] Salvando configuração:', config)
+    
+    const result = await saveConfig(config)
+    
+    if (result.success) {
+      toast.success('Configuração salva com sucesso!')
+      setIsConfiguring(false)
+    } else {
+      toast.error(result.error || 'Erro ao salvar configuração')
+    }
   }
 
-  const handleTestConnection = () => {
-    console.log('🔗 [MetaAdsDashboard] Testando conexão com Meta Ads...')
-    // TODO: Implementar teste de conexão
+  const handleTestConnection = async () => {
+    setTesting(true)
+    console.log('🔗 [MetaAdsDashboard] Testando conexão...')
+    
+    const result = await testConnection()
+    
+    if (result.success) {
+      toast.success(result.message)
+    } else {
+      toast.error(result.message)
+    }
+    
+    setTesting(false)
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+        <div className="flex items-center gap-2 text-gray-300">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Carregando configurações...
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -82,11 +124,20 @@ export function MetaAdsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center gap-2">
-                    <AlertCircle className="h-5 w-5 text-yellow-500" />
-                    <span className="text-yellow-500 font-medium">Não Configurado</span>
+                    {isConfigured ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500" />
+                        <span className="text-green-500 font-medium">Configurado</span>
+                      </>
+                    ) : (
+                      <>
+                        <AlertCircle className="h-5 w-5 text-yellow-500" />
+                        <span className="text-yellow-500 font-medium">Não Configurado</span>
+                      </>
+                    )}
                   </div>
                   <p className="text-xs text-gray-500 mt-1">
-                    Configure suas credenciais do Meta Ads
+                    {isConfigured ? 'Credenciais do Meta Ads configuradas' : 'Configure suas credenciais do Meta Ads'}
                   </p>
                 </CardContent>
               </Card>
@@ -100,7 +151,9 @@ export function MetaAdsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-white">--</div>
-                  <p className="text-xs text-gray-500">Configure primeiro o Meta Ads</p>
+                  <p className="text-xs text-gray-500">
+                    {isConfigured ? 'Em breve disponível' : 'Configure primeiro o Meta Ads'}
+                  </p>
                 </CardContent>
               </Card>
 
@@ -113,7 +166,9 @@ export function MetaAdsDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold text-white">--</div>
-                  <p className="text-xs text-gray-500">Nenhum dado disponível</p>
+                  <p className="text-xs text-gray-500">
+                    {isConfigured ? 'Em breve disponível' : 'Nenhum dado disponível'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -128,13 +183,31 @@ export function MetaAdsDashboard() {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <Button 
-                    onClick={() => setIsConfiguring(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
-                  >
-                    <Settings className="h-4 w-4 mr-2" />
-                    Configurar Meta Ads
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button 
+                      onClick={() => setIsConfiguring(true)}
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
+                    >
+                      <Settings className="h-4 w-4 mr-2" />
+                      {isConfigured ? 'Editar' : 'Configurar'} Meta Ads
+                    </Button>
+                    
+                    {isConfigured && (
+                      <Button 
+                        variant="outline"
+                        onClick={handleTestConnection}
+                        disabled={testing}
+                        className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                      >
+                        {testing ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                        )}
+                        Testar Conexão
+                      </Button>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
 
@@ -148,11 +221,11 @@ export function MetaAdsDashboard() {
                 <CardContent>
                   <Button 
                     variant="outline" 
-                    disabled
-                    className="border-gray-600 text-gray-500"
+                    disabled={!isConfigured}
+                    className="border-gray-600 text-gray-300 hover:bg-gray-800 disabled:opacity-50"
                   >
                     <BarChart3 className="h-4 w-4 mr-2" />
-                    Ver Relatórios (Configure primeiro)
+                    {isConfigured ? 'Ver Relatórios (Em breve)' : 'Ver Relatórios (Configure primeiro)'}
                   </Button>
                 </CardContent>
               </Card>
@@ -178,6 +251,7 @@ export function MetaAdsDashboard() {
                     onChange={(e) => setConfig(prev => ({ ...prev, appId: e.target.value }))}
                     placeholder="Seu App ID do Facebook"
                     className="bg-gray-800 border-gray-700 text-white"
+                    required
                   />
                 </div>
 
@@ -190,6 +264,7 @@ export function MetaAdsDashboard() {
                     onChange={(e) => setConfig(prev => ({ ...prev, appSecret: e.target.value }))}
                     placeholder="Seu App Secret"
                     className="bg-gray-800 border-gray-700 text-white"
+                    required
                   />
                 </div>
 
@@ -202,6 +277,7 @@ export function MetaAdsDashboard() {
                     onChange={(e) => setConfig(prev => ({ ...prev, accessToken: e.target.value }))}
                     placeholder="Seu Access Token"
                     className="bg-gray-800 border-gray-700 text-white"
+                    required
                   />
                 </div>
 
@@ -214,6 +290,7 @@ export function MetaAdsDashboard() {
                     onChange={(e) => setConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
                     placeholder="act_1234567890"
                     className="bg-gray-800 border-gray-700 text-white"
+                    required
                   />
                   <p className="text-xs text-gray-500 mt-1">
                     Formato: act_XXXXXXXXXX (inclua o prefixo 'act_')
@@ -224,18 +301,18 @@ export function MetaAdsDashboard() {
 
                 <div className="flex gap-3">
                   <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handleTestConnection}
-                    className="border-gray-600 text-gray-300 hover:bg-gray-800"
-                  >
-                    Testar Conexão
-                  </Button>
-                  <Button
                     type="submit"
+                    disabled={saving}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
-                    Salvar Configuração
+                    {saving ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      'Salvar Configuração'
+                    )}
                   </Button>
                   <Button
                     type="button"
