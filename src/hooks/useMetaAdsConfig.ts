@@ -39,6 +39,8 @@ export function useMetaAdsConfig() {
   const [campaigns, setCampaigns] = useState<CampaignData[]>([])
   const [insights, setInsights] = useState<InsightData[]>([])
   const [lastError, setLastError] = useState<string>('')
+  const [lastErrorType, setLastErrorType] = useState<string>('')
+  const [connectionSteps, setConnectionSteps] = useState<any>(null)
 
   // Carregar configuração existente
   useEffect(() => {
@@ -114,6 +116,8 @@ export function useMetaAdsConfig() {
   const testConnection = async () => {
     console.log('🔗 [useMetaAdsConfig] === INICIANDO TESTE DE CONEXÃO ===')
     setLastError('')
+    setLastErrorType('')
+    setConnectionSteps(null)
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -127,6 +131,7 @@ export function useMetaAdsConfig() {
         console.error('❌ [useMetaAdsConfig] Erro na edge function:', error)
         const errorMsg = 'Erro na conexão com o servidor'
         setLastError(errorMsg)
+        setLastErrorType('SERVER_ERROR')
         return { success: false, message: errorMsg }
       }
 
@@ -134,7 +139,30 @@ export function useMetaAdsConfig() {
       
       if (!data.success) {
         setLastError(data.message)
+        setLastErrorType(data.errorType || 'UNKNOWN_ERROR')
         console.error('❌ [useMetaAdsConfig] Teste falhou:', data.message)
+        
+        // Se o Ad Account ID foi corrigido, sugerir atualização
+        if (data.suggestedAdAccountId && data.suggestedAdAccountId !== config.adAccountId) {
+          return { 
+            success: false, 
+            message: data.message,
+            suggestUpdate: true,
+            correctedAdAccountId: data.suggestedAdAccountId
+          }
+        }
+      } else {
+        setConnectionSteps(data.steps)
+        
+        // Se o Ad Account ID foi corrigido automaticamente, sugerir salvar
+        if (data.correctedAdAccountId && data.correctedAdAccountId !== config.adAccountId) {
+          return { 
+            success: true, 
+            message: data.message,
+            suggestUpdate: true,
+            correctedAdAccountId: data.correctedAdAccountId
+          }
+        }
       }
       
       return data
@@ -142,6 +170,7 @@ export function useMetaAdsConfig() {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado na conexão'
       setLastError(errorMsg)
+      setLastErrorType('NETWORK_ERROR')
       return { success: false, message: errorMsg }
     }
   }
@@ -149,6 +178,7 @@ export function useMetaAdsConfig() {
   const fetchCampaigns = async () => {
     console.log('📊 [useMetaAdsConfig] === BUSCANDO CAMPANHAS ===')
     setLastError('')
+    setLastErrorType('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -162,6 +192,7 @@ export function useMetaAdsConfig() {
         console.error('❌ [useMetaAdsConfig] Erro ao buscar campanhas:', error)
         const errorMsg = 'Erro ao buscar campanhas'
         setLastError(errorMsg)
+        setLastErrorType('SERVER_ERROR')
         return { success: false, message: errorMsg }
       }
 
@@ -170,6 +201,7 @@ export function useMetaAdsConfig() {
         console.log('✅ [useMetaAdsConfig] Campanhas carregadas:', data.campaigns.length)
       } else {
         setLastError(data.message)
+        setLastErrorType('API_ERROR')
         console.error('❌ [useMetaAdsConfig] Erro nas campanhas:', data.message)
       }
 
@@ -178,6 +210,7 @@ export function useMetaAdsConfig() {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar campanhas'
       setLastError(errorMsg)
+      setLastErrorType('NETWORK_ERROR')
       return { success: false, message: errorMsg }
     }
   }
@@ -185,6 +218,7 @@ export function useMetaAdsConfig() {
   const fetchInsights = async () => {
     console.log('📈 [useMetaAdsConfig] === BUSCANDO INSIGHTS ===')
     setLastError('')
+    setLastErrorType('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -198,6 +232,7 @@ export function useMetaAdsConfig() {
         console.error('❌ [useMetaAdsConfig] Erro ao buscar insights:', error)
         const errorMsg = 'Erro ao buscar insights'
         setLastError(errorMsg)
+        setLastErrorType('SERVER_ERROR')
         return { success: false, message: errorMsg }
       }
 
@@ -206,6 +241,7 @@ export function useMetaAdsConfig() {
         console.log('✅ [useMetaAdsConfig] Insights carregados:', data.insights.length)
       } else {
         setLastError(data.message)
+        setLastErrorType('API_ERROR')
         console.error('❌ [useMetaAdsConfig] Erro nos insights:', data.message)
       }
 
@@ -214,8 +250,15 @@ export function useMetaAdsConfig() {
       console.error('❌ [useMetaAdsConfig] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
+      setLastErrorType('NETWORK_ERROR')
       return { success: false, message: errorMsg }
     }
+  }
+
+  const updateAdAccountId = async (newAdAccountId: string) => {
+    const newConfig = { ...config, adAccountId: newAdAccountId }
+    setConfig(newConfig)
+    return await saveConfig(newConfig)
   }
 
   const isConfigured = config.appId && config.appSecret && config.accessToken && config.adAccountId
@@ -232,6 +275,9 @@ export function useMetaAdsConfig() {
     campaigns,
     insights,
     isConfigured,
-    lastError
+    lastError,
+    lastErrorType,
+    connectionSteps,
+    updateAdAccountId
   }
 }

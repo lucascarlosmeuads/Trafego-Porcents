@@ -20,7 +20,9 @@ import {
   CheckCircle, 
   Loader2,
   RefreshCw,
-  AlertTriangle
+  AlertTriangle,
+  CheckCircle2,
+  ExternalLink
 } from 'lucide-react'
 
 export function MetaAdsDashboard() {
@@ -37,7 +39,10 @@ export function MetaAdsDashboard() {
     campaigns,
     insights,
     isConfigured,
-    lastError
+    lastError,
+    lastErrorType,
+    connectionSteps,
+    updateAdAccountId
   } = useMetaAdsConfig()
   
   const [isConfiguring, setIsConfiguring] = useState(false)
@@ -66,8 +71,38 @@ export function MetaAdsDashboard() {
     
     if (result.success) {
       toast.success('✅ ' + result.message)
+      
+      // Se sugeriu uma correção do Ad Account ID, mostrar opção para atualizar
+      if (result.suggestUpdate && result.correctedAdAccountId) {
+        toast.info(`💡 Sugestão: Atualizar Ad Account ID para "${result.correctedAdAccountId}"`, {
+          action: {
+            label: 'Atualizar',
+            onClick: async () => {
+              const updateResult = await updateAdAccountId(result.correctedAdAccountId)
+              if (updateResult.success) {
+                toast.success('Ad Account ID atualizado com sucesso!')
+              }
+            }
+          }
+        })
+      }
     } else {
       toast.error('❌ ' + result.message)
+      
+      // Se sugeriu uma correção do Ad Account ID, mostrar opção para atualizar
+      if (result.suggestUpdate && result.correctedAdAccountId) {
+        toast.warning(`💡 Sugerir correção: "${result.correctedAdAccountId}"`, {
+          action: {
+            label: 'Corrigir',
+            onClick: async () => {
+              const updateResult = await updateAdAccountId(result.correctedAdAccountId)
+              if (updateResult.success) {
+                toast.success('Ad Account ID corrigido! Teste a conexão novamente.')
+              }
+            }
+          }
+        })
+      }
     }
     
     setTesting(false)
@@ -96,6 +131,22 @@ export function MetaAdsDashboard() {
     }
     
     setLoadingData(false)
+  }
+
+  const getErrorSeverity = (errorType: string) => {
+    const critical = ['INVALID_TOKEN', 'SESSION_EXPIRED', 'AD_ACCOUNT_NOT_FOUND']
+    const warning = ['INVALID_AD_ACCOUNT_FORMAT', 'INVALID_TOKEN_LENGTH']
+    
+    if (critical.includes(errorType)) return 'critical'
+    if (warning.includes(errorType)) return 'warning'
+    return 'info'
+  }
+
+  const getErrorIcon = (errorType: string) => {
+    const severity = getErrorSeverity(errorType)
+    if (severity === 'critical') return <AlertTriangle className="h-4 w-4 text-red-400" />
+    if (severity === 'warning') return <AlertCircle className="h-4 w-4 text-yellow-400" />
+    return <AlertCircle className="h-4 w-4 text-blue-400" />
   }
 
   if (loading) {
@@ -145,12 +196,96 @@ export function MetaAdsDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
-        {/* Error Alert */}
+        {/* Error Alert with detailed info */}
         {lastError && (
-          <Alert className="mb-6 border-red-800 bg-red-950/50">
-            <AlertTriangle className="h-4 w-4 text-red-400" />
-            <AlertDescription className="text-red-300">
-              <strong>Erro detectado:</strong> {lastError}
+          <Alert className={`mb-6 border-gray-800 ${
+            getErrorSeverity(lastErrorType) === 'critical' ? 'bg-red-950/50 border-red-800' :
+            getErrorSeverity(lastErrorType) === 'warning' ? 'bg-yellow-950/50 border-yellow-800' :
+            'bg-blue-950/50 border-blue-800'
+          }`}>
+            {getErrorIcon(lastErrorType)}
+            <AlertDescription className={
+              getErrorSeverity(lastErrorType) === 'critical' ? 'text-red-300' :
+              getErrorSeverity(lastErrorType) === 'warning' ? 'text-yellow-300' :
+              'text-blue-300'
+            }>
+              <div className="space-y-2">
+                <div><strong>Erro detectado:</strong></div>
+                <div className="whitespace-pre-line">{lastError}</div>
+                
+                {lastErrorType === 'AD_ACCOUNT_NOT_FOUND' && (
+                  <div className="mt-3 p-3 bg-gray-900/50 rounded border border-gray-700">
+                    <p className="text-sm font-medium text-gray-300 mb-2">🔍 Como encontrar seu Ad Account ID:</p>
+                    <ol className="text-sm text-gray-400 space-y-1 list-decimal list-inside">
+                      <li>Acesse o <a href="https://adsmanager.facebook.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">Facebook Ads Manager <ExternalLink className="h-3 w-3" /></a></li>
+                      <li>Na URL, procure um número longo após "/accounts/"</li>
+                      <li>Se estiver no formato "act_1234567890", use assim</li>
+                      <li>Se for apenas "1234567890", adicione "act_" na frente</li>
+                    </ol>
+                  </div>
+                )}
+                
+                {lastErrorType === 'INVALID_TOKEN' && (
+                  <div className="mt-3 p-3 bg-gray-900/50 rounded border border-gray-700">
+                    <p className="text-sm font-medium text-gray-300 mb-2">🔑 Como gerar um novo Access Token:</p>
+                    <ol className="text-sm text-gray-400 space-y-1 list-decimal list-inside">
+                      <li>Acesse o <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">Graph API Explorer <ExternalLink className="h-3 w-3" /></a></li>
+                      <li>Selecione seu App</li>
+                      <li>Clique em "Generate Access Token"</li>
+                      <li>Selecione as permissões: <code className="bg-gray-800 px-1 rounded text-xs">ads_read</code> e <code className="bg-gray-800 px-1 rounded text-xs">ads_management</code></li>
+                      <li>Copie o token gerado</li>
+                    </ol>
+                  </div>
+                )}
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Connection Steps Status */}
+        {connectionSteps && (
+          <Alert className="mb-6 border-green-800 bg-green-950/50">
+            <CheckCircle2 className="h-4 w-4 text-green-400" />
+            <AlertDescription className="text-green-300">
+              <div className="space-y-2">
+                <div><strong>Status do Teste de Conexão:</strong></div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                  <div className="flex items-center gap-2">
+                    {connectionSteps.validation === 'OK' ? (
+                      <CheckCircle className="h-3 w-3 text-green-400" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-red-400" />
+                    )}
+                    Validação
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {connectionSteps.basic_connection === 'OK' ? (
+                      <CheckCircle className="h-3 w-3 text-green-400" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-red-400" />
+                    )}
+                    Conexão API
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {connectionSteps.ad_account_access === 'OK' ? (
+                      <CheckCircle className="h-3 w-3 text-green-400" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-red-400" />
+                    )}
+                    Ad Account
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {connectionSteps.campaigns_access === 'OK' ? (
+                      <CheckCircle className="h-3 w-3 text-green-400" />
+                    ) : connectionSteps.campaigns_access === 'WARNING' ? (
+                      <AlertTriangle className="h-3 w-3 text-yellow-400" />
+                    ) : (
+                      <AlertCircle className="h-3 w-3 text-red-400" />
+                    )}
+                    Campanhas
+                  </div>
+                </div>
+              </div>
             </AlertDescription>
           </Alert>
         )}
@@ -384,7 +519,7 @@ export function MetaAdsDashboard() {
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    Token deve ter permissões: ads_read, ads_management
+                    Token deve ter permissões: <code className="bg-gray-800 px-1 rounded">ads_read</code>, <code className="bg-gray-800 px-1 rounded">ads_management</code>
                   </p>
                 </div>
 
@@ -395,12 +530,12 @@ export function MetaAdsDashboard() {
                     type="text"
                     value={config.adAccountId}
                     onChange={(e) => setConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
-                    placeholder="act_1234567890"
+                    placeholder="act_1234567890 ou apenas 1234567890"
                     className="bg-gray-800 border-gray-700 text-white"
                     required
                   />
                   <p className="text-xs text-gray-500 mt-1">
-                    <strong>IMPORTANTE:</strong> Deve começar com 'act_' (exemplo: act_1234567890)
+                    <strong>Dica:</strong> Pode começar com 'act_' ou apenas os números (será corrigido automaticamente)
                   </p>
                 </div>
 
