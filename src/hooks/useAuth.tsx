@@ -1,4 +1,3 @@
-
 import { useEffect, createContext, useContext, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuthState } from '@/hooks/useAuthState'
@@ -16,7 +15,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites, // NOVO
+    isSites,
+    isRelatorios, // NOVO
     currentManagerName,
     updateUserType,
     resetUserState
@@ -207,7 +207,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isGestor,
     isCliente,
     isVendedor,
-    isSites
+    isSites,
+    isRelatorios
   })
 
   return (
@@ -221,7 +222,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isGestor,
       isCliente,
       isVendedor,
-      isSites, // NOVO
+      isSites,
+      isRelatorios, // NOVO
       currentManagerName
     }}>
       {children}

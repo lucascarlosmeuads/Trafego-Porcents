@@ -10,6 +10,7 @@ import { LoadingFallback } from './LoadingFallback'
 import { VendedorDashboard } from './VendedorDashboard'
 import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
 import { SitesDashboard } from './SitesDashboard'
+import { MetaAdsDashboard } from './MetaAdsDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,6 +25,7 @@ export function Dashboard() {
     isCliente,
     isVendedor,
     isSites,
+    isRelatorios,
     signOut
   } = useAuth()
 
@@ -40,14 +42,15 @@ export function Dashboard() {
     isGestor,
     isCliente,
     isVendedor,
-    isSites
+    isSites,
+    isRelatorios
   })
 
   // Reset tab when user type changes
   useEffect(() => {
     setActiveTab('dashboard')
     setSelectedManager(null)
-  }, [isAdmin, isGestor, isCliente, isVendedor, isSites])
+  }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios])
 
   const handleSignOut = async () => {
     console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
@@ -83,7 +86,8 @@ export function Dashboard() {
     isGestor: isGestor ? '✅' : '❌', 
     isCliente: isCliente ? '✅' : '❌',
     isVendedor: isVendedor ? '✅' : '❌',
-    isSites: isSites ? '✅' : '❌'
+    isSites: isSites ? '✅' : '❌',
+    isRelatorios: isRelatorios ? '✅' : '❌'
   })
 
   // Cliente Dashboard
@@ -114,6 +118,12 @@ export function Dashboard() {
   if (isSites) {
     console.log('✅ [Dashboard] Direcionando para SitesDashboard')
     return <SitesDashboard />
+  }
+
+  // Meta Ads Dashboard (NOVO)
+  if (isRelatorios) {
+    console.log('✅ [Dashboard] Direcionando para MetaAdsDashboard')
+    return <MetaAdsDashboard />
   }
 
   // Admin/Gestor Dashboards
