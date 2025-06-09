@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useMetaAdsConfig } from '@/hooks/useMetaAdsConfig'
@@ -24,6 +23,8 @@ import {
   CheckCircle2,
   ExternalLink
 } from 'lucide-react'
+import { PermissionsGuide } from './MetaAdsDashboard/PermissionsGuide'
+import { ErrorDiagnostics } from './MetaAdsDashboard/ErrorDiagnostics'
 
 export function MetaAdsDashboard() {
   const { user, signOut, currentManagerName } = useAuth()
@@ -48,6 +49,7 @@ export function MetaAdsDashboard() {
   const [isConfiguring, setIsConfiguring] = useState(false)
   const [testing, setTesting] = useState(false)
   const [loadingData, setLoadingData] = useState(false)
+  const [showPermissionsGuide, setShowPermissionsGuide] = useState(false)
 
   const handleConfigSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -196,59 +198,37 @@ export function MetaAdsDashboard() {
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto p-6">
-        {/* Error Alert with detailed info */}
-        {lastError && (
-          <Alert className={`mb-6 border-gray-800 ${
-            getErrorSeverity(lastErrorType) === 'critical' ? 'bg-red-950/50 border-red-800' :
-            getErrorSeverity(lastErrorType) === 'warning' ? 'bg-yellow-950/50 border-yellow-800' :
-            'bg-blue-950/50 border-blue-800'
-          }`}>
-            {getErrorIcon(lastErrorType)}
-            <AlertDescription className={
-              getErrorSeverity(lastErrorType) === 'critical' ? 'text-red-300' :
-              getErrorSeverity(lastErrorType) === 'warning' ? 'text-yellow-300' :
-              'text-blue-300'
-            }>
-              <div className="space-y-2">
-                <div><strong>Erro detectado:</strong></div>
-                <div className="whitespace-pre-line">{lastError}</div>
-                
-                {lastErrorType === 'AD_ACCOUNT_NOT_FOUND' && (
-                  <div className="mt-3 p-3 bg-gray-900/50 rounded border border-gray-700">
-                    <p className="text-sm font-medium text-gray-300 mb-2">🔍 Como encontrar seu Ad Account ID:</p>
-                    <ol className="text-sm text-gray-400 space-y-1 list-decimal list-inside">
-                      <li>Acesse o <a href="https://adsmanager.facebook.com" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">Facebook Ads Manager <ExternalLink className="h-3 w-3" /></a></li>
-                      <li>Na URL, procure um número longo após "/accounts/"</li>
-                      <li>Se estiver no formato "act_1234567890", use assim</li>
-                      <li>Se for apenas "1234567890", adicione "act_" na frente</li>
-                    </ol>
-                  </div>
-                )}
-                
-                {lastErrorType === 'INVALID_TOKEN' && (
-                  <div className="mt-3 p-3 bg-gray-900/50 rounded border border-gray-700">
-                    <p className="text-sm font-medium text-gray-300 mb-2">🔑 Como gerar um novo Access Token:</p>
-                    <ol className="text-sm text-gray-400 space-y-1 list-decimal list-inside">
-                      <li>Acesse o <a href="https://developers.facebook.com/tools/explorer/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline inline-flex items-center gap-1">Graph API Explorer <ExternalLink className="h-3 w-3" /></a></li>
-                      <li>Selecione seu App</li>
-                      <li>Clique em "Generate Access Token"</li>
-                      <li>Selecione as permissões: <code className="bg-gray-800 px-1 rounded text-xs">ads_read</code> e <code className="bg-gray-800 px-1 rounded text-xs">ads_management</code></li>
-                      <li>Copie o token gerado</li>
-                    </ol>
-                  </div>
-                )}
-              </div>
-            </AlertDescription>
-          </Alert>
+        {/* Permissions Guide */}
+        {showPermissionsGuide && (
+          <PermissionsGuide 
+            errorType={lastErrorType}
+            onClose={() => setShowPermissionsGuide(false)}
+          />
+        )}
+
+        {/* Error Diagnostics with improved UI */}
+        {lastError && !showPermissionsGuide && (
+          <ErrorDiagnostics
+            error={lastError}
+            errorType={lastErrorType}
+            onRetry={() => {
+              if (lastErrorType === 'INSUFFICIENT_PERMISSIONS' || lastErrorType === 'INVALID_TOKEN') {
+                handleTestConnection()
+              } else {
+                handleLoadData()
+              }
+            }}
+            onShowGuide={() => setShowPermissionsGuide(true)}
+          />
         )}
 
         {/* Connection Steps Status */}
-        {connectionSteps && (
+        {connectionSteps && !lastError && (
           <Alert className="mb-6 border-green-800 bg-green-950/50">
             <CheckCircle2 className="h-4 w-4 text-green-400" />
             <AlertDescription className="text-green-300">
               <div className="space-y-2">
-                <div><strong>Status do Teste de Conexão:</strong></div>
+                <div><strong>✅ Conexão Estabelecida com Sucesso!</strong></div>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
                   <div className="flex items-center gap-2">
                     {connectionSteps.validation === 'OK' ? (
@@ -366,7 +346,7 @@ export function MetaAdsDashboard() {
                   </p>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex gap-2">
+                  <div className="flex flex-wrap gap-2">
                     <Button 
                       onClick={() => setIsConfiguring(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
@@ -390,6 +370,15 @@ export function MetaAdsDashboard() {
                         Testar Conexão
                       </Button>
                     )}
+
+                    <Button 
+                      variant="ghost"
+                      onClick={() => setShowPermissionsGuide(true)}
+                      className="text-gray-400 hover:bg-gray-800"
+                    >
+                      <ExternalLink className="h-4 w-4 mr-2" />
+                      Ver Guia
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
@@ -478,8 +467,29 @@ export function MetaAdsDashboard() {
               <p className="text-gray-400 text-sm">
                 Insira suas credenciais do Facebook Developers para conectar com a API
               </p>
+              <div className="pt-2">
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  onClick={() => setShowPermissionsGuide(!showPermissionsGuide)}
+                  className="border-gray-600 text-gray-300 hover:bg-gray-800"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  {showPermissionsGuide ? 'Ocultar' : 'Ver'} Guia de Configuração
+                </Button>
+              </div>
             </CardHeader>
             <CardContent>
+              {/* Show guide in configuration mode if requested */}
+              {showPermissionsGuide && (
+                <div className="mb-6">
+                  <PermissionsGuide 
+                    errorType={lastErrorType}
+                    onClose={() => setShowPermissionsGuide(false)}
+                  />
+                </div>
+              )}
+
               <form onSubmit={handleConfigSubmit} className="space-y-4">
                 <div>
                   <Label htmlFor="appId" className="text-gray-300">App ID</Label>
