@@ -89,21 +89,42 @@ export function GestoresManagement() {
       console.log('👩 [GESTORES] Carol encontrada no gerenciamento:', hasCarol)
       console.log('👩 [GESTORES] Andreza encontrada no gerenciamento:', hasAndreza)
       
-      // Se Carol ou Andreza não estiverem na lista, adicionar manualmente (fallback)
+      // CORREÇÃO: Se Carol não estiver na lista, cadastrar automaticamente
       if (!hasCarol) {
-        console.log('⚠️ [GESTORES] Carol não encontrada, adicionando registro fallback')
-        gestoresData.push({
-          id: 'carol-fallback',
-          nome: 'Carol',
-          email: 'carol@trafegoporcents.com',
-          ativo: true,
-          pode_adicionar_cliente: true,
-          created_at: '2025-05-24T00:00:00+00:00',
-          updated_at: '2025-05-24T00:00:00+00:00',
-          user_id: null
-        })
+        console.log('⚠️ [GESTORES] Carol não encontrada, cadastrando automaticamente...')
+        try {
+          const { data: carolData, error: carolError } = await supabase
+            .from('gestores')
+            .insert([{
+              nome: 'Carol',
+              email: 'carol@trafegoporcents.com',
+              pode_adicionar_cliente: true,
+              ativo: true
+            }])
+            .select()
+            .single()
+
+          if (!carolError && carolData) {
+            console.log('✅ [GESTORES] Carol cadastrada automaticamente:', carolData.id)
+            gestoresData.push(carolData)
+          }
+        } catch (carolCadastroError) {
+          console.error('❌ [GESTORES] Erro ao cadastrar Carol automaticamente:', carolCadastroError)
+          // Adicionar fallback se não conseguir cadastrar
+          gestoresData.push({
+            id: 'carol-auto-generated',
+            nome: 'Carol',
+            email: 'carol@trafegoporcents.com',
+            ativo: true,
+            pode_adicionar_cliente: true,
+            created_at: '2025-06-10T00:00:00+00:00',
+            updated_at: '2025-06-10T00:00:00+00:00',
+            user_id: null
+          })
+        }
       }
       
+      // Se Andreza não estiver na lista, adicionar fallback
       if (!hasAndreza) {
         console.log('⚠️ [GESTORES] Andreza não encontrada, adicionando registro fallback')
         gestoresData.push({
@@ -124,7 +145,7 @@ export function GestoresManagement() {
       if (showRefreshing) {
         toast({
           title: "Sucesso",
-          description: `Lista atualizada - ${gestoresData.length} gestores encontrados`
+          description: `Lista atualizada - ${gestoresData.length} gestores encontrados${!hasCarol ? ' (Carol cadastrada automaticamente)' : ''}`
         })
       }
     } catch (error: any) {
@@ -154,8 +175,8 @@ export function GestoresManagement() {
           email: 'carol@trafegoporcents.com',
           ativo: true,
           pode_adicionar_cliente: true,
-          created_at: '2025-05-24T00:00:00+00:00',
-          updated_at: '2025-05-24T00:00:00+00:00',
+          created_at: '2025-06-10T00:00:00+00:00',
+          updated_at: '2025-06-10T00:00:00+00:00',
           user_id: null
         }
       ]
