@@ -27,9 +27,9 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
       cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
     )
 
-    // Total pendente - clientes com comissão não paga
+    // CORREÇÃO: Total pendente - APENAS clientes com status "Pendente" (vermelhinhos)
     const clientesPendentes = clientes.filter(cliente => 
-      cliente.comissao !== 'Pago'
+      cliente.comissao === 'Pendente'
     )
     const totalPendente = clientesPendentes.reduce((total, cliente) => 
       total + (cliente.valor_comissao || 60.00), 0

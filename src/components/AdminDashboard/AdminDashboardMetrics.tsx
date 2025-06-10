@@ -13,28 +13,6 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   console.log('📊 [AdminDashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
   console.log('📊 [AdminDashboardMetrics] Gestor selecionado:', selectedManager)
 
-  // FUNÇÃO CORRIGIDA: Determinar se uma comissão é considerada pendente
-  const isComissaoPendente = (comissao: string | null | undefined): boolean => {
-    // Considera pendente TODOS os casos que NÃO são explicitamente "Pago":
-    if (!comissao || comissao.trim() === '') {
-      return true // null, undefined, string vazia
-    }
-    
-    const comissaoTrimmed = comissao.trim()
-    
-    // Explicitamente "Pago" = NÃO pendente
-    if (comissaoTrimmed === 'Pago') {
-      return false
-    }
-    
-    // TODOS os outros casos são pendentes:
-    // - "Pendente"
-    // - "Solicitado" 
-    // - Valores numéricos antigos: "20", "60", "80", etc.
-    // - Qualquer outro status
-    return true
-  }
-
   // Total de clientes
   const totalClientes = clientes.length
 
@@ -43,15 +21,15 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   )
 
-  // CÁLCULO CORRIGIDO: Total pendente - SOMA OS VALORES REAIS de valor_comissao
+  // CORREÇÃO: Total pendente - APENAS clientes com status "Pendente" (vermelhinhos)
   const clientesPendentes = clientes.filter(cliente => 
-    isComissaoPendente(cliente.comissao)
+    cliente.comissao === 'Pendente'
   )
   const totalPendente = clientesPendentes.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60.00), 0
   )
 
-  // CÁLCULO CORRIGIDO: Total já recebido - SOMA OS VALORES REAIS de valor_comissao
+  // Total já recebido - clientes com comissão paga
   const clientesPagos = clientes.filter(cliente => 
     cliente.comissao === 'Pago'
   )
@@ -64,23 +42,6 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     cliente.status_campanha === 'Problema'
   )
 
-  // VALIDAÇÃO DOS CÁLCULOS: Log detalhado para auditoria
-  console.log('📈 [AdminDashboardMetrics] === AUDITORIA DE CÁLCULOS ===')
-  console.log('📊 [AdminDashboardMetrics] Breakdown por status de comissão:')
-  
-  // Agrupar por status de comissão para debug
-  const comissaoBreakdown = clientes.reduce((acc, cliente) => {
-    const status = cliente.comissao || 'null/undefined'
-    if (!acc[status]) {
-      acc[status] = { count: 0, total: 0 }
-    }
-    acc[status].count++
-    acc[status].total += (cliente.valor_comissao || 60.00)
-    return acc
-  }, {} as Record<string, { count: number, total: number }>)
-
-  console.log('📊 [AdminDashboardMetrics] Breakdown detalhado:', comissaoBreakdown)
-  
   console.log('📈 [AdminDashboardMetrics] Métricas calculadas:')
   console.log('   🔢 Total clientes:', totalClientes)
   console.log('   🟢 Campanhas no ar:', clientesNoAr.length)
@@ -89,16 +50,6 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   console.log('   ✅ Pagos (count):', clientesPagos.length)
   console.log('   ✅ Pagos (valor):', formatCurrency(totalRecebido))
   console.log('   ⚠️ Problemas:', clientesProblemas.length)
-  console.log('   🧮 Soma verificação:', clientesPendentes.length + clientesPagos.length, '/', totalClientes)
-
-  // Validação cruzada dos totais
-  const totalValorCalculado = totalPendente + totalRecebido
-  const totalValorEsperado = clientes.reduce((total, cliente) => total + (cliente.valor_comissao || 60.00), 0)
-  
-  console.log('💰 [AdminDashboardMetrics] Validação de valores:')
-  console.log('   📊 Total calculado (pendente + pago):', formatCurrency(totalValorCalculado))
-  console.log('   📊 Total esperado (soma de todos):', formatCurrency(totalValorEsperado))
-  console.log('   ✅ Valores batem?', totalValorCalculado === totalValorEsperado ? 'SIM' : 'NÃO')
 
   return (
     <div className="space-y-6">
@@ -175,7 +126,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
         </div>
       </div>
 
-      {/* Métricas Específicas do Admin - CÁLCULOS CORRIGIDOS */}
+      {/* Métricas Específicas do Admin */}
       <div>
         <h3 className="text-lg font-semibold mb-4 text-contrast">
           💳 Controle de Pagamentos (Admin)
