@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -14,8 +15,24 @@ export function useAdminTableLogic() {
     fetchGestores()
   }, [])
 
+  const ensureCarolInGestoresList = (gestoresList: Array<{ email: string, nome: string }>) => {
+    const hasCarol = gestoresList.some(g => g.email === 'carol@trafegoporcents.com')
+    
+    if (!hasCarol) {
+      console.log('⚠️ [AdminTable] Carol não encontrada na lista, adicionando...')
+      gestoresList.push({
+        email: 'carol@trafegoporcents.com',
+        nome: 'Carol'
+      })
+    }
+    
+    return gestoresList
+  }
+
   const fetchGestores = async () => {
     try {
+      console.log('🔍 [AdminTable] Buscando gestores ativos...')
+      
       const { data, error } = await supabase
         .from('gestores')
         .select('email, nome')
@@ -23,12 +40,34 @@ export function useAdminTableLogic() {
         .order('nome')
 
       if (error) {
-        console.error('Erro ao buscar gestores:', error)
+        console.error('❌ [AdminTable] Erro ao buscar gestores:', error)
+        // Fallback com gestores essenciais
+        const fallbackGestores = [
+          { email: 'carol@trafegoporcents.com', nome: 'Carol' },
+          { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
+        ]
+        console.log('🔄 [AdminTable] Usando fallback de gestores:', fallbackGestores)
+        setGestores(fallbackGestores)
       } else {
-        setGestores(data || [])
+        const gestoresData = data || []
+        console.log('✅ [AdminTable] Gestores carregados:', gestoresData.length)
+        console.log('📋 [AdminTable] Lista de gestores:', gestoresData)
+        
+        // Garantir que Carol está sempre na lista
+        const gestoresComCarol = ensureCarolInGestoresList([...gestoresData])
+        console.log('✅ [AdminTable] Lista final com Carol:', gestoresComCarol)
+        
+        setGestores(gestoresComCarol)
       }
     } catch (error) {
-      console.error('Erro na consulta de gestores:', error)
+      console.error('💥 [AdminTable] Erro na consulta de gestores:', error)
+      // Fallback em caso de erro
+      const fallbackGestores = [
+        { email: 'carol@trafegoporcents.com', nome: 'Carol' },
+        { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
+      ]
+      console.log('🔄 [AdminTable] Usando fallback após erro:', fallbackGestores)
+      setGestores(fallbackGestores)
     }
   }
 

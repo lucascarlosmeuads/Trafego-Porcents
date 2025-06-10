@@ -28,6 +28,22 @@ export function ManagerSelector({
   const [managers, setManagers] = useState<Manager[]>([])
   const [loading, setLoading] = useState(true)
 
+  const ensureCarolInList = (managersList: Manager[]) => {
+    const hasCarol = managersList.some(m => m.email === 'carol@trafegoporcents.com')
+    
+    if (!hasCarol) {
+      console.log('⚠️ [ManagerSelector] Carol não encontrada, adicionando...')
+      managersList.push({
+        email: 'carol@trafegoporcents.com',
+        nome: 'Carol',
+        ativo: true,
+        clientesCount: 0
+      })
+    }
+    
+    return managersList.sort((a, b) => a.nome.localeCompare(b.nome))
+  }
+
   useEffect(() => {
     const loadManagers = async () => {
       try {
@@ -39,33 +55,65 @@ export function ManagerSelector({
           .eq('ativo', true)
           .order('nome')
 
-        if (error) throw error
+        if (error) {
+          console.error('❌ [ManagerSelector] Erro ao carregar gestores:', error)
+          throw error
+        }
 
         console.log('🔍 [ManagerSelector] Gestores carregados:', gestores?.length)
         console.log('🔍 [ManagerSelector] Lista de gestores:', gestores)
 
-        // Se precisar mostrar métricas, buscar contagem de clientes
-        let managersWithMetrics = gestores || []
-        
-        if (showMetrics) {
-          managersWithMetrics = await Promise.all(
-            (gestores || []).map(async (gestor) => {
-              const { count } = await supabase
-                .from('todos_clientes')
-                .select('*', { count: 'exact', head: true })
-                .eq('email_gestor', gestor.email)
+        // Garantir que Carol está sempre na lista
+        let managersWithCarol = ensureCarolInList([...(gestores || [])])
 
-              return {
-                ...gestor,
-                clientesCount: count || 0
+        // Se precisar mostrar métricas, buscar contagem de clientes
+        if (showMetrics) {
+          managersWithCarol = await Promise.all(
+            managersWithCarol.map(async (gestor) => {
+              try {
+                const { count } = await supabase
+                  .from('todos_clientes')
+                  .select('*', { count: 'exact', head: true })
+                  .eq('email_gestor', gestor.email)
+
+                return {
+                  ...gestor,
+                  clientesCount: count || 0
+                }
+              } catch (error) {
+                console.error('❌ [ManagerSelector] Erro ao buscar clientes para:', gestor.email, error)
+                return {
+                  ...gestor,
+                  clientesCount: 0
+                }
               }
             })
           )
         }
 
-        setManagers(managersWithMetrics)
+        console.log('✅ [ManagerSelector] Lista final de gestores:', managersWithCarol)
+        setManagers(managersWithCarol)
       } catch (error) {
         console.error('❌ [ManagerSelector] Erro ao carregar gestores:', error)
+        
+        // Fallback com gestores essenciais
+        const fallbackManagers = [
+          {
+            email: 'carol@trafegoporcents.com',
+            nome: 'Carol',
+            ativo: true,
+            clientesCount: 0
+          },
+          {
+            email: 'andreza@trafegoporcents.com',
+            nome: 'Andreza',
+            ativo: true,
+            clientesCount: 0
+          }
+        ]
+        
+        console.log('🔄 [ManagerSelector] Usando fallback:', fallbackManagers)
+        setManagers(fallbackManagers)
       } finally {
         setLoading(false)
       }
