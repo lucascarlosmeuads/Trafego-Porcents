@@ -6,6 +6,7 @@ import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
+import { SiteRequestCard } from './SiteRequestCard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Upload, TrendingUp, Play, Headphones, User, Settings } from 'lucide-react'
@@ -66,6 +67,12 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
     return (
       <div className="pb-20"> {/* Espaço para navegação inferior */}
         <AvisoMudancaAtendimento />
+        
+        {/* Card de solicitação de site para mobile */}
+        <div className="p-4">
+          <SiteRequestCard />
+        </div>
+        
         <MobileOnboardingSteps onTabChange={onTabChange} />
       </div>
     )
@@ -97,6 +104,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
 
       {/* Aviso de Mudança */}
       <AvisoMudancaAtendimento />
+
+      {/* Card de Solicitação de Site - NOVO */}
+      <SiteRequestCard />
 
       {/* Seção de Perfil */}
       <Card className="bg-gray-900 border-gray-800">

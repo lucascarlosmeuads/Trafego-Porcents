@@ -535,6 +535,45 @@ export type Database = {
           },
         ]
       }
+      solicitacoes_site: {
+        Row: {
+          created_at: string
+          dados_preenchidos: boolean | null
+          email_cliente: string
+          email_gestor: string | null
+          id: string
+          nome_cliente: string
+          observacoes: string | null
+          status: string
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          dados_preenchidos?: boolean | null
+          email_cliente: string
+          email_gestor?: string | null
+          id?: string
+          nome_cliente: string
+          observacoes?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          dados_preenchidos?: boolean | null
+          email_cliente?: string
+          email_gestor?: string | null
+          id?: string
+          nome_cliente?: string
+          observacoes?: string | null
+          status?: string
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sugestoes_melhorias: {
         Row: {
           categoria: string

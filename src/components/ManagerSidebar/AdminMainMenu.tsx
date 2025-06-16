@@ -1,47 +1,72 @@
 
-import { BarChart, Users, MessageSquare, FileText, BookOpen, Lightbulb } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
+import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
+import { 
+  LayoutDashboard, 
+  Users, 
+  MessageSquare, 
+  BookOpen, 
+  Headphones, 
+  BarChart3, 
+  FileText,
+  Globe
+} from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
   onTabSelect: (tab: string) => void
-  selectedManager?: string | null
-  problemasPendentes?: number
-  onTabChange?: (tab: string) => void
-  onManagerSelect?: (manager: string | null) => void
-  isCollapsed?: boolean
 }
 
 export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
+  const { solicitations } = useSiteSolicitations()
+  
+  // Contar solicitações pendentes
+  const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
+
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: BarChart,
+      icon: LayoutDashboard,
       description: 'Visão geral e métricas'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      description: 'Gerenciar todos os clientes'
+      description: 'Gerenciar clientes'
+    },
+    {
+      id: 'solicitacoes-site',
+      label: 'Solicitações de Site',
+      icon: Globe,
+      description: 'Gerenciar pedidos de criação de site',
+      badge: pendingSiteRequests > 0 ? pendingSiteRequests : undefined
     },
     {
       id: 'sac',
       label: 'SAC',
-      icon: MessageSquare,
-      description: 'Suporte ao Cliente'
+      icon: Headphones,
+      description: 'Central de atendimento'
     },
     {
       id: 'sac-relatorio',
       label: 'Relatório SAC',
-      icon: FileText,
-      description: 'Análise de SACs por gestor'
+      icon: BarChart3,
+      description: 'Relatórios de atendimento'
+    },
+    {
+      id: 'chat',
+      label: 'Chat',
+      icon: MessageSquare,
+      description: 'Conversas com clientes'
     },
     {
       id: 'sugestoes',
       label: 'Sugestões',
-      icon: Lightbulb,
-      description: 'Sugestões dos gestores'
+      icon: FileText,
+      description: 'Feedback e melhorias'
     },
     {
       id: 'documentacao',
@@ -52,21 +77,45 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
   ]
 
   return (
-    <div className="flex flex-col space-y-1">
-      {menuItems.map(item => (
-        <button
+    <nav className="space-y-2">
+      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
+        Menu Principal
+      </div>
+      
+      {menuItems.map((item) => (
+        <Button
           key={item.id}
-          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-1
-            ${activeTab === item.id
-              ? 'bg-secondary text-secondary-foreground'
-              : 'hover:bg-muted/50 text-muted-foreground'
-            }`}
+          variant={activeTab === item.id ? "secondary" : "ghost"}
+          className={`
+            w-full justify-start h-auto p-3 text-left
+            ${activeTab === item.id 
+              ? 'bg-blue-100 text-blue-900 border border-blue-200' 
+              : 'text-gray-300 hover:text-white hover:bg-gray-800'
+            }
+          `}
           onClick={() => onTabSelect(item.id)}
         >
-          <item.icon className="h-4 w-4" />
-          <span>{item.label}</span>
-        </button>
+          <div className="flex items-center space-x-3 w-full">
+            <item.icon className="h-5 w-5 flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center justify-between">
+                <span className="font-medium truncate">{item.label}</span>
+                {item.badge && (
+                  <Badge 
+                    variant="secondary" 
+                    className="ml-2 bg-red-100 text-red-800 border-red-200 animate-pulse"
+                  >
+                    {item.badge}
+                  </Badge>
+                )}
+              </div>
+              <div className="text-xs text-gray-500 truncate">
+                {item.description}
+              </div>
+            </div>
+          </div>
+        </Button>
       ))}
-    </div>
+    </nav>
   )
 }

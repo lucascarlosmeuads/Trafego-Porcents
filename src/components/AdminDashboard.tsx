@@ -13,6 +13,7 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
 import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
+import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -84,6 +85,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
           </div>
         )
+
+      case 'solicitacoes-site':
+        return <SiteRequestsDashboard />
 
       case 'sac':
         return <SacDashboard />
