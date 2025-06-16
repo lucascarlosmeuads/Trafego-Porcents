@@ -1,6 +1,8 @@
 
-import { BarChart3, Users, Headphones, Lightbulb } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb, Globe } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
+import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
 
 interface GestorMenuProps {
   activeTab: string
@@ -10,6 +12,11 @@ interface GestorMenuProps {
 }
 
 export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isCollapsed = false }: GestorMenuProps) {
+  const { solicitations } = useSiteSolicitations()
+  
+  // Contar solicitações pendentes
+  const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
+
   const menuItems = [
     {
       id: 'dashboard',
@@ -24,6 +31,14 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       icon: Users,
       description: 'Gerenciar clientes',
       color: 'from-green-500 to-green-600'
+    },
+    {
+      id: 'solicitacoes-site',
+      label: 'Solicitações de Site',
+      icon: Globe,
+      description: 'Gerenciar pedidos de criação de site',
+      color: 'from-purple-500 to-purple-600',
+      badge: pendingSiteRequests > 0 ? pendingSiteRequests : undefined
     },
     {
       id: 'sac',
@@ -75,8 +90,18 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
             </div>
             
             {!isCollapsed && (
-              <div className="flex flex-col items-start text-left">
-                <span className="font-medium text-sm leading-tight">{item.label}</span>
+              <div className="flex flex-col items-start text-left flex-1">
+                <div className="flex items-center justify-between w-full">
+                  <span className="font-medium text-sm leading-tight">{item.label}</span>
+                  {item.badge && (
+                    <Badge 
+                      variant="secondary" 
+                      className="ml-2 bg-red-100 text-red-800 border-red-200 animate-pulse"
+                    >
+                      {item.badge}
+                    </Badge>
+                  )}
+                </div>
                 <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
               </div>
             )}
