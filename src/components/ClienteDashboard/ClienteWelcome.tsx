@@ -1,12 +1,14 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
+import { useClienteData } from '@/hooks/useClienteData'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
 import { SiteRequestCard } from './SiteRequestCard'
+import { CampanhaLinkCard } from './CampanhaLinkCard'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Upload, TrendingUp, Play, Headphones, User, Settings } from 'lucide-react'
@@ -18,6 +20,7 @@ interface ClienteWelcomeProps {
 export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const { user } = useAuth()
   const { profileData, updateProfileData } = useProfileData('cliente')
+  const { cliente, loading } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
 
   const quickActions = [
@@ -69,8 +72,13 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         <AvisoMudancaAtendimento />
         
         {/* Card de solicitação de site para mobile */}
-        <div className="p-4">
+        <div className="p-4 space-y-4">
           <SiteRequestCard />
+          
+          {/* Card da campanha se existir */}
+          {!loading && cliente?.link_campanha && (
+            <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
+          )}
         </div>
         
         <MobileOnboardingSteps onTabChange={onTabChange} />
@@ -105,8 +113,13 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       {/* Aviso de Mudança */}
       <AvisoMudancaAtendimento />
 
-      {/* Card de Solicitação de Site - NOVO */}
+      {/* Card de Solicitação de Site */}
       <SiteRequestCard />
+
+      {/* Card da Campanha - NOVO */}
+      {!loading && cliente?.link_campanha && (
+        <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
+      )}
 
       {/* Seção de Perfil */}
       <Card className="bg-gray-900 border-gray-800">

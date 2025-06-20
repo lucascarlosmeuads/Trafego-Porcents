@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Headphones, Lightbulb, Globe } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb, Globe, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
@@ -31,6 +31,13 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       icon: Users,
       description: 'Gerenciar clientes',
       color: 'from-green-500 to-green-600'
+    },
+    {
+      id: 'cadastro-campanha',
+      label: 'Cadastro de Campanha',
+      icon: ExternalLink,
+      description: 'Cadastrar e gerenciar campanhas',
+      color: 'from-pink-500 to-pink-600'
     },
     {
       id: 'solicitacoes-site',

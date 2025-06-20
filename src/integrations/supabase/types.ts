@@ -640,6 +640,7 @@ export type Database = {
           email_gestor: string | null
           id: number
           link_briefing: string | null
+          link_campanha: string | null
           link_criativo: string | null
           link_grupo: string | null
           link_site: string | null
@@ -668,6 +669,7 @@ export type Database = {
           email_gestor?: string | null
           id?: number
           link_briefing?: string | null
+          link_campanha?: string | null
           link_criativo?: string | null
           link_grupo?: string | null
           link_site?: string | null
@@ -696,6 +698,7 @@ export type Database = {
           email_gestor?: string | null
           id?: number
           link_briefing?: string | null
+          link_campanha?: string | null
           link_criativo?: string | null
           link_grupo?: string | null
           link_site?: string | null

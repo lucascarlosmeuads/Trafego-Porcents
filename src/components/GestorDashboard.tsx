@@ -9,6 +9,7 @@ import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 import { GestorSacDashboard } from './SAC/GestorSacDashboard'
 import { SugestoesDashboard } from './SugestoesDashboard'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
+import { CadastroCampanhaDashboard } from './CadastroCampanha/CadastroCampanhaDashboard'
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
 import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
@@ -100,6 +101,8 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             <ClientesTable />
           </div>
         )
+      case 'cadastro-campanha':
+        return <CadastroCampanhaDashboard />
       case 'solicitacoes-site':
         return <SiteRequestsDashboard />
       case 'sac':

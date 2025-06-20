@@ -18,6 +18,7 @@ export interface Cliente {
   link_briefing: string
   link_criativo: string
   link_site: string
+  link_campanha: string
   data_agendamento: string
   numero_bm: string
   telefone: string
@@ -88,7 +89,7 @@ export function useClienteData(emailCliente: string) {
       setLoading(true)
       console.log('🔍 [useClienteData] Buscando dados para email:', emailCliente)
 
-      // Buscar dados do cliente na tabela principal
+      // Buscar dados do cliente na tabela principal - incluindo link_campanha
       const { data: clienteData, error: clienteError } = await supabase
         .from('todos_clientes')
         .select('*')
