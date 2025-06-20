@@ -5,8 +5,8 @@ import { SacDashboard } from './SAC/SacDashboard'
 import { AdminChatLayoutSplit } from './Chat/AdminChatLayoutSplit'
 
 // Lazy components principais
-const AdminDashboard = lazy(() => import('./AdminDashboard').then(module => ({ default: module.AdminDashboard })))
-const GestorDashboard = lazy(() => import('./GestorDashboard').then(module => ({ default: module.GestorDashboard })))
+const AdminDashboard = lazy(() => import('./AdminDashboard'))
+const GestorDashboard = lazy(() => import('./GestorDashboard'))
 const ClienteDashboard = lazy(() => import('./ClienteDashboard').then(module => ({ default: module.ClienteDashboard })))
 const ClientesTable = lazy(() => import('./ClientesTable').then(module => ({ default: module.ClientesTable })))
 const GestoresManagement = lazy(() => import('./GestoresManagement').then(module => ({ default: module.GestoresManagement })))

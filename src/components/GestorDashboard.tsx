@@ -15,7 +15,7 @@ export default function GestorDashboard() {
   const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
-        return <OptimizedGestorDashboard />
+        return <OptimizedGestorDashboard activeTab={activeTab} />
       case 'clientes':
         return <ClientesTable />
       case 'cadastro-campanha':
@@ -29,7 +29,7 @@ export default function GestorDashboard() {
       case 'sugestoes':
         return <SugestoesDashboard />
       default:
-        return <OptimizedGestorDashboard />
+        return <OptimizedGestorDashboard activeTab={activeTab} />
     }
   }
 
