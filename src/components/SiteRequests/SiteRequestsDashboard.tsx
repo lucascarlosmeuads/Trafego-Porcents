@@ -39,11 +39,11 @@ export function SiteRequestsDashboard() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pendente':
-        return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>
+        return <Badge className="bg-yellow-500 text-black border-yellow-600 hover:bg-yellow-600 font-medium"><Clock className="h-3 w-3 mr-1" />Pendente</Badge>
       case 'em_andamento':
-        return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300"><AlertCircle className="h-3 w-3 mr-1" />Em andamento</Badge>
+        return <Badge className="bg-blue-500 text-white border-blue-600 hover:bg-blue-600 font-medium"><AlertCircle className="h-3 w-3 mr-1" />Em andamento</Badge>
       case 'concluido':
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-300"><CheckCircle className="h-3 w-3 mr-1" />Concluído</Badge>
+        return <Badge className="bg-green-500 text-white border-green-600 hover:bg-green-600 font-medium"><CheckCircle className="h-3 w-3 mr-1" />Concluído</Badge>
       default:
         return <Badge variant="secondary">{status}</Badge>
     }
@@ -55,12 +55,12 @@ export function SiteRequestsDashboard() {
 
   if (loading) {
     return (
-      <div className="p-6">
+      <div className="p-6 bg-gray-900 min-h-screen">
         <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded w-1/3"></div>
+          <div className="h-8 bg-gray-700 rounded w-1/3"></div>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-gray-200 rounded"></div>
+              <div key={i} className="h-24 bg-gray-700 rounded"></div>
             ))}
           </div>
         </div>
@@ -69,19 +69,20 @@ export function SiteRequestsDashboard() {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 bg-gray-900 min-h-screen">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
-            <Globe className="h-6 w-6" />
+          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
+            <Globe className="h-6 w-6 text-purple-400" />
             Solicitações de Site
           </h1>
-          <p className="text-gray-600 mt-1">
+          <p className="text-gray-300 mt-1">
             Gerencie as solicitações de criação de site dos clientes
           </p>
         </div>
         <Button
           variant="outline"
+          className="bg-gray-800 text-white border-gray-600 hover:bg-gray-700 hover:text-white"
           onClick={() => window.open('https://siteexpress.space/formulario', '_blank')}
         >
           <ExternalLink className="h-4 w-4 mr-2" />
@@ -91,38 +92,38 @@ export function SiteRequestsDashboard() {
 
       {/* Cards de resumo */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Pendentes</p>
-                <p className="text-2xl font-bold text-yellow-600">{getStatusCount('pendente')}</p>
+                <p className="text-sm text-gray-300">Pendentes</p>
+                <p className="text-2xl font-bold text-yellow-400">{getStatusCount('pendente')}</p>
               </div>
-              <Clock className="h-8 w-8 text-yellow-500" />
+              <Clock className="h-8 w-8 text-yellow-400" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Em Andamento</p>
-                <p className="text-2xl font-bold text-blue-600">{getStatusCount('em_andamento')}</p>
+                <p className="text-sm text-gray-300">Em Andamento</p>
+                <p className="text-2xl font-bold text-blue-400">{getStatusCount('em_andamento')}</p>
               </div>
-              <AlertCircle className="h-8 w-8 text-blue-500" />
+              <AlertCircle className="h-8 w-8 text-blue-400" />
             </div>
           </CardContent>
         </Card>
         
-        <Card>
+        <Card className="bg-gray-800 border-gray-700">
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Concluídos</p>
-                <p className="text-2xl font-bold text-green-600">{getStatusCount('concluido')}</p>
+                <p className="text-sm text-gray-300">Concluídos</p>
+                <p className="text-2xl font-bold text-green-400">{getStatusCount('concluido')}</p>
               </div>
-              <CheckCircle className="h-8 w-8 text-green-500" />
+              <CheckCircle className="h-8 w-8 text-green-400" />
             </div>
           </CardContent>
         </Card>
@@ -131,44 +132,44 @@ export function SiteRequestsDashboard() {
       {/* Lista de solicitações */}
       <div className="space-y-4">
         {solicitations.length === 0 ? (
-          <Card>
+          <Card className="bg-gray-800 border-gray-700">
             <CardContent className="p-8 text-center">
-              <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-gray-500 text-lg">Nenhuma solicitação de site encontrada</p>
-              <p className="text-gray-400 text-sm mt-2">
+              <Globe className="h-12 w-12 text-gray-500 mx-auto mb-4" />
+              <p className="text-gray-300 text-lg">Nenhuma solicitação de site encontrada</p>
+              <p className="text-gray-500 text-sm mt-2">
                 As solicitações aparecerão aqui quando os clientes manifestarem interesse
               </p>
             </CardContent>
           </Card>
         ) : (
           solicitations.map((solicitation) => (
-            <Card key={solicitation.id} className="hover:shadow-md transition-shadow">
+            <Card key={solicitation.id} className="bg-gray-800 border-gray-700 hover:bg-gray-750 transition-colors">
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-3 flex-1">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                      <h3 className="text-lg font-semibold text-white">
                         {solicitation.nome_cliente}
                       </h3>
                       {getStatusBadge(solicitation.status)}
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Mail className="h-4 w-4" />
-                        <span>{solicitation.email_cliente}</span>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Mail className="h-4 w-4 text-purple-400" />
+                        <span className="text-white">{solicitation.email_cliente}</span>
                       </div>
                       
                       {solicitation.telefone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="h-4 w-4" />
-                          <span>{solicitation.telefone}</span>
+                        <div className="flex items-center gap-2 text-gray-300">
+                          <Phone className="h-4 w-4 text-green-400" />
+                          <span className="text-white">{solicitation.telefone}</span>
                         </div>
                       )}
                       
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4" />
-                        <span>
+                      <div className="flex items-center gap-2 text-gray-300">
+                        <Calendar className="h-4 w-4 text-blue-400" />
+                        <span className="text-gray-200">
                           Solicitado em {new Date(solicitation.created_at).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
@@ -181,9 +182,9 @@ export function SiteRequestsDashboard() {
                     </div>
 
                     {solicitation.observacoes && (
-                      <div className="bg-gray-50 rounded-lg p-3">
-                        <p className="text-xs text-gray-600 mb-1">Observações:</p>
-                        <p className="text-sm">{solicitation.observacoes}</p>
+                      <div className="bg-gray-700 rounded-lg p-3 border border-gray-600">
+                        <p className="text-xs text-gray-400 mb-1">Observações:</p>
+                        <p className="text-sm text-gray-200">{solicitation.observacoes}</p>
                       </div>
                     )}
                   </div>
@@ -192,6 +193,7 @@ export function SiteRequestsDashboard() {
                     <Button
                       variant="outline"
                       size="sm"
+                      className="bg-gray-700 text-white border-gray-600 hover:bg-blue-600 hover:border-blue-500 hover:text-white"
                       onClick={() => window.open('https://siteexpress.space/formulario', '_blank')}
                     >
                       <ExternalLink className="h-4 w-4" />
@@ -202,6 +204,7 @@ export function SiteRequestsDashboard() {
                         <Button
                           variant="outline"
                           size="sm"
+                          className="bg-gray-700 text-white border-gray-600 hover:bg-purple-600 hover:border-purple-500 hover:text-white"
                           onClick={() => {
                             setSelectedSolicitation(solicitation)
                             setNewStatus(solicitation.status)
@@ -211,43 +214,46 @@ export function SiteRequestsDashboard() {
                           <MessageSquare className="h-4 w-4" />
                         </Button>
                       </DialogTrigger>
-                      <DialogContent>
+                      <DialogContent className="bg-gray-800 border-gray-700 text-white">
                         <DialogHeader>
-                          <DialogTitle>Atualizar Solicitação - {solicitation.nome_cliente}</DialogTitle>
+                          <DialogTitle className="text-white">Atualizar Solicitação - {solicitation.nome_cliente}</DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div>
-                            <label className="text-sm font-medium">Status:</label>
+                            <label className="text-sm font-medium text-gray-300">Status:</label>
                             <Select value={newStatus} onValueChange={setNewStatus}>
-                              <SelectTrigger>
+                              <SelectTrigger className="bg-gray-700 border-gray-600 text-white">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="pendente">Pendente</SelectItem>
-                                <SelectItem value="em_andamento">Em Andamento</SelectItem>
-                                <SelectItem value="concluido">Concluído</SelectItem>
+                              <SelectContent className="bg-gray-700 border-gray-600">
+                                <SelectItem value="pendente" className="text-white hover:bg-gray-600">Pendente</SelectItem>
+                                <SelectItem value="em_andamento" className="text-white hover:bg-gray-600">Em Andamento</SelectItem>
+                                <SelectItem value="concluido" className="text-white hover:bg-gray-600">Concluído</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
                           
                           <div>
-                            <label className="text-sm font-medium">Observações:</label>
+                            <label className="text-sm font-medium text-gray-300">Observações:</label>
                             <Textarea
                               value={observacoes}
                               onChange={(e) => setObservacoes(e.target.value)}
                               placeholder="Adicione observações sobre o contato ou andamento..."
                               rows={3}
+                              className="bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                             />
                           </div>
                           
                           <div className="flex gap-2 justify-end">
                             <Button
                               variant="outline"
+                              className="bg-gray-700 text-white border-gray-600 hover:bg-gray-600"
                               onClick={() => setSelectedSolicitation(null)}
                             >
                               Cancelar
                             </Button>
                             <Button
+                              className="bg-purple-600 hover:bg-purple-700 text-white"
                               onClick={handleUpdateStatus}
                               disabled={updating}
                             >

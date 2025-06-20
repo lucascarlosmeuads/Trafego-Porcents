@@ -103,7 +103,7 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
                 {item.badge && (
                   <Badge 
                     variant="secondary" 
-                    className="ml-2 bg-red-100 text-red-800 border-red-200 animate-pulse"
+                    className="ml-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
                   >
                     {item.badge}
                   </Badge>
