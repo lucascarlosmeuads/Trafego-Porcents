@@ -1,9 +1,8 @@
 
-import { BarChart3, Users, Headphones, Lightbulb, Globe, ExternalLink, DollarSign } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb, Globe, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
-import { useSolicitacoesSaque } from '@/hooks/useSolicitacoesSaque'
 
 interface GestorMenuProps {
   activeTab: string
@@ -14,11 +13,9 @@ interface GestorMenuProps {
 
 export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isCollapsed = false }: GestorMenuProps) {
   const { solicitations } = useSiteSolicitations()
-  const { solicitacoes } = useSolicitacoesSaque()
   
   // Contar solicitações pendentes
   const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
-  const pendingSaqueRequests = solicitacoes.filter(s => s.status_saque === 'pendente').length
 
   const menuItems = [
     {
@@ -51,15 +48,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       badge: pendingSiteRequests > 0 ? pendingSiteRequests : undefined
     },
     {
-      id: 'solicitacoes-saque',
-      label: 'Solicitações de Saque',
-      icon: DollarSign,
-      description: 'Gerenciar solicitações de saque',
-      color: 'from-yellow-500 to-yellow-600',
-      badge: pendingSaqueRequests > 0 ? pendingSaqueRequests : undefined,
-      pulseWhenBadge: true
-    },
-    {
       id: 'sac',
       label: 'SAC',
       icon: Headphones,
@@ -89,7 +77,7 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
               ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
               ${isActive 
                 ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
-                : 'text-white hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
+                : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
               }
               transition-all duration-200 h-auto py-3 group
             `}
@@ -111,19 +99,17 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
             {!isCollapsed && (
               <div className="flex flex-col items-start text-left flex-1">
                 <div className="flex items-center justify-between w-full">
-                  <span className="font-medium text-sm leading-tight text-white">{item.label}</span>
+                  <span className="font-medium text-sm leading-tight">{item.label}</span>
                   {item.badge && (
                     <Badge 
                       variant="secondary" 
-                      className={`ml-2 bg-red-100 text-red-800 border-red-200 ${
-                        item.pulseWhenBadge ? 'animate-pulse' : ''
-                      }`}
+                      className="ml-2 bg-red-100 text-red-800 border-red-200 animate-pulse"
                     >
                       {item.badge}
                     </Badge>
                   )}
                 </div>
-                <span className="text-xs text-gray-300 leading-tight mt-0.5">{item.description}</span>
+                <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
               </div>
             )}
           </Button>

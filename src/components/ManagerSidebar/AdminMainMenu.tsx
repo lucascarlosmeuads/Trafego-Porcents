@@ -2,7 +2,6 @@
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
-import { useSolicitacoesSaque } from '@/hooks/useSolicitacoesSaque'
 import { 
   LayoutDashboard, 
   Users, 
@@ -11,8 +10,7 @@ import {
   Headphones, 
   BarChart3, 
   FileText,
-  Globe,
-  DollarSign
+  Globe
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -22,11 +20,9 @@ interface AdminMainMenuProps {
 
 export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
   const { solicitations } = useSiteSolicitations()
-  const { solicitacoes } = useSolicitacoesSaque()
   
   // Contar solicitações pendentes
   const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
-  const pendingSaqueRequests = solicitacoes.filter(s => s.status_saque === 'pendente').length
 
   const menuItems = [
     {
@@ -47,14 +43,6 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
       icon: Globe,
       description: 'Gerenciar pedidos de criação de site',
       badge: pendingSiteRequests > 0 ? pendingSiteRequests : undefined
-    },
-    {
-      id: 'solicitacoes-saque',
-      label: 'Solicitações de Saque',
-      icon: DollarSign,
-      description: 'Gerenciar solicitações de saque',
-      badge: pendingSaqueRequests > 0 ? pendingSaqueRequests : undefined,
-      pulseWhenBadge: true
     },
     {
       id: 'sac',
@@ -102,7 +90,7 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
             w-full justify-start h-auto p-3 text-left
             ${activeTab === item.id 
               ? 'bg-blue-100 text-blue-900 border border-blue-200' 
-              : 'text-white hover:text-white hover:bg-gray-800'
+              : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }
           `}
           onClick={() => onTabSelect(item.id)}
@@ -115,17 +103,13 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
                 {item.badge && (
                   <Badge 
                     variant="secondary" 
-                    className={`ml-2 bg-red-100 text-red-800 border-red-200 ${
-                      item.pulseWhenBadge ? 'animate-pulse' : ''
-                    }`}
+                    className="ml-2 bg-red-100 text-red-800 border-red-200 animate-pulse"
                   >
                     {item.badge}
                   </Badge>
                 )}
               </div>
-              <div className={`text-xs truncate ${
-                activeTab === item.id ? 'text-blue-600' : 'text-gray-400'
-              }`}>
+              <div className="text-xs text-gray-500 truncate">
                 {item.description}
               </div>
             </div>
