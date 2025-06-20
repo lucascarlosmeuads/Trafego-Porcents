@@ -1,155 +1,56 @@
-
-import { useState, useEffect, Suspense } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
-import { ClientesTable } from './ClientesTable'
-import { GestoresManagement } from './GestoresManagement'
-import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
-import { LoadingFallback } from './LoadingFallback'
-import { ManagerSelector } from './ManagerSelector'
-import { useManagerData } from '@/hooks/useManagerData'
-import { SacDashboard } from './SAC/SacDashboard'
-import { LazyRelatorioSacGestores } from './LazyComponents'
-import { AdminSugestoes } from './AdminSugestoes'
+import { useState } from 'react'
+import { AdminTable } from './AdminTable'
+import { OptimizedAdminDashboard } from './AdminDashboard/OptimizedAdminDashboard'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
+import { SaquesDashboard } from './Saques/SaquesDashboard'
+import { SacDashboard } from './SAC/SacDashboard'
+import { SacGestorReport } from './SAC/SacGestorReport'
+import { AdminChatLayoutSplit } from './AdminChat/AdminChatLayoutSplit'
+import { AdminSugestoes } from './AdminSugestoes'
+import { DocumentationViewer } from './DocumentationViewer'
+import { ManagerSidebar } from './ManagerSidebar'
 
-interface AdminDashboardProps {
-  selectedManager: string | null
-  onManagerSelect: (manager: string | null) => void
-  activeTab: string
-}
+export default function AdminDashboard() {
+  const [activeTab, setActiveTab] = useState('dashboard')
+  const [selectedManager, setSelectedManager] = useState<string | null>(null)
 
-export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
-  const { user, isAdmin } = useAuth()
-  const [loading, setLoading] = useState(true)
-  const { useOptimized } = useOptimizedComponents()
-  
-  // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
-  // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
-  const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
-    user?.email || '', // userEmail: email do admin atual
-    true, // isAdminUser: true para admin
-    selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
-  )
-
-  console.log('🔍 [AdminDashboard] === DEBUG ADMIN DASHBOARD ===')
-  console.log('👤 [AdminDashboard] Admin user email:', user?.email)
-  console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
-  console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
-  console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
-  console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
-
-  useEffect(() => {
-    if (user && isAdmin) {
-      setLoading(false)
-    }
-  }, [user, isAdmin])
-
-  if (loading) {
-    return <LoadingFallback />
-  }
-
-  const renderContent = () => {
-    // Gerenciamento de gestores
-    if (selectedManager === '__GESTORES__') {
-      return <GestoresManagement />
-    }
-    
-    // Navegação por abas
+  const renderActiveTab = () => {
     switch (activeTab) {
       case 'dashboard':
-        return (
-          <div className="space-y-6">
-            {/* Seletor de gestores */}
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
-            </div>
-            
-            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
-            {useOptimized ? (
-              <OptimizedAdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            ) : (
-              <AdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            )}
-          </div>
-        )
-
+        return <OptimizedAdminDashboard />
+      case 'clientes':
+        return <AdminTable />
       case 'solicitacoes-site':
         return <SiteRequestsDashboard />
-
+      case 'solicitacoes-saque':
+        return <SaquesDashboard />
       case 'sac':
         return <SacDashboard />
-
       case 'sac-relatorio':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyRelatorioSacGestores />
-          </Suspense>
-        )
-
-      case 'documentacao':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyDocumentationViewer />
-          </Suspense>
-        )
-
+        return <SacGestorReport />
       case 'chat':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyAdminChatLayoutSplit />
-          </Suspense>
-        )
-
+        return <AdminChatLayoutSplit />
       case 'sugestoes':
-        return (
-          <div className="w-full">
-            <AdminSugestoes />
-          </div>
-        )
-      
-      case 'clientes':
+        return <AdminSugestoes />
+      case 'documentacao':
+        return <DocumentationViewer />
       default:
-        return (
-          <div className="space-y-4 w-full">
-            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
-            {selectedManager !== '__GESTORES__' && (
-              <div className="bg-card border rounded-lg p-4">
-                <ManagerSelector 
-                  selectedManager={selectedManager}
-                  onManagerSelect={onManagerSelect}
-                  isAdminContext={true}
-                />
-              </div>
-            )}
-            
-            {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <div className="w-full">
-              <ClientesTable selectedManager={selectedManager} />
-            </div>
-          </div>
-        )
+        return <OptimizedAdminDashboard />
     }
   }
 
   return (
-    <div className="w-full">
-      {renderContent()}
+    <div className="flex min-h-screen w-full bg-gray-100">
+      <ManagerSidebar
+        selectedManager={selectedManager}
+        onManagerSelect={setSelectedManager}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
+      
+      <div className="flex-1 overflow-auto">
+        {renderActiveTab()}
+      </div>
     </div>
   )
 }
-
-// Add default export for lazy loading
-export default AdminDashboard
