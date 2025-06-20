@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Globe, Phone, Mail, Calendar, Clock, CheckCircle, AlertCircle, ExternalLink, MessageSquare } from 'lucide-react'
+import { Globe, Phone, Mail, Calendar, Clock, CheckCircle, AlertCircle, ExternalLink, MessageSquare, Users, UserCheck } from 'lucide-react'
 import type { SiteSolicitation } from '@/hooks/useSiteSolicitations'
 
 export function SiteRequestsDashboard() {
@@ -49,8 +49,20 @@ export function SiteRequestsDashboard() {
     }
   }
 
+  const getOrigemBadge = (origem: string) => {
+    if (origem === 'manual') {
+      return <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300"><Users className="h-3 w-3 mr-1" />Solicitação Manual</Badge>
+    } else {
+      return <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300"><UserCheck className="h-3 w-3 mr-1" />Marcado por Gestor</Badge>
+    }
+  }
+
   const getStatusCount = (status: string) => {
     return solicitations.filter(s => s.status === status).length
+  }
+
+  const getOrigemCount = (origem: string) => {
+    return solicitations.filter(s => s.origem === origem).length
   }
 
   if (loading) {
@@ -89,7 +101,7 @@ export function SiteRequestsDashboard() {
         </Button>
       </div>
 
-      {/* Cards de resumo */}
+      {/* Cards de resumo por status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardContent className="p-4">
@@ -128,6 +140,35 @@ export function SiteRequestsDashboard() {
         </Card>
       </div>
 
+      {/* Cards de resumo por origem */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Solicitações Manuais</p>
+                <p className="text-2xl font-bold text-blue-600">{getOrigemCount('manual')}</p>
+                <p className="text-xs text-gray-500">Enviadas pelos clientes</p>
+              </div>
+              <Users className="h-8 w-8 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Marcados por Gestores</p>
+                <p className="text-2xl font-bold text-purple-600">{getOrigemCount('gestor')}</p>
+                <p className="text-xs text-gray-500">Status "aguardando link"</p>
+              </div>
+              <UserCheck className="h-8 w-8 text-purple-500" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Lista de solicitações */}
       <div className="space-y-4">
         {solicitations.length === 0 ? (
@@ -136,7 +177,7 @@ export function SiteRequestsDashboard() {
               <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-500 text-lg">Nenhuma solicitação de site encontrada</p>
               <p className="text-gray-400 text-sm mt-2">
-                As solicitações aparecerão aqui quando os clientes manifestarem interesse
+                As solicitações aparecerão aqui quando os clientes manifestarem interesse ou quando gestores marcarem clientes como "aguardando link"
               </p>
             </CardContent>
           </Card>
@@ -146,11 +187,17 @@ export function SiteRequestsDashboard() {
               <CardContent className="p-6">
                 <div className="flex items-start justify-between">
                   <div className="space-y-3 flex-1">
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {solicitation.nome_cliente}
                       </h3>
                       {getStatusBadge(solicitation.status)}
+                      {getOrigemBadge(solicitation.origem)}
+                      {solicitation.vendedor && (
+                        <Badge variant="outline" className="bg-gray-50 text-gray-700">
+                          Vendedor: {solicitation.vendedor}
+                        </Badge>
+                      )}
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
@@ -169,7 +216,7 @@ export function SiteRequestsDashboard() {
                       <div className="flex items-center gap-2">
                         <Calendar className="h-4 w-4" />
                         <span>
-                          Solicitado em {new Date(solicitation.created_at).toLocaleDateString('pt-BR', {
+                          {solicitation.origem === 'manual' ? 'Solicitado' : 'Marcado'} em {new Date(solicitation.created_at).toLocaleDateString('pt-BR', {
                             day: '2-digit',
                             month: '2-digit',
                             year: 'numeric',
@@ -178,6 +225,13 @@ export function SiteRequestsDashboard() {
                           })}
                         </span>
                       </div>
+
+                      {solicitation.data_venda && (
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          <span>Venda: {new Date(solicitation.data_venda).toLocaleDateString('pt-BR')}</span>
+                        </div>
+                      )}
                     </div>
 
                     {solicitation.observacoes && (
@@ -189,13 +243,15 @@ export function SiteRequestsDashboard() {
                   </div>
 
                   <div className="flex gap-2 ml-4">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open('https://siteexpress.space/formulario', '_blank')}
-                    >
-                      <ExternalLink className="h-4 w-4" />
-                    </Button>
+                    {solicitation.origem === 'manual' && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => window.open('https://siteexpress.space/formulario', '_blank')}
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                      </Button>
+                    )}
                     
                     <Dialog>
                       <DialogTrigger asChild>
@@ -213,7 +269,12 @@ export function SiteRequestsDashboard() {
                       </DialogTrigger>
                       <DialogContent>
                         <DialogHeader>
-                          <DialogTitle>Atualizar Solicitação - {solicitation.nome_cliente}</DialogTitle>
+                          <DialogTitle>
+                            Atualizar Solicitação - {solicitation.nome_cliente}
+                            <div className="text-sm font-normal text-gray-500 mt-1">
+                              {solicitation.origem === 'manual' ? 'Solicitação Manual' : 'Marcado por Gestor'}
+                            </div>
+                          </DialogTitle>
                         </DialogHeader>
                         <div className="space-y-4">
                           <div>
@@ -228,6 +289,11 @@ export function SiteRequestsDashboard() {
                                 <SelectItem value="concluido">Concluído</SelectItem>
                               </SelectContent>
                             </Select>
+                            {solicitation.origem === 'gestor' && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                ℹ️ Concluído = Site finalizado (atualiza status do cliente)
+                              </p>
+                            )}
                           </div>
                           
                           <div>
