@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -183,6 +184,7 @@ export function useSellerData(sellerEmail: string) {
           link_briefing: '',
           link_criativo: '',
           link_site: '',
+          link_campanha: '',
           numero_bm: '',
           comissao_paga: Boolean(item.comissao_paga),
           valor_comissao: Number(item.valor_comissao || 60),
@@ -373,6 +375,7 @@ export function useSellerData(sellerEmail: string) {
           link_briefing: existingClient.link_briefing || '',
           link_criativo: existingClient.link_criativo || '',
           link_site: existingClient.link_site || '',
+          link_campanha: existingClient.link_campanha || '',
           numero_bm: existingClient.numero_bm || '',
           comissao_paga: Boolean(existingClient.comissao_paga),
           valor_comissao: Number(existingClient.valor_comissao || 60),

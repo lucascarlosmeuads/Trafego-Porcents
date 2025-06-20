@@ -33,6 +33,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     link_briefing: '',
     link_criativo: '',
     link_site: '',
+    link_campanha: '',
     numero_bm: '',
     comissao_paga: false,
     valor_comissao: 60,

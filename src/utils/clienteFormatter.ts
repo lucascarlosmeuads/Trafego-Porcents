@@ -36,6 +36,7 @@ export function formatCliente(item: any): Cliente | null {
       link_briefing: item.link_briefing || '',
       link_criativo: item.link_criativo || '',
       link_site: item.link_site || '',
+      link_campanha: item.link_campanha || '',
       numero_bm: item.numero_bm || '',
       comissao_paga: Boolean(item.comissao_paga),
       valor_comissao: Number(item.valor_comissao || 60),
