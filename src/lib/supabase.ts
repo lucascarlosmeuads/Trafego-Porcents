@@ -21,6 +21,7 @@ export type Cliente = {
   link_briefing: string
   link_criativo: string
   link_site: string
+  link_campanha: string
   numero_bm: string
   comissao_paga: boolean
   valor_comissao: number
