@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -34,13 +35,13 @@
 
     --radius: 0.5rem;
 
-    --sidebar-background: 220 13% 18%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 220 13% 25%;
-    --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 220 13% 22%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 13% 25%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 222.2 84% 4.9%;
+    --sidebar-primary: 220 13% 91%;
+    --sidebar-primary-foreground: 222.2 84% 4.9%;
+    --sidebar-accent: 220 13% 95%;
+    --sidebar-accent-foreground: 222.2 84% 4.9%;
+    --sidebar-border: 220 13% 85%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Tokens personalizados para melhor contraste */
@@ -48,55 +49,55 @@
     --text-secondary: 215.4 16.3% 46.9%;
     --text-accent: 222.2 47.4% 11.2%;
     --bg-primary: 0 0% 100%;
-    --bg-secondary: 210 40% 96.1%;
+    --bg-secondary: 210 40% 98%;
     --bg-accent: 210 40% 96.1%;
   }
 
   .dark {
-    --background: 220 13% 9%;
+    --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
 
-    --card: 220 13% 12%;
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 220 13% 12%;
+    --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 210 40% 98%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
-    --secondary: 220 13% 16%;
+    --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 220 13% 16%;
+    --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 220 13% 16%;
+    --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 13% 20%;
-    --input: 220 13% 16%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
     
-    --sidebar-background: 220 13% 6%;
+    --sidebar-background: 222.2 84% 4.9%;
     --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 220 13% 12%;
+    --sidebar-primary: 217.2 32.6% 17.5%;
     --sidebar-primary-foreground: 210 40% 98%;
-    --sidebar-accent: 220 13% 10%;
+    --sidebar-accent: 217.2 32.6% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 13% 15%;
+    --sidebar-border: 217.2 32.6% 20%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Tokens personalizados para modo escuro */
     --text-primary: 210 40% 98%;
     --text-secondary: 215 20.2% 65.1%;
     --text-accent: 210 40% 98%;
-    --bg-primary: 220 13% 9%;
-    --bg-secondary: 220 13% 16%;
-    --bg-accent: 220 13% 16%;
+    --bg-primary: 222.2 84% 4.9%;
+    --bg-secondary: 217.2 32.6% 17.5%;
+    --bg-accent: 217.2 32.6% 17.5%;
   }
 }
 
@@ -107,6 +108,7 @@
 
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
   }
 }
 
@@ -145,65 +147,55 @@
   }
   
   .text-contrast {
-    color: hsl(var(--text-primary));
+    color: hsl(var(--text-primary)) !important;
+    font-weight: 500;
   }
   
   .text-contrast-secondary {
-    color: hsl(var(--text-secondary));
+    color: hsl(var(--text-secondary)) !important;
+    font-weight: 400;
   }
   
   .bg-contrast {
-    background-color: hsl(var(--bg-primary));
+    background-color: hsl(var(--bg-primary)) !important;
+    border: 1px solid hsl(var(--border));
   }
   
   .bg-contrast-secondary {
-    background-color: hsl(var(--bg-secondary));
+    background-color: hsl(var(--bg-secondary)) !important;
+    border: 1px solid hsl(var(--border));
   }
 
   /* Headers e títulos com contraste garantido */
   .header-title {
     color: hsl(var(--text-primary)) !important;
-    font-weight: 600;
+    font-weight: 700;
+    font-size: 1.5rem;
   }
   
   .header-subtitle {
     color: hsl(var(--text-secondary)) !important;
     font-weight: 500;
+    font-size: 0.875rem;
   }
 
   /* Botões com contraste melhorado */
   .btn-contrast {
-    background-color: hsl(var(--primary));
-    color: hsl(var(--primary-foreground));
-    border: 1px solid hsl(var(--border));
+    background-color: hsl(var(--primary)) !important;
+    color: hsl(var(--primary-foreground)) !important;
+    border: 1px solid hsl(var(--primary));
+    font-weight: 500;
   }
   
   .btn-contrast:hover {
-    background-color: hsl(var(--primary) / 0.9);
-  }
-
-  /* Dropdown com fundo sólido */
-  .dropdown-content {
-    background-color: hsl(var(--popover)) !important;
-    border: 1px solid hsl(var(--border));
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    z-index: 50;
-  }
-  
-  .dropdown-item {
-    color: hsl(var(--popover-foreground)) !important;
-    padding: 8px 12px;
-  }
-  
-  .dropdown-item:hover {
-    background-color: hsl(var(--accent));
-    color: hsl(var(--accent-foreground)) !important;
+    background-color: hsl(var(--primary) / 0.9) !important;
   }
 
   /* Cards de status com contraste melhorado */
   .status-card {
-    border: 1px solid hsl(var(--border));
-    background-color: hsl(var(--card));
+    border: 2px solid hsl(var(--border)) !important;
+    background-color: hsl(var(--card)) !important;
+    box-shadow: 0 2px 4px -1px rgb(0 0 0 / 0.1);
   }
   
   .status-card h3 {
@@ -213,84 +205,86 @@
   
   .status-card .status-number {
     color: hsl(var(--card-foreground)) !important;
-    font-weight: 700;
+    font-weight: 800;
+    font-size: 2rem;
   }
   
   .status-card .status-description {
     color: hsl(var(--muted-foreground)) !important;
+    font-weight: 500;
   }
 
-  /* Ícones com contraste adequado */
-  .icon-contrast {
-    color: hsl(var(--foreground));
-  }
-  
-  .icon-muted {
-    color: hsl(var(--muted-foreground));
-  }
-
-  /* Menu lateral com melhor contraste */
-  .sidebar-item {
-    color: hsl(var(--sidebar-foreground)) !important;
-    padding: 8px 16px;
-    border-radius: 6px;
-    transition: all 0.2s ease;
-  }
-  
-  .sidebar-item:hover {
-    background-color: hsl(var(--sidebar-accent)) !important;
-    color: hsl(var(--sidebar-accent-foreground)) !important;
-  }
-  
-  .sidebar-item.active {
-    background-color: hsl(var(--sidebar-primary)) !important;
-    color: hsl(var(--sidebar-primary-foreground)) !important;
-    border-left: 3px solid hsl(var(--sidebar-ring));
-  }
-
-  /* Badges e tags com contraste */
+  /* Badges com melhor contraste */
   .badge-contrast {
-    border: 1px solid hsl(var(--border));
-    background-color: hsl(var(--secondary));
-    color: hsl(var(--secondary-foreground)) !important;
+    border: 2px solid !important;
+    font-weight: 600;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .badge-pendente {
+    background-color: #fef3c7 !important;
+    color: #92400e !important;
+    border-color: #f59e0b !important;
+  }
+
+  .badge-em-andamento {
+    background-color: #dbeafe !important;
+    color: #1e40af !important;
+    border-color: #3b82f6 !important;
+  }
+
+  .badge-concluido {
+    background-color: #d1fae5 !important;
+    color: #065f46 !important;
+    border-color: #10b981 !important;
+  }
+
+  .badge-manual {
+    background-color: #e0e7ff !important;
+    color: #3730a3 !important;
+    border-color: #6366f1 !important;
+  }
+
+  .badge-gestor {
+    background-color: #f3e8ff !important;
+    color: #6b21a8 !important;
+    border-color: #a855f7 !important;
+  }
+
+  /* Dark mode adjustments for badges */
+  .dark .badge-pendente {
+    background-color: #451a03 !important;
+    color: #fbbf24 !important;
+    border-color: #f59e0b !important;
+  }
+
+  .dark .badge-em-andamento {
+    background-color: #1e3a8a !important;
+    color: #93c5fd !important;
+    border-color: #3b82f6 !important;
+  }
+
+  .dark .badge-concluido {
+    background-color: #064e3b !important;
+    color: #6ee7b7 !important;
+    border-color: #10b981 !important;
+  }
+
+  .dark .badge-manual {
+    background-color: #312e81 !important;
+    color: #c7d2fe !important;
+    border-color: #6366f1 !important;
+  }
+
+  .dark .badge-gestor {
+    background-color: #581c87 !important;
+    color: #e9d5ff !important;
+    border-color: #a855f7 !important;
   }
 
   /* Tabelas com melhor legibilidade */
-  .table-header {
-    background-color: hsl(var(--muted)) !important;
-    color: hsl(var(--foreground)) !important;
-    font-weight: 600;
-    border-bottom: 1px solid hsl(var(--border));
-  }
-  
-  .table-cell {
-    color: hsl(var(--foreground)) !important;
-    border-bottom: 1px solid hsl(var(--border));
-    padding: 12px 8px;
-  }
-  
   .table-row:hover {
     background-color: hsl(var(--muted) / 0.5) !important;
-  }
-  
-  .table-row:hover .table-cell {
-    color: hsl(var(--foreground)) !important;
-  }
-
-  /* Inputs com contraste melhorado */
-  .input-contrast {
-    background-color: hsl(var(--background));
-    color: hsl(var(--foreground));
-    border: 1px solid hsl(var(--border));
-  }
-  
-  .input-contrast:focus {
-    border-color: hsl(var(--ring));
-    outline: 2px solid hsl(var(--ring) / 0.2);
-  }
-  
-  .input-contrast::placeholder {
-    color: hsl(var(--muted-foreground));
   }
 
   /* Mobile specific improvements */
@@ -341,150 +335,4 @@
       min-width: 44px;
     }
   }
-}
-
-/* Status específicos com cores melhoradas e contraste garantido */
-.status-formulario {
-  background-color: hsl(220 13% 91% / 0.3);
-  color: hsl(220 13% 20%) !important;
-  border: 1px solid hsl(220 13% 70%);
-}
-
-.dark .status-formulario {
-  background-color: hsl(220 13% 20% / 0.3);
-  color: hsl(220 13% 90%) !important;
-  border: 1px solid hsl(220 13% 40%);
-}
-
-.status-brief {
-  background-color: hsl(217 91% 91% / 0.3);
-  color: hsl(217 91% 20%) !important;
-  border: 1px solid hsl(217 91% 70%);
-}
-
-.dark .status-brief {
-  background-color: hsl(217 91% 20% / 0.3);
-  color: hsl(217 91% 90%) !important;
-  border: 1px solid hsl(217 91% 40%);
-}
-
-.status-criativo {
-  background-color: hsl(271 81% 91% / 0.3);
-  color: hsl(271 81% 20%) !important;
-  border: 1px solid hsl(271 81% 70%);
-}
-
-.dark .status-criativo {
-  background-color: hsl(271 81% 20% / 0.3);
-  color: hsl(271 81% 90%) !important;
-  border: 1px solid hsl(271 81% 40%);
-}
-
-.status-site {
-  background-color: hsl(25 95% 91% / 0.3);
-  color: hsl(25 95% 20%) !important;
-  border: 1px solid hsl(25 95% 70%);
-}
-
-.dark .status-site {
-  background-color: hsl(25 95% 20% / 0.3);
-  color: hsl(25 95% 90%) !important;
-  border: 1px solid hsl(25 95% 40%);
-}
-
-.status-agendamento {
-  background-color: hsl(45 93% 91% / 0.3);
-  color: hsl(45 93% 20%) !important;
-  border: 1px solid hsl(45 93% 70%);
-}
-
-.dark .status-agendamento {
-  background-color: hsl(45 93% 20% / 0.3);
-  color: hsl(45 93% 90%) !important;
-  border: 1px solid hsl(45 93% 40%);
-}
-
-.status-no-ar {
-  background-color: hsl(142 71% 91% / 0.3);
-  color: hsl(142 71% 20%) !important;
-  border: 1px solid hsl(142 71% 70%);
-}
-
-.dark .status-no-ar {
-  background-color: hsl(142 71% 20% / 0.3);
-  color: hsl(142 71% 90%) !important;
-  border: 1px solid hsl(142 71% 40%);
-}
-
-.status-otimizacao {
-  background-color: hsl(160 84% 91% / 0.3);
-  color: hsl(160 84% 20%) !important;
-  border: 1px solid hsl(160 84% 70%);
-}
-
-.dark .status-otimizacao {
-  background-color: hsl(160 84% 20% / 0.3);
-  color: hsl(160 84% 90%) !important;
-  border: 1px solid hsl(160 84% 40%);
-}
-
-.status-problema {
-  background-color: hsl(0 84% 91% / 0.3);
-  color: hsl(0 84% 20%) !important;
-  border: 1px solid hsl(0 84% 70%);
-}
-
-.dark .status-problema {
-  background-color: hsl(0 84% 20% / 0.3);
-  color: hsl(0 84% 90%) !important;
-  border: 1px solid hsl(0 84% 40%);
-}
-
-.status-off {
-  background-color: hsl(210 40% 91% / 0.3);
-  color: hsl(210 40% 20%) !important;
-  border: 1px solid hsl(210 40% 70%);
-}
-
-.dark .status-off {
-  background-color: hsl(210 40% 20% / 0.3);
-  color: hsl(210 40% 90%) !important;
-  border: 1px solid hsl(210 40% 40%);
-}
-
-.status-reembolso {
-  background-color: hsl(0 84% 91% / 0.3);
-  color: hsl(0 84% 20%) !important;
-  border: 1px solid hsl(0 84% 70%);
-}
-
-.dark .status-reembolso {
-  background-color: hsl(0 84% 20% / 0.3);
-  color: hsl(0 84% 90%) !important;
-  border: 1px solid hsl(0 84% 40%);
-}
-
-/* Novos status adicionados */
-.status-urgente {
-  background-color: hsl(0 70% 91% / 0.3);
-  color: hsl(0 70% 30%) !important;
-  border: 1px solid hsl(0 70% 60%);
-}
-
-.dark .status-urgente {
-  background-color: hsl(0 70% 25% / 0.3);
-  color: hsl(0 70% 85%) !important;
-  border: 1px solid hsl(0 70% 45%);
-}
-
-.status-cliente-antigo {
-  background-color: hsl(0 90% 91% / 0.3);
-  color: hsl(0 90% 25%) !important;
-  border: 1px solid hsl(0 90% 55%);
-}
-
-.dark .status-cliente-antigo {
-  background-color: hsl(0 90% 20% / 0.3);
-  color: hsl(0 90% 80%) !important;
-  border: 1px solid hsl(0 90% 40%);
 }
