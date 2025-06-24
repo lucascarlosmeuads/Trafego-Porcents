@@ -2,7 +2,6 @@
 import { lazy, Suspense } from 'react'
 import { LoadingFallback } from './LoadingFallback'
 import { SacDashboard } from './SAC/SacDashboard'
-import { AdminChatLayoutSplit } from './Chat/AdminChatLayoutSplit'
 
 // Lazy components principais
 const AdminDashboard = lazy(() => import('./AdminDashboard').then(module => ({ default: module.AdminDashboard })))
@@ -52,12 +51,6 @@ export const LazyGestoresManagement = () => (
 export const LazySacDashboard = () => (
   <Suspense fallback={<LoadingFallback />}>
     <SacDashboard />
-  </Suspense>
-)
-
-export const LazyAdminChatLayoutSplit = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <AdminChatLayoutSplit />
   </Suspense>
 )
 

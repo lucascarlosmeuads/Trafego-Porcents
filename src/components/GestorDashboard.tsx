@@ -5,7 +5,6 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { useProfileData } from '@/hooks/useProfileData'
 import { ClientesTable } from './ClientesTable'
 import { GamifiedMetrics } from './GestorDashboard/GamifiedMetrics'
-import { ChatLayoutSplit } from './Chat/ChatLayoutSplit'
 import { GestorSacDashboard } from './SAC/GestorSacDashboard'
 import { SugestoesDashboard } from './SugestoesDashboard'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
@@ -107,12 +106,6 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return <SiteRequestsDashboard />
       case 'sac':
         return <GestorSacDashboard />
-      case 'chat':
-        return (
-          <div className="bg-gray-950 min-h-screen">
-            <ChatLayoutSplit />
-          </div>
-        )
       case 'sugestoes':
         return (
           <div className="bg-gray-950 min-h-screen p-6">

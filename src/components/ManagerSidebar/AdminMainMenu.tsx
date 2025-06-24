@@ -1,16 +1,15 @@
-
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
 import { 
   LayoutDashboard, 
   Users, 
-  MessageSquare, 
   BookOpen, 
   Headphones, 
   BarChart3, 
   FileText,
-  Globe
+  Globe,
+  MessageSquare
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -55,12 +54,6 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
       label: 'Relatório SAC',
       icon: BarChart3,
       description: 'Relatórios de atendimento'
-    },
-    {
-      id: 'chat',
-      label: 'Chat',
-      icon: MessageSquare,
-      description: 'Conversas com clientes'
     },
     {
       id: 'sugestoes',

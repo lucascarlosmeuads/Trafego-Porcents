@@ -6,7 +6,7 @@ import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from './LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -103,13 +103,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return (
           <Suspense fallback={<LoadingFallback />}>
             <LazyDocumentationViewer />
-          </Suspense>
-        )
-
-      case 'chat':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyAdminChatLayoutSplit />
           </Suspense>
         )
 
