@@ -1,9 +1,10 @@
+
 import { useState, useEffect, Suspense, memo, useMemo, useCallback } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from '../ClientesTable'
 import { GestoresManagement } from '../GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAdminChatLayoutSplit } from '../LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from '../LazyComponents'
 import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -90,13 +91,6 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
         return (
           <Suspense fallback={<LoadingFallback />}>
             <LazyDocumentationViewer />
-          </Suspense>
-        )
-
-      case 'chat':
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyAdminChatLayoutSplit />
           </Suspense>
         )
       
