@@ -9,6 +9,7 @@ import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
 import { SiteRequestCard } from './SiteRequestCard'
 import { CampanhaLinkCard } from './CampanhaLinkCard'
+import { MensagemInstitucional } from './MensagemInstitucional'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Upload, TrendingUp, Play, Headphones, User, Settings } from 'lucide-react'
@@ -69,6 +70,11 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   if (isMobile) {
     return (
       <div className="pb-20"> {/* Espaço para navegação inferior */}
+        {/* Mensagem Institucional - Mobile */}
+        <div className="p-4">
+          <MensagemInstitucional />
+        </div>
+        
         <AvisoMudancaAtendimento />
         
         {/* Card de solicitação de site para mobile */}
@@ -109,6 +115,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           preencher o briefing e muito mais. Vamos começar?
         </p>
       </div>
+
+      {/* Mensagem Institucional - Desktop */}
+      <MensagemInstitucional />
 
       {/* Aviso de Mudança */}
       <AvisoMudancaAtendimento />
