@@ -6,7 +6,7 @@ import { AlertTriangle, MessageCircle, Mail, Phone } from 'lucide-react'
 export function TermosRejeitadosScreen() {
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Rejeitei os termos e condições na plataforma Tráfego Porcents e gostaria de conversar sobre o encerramento da parceria. Preciso de orientação sobre os próximos passos.`)
-    const whatsappUrl = `https://wa.me/5511943064852?text=${message}`
+    const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 
@@ -68,7 +68,7 @@ Atenciosamente.`)
                 <MessageCircle className="h-5 w-5 mr-3" />
                 <div className="text-left">
                   <div className="font-semibold">WhatsApp (Recomendado)</div>
-                  <div className="text-sm opacity-90">(11) 9 4306-4852</div>
+                  <div className="text-sm opacity-90">(48) 9 9113-1987</div>
                 </div>
               </Button>
 

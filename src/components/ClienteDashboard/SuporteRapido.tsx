@@ -12,6 +12,12 @@ export function SuporteRapido({ onBack }: SuporteRapidoProps) {
     window.open('https://trafegoporcents.com/sac', '_blank')
   }
 
+  const handleWhatsAppContact = () => {
+    const message = encodeURIComponent(`Olá! Preciso de suporte através do sistema. Aguardo orientação sobre como proceder.`)
+    const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
+    window.open(whatsappUrl, '_blank')
+  }
+
   return (
     <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
       {/* Header */}
@@ -82,20 +88,33 @@ export function SuporteRapido({ onBack }: SuporteRapidoProps) {
             </div>
           </div>
 
-          {/* Botão SAC */}
-          <div className="text-center py-4">
+          {/* Botões de Contato */}
+          <div className="space-y-3">
+            <Button
+              onClick={handleWhatsAppContact}
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 text-lg shadow-lg"
+              size="lg"
+            >
+              <MessageCircle className="h-5 w-5 mr-3" />
+              <div className="text-left">
+                <div className="font-semibold">WhatsApp Direto</div>
+                <div className="text-sm opacity-90">(48) 9 9113-1987</div>
+              </div>
+            </Button>
+
             <Button
               onClick={handleOpenSAC}
-              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg shadow-lg"
+              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg shadow-lg"
               size="lg"
             >
               <ExternalLink className="h-5 w-5 mr-2" />
               Abrir Central SAC
             </Button>
-            <p className="text-gray-400 text-sm mt-2">
-              Será aberto em uma nova aba
-            </p>
           </div>
+
+          <p className="text-gray-400 text-sm text-center">
+            SAC será aberto em uma nova aba
+          </p>
 
           {/* Informações Adicionais */}
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-4">
