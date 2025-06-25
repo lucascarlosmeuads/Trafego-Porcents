@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -149,40 +150,31 @@ export function ClienteDashboard() {
 
   // Envolver todo o conteúdo com a proteção de termos
   const dashboardContent = () => {
-    // Layout mobile otimizado
+    // Layout mobile também COM SidebarProvider para acessar o sidebar
     if (isMobile) {
       return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-20"></div>
-                <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold px-3 py-2 text-sm">
-                  <span>Tráfego</span>
-                  <span className="text-orange-300">Porcents</span>
-                </div>
-              </div>
-            </div>
+        <SidebarProvider defaultOpen={false}>
+          <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
+            {/* Sidebar para mobile */}
+            <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
             
-            <div className="flex items-center gap-3">
-              <div className="text-gray-800 text-sm font-medium">
-                {activeTab === 'overview' && 'Painel Principal'}
-                {activeTab === 'briefing' && 'Briefing'}
-                {activeTab === 'arquivos' && 'Materiais'}
-                {activeTab === 'vendas' && 'Vendas'}
-                {activeTab === 'tutoriais' && 'Tutoriais'}
-                {activeTab === 'suporte' && 'Suporte'}
-              </div>
-              <ProfileDropdown />
-            </div>
+            <SidebarInset className="flex-1 flex flex-col">
+              {/* Header mobile com botão hamburguer */}
+              <MobileHeader 
+                activeTab={activeTab} 
+                onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
+              />
+              
+              {/* Conteúdo principal */}
+              <main className="flex-1 pb-20">
+                {renderContent()}
+              </main>
+              
+              {/* Navegação inferior */}
+              <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+            </SidebarInset>
           </div>
-          
-          <main className="pb-20 min-h-screen">
-            {renderContent()}
-          </main>
-          
-          <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
-        </div>
+        </SidebarProvider>
       )
     }
 

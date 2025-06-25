@@ -44,11 +44,6 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
       
       <div className="flex items-center gap-2">
         <ProfileDropdown />
-        {!onBack && (
-          <div className="hidden md:flex items-center gap-2">
-            <SidebarTrigger className="text-gray-700 hover:text-blue-600 transition-colors" />
-          </div>
-        )}
       </div>
     </header>
   )
