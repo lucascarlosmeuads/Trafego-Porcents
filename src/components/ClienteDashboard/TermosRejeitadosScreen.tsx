@@ -1,9 +1,11 @@
-
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MessageCircle, Mail, Phone } from 'lucide-react'
+import { AlertTriangle, MessageCircle, Mail, Phone, LogOut } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
 
 export function TermosRejeitadosScreen() {
+  const { signOut } = useAuth()
+
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Rejeitei os termos e condições na plataforma Tráfego Porcents e gostaria de conversar sobre o encerramento da parceria. Preciso de orientação sobre os próximos passos.`)
     const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
@@ -21,6 +23,10 @@ Aguardo orientação sobre os próximos passos.
 Atenciosamente.`)
     
     window.location.href = `mailto:contrato@trafegoporcents.com?subject=${subject}&body=${body}`
+  }
+
+  const handleSignOut = async () => {
+    await signOut()
   }
 
   return (
@@ -42,7 +48,7 @@ Atenciosamente.`)
               respeitamos sua escolha.
             </p>
           </div>
-
+          
           <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
             <h3 className="font-semibold text-orange-300 mb-2">
               Próximos Passos
@@ -83,6 +89,16 @@ Atenciosamente.`)
                   <div className="font-semibold">E-mail</div>
                   <div className="text-sm opacity-90">contrato@trafegoporcents.com</div>
                 </div>
+              </Button>
+
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                className="w-full border-red-500 text-red-400 hover:bg-red-500/10 h-12"
+                size="lg"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair do Sistema
               </Button>
             </div>
           </div>
