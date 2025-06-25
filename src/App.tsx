@@ -16,6 +16,7 @@ const queryClient = new QueryClient();
 
 const App = () => {
   console.log('🔍 [App] Renderizando App com rotas')
+  console.log('🔍 [App] URL atual no App:', window.location.pathname)
   
   return (
     <QueryClientProvider client={queryClient}>

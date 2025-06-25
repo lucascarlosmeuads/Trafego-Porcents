@@ -10,38 +10,42 @@ export function MensagemInstitucional() {
   const { termosAceitos, termosRejeitados, clienteAntigo, loading } = useTermosAceitos()
 
   const handleAbrirTermos = (e: React.MouseEvent) => {
+    console.log('🔄 [MensagemInstitucional] === CLIQUE NO BOTÃO ===')
+    console.log('🔍 [MensagemInstitucional] Event:', e)
+    console.log('🔍 [MensagemInstitucional] Estado:', { termosAceitos, termosRejeitados, clienteAntigo, loading })
+    console.log('🔍 [MensagemInstitucional] URL atual antes:', window.location.pathname)
+    
     e.preventDefault()
     e.stopPropagation()
     
-    console.log('🔄 [MensagemInstitucional] Botão clicado - iniciando navegação')
-    console.log('🔍 [MensagemInstitucional] Estado atual:', { termosAceitos, termosRejeitados, clienteAntigo })
-    
     try {
-      // Tentar navegação com React Router primeiro
-      console.log('🔄 [MensagemInstitucional] Tentando navigate(/termos)')
-      navigate('/termos')
+      console.log('🔄 [MensagemInstitucional] Forçando navegação direta')
       
-      // Fallback com window.location após um pequeno delay
-      setTimeout(() => {
-        if (window.location.pathname !== '/termos') {
-          console.log('🔄 [MensagemInstitucional] Fallback: usando window.location')
-          window.location.href = '/termos'
-        }
-      }, 100)
+      // Forçar navegação direta sempre, independente do estado
+      window.location.href = '/termos'
+      
+      console.log('✅ [MensagemInstitucional] Navegação executada')
     } catch (error) {
       console.error('❌ [MensagemInstitucional] Erro na navegação:', error)
-      // Fallback direto
-      window.location.href = '/termos'
     }
   }
 
+  console.log('🔍 [MensagemInstitucional] Renderizando com estado:', { 
+    termosAceitos, 
+    termosRejeitados, 
+    clienteAntigo, 
+    loading 
+  })
+
   // Se ainda está carregando, não renderizar nada
   if (loading) {
+    console.log('⏳ [MensagemInstitucional] Loading - não renderizando')
     return null
   }
 
   // Se é cliente antigo, não mostrar nada sobre termos
   if (clienteAntigo) {
+    console.log('👴 [MensagemInstitucional] Cliente antigo - renderizando mensagem simples')
     return (
       <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-500/30 shadow-lg">
         <CardContent className="p-6">
@@ -70,6 +74,31 @@ export function MensagemInstitucional() {
                 </div>
               </div>
             </div>
+
+            {/* Botão para ver termos mesmo sendo cliente antigo */}
+            <div className="bg-gray-800/50 border border-gray-600 rounded-lg p-4">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <FileText className="h-5 w-5 text-teal-400" />
+                  <div>
+                    <h3 className="font-semibold text-white">Termos e Condições</h3>
+                    <p className="text-sm text-gray-400">
+                      Clique para visualizar nossos termos
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  onClick={handleAbrirTermos}
+                  variant="outline"
+                  size="lg"
+                  className="border-teal-500 text-teal-400 hover:bg-teal-500/10"
+                  type="button"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Ver Termos
+                </Button>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -78,10 +107,12 @@ export function MensagemInstitucional() {
 
   // Se rejeitou os termos, não mostrar nada (será redirecionado pela TermosProtection)
   if (termosRejeitados) {
+    console.log('❌ [MensagemInstitucional] Termos rejeitados - não renderizando')
     return null
   }
 
   // Para clientes novos, mostrar lógica de termos
+  console.log('🆕 [MensagemInstitucional] Cliente novo - renderizando mensagem completa')
   return (
     <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-500/30 shadow-lg">
       <CardContent className="p-6">
