@@ -17,10 +17,28 @@ export function TermosProtection({ children }: TermosProtectionProps) {
   // Redirecionar para página de termos se necessário
   useEffect(() => {
     console.log('🔍 [TermosProtection] Estado:', { loading, podeUsarSistema, termosRejeitados })
+    console.log('🔍 [TermosProtection] URL atual:', window.location.pathname)
     
     if (!loading && !podeUsarSistema && !termosRejeitados) {
       console.log('🔄 [TermosProtection] Redirecionando para /termos')
-      navigate('/termos')
+      
+      // Verificar se já não está na página de termos para evitar loop
+      if (window.location.pathname !== '/termos') {
+        try {
+          navigate('/termos')
+          
+          // Fallback se a navegação não funcionar
+          setTimeout(() => {
+            if (window.location.pathname !== '/termos') {
+              console.log('🔄 [TermosProtection] Fallback: usando window.location')
+              window.location.href = '/termos'
+            }
+          }, 100)
+        } catch (error) {
+          console.error('❌ [TermosProtection] Erro na navegação:', error)
+          window.location.href = '/termos'
+        }
+      }
     }
   }, [loading, podeUsarSistema, termosRejeitados, navigate])
 

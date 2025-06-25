@@ -9,9 +9,30 @@ export function MensagemInstitucional() {
   const navigate = useNavigate()
   const { termosAceitos, termosRejeitados, clienteAntigo, loading } = useTermosAceitos()
 
-  const handleAbrirTermos = () => {
-    console.log('🔄 [MensagemInstitucional] Navegando para /termos')
-    navigate('/termos')
+  const handleAbrirTermos = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    
+    console.log('🔄 [MensagemInstitucional] Botão clicado - iniciando navegação')
+    console.log('🔍 [MensagemInstitucional] Estado atual:', { termosAceitos, termosRejeitados, clienteAntigo })
+    
+    try {
+      // Tentar navegação com React Router primeiro
+      console.log('🔄 [MensagemInstitucional] Tentando navigate(/termos)')
+      navigate('/termos')
+      
+      // Fallback com window.location após um pequeno delay
+      setTimeout(() => {
+        if (window.location.pathname !== '/termos') {
+          console.log('🔄 [MensagemInstitucional] Fallback: usando window.location')
+          window.location.href = '/termos'
+        }
+      }, 100)
+    } catch (error) {
+      console.error('❌ [MensagemInstitucional] Erro na navegação:', error)
+      // Fallback direto
+      window.location.href = '/termos'
+    }
   }
 
   // Se ainda está carregando, não renderizar nada
@@ -136,6 +157,7 @@ export function MensagemInstitucional() {
                   ? "border-teal-500 text-teal-400 hover:bg-teal-500/10" 
                   : "bg-teal-600 hover:bg-teal-700 text-white font-semibold px-6"
                 }
+                type="button"
               >
                 <FileText className="h-4 w-4 mr-2" />
                 {termosAceitos ? "Revisar Termos" : "Ler e Decidir"}
