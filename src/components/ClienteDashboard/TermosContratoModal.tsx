@@ -25,15 +25,15 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
   const [aceitando, setAceitando] = useState(false)
   const [rejeitando, setRejeitando] = useState(false)
 
-  // Prevenir scroll do body quando modal está aberto em mobile
+  // Prevenir scroll do body quando modal está aberto
   useEffect(() => {
-    if (open && isMobile) {
+    if (open) {
       document.body.style.overflow = 'hidden'
       return () => {
         document.body.style.overflow = 'unset'
       }
     }
-  }, [open, isMobile])
+  }, [open])
 
   const handleAceitarTermos = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -146,27 +146,13 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
         className={`
           ${isMobile 
             ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none m-0 rounded-none' 
-            : 'max-w-4xl max-h-[80vh]'
+            : 'max-w-4xl w-[90vw] h-[85vh]'
           } 
-          bg-gray-900 border-gray-700 overflow-hidden flex flex-col
+          bg-gray-900 border-gray-700 p-0 gap-0 flex flex-col
         `}
-        style={{
-          // Garantir que em mobile ocupe toda a tela
-          ...(isMobile && {
-            width: '100vw',
-            height: '100vh',
-            maxWidth: '100vw',
-            maxHeight: '100vh',
-            transform: 'none',
-            top: '0',
-            left: '0',
-            right: '0',
-            bottom: '0'
-          })
-        }}
       >
         {/* Header fixo */}
-        <DialogHeader className="flex-shrink-0 p-4 pb-2 border-b border-gray-700">
+        <DialogHeader className="flex-shrink-0 p-4 pb-3 border-b border-gray-700 bg-gray-900">
           <div className="flex items-center justify-between">
             <DialogTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
               <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-teal-400" />
@@ -187,10 +173,10 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
           </p>
         </DialogHeader>
         
-        {/* Conteúdo com scroll */}
-        <div className="flex-1 overflow-hidden">
+        {/* Conteúdo com scroll otimizado */}
+        <div className="flex-1 min-h-0">
           <ScrollArea className="h-full">
-            <div className="p-4 space-y-6 text-gray-300">
+            <div className="p-4 space-y-6 text-gray-300 pb-6">
               
               {/* Aviso Importante */}
               <div className="bg-teal-900/20 border border-teal-500/30 rounded-lg p-4">
@@ -362,22 +348,18 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
                   <p><strong>Site:</strong> trafegoporcents.com</p>
                 </div>
               </div>
-              
-              {/* Espaçamento extra para mobile */}
-              {isMobile && <div className="h-20" />}
             </div>
           </ScrollArea>
         </div>
 
         {/* Botões de Ação - Fixos na parte inferior */}
-        <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-700 bg-gray-900">
+        <div className="flex-shrink-0 p-4 pt-3 border-t border-gray-700 bg-gray-900">
           {/* Se já aceitou os termos, mostrar apenas botão de fechar */}
           {termosAceitos ? (
             <Button
               onClick={handleCloseModal}
               size="lg"
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px] touch-manipulation"
-              style={{ touchAction: 'manipulation' }}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
             >
               Fechar
             </Button>
@@ -388,18 +370,16 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
                 onClick={handleRejeitarTermos}
                 variant="outline"
                 size="lg"
-                className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10 min-h-[48px] touch-manipulation"
+                className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10 min-h-[48px]"
                 disabled={aceitando || rejeitando}
-                style={{ touchAction: 'manipulation' }}
               >
                 {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
               </Button>
               <Button
                 onClick={handleAceitarTermos}
                 size="lg"
-                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px] touch-manipulation"
+                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
                 disabled={aceitando || rejeitando}
-                style={{ touchAction: 'manipulation' }}
               >
                 {aceitando ? 'Aceitando...' : 'Aceito os Termos e Condições'}
               </Button>
