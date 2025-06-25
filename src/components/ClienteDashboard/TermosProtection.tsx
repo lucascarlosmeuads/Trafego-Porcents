@@ -16,13 +16,11 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
   const { marcarTermosAceitos, marcarTermosRejeitados, refetch } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
-  const [showReconsiderOption, setShowReconsiderOption] = useState(false)
 
   console.log('🔍 [TermosProtection] Estado atual:', {
     podeUsarSistema,
     termosRejeitados,
-    loading,
-    showReconsiderOption
+    loading
   })
 
   // Mostrar loading enquanto verifica os termos
@@ -37,21 +35,9 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     )
   }
 
-  const handleTermosRejeitados = () => {
-    console.log('❌ [TermosProtection] Usuário rejeitou os termos')
-    marcarTermosRejeitados()
-    setShowReconsiderOption(true)
-  }
-
-  const handleReconsiderar = () => {
-    console.log('🔄 [TermosProtection] Usuário quer reconsiderar')
-    setTermosModalOpen(true)
-  }
-
   const handleTermosAceitos = async () => {
     console.log('✅ [TermosProtection] Usuário aceitou os termos')
     await marcarTermosAceitos()
-    setShowReconsiderOption(false)
     setTermosModalOpen(false)
     // Forçar re-verificação do estado
     setTimeout(() => {
@@ -59,19 +45,23 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     }, 100)
   }
 
-  const handleTermosRejeitadosNoModal = async () => {
-    console.log('❌ [TermosProtection] Usuário rejeitou os termos no modal')
+  const handleTermosRejeitados = async () => {
+    console.log('❌ [TermosProtection] Usuário rejeitou os termos')
     await marcarTermosRejeitados()
     setTermosModalOpen(false)
-    setShowReconsiderOption(true)
     // Forçar re-verificação do estado
     setTimeout(() => {
       refetch()
     }, 100)
   }
 
-  // Se rejeitou os termos OU está mostrando opção de reconsiderar
-  if (termosRejeitados || showReconsiderOption) {
+  const handleVoltarEAceitar = () => {
+    console.log('🔄 [TermosProtection] Usuário quer voltar e aceitar')
+    setTermosModalOpen(true)
+  }
+
+  // Se rejeitou os termos, mostrar tela de suporte com opção de voltar
+  if (termosRejeitados) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
         <Card className="max-w-md w-full bg-gray-900 border-gray-700">
@@ -87,20 +77,20 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
                 Mudou de Ideia?
               </h2>
               <p className="text-gray-400 text-sm leading-relaxed mb-4">
-                Você rejeitou os termos, mas ainda pode reconsiderar sua decisão e continuar usando nossa plataforma.
+                Você rejeitou os termos, mas ainda pode voltar e aceitar para continuar usando nossa plataforma.
               </p>
               <p className="text-orange-300 text-xs">
-                💡 Clique no botão abaixo para reconsiderar
+                💡 Clique no botão abaixo para voltar e aceitar os termos
               </p>
             </div>
 
             <div className="space-y-3">
               <Button
-                onClick={handleReconsiderar}
+                onClick={handleVoltarEAceitar}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white"
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Reconsiderar e Ler Termos
+                Voltar e Aceitar Termos
               </Button>
             </div>
           </CardContent>
@@ -110,7 +100,8 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
           onTermosAceitos={handleTermosAceitos}
-          onTermosRejeitados={handleTermosRejeitadosNoModal}
+          onTermosRejeitados={undefined}
+          showOnlyAccept={true}
         />
       </div>
     )
@@ -157,7 +148,8 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
           onTermosAceitos={handleTermosAceitos}
-          onTermosRejeitados={handleTermosRejeitadosNoModal}
+          onTermosRejeitados={handleTermosRejeitados}
+          showOnlyAccept={false}
         />
       </div>
     )

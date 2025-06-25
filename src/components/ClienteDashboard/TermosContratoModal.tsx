@@ -16,9 +16,16 @@ interface TermosContratoModalProps {
   onOpenChange: (open: boolean) => void
   onTermosAceitos: () => void
   onTermosRejeitados?: () => void
+  showOnlyAccept?: boolean
 }
 
-export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTermosRejeitados }: TermosContratoModalProps) {
+export function TermosContratoModal({ 
+  open, 
+  onOpenChange, 
+  onTermosAceitos, 
+  onTermosRejeitados,
+  showOnlyAccept = false
+}: TermosContratoModalProps) {
   const { user } = useAuth()
   const isMobile = useIsMobile()
   const { termosAceitos } = useTermosAceitos()
@@ -70,7 +77,6 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
       })
 
       onTermosAceitos()
-      onOpenChange(false)
     } catch (error: any) {
       console.error('❌ [TermosContratoModal] Erro crítico:', error)
       toast({
@@ -87,7 +93,7 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
     e.preventDefault()
     e.stopPropagation()
     
-    if (!user?.email || rejeitando) return
+    if (!user?.email || rejeitando || !onTermosRejeitados) return
     
     setRejeitando(true)
     
@@ -113,15 +119,12 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
       
       toast({
         title: "Termos Rejeitados",
-        description: "Você será direcionado para falar com o suporte sobre o encerramento da parceria.",
+        description: "Você rejeitou os termos. Entre em contato conosco para mais informações.",
         variant: "destructive",
         duration: 3000
       })
 
-      if (onTermosRejeitados) {
-        onTermosRejeitados()
-      }
-      onOpenChange(false)
+      onTermosRejeitados()
     } catch (error: any) {
       console.error('❌ [TermosContratoModal] Erro crítico:', error)
       toast({
@@ -357,17 +360,31 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
 
         {/* Botões de Ação - Fixos na parte inferior */}
         <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-700 bg-gray-900">
-          {/* Se já aceitou os termos, mostrar apenas botão de fechar */}
-          {termosAceitos ? (
-            <Button
-              onClick={handleCloseModal}
-              size="lg"
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
-            >
-              Fechar
-            </Button>
+          {/* Se já aceitou os termos ou modo somente leitura, mostrar apenas botão de fechar */}
+          {termosAceitos || showOnlyAccept ? (
+            <div className="flex flex-col sm:flex-row gap-3">
+              {showOnlyAccept && !termosAceitos && (
+                <Button
+                  onClick={handleAceitarTermos}
+                  size="lg"
+                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
+                  disabled={aceitando}
+                >
+                  {aceitando ? 'Aceitando...' : 'Aceitar Termos e Condições'}
+                </Button>
+              )}
+              {termosAceitos && (
+                <Button
+                  onClick={handleCloseModal}
+                  size="lg"
+                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
+                >
+                  Fechar
+                </Button>
+              )}
+            </div>
           ) : (
-            /* Se não aceitou ainda, mostrar botões de aceitar/rejeitar */
+            /* Se não aceitou ainda e não é modo somente aceitar, mostrar botões de aceitar/rejeitar */
             <div className="flex flex-col sm:flex-row gap-3">
               <Button
                 onClick={handleRejeitarTermos}
