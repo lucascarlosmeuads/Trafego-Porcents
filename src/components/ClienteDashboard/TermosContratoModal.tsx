@@ -150,7 +150,7 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
                   </li>
                 </ul>
                 <p className="text-sm text-gray-400">
-                  <strong>Prazo de entrega:</strong> até 15 dias corridos após a confirmação do pagamento.
+                  <strong>Prazo de entrega:</strong> até 15 dias úteis após a confirmação do pagamento.
                 </p>
               </div>
             </div>
@@ -192,7 +192,8 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
                 </p>
                 <p className="leading-relaxed">
                   Caso deseje continuar mesmo sem comissionamento nesse prazo, podemos conversar e negociar 
-                  o valor mínimo necessário para manter a operação viável para ambos.
+                  o valor mínimo necessário para manter a operação viável para ambos. Essa decisão será avaliada 
+                  de forma justa, com base no desempenho e nos esforços realizados.
                 </p>
                 <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 mt-3">
                   <p className="text-yellow-300 text-sm">
@@ -240,7 +241,7 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
                   considerando o envolvimento de equipe, ferramentas e tempo dedicado.
                 </p>
                 <p className="leading-relaxed">
-                  No entanto, se nenhum serviço for entregue no prazo de até 15 dias após o pagamento, 
+                  No entanto, se nenhum serviço for entregue no prazo de até <strong className="text-yellow-400">15 dias úteis</strong> após o pagamento, 
                   o cliente poderá solicitar reembolso total.
                 </p>
                 <p className="leading-relaxed text-green-400">
@@ -248,18 +249,6 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
                   e solicitar reembolso total do valor pago.
                 </p>
               </div>
-            </div>
-
-            <Separator className="bg-gray-700" />
-
-            {/* Seção 7 - Cancelamento */}
-            <div>
-              <h3 className="text-lg font-semibold text-white mb-3">7. CANCELAMENTO</h3>
-              <p className="leading-relaxed">
-                Ambas as partes podem solicitar o cancelamento da parceria com aviso prévio de 5 dias úteis. 
-                Se houver falta de colaboração ou descumprimento de obrigações, a Tráfego Porcents poderá 
-                encerrar a parceria de forma imediata.
-              </p>
             </div>
 
             {/* Contato */}
