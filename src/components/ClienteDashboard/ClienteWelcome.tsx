@@ -5,12 +5,12 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
-import { SiteRequestCard } from './SiteRequestCard'
 import { CampanhaLinkCard } from './CampanhaLinkCard'
 import { MensagemInstitucional } from './MensagemInstitucional'
 import { ClienteWelcomeHeader } from './ClienteWelcomeHeader'
 import { ClienteProfileSection } from './ClienteProfileSection'
 import { ClienteQuickActions } from './ClienteQuickActions'
+import { SiteRequestPrompt } from './SiteRequestPrompt'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
@@ -32,17 +32,17 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         
         <AvisoMudancaAtendimento />
         
-        {/* Card de solicitação de site para mobile */}
+        {/* Card da campanha se existir */}
         <div className="p-4 space-y-4">
-          <SiteRequestCard />
-          
-          {/* Card da campanha se existir */}
           {!loading && cliente?.link_campanha && (
             <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
           )}
         </div>
         
         <MobileOnboardingSteps onTabChange={onTabChange} />
+        
+        {/* Prompt de Site no final */}
+        <SiteRequestPrompt />
       </div>
     )
   }
@@ -59,9 +59,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       {/* Aviso de Mudança */}
       <AvisoMudancaAtendimento />
 
-      {/* Card de Solicitação de Site */}
-      <SiteRequestCard />
-
       {/* Card da Campanha */}
       {!loading && cliente?.link_campanha && (
         <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
@@ -75,6 +72,9 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
 
       {/* Grid de Ações Rápidas */}
       <ClienteQuickActions onTabChange={onTabChange} />
+
+      {/* Prompt de Site no final */}
+      <SiteRequestPrompt />
     </div>
   )
 }
