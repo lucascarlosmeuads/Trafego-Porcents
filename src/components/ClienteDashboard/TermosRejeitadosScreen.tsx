@@ -1,11 +1,9 @@
+
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MessageCircle, Mail, Phone, LogOut } from 'lucide-react'
-import { useAuth } from '@/hooks/useAuth'
+import { AlertTriangle, MessageCircle, Mail, Phone } from 'lucide-react'
 
 export function TermosRejeitadosScreen() {
-  const { signOut } = useAuth()
-
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Rejeitei os termos e condições na plataforma Tráfego Porcents e gostaria de conversar sobre o encerramento da parceria. Preciso de orientação sobre os próximos passos.`)
     const whatsappUrl = `https://wa.me/5511943064852?text=${message}`
@@ -23,10 +21,6 @@ Aguardo orientação sobre os próximos passos.
 Atenciosamente.`)
     
     window.location.href = `mailto:contrato@trafegoporcents.com?subject=${subject}&body=${body}`
-  }
-
-  const handleSignOut = async () => {
-    await signOut()
   }
 
   return (
@@ -110,19 +104,6 @@ Atenciosamente.`)
               💡 <strong>Lembre-se:</strong> Você pode solicitar reembolso total do valor pago, 
               conforme estabelecido em nossos termos de uso.
             </p>
-          </div>
-
-          {/* Botão de Sair - NOVO */}
-          <div className="pt-4 border-t border-gray-700">
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              className="w-full border-red-500/50 text-red-400 hover:bg-red-500/10 hover:border-red-500 h-12"
-              size="lg"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              Sair do Sistema
-            </Button>
           </div>
         </CardContent>
       </Card>
