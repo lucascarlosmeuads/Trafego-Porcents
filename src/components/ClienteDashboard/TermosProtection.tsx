@@ -1,12 +1,10 @@
 
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
-import { useTermosAceitos } from '@/hooks/useTermosAceitos'
-import { TermosContratoModal } from './TermosContratoModal'
 import { TermosRejeitadosScreen } from './TermosRejeitadosScreen'
-import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+import { useNavigate } from 'react-router-dom'
 
 interface TermosProtectionProps {
   children: React.ReactNode
@@ -14,8 +12,7 @@ interface TermosProtectionProps {
 
 export function TermosProtection({ children }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
-  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
-  const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const navigate = useNavigate()
 
   // Mostrar loading enquanto verifica os termos
   if (loading) {
@@ -34,7 +31,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
     return <TermosRejeitadosScreen />
   }
 
-  // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
+  // Se não pode usar o sistema (cliente novo que não aceitou termos), redirecionar para página de termos
   if (!podeUsarSistema) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
@@ -62,7 +59,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
             </div>
 
             <Button
-              onClick={() => setTermosModalOpen(true)}
+              onClick={() => navigate('/termos-de-uso')}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white"
             >
               <FileText className="h-4 w-4 mr-2" />
@@ -70,13 +67,6 @@ export function TermosProtection({ children }: TermosProtectionProps) {
             </Button>
           </CardContent>
         </Card>
-
-        <TermosContratoModal
-          open={termosModalOpen}
-          onOpenChange={setTermosModalOpen}
-          onTermosAceitos={marcarTermosAceitos}
-          onTermosRejeitados={marcarTermosRejeitados}
-        />
       </div>
     )
   }
