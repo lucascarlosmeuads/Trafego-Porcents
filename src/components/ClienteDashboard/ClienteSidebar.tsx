@@ -152,50 +152,28 @@ export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) 
             </Button>
           ))}
 
-          {/* Item ULTRA DESTACADO para Termos de Uso */}
-          <div className="relative mt-4 p-2">
-            {/* Efeito de glow/brilho no fundo */}
-            <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 rounded-xl blur-lg opacity-40 animate-ultra-pulse"></div>
-            
-            {/* Seta piscante apontando para o item */}
-            <div className="absolute -left-2 top-1/2 transform -translate-y-1/2 text-yellow-400 animate-bounce-intense z-10">
-              <span className="text-2xl">👉</span>
-            </div>
-            
-            <Button
-              variant="ghost"
-              className="relative w-full justify-start text-left h-auto py-4 bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-700 hover:via-red-600 hover:to-orange-600 text-white border-2 border-yellow-400 rounded-xl shadow-2xl animate-shake-subtle hover:scale-105 transition-all duration-300"
-              onClick={handleAbrirTermos}
-            >
-              <div className="flex items-center w-full">
-                <div className="flex items-center gap-2 mr-3">
-                  <AlertTriangle className="h-6 w-6 text-yellow-300 animate-bounce" />
-                  <FileText className="h-6 w-6 text-yellow-300" />
-                  <span className="text-xl">⚠️</span>
-                </div>
-                <div className="flex-1 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-yellow-100 text-base">🔥 TERMOS DE USO 🔥</div>
-                    <div className="text-sm text-yellow-200 font-medium mt-1">AÇÃO NECESSÁRIA - CLIQUE AQUI!</div>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Badge className="text-sm bg-yellow-500 text-black border-yellow-400 font-bold animate-pulse px-3 py-1 shadow-lg">
-                      URGENTE
-                    </Badge>
-                    <div className="w-3 h-3 bg-yellow-400 rounded-full animate-ping"></div>
-                  </div>
-                </div>
+          {/* Item destacado para Termos de Uso */}
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-left h-auto py-3 border border-orange-500/30 bg-orange-500/10 hover:bg-orange-500/20 text-orange-200 hover:text-orange-100 animate-pulse"
+            onClick={handleAbrirTermos}
+          >
+            <div className="flex items-center w-full">
+              <div className="flex items-center gap-1 mr-3">
+                <AlertTriangle className="h-5 w-5 text-orange-400" />
+                <FileText className="h-5 w-5 text-orange-400" />
               </div>
-              
-              {/* Efeito de spotlight no hover */}
-              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-full group-hover:animate-spotlight rounded-xl"></div>
-            </Button>
-            
-            {/* Badge "NOVO" piscante */}
-            <div className="absolute -top-3 -right-3 bg-yellow-500 text-black text-sm font-bold px-3 py-1 rounded-full border-2 border-white animate-bounce-intense shadow-xl z-10">
-              NOVO
+              <div className="flex-1 flex items-center justify-between">
+                <div>
+                  <div className="font-medium">Termos de Uso</div>
+                  <div className="text-xs opacity-70">Revisar condições importantes</div>
+                </div>
+                <Badge variant="outline" className="text-xs bg-orange-500/20 text-orange-300 border-orange-500/40">
+                  Importante
+                </Badge>
+              </div>
             </div>
-          </div>
+          </Button>
         </nav>
 
         {/* Logout Button */}
