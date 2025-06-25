@@ -23,6 +23,9 @@ interface BriefingData {
   quer_site: boolean
   nome_marca: string
   resumo_conversa_vendedor: string
+  forma_pagamento: string
+  tipo_prestacao_servico: string
+  localizacao_divulgacao: string
 }
 
 interface ArquivoCliente {
@@ -431,6 +434,32 @@ export function BriefingMaterialsModal({
     }
   }
 
+  const formatFormaPagamento = (forma: string) => {
+    switch (forma) {
+      case 'cartao':
+        return 'Cartão'
+      case 'boleto':
+        return 'Boleto'
+      case 'pix':
+        return 'Pix'
+      default:
+        return forma || 'Não informado'
+    }
+  }
+
+  const formatTipoPrestacao = (tipo: string) => {
+    switch (tipo) {
+      case 'presencial':
+        return 'Presencial'
+      case 'online':
+        return 'Online'
+      case 'hibrido':
+        return 'Híbrido'
+      default:
+        return tipo || 'Não informado'
+    }
+  }
+
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -499,6 +528,28 @@ export function BriefingMaterialsModal({
                           <h4 className="font-semibold text-sm mb-2 text-green-700">💰 Investimento Diário</h4>
                           <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
                             R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* NOVAS INFORMAÇÕES ADICIONADAS */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">💳 Forma de Pagamento</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                            {formatFormaPagamento(briefing.forma_pagamento)}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">📍 Tipo de Prestação</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                            {formatTipoPrestacao(briefing.tipo_prestacao_servico)}
+                          </p>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2 text-green-700">🌎 Localização</h4>
+                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
+                            {briefing.localizacao_divulgacao || 'Não informado'}
                           </p>
                         </div>
                       </div>

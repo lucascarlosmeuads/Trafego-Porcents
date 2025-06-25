@@ -48,6 +48,15 @@ const briefingFormSchema = z.object({
   }),
   nome_marca: z.string().optional(),
   observacoes_finais: z.string().optional(),
+  forma_pagamento: z.enum(['cartao', 'boleto', 'pix'], {
+    required_error: "Por favor, selecione a forma de pagamento.",
+  }),
+  tipo_prestacao_servico: z.enum(['presencial', 'online', 'hibrido'], {
+    required_error: "Por favor, selecione o tipo de prestação do serviço.",
+  }),
+  localizacao_divulgacao: z.string().min(2, {
+    message: "Localização para divulgação precisa ter pelo menos 2 caracteres.",
+  }),
 }).refine((data) => {
   if (data.quer_site === 'sim' && (!data.nome_marca || data.nome_marca.trim().length < 2)) {
     return false;
@@ -67,6 +76,9 @@ interface BriefingCliente {
   quer_site: boolean
   nome_marca?: string | null
   observacoes_finais?: string | null
+  forma_pagamento?: string | null
+  tipo_prestacao_servico?: string | null
+  localizacao_divulgacao?: string | null
 }
 
 interface BriefingFormProps {
@@ -96,6 +108,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
       quer_site: briefing?.quer_site ? 'sim' : 'nao',
       nome_marca: briefing?.nome_marca || "",
       observacoes_finais: briefing?.observacoes_finais || "",
+      forma_pagamento: (briefing?.forma_pagamento as 'cartao' | 'boleto' | 'pix') || undefined,
+      tipo_prestacao_servico: (briefing?.tipo_prestacao_servico as 'presencial' | 'online' | 'hibrido') || undefined,
+      localizacao_divulgacao: briefing?.localizacao_divulgacao || "",
     },
   })
 
@@ -113,6 +128,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
         quer_site: briefing.quer_site ? 'sim' : 'nao',
         nome_marca: briefing.nome_marca || "",
         observacoes_finais: briefing.observacoes_finais || "",
+        forma_pagamento: (briefing.forma_pagamento as 'cartao' | 'boleto' | 'pix') || undefined,
+        tipo_prestacao_servico: (briefing.tipo_prestacao_servico as 'presencial' | 'online' | 'hibrido') || undefined,
+        localizacao_divulgacao: briefing.localizacao_divulgacao || "",
       })
     }
   }, [briefing, form])
@@ -136,6 +154,9 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
         quer_site: values.quer_site === 'sim',
         nome_marca: values.quer_site === 'sim' ? values.nome_marca?.trim() || null : null,
         observacoes_finais: values.observacoes_finais?.trim() || null,
+        forma_pagamento: values.forma_pagamento,
+        tipo_prestacao_servico: values.tipo_prestacao_servico,
+        localizacao_divulgacao: values.localizacao_divulgacao.trim(),
       }
 
       console.log('💾 [BriefingForm] Dados preparados para salvar:', briefingData)
@@ -263,6 +284,107 @@ export function BriefingForm({ briefing, emailCliente, onBriefingUpdated, onBack
                           className="h-12 border-gray-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl transition-all text-gray-800"
                           {...field}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 💳 Forma de Pagamento */}
+                <FormField
+                  control={form.control}
+                  name="forma_pagamento"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
+                        💳 Qual será a forma de pagamento?
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="cartao" id="pagamento-cartao" />
+                            <Label htmlFor="pagamento-cartao" className="text-gray-700 cursor-pointer">
+                              Cartão
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="boleto" id="pagamento-boleto" />
+                            <Label htmlFor="pagamento-boleto" className="text-gray-700 cursor-pointer">
+                              Boleto
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="pix" id="pagamento-pix" />
+                            <Label htmlFor="pagamento-pix" className="text-gray-700 cursor-pointer">
+                              Pix
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 📍 Tipo de Prestação do Serviço */}
+                <FormField
+                  control={form.control}
+                  name="tipo_prestacao_servico"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
+                        📍 Qual o tipo/modelo de prestação do seu serviço?
+                      </FormLabel>
+                      <FormControl>
+                        <RadioGroup
+                          onValueChange={field.onChange}
+                          value={field.value}
+                          className="flex flex-col space-y-2"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="presencial" id="prestacao-presencial" />
+                            <Label htmlFor="prestacao-presencial" className="text-gray-700 cursor-pointer">
+                              Presencial
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="online" id="prestacao-online" />
+                            <Label htmlFor="prestacao-online" className="text-gray-700 cursor-pointer">
+                              Online
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="hibrido" id="prestacao-hibrido" />
+                            <Label htmlFor="prestacao-hibrido" className="text-gray-700 cursor-pointer">
+                              Híbrido
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* 🌎 Localização para Divulgação */}
+                <FormField
+                  control={form.control}
+                  name="localizacao_divulgacao"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2 text-gray-800 font-semibold text-base">
+                        🌎 Em qual cidade, região ou estado o seu serviço/produto deve ser divulgado?
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="Ex: São Paulo, Brasil inteiro, Região Sudeste..." 
+                          className="h-12 border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl transition-all text-gray-800"
+                          {...field} 
                         />
                       </FormControl>
                       <FormMessage />
