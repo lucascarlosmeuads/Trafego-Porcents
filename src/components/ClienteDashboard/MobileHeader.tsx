@@ -1,7 +1,7 @@
 
 import { SidebarTrigger } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Menu } from 'lucide-react'
 import { ProfileDropdown } from '../ProfileDropdown'
 
 interface MobileHeaderProps {
@@ -35,7 +35,18 @@ export function MobileHeader({ activeTab, onBack }: MobileHeaderProps) {
             <ArrowLeft className="h-4 w-4" />
           </Button>
         ) : (
-          <SidebarTrigger className="text-gray-700 hover:text-blue-600 transition-colors" />
+          <div className="relative">
+            {/* Animação de destaque no fundo */}
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl blur-sm opacity-30 animate-pulse"></div>
+            
+            {/* Botão do menu destacado */}
+            <SidebarTrigger className="relative bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 border-2 border-white shadow-lg rounded-xl p-2 transition-all duration-300 hover:scale-110 animate-pulse hover:animate-none min-w-[44px] min-h-[44px] flex items-center justify-center">
+              <Menu className="h-5 w-5" />
+            </SidebarTrigger>
+            
+            {/* Pequeno indicador visual */}
+            <div className="absolute -top-1 -right-1 w-3 h-3 bg-orange-500 rounded-full border-2 border-white animate-bounce"></div>
+          </div>
         )}
         <h1 className="text-lg font-bold text-gray-800 truncate">
           {currentLabel}
