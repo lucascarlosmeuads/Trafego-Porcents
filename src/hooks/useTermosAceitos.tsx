@@ -86,16 +86,73 @@ export function useTermosAceitos() {
     }
   }
 
-  const marcarTermosAceitos = () => {
+  const marcarTermosAceitos = async () => {
     console.log('✅ [useTermosAceitos] Marcando termos como aceitos')
     setTermosAceitos(true)
     setTermosRejeitados(false) // Garantir que não esteja rejeitado
+    
+    // Atualizar no banco se necessário
+    if (user?.email) {
+      try {
+        await supabase
+          .from('cliente_profiles')
+          .upsert({
+            email_cliente: user.email,
+            termos_aceitos: true,
+            termos_rejeitados: false,
+            data_aceite_termos: new Date().toISOString(),
+            data_rejeicao_termos: null
+          })
+        console.log('💾 [useTermosAceitos] Termos aceitos salvos no banco')
+      } catch (error) {
+        console.error('❌ [useTermosAceitos] Erro ao salvar aceitação:', error)
+      }
+    }
   }
 
-  const marcarTermosRejeitados = () => {
+  const marcarTermosRejeitados = async () => {
     console.log('❌ [useTermosAceitos] Marcando termos como rejeitados')
     setTermosRejeitados(true)
     setTermosAceitos(false) // Garantir que não esteja aceito
+    
+    // Atualizar no banco se necessário
+    if (user?.email) {
+      try {
+        await supabase
+          .from('cliente_profiles')
+          .upsert({
+            email_cliente: user.email,
+            termos_aceitos: false,
+            termos_rejeitados: true,
+            data_rejeicao_termos: new Date().toISOString(),
+            data_aceite_termos: null
+          })
+        console.log('💾 [useTermosAceitos] Termos rejeitados salvos no banco')
+      } catch (error) {
+        console.error('❌ [useTermosAceitos] Erro ao salvar rejeição:', error)
+      }
+    }
+  }
+
+  const limparEstadoRejeicao = async () => {
+    console.log('🔄 [useTermosAceitos] Limpando estado de rejeição')
+    setTermosRejeitados(false)
+    
+    // Limpar no banco também
+    if (user?.email) {
+      try {
+        await supabase
+          .from('cliente_profiles')
+          .update({
+            termos_rejeitados: false,
+            data_rejeicao_termos: null
+          })
+          .eq('email_cliente', user.email)
+        console.log('💾 [useTermosAceitos] Estado de rejeição limpo no banco')
+      } catch (error) {
+        console.error('❌ [useTermosAceitos] Erro ao limpar rejeição:', error)
+      }
+    }
   }
 
   useEffect(() => {
@@ -109,6 +166,7 @@ export function useTermosAceitos() {
     loading,
     marcarTermosAceitos,
     marcarTermosRejeitados,
+    limparEstadoRejeicao,
     refetch: checkTermosAceitos
   }
 }

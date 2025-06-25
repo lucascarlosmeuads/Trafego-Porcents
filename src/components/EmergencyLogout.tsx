@@ -9,6 +9,8 @@ export function EmergencyLogout() {
   const [isLoading, setIsLoading] = useState(false)
 
   const handleEmergencyLogout = async () => {
+    if (isLoading) return // Evitar cliques duplos
+    
     setIsLoading(true)
     console.log('🚨 [EmergencyLogout] Logout de emergência iniciado')
     
@@ -17,34 +19,32 @@ export function EmergencyLogout() {
       console.log('🧹 [EmergencyLogout] Limpando localStorage')
       Object.keys(localStorage).forEach((key) => {
         if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          console.log('🗑️ [EmergencyLogout] Removendo chave:', key)
           localStorage.removeItem(key)
         }
       })
       
       // Chamar função de logout
+      console.log('🚪 [EmergencyLogout] Chamando signOut()')
       await signOut()
-      
-      // Forçar reload da página como backup
-      setTimeout(() => {
-        console.log('🔄 [EmergencyLogout] Forçando reload da página')
-        window.location.href = '/'
-      }, 1000)
       
     } catch (error) {
       console.error('❌ [EmergencyLogout] Erro no logout:', error)
-      // Em caso de erro, forçar redirecionamento mesmo assim
+    } finally {
+      // Em qualquer caso, forçar redirecionamento
+      console.log('🔄 [EmergencyLogout] Forçando redirecionamento')
       window.location.href = '/'
     }
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <div className="fixed top-4 right-4 z-[9999]">
       <Button
         onClick={handleEmergencyLogout}
         disabled={isLoading}
         variant="destructive"
         size="sm"
-        className="bg-red-600 hover:bg-red-700 text-white shadow-lg border-2 border-red-500"
+        className="bg-red-600 hover:bg-red-700 text-white shadow-lg border-2 border-red-500 font-semibold"
       >
         <LogOut className="h-4 w-4 mr-2" />
         {isLoading ? 'Saindo...' : 'Logout'}

@@ -1,12 +1,18 @@
-
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MessageCircle, Mail, Phone, LogOut } from 'lucide-react'
+import { AlertTriangle, MessageCircle, Mail, RotateCcw, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { useTermosAceitos } from '@/hooks/useTermosAceitos'
+import { TermosContratoModal } from './TermosContratoModal'
 import { EmergencyLogout } from '@/components/EmergencyLogout'
+import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 export function TermosRejeitadosScreen() {
   const { signOut } = useAuth()
+  const { marcarTermosAceitos } = useTermosAceitos()
+  const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const navigate = useNavigate()
 
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Rejeitei os termos e condições na plataforma Tráfego Porcents e gostaria de conversar sobre o encerramento da parceria. Preciso de orientação sobre os próximos passos.`)
@@ -31,9 +37,26 @@ Atenciosamente.`)
     await signOut()
   }
 
+  const handleReconsiderar = () => {
+    console.log('🔄 [TermosRejeitados] Usuário quer reconsiderar os termos')
+    setTermosModalOpen(true)
+  }
+
+  const handleTermosAceitos = () => {
+    console.log('✅ [TermosRejeitados] Usuário aceitou os termos - redirecionando')
+    marcarTermosAceitos()
+    // Redirecionar para o dashboard
+    navigate('/')
+  }
+
+  const handleTermosRejeitados = () => {
+    console.log('❌ [TermosRejeitados] Usuário confirmou rejeição')
+    setTermosModalOpen(false)
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-      {/* Botão de logout de emergência apenas nesta tela */}
+      {/* Botão de logout de emergência */}
       <EmergencyLogout />
       
       <Card className="max-w-2xl w-full bg-gray-900 border-gray-700">
@@ -52,6 +75,25 @@ Atenciosamente.`)
               Você optou por não aceitar nossos termos e condições. Entendemos sua decisão e 
               respeitamos sua escolha.
             </p>
+          </div>
+
+          {/* Nova seção para mudança de ideia */}
+          <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+            <h3 className="font-semibold text-blue-300 mb-2 flex items-center justify-center gap-2">
+              <RotateCcw className="h-4 w-4" />
+              Mudou de Ideia?
+            </h3>
+            <p className="text-gray-300 text-sm leading-relaxed mb-3">
+              Se você reconsiderou sua decisão, pode ler e aceitar os termos para 
+              continuar usando nossa plataforma.
+            </p>
+            <Button
+              onClick={handleReconsiderar}
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reconsiderar e Ler Termos
+            </Button>
           </div>
           
           <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
@@ -128,6 +170,14 @@ Atenciosamente.`)
           </div>
         </CardContent>
       </Card>
+
+      {/* Modal de Termos para Reconsideração */}
+      <TermosContratoModal
+        open={termosModalOpen}
+        onOpenChange={setTermosModalOpen}
+        onTermosAceitos={handleTermosAceitos}
+        onTermosRejeitados={handleTermosRejeitados}
+      />
     </div>
   )
 }

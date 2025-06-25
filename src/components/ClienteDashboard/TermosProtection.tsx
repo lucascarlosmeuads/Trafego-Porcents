@@ -5,7 +5,7 @@ import { TermosContratoModal } from './TermosContratoModal'
 import { useNavigate } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { FileText, Shield } from 'lucide-react'
+import { FileText, Shield, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TermosProtectionProps {
@@ -17,17 +17,34 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
   const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const [showReconsiderOption, setShowReconsiderOption] = useState(false)
   const navigate = useNavigate()
 
-  // Se rejeitou os termos, redirecionar automaticamente
+  console.log('🔍 [TermosProtection] Estado atual:', {
+    podeUsarSistema,
+    termosRejeitados,
+    loading,
+    showReconsiderOption
+  })
+
+  // Se rejeitou os termos, mostrar opção de reconsiderar por alguns segundos
   useEffect(() => {
     if (termosRejeitados && !loading) {
-      console.log('🚫 [TermosProtection] Termos rejeitados detectados, redirecionando...')
-      if (onTermosRejeitados) {
-        onTermosRejeitados()
-      } else {
-        navigate('/termos-rejeitados')
-      }
+      console.log('🚫 [TermosProtection] Termos rejeitados - preparando redirecionamento')
+      
+      // Mostrar opção de reconsiderar por 3 segundos
+      setShowReconsiderOption(true)
+      
+      const timer = setTimeout(() => {
+        console.log('⏰ [TermosProtection] Tempo esgotado - redirecionando')
+        if (onTermosRejeitados) {
+          onTermosRejeitados()
+        } else {
+          navigate('/termos-rejeitados')
+        }
+      }, 5000) // 5 segundos para o usuário reconsiderar
+
+      return () => clearTimeout(timer)
     }
   }, [termosRejeitados, loading, onTermosRejeitados, navigate])
 
@@ -43,18 +60,82 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     )
   }
 
-  // Se rejeitou os termos, não mostrar nada (será redirecionado)
-  if (termosRejeitados) {
-    return null
+  const handleTermosRejeitados = () => {
+    console.log('❌ [TermosProtection] Usuário rejeitou os termos')
+    marcarTermosRejeitados()
+    setShowReconsiderOption(true)
   }
 
-  const handleTermosRejeitados = () => {
-    marcarTermosRejeitados()
-    if (onTermosRejeitados) {
-      onTermosRejeitados()
-    } else {
-      navigate('/termos-rejeitados')
-    }
+  const handleReconsiderar = () => {
+    console.log('🔄 [TermosProtection] Usuário quer reconsiderar')
+    setShowReconsiderOption(false)
+    setTermosModalOpen(true)
+  }
+
+  const handleTermosAceitos = () => {
+    console.log('✅ [TermosProtection] Usuário aceitou os termos')
+    marcarTermosAceitos()
+    setShowReconsiderOption(false)
+  }
+
+  // Se rejeitou os termos E está mostrando opção de reconsiderar
+  if (termosRejeitados && showReconsiderOption) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
+        <Card className="max-w-md w-full bg-gray-900 border-gray-700">
+          <CardContent className="p-6 text-center space-y-4">
+            <div className="flex justify-center">
+              <div className="p-3 bg-orange-900/20 rounded-full">
+                <RotateCcw className="h-8 w-8 text-orange-400" />
+              </div>
+            </div>
+            
+            <div>
+              <h2 className="text-xl font-bold text-white mb-2">
+                Mudou de Ideia?
+              </h2>
+              <p className="text-gray-400 text-sm leading-relaxed mb-4">
+                Você rejeitou os termos, mas ainda pode reconsiderar sua decisão.
+              </p>
+              <p className="text-orange-300 text-xs">
+                ⏰ Redirecionando em alguns segundos...
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Button
+                onClick={handleReconsiderar}
+                className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Reconsiderar e Ler Termos
+              </Button>
+
+              <Button
+                onClick={() => {
+                  if (onTermosRejeitados) {
+                    onTermosRejeitados()
+                  } else {
+                    navigate('/termos-rejeitados')
+                  }
+                }}
+                variant="outline"
+                className="w-full border-red-500 text-red-400 hover:bg-red-500/10"
+              >
+                Prosseguir com Rejeição
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <TermosContratoModal
+          open={termosModalOpen}
+          onOpenChange={setTermosModalOpen}
+          onTermosAceitos={handleTermosAceitos}
+          onTermosRejeitados={handleTermosRejeitados}
+        />
+      </div>
+    )
   }
 
   // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
