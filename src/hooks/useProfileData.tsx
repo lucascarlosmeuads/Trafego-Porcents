@@ -6,8 +6,6 @@ import { useAuth } from '@/hooks/useAuth'
 interface ProfileData {
   avatar_url?: string | null
   nome_display?: string | null
-  termos_aceitos?: boolean | null
-  data_aceite_termos?: string | null
 }
 
 export function useProfileData(userType: 'gestor' | 'cliente') {
@@ -48,7 +46,7 @@ export function useProfileData(userType: 'gestor' | 'cliente') {
         } else {
           const { data, error } = await supabase
             .from('cliente_profiles')
-            .select('avatar_url, nome_display, termos_aceitos, data_aceite_termos')
+            .select('avatar_url, nome_display')
             .eq('email_cliente', user.email)
             .maybeSingle()
 
@@ -65,9 +63,7 @@ export function useProfileData(userType: 'gestor' | 'cliente') {
             if (!clienteError && clienteData) {
               setProfileData({
                 avatar_url: null,
-                nome_display: clienteData.nome_cliente,
-                termos_aceitos: false,
-                data_aceite_termos: null
+                nome_display: clienteData.nome_cliente
               })
             }
           }

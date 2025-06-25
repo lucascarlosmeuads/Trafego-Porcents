@@ -13,7 +13,6 @@ import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarRespo
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 import { ProfileDropdown } from './ProfileDropdown'
-import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
 export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
@@ -140,71 +139,61 @@ export function ClienteDashboard() {
     }
   }
 
-  // Envolver todo o conteúdo com a proteção de termos
-  const dashboardContent = () => {
-    // Layout mobile otimizado
-    if (isMobile) {
-      return (
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
-          <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
-            <div className="flex items-center gap-3">
-              <div className="relative group">
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-20"></div>
-                <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold px-3 py-2 text-sm">
-                  <span>Tráfego</span>
-                  <span className="text-orange-300">Porcents</span>
-                </div>
+  // Layout mobile otimizado
+  if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="flex items-center justify-between p-4 bg-white border-b border-gray-200 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg blur-sm opacity-20"></div>
+              <div className="relative bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-bold px-3 py-2 text-sm">
+                <span>Tráfego</span>
+                <span className="text-orange-300">Porcents</span>
               </div>
-            </div>
-            
-            <div className="flex items-center gap-3">
-              <div className="text-gray-800 text-sm font-medium">
-                {activeTab === 'overview' && 'Painel Principal'}
-                {activeTab === 'briefing' && 'Briefing'}
-                {activeTab === 'arquivos' && 'Materiais'}
-                {activeTab === 'vendas' && 'Vendas'}
-                {activeTab === 'tutoriais' && 'Tutoriais'}
-                {activeTab === 'suporte' && 'Suporte'}
-              </div>
-              <ProfileDropdown />
             </div>
           </div>
           
-          <main className="pb-20 min-h-screen">
-            {renderContent()}
-          </main>
-          
-          <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+          <div className="flex items-center gap-3">
+            <div className="text-gray-800 text-sm font-medium">
+              {activeTab === 'overview' && 'Painel Principal'}
+              {activeTab === 'briefing' && 'Briefing'}
+              {activeTab === 'arquivos' && 'Materiais'}
+              {activeTab === 'vendas' && 'Vendas'}
+              {activeTab === 'tutoriais' && 'Tutoriais'}
+              {activeTab === 'suporte' && 'Suporte'}
+            </div>
+            <ProfileDropdown />
+          </div>
         </div>
-      )
-    }
-
-    // Layout desktop COM SidebarProvider - SEM navegação inferior
-    return (
-      <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
-          <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
-          
-          <SidebarInset className="flex-1">
-            <MobileHeader 
-              activeTab={activeTab} 
-              onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
-            />
-            
-            <main className="flex-1 p-4 md:p-6">
-              {renderContent()}
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+        
+        <main className="pb-20 min-h-screen">
+          {renderContent()}
+        </main>
+        
+        <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
+      </div>
     )
   }
 
-  // Retornar conteúdo protegido pelos termos
+  // Layout desktop COM SidebarProvider - SEM navegação inferior
   return (
-    <TermosProtection>
-      {dashboardContent()}
-    </TermosProtection>
+    <SidebarProvider defaultOpen={false}>
+      <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
+        <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
+        
+        <SidebarInset className="flex-1">
+          <MobileHeader 
+            activeTab={activeTab} 
+            onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
+          />
+          
+          <main className="flex-1 p-4 md:p-6">
+            {renderContent()}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   )
 }
 
