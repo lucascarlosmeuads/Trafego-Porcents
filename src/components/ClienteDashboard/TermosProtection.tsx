@@ -19,12 +19,6 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   const [termosModalOpen, setTermosModalOpen] = useState(false)
   const navigate = useNavigate()
 
-  console.log('🛡️ [TermosProtection] Estado:', {
-    podeUsarSistema,
-    termosRejeitados,
-    loading
-  })
-
   // Se rejeitou os termos, redirecionar automaticamente
   useEffect(() => {
     if (termosRejeitados && !loading) {
@@ -39,7 +33,6 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
 
   // Mostrar loading enquanto verifica os termos
   if (loading) {
-    console.log('⏳ [TermosProtection] Mostrando loading')
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center">
@@ -52,18 +45,10 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
 
   // Se rejeitou os termos, não mostrar nada (será redirecionado)
   if (termosRejeitados) {
-    console.log('🚫 [TermosProtection] Termos rejeitados, não mostrando conteúdo')
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
-          <p className="text-gray-400">Redirecionando...</p>
-        </div>
-      </div>
-    )
+    return null
   }
 
   const handleTermosRejeitados = () => {
-    console.log('🚫 [TermosProtection] Processando rejeição de termos')
     marcarTermosRejeitados()
     if (onTermosRejeitados) {
       onTermosRejeitados()
@@ -74,7 +59,6 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
 
   // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
   if (!podeUsarSistema) {
-    console.log('🔒 [TermosProtection] Bloqueando acesso - precisa aceitar termos')
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
         <Card className="max-w-md w-full bg-gray-900 border-gray-700">
@@ -121,6 +105,5 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   }
 
   // Se pode usar o sistema (cliente antigo ou novo que aceitou), mostrar o conteúdo normal
-  console.log('✅ [TermosProtection] Permitindo acesso ao sistema')
   return <>{children}</>
 }
