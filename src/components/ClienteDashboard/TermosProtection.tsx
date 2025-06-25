@@ -2,9 +2,10 @@
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { TermosRejeitadosScreen } from './TermosRejeitadosScreen'
 import { Card, CardContent } from '@/components/ui/card'
-import { FileText, Shield } from 'lucide-react'
+import { FileText, Shield, Clock } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 
 interface TermosProtectionProps {
   children: React.ReactNode
@@ -13,14 +14,62 @@ interface TermosProtectionProps {
 export function TermosProtection({ children }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
   const navigate = useNavigate()
+  const [showForceButton, setShowForceButton] = useState(false)
+
+  // Mostrar botão de força após 10 segundos de loading
+  useEffect(() => {
+    if (loading) {
+      const timer = setTimeout(() => {
+        setShowForceButton(true)
+      }, 10000)
+
+      return () => clearTimeout(timer)
+    } else {
+      setShowForceButton(false)
+    }
+  }, [loading])
+
+  const handleForceAccess = () => {
+    console.log('🚨 [TermosProtection] Acesso forçado pelo usuário')
+    // Limpar cache e recarregar
+    localStorage.removeItem('supabase-auth-token')
+    Object.keys(localStorage).forEach((key) => {
+      if (key.includes('supabase') || key.includes('auth')) {
+        localStorage.removeItem(key)
+      }
+    })
+    window.location.reload()
+  }
 
   // Mostrar loading enquanto verifica os termos
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center">
+        <div className="text-center space-y-4">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
-          <p className="text-gray-400">Verificando acesso...</p>
+          <p className="text-gray-400">Verificando acesso ao sistema...</p>
+          <div className="text-sm text-gray-500">
+            Aguarde alguns segundos...
+          </div>
+          
+          {showForceButton && (
+            <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+              <div className="flex items-center gap-2 mb-3">
+                <Clock className="h-4 w-4 text-yellow-400" />
+                <p className="text-yellow-300 text-sm">
+                  O carregamento está demorando mais que o esperado
+                </p>
+              </div>
+              <Button
+                onClick={handleForceAccess}
+                variant="outline"
+                size="sm"
+                className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
+              >
+                Forçar Carregamento
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     )
