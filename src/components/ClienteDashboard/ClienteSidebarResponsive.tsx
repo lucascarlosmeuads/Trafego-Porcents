@@ -1,6 +1,8 @@
 
+import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
+import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +26,7 @@ import {
   LogOut 
 } from 'lucide-react'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
+import { TermosContratoModal } from './TermosContratoModal'
 
 interface ClienteSidebarResponsiveProps {
   activeTab: string
@@ -33,6 +36,8 @@ interface ClienteSidebarResponsiveProps {
 export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSidebarResponsiveProps) {
   const { signOut, user } = useAuth()
   const { profileData, updateProfileData } = useProfileData('cliente')
+  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
+  const [termosModalOpen, setTermosModalOpen] = useState(false)
 
   const menuItems = [
     { id: 'overview', label: 'Visão Geral', icon: Home },
@@ -55,72 +60,103 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
     updateProfileData({ avatar_url: newUrl })
   }
 
+  const handleAbrirTermos = () => {
+    setTermosModalOpen(true)
+  }
+
+  const handleTermosAceitos = () => {
+    marcarTermosAceitos()
+  }
+
+  const handleTermosRejeitados = () => {
+    marcarTermosRejeitados()
+  }
+
   return (
-    <Sidebar>
-      <SidebarHeader className="border-b border-gray-800 p-4">
-        <div className="flex items-center gap-3">
-          <div className="relative group cursor-pointer">
-            <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-            <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-3 py-2 text-sm transition-transform duration-300 hover:scale-105">
-              <span>Tráfego</span>
-              <span className="text-orange-300">Porcents</span>
+    <>
+      <Sidebar>
+        <SidebarHeader className="border-b border-gray-800 p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative group cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-3 py-2 text-sm transition-transform duration-300 hover:scale-105">
+                <span>Tráfego</span>
+                <span className="text-orange-300">Porcents</span>
+              </div>
             </div>
           </div>
-        </div>
-        
-        {/* Perfil do Cliente */}
-        <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 mt-4">
-          <ProfileAvatarUpload
-            currentAvatarUrl={profileData?.avatar_url}
-            userName={profileData?.nome_display || user?.email || 'Cliente'}
-            userType="cliente"
-            onAvatarChange={handleAvatarChange}
-            size="md"
-            showEditButton={true}
-          />
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-white truncate">
-              {profileData?.nome_display || 'Cliente'}
-            </p>
-            <p className="text-xs text-gray-400 truncate">
-              {user?.email}
-            </p>
+          
+          {/* Perfil do Cliente */}
+          <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 mt-4">
+            <ProfileAvatarUpload
+              currentAvatarUrl={profileData?.avatar_url}
+              userName={profileData?.nome_display || user?.email || 'Cliente'}
+              userType="cliente"
+              onAvatarChange={handleAvatarChange}
+              size="md"
+              showEditButton={true}
+            />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-white truncate">
+                {profileData?.nome_display || 'Cliente'}
+              </p>
+              <p className="text-xs text-gray-400 truncate">
+                {user?.email}
+              </p>
+            </div>
           </div>
-        </div>
-      </SidebarHeader>
-      
-      <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel className="text-gray-400">Menu Principal</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton 
-                    onClick={() => onTabChange(item.id)}
-                    isActive={activeTab === item.id}
-                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50"
-                  >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-      </SidebarContent>
+        </SidebarHeader>
+        
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel className="text-gray-400">Menu Principal</SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {menuItems.map((item) => (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton 
+                      onClick={() => onTabChange(item.id)}
+                      isActive={activeTab === item.id}
+                      className="w-full justify-start text-gray-300 hover:text-white hover:bg-gray-800/50"
+                    >
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.label}</span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        </SidebarContent>
 
-      <SidebarFooter className="border-t border-gray-800 p-4">
-        <Button
-          variant="ghost"
-          className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
-          onClick={handleSignOut}
-        >
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair do Sistema
-        </Button>
-      </SidebarFooter>
-    </Sidebar>
+        <SidebarFooter className="border-t border-gray-800 p-4 space-y-2">
+          {/* Link discreto para Termos de Uso */}
+          <button
+            onClick={handleAbrirTermos}
+            className="w-full text-left text-xs text-gray-500 hover:text-gray-400 transition-colors py-1"
+          >
+            <FileText className="h-3 w-3 inline mr-1" />
+            Termos de Uso
+          </button>
+          
+          <Button
+            variant="ghost"
+            className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            onClick={handleSignOut}
+          >
+            <LogOut className="mr-2 h-4 w-4" />
+            Sair do Sistema
+          </Button>
+        </SidebarFooter>
+      </Sidebar>
+
+      {/* Modal de Termos */}
+      <TermosContratoModal
+        open={termosModalOpen}
+        onOpenChange={setTermosModalOpen}
+        onTermosAceitos={handleTermosAceitos}
+        onTermosRejeitados={handleTermosRejeitados}
+      />
+    </>
   )
 }
