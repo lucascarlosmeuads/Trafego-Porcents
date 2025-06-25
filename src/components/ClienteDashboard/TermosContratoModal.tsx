@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -149,20 +150,6 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
             : 'max-w-4xl w-full max-h-[85vh]'
           }
         `}
-        style={isMobile ? { 
-          position: 'fixed !important',
-          inset: '0 !important',
-          transform: 'none !important', 
-          left: '0 !important', 
-          top: '0 !important',
-          translate: 'none !important',
-          width: '100vw !important',
-          height: '100vh !important',
-          maxWidth: 'none !important',
-          maxHeight: 'none !important',
-          margin: '0 !important',
-          borderRadius: '0 !important'
-        } : undefined}
       >
         {/* Header fixo */}
         <DialogHeader className="flex-shrink-0 p-4 pb-2 border-b border-gray-700">
