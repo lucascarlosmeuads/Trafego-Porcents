@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -130,25 +129,50 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
                   </SidebarMenuItem>
                 ))}
 
-                {/* Item destacado para Termos de Uso */}
+                {/* Item ULTRA DESTACADO para Termos de Uso */}
                 <SidebarMenuItem>
-                  <SidebarMenuButton 
-                    onClick={handleAbrirTermos}
-                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-orange-500/10 border border-orange-500/30 rounded-lg animate-pulse"
-                  >
-                    <div className="flex items-center gap-2 w-full">
-                      <div className="flex items-center gap-1">
-                        <AlertTriangle className="h-4 w-4 text-orange-400" />
-                        <FileText className="h-4 w-4 text-orange-400" />
-                      </div>
-                      <div className="flex-1 flex items-center justify-between">
-                        <span className="text-orange-200">Termos de Uso</span>
-                        <Badge variant="outline" className="text-xs bg-orange-500/20 text-orange-300 border-orange-500/40 px-2 py-0.5">
-                          Importante
-                        </Badge>
-                      </div>
+                  <div className="relative p-1">
+                    {/* Efeito de glow/brilho no fundo */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-red-500 via-orange-500 to-red-600 rounded-xl blur-md opacity-50 animate-ultra-pulse"></div>
+                    
+                    {/* Seta piscante apontando para o item */}
+                    <div className="absolute -left-3 top-1/2 transform -translate-y-1/2 text-yellow-400 animate-bounce-intense">
+                      <span className="text-lg">👉</span>
                     </div>
-                  </SidebarMenuButton>
+                    
+                    <SidebarMenuButton 
+                      onClick={handleAbrirTermos}
+                      className="relative w-full justify-start text-white bg-gradient-to-r from-red-600 via-red-500 to-orange-500 hover:from-red-700 hover:via-red-600 hover:to-orange-600 border-2 border-yellow-400 rounded-xl shadow-xl animate-shake-subtle hover:scale-105 transition-all duration-300 p-3"
+                    >
+                      <div className="flex items-center gap-2 w-full">
+                        <div className="flex items-center gap-1 animate-pulse">
+                          <AlertTriangle className="h-5 w-5 text-yellow-300 animate-bounce" />
+                          <FileText className="h-5 w-5 text-yellow-300" />
+                          <span className="text-lg">⚠️</span>
+                        </div>
+                        <div className="flex-1 flex items-center justify-between">
+                          <div className="text-left">
+                            <div className="font-bold text-yellow-100 text-sm">🔥 TERMOS DE USO 🔥</div>
+                            <div className="text-xs text-yellow-200 font-medium">AÇÃO NECESSÁRIA - CLIQUE AQUI!</div>
+                          </div>
+                          <div className="flex flex-col items-center gap-1">
+                            <Badge className="text-xs bg-yellow-500 text-black border-yellow-400 font-bold animate-pulse px-2 py-1 shadow-lg">
+                              URGENTE
+                            </Badge>
+                            <div className="w-2 h-2 bg-yellow-400 rounded-full animate-ping"></div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Efeito de spotlight no hover */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-full group-hover:animate-spotlight rounded-xl"></div>
+                    </SidebarMenuButton>
+                    
+                    {/* Badge "NOVO" piscante */}
+                    <div className="absolute -top-2 -right-2 bg-yellow-500 text-black text-xs font-bold px-2 py-1 rounded-full border-2 border-white animate-bounce-intense shadow-lg">
+                      NOVO
+                    </div>
+                  </div>
                 </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>

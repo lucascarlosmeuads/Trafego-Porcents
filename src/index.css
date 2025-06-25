@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -538,6 +539,21 @@
   }
 }
 
+/* Animações ULTRA INTENSAS para Termos de Uso */
+@layer components {
+  .termos-ultra-highlight {
+    position: relative;
+    background: linear-gradient(135deg, #dc2626, #ea580c, #dc2626);
+    background-size: 200% 200%;
+    animation: gradient-shift 2s ease-in-out infinite, ultra-pulse 1.5s infinite, glow-intense 2s infinite;
+    border: 3px solid #fbbf24;
+    box-shadow: 
+      0 0 20px rgba(220, 38, 38, 0.8),
+      0 0 40px rgba(234, 88, 12, 0.6),
+      0 0 60px rgba(251, 191, 36, 0.4);
+  }
+}
+
 @keyframes gentle-pulse {
   0%, 100% {
     opacity: 1;
@@ -579,6 +595,83 @@
   }
 }
 
+/* Animações ULTRA INTENSAS para Termos */
+@keyframes ultra-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  25% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.06);
+  }
+  75% {
+    opacity: 0.9;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes glow-intense {
+  0%, 100% {
+    box-shadow: 
+      0 0 20px rgba(220, 38, 38, 0.8),
+      0 0 40px rgba(234, 88, 12, 0.6),
+      0 0 60px rgba(251, 191, 36, 0.4);
+  }
+  50% {
+    box-shadow: 
+      0 0 30px rgba(220, 38, 38, 1),
+      0 0 60px rgba(234, 88, 12, 0.8),
+      0 0 90px rgba(251, 191, 36, 0.6);
+  }
+}
+
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes shake-subtle {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-2px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(2px);
+  }
+}
+
+@keyframes bounce-intense {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  40% {
+    transform: translateY(-12px) scale(1.1);
+  }
+  60% {
+    transform: translateY(-6px) scale(1.05);
+  }
+}
+
+@keyframes spotlight {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 /* Mobile optimizations para o botão de menu */
 @media (max-width: 768px) {
   .menu-trigger-highlight {
@@ -589,5 +682,40 @@
   
   .menu-trigger-highlight:active {
     transform: scale(0.95);
+  }
+  
+  /* Termos mais visíveis no mobile */
+  .termos-ultra-highlight {
+    box-shadow: 
+      0 0 15px rgba(220, 38, 38, 0.9),
+      0 0 30px rgba(234, 88, 12, 0.7),
+      0 0 45px rgba(251, 191, 36, 0.5);
+  }
+}
+
+/* Adicionar as novas animações às classes do Tailwind */
+@layer utilities {
+  .animate-ultra-pulse {
+    animation: ultra-pulse 1.5s infinite;
+  }
+  
+  .animate-glow-intense {
+    animation: glow-intense 2s infinite;
+  }
+  
+  .animate-gradient-shift {
+    animation: gradient-shift 2s ease-in-out infinite;
+  }
+  
+  .animate-shake-subtle {
+    animation: shake-subtle 0.8s infinite;
+  }
+  
+  .animate-bounce-intense {
+    animation: bounce-intense 1.2s infinite;
+  }
+  
+  .animate-spotlight {
+    animation: spotlight 1.5s ease-in-out;
   }
 }
