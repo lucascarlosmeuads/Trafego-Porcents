@@ -27,7 +27,7 @@ export function MensagemInstitucional() {
     return null
   }
 
-  // Interface específica para clientes antigos (mais discreta)
+  // Interface completamente discreta para clientes antigos
   if (clienteAntigo) {
     return (
       <>
@@ -44,29 +44,28 @@ export function MensagemInstitucional() {
                 </h2>
               </div>
 
-              {/* Mensagem principal para clientes antigos */}
+              {/* Mensagem simples e limpa para clientes antigos */}
               <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <Shield className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
                   <div className="text-gray-300 leading-relaxed flex-1">
-                    <p className="text-white">
+                    <p className="text-white text-base">
                       Você tem acesso completo a todas as funcionalidades da nossa plataforma!
                     </p>
-                    <p className="text-sm mt-2">
+                    <p className="text-sm mt-2 text-gray-400">
                       Aproveite todas as ferramentas disponíveis para acompanhar e gerenciar suas campanhas.
                     </p>
+                    
+                    {/* Link super discreto para ver termos (quase invisível) */}
+                    <div className="mt-4 pt-2 border-t border-gray-700/50">
+                      <button
+                        onClick={handleAbrirTermos}
+                        className="text-xs text-gray-500 hover:text-gray-400 transition-colors underline-offset-2 hover:underline"
+                      >
+                        ver termos de uso
+                      </button>
+                    </div>
                   </div>
-                  
-                  {/* Link discreto para ver termos (opcional) */}
-                  <Button
-                    onClick={handleAbrirTermos}
-                    variant="ghost"
-                    size="sm"
-                    className="text-xs text-gray-400 hover:text-gray-300 p-1 h-auto"
-                  >
-                    <Eye className="h-3 w-3 mr-1" />
-                    Ver termos
-                  </Button>
                 </div>
               </div>
             </div>
