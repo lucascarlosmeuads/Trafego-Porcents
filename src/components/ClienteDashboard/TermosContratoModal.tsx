@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -146,15 +145,23 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
         className={`
           bg-gray-900 border-gray-700 p-0 flex flex-col z-[9999]
           ${isMobile 
-            ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none m-0 rounded-none [&_.dialog-close]:hidden' 
+            ? '!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !transform-none !translate-x-0 !translate-y-0 !left-0 !top-0' 
             : 'max-w-4xl w-full max-h-[85vh]'
           }
         `}
         style={isMobile ? { 
+          position: 'fixed !important',
+          inset: '0 !important',
           transform: 'none !important', 
           left: '0 !important', 
           top: '0 !important',
-          translate: 'none !important'
+          translate: 'none !important',
+          width: '100vw !important',
+          height: '100vh !important',
+          maxWidth: 'none !important',
+          maxHeight: 'none !important',
+          margin: '0 !important',
+          borderRadius: '0 !important'
         } : undefined}
       >
         {/* Header fixo */}
