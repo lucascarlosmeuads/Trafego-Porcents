@@ -10,6 +10,7 @@ export function MensagemInstitucional() {
   const { termosAceitos, termosRejeitados, clienteAntigo, loading } = useTermosAceitos()
 
   const handleAbrirTermos = () => {
+    console.log('🔄 [MensagemInstitucional] Navegando para /termos')
     navigate('/termos')
   }
 

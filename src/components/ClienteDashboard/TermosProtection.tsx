@@ -16,7 +16,10 @@ export function TermosProtection({ children }: TermosProtectionProps) {
 
   // Redirecionar para página de termos se necessário
   useEffect(() => {
+    console.log('🔍 [TermosProtection] Estado:', { loading, podeUsarSistema, termosRejeitados })
+    
     if (!loading && !podeUsarSistema && !termosRejeitados) {
+      console.log('🔄 [TermosProtection] Redirecionando para /termos')
       navigate('/termos')
     }
   }, [loading, podeUsarSistema, termosRejeitados, navigate])
