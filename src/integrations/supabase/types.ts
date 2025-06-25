@@ -238,25 +238,31 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
+          data_aceite_termos: string | null
           email_cliente: string
           id: string
           nome_display: string | null
+          termos_aceitos: boolean | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
+          data_aceite_termos?: string | null
           email_cliente: string
           id?: string
           nome_display?: string | null
+          termos_aceitos?: boolean | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
+          data_aceite_termos?: string | null
           email_cliente?: string
           id?: string
           nome_display?: string | null
+          termos_aceitos?: boolean | null
           updated_at?: string
         }
         Relationships: []
