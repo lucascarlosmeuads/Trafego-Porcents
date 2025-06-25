@@ -212,6 +212,7 @@ export function ClienteRow({
           <ClienteRowBM
             clienteId={cliente.id!.toString()}
             numeroBM={cliente.numero_bm || ''}
+            nomeCliente={cliente.nome_cliente || ''}
             editingBM={editingBM}
             bmValue={bmValue}
             setBmValue={setBmValue}
