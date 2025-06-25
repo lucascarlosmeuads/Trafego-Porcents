@@ -86,32 +86,34 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
             <FileText className="h-6 w-6 text-teal-400" />
             Termos de Uso e Condições Gerais
           </DialogTitle>
+          <p className="text-gray-400 text-sm">Leia com atenção antes de iniciar.</p>
         </DialogHeader>
         
         <ScrollArea className="h-[60vh] pr-4">
           <div className="space-y-6 text-gray-300">
             
             {/* Aviso Importante */}
-            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+            <div className="bg-teal-900/20 border border-teal-500/30 rounded-lg p-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-orange-400 mt-0.5 flex-shrink-0" />
+                <AlertTriangle className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-orange-300 mb-2">Leia Atentamente</h3>
+                  <h3 className="font-semibold text-teal-300 mb-2">Modelo de Parceria</h3>
                   <p className="text-sm">
-                    Ao aceitar estes termos, você concorda com nosso modelo de prestação de serviços 
-                    de marketing digital por porcentagem sobre resultados.
+                    Ao aceitar estes termos, você concorda com o modelo de parceria da Tráfego Porcents, 
+                    baseado em prestação de serviços de marketing digital com foco em performance, 
+                    utilizando comissão sobre os resultados gerados.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Seção 1 - Objeto do Contrato */}
+            {/* Seção 1 - Objeto dos Serviços */}
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">1. OBJETO DOS SERVIÇOS</h3>
               <p className="leading-relaxed">
                 A <strong className="text-teal-400">Tráfego Porcents</strong> prestará serviços de marketing digital 
-                e tráfego pago com remuneração por comissão sobre as vendas realizadas através dos anúncios 
-                criados e gerenciados por nossa equipe.
+                e tráfego pago com o objetivo de gerar vendas para o seu produto ou serviço. A remuneração ocorre 
+                por meio de comissão sobre os resultados, de forma transparente e justa para ambas as partes.
               </p>
             </div>
 
@@ -119,28 +121,28 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
 
             {/* Seção 2 - Taxa de Ativação */}
             <div>
-              <h3 className="text-lg font-semibold text-white mb-3">2. TAXA DE ATIVAÇÃO E ESTRUTURA</h3>
+              <h3 className="text-lg font-semibold text-white mb-3">2. TAXA DE ATIVAÇÃO E ESTRUTURA INICIAL</h3>
               <div className="space-y-3">
                 <p className="leading-relaxed">
-                  Para início dos trabalhos, há uma taxa única de <strong className="text-green-400">R$ 350,00</strong>, 
-                  referente à construção de toda estrutura inicial, incluindo:
+                  Você já realizou o pagamento da taxa única de <strong className="text-green-400">R$ 350,00</strong>, 
+                  que não será cobrada novamente. Essa taxa cobre a criação completa da estrutura inicial, incluindo:
                 </p>
                 <ul className="space-y-2 ml-4">
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Análise completa do produto/serviço</span>
+                    <span>Análise estratégica do seu produto ou serviço</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Criação de criativos de imagens com copywriter bem feitas</span>
+                    <span>Criação de criativos com copy profissional</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Configuração da BM e do traqueamento</span>
+                    <span>Configuração de BM (Business Manager) e traqueamento</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                    <span>Construção da página de vendas (site)</span>
+                    <span>Construção de página de vendas</span>
                   </li>
                   <li className="flex items-start gap-2">
                     <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
@@ -148,7 +150,7 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
                   </li>
                 </ul>
                 <p className="text-sm text-gray-400">
-                  <strong>Prazo de entrega:</strong> até 15 dias corridos após confirmação do pagamento.
+                  <strong>Prazo de entrega:</strong> até 15 dias corridos após a confirmação do pagamento.
                 </p>
               </div>
             </div>
@@ -160,36 +162,44 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
               <h3 className="text-lg font-semibold text-white mb-3">3. MODELO POR PORCENTAGEM</h3>
               <div className="space-y-3">
                 <p className="leading-relaxed">
-                  Nosso modelo funciona por <strong className="text-teal-400">comissão sobre resultados</strong>. 
-                  Somos remunerados apenas com base nas vendas realizadas através das campanhas.
+                  Nosso modelo é baseado em <strong className="text-teal-400">performance</strong>: você só paga 
+                  comissão quando houver vendas reais geradas pelas campanhas que nós criamos e gerenciamos.
                 </p>
                 <p className="leading-relaxed">
-                  <strong className="text-green-400">Comissão:</strong> 5% sobre o lucro líquido gerado pelas vendas.
+                  <strong className="text-green-400">Comissão:</strong> 5% sobre o lucro líquido das vendas feitas pelas campanhas.
                 </p>
                 <p className="leading-relaxed">
-                  <strong className="text-yellow-400">Período de avaliação:</strong> Durante os primeiros 30 dias, 
-                  prestamos todos os serviços com máxima qualidade e dedicação para gerar resultados efetivos.
+                  Durante os primeiros <strong className="text-yellow-400">30 dias</strong>, dedicamos nossa equipe 
+                  para gerar os melhores resultados possíveis, testando e otimizando continuamente.
                 </p>
               </div>
             </div>
 
             <Separator className="bg-gray-700" />
 
-            {/* Seção 4 - Nova Regra de Parceria */}
-            <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-4">
-              <h3 className="text-lg font-semibold text-red-300 mb-3">4. REGRA DE PARCERIA ATIVA</h3>
+            {/* Seção 4 - Continuidade da Parceria */}
+            <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-orange-300 mb-3">4. CONTINUIDADE DA PARCERIA</h3>
               <div className="space-y-3">
                 <p className="leading-relaxed">
-                  Para manter a parceria ativa, é necessário que nos <strong className="text-white">30 primeiros dias</strong> 
-                  tenhamos comissionamento mínimo de <strong className="text-green-400">R$ 200</strong>.
+                  Para que a parceria continue após os <strong className="text-white">30 dias iniciais</strong>, 
+                  é necessário que exista <strong className="text-green-400">comissionamento mensal mínimo</strong>, 
+                  ou seja, algum nível de retorno financeiro para justificar a continuidade do trabalho.
                 </p>
                 <p className="leading-relaxed">
-                  Caso isso não aconteça, a parceria pode ser encerrada automaticamente. 
-                  <strong className="text-yellow-300"> Isso não é uma mensalidade.</strong>
+                  Se não houver comissionamento nesse período, a parceria poderá ser encerrada automaticamente, 
+                  sem obrigação futura de continuidade.
                 </p>
                 <p className="leading-relaxed">
-                  Se desejar manter o projeto mesmo sem atingir esse valor, poderá realizar o pagamento manual de R$ 200.
+                  Caso deseje continuar mesmo sem comissionamento nesse prazo, podemos conversar e negociar 
+                  o valor mínimo necessário para manter a operação viável para ambos.
                 </p>
+                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 mt-3">
+                  <p className="text-yellow-300 text-sm">
+                    ⚠️ Isso não se trata de uma mensalidade fixa, e sim de uma condição básica para 
+                    manter a parceria ativa com envolvimento contínuo da nossa equipe.
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -200,21 +210,20 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
               <h3 className="text-lg font-semibold text-white mb-3">5. RESPONSABILIDADES</h3>
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
-                  <h4 className="font-semibold text-teal-400 mb-2">Suas Responsabilidades:</h4>
+                  <h4 className="font-semibold text-teal-400 mb-2">Responsabilidades do Cliente:</h4>
                   <ul className="space-y-1 text-sm">
-                    <li>• Fornecer informações verdadeiras sobre o produto</li>
-                    <li>• Declarar corretamente as vendas realizadas</li>
-                    <li>• Pagar a taxa inicial de R$ 350,00</li>
-                    <li>• Cumprir com pagamentos das comissões</li>
+                    <li>• Fornecer informações corretas e atualizadas sobre o produto/serviço</li>
+                    <li>• Declarar com transparência as vendas realizadas</li>
+                    <li>• Cumprir com o pagamento das comissões geradas</li>
                   </ul>
                 </div>
                 <div>
-                  <h4 className="font-semibold text-teal-400 mb-2">Nossas Responsabilidades:</h4>
+                  <h4 className="font-semibold text-teal-400 mb-2">Responsabilidades da Tráfego Porcents:</h4>
                   <ul className="space-y-1 text-sm">
-                    <li>• Criar e gerenciar os anúncios</li>
-                    <li>• Fornecer suporte e atualizações estratégicas</li>
-                    <li>• Entregar estrutura completa no prazo</li>
-                    <li>• Manter comunicação clara e respeitosa</li>
+                    <li>• Criar e gerenciar todas as campanhas de tráfego</li>
+                    <li>• Fornecer suporte e orientações estratégicas</li>
+                    <li>• Entregar toda a estrutura inicial conforme combinado</li>
+                    <li>• Manter comunicação clara, objetiva e profissional</li>
                   </ul>
                 </div>
               </div>
@@ -227,11 +236,16 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
               <h3 className="text-lg font-semibold text-white mb-3">6. POLÍTICA DE REEMBOLSO</h3>
               <div className="space-y-3">
                 <p className="leading-relaxed">
-                  <strong className="text-red-400">Não há reembolso</strong> após a entrega dos serviços, 
-                  pois envolvemos equipe, tecnologia e tempo dedicado para desenvolver toda a estrutura.
+                  Após a entrega do serviço, <strong className="text-red-400">não há reembolso</strong>, 
+                  considerando o envolvimento de equipe, ferramentas e tempo dedicado.
                 </p>
-                <p className="text-sm text-gray-400">
-                  Reembolso é possível apenas se nenhum serviço for prestado em até 15 dias após o pagamento da taxa.
+                <p className="leading-relaxed">
+                  No entanto, se nenhum serviço for entregue no prazo de até 15 dias após o pagamento, 
+                  o cliente poderá solicitar reembolso total.
+                </p>
+                <p className="leading-relaxed text-green-400">
+                  Caso você não concorde com os termos apresentados, poderá clicar em "Não Aceito" 
+                  e solicitar reembolso total do valor pago.
                 </p>
               </div>
             </div>
@@ -242,19 +256,20 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
             <div>
               <h3 className="text-lg font-semibold text-white mb-3">7. CANCELAMENTO</h3>
               <p className="leading-relaxed">
-                Qualquer parte pode cancelar os serviços com aviso prévio de 5 dias úteis. 
-                Falta de colaboração adequada pode resultar em encerramento imediato.
+                Ambas as partes podem solicitar o cancelamento da parceria com aviso prévio de 5 dias úteis. 
+                Se houver falta de colaboração ou descumprimento de obrigações, a Tráfego Porcents poderá 
+                encerrar a parceria de forma imediata.
               </p>
             </div>
 
             {/* Contato */}
             <div className="bg-gray-800/50 rounded-lg p-4">
-              <h4 className="font-semibold text-white mb-2">Contato</h4>
+              <h4 className="font-semibold text-white mb-2">📞 Contato</h4>
               <div className="text-sm space-y-1">
                 <p><strong>Empresa:</strong> Tráfego Porcents Marketing Digital LTDA</p>
                 <p><strong>CNPJ:</strong> 60.697.779/0001-78</p>
                 <p><strong>E-mail:</strong> contrato@trafegoporcents.com</p>
-                <p><strong>Telefone:</strong> (11) 9 4306-4852</p>
+                <p><strong>Telefone/WhatsApp:</strong> (11) 9 4306-4852</p>
                 <p><strong>Site:</strong> trafegoporcents.com</p>
               </div>
             </div>
