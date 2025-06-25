@@ -16,32 +16,40 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
   const { refetch } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const [processandoAceite, setProcessandoAceite] = useState(false)
 
   console.log('🔍 [TermosProtection] Estado atual:', {
     podeUsarSistema,
     termosRejeitados,
-    loading
+    loading,
+    processandoAceite
   })
 
-  // Mostrar loading enquanto verifica os termos
-  if (loading) {
+  // Mostrar loading enquanto verifica os termos ou está processando aceite
+  if (loading || processandoAceite) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
         <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
-          <p className="text-gray-400">Verificando acesso...</p>
+          <p className="text-gray-400">
+            {processandoAceite ? 'Processando aceitação dos termos...' : 'Verificando acesso...'}
+          </p>
         </div>
       </div>
     )
   }
 
   const handleTermosAceitos = async () => {
-    console.log('✅ [TermosProtection] Usuário aceitou os termos')
+    console.log('✅ [TermosProtection] Usuário aceitou os termos - iniciando processamento')
+    setProcessandoAceite(true)
     setTermosModalOpen(false)
-    // Forçar re-verificação do estado após um pequeno delay
+    
+    // Aguardar um momento para garantir que o modal foi fechado
     setTimeout(() => {
-      refetch()
-    }, 100)
+      console.log('🔄 [TermosProtection] Forçando refresh da página para atualizar estado')
+      // Forçar refresh completo da página para garantir estado limpo
+      window.location.reload()
+    }, 500)
   }
 
   const handleTermosRejeitados = async () => {
@@ -86,9 +94,10 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
               <Button
                 onClick={handleVoltarEAceitar}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+                disabled={processandoAceite}
               >
                 <FileText className="h-4 w-4 mr-2" />
-                Voltar e Aceitar Termos
+                {processandoAceite ? 'Processando...' : 'Voltar e Aceitar Termos'}
               </Button>
             </div>
           </CardContent>
@@ -135,9 +144,10 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
             <Button
               onClick={() => setTermosModalOpen(true)}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              disabled={processandoAceite}
             >
               <FileText className="h-4 w-4 mr-2" />
-              Ler e Aceitar Termos
+              {processandoAceite ? 'Processando...' : 'Ler e Aceitar Termos'}
             </Button>
           </CardContent>
         </Card>
