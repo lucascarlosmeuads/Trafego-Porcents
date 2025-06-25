@@ -144,12 +144,18 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent 
         className={`
+          bg-gray-900 border-gray-700 p-0 flex flex-col z-[9999]
           ${isMobile 
-            ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none m-0 rounded-none' 
-            : 'max-w-4xl w-full h-[85vh] max-h-[85vh]'
-          } 
-          bg-gray-900 border-gray-700 p-0 flex flex-col
+            ? 'fixed inset-0 w-screen h-screen max-w-none max-h-none m-0 rounded-none [&_.dialog-close]:hidden' 
+            : 'max-w-4xl w-full max-h-[85vh]'
+          }
         `}
+        style={isMobile ? { 
+          transform: 'none !important', 
+          left: '0 !important', 
+          top: '0 !important',
+          translate: 'none !important'
+        } : undefined}
       >
         {/* Header fixo */}
         <DialogHeader className="flex-shrink-0 p-4 pb-2 border-b border-gray-700">
@@ -174,8 +180,8 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
         </DialogHeader>
         
         {/* Conteúdo com scroll - altura fixa definida */}
-        <div className="flex-1 min-h-0">
-          <ScrollArea className={`${isMobile ? 'h-full' : 'h-[calc(85vh-180px)]'}`}>
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className={`h-full ${isMobile ? 'px-1' : ''}`}>
             <div className="p-4 space-y-6 text-gray-300">
               
               {/* Aviso Importante */}
@@ -350,7 +356,7 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTer
               </div>
               
               {/* Espaçamento extra para mobile */}
-              {isMobile && <div className="h-20" />}
+              {isMobile && <div className="h-24" />}
             </div>
           </ScrollArea>
         </div>
