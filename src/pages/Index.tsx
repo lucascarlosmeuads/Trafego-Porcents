@@ -2,6 +2,7 @@
 import { useAuth, AuthProvider } from '@/hooks/useAuth'
 import { LoginForm } from '@/components/LoginForm'
 import { Dashboard } from '@/components/Dashboard'
+import { EmergencyLogout } from '@/components/EmergencyLogout'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -10,6 +11,8 @@ function AppContent() {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-lg">Carregando...</div>
+        {/* Botão de emergência disponível mesmo durante carregamento */}
+        <EmergencyLogout />
       </div>
     )
   }
@@ -18,7 +21,13 @@ function AppContent() {
     return <LoginForm />
   }
 
-  return <Dashboard />
+  return (
+    <>
+      <Dashboard />
+      {/* Botão de logout de emergência sempre visível */}
+      <EmergencyLogout />
+    </>
+  )
 }
 
 const Index = () => {
