@@ -9,16 +9,19 @@ import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { useIsMobile } from '@/hooks/useIsMobile'
+import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 
 interface TermosContratoModalProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onTermosAceitos: () => void
+  onTermosRejeitados?: () => void
 }
 
-export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: TermosContratoModalProps) {
+export function TermosContratoModal({ open, onOpenChange, onTermosAceitos, onTermosRejeitados }: TermosContratoModalProps) {
   const { user } = useAuth()
   const isMobile = useIsMobile()
+  const { termosAceitos } = useTermosAceitos()
   const [aceitando, setAceitando] = useState(false)
   const [rejeitando, setRejeitando] = useState(false)
 
@@ -48,7 +51,9 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
         .upsert({
           email_cliente: user.email,
           termos_aceitos: true,
-          data_aceite_termos: new Date().toISOString()
+          termos_rejeitados: false,
+          data_aceite_termos: new Date().toISOString(),
+          data_rejeicao_termos: null
         })
 
       if (error) {
@@ -82,20 +87,51 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
     e.preventDefault()
     e.stopPropagation()
     
-    if (rejeitando) return
+    if (!user?.email || rejeitando) return
     
     setRejeitando(true)
     
-    toast({
-      title: "Termos Rejeitados",
-      description: "Para usar o sistema é necessário aceitar os termos e condições.",
-      variant: "destructive",
-      duration: 5000
-    })
+    try {
+      console.log('🔄 [TermosContratoModal] Salvando rejeição dos termos para:', user.email)
+      
+      const { error } = await supabase
+        .from('cliente_profiles')
+        .upsert({
+          email_cliente: user.email,
+          termos_aceitos: false,
+          termos_rejeitados: true,
+          data_aceite_termos: null,
+          data_rejeicao_termos: new Date().toISOString()
+        })
 
-    setTimeout(() => {
+      if (error) {
+        console.error('❌ [TermosContratoModal] Erro ao salvar rejeição:', error)
+        throw error
+      }
+
+      console.log('❌ [TermosContratoModal] Termos rejeitados com sucesso!')
+      
+      toast({
+        title: "Termos Rejeitados",
+        description: "Você será direcionado para falar com o suporte sobre o encerramento da parceria.",
+        variant: "destructive",
+        duration: 3000
+      })
+
+      if (onTermosRejeitados) {
+        onTermosRejeitados()
+      }
+      onOpenChange(false)
+    } catch (error: any) {
+      console.error('❌ [TermosContratoModal] Erro crítico:', error)
+      toast({
+        title: "Erro",
+        description: "Erro ao processar sua decisão. Tente novamente.",
+        variant: "destructive"
+      })
+    } finally {
       setRejeitando(false)
-    }, 2000)
+    }
   }
 
   const handleCloseModal = (e: React.MouseEvent) => {
@@ -146,7 +182,9 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
               </button>
             )}
           </div>
-          <p className="text-gray-400 text-xs sm:text-sm">Leia com atenção antes de iniciar.</p>
+          <p className="text-gray-400 text-xs sm:text-sm">
+            {termosAceitos ? "Você já aceitou estes termos anteriormente." : "Leia com atenção antes de decidir."}
+          </p>
         </DialogHeader>
         
         {/* Conteúdo com scroll */}
@@ -333,27 +371,40 @@ export function TermosContratoModal({ open, onOpenChange, onTermosAceitos }: Ter
 
         {/* Botões de Ação - Fixos na parte inferior */}
         <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-700 bg-gray-900">
-          <div className="flex flex-col sm:flex-row gap-3">
+          {/* Se já aceitou os termos, mostrar apenas botão de fechar */}
+          {termosAceitos ? (
             <Button
-              onClick={handleRejeitarTermos}
-              variant="outline"
+              onClick={handleCloseModal}
               size="lg"
-              className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10 min-h-[48px] touch-manipulation"
-              disabled={aceitando || rejeitando}
+              className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px] touch-manipulation"
               style={{ touchAction: 'manipulation' }}
             >
-              {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
+              Fechar
             </Button>
-            <Button
-              onClick={handleAceitarTermos}
-              size="lg"
-              className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px] touch-manipulation"
-              disabled={aceitando || rejeitando}
-              style={{ touchAction: 'manipulation' }}
-            >
-              {aceitando ? 'Aceitando...' : 'Aceito os Termos e Condições'}
-            </Button>
-          </div>
+          ) : (
+            /* Se não aceitou ainda, mostrar botões de aceitar/rejeitar */
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Button
+                onClick={handleRejeitarTermos}
+                variant="outline"
+                size="lg"
+                className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10 min-h-[48px] touch-manipulation"
+                disabled={aceitando || rejeitando}
+                style={{ touchAction: 'manipulation' }}
+              >
+                {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
+              </Button>
+              <Button
+                onClick={handleAceitarTermos}
+                size="lg"
+                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px] touch-manipulation"
+                disabled={aceitando || rejeitando}
+                style={{ touchAction: 'manipulation' }}
+              >
+                {aceitando ? 'Aceitando...' : 'Aceito os Termos e Condições'}
+              </Button>
+            </div>
+          )}
         </div>
       </DialogContent>
     </Dialog>

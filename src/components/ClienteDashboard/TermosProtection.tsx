@@ -2,6 +2,7 @@
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
+import { TermosRejeitadosScreen } from './TermosRejeitadosScreen'
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Shield } from 'lucide-react'
@@ -12,8 +13,8 @@ interface TermosProtectionProps {
 }
 
 export function TermosProtection({ children }: TermosProtectionProps) {
-  const { podeUsarSistema, loading } = usePermissaoSistema()
-  const { marcarTermosAceitos } = useTermosAceitos()
+  const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
+  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
 
   // Mostrar loading enquanto verifica os termos
@@ -26,6 +27,11 @@ export function TermosProtection({ children }: TermosProtectionProps) {
         </div>
       </div>
     )
+  }
+
+  // Se rejeitou os termos, mostrar tela de encerramento
+  if (termosRejeitados) {
+    return <TermosRejeitadosScreen />
   }
 
   // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
@@ -69,6 +75,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
           onTermosAceitos={marcarTermosAceitos}
+          onTermosRejeitados={marcarTermosRejeitados}
         />
       </div>
     )

@@ -239,30 +239,36 @@ export type Database = {
           avatar_url: string | null
           created_at: string
           data_aceite_termos: string | null
+          data_rejeicao_termos: string | null
           email_cliente: string
           id: string
           nome_display: string | null
           termos_aceitos: boolean | null
+          termos_rejeitados: boolean | null
           updated_at: string
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           data_aceite_termos?: string | null
+          data_rejeicao_termos?: string | null
           email_cliente: string
           id?: string
           nome_display?: string | null
           termos_aceitos?: boolean | null
+          termos_rejeitados?: boolean | null
           updated_at?: string
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           data_aceite_termos?: string | null
+          data_rejeicao_termos?: string | null
           email_cliente?: string
           id?: string
           nome_display?: string | null
           termos_aceitos?: boolean | null
+          termos_rejeitados?: boolean | null
           updated_at?: string
         }
         Relationships: []

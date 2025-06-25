@@ -8,7 +8,7 @@ import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 
 export function MensagemInstitucional() {
   const [termosModalOpen, setTermosModalOpen] = useState(false)
-  const { termosAceitos, clienteAntigo, loading, marcarTermosAceitos } = useTermosAceitos()
+  const { termosAceitos, termosRejeitados, clienteAntigo, loading, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
 
   const handleAbrirTermos = () => {
     setTermosModalOpen(true)
@@ -16,6 +16,10 @@ export function MensagemInstitucional() {
 
   const handleTermosAceitos = () => {
     marcarTermosAceitos()
+  }
+
+  const handleTermosRejeitados = () => {
+    marcarTermosRejeitados()
   }
 
   // Se ainda está carregando, não renderizar nada
@@ -57,6 +61,11 @@ export function MensagemInstitucional() {
         </CardContent>
       </Card>
     )
+  }
+
+  // Se rejeitou os termos, não mostrar nada (será redirecionado pela TermosProtection)
+  if (termosRejeitados) {
+    return null
   }
 
   // Para clientes novos, mostrar lógica de termos
@@ -151,6 +160,7 @@ export function MensagemInstitucional() {
         open={termosModalOpen}
         onOpenChange={setTermosModalOpen}
         onTermosAceitos={handleTermosAceitos}
+        onTermosRejeitados={handleTermosRejeitados}
       />
     </>
   )
