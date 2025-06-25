@@ -17,6 +17,7 @@ import {
   SidebarFooter,
 } from '@/components/ui/sidebar'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { 
   Home, 
   FileText, 
@@ -24,7 +25,8 @@ import {
   TrendingUp, 
   Play, 
   Headphones, 
-  LogOut 
+  LogOut,
+  AlertTriangle
 } from 'lucide-react'
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 import { TermosContratoModal } from './TermosContratoModal'
@@ -127,21 +129,33 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 ))}
+
+                {/* Item destacado para Termos de Uso */}
+                <SidebarMenuItem>
+                  <SidebarMenuButton 
+                    onClick={handleAbrirTermos}
+                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-orange-500/10 border border-orange-500/30 rounded-lg animate-pulse"
+                  >
+                    <div className="flex items-center gap-2 w-full">
+                      <div className="flex items-center gap-1">
+                        <AlertTriangle className="h-4 w-4 text-orange-400" />
+                        <FileText className="h-4 w-4 text-orange-400" />
+                      </div>
+                      <div className="flex-1 flex items-center justify-between">
+                        <span className="text-orange-200">Termos de Uso</span>
+                        <Badge variant="outline" className="text-xs bg-orange-500/20 text-orange-300 border-orange-500/40 px-2 py-0.5">
+                          Importante
+                        </Badge>
+                      </div>
+                    </div>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
         </SidebarContent>
 
-        <SidebarFooter className="border-t border-gray-800 p-4 space-y-2">
-          {/* Link discreto para Termos de Uso */}
-          <button
-            onClick={handleAbrirTermos}
-            className="w-full text-left text-xs text-gray-500 hover:text-gray-400 transition-colors py-1"
-          >
-            <FileText className="h-3 w-3 inline mr-1" />
-            Termos de Uso
-          </button>
-          
+        <SidebarFooter className="border-t border-gray-800 p-4">
           <Button
             variant="ghost"
             className="w-full justify-start text-red-400 hover:text-red-300 hover:bg-red-500/10"
