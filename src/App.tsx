@@ -26,12 +26,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route 
                 path="/termos" 
-                element={
-                  <div>
-                    {console.log('🔍 [App] Renderizando rota /termos')}
-                    <Termos />
-                  </div>
-                } 
+                element={<Termos />}
               />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="*" element={<NotFound />} />
