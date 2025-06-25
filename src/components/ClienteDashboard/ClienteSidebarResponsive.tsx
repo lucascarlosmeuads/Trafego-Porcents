@@ -130,22 +130,25 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
                   </SidebarMenuItem>
                 ))}
 
-                {/* Item destacado para Termos de Uso */}
+                {/* Item destacado para Termos de Uso - mesmo nível do botão do menu */}
                 <SidebarMenuItem>
                   <SidebarMenuButton 
                     onClick={handleAbrirTermos}
-                    className="w-full justify-start text-gray-300 hover:text-white hover:bg-orange-500/10 border border-orange-500/30 rounded-lg animate-pulse"
+                    className="sidebar-termos-button w-full justify-start text-white hover:text-white p-3 my-2"
                   >
                     <div className="flex items-center gap-2 w-full">
                       <div className="flex items-center gap-1">
-                        <AlertTriangle className="h-4 w-4 text-orange-400" />
-                        <FileText className="h-4 w-4 text-orange-400" />
+                        <AlertTriangle className="h-4 w-4 text-red-200" />
+                        <FileText className="h-4 w-4 text-red-200" />
                       </div>
                       <div className="flex-1 flex items-center justify-between">
-                        <span className="text-orange-200">Termos de Uso</span>
-                        <Badge variant="outline" className="text-xs bg-orange-500/20 text-orange-300 border-orange-500/40 px-2 py-0.5">
-                          Importante
-                        </Badge>
+                        <span className="font-medium text-white">⚠️ Termos de Uso</span>
+                        <div className="relative">
+                          <Badge variant="outline" className="text-xs bg-red-600/30 text-red-100 border-red-500/50 px-2 py-0.5 font-bold">
+                            IMPORTANTE
+                          </Badge>
+                          <div className="termos-indicator"></div>
+                        </div>
                       </div>
                     </div>
                   </SidebarMenuButton>
