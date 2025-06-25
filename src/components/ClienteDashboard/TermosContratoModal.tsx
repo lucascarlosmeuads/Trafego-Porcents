@@ -1,11 +1,9 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
 import { CheckCircle2, FileText, AlertTriangle, X } from 'lucide-react'
-import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -28,7 +26,7 @@ export function TermosContratoModal({
 }: TermosContratoModalProps) {
   const { user } = useAuth()
   const isMobile = useIsMobile()
-  const { termosAceitos } = useTermosAceitos()
+  const { termosAceitos, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [aceitando, setAceitando] = useState(false)
   const [rejeitando, setRejeitando] = useState(false)
 
@@ -51,23 +49,11 @@ export function TermosContratoModal({
     setAceitando(true)
     
     try {
-      console.log('🔄 [TermosContratoModal] Salvando aceitação dos termos para:', user.email)
+      console.log('🔄 [TermosContratoModal] Aceitando termos para:', user.email)
       
-      const { error } = await supabase
-        .from('cliente_profiles')
-        .upsert({
-          email_cliente: user.email,
-          termos_aceitos: true,
-          termos_rejeitados: false,
-          data_aceite_termos: new Date().toISOString(),
-          data_rejeicao_termos: null
-        })
-
-      if (error) {
-        console.error('❌ [TermosContratoModal] Erro ao salvar aceitação:', error)
-        throw error
-      }
-
+      // Usar o hook para marcar termos aceitos
+      await marcarTermosAceitos()
+      
       console.log('✅ [TermosContratoModal] Termos aceitos com sucesso!')
       
       toast({
@@ -76,9 +62,11 @@ export function TermosContratoModal({
         duration: 3000
       })
 
+      // Chamar callback do parent
       onTermosAceitos()
+      
     } catch (error: any) {
-      console.error('❌ [TermosContratoModal] Erro crítico:', error)
+      console.error('❌ [TermosContratoModal] Erro ao aceitar termos:', error)
       toast({
         title: "Erro",
         description: "Erro ao aceitar os termos. Tente novamente.",
@@ -98,23 +86,11 @@ export function TermosContratoModal({
     setRejeitando(true)
     
     try {
-      console.log('🔄 [TermosContratoModal] Salvando rejeição dos termos para:', user.email)
+      console.log('🔄 [TermosContratoModal] Rejeitando termos para:', user.email)
       
-      const { error } = await supabase
-        .from('cliente_profiles')
-        .upsert({
-          email_cliente: user.email,
-          termos_aceitos: false,
-          termos_rejeitados: true,
-          data_aceite_termos: null,
-          data_rejeicao_termos: new Date().toISOString()
-        })
-
-      if (error) {
-        console.error('❌ [TermosContratoModal] Erro ao salvar rejeição:', error)
-        throw error
-      }
-
+      // Usar o hook para marcar termos rejeitados
+      await marcarTermosRejeitados()
+      
       console.log('❌ [TermosContratoModal] Termos rejeitados com sucesso!')
       
       toast({
@@ -124,9 +100,11 @@ export function TermosContratoModal({
         duration: 3000
       })
 
+      // Chamar callback do parent
       onTermosRejeitados()
+      
     } catch (error: any) {
-      console.error('❌ [TermosContratoModal] Erro crítico:', error)
+      console.error('❌ [TermosContratoModal] Erro ao rejeitar termos:', error)
       toast({
         title: "Erro",
         description: "Erro ao processar sua decisão. Tente novamente.",
@@ -360,7 +338,7 @@ export function TermosContratoModal({
 
         {/* Botões de Ação - Fixos na parte inferior */}
         <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-700 bg-gray-900">
-          {/* Se já aceitou os termos ou modo somente leitura, mostrar apenas botão de fechar */}
+          {/* Se já aceitou os termos ou modo somente aceitar, mostrar apenas botão de aceitar/fechar */}
           {termosAceitos || showOnlyAccept ? (
             <div className="flex flex-col sm:flex-row gap-3">
               {showOnlyAccept && !termosAceitos && (

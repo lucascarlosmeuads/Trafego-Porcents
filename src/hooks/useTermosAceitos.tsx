@@ -31,11 +31,11 @@ export function useTermosAceitos() {
         setTermosRejeitados(false)
         setClienteAntigo(false)
       } else if (data) {
-        // Verificar se o cliente foi cadastrado antes de 24/06/2025
-        const dataLimite = new Date('2025-06-24T00:00:00Z')
+        // Verificar se o cliente foi cadastrado antes ou até 24/06/2025 (inclusive)
+        const dataLimite = new Date('2025-06-24T23:59:59Z')
         const dataClienteCriacao = new Date(data.created_at)
         
-        if (dataClienteCriacao < dataLimite) {
+        if (dataClienteCriacao <= dataLimite) {
           console.log('✅ [useTermosAceitos] Cliente antigo - não precisa aceitar termos')
           setClienteAntigo(true)
           setTermosAceitos(true) // Para compatibilidade, mas não será usado na UI
@@ -55,10 +55,10 @@ export function useTermosAceitos() {
           .maybeSingle()
 
         if (!clienteError && clienteData) {
-          const dataLimite = new Date('2025-06-24T00:00:00Z')
+          const dataLimite = new Date('2025-06-24T23:59:59Z')
           const dataClienteCriacao = new Date(clienteData.created_at)
           
-          if (dataClienteCriacao < dataLimite) {
+          if (dataClienteCriacao <= dataLimite) {
             console.log('✅ [useTermosAceitos] Cliente antigo encontrado em todos_clientes')
             setClienteAntigo(true)
             setTermosAceitos(true) // Para compatibilidade
@@ -87,50 +87,78 @@ export function useTermosAceitos() {
   }
 
   const marcarTermosAceitos = async () => {
-    console.log('✅ [useTermosAceitos] Marcando termos como aceitos')
-    setTermosAceitos(true)
-    setTermosRejeitados(false) // Garantir que não esteja rejeitado
+    if (!user?.email) {
+      console.error('❌ [useTermosAceitos] Usuário não encontrado')
+      return
+    }
+
+    console.log('✅ [useTermosAceitos] Marcando termos como aceitos para:', user.email)
     
-    // Atualizar no banco se necessário
-    if (user?.email) {
-      try {
-        await supabase
-          .from('cliente_profiles')
-          .upsert({
-            email_cliente: user.email,
-            termos_aceitos: true,
-            termos_rejeitados: false,
-            data_aceite_termos: new Date().toISOString(),
-            data_rejeicao_termos: null
-          })
-        console.log('💾 [useTermosAceitos] Termos aceitos salvos no banco')
-      } catch (error) {
+    try {
+      const { error } = await supabase
+        .from('cliente_profiles')
+        .upsert({
+          email_cliente: user.email,
+          termos_aceitos: true,
+          termos_rejeitados: false,
+          data_aceite_termos: new Date().toISOString(),
+          data_rejeicao_termos: null
+        }, {
+          onConflict: 'email_cliente'
+        })
+
+      if (error) {
         console.error('❌ [useTermosAceitos] Erro ao salvar aceitação:', error)
+        throw error
       }
+
+      console.log('💾 [useTermosAceitos] Termos aceitos salvos no banco')
+      
+      // Atualizar estados locais
+      setTermosAceitos(true)
+      setTermosRejeitados(false)
+      
+    } catch (error) {
+      console.error('❌ [useTermosAceitos] Erro ao marcar termos aceitos:', error)
+      throw error
     }
   }
 
   const marcarTermosRejeitados = async () => {
-    console.log('❌ [useTermosAceitos] Marcando termos como rejeitados')
-    setTermosRejeitados(true)
-    setTermosAceitos(false) // Garantir que não esteja aceito
+    if (!user?.email) {
+      console.error('❌ [useTermosAceitos] Usuário não encontrado')
+      return
+    }
+
+    console.log('❌ [useTermosAceitos] Marcando termos como rejeitados para:', user.email)
     
-    // Atualizar no banco se necessário
-    if (user?.email) {
-      try {
-        await supabase
-          .from('cliente_profiles')
-          .upsert({
-            email_cliente: user.email,
-            termos_aceitos: false,
-            termos_rejeitados: true,
-            data_rejeicao_termos: new Date().toISOString(),
-            data_aceite_termos: null
-          })
-        console.log('💾 [useTermosAceitos] Termos rejeitados salvos no banco')
-      } catch (error) {
+    try {
+      const { error } = await supabase
+        .from('cliente_profiles')
+        .upsert({
+          email_cliente: user.email,
+          termos_aceitos: false,
+          termos_rejeitados: true,
+          data_rejeicao_termos: new Date().toISOString(),
+          data_aceite_termos: null
+        }, {
+          onConflict: 'email_cliente'
+        })
+
+      if (error) {
         console.error('❌ [useTermosAceitos] Erro ao salvar rejeição:', error)
+        throw error
       }
+
+      console.log('💾 [useTermosAceitos] Termos rejeitados salvos no banco')
+      
+      // Atualizar estados locais
+      setTermosRejeitados(true)
+      setTermosAceitos(false)
+      
+    } catch (error) {
+      console.error('❌ [useTermosAceitos] Erro ao marcar termos rejeitados:', error)
+      throw error
     }
   }
 

@@ -14,7 +14,7 @@ interface TermosProtectionProps {
 
 export function TermosProtection({ children, onTermosRejeitados }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
-  const { marcarTermosAceitos, marcarTermosRejeitados, refetch } = useTermosAceitos()
+  const { refetch } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
 
   console.log('🔍 [TermosProtection] Estado atual:', {
@@ -37,9 +37,8 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
 
   const handleTermosAceitos = async () => {
     console.log('✅ [TermosProtection] Usuário aceitou os termos')
-    await marcarTermosAceitos()
     setTermosModalOpen(false)
-    // Forçar re-verificação do estado
+    // Forçar re-verificação do estado após um pequeno delay
     setTimeout(() => {
       refetch()
     }, 100)
@@ -47,9 +46,8 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
 
   const handleTermosRejeitados = async () => {
     console.log('❌ [TermosProtection] Usuário rejeitou os termos')
-    await marcarTermosRejeitados()
     setTermosModalOpen(false)
-    // Forçar re-verificação do estado
+    // Forçar re-verificação do estado após um pequeno delay
     setTimeout(() => {
       refetch()
     }, 100)
