@@ -8,7 +8,7 @@ import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 
 export function MensagemInstitucional() {
   const [termosModalOpen, setTermosModalOpen] = useState(false)
-  const { termosAceitos, marcarTermosAceitos } = useTermosAceitos()
+  const { termosAceitos, clienteAntigo, loading, marcarTermosAceitos } = useTermosAceitos()
 
   const handleAbrirTermos = () => {
     setTermosModalOpen(true)
@@ -18,6 +18,48 @@ export function MensagemInstitucional() {
     marcarTermosAceitos()
   }
 
+  // Se ainda está carregando, não renderizar nada
+  if (loading) {
+    return null
+  }
+
+  // Se é cliente antigo, não mostrar nada sobre termos
+  if (clienteAntigo) {
+    return (
+      <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-500/30 shadow-lg">
+        <CardContent className="p-6">
+          <div className="space-y-4">
+            {/* Título Principal */}
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg">
+                <Shield className="h-6 w-6 text-white" />
+              </div>
+              <h2 className="text-xl font-bold text-white">
+                Bem-vindo à Tráfego Porcents!
+              </h2>
+            </div>
+
+            {/* Mensagem simples para clientes antigos */}
+            <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="h-5 w-5 text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-gray-300 leading-relaxed">
+                  <p className="text-white">
+                    Você tem acesso completo a todas as funcionalidades da nossa plataforma!
+                  </p>
+                  <p className="text-sm mt-2">
+                    Aproveite todas as ferramentas disponíveis para acompanhar e gerenciar suas campanhas.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Para clientes novos, mostrar lógica de termos
   return (
     <>
       <Card className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border-blue-500/30 shadow-lg">

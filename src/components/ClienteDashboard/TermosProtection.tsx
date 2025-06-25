@@ -1,4 +1,5 @@
 
+import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
 import { useState } from 'react'
@@ -11,7 +12,8 @@ interface TermosProtectionProps {
 }
 
 export function TermosProtection({ children }: TermosProtectionProps) {
-  const { termosAceitos, loading, marcarTermosAceitos } = useTermosAceitos()
+  const { podeUsarSistema, loading } = usePermissaoSistema()
+  const { marcarTermosAceitos } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
 
   // Mostrar loading enquanto verifica os termos
@@ -26,8 +28,8 @@ export function TermosProtection({ children }: TermosProtectionProps) {
     )
   }
 
-  // Se os termos não foram aceitos, mostrar tela de bloqueio
-  if (!termosAceitos) {
+  // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
+  if (!podeUsarSistema) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
         <Card className="max-w-md w-full bg-gray-900 border-gray-700">
@@ -72,6 +74,6 @@ export function TermosProtection({ children }: TermosProtectionProps) {
     )
   }
 
-  // Se os termos foram aceitos, mostrar o conteúdo normal
+  // Se pode usar o sistema (cliente antigo ou novo que aceitou), mostrar o conteúdo normal
   return <>{children}</>
 }
