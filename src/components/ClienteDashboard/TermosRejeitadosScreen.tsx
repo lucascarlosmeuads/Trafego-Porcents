@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { AlertTriangle, MessageCircle, Mail, RotateCcw, LogOut } from 'lucide-react'
+import { AlertTriangle, MessageCircle, Mail, RotateCcw, LogOut, Phone } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
