@@ -49,15 +49,18 @@ export type Database = {
           descricao_resumida: string | null
           diferencial: string | null
           email_cliente: string
+          forma_pagamento: string | null
           id: string
           investimento_diario: number | null
           liberar_edicao: boolean | null
+          localizacao_divulgacao: string | null
           nome_marca: string | null
           nome_produto: string
           observacoes_finais: string | null
           publico_alvo: string | null
           quer_site: boolean | null
           resumo_conversa_vendedor: string | null
+          tipo_prestacao_servico: string | null
           updated_at: string
         }
         Insert: {
@@ -66,15 +69,18 @@ export type Database = {
           descricao_resumida?: string | null
           diferencial?: string | null
           email_cliente: string
+          forma_pagamento?: string | null
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
+          localizacao_divulgacao?: string | null
           nome_marca?: string | null
           nome_produto: string
           observacoes_finais?: string | null
           publico_alvo?: string | null
           quer_site?: boolean | null
           resumo_conversa_vendedor?: string | null
+          tipo_prestacao_servico?: string | null
           updated_at?: string
         }
         Update: {
@@ -83,15 +89,18 @@ export type Database = {
           descricao_resumida?: string | null
           diferencial?: string | null
           email_cliente?: string
+          forma_pagamento?: string | null
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
+          localizacao_divulgacao?: string | null
           nome_marca?: string | null
           nome_produto?: string
           observacoes_finais?: string | null
           publico_alvo?: string | null
           quer_site?: boolean | null
           resumo_conversa_vendedor?: string | null
+          tipo_prestacao_servico?: string | null
           updated_at?: string
         }
         Relationships: []
