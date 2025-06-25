@@ -1,11 +1,12 @@
 
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
+import { useTermosAceitos } from '@/hooks/useTermosAceitos'
+import { TermosContratoModal } from './TermosContratoModal'
 import { TermosRejeitadosScreen } from './TermosRejeitadosScreen'
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { FileText, Shield, Clock } from 'lucide-react'
+import { FileText, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useNavigate } from 'react-router-dom'
-import { useState, useEffect } from 'react'
 
 interface TermosProtectionProps {
   children: React.ReactNode
@@ -13,63 +14,16 @@ interface TermosProtectionProps {
 
 export function TermosProtection({ children }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
-  const navigate = useNavigate()
-  const [showForceButton, setShowForceButton] = useState(false)
-
-  // Mostrar botão de força após 10 segundos de loading
-  useEffect(() => {
-    if (loading) {
-      const timer = setTimeout(() => {
-        setShowForceButton(true)
-      }, 10000)
-
-      return () => clearTimeout(timer)
-    } else {
-      setShowForceButton(false)
-    }
-  }, [loading])
-
-  const handleForceAccess = () => {
-    console.log('🚨 [TermosProtection] Acesso forçado pelo usuário')
-    // Limpar cache e recarregar
-    localStorage.removeItem('supabase-auth-token')
-    Object.keys(localStorage).forEach((key) => {
-      if (key.includes('supabase') || key.includes('auth')) {
-        localStorage.removeItem(key)
-      }
-    })
-    window.location.reload()
-  }
+  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
+  const [termosModalOpen, setTermosModalOpen] = useState(false)
 
   // Mostrar loading enquanto verifica os termos
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="text-center space-y-4">
+        <div className="text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-2"></div>
-          <p className="text-gray-400">Verificando acesso ao sistema...</p>
-          <div className="text-sm text-gray-500">
-            Aguarde alguns segundos...
-          </div>
-          
-          {showForceButton && (
-            <div className="mt-6 p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-              <div className="flex items-center gap-2 mb-3">
-                <Clock className="h-4 w-4 text-yellow-400" />
-                <p className="text-yellow-300 text-sm">
-                  O carregamento está demorando mais que o esperado
-                </p>
-              </div>
-              <Button
-                onClick={handleForceAccess}
-                variant="outline"
-                size="sm"
-                className="border-yellow-500 text-yellow-400 hover:bg-yellow-500/10"
-              >
-                Forçar Carregamento
-              </Button>
-            </div>
-          )}
+          <p className="text-gray-400">Verificando acesso...</p>
         </div>
       </div>
     )
@@ -80,7 +34,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
     return <TermosRejeitadosScreen />
   }
 
-  // Se não pode usar o sistema (cliente novo que não aceitou termos), redirecionar para página de termos
+  // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
   if (!podeUsarSistema) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
@@ -108,7 +62,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
             </div>
 
             <Button
-              onClick={() => navigate('/termos-de-uso')}
+              onClick={() => setTermosModalOpen(true)}
               className="w-full bg-teal-600 hover:bg-teal-700 text-white"
             >
               <FileText className="h-4 w-4 mr-2" />
@@ -116,6 +70,13 @@ export function TermosProtection({ children }: TermosProtectionProps) {
             </Button>
           </CardContent>
         </Card>
+
+        <TermosContratoModal
+          open={termosModalOpen}
+          onOpenChange={setTermosModalOpen}
+          onTermosAceitos={marcarTermosAceitos}
+          onTermosRejeitados={marcarTermosRejeitados}
+        />
       </div>
     )
   }
