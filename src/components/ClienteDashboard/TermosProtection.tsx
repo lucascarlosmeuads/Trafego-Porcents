@@ -2,20 +2,34 @@
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
-import { TermosRejeitadosScreen } from './TermosRejeitadosScreen'
-import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TermosProtectionProps {
   children: React.ReactNode
+  onTermosRejeitados?: () => void
 }
 
-export function TermosProtection({ children }: TermosProtectionProps) {
+export function TermosProtection({ children, onTermosRejeitados }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
   const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const navigate = useNavigate()
+
+  // Se rejeitou os termos, redirecionar automaticamente
+  useEffect(() => {
+    if (termosRejeitados && !loading) {
+      console.log('🚫 [TermosProtection] Termos rejeitados detectados, redirecionando...')
+      if (onTermosRejeitados) {
+        onTermosRejeitados()
+      } else {
+        navigate('/termos-rejeitados')
+      }
+    }
+  }, [termosRejeitados, loading, onTermosRejeitados, navigate])
 
   // Mostrar loading enquanto verifica os termos
   if (loading) {
@@ -29,9 +43,18 @@ export function TermosProtection({ children }: TermosProtectionProps) {
     )
   }
 
-  // Se rejeitou os termos, mostrar tela de encerramento
+  // Se rejeitou os termos, não mostrar nada (será redirecionado)
   if (termosRejeitados) {
-    return <TermosRejeitadosScreen />
+    return null
+  }
+
+  const handleTermosRejeitados = () => {
+    marcarTermosRejeitados()
+    if (onTermosRejeitados) {
+      onTermosRejeitados()
+    } else {
+      navigate('/termos-rejeitados')
+    }
   }
 
   // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
@@ -75,7 +98,7 @@ export function TermosProtection({ children }: TermosProtectionProps) {
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
           onTermosAceitos={marcarTermosAceitos}
-          onTermosRejeitados={marcarTermosRejeitados}
+          onTermosRejeitados={handleTermosRejeitados}
         />
       </div>
     )

@@ -1,5 +1,6 @@
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useProfileData } from '@/hooks/useProfileData'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
@@ -35,6 +36,7 @@ interface ClienteSidebarResponsiveProps {
 
 export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSidebarResponsiveProps) {
   const { signOut, user } = useAuth()
+  const navigate = useNavigate()
   const { profileData, updateProfileData } = useProfileData('cliente')
   const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
@@ -70,6 +72,7 @@ export function ClienteSidebarResponsive({ activeTab, onTabChange }: ClienteSide
 
   const handleTermosRejeitados = () => {
     marcarTermosRejeitados()
+    navigate('/termos-rejeitados')
   }
 
   return (

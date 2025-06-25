@@ -1,5 +1,6 @@
 
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { FileText, Shield, AlertTriangle, Eye } from 'lucide-react'
@@ -8,6 +9,7 @@ import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 
 export function MensagemInstitucional() {
   const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const navigate = useNavigate()
   const { termosAceitos, termosRejeitados, clienteAntigo, loading, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
 
   const handleAbrirTermos = () => {
@@ -20,6 +22,7 @@ export function MensagemInstitucional() {
 
   const handleTermosRejeitados = () => {
     marcarTermosRejeitados()
+    navigate('/termos-rejeitados')
   }
 
   // Se ainda está carregando, não renderizar nada

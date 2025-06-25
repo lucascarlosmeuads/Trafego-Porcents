@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -17,6 +18,7 @@ import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
 export function ClienteDashboard() {
   const { user, loading: authLoading } = useAuth()
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('overview')
   const { cliente, briefing, vendas, arquivos, loading: dataLoading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
@@ -58,6 +60,11 @@ export function ClienteDashboard() {
 
   const handleBackToOverview = () => {
     setActiveTab('overview')
+  }
+
+  const handleTermosRejeitados = () => {
+    console.log('🚫 [ClienteDashboard] Redirecionando para termos rejeitados')
+    navigate('/termos-rejeitados')
   }
 
   const renderContent = () => {
@@ -202,7 +209,7 @@ export function ClienteDashboard() {
 
   // Retornar conteúdo protegido pelos termos
   return (
-    <TermosProtection>
+    <TermosProtection onTermosRejeitados={handleTermosRejeitados}>
       {dashboardContent()}
     </TermosProtection>
   )
