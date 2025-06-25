@@ -392,6 +392,7 @@ export type Database = {
           ad_account_id: string
           api_id: string
           app_secret: string
+          cliente_id: number | null
           created_at: string
           email_usuario: string
           id: string
@@ -402,6 +403,7 @@ export type Database = {
           ad_account_id: string
           api_id: string
           app_secret: string
+          cliente_id?: number | null
           created_at?: string
           email_usuario: string
           id?: string
@@ -412,6 +414,7 @@ export type Database = {
           ad_account_id?: string
           api_id?: string
           app_secret?: string
+          cliente_id?: number | null
           created_at?: string
           email_usuario?: string
           id?: string
