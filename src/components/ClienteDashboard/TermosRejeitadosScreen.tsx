@@ -2,7 +2,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, MessageCircle, Mail, Phone } from 'lucide-react'
-import { ProfileDropdown } from '../ProfileDropdown'
+import { ProfileDropdown } from '@/components/ProfileDropdown'
 
 export function TermosRejeitadosScreen() {
   const handleWhatsAppContact = () => {
