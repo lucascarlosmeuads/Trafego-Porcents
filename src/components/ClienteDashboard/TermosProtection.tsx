@@ -2,7 +2,6 @@
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
-import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Shield, RotateCcw } from 'lucide-react'
@@ -18,8 +17,6 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
   const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
   const [showReconsiderOption, setShowReconsiderOption] = useState(false)
-  const [isNavigating, setIsNavigating] = useState(false)
-  const navigate = useNavigate()
 
   console.log('🔍 [TermosProtection] Estado atual:', {
     podeUsarSistema,
@@ -57,17 +54,6 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     setShowReconsiderOption(false)
   }
 
-  const handleProsseguirRejeicao = async () => {
-    console.log('🚫 [TermosProtection] Usuário confirmou rejeição - navegando')
-    setIsNavigating(true)
-    
-    if (onTermosRejeitados) {
-      onTermosRejeitados()
-    } else {
-      navigate('/termos-rejeitados')
-    }
-  }
-
   // Se rejeitou os termos OU está mostrando opção de reconsiderar
   if (termosRejeitados || showReconsiderOption) {
     return (
@@ -88,7 +74,7 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
                 Você rejeitou os termos, mas ainda pode reconsiderar sua decisão e continuar usando nossa plataforma.
               </p>
               <p className="text-orange-300 text-xs">
-                💡 Escolha uma das opções abaixo
+                💡 Clique no botão abaixo para reconsiderar
               </p>
             </div>
 
@@ -96,26 +82,9 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
               <Button
                 onClick={handleReconsiderar}
                 className="w-full bg-teal-600 hover:bg-teal-700 text-white"
-                disabled={isNavigating}
               >
                 <FileText className="h-4 w-4 mr-2" />
                 Reconsiderar e Ler Termos
-              </Button>
-
-              <Button
-                onClick={handleProsseguirRejeicao}
-                variant="outline"
-                className="w-full border-red-500 text-red-400 hover:bg-red-500/10"
-                disabled={isNavigating}
-              >
-                {isNavigating ? (
-                  <>
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-400 mr-2"></div>
-                    Redirecionando...
-                  </>
-                ) : (
-                  'Prosseguir com Rejeição'
-                )}
               </Button>
             </div>
           </CardContent>
