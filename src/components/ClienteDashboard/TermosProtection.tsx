@@ -4,7 +4,7 @@ import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { FileText, Shield, RotateCcw } from 'lucide-react'
+import { FileText, Heart, RotateCcw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface TermosProtectionProps {
@@ -114,41 +114,54 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     )
   }
 
-  // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de bloqueio
+  // Se não pode usar o sistema (cliente novo que não aceitou termos), mostrar tela de boas-vindas
   if (!podeUsarSistema) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
-        <Card className="max-w-md w-full bg-gray-900 border-gray-700">
-          <CardContent className="p-6 text-center space-y-4">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+        <Card className="max-w-md w-full bg-white shadow-2xl border-0">
+          <CardContent className="p-8 text-center space-y-6">
+            {/* Ícone de boas-vindas */}
             <div className="flex justify-center">
-              <div className="p-3 bg-red-900/20 rounded-full">
-                <Shield className="h-8 w-8 text-red-400" />
+              <div className="p-4 bg-gradient-to-br from-teal-100 to-blue-100 rounded-full shadow-lg">
+                <Heart className="h-10 w-10 text-teal-600" />
               </div>
             </div>
             
+            {/* Título acolhedor */}
             <div>
-              <h2 className="text-xl font-bold text-white mb-2">
-                Acesso Restrito
+              <h2 className="text-2xl font-bold text-gray-800 mb-3">
+                🎉 Bem-vindo(a)!
               </h2>
-              <p className="text-gray-400 text-sm leading-relaxed">
-                Para acessar seu painel, é necessário ler e aceitar nossos termos e condições de uso.
+              <p className="text-gray-600 text-base leading-relaxed mb-4">
+                Estamos quase prontos! Para garantir a melhor experiência e sua proteção, 
+                precisamos que você conheça nossos termos de uso.
+              </p>
+              <p className="text-sm text-gray-500">
+                ✨ É rápido, simples e importante para seus direitos
               </p>
             </div>
 
-            <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3">
-              <p className="text-yellow-300 text-xs">
-                ⚠️ Este é um requisito obrigatório para usar nossa plataforma
+            {/* Card informativo positivo */}
+            <div className="bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-lg p-4">
+              <p className="text-teal-700 text-sm font-medium">
+                💖 Sua segurança e privacidade são nossa prioridade
               </p>
             </div>
 
+            {/* Botão convidativo */}
             <Button
               onClick={() => setTermosModalOpen(true)}
-              className="w-full bg-teal-600 hover:bg-teal-700 text-white"
+              className="w-full bg-gradient-to-r from-teal-600 to-blue-600 hover:from-teal-700 hover:to-blue-700 text-white text-lg py-3 rounded-xl shadow-lg transform transition-all duration-200 hover:scale-105"
               disabled={processandoAceite}
             >
-              <FileText className="h-4 w-4 mr-2" />
-              {processandoAceite ? 'Processando...' : 'Ler e Aceitar Termos'}
+              <Heart className="h-5 w-5 mr-2" />
+              {processandoAceite ? 'Processando...' : 'Vamos Começar! 🚀'}
             </Button>
+            
+            {/* Texto adicional reconfortante */}
+            <p className="text-xs text-gray-400 mt-4">
+              Após aceitar, você terá acesso completo ao seu painel
+            </p>
           </CardContent>
         </Card>
 
