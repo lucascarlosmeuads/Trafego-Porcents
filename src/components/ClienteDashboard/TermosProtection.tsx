@@ -14,7 +14,7 @@ interface TermosProtectionProps {
 
 export function TermosProtection({ children, onTermosRejeitados }: TermosProtectionProps) {
   const { podeUsarSistema, termosRejeitados, loading } = usePermissaoSistema()
-  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
+  const { marcarTermosAceitos, marcarTermosRejeitados, refetch } = useTermosAceitos()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
   const [showReconsiderOption, setShowReconsiderOption] = useState(false)
 
@@ -48,10 +48,26 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
     setTermosModalOpen(true)
   }
 
-  const handleTermosAceitos = () => {
+  const handleTermosAceitos = async () => {
     console.log('✅ [TermosProtection] Usuário aceitou os termos')
-    marcarTermosAceitos()
+    await marcarTermosAceitos()
     setShowReconsiderOption(false)
+    setTermosModalOpen(false)
+    // Forçar re-verificação do estado
+    setTimeout(() => {
+      refetch()
+    }, 100)
+  }
+
+  const handleTermosRejeitadosNoModal = async () => {
+    console.log('❌ [TermosProtection] Usuário rejeitou os termos no modal')
+    await marcarTermosRejeitados()
+    setTermosModalOpen(false)
+    setShowReconsiderOption(true)
+    // Forçar re-verificação do estado
+    setTimeout(() => {
+      refetch()
+    }, 100)
   }
 
   // Se rejeitou os termos OU está mostrando opção de reconsiderar
@@ -94,7 +110,7 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
           onTermosAceitos={handleTermosAceitos}
-          onTermosRejeitados={handleTermosRejeitados}
+          onTermosRejeitados={handleTermosRejeitadosNoModal}
         />
       </div>
     )
@@ -140,8 +156,8 @@ export function TermosProtection({ children, onTermosRejeitados }: TermosProtect
         <TermosContratoModal
           open={termosModalOpen}
           onOpenChange={setTermosModalOpen}
-          onTermosAceitos={marcarTermosAceitos}
-          onTermosRejeitados={handleTermosRejeitados}
+          onTermosAceitos={handleTermosAceitos}
+          onTermosRejeitados={handleTermosRejeitadosNoModal}
         />
       </div>
     )
