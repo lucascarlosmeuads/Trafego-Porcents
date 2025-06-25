@@ -1,7 +1,9 @@
+
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { AlertTriangle, MessageCircle, Mail, Phone, LogOut } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
+import { EmergencyLogout } from '@/components/EmergencyLogout'
 
 export function TermosRejeitadosScreen() {
   const { signOut } = useAuth()
@@ -31,6 +33,9 @@ Atenciosamente.`)
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-950 p-4">
+      {/* Botão de logout de emergência apenas nesta tela */}
+      <EmergencyLogout />
+      
       <Card className="max-w-2xl w-full bg-gray-900 border-gray-700">
         <CardContent className="p-8 text-center space-y-6">
           <div className="flex justify-center">
