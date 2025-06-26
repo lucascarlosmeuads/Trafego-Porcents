@@ -191,7 +191,7 @@ export function TermosContratoModal({
                 <h3 className="text-lg font-semibold text-white mb-3">2. TAXA DE ATIVAÇÃO E ESTRUTURA INICIAL</h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
-                    Você já realizou o pagamento da taxa única de <strong className="text-green-400">R$ 350,00</strong>, 
+                    Você já realizou o pagamento da taxa única de <strong className="text-green-400">R$ 500,00</strong>, 
                     que não será cobrada novamente. Essa taxa cobre a criação completa da estrutura inicial, incluindo:
                   </p>
                   <ul className="space-y-2 ml-4">
