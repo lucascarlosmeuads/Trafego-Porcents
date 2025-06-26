@@ -10,6 +10,7 @@ import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { VendasManager } from './ClienteDashboard/VendasManager'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { SuporteRapido } from './ClienteDashboard/SuporteRapido'
+import { ClienteCampanhas } from './ClienteDashboard/ClienteCampanhas'
 import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
@@ -135,6 +136,8 @@ export function ClienteDashboard() {
             onBack={handleBackToOverview}
           />
         )
+      case 'campanhas':
+        return <ClienteCampanhas onBack={handleBackToOverview} />
       case 'tutoriais':
         return <TutorialVideos onBack={handleBackToOverview} />
       case 'suporte':

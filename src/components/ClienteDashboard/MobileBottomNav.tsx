@@ -1,12 +1,6 @@
 
-import { 
-  Home, 
-  FileText, 
-  Upload, 
-  TrendingUp, 
-  Headphones,
-  FileVideo
-} from 'lucide-react'
+import { Home, FileText, Upload, DollarSign, BarChart, HelpCircle } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 interface MobileBottomNavProps {
   activeTab: string
@@ -15,40 +9,56 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
   const navItems = [
-    { id: 'overview', label: 'Início', icon: Home },
-    { id: 'briefing', label: 'Form', icon: FileText },
-    { id: 'arquivos', label: 'Files', icon: Upload },
-    { id: 'tutoriais', label: 'Tutoriais', icon: FileVideo },
-    { id: 'vendas', label: 'Vendas', icon: TrendingUp },
-    { id: 'suporte', label: 'Suporte', icon: Headphones },
+    {
+      id: 'overview',
+      label: 'Início',
+      icon: Home
+    },
+    {
+      id: 'briefing',
+      label: 'Briefing',
+      icon: FileText
+    },
+    {
+      id: 'arquivos',
+      label: 'Materiais',
+      icon: Upload
+    },
+    {
+      id: 'campanhas',
+      label: 'Campanhas',
+      icon: BarChart
+    },
+    {
+      id: 'vendas',
+      label: 'Vendas',
+      icon: DollarSign
+    },
+    {
+      id: 'suporte',
+      label: 'Suporte',
+      icon: HelpCircle
+    }
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50 md:hidden shadow-lg">
-      <div className="grid grid-cols-6 h-16">
-        {navItems.map((item) => {
-          const isActive = activeTab === item.id
-          
-          return (
-            <button
-              key={item.id}
-              onClick={() => onTabChange(item.id)}
-              className={`flex flex-col items-center justify-center space-y-1 transition-all duration-200 ${
-                isActive 
-                  ? 'text-blue-600 bg-gradient-to-t from-blue-50 to-transparent scale-105' 
-                  : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
-              }`}
-            >
-              <item.icon className={`h-4 w-4 ${isActive ? 'scale-110' : ''} transition-transform`} />
-              <span className={`text-xs font-medium ${isActive ? 'font-semibold' : ''}`}>
-                {item.label}
-              </span>
-              {isActive && (
-                <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-6 h-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-t-full" />
-              )}
-            </button>
-          )
-        })}
+    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-1 z-50">
+      <div className="flex justify-around items-center max-w-md mx-auto">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => onTabChange(item.id)}
+            className={cn(
+              "flex flex-col items-center justify-center p-2 rounded-lg transition-colors min-w-0 flex-1",
+              activeTab === item.id
+                ? "text-blue-600 bg-blue-50"
+                : "text-gray-600 hover:text-blue-600 hover:bg-gray-50"
+            )}
+          >
+            <item.icon className="w-5 h-5 mb-1" />
+            <span className="text-xs font-medium truncate">{item.label}</span>
+          </button>
+        ))}
       </div>
     </div>
   )
