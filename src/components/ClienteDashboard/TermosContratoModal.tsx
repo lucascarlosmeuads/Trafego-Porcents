@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -155,9 +154,9 @@ export function TermosContratoModal({
           </p>
         </DialogHeader>
         
-        {/* Conteúdo com scroll - altura ajustada para desktop */}
-        <div className={`flex-1 min-h-0 overflow-hidden ${isMobile ? '' : 'h-[500px]'}`}>
-          <ScrollArea className={`${isMobile ? 'h-full px-1' : 'h-full'}`}>
+        {/* Conteúdo com scroll - altura específica para cada plataforma */}
+        <div className="flex-1 min-h-0 overflow-hidden">
+          <ScrollArea className={`${isMobile ? 'h-full px-1' : 'h-[500px]'} w-full overflow-auto`}>
             <div className="p-4 space-y-6 text-gray-300">
               
               {/* Aviso Importante */}
