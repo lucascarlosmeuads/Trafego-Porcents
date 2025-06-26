@@ -21,15 +21,10 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
   const { cliente, loading } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
 
-  // Layout Mobile Premium
+  // Se for mobile, usar componente simplificado
   if (isMobile) {
     return (
-      <div className="pb-20 bg-gradient-to-br from-slate-900 via-gray-900 to-black min-h-screen">
-        {/* Header Premium Mobile */}
-        <div className="mobile-safe">
-          <ClienteWelcomeHeader className="rounded-b-3xl" />
-        </div>
-        
+      <div className="pb-20"> {/* Espaço para navegação inferior */}
         {/* Mensagem Institucional - Mobile */}
         <div className="p-4">
           <MensagemInstitucional />
@@ -47,55 +42,39 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         <MobileOnboardingSteps onTabChange={onTabChange} />
         
         {/* Prompt de Site no final */}
-        <div className="p-4">
-          <SiteRequestPrompt />
-        </div>
+        <SiteRequestPrompt />
       </div>
     )
   }
 
-  // Layout Desktop Premium
+  // Versão desktop
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black">
-      {/* Header Premium Desktop */}
+    <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
+      {/* Header de Boas-vindas */}
       <ClienteWelcomeHeader />
 
-      {/* Conteúdo Principal */}
-      <div className="p-6 space-y-8 max-w-7xl mx-auto">
-        {/* Mensagem Institucional - Desktop */}
-        <MensagemInstitucional />
+      {/* Mensagem Institucional - Desktop */}
+      <MensagemInstitucional />
 
-        {/* Aviso de Mudança */}
-        <AvisoMudancaAtendimento />
+      {/* Aviso de Mudança */}
+      <AvisoMudancaAtendimento />
 
-        {/* Card da Campanha */}
-        {!loading && cliente?.link_campanha && (
-          <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
-        )}
+      {/* Card da Campanha */}
+      {!loading && cliente?.link_campanha && (
+        <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
+      )}
 
-        {/* Seção de Perfil Premium */}
-        <ClienteProfileSection />
+      {/* Seção de Perfil */}
+      <ClienteProfileSection />
 
-        {/* Componente de Onboarding Premium */}
-        <OnboardingSteps onTabChange={onTabChange} />
+      {/* Componente de Onboarding Interativo */}
+      <OnboardingSteps onTabChange={onTabChange} />
 
-        {/* Grid de Ações Rápidas Premium */}
-        <ClienteQuickActions onTabChange={onTabChange} />
+      {/* Grid de Ações Rápidas */}
+      <ClienteQuickActions onTabChange={onTabChange} />
 
-        {/* Prompt de Site Premium */}
-        <div className="max-w-4xl mx-auto">
-          <SiteRequestPrompt />
-        </div>
-      </div>
-      
-      {/* Footer Premium */}
-      <div className="mt-12 border-t border-slate-800/50 bg-slate-900/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-6 py-8 text-center">
-          <p className="text-gray-400 text-sm">
-            © 2024 Tráfego Porcents - Sua parceira em alta performance digital
-          </p>
-        </div>
-      </div>
+      {/* Prompt de Site no final */}
+      <SiteRequestPrompt />
     </div>
   )
 }

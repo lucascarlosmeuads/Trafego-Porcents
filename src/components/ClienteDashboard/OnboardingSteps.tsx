@@ -1,215 +1,290 @@
 
-import { useState } from 'react'
+import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
 import { useClienteData } from '@/hooks/useClienteData'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { 
-  CheckCircle2, 
-  Circle, 
   FileText, 
   Upload, 
-  TrendingUp, 
   BarChart3,
   Headphones,
-  PlayCircle,
-  Sparkles
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  ChevronRight,
+  Calendar
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
   onTabChange: (tab: string) => void
 }
 
+interface Step {
+  id: number
+  title: string
+  description: string
+  icon: any
+  action: () => void
+  actionText: string
+  canCheck: boolean
+  autoCheck?: boolean
+}
+
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
-  const { briefing, arquivos, vendas, loading } = useClienteData(user?.email || '')
+  const { briefing, arquivos } = useClienteData(user?.email || '')
+  const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
+  const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
+
+  const steps: Step[] = React.useMemo(() => [
+    {
+      id: 1,
+      title: 'Preencher Formulário',
+      description: 'Complete todas as informações sobre seu produto/serviço',
+      icon: FileText,
+      action: () => onTabChange('briefing'),
+      actionText: 'Preencher Formulário',
+      canCheck: true,
+      autoCheck: !!(briefing && briefing.nome_produto && briefing.descricao_resumida)
+    },
+    {
+      id: 2,
+      title: 'Enviar Materiais Criativos',
+      description: 'Envie logos, fotos e materiais para criação dos criativos',
+      icon: Upload,
+      action: () => onTabChange('arquivos'),
+      actionText: 'Enviar Materiais',
+      canCheck: true,
+      autoCheck: !!(arquivos && arquivos.length > 0)
+    },
+    {
+      id: 3,
+      title: 'Contatar Suporte se Necessário',
+      description: 'Notifique seu gestor que você concluiu as etapas 1 e 2. Isso abre um chamado no painel do gestor para que ele possa te dar a atenção devida',
+      icon: Headphones,
+      action: () => onTabChange('suporte'),
+      actionText: 'Acessar Suporte',
+      canCheck: true
+    },
+    {
+      id: 4,
+      title: 'Analisar Métricas',
+      description: 'Acompanhe o desempenho da sua campanha',
+      icon: BarChart3,
+      action: () => onTabChange('vendas'),
+      actionText: 'Ver Métricas',
+      canCheck: true
+    }
+  ], [briefing, arquivos, onTabChange])
+
+  const checkAutoSteps = React.useCallback(() => {
+    steps.forEach(step => {
+      if (step.autoCheck && !progresso.has(step.id) && !userManuallyUnchecked.has(step.id)) {
+        togglePasso(step.id)
+      }
+    })
+  }, [steps, progresso, togglePasso, userManuallyUnchecked])
+
+  React.useEffect(() => {
+    if (!loading && (briefing || arquivos)) {
+      checkAutoSteps()
+    }
+  }, [loading, briefing, arquivos, checkAutoSteps])
+
+  const totalSteps = steps.length
+  const completedSteps = progresso.size
+  const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
+
+  const handleStepToggle = React.useCallback(async (stepId: number) => {
+    const step = steps.find(s => s.id === stepId)
+    if (step?.autoCheck && progresso.has(stepId)) {
+      setUserManuallyUnchecked(prev => new Set(prev).add(stepId))
+    }
+    await togglePasso(stepId)
+  }, [togglePasso, steps, progresso])
+
+  const handleBackToOverview = () => {
+    onTabChange('overview')
+  }
 
   if (loading) {
     return (
-      <div className="animate-pulse">
-        <div className="h-64 bg-slate-800 rounded-2xl"></div>
-      </div>
+      <Card className="bg-white border-gray-200 shadow-lg">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+            <span className="ml-2 text-gray-600">Carregando progresso...</span>
+          </div>
+        </CardContent>
+      </Card>
     )
   }
 
-  const steps = [
-    {
-      id: 'briefing',
-      title: 'Preencher Briefing',
-      description: 'Conte-nos sobre seu negócio e objetivos',
-      icon: FileText,
-      completed: briefing && Object.keys(briefing).length > 0,
-      action: () => onTabChange('briefing'),
-      color: 'from-blue-500 to-blue-600'
-    },
-    {
-      id: 'arquivos',
-      title: 'Enviar Materiais',
-      description: 'Upload de logos, fotos e criativos',
-      icon: Upload,
-      completed: arquivos && arquivos.length > 0,
-      action: () => onTabChange('arquivos'),
-      color: 'from-green-500 to-green-600'
-    },
-    {
-      id: 'campanhas',
-      title: 'Configurar Campanhas',
-      description: 'Definir estratégias e públicos-alvo',
-      icon: BarChart3,
-      completed: false, // TODO: implementar lógica
-      action: () => onTabChange('campanhas'),
-      color: 'from-purple-500 to-purple-600'
-    },
-    {
-      id: 'vendas',
-      title: 'Registrar Vendas',
-      description: 'Acompanhar resultados e conversões',
-      icon: TrendingUp,
-      completed: vendas && vendas.length > 0,
-      action: () => onTabChange('vendas'),
-      color: 'from-orange-500 to-orange-600'
-    }
-  ]
-
-  const completedSteps = steps.filter(step => step.completed).length
-  const progressPercentage = (completedSteps / steps.length) * 100
-
   return (
-    <Card className="bg-gradient-to-br from-slate-800/95 to-gray-900/95 border-slate-700/50 backdrop-blur-sm shadow-2xl rounded-2xl overflow-hidden">
-      <CardHeader className="bg-gradient-to-r from-indigo-900/30 to-purple-900/30 border-b border-slate-700/50">
+    <Card className="bg-white border-gray-200 shadow-lg">
+      <CardHeader>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-indigo-600/20 rounded-lg border border-indigo-500/30">
-              <Sparkles className="h-6 w-6 text-indigo-400" />
-            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleBackToOverview}
+              className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
+            >
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Voltar
+            </Button>
             <div>
-              <CardTitle className="text-white text-xl">Guia de Configuração</CardTitle>
-              <CardDescription className="text-gray-300">
-                Complete os passos para otimizar sua conta
+              <CardTitle className="text-gray-800 flex items-center gap-2">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                </div>
+                Guia de Configuração
+              </CardTitle>
+              <CardDescription className="text-gray-600">
+                Siga estes 4 passos para configurar sua campanha corretamente
               </CardDescription>
             </div>
           </div>
           <Badge 
-            variant="outline" 
-            className="bg-indigo-600/20 text-indigo-300 border-indigo-500/30 px-3 py-1"
+            variant={completedSteps === totalSteps ? "default" : "secondary"}
+            className={`text-sm ${
+              completedSteps === totalSteps 
+                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
+                : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+            }`}
           >
-            {completedSteps}/{steps.length} Concluído
+            {completedSteps}/{totalSteps} concluídos
           </Badge>
         </div>
-      </CardHeader>
-
-      <CardContent className="p-6 space-y-6">
-        {/* Barra de progresso premium */}
-        <div className="space-y-3">
+        
+        <div className="space-y-2">
           <div className="flex justify-between text-sm">
-            <span className="text-gray-300 font-medium">Progresso Geral</span>
-            <span className="text-white font-semibold">{Math.round(progressPercentage)}%</span>
+            <span className="text-gray-800 font-medium">Progresso geral</span>
+            <span className="text-blue-600 font-bold">{progressPercentage}%</span>
           </div>
-          <div className="relative">
+          {typeof progressPercentage === 'number' && !isNaN(progressPercentage) && (
             <Progress 
               value={progressPercentage} 
-              className="h-3 bg-slate-700/50 rounded-full overflow-hidden"
+              className="h-3"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-full pointer-events-none"></div>
-          </div>
+          )}
         </div>
-
-        {/* Lista de etapas premium */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {steps.map((step, index) => (
-            <div key={step.id} className="relative group">
-              {/* Separador visual entre etapas */}
-              {index > 0 && index % 2 === 0 && (
-                <div className="absolute -top-2 left-0 right-0 h-px bg-gradient-to-r from-transparent via-slate-600 to-transparent"></div>
-              )}
-              
-              <div 
-                className={`
-                  p-4 rounded-xl border transition-all duration-300 cursor-pointer
-                  ${step.completed 
-                    ? 'bg-gradient-to-br from-green-900/30 to-emerald-900/30 border-green-700/50 shadow-lg' 
-                    : 'bg-slate-800/50 border-slate-700/50 hover:border-slate-600/50 hover:bg-slate-800/80'
-                  }
-                  hover:scale-105 hover:shadow-xl
-                `}
-                onClick={step.action}
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <div className="space-y-3">
+          {steps.map((step, index) => {
+            const isCompleted = progresso.has(step.id)
+            
+            return (
+              <div
+                key={step.id}
+                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all duration-200 ${
+                  isCompleted 
+                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
+                    : 'bg-white border-gray-200 hover:border-gray-300'
+                } shadow-sm hover:shadow-md`}
               >
-                <div className="flex items-start gap-4">
-                  {/* Ícone da etapa */}
-                  <div className={`
-                    p-2 rounded-lg transition-all duration-300
-                    ${step.completed 
-                      ? 'bg-green-600/20 border border-green-500/30' 
-                      : 'bg-slate-700/50 border border-slate-600/30 group-hover:bg-slate-600/50'
-                    }
-                  `}>
-                    {step.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-400" />
-                    ) : (
-                      <step.icon className="h-5 w-5 text-gray-400 group-hover:text-gray-300" />
-                    )}
+                <div className="flex items-center space-x-3 flex-1">
+                  <Checkbox
+                    checked={isCompleted}
+                    onCheckedChange={() => handleStepToggle(step.id)}
+                    className="w-6 h-6 border-2"
+                  />
+                  
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
+                    isCompleted 
+                      ? 'bg-green-600 border-green-600 text-white' 
+                      : 'bg-gray-100 border-gray-300 text-gray-600'
+                  }`}>
+                    {index + 1}
                   </div>
                   
-                  {/* Conteúdo da etapa */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className={`
-                        font-semibold transition-colors
-                        ${step.completed ? 'text-green-300' : 'text-white group-hover:text-blue-300'}
-                      `}>
+                  <div className={`p-2 rounded-lg ${
+                    isCompleted 
+                      ? 'bg-green-600' 
+                      : 'bg-gray-400'
+                  }`}>
+                    <step.icon className="h-4 w-4 text-white" />
+                  </div>
+                  
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-800'}`}>
                         {step.title}
-                      </h3>
-                      {step.completed && (
-                        <Badge 
-                          variant="outline" 
-                          className="bg-green-600/20 text-green-300 border-green-500/30 text-xs px-2 py-0.5"
-                        >
-                          ✓ Feito
-                        </Badge>
+                      </h4>
+                      {isCompleted && (
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
                       )}
                     </div>
-                    <p className="text-sm text-gray-400 leading-relaxed mb-3">
-                      {step.description}
-                    </p>
-                    <Button
-                      size="sm"
-                      variant={step.completed ? "outline" : "default"}
-                      className={`
-                        text-xs transition-all duration-300
-                        ${step.completed 
-                          ? 'border-green-600/50 text-green-300 hover:bg-green-600/20' 
-                          : `bg-gradient-to-r ${step.color} hover:scale-105 shadow-md`
-                        }
-                      `}
-                    >
-                      {step.completed ? 'Ver Etapa' : 'Começar'}
-                    </Button>
+                    <p className="text-gray-600 text-sm">{step.description}</p>
                   </div>
                 </div>
+                
+                <div className="flex items-center">
+                  <Button
+                    onClick={step.action}
+                    className={`${
+                      isCompleted 
+                        ? 'bg-green-600 hover:bg-green-700 text-white' 
+                        : 'bg-gray-600 hover:bg-gray-700 text-white'
+                    } shadow-md`}
+                    size="sm"
+                  >
+                    {step.actionText}
+                    <ChevronRight className="h-4 w-4 ml-1" />
+                  </Button>
+                </div>
               </div>
-            </div>
-          ))}
+            )
+          })}
         </div>
 
-        {/* Botões de ações secundárias */}
-        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-700/50">
+        {/* Mensagem de Tranquilização */}
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Calendar className="h-5 w-5 text-blue-600" />
+            <span className="text-blue-800 font-medium">Fique tranquilo!</span>
+          </div>
+          <p className="text-gray-700 text-sm leading-relaxed">
+            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão de todos os passos. 
+            É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
+          </p>
+        </div>
+
+        {completedSteps === totalSteps && (
+          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 text-center">
+            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-3">
+              <CheckCircle2 className="h-6 w-6 text-white" />
+            </div>
+            <h3 className="text-green-700 font-semibold text-lg mb-2">Parabéns! 🎉</h3>
+            <p className="text-gray-700 text-sm mb-4">
+              Você completou todos os passos! Agora suas campanhas estão prontas para decolar!
+            </p>
+            <Button
+              onClick={() => onTabChange('vendas')}
+              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
+              size="sm"
+            >
+              Ver Métricas da Campanha
+            </Button>
+          </div>
+        )}
+
+        <div className="pt-4 border-t border-gray-200">
           <Button
             variant="outline"
-            onClick={() => onTabChange('suporte')}
-            className="flex-1 border-slate-600 bg-slate-800/50 text-gray-300 hover:text-white hover:bg-slate-700/80 transition-all duration-300"
+            onClick={handleBackToOverview}
+            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
           >
-            <Headphones className="h-4 w-4 mr-2" />
-            Acessar Suporte
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => onTabChange('tutoriais')}
-            className="flex-1 border-slate-600 bg-slate-800/50 text-gray-300 hover:text-white hover:bg-slate-700/80 transition-all duration-300"
-          >
-            <PlayCircle className="h-4 w-4 mr-2" />
-            Ver Tutoriais
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Voltar ao Painel Principal
           </Button>
         </div>
       </CardContent>
