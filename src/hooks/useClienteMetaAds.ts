@@ -45,6 +45,8 @@ export function useClienteMetaAds(clienteId: string) {
   const [lastErrorType, setLastErrorType] = useState<string>('')
   const [connectionSteps, setConnectionSteps] = useState<any>(null)
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' })
+  const [autoLoadingData, setAutoLoadingData] = useState(false)
+  const [lastDataUpdate, setLastDataUpdate] = useState<Date | null>(null)
 
   // Carregar configuração do cliente específico
   useEffect(() => {
@@ -93,12 +95,19 @@ export function useClienteMetaAds(clienteId: string) {
         }
 
         if (configData) {
-          setConfig({
+          const newConfig = {
             appId: configData.api_id || '',
             appSecret: configData.app_secret || '',
             accessToken: configData.access_token || '',
             adAccountId: configData.ad_account_id || ''
-          })
+          }
+          setConfig(newConfig)
+          
+          // Auto-carregar dados se configuração está completa
+          if (newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId) {
+            console.log('🚀 [useClienteMetaAds] Config completa, carregando dados automaticamente...')
+            await autoLoadData()
+          }
         } else {
           console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
         }
@@ -111,6 +120,32 @@ export function useClienteMetaAds(clienteId: string) {
 
     loadConfig()
   }, [clienteId])
+
+  // Função para carregar dados automaticamente
+  const autoLoadData = async () => {
+    setAutoLoadingData(true)
+    
+    try {
+      // Definir período padrão (últimos 7 dias)
+      const endDate = new Date().toISOString().split('T')[0]
+      const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+      
+      setDateRange({ startDate, endDate })
+      
+      // Carregar campanhas e insights em paralelo
+      await Promise.all([
+        loadCampaigns(startDate, endDate),
+        loadInsights(startDate, endDate)
+      ])
+      
+      setLastDataUpdate(new Date())
+      console.log('✅ [useClienteMetaAds] Dados carregados automaticamente')
+    } catch (error) {
+      console.error('❌ [useClienteMetaAds] Erro no carregamento automático:', error)
+    } finally {
+      setAutoLoadingData(false)
+    }
+  }
 
   const saveConfig = async (newConfig: ClienteMetaAdsConfig) => {
     if (!clienteId) return { success: false, error: 'Cliente ID necessário' }
@@ -189,10 +224,8 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const fetchCampaigns = async (startDate?: string, endDate?: string) => {
+  const loadCampaigns = async (startDate?: string, endDate?: string) => {
     console.log('📊 [useClienteMetaAds] Buscando campanhas do cliente:', clienteId)
-    setLastError('')
-    setLastErrorType('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -206,35 +239,25 @@ export function useClienteMetaAds(clienteId: string) {
 
       if (error) {
         console.error('❌ [useClienteMetaAds] Erro ao buscar campanhas:', error)
-        const errorMsg = 'Erro ao buscar campanhas'
-        setLastError(errorMsg)
-        setLastErrorType('SERVER_ERROR')
-        return { success: false, message: errorMsg }
+        throw new Error('Erro ao buscar campanhas')
       }
 
       if (data.success) {
         setCampaigns(data.campaigns)
         console.log('✅ [useClienteMetaAds] Campanhas carregadas:', data.campaigns.length)
       } else {
-        setLastError(data.message)
-        setLastErrorType('API_ERROR')
-        console.error('❌ [useClienteMetaAds] Erro nas campanhas:', data.message)
+        throw new Error(data.message)
       }
 
       return data
     } catch (error) {
       console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
-      const errorMsg = 'Erro inesperado ao buscar campanhas'
-      setLastError(errorMsg)
-      setLastErrorType('NETWORK_ERROR')
-      return { success: false, message: errorMsg }
+      throw error
     }
   }
 
-  const fetchInsights = async (startDate?: string, endDate?: string) => {
+  const loadInsights = async (startDate?: string, endDate?: string) => {
     console.log('📈 [useClienteMetaAds] Buscando insights do cliente:', clienteId)
-    setLastError('')
-    setLastErrorType('')
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -248,24 +271,44 @@ export function useClienteMetaAds(clienteId: string) {
 
       if (error) {
         console.error('❌ [useClienteMetaAds] Erro ao buscar insights:', error)
-        const errorMsg = 'Erro ao buscar insights'
-        setLastError(errorMsg)
-        setLastErrorType('SERVER_ERROR')
-        return { success: false, message: errorMsg }
+        throw new Error('Erro ao buscar insights')
       }
 
       if (data.success) {
         setInsights(data.insights)
         console.log('✅ [useClienteMetaAds] Insights carregados:', data.insights.length)
       } else {
-        setLastError(data.message)
-        setLastErrorType('API_ERROR')
-        console.error('❌ [useClienteMetaAds] Erro nos insights:', data.message)
+        throw new Error(data.message)
       }
 
       return data
     } catch (error) {
       console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
+      throw error
+    }
+  }
+
+  const fetchCampaigns = async (startDate?: string, endDate?: string) => {
+    setLastError('')
+    setLastErrorType('')
+    
+    try {
+      return await loadCampaigns(startDate, endDate)
+    } catch (error) {
+      const errorMsg = 'Erro inesperado ao buscar campanhas'
+      setLastError(errorMsg)
+      setLastErrorType('NETWORK_ERROR')
+      return { success: false, message: errorMsg }
+    }
+  }
+
+  const fetchInsights = async (startDate?: string, endDate?: string) => {
+    setLastError('')
+    setLastErrorType('')
+    
+    try {
+      return await loadInsights(startDate, endDate)
+    } catch (error) {
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
       setLastErrorType('NETWORK_ERROR')
@@ -275,10 +318,20 @@ export function useClienteMetaAds(clienteId: string) {
 
   const fetchDataWithDateRange = async (startDate: string, endDate: string) => {
     setDateRange({ startDate, endDate })
-    await Promise.all([
-      fetchCampaigns(startDate, endDate),
-      fetchInsights(startDate, endDate)
-    ])
+    setLastError('')
+    setLastErrorType('')
+    
+    try {
+      await Promise.all([
+        loadCampaigns(startDate, endDate),
+        loadInsights(startDate, endDate)
+      ])
+      setLastDataUpdate(new Date())
+    } catch (error) {
+      console.error('❌ [useClienteMetaAds] Erro ao buscar dados:', error)
+      setLastError('Erro ao carregar dados')
+      setLastErrorType('NETWORK_ERROR')
+    }
   }
 
   const updateAdAccountId = async (newAdAccountId: string) => {
@@ -306,6 +359,8 @@ export function useClienteMetaAds(clienteId: string) {
     lastErrorType,
     connectionSteps,
     updateAdAccountId,
-    dateRange
+    dateRange,
+    autoLoadingData,
+    lastDataUpdate
   }
 }

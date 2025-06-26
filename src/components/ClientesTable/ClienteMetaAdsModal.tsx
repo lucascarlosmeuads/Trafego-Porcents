@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -23,7 +24,8 @@ import {
   DollarSign,
   Eye,
   MousePointer,
-  Info
+  Info,
+  Clock
 } from 'lucide-react'
 
 interface ClienteMetaAdsModalProps {
@@ -55,13 +57,14 @@ export function ClienteMetaAdsModal({
     lastErrorType,
     connectionSteps,
     updateAdAccountId,
-    dateRange
+    dateRange,
+    autoLoadingData,
+    lastDataUpdate
   } = useClienteMetaAds(clienteId)
 
   const [activeTab, setActiveTab] = useState('config')
   const [testing, setTesting] = useState(false)
   const [fetchingData, setFetchingData] = useState(false)
-  const [showAdvancedConfig, setShowAdvancedConfig] = useState(false)
 
   const handleSaveConfig = async () => {
     if (!config.appId || !config.appSecret || !config.accessToken || !config.adAccountId) {
@@ -77,8 +80,10 @@ export function ClienteMetaAdsModal({
     if (result.success) {
       toast({
         title: "✅ Configuração salva",
-        description: `Configuração do Meta Ads salva para ${nomeCliente}!`,
+        description: `Configuração do Meta Ads salva para ${nomeCliente}! Dados serão carregados automaticamente.`,
       })
+      // Trocar para aba de métricas após salvar
+      setActiveTab('metrics')
     } else {
       toast({
         title: "❌ Erro ao salvar",
@@ -105,12 +110,9 @@ export function ClienteMetaAdsModal({
     if (result.success) {
       toast({
         title: "✅ Conexão bem-sucedida",
-        description: "Configuração válida! Dados conectados.",
+        description: "Configuração válida! Dados serão carregados automaticamente.",
       })
       setActiveTab('metrics')
-      
-      // Carregar dados automaticamente após conexão bem-sucedida
-      handleFetchData()
     } else {
       toast({
         title: "❌ Erro na conexão",
@@ -120,7 +122,7 @@ export function ClienteMetaAdsModal({
     }
   }
 
-  const handleFetchData = async (startDate?: string, endDate?: string) => {
+  const handleManualRefresh = async (startDate?: string, endDate?: string) => {
     if (!isConfigured) {
       toast({
         title: "⚠️ Configuração necessária",
@@ -157,6 +159,24 @@ export function ClienteMetaAdsModal({
     }
   }
 
+  const formatLastUpdate = (date: Date | null) => {
+    if (!date) return 'Nunca'
+    
+    const now = new Date()
+    const diffMs = now.getTime() - date.getTime()
+    const diffMinutes = Math.floor(diffMs / (1000 * 60))
+    
+    if (diffMinutes < 1) return 'Agora'
+    if (diffMinutes === 1) return '1 minuto atrás'
+    if (diffMinutes < 60) return `${diffMinutes} minutos atrás`
+    
+    const diffHours = Math.floor(diffMinutes / 60)
+    if (diffHours === 1) return '1 hora atrás'
+    if (diffHours < 24) return `${diffHours} horas atrás`
+    
+    return date.toLocaleDateString('pt-BR')
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
@@ -164,8 +184,24 @@ export function ClienteMetaAdsModal({
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             Meta Ads - {nomeCliente}
+            {lastDataUpdate && (
+              <Badge variant="outline" className="ml-2 text-xs">
+                <Clock className="h-3 w-3 mr-1" />
+                Atualizado {formatLastUpdate(lastDataUpdate)}
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
+
+        {/* Indicador de carregamento automático */}
+        {(loading || autoLoadingData) && (
+          <Alert className="border-blue-200 bg-blue-50">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            <AlertDescription>
+              {loading ? 'Carregando configuração...' : 'Carregando dados automaticamente...'}
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4">
@@ -180,10 +216,20 @@ export function ClienteMetaAdsModal({
             <TabsTrigger value="metrics" className="flex items-center gap-2">
               <BarChart3 className="h-4 w-4" />
               Métricas
+              {insights.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {insights.length}
+                </Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="campaigns" className="flex items-center gap-2">
               <Target className="h-4 w-4" />
               Campanhas
+              {campaigns.length > 0 && (
+                <Badge variant="secondary" className="ml-1 text-xs">
+                  {campaigns.length}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
@@ -193,7 +239,7 @@ export function ClienteMetaAdsModal({
               <Info className="h-4 w-4" />
               <AlertDescription>
                 Esta configuração será específica para <strong>{nomeCliente}</strong>. 
-                Os dados configurados aqui aparecerão no painel do cliente.
+                Os dados serão carregados automaticamente após a configuração.
               </AlertDescription>
             </Alert>
 
@@ -274,7 +320,7 @@ export function ClienteMetaAdsModal({
                         Salvando...
                       </>
                     ) : (
-                      'Salvar Configuração'
+                      'Salvar e Carregar Dados'
                     )}
                   </Button>
                 </div>
@@ -326,23 +372,6 @@ export function ClienteMetaAdsModal({
                       </>
                     )}
                   </Button>
-                  
-                  <Button 
-                    onClick={() => handleFetchData()} 
-                    disabled={fetchingData || !isConfigured}
-                  >
-                    {fetchingData ? (
-                      <>
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        Carregando...
-                      </>
-                    ) : (
-                      <>
-                        <BarChart3 className="h-4 w-4 mr-2" />
-                        Buscar Dados
-                      </>
-                    )}
-                  </Button>
                 </div>
               </CardContent>
             </Card>
@@ -350,10 +379,36 @@ export function ClienteMetaAdsModal({
 
           {/* Aba de Métricas */}
           <TabsContent value="metrics" className="space-y-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-semibold">Métricas</h3>
+                {lastDataUpdate && (
+                  <Badge variant="outline" className="text-xs">
+                    Última atualização: {formatLastUpdate(lastDataUpdate)}
+                  </Badge>
+                )}
+              </div>
+              <Button
+                onClick={() => handleManualRefresh()}
+                disabled={fetchingData || !isConfigured}
+                variant="outline"
+                size="sm"
+              >
+                {fetchingData ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Atualizando...
+                  </>
+                ) : (
+                  'Atualizar Agora'
+                )}
+              </Button>
+            </div>
+
             <DateRangeFilter
-              onDateRangeChange={handleFetchData}
-              onRefresh={() => handleFetchData()}
-              loading={fetchingData}
+              onDateRangeChange={handleManualRefresh}
+              onRefresh={() => handleManualRefresh()}
+              loading={fetchingData || autoLoadingData}
             />
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -414,12 +469,23 @@ export function ClienteMetaAdsModal({
               ))}
             </div>
 
-            {insights.length === 0 && (
+            {!isConfigured && (
               <Card>
                 <CardContent className="p-8 text-center">
                   <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    Nenhuma métrica disponível. Clique em "Buscar Dados" na aba de teste.
+                    Configure as credenciais na aba "Configuração" para ver as métricas automaticamente.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
+
+            {isConfigured && insights.length === 0 && !autoLoadingData && (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <BarChart3 className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    {lastError ? 'Erro ao carregar métricas. Verifique a configuração.' : 'Carregando métricas...'}
                   </p>
                 </CardContent>
               </Card>
@@ -453,12 +519,21 @@ export function ClienteMetaAdsModal({
                   </Card>
                 ))}
               </div>
+            ) : !isConfigured ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">
+                    Configure as credenciais na aba "Configuração" para ver as campanhas automaticamente.
+                  </p>
+                </CardContent>
+              </Card>
             ) : (
               <Card>
                 <CardContent className="p-8 text-center">
                   <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
                   <p className="text-muted-foreground">
-                    Nenhuma campanha encontrada. Clique em "Buscar Dados" na aba de teste.
+                    {lastError ? 'Erro ao carregar campanhas. Verifique a configuração.' : 'Carregando campanhas...'}
                   </p>
                 </CardContent>
               </Card>
