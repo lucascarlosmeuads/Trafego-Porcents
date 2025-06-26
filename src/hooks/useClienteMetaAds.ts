@@ -46,29 +46,51 @@ export function useClienteMetaAds(clienteId: string) {
   // Carregar configuração do cliente específico
   useEffect(() => {
     const loadConfig = async () => {
-      if (!user?.email || !clienteId) return
+      if (!user?.email) return
 
-      console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', clienteId)
+      console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', { clienteId, email: user.email })
       
       try {
-        const { data, error } = await supabase
+        // Primeiro, tentar buscar por cliente_id (configuração do gestor)
+        let query = supabase
           .from('meta_ads_configs')
           .select('*')
-          .eq('cliente_id', clienteId)
-          .single()
 
-        if (error && error.code !== 'PGRST116') {
-          console.error('❌ [useClienteMetaAds] Erro ao carregar config:', error)
-        } else if (data) {
-          console.log('✅ [useClienteMetaAds] Config carregada:', data)
+        if (clienteId) {
+          query = query.eq('cliente_id', clienteId)
+        }
+
+        const { data: configByClienteId, error: errorByClienteId } = await query.single()
+
+        if (configByClienteId && !errorByClienteId) {
+          console.log('✅ [useClienteMetaAds] Config encontrada por cliente_id:', configByClienteId)
           setConfig({
-            appId: data.api_id || '',
-            appSecret: data.app_secret || '',
-            accessToken: data.access_token || '',
-            adAccountId: data.ad_account_id || ''
+            appId: configByClienteId.api_id || '',
+            appSecret: configByClienteId.app_secret || '',
+            accessToken: configByClienteId.access_token || '',
+            adAccountId: configByClienteId.ad_account_id || ''
           })
         } else {
-          console.log('📝 [useClienteMetaAds] Nenhuma config encontrada para cliente')
+          // Se não encontrou por cliente_id, tentar buscar por email_usuario (configuração do admin)
+          console.log('🔍 [useClienteMetaAds] Não encontrou por cliente_id, tentando por email...')
+          
+          const { data: configByEmail, error: errorByEmail } = await supabase
+            .from('meta_ads_configs')
+            .select('*')
+            .eq('email_usuario', user.email)
+            .single()
+
+          if (configByEmail && !errorByEmail) {
+            console.log('✅ [useClienteMetaAds] Config encontrada por email:', configByEmail)
+            setConfig({
+              appId: configByEmail.api_id || '',
+              appSecret: configByEmail.app_secret || '',
+              accessToken: configByEmail.access_token || '',
+              adAccountId: configByEmail.ad_account_id || ''
+            })
+          } else {
+            console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
+          }
         }
       } catch (error) {
         console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
@@ -81,7 +103,7 @@ export function useClienteMetaAds(clienteId: string) {
   }, [user?.email, clienteId])
 
   const saveConfig = async (newConfig: ClienteMetaAdsConfig) => {
-    if (!user?.email || !clienteId) return { success: false, error: 'Dados insuficientes' }
+    if (!user?.email) return { success: false, error: 'Dados insuficientes' }
 
     setSaving(true)
     console.log('💾 [useClienteMetaAds] Salvando config do cliente:', clienteId)
@@ -91,7 +113,7 @@ export function useClienteMetaAds(clienteId: string) {
         .from('meta_ads_configs')
         .upsert({
           email_usuario: user.email,
-          cliente_id: parseInt(clienteId),
+          cliente_id: clienteId ? parseInt(clienteId) : null,
           api_id: newConfig.appId,
           app_secret: newConfig.appSecret,
           access_token: newConfig.accessToken,
