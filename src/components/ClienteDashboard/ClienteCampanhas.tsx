@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -9,6 +8,7 @@ import { useClienteData } from '@/hooks/useClienteData'
 import { useAuth } from '@/hooks/useAuth'
 import { formatCurrency } from '@/lib/utils'
 import { useState, useEffect } from 'react'
+import { DateRangeFilter } from '@/components/DateRangeFilter'
 
 interface ClienteCampanhasProps {
   onBack: () => void
@@ -22,41 +22,50 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
   const { 
     insights, 
     campaigns, 
-    fetchInsights, 
-    fetchCampaigns,
+    fetchDataWithDateRange,
     loading: metaAdsLoading,
     isConfigured,
     lastError,
-    connectionSteps
+    connectionSteps,
+    dateRange
   } = useClienteMetaAds(cliente?.id?.toString() || '')
 
   // Carregar dados iniciais
   useEffect(() => {
-    const loadData = async () => {
+    const loadInitialData = async () => {
       if (cliente?.id && isConfigured) {
+        // Carregar dados dos últimos 7 dias por padrão
+        const endDate = new Date().toISOString().split('T')[0]
+        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        
         try {
-          await Promise.all([
-            fetchCampaigns(),
-            fetchInsights()
-          ])
+          await fetchDataWithDateRange(startDate, endDate)
         } catch (error) {
-          console.error('Erro ao carregar dados:', error)
+          console.error('Erro ao carregar dados iniciais:', error)
         }
       }
     }
 
-    loadData()
-  }, [cliente?.id, isConfigured, fetchCampaigns, fetchInsights])
+    loadInitialData()
+  }, [cliente?.id, isConfigured])
+
+  const handleDateRangeChange = async (startDate: string, endDate: string) => {
+    await fetchDataWithDateRange(startDate, endDate)
+  }
 
   const handleRefresh = async () => {
     if (!isConfigured) return
     
     setRefreshing(true)
     try {
-      await Promise.all([
-        fetchCampaigns(),
-        fetchInsights()
-      ])
+      if (dateRange.startDate && dateRange.endDate) {
+        await fetchDataWithDateRange(dateRange.startDate, dateRange.endDate)
+      } else {
+        // Usar últimos 7 dias como padrão
+        const endDate = new Date().toISOString().split('T')[0]
+        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        await fetchDataWithDateRange(startDate, endDate)
+      }
     } catch (error) {
       console.error('Erro ao atualizar dados:', error)
     } finally {
@@ -166,7 +175,33 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
         </Button>
       </div>
 
+      {/* Filtros de Data */}
+      <div className="mb-6">
+        <DateRangeFilter
+          onDateRangeChange={handleDateRangeChange}
+          onRefresh={handleRefresh}
+          loading={metaAdsLoading || refreshing}
+        />
+      </div>
+
+      {/* Período atual */}
+      {dateRange.startDate && dateRange.endDate && (
+        <div className="mb-6">
+          <Card className="bg-blue-900/20 border-blue-700">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-2 text-blue-300">
+                <Calendar className="h-4 w-4" />
+                <span className="text-sm font-medium">
+                  Período: {new Date(dateRange.startDate).toLocaleDateString('pt-BR')} - {new Date(dateRange.endDate).toLocaleDateString('pt-BR')}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Métricas principais */}
+      
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -254,6 +289,7 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
       </div>
 
       {/* Lista de campanhas */}
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

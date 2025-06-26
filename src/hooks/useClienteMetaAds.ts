@@ -25,6 +25,8 @@ interface InsightData {
   cpm: string
   cpc: string
   ctr: string
+  date_start?: string
+  date_stop?: string
 }
 
 export function useClienteMetaAds(clienteId: string) {
@@ -42,55 +44,63 @@ export function useClienteMetaAds(clienteId: string) {
   const [lastError, setLastError] = useState<string>('')
   const [lastErrorType, setLastErrorType] = useState<string>('')
   const [connectionSteps, setConnectionSteps] = useState<any>(null)
+  const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' })
 
   // Carregar configuração do cliente específico
   useEffect(() => {
     const loadConfig = async () => {
-      if (!user?.email) return
+      if (!clienteId) {
+        setLoading(false)
+        return
+      }
 
-      console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', { clienteId, email: user.email })
+      console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', { clienteId })
       
       try {
-        // Primeiro, tentar buscar por cliente_id (configuração do gestor)
-        let query = supabase
+        // Primeiro, tentar buscar configuração específica do cliente
+        let { data: configData, error } = await supabase
           .from('meta_ads_configs')
           .select('*')
+          .eq('cliente_id', parseInt(clienteId))
+          .single()
 
-        if (clienteId) {
-          query = query.eq('cliente_id', clienteId)
-        }
-
-        const { data: configByClienteId, error: errorByClienteId } = await query.single()
-
-        if (configByClienteId && !errorByClienteId) {
-          console.log('✅ [useClienteMetaAds] Config encontrada por cliente_id:', configByClienteId)
-          setConfig({
-            appId: configByClienteId.api_id || '',
-            appSecret: configByClienteId.app_secret || '',
-            accessToken: configByClienteId.access_token || '',
-            adAccountId: configByClienteId.ad_account_id || ''
-          })
-        } else {
-          // Se não encontrou por cliente_id, tentar buscar por email_usuario (configuração do admin)
-          console.log('🔍 [useClienteMetaAds] Não encontrou por cliente_id, tentando por email...')
+        // Se não encontrou configuração específica, buscar configuração global do gestor
+        if (error || !configData) {
+          console.log('🔍 [useClienteMetaAds] Buscando config global do gestor...')
           
-          const { data: configByEmail, error: errorByEmail } = await supabase
-            .from('meta_ads_configs')
-            .select('*')
-            .eq('email_usuario', user.email)
+          // Buscar o email do gestor do cliente
+          const { data: clienteData } = await supabase
+            .from('todos_clientes')
+            .select('email_gestor')
+            .eq('id', parseInt(clienteId))
             .single()
 
-          if (configByEmail && !errorByEmail) {
-            console.log('✅ [useClienteMetaAds] Config encontrada por email:', configByEmail)
-            setConfig({
-              appId: configByEmail.api_id || '',
-              appSecret: configByEmail.app_secret || '',
-              accessToken: configByEmail.access_token || '',
-              adAccountId: configByEmail.ad_account_id || ''
-            })
-          } else {
-            console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
+          if (clienteData?.email_gestor) {
+            const { data: globalConfig, error: globalError } = await supabase
+              .from('meta_ads_configs')
+              .select('*')
+              .eq('email_usuario', clienteData.email_gestor)
+              .is('cliente_id', null)
+              .single()
+
+            if (!globalError && globalConfig) {
+              configData = globalConfig
+              console.log('✅ [useClienteMetaAds] Config global encontrada:', globalConfig)
+            }
           }
+        } else {
+          console.log('✅ [useClienteMetaAds] Config específica encontrada:', configData)
+        }
+
+        if (configData) {
+          setConfig({
+            appId: configData.api_id || '',
+            appSecret: configData.app_secret || '',
+            accessToken: configData.access_token || '',
+            adAccountId: configData.ad_account_id || ''
+          })
+        } else {
+          console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
         }
       } catch (error) {
         console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
@@ -100,10 +110,10 @@ export function useClienteMetaAds(clienteId: string) {
     }
 
     loadConfig()
-  }, [user?.email, clienteId])
+  }, [clienteId])
 
   const saveConfig = async (newConfig: ClienteMetaAdsConfig) => {
-    if (!user?.email) return { success: false, error: 'Dados insuficientes' }
+    if (!clienteId) return { success: false, error: 'Cliente ID necessário' }
 
     setSaving(true)
     console.log('💾 [useClienteMetaAds] Salvando config do cliente:', clienteId)
@@ -112,8 +122,8 @@ export function useClienteMetaAds(clienteId: string) {
       const { error } = await supabase
         .from('meta_ads_configs')
         .upsert({
-          email_usuario: user.email,
-          cliente_id: clienteId ? parseInt(clienteId) : null,
+          cliente_id: parseInt(clienteId),
+          email_usuario: user?.email || '',
           api_id: newConfig.appId,
           app_secret: newConfig.appSecret,
           access_token: newConfig.accessToken,
@@ -165,26 +175,8 @@ export function useClienteMetaAds(clienteId: string) {
         setLastError(data.message)
         setLastErrorType(data.errorType || 'UNKNOWN_ERROR')
         console.error('❌ [useClienteMetaAds] Teste falhou:', data.message)
-        
-        if (data.suggestedAdAccountId && data.suggestedAdAccountId !== config.adAccountId) {
-          return { 
-            success: false, 
-            message: data.message,
-            suggestUpdate: true,
-            correctedAdAccountId: data.suggestedAdAccountId
-          }
-        }
       } else {
         setConnectionSteps(data.steps)
-        
-        if (data.correctedAdAccountId && data.correctedAdAccountId !== config.adAccountId) {
-          return { 
-            success: true, 
-            message: data.message,
-            suggestUpdate: true,
-            correctedAdAccountId: data.correctedAdAccountId
-          }
-        }
       }
       
       return data
@@ -197,7 +189,7 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = async (startDate?: string, endDate?: string) => {
     console.log('📊 [useClienteMetaAds] Buscando campanhas do cliente:', clienteId)
     setLastError('')
     setLastErrorType('')
@@ -206,7 +198,9 @@ export function useClienteMetaAds(clienteId: string) {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_campaigns',
-          config: config
+          config: config,
+          startDate,
+          endDate
         }
       })
 
@@ -237,7 +231,7 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const fetchInsights = async () => {
+  const fetchInsights = async (startDate?: string, endDate?: string) => {
     console.log('📈 [useClienteMetaAds] Buscando insights do cliente:', clienteId)
     setLastError('')
     setLastErrorType('')
@@ -246,7 +240,9 @@ export function useClienteMetaAds(clienteId: string) {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_insights',
-          config: config
+          config: config,
+          startDate,
+          endDate
         }
       })
 
@@ -277,6 +273,14 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
+  const fetchDataWithDateRange = async (startDate: string, endDate: string) => {
+    setDateRange({ startDate, endDate })
+    await Promise.all([
+      fetchCampaigns(startDate, endDate),
+      fetchInsights(startDate, endDate)
+    ])
+  }
+
   const updateAdAccountId = async (newAdAccountId: string) => {
     const newConfig = { ...config, adAccountId: newAdAccountId }
     setConfig(newConfig)
@@ -294,12 +298,14 @@ export function useClienteMetaAds(clienteId: string) {
     testConnection,
     fetchCampaigns,
     fetchInsights,
+    fetchDataWithDateRange,
     campaigns,
     insights,
     isConfigured,
     lastError,
     lastErrorType,
     connectionSteps,
-    updateAdAccountId
+    updateAdAccountId,
+    dateRange
   }
 }

@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -38,7 +37,7 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { action, config } = await req.json()
+    const { action, config, startDate, endDate } = await req.json()
 
     if (action === 'test_connection') {
       console.log('🔗 [meta-ads-api] === TESTE DE CONEXÃO DETALHADO ===')
@@ -46,7 +45,6 @@ serve(async (req) => {
       // STEP 1: Validações básicas de formato
       console.log('🔍 [meta-ads-api] PASSO 1: Validando formato das credenciais...')
       
-      // Validar App ID
       if (!config.appId || config.appId.length < 10) {
         console.error('❌ [meta-ads-api] App ID inválido')
         return new Response(
@@ -63,7 +61,6 @@ serve(async (req) => {
         )
       }
 
-      // Validar Access Token
       if (!config.accessToken || config.accessToken.length < 100) {
         console.error('❌ [meta-ads-api] Access Token muito curto')
         return new Response(
@@ -80,7 +77,6 @@ serve(async (req) => {
         )
       }
 
-      // Validar Ad Account ID
       if (!config.adAccountId) {
         console.error('❌ [meta-ads-api] Ad Account ID não fornecido')
         return new Response(
@@ -178,13 +174,7 @@ serve(async (req) => {
             switch (adAccountData.error.code) {
               case 100:
                 if (adAccountData.error.error_subcode === 33) {
-                  errorMessage = `Ad Account "${adAccountId}" não encontrado ou você não tem permissão. 
-                  
-POSSÍVEIS SOLUÇÕES:
-1. Verifique se o Ad Account ID está correto no Facebook Ads Manager
-2. Certifique-se de que seu token tem as permissões "ads_read" e "ads_management"
-3. Verifique se você tem acesso ao Ad Account no Facebook Ads Manager
-4. Se o Ad Account for de outra pessoa/empresa, solicite acesso como Admin ou Advertiser`
+                  errorMessage = `Ad Account "${adAccountId}" não encontrado ou você não tem permissão.`
                   errorType = 'AD_ACCOUNT_NOT_FOUND'
                 } else {
                   errorMessage = `Ad Account não acessível: ${adAccountData.error.message}`
@@ -192,7 +182,7 @@ POSSÍVEIS SOLUÇÕES:
                 }
                 break
               case 190:
-                errorMessage = 'Token não tem permissão para acessar este Ad Account. Verifique se o token tem as permissões "ads_read" e "ads_management".'
+                errorMessage = 'Token não tem permissão para acessar este Ad Account.'
                 errorType = 'INSUFFICIENT_PERMISSIONS'
                 break
               default:
@@ -218,33 +208,18 @@ POSSÍVEIS SOLUÇÕES:
         }
 
         console.log('✅ [meta-ads-api] PASSO 3: Ad Account acessível:', adAccountData)
-        
-        // STEP 4: Testar acesso a campanhas (opcional)
-        console.log('🔗 [meta-ads-api] PASSO 4: Testando acesso a campanhas...')
-        
-        const campaignsTestUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?limit=1&fields=id,name&access_token=${config.accessToken}`
-        
-        const campaignsTestResponse = await fetch(campaignsTestUrl)
-        const campaignsTestData = await campaignsTestResponse.json()
-        
-        if (!campaignsTestResponse.ok) {
-          console.warn('⚠️ [meta-ads-api] PASSO 4: Erro ao testar campanhas (mas Ad Account OK):', campaignsTestData)
-        } else {
-          console.log('✅ [meta-ads-api] PASSO 4: Acesso a campanhas OK')
-        }
 
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: '🎉 Conexão com Meta Ads realizada com sucesso! Todas as validações passaram.',
+            message: '🎉 Conexão com Meta Ads realizada com sucesso!',
             user: data,
             adAccount: adAccountData,
             correctedAdAccountId: adAccountId !== config.adAccountId ? adAccountId : null,
             steps: {
               validation: 'OK',
               basic_connection: 'OK',
-              ad_account_access: 'OK',
-              campaigns_access: campaignsTestResponse.ok ? 'OK' : 'WARNING'
+              ad_account_access: 'OK'
             }
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -255,7 +230,7 @@ POSSÍVEIS SOLUÇÕES:
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: `Erro inesperado: ${error.message}. Verifique sua conexão com a internet.`,
+            message: `Erro inesperado: ${error.message}`,
             errorType: 'NETWORK_ERROR',
             step: 'basic_connection'
           }),
@@ -270,16 +245,18 @@ POSSÍVEIS SOLUÇÕES:
     if (action === 'get_campaigns') {
       console.log('📊 [meta-ads-api] === BUSCANDO CAMPANHAS ===')
       
-      // Auto-corrigir Ad Account ID se necessário
       let adAccountId = config.adAccountId.trim()
       if (!adAccountId.startsWith('act_')) {
         adAccountId = `act_${adAccountId}`
-        console.log(`🔧 [meta-ads-api] Ad Account ID corrigido para: ${adAccountId}`)
       }
       
-      console.log('🔍 [meta-ads-api] Ad Account ID:', adAccountId)
+      let campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status,objective,created_time&access_token=${config.accessToken}`
       
-      const campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status,objective,created_time&access_token=${config.accessToken}`
+      // Adicionar filtros de data se fornecidos
+      if (startDate && endDate) {
+        campaignsUrl += `&time_range={"since":"${startDate}","until":"${endDate}"}`
+        console.log('📅 [meta-ads-api] Aplicando filtro de data:', { startDate, endDate })
+      }
       
       const response = await fetch(campaignsUrl)
       const data = await response.json()
@@ -291,14 +268,10 @@ POSSÍVEIS SOLUÇÕES:
         if (data.error) {
           switch (data.error.code) {
             case 100:
-              if (data.error.error_subcode === 33) {
-                errorMessage = `Ad Account "${adAccountId}" não encontrado. Execute o teste de conexão primeiro para verificar suas credenciais.`
-              } else {
-                errorMessage = 'Ad Account não encontrado ou sem permissão. Verifique o ID e permissões.'
-              }
+              errorMessage = 'Ad Account não encontrado ou sem permissão.'
               break
             case 190:
-              errorMessage = 'Token inválido ou sem permissão para campanhas. Verifique as permissões "ads_read".'
+              errorMessage = 'Token inválido ou sem permissão para campanhas.'
               break
             default:
               errorMessage = `Erro da API: ${data.error.message}`
@@ -331,16 +304,21 @@ POSSÍVEIS SOLUÇÕES:
     if (action === 'get_insights') {
       console.log('📈 [meta-ads-api] === BUSCANDO INSIGHTS ===')
       
-      // Auto-corrigir Ad Account ID se necessário
       let adAccountId = config.adAccountId.trim()
       if (!adAccountId.startsWith('act_')) {
         adAccountId = `act_${adAccountId}`
-        console.log(`🔧 [meta-ads-api] Ad Account ID corrigido para: ${adAccountId}`)
       }
       
-      console.log('🔍 [meta-ads-api] Ad Account ID:', adAccountId)
+      let insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}`
       
-      const insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&date_preset=last_7d&access_token=${config.accessToken}`
+      // Aplicar filtro de data
+      if (startDate && endDate) {
+        insightsUrl += `&time_range={"since":"${startDate}","until":"${endDate}"}`
+        console.log('📅 [meta-ads-api] Aplicando filtro de data:', { startDate, endDate })
+      } else {
+        // Padrão: últimos 7 dias
+        insightsUrl += `&date_preset=last_7d`
+      }
       
       const response = await fetch(insightsUrl)
       const data = await response.json()
@@ -352,14 +330,10 @@ POSSÍVEIS SOLUÇÕES:
         if (data.error) {
           switch (data.error.code) {
             case 100:
-              if (data.error.error_subcode === 33) {
-                errorMessage = `Ad Account "${adAccountId}" não encontrado. Execute o teste de conexão primeiro para verificar suas credenciais.`
-              } else {
-                errorMessage = 'Ad Account não encontrado ou sem permissão para insights.'
-              }
+              errorMessage = 'Ad Account não encontrado ou sem permissão para insights.'
               break
             case 190:
-              errorMessage = 'Token sem permissão para acessar insights. Verifique as permissões "ads_read".'
+              errorMessage = 'Token sem permissão para acessar insights.'
               break
             default:
               errorMessage = `Erro da API: ${data.error.message}`
