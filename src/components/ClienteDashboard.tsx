@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -161,7 +160,7 @@ export function ClienteDashboard() {
             {/* Sidebar para mobile */}
             <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
             
-            <SidebarInset className="flex-1 flex flex-col">
+            <SidebarInset className="flex-1 flex flex-col w-full">
               {/* Header mobile com botão hamburguer */}
               <MobileHeader 
                 activeTab={activeTab} 
@@ -169,7 +168,7 @@ export function ClienteDashboard() {
               />
               
               {/* Conteúdo principal */}
-              <main className="flex-1 pb-20">
+              <main className="flex-1 pb-20 w-full overflow-x-hidden">
                 {renderContent()}
               </main>
               
@@ -187,14 +186,16 @@ export function ClienteDashboard() {
         <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
           <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
           
-          <SidebarInset className="flex-1">
+          <SidebarInset className="flex-1 flex flex-col min-w-0">
             <MobileHeader 
               activeTab={activeTab} 
               onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
             />
             
-            <main className="flex-1 p-4 md:p-6">
-              {renderContent()}
+            <main className="flex-1 p-6 overflow-x-hidden">
+              <div className="max-w-7xl mx-auto">
+                {renderContent()}
+              </div>
             </main>
           </SidebarInset>
         </div>
