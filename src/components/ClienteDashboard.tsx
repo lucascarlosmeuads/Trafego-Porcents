@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/hooks/useAuth'
@@ -31,6 +32,7 @@ export function ClienteDashboard() {
     dataLoading,
     activeTab,
     isMobile,
+    screenWidth: window.innerWidth,
     userAgent: navigator.userAgent
   })
 
@@ -150,29 +152,25 @@ export function ClienteDashboard() {
     }
   }
 
-  // Envolver todo o conteúdo com a proteção de termos
+  // Layout completamente separado para desktop e mobile
   const dashboardContent = () => {
-    // Layout mobile também COM SidebarProvider para acessar o sidebar
     if (isMobile) {
+      // Layout Mobile COM SidebarProvider (hamburguer menu)
       return (
         <SidebarProvider defaultOpen={false}>
           <div className="min-h-screen flex w-full bg-gradient-to-br from-blue-50 via-white to-purple-50">
-            {/* Sidebar para mobile */}
             <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
             
             <SidebarInset className="flex-1 flex flex-col w-full">
-              {/* Header mobile com botão hamburguer */}
               <MobileHeader 
                 activeTab={activeTab} 
                 onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
               />
               
-              {/* Conteúdo principal */}
               <main className="flex-1 pb-20 w-full overflow-x-hidden">
                 {renderContent()}
               </main>
               
-              {/* Navegação inferior */}
               <MobileBottomNav activeTab={activeTab} onTabChange={setActiveTab} />
             </SidebarInset>
           </div>
@@ -180,26 +178,58 @@ export function ClienteDashboard() {
       )
     }
 
-    // Layout desktop COM SidebarProvider - SEM navegação inferior
+    // Layout Desktop SEM SidebarProvider - layout simples
     return (
-      <SidebarProvider defaultOpen={false}>
-        <div className="min-h-screen flex w-full" style={{backgroundColor: '#0a0a0a'}}>
-          <ClienteSidebarResponsive activeTab={activeTab} onTabChange={setActiveTab} />
-          
-          <SidebarInset className="flex-1 flex flex-col min-w-0">
-            <MobileHeader 
-              activeTab={activeTab} 
-              onBack={activeTab !== 'overview' ? handleBackToOverview : undefined}
-            />
-            
-            <main className="flex-1 p-6 overflow-x-hidden">
-              <div className="max-w-7xl mx-auto">
-                {renderContent()}
+      <div className="min-h-screen flex flex-col w-full bg-gradient-to-br from-slate-50 via-white to-blue-50">
+        {/* Header Desktop */}
+        <header className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 shadow-sm">
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center shadow-md">
+                <span className="text-white font-bold text-base">TP</span>
               </div>
-            </main>
-          </SidebarInset>
-        </div>
-      </SidebarProvider>
+              <div>
+                <h1 className="font-semibold text-gray-900 text-xl">Painel do Cliente</h1>
+                <p className="text-sm text-gray-600">{user?.email?.split('@')[0]}</p>
+              </div>
+            </div>
+            
+            {/* Navigation Desktop */}
+            <nav className="flex items-center gap-2">
+              {[
+                { id: 'overview', label: 'Início' },
+                { id: 'briefing', label: 'Briefing' },
+                { id: 'arquivos', label: 'Materiais' },
+                { id: 'campanhas', label: 'Campanhas' },
+                { id: 'vendas', label: 'Vendas' },
+                { id: 'tutoriais', label: 'Tutoriais' },
+                { id: 'suporte', label: 'Suporte' }
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => setActiveTab(item.id)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                    activeTab === item.id
+                      ? 'bg-blue-600 text-white shadow-md'
+                      : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </nav>
+            
+            <ProfileDropdown />
+          </div>
+        </header>
+        
+        {/* Conteúdo Principal Desktop */}
+        <main className="flex-1 p-6 overflow-x-hidden">
+          <div className="max-w-7xl mx-auto">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     )
   }
 
