@@ -42,6 +42,33 @@ export type Database = {
         }
         Relationships: []
       }
+      backup_comissoes_antigas: {
+        Row: {
+          comissao: string | null
+          comissao_paga: boolean | null
+          created_at: string | null
+          id: number | null
+          nome_cliente: string | null
+          valor_comissao: number | null
+        }
+        Insert: {
+          comissao?: string | null
+          comissao_paga?: boolean | null
+          created_at?: string | null
+          id?: number | null
+          nome_cliente?: string | null
+          valor_comissao?: number | null
+        }
+        Update: {
+          comissao?: string | null
+          comissao_paga?: boolean | null
+          created_at?: string | null
+          id?: number | null
+          nome_cliente?: string | null
+          valor_comissao?: number | null
+        }
+        Relationships: []
+      }
       briefings_cliente: {
         Row: {
           comissao_aceita: string | null
@@ -386,6 +413,47 @@ export type Database = {
         }
         Relationships: []
       }
+      historico_pagamentos_comissao: {
+        Row: {
+          cliente_id: number
+          created_at: string | null
+          data_pagamento: string
+          id: string
+          observacoes: string | null
+          pago_por: string
+          updated_at: string | null
+          valor_pago: number
+        }
+        Insert: {
+          cliente_id: number
+          created_at?: string | null
+          data_pagamento?: string
+          id?: string
+          observacoes?: string | null
+          pago_por: string
+          updated_at?: string | null
+          valor_pago: number
+        }
+        Update: {
+          cliente_id?: number
+          created_at?: string | null
+          data_pagamento?: string
+          id?: string
+          observacoes?: string | null
+          pago_por?: string
+          updated_at?: string | null
+          valor_pago?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "historico_pagamentos_comissao_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "todos_clientes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       meta_ads_configs: {
         Row: {
           access_token: string
@@ -660,6 +728,7 @@ export type Database = {
           data_subida_campanha: string | null
           data_venda: string | null
           descricao_problema: string | null
+          eh_ultimo_pago: boolean | null
           email_cliente: string | null
           email_gestor: string | null
           id: number
@@ -676,6 +745,9 @@ export type Database = {
           status_campanha: string | null
           status_envio: string | null
           telefone: string | null
+          total_pago_comissao: number | null
+          ultimo_pagamento_em: string | null
+          ultimo_valor_pago: number | null
           valor_comissao: number | null
           vendedor: string | null
         }
@@ -689,6 +761,7 @@ export type Database = {
           data_subida_campanha?: string | null
           data_venda?: string | null
           descricao_problema?: string | null
+          eh_ultimo_pago?: boolean | null
           email_cliente?: string | null
           email_gestor?: string | null
           id?: number
@@ -705,6 +778,9 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          total_pago_comissao?: number | null
+          ultimo_pagamento_em?: string | null
+          ultimo_valor_pago?: number | null
           valor_comissao?: number | null
           vendedor?: string | null
         }
@@ -718,6 +794,7 @@ export type Database = {
           data_subida_campanha?: string | null
           data_venda?: string | null
           descricao_problema?: string | null
+          eh_ultimo_pago?: boolean | null
           email_cliente?: string | null
           email_gestor?: string | null
           id?: number
@@ -734,6 +811,9 @@ export type Database = {
           status_campanha?: string | null
           status_envio?: string | null
           telefone?: string | null
+          total_pago_comissao?: number | null
+          ultimo_pagamento_em?: string | null
+          ultimo_valor_pago?: number | null
           valor_comissao?: number | null
           vendedor?: string | null
         }

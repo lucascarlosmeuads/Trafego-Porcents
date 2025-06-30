@@ -1,4 +1,3 @@
-
 import { createClient } from '@supabase/supabase-js'
 
 // Usando os valores do arquivo de configuração do Supabase
@@ -31,6 +30,22 @@ export type Cliente = {
   saque_solicitado: boolean
   comissao: string
   site_pago: boolean
+  // Novas colunas para sistema avançado de comissões
+  ultimo_pagamento_em: string | null
+  ultimo_valor_pago: number | null
+  total_pago_comissao: number
+  eh_ultimo_pago: boolean
+}
+
+export type HistoricoPagamentoComissao = {
+  id: string
+  cliente_id: number
+  valor_pago: number
+  data_pagamento: string
+  pago_por: string
+  observacoes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export type Gestor = {
