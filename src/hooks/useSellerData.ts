@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
@@ -86,7 +85,11 @@ export function useSellerData(sellerEmail: string) {
           comissao_paga,
           valor_comissao,
           comissao,
-          site_pago
+          site_pago,
+          ultimo_pagamento_em,
+          ultimo_valor_pago,
+          total_pago_comissao,
+          eh_ultimo_pago
         `)
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false, nullsFirst: false })
@@ -111,7 +114,11 @@ export function useSellerData(sellerEmail: string) {
             comissao_paga,
             valor_comissao,
             comissao,
-            site_pago
+            site_pago,
+            ultimo_pagamento_em,
+            ultimo_valor_pago,
+            total_pago_comissao,
+            eh_ultimo_pago
           `)
           .ilike('vendedor', `%${sellerName}%`)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -141,7 +148,11 @@ export function useSellerData(sellerEmail: string) {
             comissao_paga,
             valor_comissao,
             comissao,
-            site_pago
+            site_pago,
+            ultimo_pagamento_em,
+            ultimo_valor_pago,
+            total_pago_comissao,
+            eh_ultimo_pago
           `)
           .eq('vendedor', capitalizedName)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -193,7 +204,12 @@ export function useSellerData(sellerEmail: string) {
           descricao_problema: '',
           saque_solicitado: false,
           comissao: item.comissao || 'Pendente',
-          site_pago: Boolean(item.site_pago || false)
+          site_pago: Boolean(item.site_pago || false),
+          // Novas propriedades do sistema avançado de comissões
+          ultimo_pagamento_em: item.ultimo_pagamento_em || null,
+          ultimo_valor_pago: item.ultimo_valor_pago || null,
+          total_pago_comissao: Number(item.total_pago_comissao || 0),
+          eh_ultimo_pago: Boolean(item.eh_ultimo_pago || false)
         }))
 
         console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
@@ -384,7 +400,12 @@ export function useSellerData(sellerEmail: string) {
           descricao_problema: existingClient.descricao_problema || '',
           saque_solicitado: Boolean(existingClient.saque_solicitado || false),
           comissao: existingClient.comissao || 'Pendente',
-          site_pago: Boolean(existingClient.site_pago || false)
+          site_pago: Boolean(existingClient.site_pago || false),
+          // Novas propriedades do sistema avançado de comissões
+          ultimo_pagamento_em: existingClient.ultimo_pagamento_em || null,
+          ultimo_valor_pago: existingClient.ultimo_valor_pago || null,
+          total_pago_comissao: Number(existingClient.total_pago_comissao || 0),
+          eh_ultimo_pago: Boolean(existingClient.eh_ultimo_pago || false)
         }
 
         return { exists: true, foundClient: formattedClient }
@@ -392,7 +413,6 @@ export function useSellerData(sellerEmail: string) {
 
       console.log('✅ [useSellerData] Client does not exist, can proceed')
       return { exists: false }
-
     } catch (error) {
       console.error('💥 [useSellerData] Error checking for duplicates:', error)
       return { exists: false }
@@ -443,7 +463,11 @@ export function useSellerData(sellerEmail: string) {
         link_site: '',
         numero_bm: '',
         comissao: 'Pendente',
-        site_pago: false
+        site_pago: false,
+        ultimo_pagamento_em: null,
+        ultimo_valor_pago: null,
+        total_pago_comissao: 0,
+        eh_ultimo_pago: false
       }
 
       console.log('📤 [useSellerData] Inserting new client with vendedor:', vendorName)

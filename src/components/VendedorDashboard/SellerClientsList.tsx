@@ -41,7 +41,12 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     descricao_problema: '',
     saque_solicitado: false,
     comissao: 'Pendente',
-    site_pago: false
+    site_pago: false,
+    // Novas propriedades do sistema avançado de comissões
+    ultimo_pagamento_em: null,
+    ultimo_valor_pago: null,
+    total_pago_comissao: 0,
+    eh_ultimo_pago: false
   }))
 
   const { dateFilter, setDateFilter, organizedClientes } = useClientFilters(clientesFormatted)

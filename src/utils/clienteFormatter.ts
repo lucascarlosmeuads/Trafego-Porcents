@@ -45,7 +45,12 @@ export function formatCliente(item: any): Cliente | null {
       descricao_problema: item.descricao_problema || '',
       saque_solicitado: Boolean(item.saque_solicitado || false),
       comissao: item.comissao || 'Pendente',
-      site_pago: Boolean(item.site_pago || false)
+      site_pago: Boolean(item.site_pago || false),
+      // Novas propriedades do sistema avançado de comissões
+      ultimo_pagamento_em: item.ultimo_pagamento_em || null,
+      ultimo_valor_pago: item.ultimo_valor_pago || null,
+      total_pago_comissao: Number(item.total_pago_comissao || 0),
+      eh_ultimo_pago: Boolean(item.eh_ultimo_pago || false)
     }
   } catch (error) {
     console.error('❌ [formatCliente] Erro ao formatar cliente:', error, item)
