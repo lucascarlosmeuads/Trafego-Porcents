@@ -1,5 +1,4 @@
-
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, lazy } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { ClientesTable } from './ClientesTable'
@@ -60,29 +59,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     // Navegação por abas
     switch (activeTab) {
       case 'dashboard':
+        // Usar o novo dashboard aprimorado para a aba dashboard
         return (
-          <div className="space-y-6">
-            {/* Seletor de gestores */}
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
-            </div>
-            
-            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
-            {useOptimized ? (
-              <OptimizedAdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            ) : (
-              <AdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            )}
+          <div className="w-full">
+            <LazyEnhancedAdminDashboard 
+              selectedManager={selectedManager}
+              onManagerSelect={onManagerSelect}
+            />
           </div>
         )
 
@@ -143,6 +126,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     </div>
   )
 }
+
+// Add Lazy loading for the new Enhanced dashboard
+const LazyEnhancedAdminDashboard = lazy(() => 
+  import('./AdminDashboard/EnhancedAdminDashboard').then(module => ({
+    default: module.EnhancedAdminDashboard
+  }))
+)
 
 // Add default export for lazy loading
 export default AdminDashboard
