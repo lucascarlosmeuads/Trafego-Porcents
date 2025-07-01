@@ -52,7 +52,7 @@ import { toast } from "@/hooks/use-toast"
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 
-import { Cliente } from '@/lib/supabase'
+import { Cliente, StatusCampanha } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 import { useToast as useToastHook } from '@/hooks/use-toast'
 import { useSupabase } from '@/hooks/useSupabase'
@@ -303,7 +303,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     }
   }
 
-  const updateClienteStatus = async (clienteId: string, newStatus: string) => {
+  const updateClienteStatus = async (clienteId: string, newStatus: StatusCampanha) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
@@ -547,7 +547,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
               {STATUS_CAMPANHA.map((status) => (
                 <DropdownMenuItem
                   key={status}
-                  onClick={() => updateClienteStatus(cliente.id, status)}
+                  onClick={() => updateClienteStatus(cliente.id, status as StatusCampanha)}
                 >
                   {getStatusDisplayLabel(status)}
                 </DropdownMenuItem>
