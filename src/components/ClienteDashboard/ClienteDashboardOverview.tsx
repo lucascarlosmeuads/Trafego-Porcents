@@ -1,10 +1,12 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { TrendingUp, DollarSign, FileText, Calendar, CheckCircle, Circle, Clock } from 'lucide-react'
+import { TrendingUp, DollarSign, FileText, Calendar, CheckCircle, Circle, Clock, Database, RefreshCw } from 'lucide-react'
 import type { Cliente, BriefingCliente, VendaCliente, ArquivoCliente } from '@/hooks/useClienteData'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
+import { Button } from '@/components/ui/button'
 
 interface ClienteDashboardOverviewProps {
   cliente: Cliente | null
@@ -35,6 +37,8 @@ export function ClienteDashboardOverview({
   vendas, 
   arquivos 
 }: ClienteDashboardOverviewProps) {
+  const [totalClientes, setTotalClientes] = useState<number | null>(null)
+  const [loadingTotal, setLoadingTotal] = useState(false)
   
   const totalVendas = vendas.reduce((sum, venda) => sum + Number(venda.valor_venda || 0), 0)
   const totalComissoes = vendas.length * 60 // Assumindo R$ 60 por venda
@@ -73,6 +77,27 @@ export function ClienteDashboardOverview({
     }
   }
 
+  // Função para verificar o total de clientes no sistema
+  const checkTotalClientes = async () => {
+    setLoadingTotal(true)
+    try {
+      const { count, error } = await supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+
+      if (error) {
+        console.error('❌ Erro ao contar clientes:', error)
+      } else {
+        setTotalClientes(count)
+        console.log(`📊 [ClienteDashboard] Total de clientes no sistema: ${count}`)
+      }
+    } catch (error) {
+      console.error('💥 Erro na verificação:', error)
+    } finally {
+      setLoadingTotal(false)
+    }
+  }
+
   // Set up real-time subscription for status updates
   useEffect(() => {
     if (!cliente?.email_cliente) return
@@ -103,12 +128,53 @@ export function ClienteDashboardOverview({
     }
   }, [cliente?.email_cliente])
 
+  // Verificar total de clientes ao carregar
+  useEffect(() => {
+    checkTotalClientes()
+  }, [])
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold">Dashboard</h1>
         <p className="text-muted-foreground">Visão geral da sua campanha de tráfego</p>
       </div>
+
+      {/* Informações do Sistema - Apenas para debugging */}
+      {totalClientes !== null && (
+        <Card className="bg-blue-50 border-blue-200">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-700">
+              <Database className="w-5 h-5" />
+              Status do Sistema
+              <Button
+                onClick={checkTotalClientes}
+                variant="ghost"
+                size="sm"
+                disabled={loadingTotal}
+                className="ml-auto"
+              >
+                {loadingTotal ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-blue-700">{totalClientes}</span>
+              <span className="text-blue-600">clientes total no sistema</span>
+            </div>
+            {totalClientes > 1000 && (
+              <p className="text-sm text-green-600 mt-1">
+                ✅ Sistema carregando corretamente todos os registros
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Status da Campanha com Progress Bar */}
       <Card>

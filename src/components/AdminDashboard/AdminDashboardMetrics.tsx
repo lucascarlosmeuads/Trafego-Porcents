@@ -1,20 +1,12 @@
 
-import { useMemo } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { formatCurrency } from '@/lib/utils'
-import { useFiltrosComissao, type FiltroComissao } from '@/hooks/useFiltrosComissao'
-import { FiltrosComissaoAvancados } from '@/components/ClientesTable/FiltrosComissaoAvancados'
+import { useMemo, useState } from 'react'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Users, TrendingUp, DollarSign, Calendar, Award, RefreshCw, Database, AlertTriangle } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
-import { 
-  DollarSign, 
-  TrendingUp, 
-  Users, 
-  Clock,
-  CheckCircle,
-  Star,
-  AlertCircle
-} from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
+import { useToast } from '@/hooks/use-toast'
+import { supabase } from '@/lib/supabase'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
@@ -22,71 +14,210 @@ interface AdminDashboardMetricsProps {
 }
 
 export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashboardMetricsProps) {
-  const { 
-    filtros, 
-    setFiltros, 
-    clientesFiltrados, 
-    estatisticas 
-  } = useFiltrosComissao(clientes)
+  const [refreshing, setRefreshing] = useState(false)
+  const [totalInDatabase, setTotalInDatabase] = useState<number | null>(null)
+  const { toast } = useToast()
 
-  // Lista de gestores únicos para o filtro
-  const gestores = useMemo(() => {
-    const gestoresUnicos = Array.from(
-      new Set(clientes.map(c => c.email_gestor).filter(Boolean))
-    ).map(email => ({
-      email,
-      nome: email.split('@')[0] // Simplificado - você pode melhorar isso
-    }))
+  // Verificar total real no banco de dados
+  const checkDatabaseTotal = async () => {
+    setRefreshing(true)
+    try {
+      const { count, error } = await supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+
+      if (error) {
+        console.error('❌ Erro ao verificar total:', error)
+        toast({
+          title: "Erro",
+          description: "Erro ao verificar total de clientes",
+          variant: "destructive"
+        })
+      } else {
+        setTotalInDatabase(count)
+        console.log(`📊 [AdminDashboard] Total real no banco: ${count}`)
+        
+        if (count && count > clientes.length) {
+          toast({
+            title: "Aviso",
+            description: `Existem ${count} clientes no banco, mas apenas ${clientes.length} foram carregados. Recarregue a página.`,
+            variant: "default"
+          })
+        } else {
+          toast({
+            title: "Sucesso",
+            description: `Todos os ${count} clientes foram carregados corretamente.`,
+            variant: "default"
+          })
+        }
+      }
+    } catch (error) {
+      console.error('💥 Erro na verificação:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao verificar dados",
+        variant: "destructive"
+      })
+    } finally {
+      setRefreshing(false)
+    }
+  }
+
+  const metrics = useMemo(() => {
+    const totalClientes = clientes.length
+    const clientesComVenda = clientes.filter(c => c.data_venda).length
+    const clientesAtivos = clientes.filter(c => 
+      c.status_campanha && !['Concluído', 'Cancelado'].includes(c.status_campanha)
+    ).length
     
-    return gestoresUnicos
-  }, [clientes])
+    const totalComissoes = clientes.reduce((sum, cliente) => {
+      return sum + (Number(cliente.valor_comissao) || 60)
+    }, 0)
 
-  // Métricas detalhadas
-  const metricas = useMemo(() => {
-    const clientesDoMes = clientes.filter(c => {
-      const created = new Date(c.created_at)
-      const agora = new Date()
-      return created.getMonth() === agora.getMonth() && 
-             created.getFullYear() === agora.getFullYear()
-    })
+    const comissoesPagas = clientes
+      .filter(c => c.comissao_paga || c.comissao === 'Pago')
+      .reduce((sum, cliente) => sum + (Number(cliente.valor_comissao) || 60), 0)
 
-    const pagamentosDoMes = clientes.filter(c => {
-      if (!c.ultimo_pagamento_em) return false
-      const pagamento = new Date(c.ultimo_pagamento_em)
-      const agora = new Date()
-      return pagamento.getMonth() === agora.getMonth() && 
-             pagamento.getFullYear() === agora.getFullYear()
-    })
+    const clientesHoje = clientes.filter(c => {
+      if (!c.created_at) return false
+      const hoje = new Date().toDateString()
+      const clienteData = new Date(c.created_at).toDateString()
+      return hoje === clienteData
+    }).length
+
+    // Estatísticas por gestor
+    const gestorStats = clientes.reduce((acc, cliente) => {
+      const gestor = cliente.email_gestor || 'Sem Gestor'
+      if (!acc[gestor]) {
+        acc[gestor] = { total: 0, ativos: 0, comissoes: 0 }
+      }
+      acc[gestor].total++
+      if (cliente.status_campanha && !['Concluído', 'Cancelado'].includes(cliente.status_campanha)) {
+        acc[gestor].ativos++
+      }
+      acc[gestor].comissoes += Number(cliente.valor_comissao) || 60
+      return acc
+    }, {} as Record<string, { total: number, ativos: number, comissoes: number }>)
 
     return {
-      clientesDoMes: clientesDoMes.length,
-      pagamentosDoMes: pagamentosDoMes.length,
-      ticketMedio: estatisticas.total > 0 ? 
-        (estatisticas.valorTotalPago + estatisticas.valorTotalPendente) / estatisticas.total : 0
+      totalClientes,
+      clientesComVenda,
+      clientesAtivos,
+      totalComissoes,
+      comissoesPagas,
+      clientesHoje,
+      gestorStats
     }
-  }, [clientes, estatisticas])
+  }, [clientes])
+
+  const isDiscrepancy = totalInDatabase && totalInDatabase > clientes.length
 
   return (
     <div className="space-y-6">
-      {/* Filtros */}
-      <FiltrosComissaoAvancados
-        clientes={clientes}
-        filtros={filtros}
-        onFiltrosChange={setFiltros}
-        gestores={gestores}
-      />
+      {/* Header com botão de verificação */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">Métricas do Sistema</h2>
+          <p className="text-muted-foreground">
+            {selectedManager && selectedManager !== 'Todos os Gestores' && selectedManager !== 'Todos os Clientes'
+              ? `Dados do gestor: ${selectedManager}`
+              : 'Visão geral de todos os clientes'
+            }
+          </p>
+        </div>
+        <Button onClick={checkDatabaseTotal} disabled={refreshing} variant="outline">
+          {refreshing ? (
+            <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+          ) : (
+            <Database className="w-4 h-4 mr-2" />
+          )}
+          Verificar Total
+        </Button>
+      </div>
 
-      {/* Métricas Principais */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Alert de discrepância */}
+      {isDiscrepancy && (
+        <Card className="border-orange-200 bg-orange-50">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-2 text-orange-700">
+              <AlertTriangle className="w-5 h-5" />
+              <span className="font-medium">
+                Discrepância detectada: {totalInDatabase} no banco vs {clientes.length} carregados
+              </span>
+            </div>
+            <p className="text-sm text-orange-600 mt-1">
+              Recarregue a página para garantir que todos os dados sejam exibidos.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Status de carregamento de dados */}
+      <Card className="bg-blue-50 border-blue-200">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-blue-700">
+            <Database className="w-5 h-5" />
+            Status de Carregamento
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div>
+              <div className="text-2xl font-bold text-blue-700">{clientes.length}</div>
+              <p className="text-blue-600">clientes carregados</p>
+            </div>
+            {totalInDatabase && (
+              <div className="text-right">
+                <div className="text-lg font-semibold text-blue-700">{totalInDatabase}</div>
+                <p className="text-sm text-blue-600">total no banco</p>
+              </div>
+            )}
+          </div>
+          {clientes.length >= 1000 && (
+            <p className="text-sm text-green-600 mt-2">
+              ✅ Sistema carregando grandes volumes corretamente
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Métricas principais */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{estatisticas.total}</div>
+            <div className="text-2xl font-bold">{metrics.totalClientes}</div>
             <p className="text-xs text-muted-foreground">
-              {estatisticas.filtrados} após filtros
+              {metrics.clientesHoje} novos hoje
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Clientes Ativos</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{metrics.clientesAtivos}</div>
+            <p className="text-xs text-muted-foreground">
+              {Math.round((metrics.clientesAtivos / metrics.totalClientes) * 100)}% do total
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total em Comissões</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(metrics.totalComissoes)}</div>
+            <p className="text-xs text-muted-foreground">
+              valor total gerado
             </p>
           </CardContent>
         </Card>
@@ -94,127 +225,42 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Comissões Pagas</CardTitle>
-            <CheckCircle className="h-4 w-4 text-green-600" />
+            <Award className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {formatCurrency(estatisticas.valorTotalPago)}
-            </div>
+            <div className="text-2xl font-bold">{formatCurrency(metrics.comissoesPagas)}</div>
             <p className="text-xs text-muted-foreground">
-              {estatisticas.pagos} cliente(s) - {metricas.pagamentosDoMes} este mês
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comissões Pendentes</CardTitle>
-            <Clock className="h-4 w-4 text-orange-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-orange-600">
-              {formatCurrency(estatisticas.valorTotalPendente)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {estatisticas.pendentes} cliente(s) pendentes
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Últimos Pagos</CardTitle>
-            <Star className="h-4 w-4 text-yellow-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-yellow-600">
-              {estatisticas.ultimosPagos}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Marcados como últimos pagos
+              {Math.round((metrics.comissoesPagas / metrics.totalComissoes) * 100)}% do total
             </p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Métricas Secundárias */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ticket Médio</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {formatCurrency(metricas.ticketMedio)}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Valor médio por cliente
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes este Mês</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{metricas.clientesDoMes}</div>
-            <p className="text-xs text-muted-foreground">
-              Novos clientes em {new Date().toLocaleDateString('pt-BR', { month: 'long' })}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
-            <AlertCircle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {estatisticas.total > 0 ? 
-                Math.round((estatisticas.pagos / estatisticas.total) * 100) : 0}%
-            </div>
-            <p className="text-xs text-muted-foreground">
-              Clientes que geraram comissão
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Informações do Gestor Selecionado */}
-      {selectedManager && selectedManager !== '__GESTORES__' && (
+      {/* Estatísticas por gestor quando visualizando todos */}
+      {(!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              Filtro Ativo: {selectedManager}
-            </CardTitle>
-            <CardDescription>
-              Métricas específicas do gestor selecionado
-            </CardDescription>
+            <CardTitle>Distribuição por Gestor</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex gap-4">
-              <Badge variant="outline">
-                {clientes.filter(c => c.email_gestor === selectedManager).length} clientes
-              </Badge>
-              <Badge variant="outline">
-                {formatCurrency(
-                  clientes
-                    .filter(c => c.email_gestor === selectedManager && c.comissao === 'Pago')
-                    .reduce((sum, c) => sum + (c.valor_comissao || 60), 0)
-                )} pagos
-              </Badge>
-              <Badge variant="outline">
-                {formatCurrency(
-                  clientes
-                    .filter(c => c.email_gestor === selectedManager && c.comissao !== 'Pago')
-                    .reduce((sum, c) => sum + (c.valor_comissao || 60), 0)
-                )} pendentes
-              </Badge>
+            <div className="space-y-4">
+              {Object.entries(metrics.gestorStats)
+                .sort(([,a], [,b]) => b.total - a.total)
+                .slice(0, 10)
+                .map(([gestor, stats]) => (
+                <div key={gestor} className="flex items-center justify-between p-3 border rounded-lg">
+                  <div>
+                    <p className="font-medium">{gestor.replace('@trafegoporcents.com', '')}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {stats.ativos} ativos de {stats.total} total
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="font-semibold">{formatCurrency(stats.comissoes)}</p>
+                    <p className="text-sm text-muted-foreground">em comissões</p>
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

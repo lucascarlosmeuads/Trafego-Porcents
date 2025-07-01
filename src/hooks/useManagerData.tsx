@@ -34,15 +34,47 @@ export function useManagerData(
     setError(null)
 
     try {
-      console.log('🔍 [useManagerData] === INICIANDO BUSCA ===')
+      console.log('🔍 [useManagerData] === INICIANDO BUSCA COMPLETA ===')
       console.log('📧 [useManagerData] userEmail:', userEmail)
       console.log('🔒 [useManagerData] isAdminUser:', isAdminUser)
       console.log('👤 [useManagerData] selectedManager:', selectedManager)
       console.log('🎯 [useManagerData] filterType:', filterType)
 
+      // Primeiro, contar o total de registros para verificação
+      let countQuery = supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+
+      // Aplicar filtros à contagem também
+      if (filterType === 'sites-pendentes') {
+        countQuery = countQuery.eq('site_status', 'aguardando_link')
+      } else if (filterType === 'sites-finalizados') {
+        countQuery = countQuery.eq('site_status', 'finalizado')
+      } else if (isAdminUser) {
+        if (selectedManager && 
+            selectedManager !== 'Todos os Clientes' && 
+            selectedManager !== 'Todos os Gestores' && 
+            selectedManager !== null &&
+            selectedManager !== '') {
+          countQuery = countQuery.eq('email_gestor', selectedManager)
+        }
+      } else {
+        countQuery = countQuery.eq('email_gestor', userEmail)
+      }
+
+      const { count, error: countError } = await countQuery
+
+      if (countError) {
+        console.error('❌ [useManagerData] Erro ao contar registros:', countError)
+      } else {
+        console.log(`📊 [useManagerData] Total de registros esperados: ${count}`)
+      }
+
+      // Agora buscar todos os dados com limite expandido
       let query = supabase
         .from('todos_clientes')
         .select('*, site_pago')
+        .range(0, 15000) // Aumentar limite significativamente para garantir todos os registros
 
       // PRIORITY 1: Handle Site Creator panel filters first
       if (filterType === 'sites-pendentes') {
@@ -84,6 +116,45 @@ export function useManagerData(
       }
 
       console.log('✅ [useManagerData] Dados encontrados:', data?.length || 0, 'registros')
+      
+      // Verificar se há discrepância entre contagem esperada e carregada
+      if (count && data && data.length < count) {
+        console.warn(`⚠️ [useManagerData] DISCREPÂNCIA: Esperado ${count}, carregado ${data.length}`)
+        
+        // Para casos críticos, tentar uma segunda busca sem range
+        if (data.length < count * 0.9) { // Se carregou menos de 90% do esperado
+          console.log('🔄 [useManagerData] Tentando busca sem limite de range...')
+          
+          let unlimitedQuery = supabase
+            .from('todos_clientes')
+            .select('*, site_pago')
+          
+          // Aplicar os mesmos filtros
+          if (filterType === 'sites-pendentes') {
+            unlimitedQuery = unlimitedQuery.eq('site_status', 'aguardando_link')
+          } else if (filterType === 'sites-finalizados') {
+            unlimitedQuery = unlimitedQuery.eq('site_status', 'finalizado')
+          } else if (isAdminUser) {
+            if (selectedManager && 
+                selectedManager !== 'Todos os Clientes' && 
+                selectedManager !== 'Todos os Gestores' && 
+                selectedManager !== null &&
+                selectedManager !== '') {
+              unlimitedQuery = unlimitedQuery.eq('email_gestor', selectedManager)
+            }
+          } else {
+            unlimitedQuery = unlimitedQuery.eq('email_gestor', userEmail)
+          }
+
+          const { data: unlimitedData, error: unlimitedError } = await unlimitedQuery.order('created_at', { ascending: false })
+          
+          if (!unlimitedError && unlimitedData && unlimitedData.length > data.length) {
+            console.log(`🔄 [useManagerData] Busca sem limite retornou mais dados: ${unlimitedData.length}`)
+            setClientes(unlimitedData || [])
+            return
+          }
+        }
+      }
       
       // Enhanced logging for verification
       if (data && data.length > 0) {
