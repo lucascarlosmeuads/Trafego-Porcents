@@ -11,10 +11,8 @@ import {
   useReactTable,
   getPaginationRowModel,
   getFilteredRowModel,
-  FilterFn,
   SortingState,
   getSortedRowModel,
-  OnChangeFn,
 } from '@tanstack/react-table'
 import {
   Table,
@@ -24,7 +22,6 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -48,8 +45,6 @@ import {
 import { MoreHorizontal, Edit, Trash2, Copy, ChevronsUpDown } from 'lucide-react'
 import { Checkbox } from "@/components/ui/checkbox"
 import { toast } from "@/hooks/use-toast"
-import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 
 import { Cliente, StatusCampanha } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -63,23 +58,12 @@ import {
   getStatusDisplayLabel
 } from '@/lib/supabase'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { Badge } from '@/components/ui/badge'
-import { DatePicker } from "@/components/ui/date-picker"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
 import { ComissaoButton } from './ClientesTable/ComissaoButton'
 import { TableActions } from './ClientesTable/TableActions'
 
