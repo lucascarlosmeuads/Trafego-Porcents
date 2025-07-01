@@ -13,6 +13,7 @@ import { MaxIntegrationStats } from './MaxIntegrationStats'
 import { WebhookMonitoringDashboard } from './WebhookMonitoringDashboard'
 import { WebhookDiagnostics } from './WebhookDiagnostics'
 import { WebhookTroubleshooting } from './WebhookTroubleshooting'
+import { AlternativeWebhookTest } from './AlternativeWebhookTest'
 import { 
   Settings, 
   User, 
@@ -30,7 +31,7 @@ export function MaxIntegrationDashboard() {
   const { config, logs, loading, updating, changeActiveGestor, toggleIntegration, testWebhook, refetch } = useMaxIntegration()
   const { gestores, loading: gestoresLoading } = useGestores()
   const [testingWebhook, setTestingWebhook] = useState(false)
-  const [activeTab, setActiveTab<'config' | 'monitor' | 'diagnostics' | 'troubleshooting' | 'logs'>(
+  const [activeTab, setActiveTab] = useState<'config' | 'monitor' | 'diagnostics' | 'troubleshooting' | 'logs'>(
     'config'
   )
 
