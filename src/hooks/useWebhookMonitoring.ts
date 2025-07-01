@@ -25,6 +25,19 @@ export function useWebhookMonitoring() {
     lastAttempt: null as string | null
   })
 
+  const mapStatusToWebhookStatus = (dbStatus: string): 'success' | 'error' | 'processing' => {
+    switch (dbStatus) {
+      case 'sucesso':
+        return 'success'
+      case 'processando':
+        return 'processing'
+      case 'erro':
+      case 'duplicado':
+      default:
+        return 'error'
+    }
+  }
+
   useEffect(() => {
     // Buscar tentativas recentes
     fetchRecentAttempts()
@@ -67,14 +80,13 @@ export function useWebhookMonitoring() {
 
       if (error) throw error
 
-      const formattedAttempts = data?.map(log => ({
+      const formattedAttempts: WebhookAttempt[] = data?.map(log => ({
         id: log.id,
         timestamp: log.created_at,
         method: 'POST',
         headers: log.dados_originais?.headers || {},
         body: log.dados_originais,
-        status: log.status === 'sucesso' ? 'success' : 
-                log.status === 'processando' ? 'processing' : 'error',
+        status: mapStatusToWebhookStatus(log.status),
         error_message: log.erro_detalhes,
         client_created: log.status === 'sucesso',
         client_id: log.cliente_criado_id?.toString()
@@ -94,8 +106,7 @@ export function useWebhookMonitoring() {
       method: 'POST',
       headers: newLog.dados_originais?.headers || {},
       body: newLog.dados_originais,
-      status: newLog.status === 'sucesso' ? 'success' : 
-              newLog.status === 'processando' ? 'processing' : 'error',
+      status: mapStatusToWebhookStatus(newLog.status),
       error_message: newLog.erro_detalhes,
       client_created: newLog.status === 'sucesso',
       client_id: newLog.cliente_criado_id?.toString()
