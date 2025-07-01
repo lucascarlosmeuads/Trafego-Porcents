@@ -10,6 +10,9 @@ import { Separator } from '@/components/ui/separator'
 import { LoadingFallback } from '@/components/LoadingFallback'
 import { MaxIntegrationLogs } from './MaxIntegrationLogs'
 import { MaxIntegrationStats } from './MaxIntegrationStats'
+import { WebhookMonitoringDashboard } from './WebhookMonitoringDashboard'
+import { WebhookDiagnostics } from './WebhookDiagnostics'
+import { WebhookTroubleshooting } from './WebhookTroubleshooting'
 import { 
   Settings, 
   User, 
@@ -19,15 +22,17 @@ import {
   CheckCircle,
   Globe,
   RefreshCw,
-  FileText
+  FileText,
+  AlertTriangle
 } from 'lucide-react'
-import { WebhookMonitoringDashboard } from './WebhookMonitoringDashboard'
 
 export function MaxIntegrationDashboard() {
   const { config, logs, loading, updating, changeActiveGestor, toggleIntegration, testWebhook, refetch } = useMaxIntegration()
   const { gestores, loading: gestoresLoading } = useGestores()
   const [testingWebhook, setTestingWebhook] = useState(false)
-  const [activeTab, setActiveTab] = useState<'config' | 'monitor' | 'logs'>('config')
+  const [activeTab, setActiveTab<'config' | 'monitor' | 'diagnostics' | 'troubleshooting' | 'logs'>(
+    'config'
+  )
 
   const handleGestorChange = async (gestorEmail: string) => {
     const gestor = gestores.find(g => g.email === gestorEmail)
@@ -83,10 +88,10 @@ export function MaxIntegrationDashboard() {
       </div>
 
       {/* Tabs de Navegação */}
-      <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+      <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg overflow-x-auto">
         <button
           onClick={() => setActiveTab('config')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'config' 
               ? 'bg-blue-600 text-white' 
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -97,18 +102,40 @@ export function MaxIntegrationDashboard() {
         </button>
         <button
           onClick={() => setActiveTab('monitor')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'monitor' 
               ? 'bg-blue-600 text-white' 
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
           }`}
         >
           <Activity className="w-4 h-4 mr-2 inline" />
-          Monitor em Tempo Real
+          Monitor
+        </button>
+        <button
+          onClick={() => setActiveTab('diagnostics')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'diagnostics' 
+              ? 'bg-blue-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          <TestTube className="w-4 h-4 mr-2 inline" />
+          Diagnósticos
+        </button>
+        <button
+          onClick={() => setActiveTab('troubleshooting')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
+            activeTab === 'troubleshooting' 
+              ? 'bg-blue-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          <AlertTriangle className="w-4 h-4 mr-2 inline" />
+          Soluções
         </button>
         <button
           onClick={() => setActiveTab('logs')}
-          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${
             activeTab === 'logs' 
               ? 'bg-blue-600 text-white' 
               : 'text-gray-400 hover:text-white hover:bg-gray-700'
@@ -272,6 +299,14 @@ export function MaxIntegrationDashboard() {
 
       {activeTab === 'monitor' && (
         <WebhookMonitoringDashboard />
+      )}
+
+      {activeTab === 'diagnostics' && (
+        <WebhookDiagnostics />
+      )}
+
+      {activeTab === 'troubleshooting' && (
+        <WebhookTroubleshooting />
       )}
 
       {activeTab === 'logs' && (
