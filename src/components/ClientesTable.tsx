@@ -516,6 +516,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
       header: '',
       cell: ({ row }) => {
         const cliente = row.original
+        const clienteId = cliente.id || ''
 
         return (
           <DropdownMenu>
@@ -528,7 +529,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => copyToClipboard(cliente.id!.toString())}
+                onClick={() => copyToClipboard(clienteId)}
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar ID
@@ -539,7 +540,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => duplicateCliente(cliente.id!.toString())}
+                onClick={() => duplicateCliente(clienteId)}
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Duplicar
@@ -549,7 +550,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
               {STATUS_CAMPANHA.map((status) => (
                 <DropdownMenuItem
                   key={status}
-                  onClick={() => updateClienteStatus(cliente.id!.toString(), status as StatusCampanha)}
+                  onClick={() => updateClienteStatus(clienteId, status as StatusCampanha)}
                 >
                   {getStatusDisplayLabel(status)}
                 </DropdownMenuItem>
@@ -574,7 +575,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-red-600 text-red-50"
-                      onClick={() => deleteCliente(cliente.id!.toString())}
+                      onClick={() => deleteCliente(clienteId)}
                     >
                       Deletar
                     </AlertDialogAction>
