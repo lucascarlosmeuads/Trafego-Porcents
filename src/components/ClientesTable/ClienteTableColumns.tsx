@@ -1,4 +1,3 @@
-
 import { ColumnDef } from '@tanstack/react-table'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from "@/components/ui/checkbox"
@@ -28,17 +27,17 @@ export class ClienteTableColumns {
         id: "select",
         header: ({ table }) => (
           <Checkbox
-            checked={table.getIsAllPageRowsSelected()}
+            checked={Boolean(table.getIsAllPageRowsSelected())}
             onCheckedChange={(value) => {
-              table.toggleAllPageRowsSelected(!!value)
+              table.toggleAllPageRowsSelected(Boolean(value))
             }}
             aria-label="Selecionar todos"
           />
         ),
         cell: ({ row }) => (
           <Checkbox
-            checked={row.getIsSelected()}
-            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            checked={Boolean(row.getIsSelected())}
+            onCheckedChange={(value) => row.toggleSelected(Boolean(value))}
             aria-label="Selecionar linha"
           />
         ),
