@@ -27,7 +27,7 @@ export class ClienteTableColumns {
         id: "select",
         header: ({ table }) => (
           <Checkbox
-            checked={Boolean(table.getIsAllPageRowsSelected())}
+            checked={Boolean(table.getIsAllPageRowsSelected()) || (table.getIsSomePageRowsSelected() ? "indeterminate" : false)}
             onCheckedChange={(value) => {
               table.toggleAllPageRowsSelected(Boolean(value))
             }}
