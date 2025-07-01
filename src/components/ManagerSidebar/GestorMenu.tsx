@@ -1,7 +1,7 @@
-import { BarChart3, Users, Headphones, Lightbulb, Globe, ExternalLink } from 'lucide-react'
+
+import { BarChart3, Users, Headphones, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { useSiteSolicitations } from '@/hooks/useSiteSolicitations'
+import { OutrosSubmenu } from './OutrosSubmenu'
 
 interface GestorMenuProps {
   activeTab: string
@@ -11,11 +11,6 @@ interface GestorMenuProps {
 }
 
 export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isCollapsed = false }: GestorMenuProps) {
-  const { solicitations } = useSiteSolicitations()
-  
-  // Contar solicitações pendentes
-  const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
-
   const menuItems = [
     {
       id: 'dashboard',
@@ -39,26 +34,11 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       color: 'from-pink-500 to-pink-600'
     },
     {
-      id: 'solicitacoes-site',
-      label: 'Solicitações de Site',
-      icon: Globe,
-      description: 'Gerenciar pedidos de criação de site',
-      color: 'from-purple-500 to-purple-600',
-      badge: pendingSiteRequests > 0 ? pendingSiteRequests : undefined
-    },
-    {
       id: 'sac',
       label: 'SAC',
       icon: Headphones,
       description: 'Suporte aos clientes',
       color: 'from-orange-500 to-orange-600'
-    },
-    {
-      id: 'sugestoes',
-      label: 'Sugestões',
-      icon: Lightbulb,
-      description: 'Ideias de melhorias',
-      color: 'from-yellow-500 to-yellow-600'
     }
   ]
 
@@ -99,14 +79,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
               <div className="flex flex-col items-start text-left flex-1">
                 <div className="flex items-center justify-between w-full">
                   <span className="font-medium text-sm leading-tight">{item.label}</span>
-                  {item.badge && (
-                    <Badge 
-                      variant="secondary" 
-                      className="ml-2 bg-red-500 text-white border-red-600 hover:bg-red-600"
-                    >
-                      {item.badge}
-                    </Badge>
-                  )}
                 </div>
                 <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
               </div>
@@ -114,6 +86,16 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
           </Button>
         )
       })}
+
+      {/* Separador */}
+      {!isCollapsed && <div className="border-t border-gray-700/50 my-4"></div>}
+
+      {/* Submenu "Outros" */}
+      <OutrosSubmenu 
+        activeTab={activeTab}
+        onTabSelect={onTabChange}
+        isCollapsed={isCollapsed}
+      />
     </nav>
   )
 }
