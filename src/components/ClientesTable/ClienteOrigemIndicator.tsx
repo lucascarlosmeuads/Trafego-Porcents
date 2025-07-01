@@ -1,7 +1,7 @@
 
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { Badge } from '@/components/ui/badge'
-import { bot, user } from 'lucide-react'
+import { Bot, User } from 'lucide-react'
 
 interface ClienteOrigemIndicatorProps {
   origem: 'appmax' | 'manual'
@@ -41,11 +41,11 @@ export function ClienteOrigemIndicator({
             <div className="flex items-center justify-center">
               {isAppMax ? (
                 <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">🤖</span>
+                  <Bot className="w-2.5 h-2.5 text-white" />
                 </div>
               ) : (
                 <div className="w-4 h-4 bg-gray-500 rounded-full flex items-center justify-center">
-                  <span className="text-white text-xs">👤</span>
+                  <User className="w-2.5 h-2.5 text-white" />
                 </div>
               )}
             </div>
@@ -77,7 +77,15 @@ export function ClienteOrigemIndicator({
       variant={isAppMax ? "default" : "secondary"}
       className={`${isAppMax ? 'bg-blue-500 hover:bg-blue-600' : 'bg-gray-500 hover:bg-gray-600'} text-white`}
     >
-      {isAppMax ? '🤖 AppMax' : '👤 Manual'}
+      {isAppMax ? (
+        <span className="flex items-center gap-1">
+          <Bot className="w-3 h-3" /> AppMax
+        </span>
+      ) : (
+        <span className="flex items-center gap-1">
+          <User className="w-3 h-3" /> Manual
+        </span>
+      )}
     </Badge>
   )
 }
