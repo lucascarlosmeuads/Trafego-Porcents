@@ -4,7 +4,6 @@ import { lazy } from 'react'
 // Lazy-load components to improve initial load time
 export const LazyStatusFunnelDashboard = lazy(() => import('./Dashboard/StatusFunnelDashboard'))
 export const LazyDocumentationViewer = lazy(() => import('./Documentation/DocumentationViewer'))
-export const LazyRelatorioSacGestores = lazy(() => import('./SAC/RelatorioSacGestores'))
 
 // Admin Dashboard Enhanced - Lazy loading para melhor performance
 export const LazyEnhancedAdminDashboard = lazy(() => 

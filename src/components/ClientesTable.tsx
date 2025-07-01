@@ -1,4 +1,3 @@
-
 import {
   useState,
   useEffect,
@@ -86,12 +85,6 @@ import { TableActions } from './ClientesTable/TableActions'
 
 // Define a generic type for the filter value
 type FilterValue = string | [Date | undefined, Date | undefined] | null
-
-// Extend the ColumnDef type to include a filterValue
-interface EnhancedColumnDef<TData, TValue = unknown> extends ColumnDef<TData, TValue> {
-  filterValue?: FilterValue
-  onFilterChange?: OnChangeFn<FilterValue>
-}
 
 interface ClientesTableProps {
   selectedManager?: string | null
@@ -309,7 +302,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     }
   }
 
-  const updateClienteStatus = async (clienteId: string, newStatus: string) => {
+  const updateClienteStatus = async (clienteId: string, newStatus: STATUS_CAMPANHA) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
