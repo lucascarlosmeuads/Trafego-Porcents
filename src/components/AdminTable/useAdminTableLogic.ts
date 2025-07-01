@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -73,10 +72,27 @@ export function useAdminTableLogic() {
 
   const fetchAllClientes = async () => {
     try {
+      console.log('🔍 [AdminTable] Iniciando busca de TODOS os clientes...')
+      setLoading(true)
+      
+      // Buscar o total de clientes primeiro para saber quantos temos
+      const { count, error: countError } = await supabase
+        .from('todos_clientes')
+        .select('*', { count: 'exact', head: true })
+
+      if (countError) {
+        console.error('❌ Erro ao contar clientes:', countError)
+      } else {
+        console.log(`📊 [AdminTable] Total de clientes no banco: ${count}`)
+      }
+
+      // Buscar TODOS os clientes sem limite
       const { data, error } = await supabase
         .from('todos_clientes')
         .select('*')
         .order('created_at', { ascending: false })
+        // Remover qualquer limite implícito usando range para garantir que pegamos todos
+        .range(0, 10000) // Aumentar significativamente o range para cobrir todos os clientes
 
       if (error) {
         console.error('❌ Erro ao buscar clientes:', error)
@@ -96,6 +112,19 @@ export function useAdminTableLogic() {
           // Ensure status_campanha is a string
           status_campanha: cliente.status_campanha ? String(cliente.status_campanha) : ''
         }))
+        
+        console.log(`✅ [AdminTable] Clientes carregados com sucesso: ${formattedClientes.length}`)
+        console.log(`📋 [AdminTable] Comparação - Esperado: ${count || 'N/A'}, Carregado: ${formattedClientes.length}`)
+        
+        // Verificar se há discrepância
+        if (count && formattedClientes.length < count) {
+          console.warn(`⚠️ [AdminTable] ATENÇÃO: Carregados ${formattedClientes.length} de ${count} clientes totais`)
+          toast({
+            title: "Aviso",
+            description: `Carregados ${formattedClientes.length} de ${count} clientes. Alguns podem não ter sido exibidos.`,
+            variant: "default"
+          })
+        }
         
         setClientes(formattedClientes)
       }
