@@ -1,4 +1,3 @@
-
 import {
   useState,
   useEffect,
@@ -423,7 +422,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
       accessorKey: 'status_campanha',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status_campanha') as string
+        const status = row.getValue('status_campanha') as StatusCampanha
         const label = getStatusDisplayLabel(status)
 
         // Determine badge color based on status
@@ -526,7 +525,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Ações</DropdownMenuLabel>
               <DropdownMenuItem
-                onClick={() => copyToClipboard(cliente.id)}
+                onClick={() => copyToClipboard(cliente.id!.toString())}
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Copiar ID
@@ -537,7 +536,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem
-                onClick={() => duplicateCliente(cliente.id)}
+                onClick={() => duplicateCliente(cliente.id!.toString())}
               >
                 <Copy className="mr-2 h-4 w-4" />
                 Duplicar
@@ -547,7 +546,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
               {STATUS_CAMPANHA.map((status) => (
                 <DropdownMenuItem
                   key={status}
-                  onClick={() => updateClienteStatus(cliente.id, status as StatusCampanha)}
+                  onClick={() => updateClienteStatus(cliente.id!.toString(), status as StatusCampanha)}
                 >
                   {getStatusDisplayLabel(status)}
                 </DropdownMenuItem>
@@ -572,7 +571,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
                     <AlertDialogAction
                       className="bg-red-600 text-red-50"
-                      onClick={() => deleteCliente(cliente.id)}
+                      onClick={() => deleteCliente(cliente.id!.toString())}
                     >
                       Deletar
                     </AlertDialogAction>
