@@ -45,6 +45,12 @@ const BM_STATUS_OPTIONS = [
   { value: 'sem_bm', label: 'Sem BM' }
 ]
 
+const ORIGEM_OPTIONS = [
+  { value: 'all', label: 'Todas as Origens' },
+  { value: 'appmax', label: '🤖 AppMax (Automático)' },
+  { value: 'manual', label: '👤 Manual' }
+]
+
 export function TableFilters({
   searchTerm,
   setSearchTerm,
@@ -57,9 +63,14 @@ export function TableFilters({
   setCreativoFilter,
   bmFilter = 'all',
   setBmFilter,
+  origemFilter = 'all',
+  setOrigemFilter,
   getStatusColor,
   isSearching = false
-}: TableFiltersProps) {
+}: TableFiltersProps & {
+  origemFilter?: string
+  setOrigemFilter?: (value: string) => void
+}) {
   
   const handleSiteStatusChange = (value: string) => {
     console.log('🎯 [TableFilters] Alterando filtro de site_status para:', value)
@@ -87,13 +98,19 @@ export function TableFilters({
     }
   }
 
+  const handleOrigemChange = (value: string) => {
+    console.log('🤖 [TableFilters] Alterando filtro de origem para:', value)
+    if (setOrigemFilter) {
+      setOrigemFilter(value)
+    }
+  }
+
   return (
     <div className="flex flex-col space-y-6 sm:flex-row sm:space-y-0 sm:space-x-6">
-      {/* Campo de Busca com gradiente azul vibrante e indicador de busca */}
+      {/* Campo de Busca - keep existing code the same */}
       <div className="relative flex-1">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-500/15 to-cyan-500/15 rounded-xl border border-blue-400/30 shadow-xl shadow-blue-500/15 backdrop-blur-sm"></div>
         <div className="relative">
-          {/* ETAPA 3: Ícone animado durante busca */}
           {isSearching ? (
             <div className="absolute left-4 top-1/2 transform -translate-y-1/2">
               <div className="w-5 h-5 border-2 border-blue-300/30 border-t-blue-300 rounded-full animate-spin"></div>
@@ -109,8 +126,27 @@ export function TableFilters({
           />
         </div>
       </div>
+
+      {/* Status Origem com gradiente rosa vibrante */}
+      {setOrigemFilter && (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-pink-500/15 to-rose-500/15 rounded-xl border border-pink-400/30 shadow-xl shadow-pink-500/15 backdrop-blur-sm"></div>
+          <Select value={origemFilter} onValueChange={handleOrigemChange}>
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-pink-400/40 text-white hover:border-pink-300/60 focus:border-pink-300 focus:ring-2 focus:ring-pink-400/30 transition-all duration-300 rounded-xl">
+              <SelectValue placeholder="Origem" className="font-medium" />
+            </SelectTrigger>
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
+              {ORIGEM_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                  <span className="font-medium">{option.label}</span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       
-      {/* Status da Campanha com gradiente verde vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status da Campanha - keep existing code the same */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-green-500/15 to-emerald-500/15 rounded-xl border border-green-400/30 shadow-xl shadow-green-500/15 backdrop-blur-sm"></div>
         <Select value={statusFilter} onValueChange={handleStatusChange}>
@@ -132,7 +168,7 @@ export function TableFilters({
         </Select>
       </div>
 
-      {/* Status do Site com gradiente laranja vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status do Site - keep existing code the same */}
       {showSiteStatusFilter && setSiteStatusFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-orange-500/15 to-amber-500/15 rounded-xl border border-orange-400/30 shadow-xl shadow-orange-500/15 backdrop-blur-sm"></div>
@@ -151,7 +187,7 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status Criativo com gradiente roxo vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status Criativo - keep existing code the same */}
       {setCreativoFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/15 to-violet-500/15 rounded-xl border border-purple-400/30 shadow-xl shadow-purple-500/15 backdrop-blur-sm"></div>
@@ -170,7 +206,7 @@ export function TableFilters({
         </div>
       )}
 
-      {/* Status BM com gradiente ciano vibrante - SEM ÍCONE DUPLICADO */}
+      {/* Status BM - keep existing code the same */}
       {setBmFilter && (
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/15 to-teal-500/15 rounded-xl border border-cyan-400/30 shadow-xl shadow-cyan-500/15 backdrop-blur-sm"></div>

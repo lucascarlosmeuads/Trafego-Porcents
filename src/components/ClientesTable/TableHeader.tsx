@@ -37,6 +37,18 @@ export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableH
               </TooltipContent>
             </Tooltip>
           </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center text-xs font-bold">
+                  🤖
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Origem</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
           <TableHead className="text-white font-semibold w-20 text-xs">
             <Tooltip>
               <TooltipTrigger>

@@ -1,4 +1,3 @@
-
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, Mail, AtSign } from 'lucide-react'
@@ -14,6 +13,8 @@ import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
+import { useClienteOrigem } from '@/hooks/useClienteOrigem'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -68,6 +69,8 @@ export function ClienteRow({
   onComissionUpdate,
   onSitePagoChange
 }: ClienteRowProps) {
+  const { getClienteOrigem } = useClienteOrigem()
+  
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'N/A'
     try {
@@ -91,6 +94,8 @@ export function ClienteRow({
     }
   }
 
+  const clienteOrigem = getClienteOrigem(cliente.id!.toString())
+
   return (
     <TooltipProvider>
       <TableRow 
@@ -105,6 +110,15 @@ export function ClienteRow({
           <ClienteRowName 
             clienteId={cliente.id!.toString()}
             nomeCliente={cliente.nome_cliente || ''}
+          />
+        </TableCell>
+
+        <TableCell className="text-white text-xs p-1">
+          <ClienteOrigemIndicator
+            origem={clienteOrigem.origem}
+            createdAt={clienteOrigem.created_at}
+            pedidoId={clienteOrigem.pedido_id}
+            compact={true}
           />
         </TableCell>
 
