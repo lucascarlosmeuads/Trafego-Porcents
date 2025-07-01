@@ -2,7 +2,7 @@
 import { useMemo, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Users, TrendingUp, DollarSign, Calendar, Award, RefreshCw, Database, AlertTriangle } from 'lucide-react'
+import { Users, TrendingUp, DollarSign, Calendar, Award, RefreshCw, Database, AlertTriangle, CheckCircle } from 'lucide-react'
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
@@ -39,13 +39,13 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
         
         if (count && count > clientes.length) {
           toast({
-            title: "Aviso",
+            title: "Discrepância Detectada",
             description: `Existem ${count} clientes no banco, mas apenas ${clientes.length} foram carregados. Recarregue a página.`,
-            variant: "default"
+            variant: "destructive"
           })
         } else {
           toast({
-            title: "Sucesso",
+            title: "Dados Sincronizados",
             description: `Todos os ${count} clientes foram carregados corretamente.`,
             variant: "default"
           })
@@ -110,7 +110,8 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     }
   }, [clientes])
 
-  const isDiscrepancy = totalInDatabase && totalInDatabase > clientes.length
+  const isDiscrepancy = totalInDatabase && totalInDatabase !== clientes.length
+  const isFullyLoaded = totalInDatabase && totalInDatabase === clientes.length
 
   return (
     <div className="space-y-6">
@@ -135,47 +136,63 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
         </Button>
       </div>
 
-      {/* Alert de discrepância */}
-      {isDiscrepancy && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-2 text-orange-700">
-              <AlertTriangle className="w-5 h-5" />
-              <span className="font-medium">
-                Discrepância detectada: {totalInDatabase} no banco vs {clientes.length} carregados
-              </span>
-            </div>
-            <p className="text-sm text-orange-600 mt-1">
-              Recarregue a página para garantir que todos os dados sejam exibidos.
-            </p>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Status de carregamento de dados */}
-      <Card className="bg-blue-50 border-blue-200">
+      {/* Status de carregamento */}
+      <Card className={`${isFullyLoaded ? 'border-green-200 bg-green-50' : isDiscrepancy ? 'border-orange-200 bg-orange-50' : 'bg-blue-50 border-blue-200'}`}>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-blue-700">
-            <Database className="w-5 h-5" />
+          <CardTitle className={`flex items-center gap-2 ${isFullyLoaded ? 'text-green-700' : isDiscrepancy ? 'text-orange-700' : 'text-blue-700'}`}>
+            {isFullyLoaded ? (
+              <CheckCircle className="w-5 h-5" />
+            ) : isDiscrepancy ? (
+              <AlertTriangle className="w-5 h-5" />
+            ) : (
+              <Database className="w-5 h-5" />
+            )}
             Status de Carregamento
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <div className="text-2xl font-bold text-blue-700">{clientes.length}</div>
-              <p className="text-blue-600">clientes carregados</p>
+              <div className={`text-2xl font-bold ${isFullyLoaded ? 'text-green-700' : isDiscrepancy ? 'text-orange-700' : 'text-blue-700'}`}>
+                {clientes.length}
+              </div>
+              <p className={`${isFullyLoaded ? 'text-green-600' : isDiscrepancy ? 'text-orange-600' : 'text-blue-600'}`}>
+                clientes carregados
+              </p>
             </div>
             {totalInDatabase && (
               <div className="text-right">
-                <div className="text-lg font-semibold text-blue-700">{totalInDatabase}</div>
-                <p className="text-sm text-blue-600">total no banco</p>
+                <div className={`text-lg font-semibold ${isFullyLoaded ? 'text-green-700' : isDiscrepancy ? 'text-orange-700' : 'text-blue-700'}`}>
+                  {totalInDatabase}
+                </div>
+                <p className={`text-sm ${isFullyLoaded ? 'text-green-600' : isDiscrepancy ? 'text-orange-600' : 'text-blue-600'}`}>
+                  total no banco
+                </p>
               </div>
             )}
           </div>
-          {clientes.length >= 1000 && (
-            <p className="text-sm text-green-600 mt-2">
-              ✅ Sistema carregando grandes volumes corretamente
+          
+          {isFullyLoaded && (
+            <p className="text-sm text-green-600 mt-2 flex items-center gap-2">
+              <CheckCircle className="w-4 h-4" />
+              ✅ Todos os clientes carregados corretamente
+            </p>
+          )}
+          
+          {isDiscrepancy && (
+            <div className="mt-2">
+              <p className="text-sm text-orange-600 font-medium">
+                ⚠️ Discrepância detectada: {totalInDatabase} no banco vs {clientes.length} carregados
+              </p>
+              <p className="text-sm text-orange-600 mt-1">
+                Recarregue a página para garantir que todos os dados sejam exibidos.
+              </p>
+            </div>
+          )}
+          
+          {clientes.length >= 1000 && !totalInDatabase && (
+            <p className="text-sm text-blue-600 mt-2">
+              📊 Carregando grandes volumes - clique em "Verificar Total" para validar
             </p>
           )}
         </CardContent>

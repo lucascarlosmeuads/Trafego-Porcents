@@ -40,7 +40,6 @@ export function useAdminTableLogic() {
 
       if (error) {
         console.error('❌ [AdminTable] Erro ao buscar gestores:', error)
-        // Fallback com gestores essenciais
         const fallbackGestores = [
           { email: 'carol@trafegoporcents.com', nome: 'Carol' },
           { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
@@ -50,9 +49,7 @@ export function useAdminTableLogic() {
       } else {
         const gestoresData = data || []
         console.log('✅ [AdminTable] Gestores carregados:', gestoresData.length)
-        console.log('📋 [AdminTable] Lista de gestores:', gestoresData)
         
-        // Garantir que Carol está sempre na lista
         const gestoresComCarol = ensureCarolInGestoresList([...gestoresData])
         console.log('✅ [AdminTable] Lista final com Carol:', gestoresComCarol)
         
@@ -60,7 +57,6 @@ export function useAdminTableLogic() {
       }
     } catch (error) {
       console.error('💥 [AdminTable] Erro na consulta de gestores:', error)
-      // Fallback em caso de erro
       const fallbackGestores = [
         { email: 'carol@trafegoporcents.com', nome: 'Carol' },
         { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
@@ -70,12 +66,51 @@ export function useAdminTableLogic() {
     }
   }
 
+  // Função para buscar dados em chunks
+  const fetchAllDataInChunks = async (chunkSize: number = 1000) => {
+    const allData: Cliente[] = []
+    let from = 0
+    let hasMore = true
+
+    while (hasMore) {
+      console.log(`🔄 [AdminTable] Buscando chunk ${from} a ${from + chunkSize - 1}`)
+      
+      const { data, error } = await supabase
+        .from('todos_clientes')
+        .select('*')
+        .range(from, from + chunkSize - 1)
+        .order('created_at', { ascending: false })
+
+      if (error) {
+        console.error(`❌ [AdminTable] Erro no chunk ${from}:`, error)
+        throw error
+      }
+
+      if (data && data.length > 0) {
+        allData.push(...data)
+        console.log(`✅ [AdminTable] Chunk ${from}: ${data.length} registros`)
+        
+        // Se retornou menos que o chunk size, não há mais dados
+        if (data.length < chunkSize) {
+          hasMore = false
+        } else {
+          from += chunkSize
+        }
+      } else {
+        hasMore = false
+      }
+    }
+
+    console.log(`🎯 [AdminTable] Total de registros carregados: ${allData.length}`)
+    return allData
+  }
+
   const fetchAllClientes = async () => {
     try {
-      console.log('🔍 [AdminTable] Iniciando busca de TODOS os clientes...')
+      console.log('🔍 [AdminTable] Iniciando busca de TODOS os clientes sem limitação...')
       setLoading(true)
       
-      // Buscar o total de clientes primeiro para saber quantos temos
+      // Buscar o total de clientes primeiro
       const { count, error: countError } = await supabase
         .from('todos_clientes')
         .select('*', { count: 'exact', head: true })
@@ -86,48 +121,33 @@ export function useAdminTableLogic() {
         console.log(`📊 [AdminTable] Total de clientes no banco: ${count}`)
       }
 
-      // Buscar TODOS os clientes sem limite
-      const { data, error } = await supabase
-        .from('todos_clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
-        // Remover qualquer limite implícito usando range para garantir que pegamos todos
-        .range(0, 10000) // Aumentar significativamente o range para cobrir todos os clientes
-
-      if (error) {
-        console.error('❌ Erro ao buscar clientes:', error)
+      // Buscar TODOS os clientes em chunks
+      const allData = await fetchAllDataInChunks()
+      
+      // Properly format the data to ensure consistent date handling
+      const formattedClientes = allData.map(cliente => ({
+        ...cliente,
+        data_venda: cliente.data_venda ? String(cliente.data_venda) : null,
+        created_at: cliente.created_at ? String(cliente.created_at) : null,
+        status_campanha: cliente.status_campanha ? String(cliente.status_campanha) : ''
+      }))
+      
+      console.log(`✅ [AdminTable] Clientes carregados com sucesso: ${formattedClientes.length}`)
+      console.log(`📋 [AdminTable] Comparação - Esperado: ${count || 'N/A'}, Carregado: ${formattedClientes.length}`)
+      
+      // Verificar se há discrepância significativa
+      if (count && formattedClientes.length !== count) {
+        console.warn(`⚠️ [AdminTable] DISCREPÂNCIA: Carregados ${formattedClientes.length} de ${count} clientes totais`)
         toast({
-          title: "Erro",
-          description: `Erro ao carregar dados: ${error.message}`,
-          variant: "destructive"
+          title: "Aviso",
+          description: `Carregados ${formattedClientes.length} de ${count} clientes. Verifique se todos foram exibidos.`,
+          variant: "default"
         })
       } else {
-        // Properly format the data to ensure consistent date handling
-        const formattedClientes = (data || []).map(cliente => ({
-          ...cliente,
-          // Ensure data_venda is properly formatted as string (YYYY-MM-DD)
-          data_venda: cliente.data_venda ? String(cliente.data_venda) : null,
-          // Ensure created_at is properly formatted as string
-          created_at: cliente.created_at ? String(cliente.created_at) : null,
-          // Ensure status_campanha is a string
-          status_campanha: cliente.status_campanha ? String(cliente.status_campanha) : ''
-        }))
-        
-        console.log(`✅ [AdminTable] Clientes carregados com sucesso: ${formattedClientes.length}`)
-        console.log(`📋 [AdminTable] Comparação - Esperado: ${count || 'N/A'}, Carregado: ${formattedClientes.length}`)
-        
-        // Verificar se há discrepância
-        if (count && formattedClientes.length < count) {
-          console.warn(`⚠️ [AdminTable] ATENÇÃO: Carregados ${formattedClientes.length} de ${count} clientes totais`)
-          toast({
-            title: "Aviso",
-            description: `Carregados ${formattedClientes.length} de ${count} clientes. Alguns podem não ter sido exibidos.`,
-            variant: "default"
-          })
-        }
-        
-        setClientes(formattedClientes)
+        console.log(`✅ [AdminTable] Todos os ${formattedClientes.length} clientes carregados corretamente`)
       }
+      
+      setClientes(formattedClientes)
     } catch (error) {
       console.error('❌ Erro na consulta:', error)
       toast({
