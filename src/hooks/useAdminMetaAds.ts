@@ -221,7 +221,7 @@ export function useAdminMetaAds() {
         // Calcular custo por mensagem (assumindo que mensagens = clicks)
         const costPerMessage = todayInsights.clicks > 0 
           ? (parseFloat(todayInsights.spend) / todayInsights.clicks).toFixed(2)
-          : 0
+          : '0'
 
         setInsights({
           spend: parseFloat(todayInsights.spend) || 0,
