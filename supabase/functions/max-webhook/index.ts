@@ -74,16 +74,25 @@ function extractClientData(rawData: any): MaxPedido {
 
 serve(async (req) => {
   const requestId = `req-${Date.now()}`;
-  console.log(`🚀 [Max Webhook ${requestId}] Nova requisição recebida`);
+  console.log(`🚀 [Max Webhook ${requestId}] ===== NOVA REQUISIÇÃO WEBHOOK =====`);
   console.log(`📨 [Max Webhook ${requestId}] Método: ${req.method}`);
   console.log(`🔗 [Max Webhook ${requestId}] URL: ${req.url}`);
+  console.log(`⏰ [Max Webhook ${requestId}] Timestamp: ${new Date().toISOString()}`);
   
   // Capturar headers para debugging
   const headers: Record<string, string> = {};
   req.headers.forEach((value, key) => {
     headers[key] = value;
   });
-  console.log(`📋 [Max Webhook ${requestId}] Headers:`, JSON.stringify(headers, null, 2));
+  console.log(`📋 [Max Webhook ${requestId}] Headers completos:`, JSON.stringify(headers, null, 2));
+  
+  // Log específico do User-Agent para identificar origem
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  console.log(`🔍 [Max Webhook ${requestId}] User-Agent: ${userAgent}`);
+  
+  // Log do Content-Type para verificar formato
+  const contentType = req.headers.get('content-type') || 'unknown';
+  console.log(`📄 [Max Webhook ${requestId}] Content-Type: ${contentType}`);
 
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -101,36 +110,74 @@ serve(async (req) => {
   try {
     // Tentar capturar o corpo da requisição
     const bodyText = await req.text();
-    console.log(`📦 [Max Webhook ${requestId}] Corpo da requisição (raw):`, bodyText);
+    console.log(`📦 [Max Webhook ${requestId}] CORPO COMPLETO DA REQUISIÇÃO:`, bodyText);
+    console.log(`📊 [Max Webhook ${requestId}] Tamanho do corpo: ${bodyText.length} bytes`);
 
     if (bodyText.trim()) {
       try {
         rawBody = JSON.parse(bodyText);
-        console.log(`📦 [Max Webhook ${requestId}] Dados JSON parseados:`, JSON.stringify(rawBody, null, 2));
+        console.log(`✅ [Max Webhook ${requestId}] JSON parseado com sucesso`);
+        console.log(`📦 [Max Webhook ${requestId}] DADOS ESTRUTURADOS:`, JSON.stringify(rawBody, null, 2));
       } catch (parseError) {
-        console.log(`⚠️ [Max Webhook ${requestId}] Erro ao fazer parse do JSON:`, parseError);
-        rawBody = { raw_text: bodyText, parse_error: parseError.message };
+        console.log(`⚠️ [Max Webhook ${requestId}] ERRO AO FAZER PARSE DO JSON:`, parseError);
+        console.log(`📝 [Max Webhook ${requestId}] Tentando processar como texto simples...`);
+        
+        // Tentar processar como form-data ou query string
+        const isFormData = contentType.includes('application/x-www-form-urlencoded');
+        const isMultipart = contentType.includes('multipart/form-data');
+        
+        if (isFormData) {
+          console.log(`📝 [Max Webhook ${requestId}] Detectado form-data, processando...`);
+          try {
+            const formData = new URLSearchParams(bodyText);
+            rawBody = Object.fromEntries(formData.entries());
+            console.log(`✅ [Max Webhook ${requestId}] Form-data processado:`, JSON.stringify(rawBody, null, 2));
+          } catch (formError) {
+            console.log(`❌ [Max Webhook ${requestId}] Erro ao processar form-data:`, formError);
+            rawBody = { raw_text: bodyText, parse_error: parseError.message, form_error: formError.message };
+          }
+        } else {
+          rawBody = { raw_text: bodyText, parse_error: parseError.message, content_type: contentType };
+        }
       }
     } else {
-      console.log(`⚠️ [Max Webhook ${requestId}] Corpo da requisição vazio`);
-      rawBody = { message: 'Corpo vazio', method: req.method, headers };
+      console.log(`⚠️ [Max Webhook ${requestId}] CORPO DA REQUISIÇÃO VAZIO!`);
+      rawBody = { 
+        message: 'Corpo vazio - possível problema na configuração do AppMax', 
+        method: req.method, 
+        headers,
+        user_agent: userAgent,
+        timestamp: new Date().toISOString()
+      };
     }
 
     // Extrair ID do pedido para logs
     if (rawBody && typeof rawBody === 'object') {
-      pedidoId = rawBody.id || rawBody.pedido_id || rawBody.order_id || pedidoId;
+      pedidoId = rawBody.id || rawBody.pedido_id || rawBody.order_id || rawBody.transaction_id || pedidoId;
+      console.log(`🆔 [Max Webhook ${requestId}] ID do pedido identificado: ${pedidoId}`);
     }
 
     // Log inicial SEMPRE é criado, mesmo com dados incompletos
     const initialLog = {
       pedido_id: pedidoId,
       status: 'processando',
-      dados_originais: rawBody,
+      dados_originais: {
+        ...rawBody,
+        _webhook_meta: {
+          request_id: requestId,
+          timestamp: new Date().toISOString(),
+          method: req.method,
+          headers: headers,
+          user_agent: userAgent,
+          content_type: contentType,
+          body_size: bodyText?.length || 0
+        }
+      },
       gestor_atribuido: null,
       erro_detalhes: null
     };
 
-    console.log(`💾 [Max Webhook ${requestId}] Criando log inicial...`);
+    console.log(`💾 [Max Webhook ${requestId}] Criando log inicial detalhado...`);
     const { data: logData, error: logError } = await supabase
       .from('max_integration_logs')
       .insert(initialLog)
@@ -138,23 +185,23 @@ serve(async (req) => {
       .single();
 
     if (logError) {
-      console.error(`❌ [Max Webhook ${requestId}] Erro ao criar log inicial:`, logError);
+      console.error(`❌ [Max Webhook ${requestId}] ERRO CRÍTICO ao criar log inicial:`, logError);
       // Continuar mesmo se o log falhar
     } else {
-      console.log(`✅ [Max Webhook ${requestId}] Log inicial criado com ID:`, logData?.id);
+      console.log(`✅ [Max Webhook ${requestId}] Log inicial criado com ID: ${logData?.id}`);
     }
 
     // Verificar se há dados suficientes para processar
     if (!rawBody || typeof rawBody !== 'object' || Object.keys(rawBody).length === 0) {
-      const errorMsg = 'Dados insuficientes ou formato inválido';
-      console.log(`⚠️ [Max Webhook ${requestId}] ${errorMsg}`);
+      const errorMsg = `❌ DADOS INSUFICIENTES - Webhook chamado mas sem dados válidos. Verifique configuração no AppMax.`;
+      console.log(`${errorMsg} Request ID: ${requestId}`);
       
       if (logData?.id) {
         await supabase
           .from('max_integration_logs')
           .update({
             status: 'erro',
-            erro_detalhes: `${errorMsg}. Método: ${req.method}, Headers: ${JSON.stringify(headers)}`
+            erro_detalhes: `${errorMsg} | Método: ${req.method} | User-Agent: ${userAgent} | Content-Type: ${contentType}`
           })
           .eq('id', logData.id);
       }
@@ -164,7 +211,9 @@ serve(async (req) => {
           error: errorMsg,
           request_id: requestId,
           method: req.method,
-          received_data: rawBody 
+          received_data: rawBody,
+          webhook_url: req.url,
+          timestamp: new Date().toISOString()
         }),
         { 
           status: 400, 
@@ -182,21 +231,25 @@ serve(async (req) => {
       .single();
 
     if (configError || !config) {
-      const errorMsg = 'Integração não configurada ou inativa';
-      console.error(`❌ [Max Webhook ${requestId}] ${errorMsg}:`, configError);
+      const errorMsg = `❌ INTEGRAÇÃO INATIVA - Webhook recebido mas integração está desativada no sistema`;
+      console.error(`${errorMsg} Request ID: ${requestId}`, configError);
       
       if (logData?.id) {
         await supabase
           .from('max_integration_logs')
           .update({
             status: 'erro',
-            erro_detalhes: errorMsg
+            erro_detalhes: `${errorMsg} | Erro: ${configError?.message || 'Configuração não encontrada'}`
           })
           .eq('id', logData.id);
       }
 
       return new Response(
-        JSON.stringify({ error: errorMsg, request_id: requestId }),
+        JSON.stringify({ 
+          error: errorMsg, 
+          request_id: requestId,
+          details: configError?.message || 'Configuração não encontrada'
+        }),
         { 
           status: 400, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
@@ -204,15 +257,17 @@ serve(async (req) => {
       );
     }
 
-    console.log(`⚙️ [Max Webhook ${requestId}] Configuração encontrada:`, config.gestor_nome);
+    console.log(`✅ [Max Webhook ${requestId}] Configuração ativa encontrada - Gestor: ${config.gestor_nome}`);
 
     // Extrair dados do cliente com mapeamento flexível
     const clienteData = extractClientData(rawBody);
+    console.log(`📋 [Max Webhook ${requestId}] Dados do cliente extraídos:`, JSON.stringify(clienteData, null, 2));
     
     // Validar dados essenciais com fallbacks
     if (!clienteData.nome_cliente || !clienteData.telefone) {
-      const errorMsg = `Dados obrigatórios faltando. Nome: ${clienteData.nome_cliente || 'FALTANDO'}, Telefone: ${clienteData.telefone || 'FALTANDO'}`;
-      console.error(`❌ [Max Webhook ${requestId}] ${errorMsg}`);
+      const errorMsg = `❌ DADOS OBRIGATÓRIOS FALTANDO - Nome: '${clienteData.nome_cliente || 'AUSENTE'}' | Telefone: '${clienteData.telefone || 'AUSENTE'}'`;
+      console.error(`${errorMsg} Request ID: ${requestId}`);
+      console.log(`🔍 [Max Webhook ${requestId}] Estrutura de dados recebida para debug:`, Object.keys(rawBody));
       
       if (logData?.id) {
         await supabase
@@ -220,7 +275,7 @@ serve(async (req) => {
           .update({
             status: 'erro',
             gestor_atribuido: config.gestor_email,
-            erro_detalhes: errorMsg
+            erro_detalhes: `${errorMsg} | Estrutura recebida: ${JSON.stringify(Object.keys(rawBody))}`
           })
           .eq('id', logData.id);
       }
@@ -229,7 +284,9 @@ serve(async (req) => {
         JSON.stringify({ 
           error: errorMsg,
           request_id: requestId,
-          received_data: clienteData 
+          received_data: clienteData,
+          data_structure: Object.keys(rawBody),
+          help: "Verifique se o AppMax está enviando os campos 'nome_cliente' e 'telefone' corretamente"
         }),
         { 
           status: 400, 
@@ -253,6 +310,7 @@ serve(async (req) => {
       if (existingByEmail) {
         clienteExiste = true;
         clienteExistente = existingByEmail;
+        console.log(`🔍 [Max Webhook ${requestId}] Cliente encontrado por email: ${existingByEmail.nome_cliente}`);
       }
     }
 
@@ -267,11 +325,12 @@ serve(async (req) => {
       if (existingByPhone) {
         clienteExiste = true;
         clienteExistente = existingByPhone;
+        console.log(`🔍 [Max Webhook ${requestId}] Cliente encontrado por telefone: ${existingByPhone.nome_cliente}`);
       }
     }
 
     if (clienteExiste && clienteExistente) {
-      console.log(`⚠️ [Max Webhook ${requestId}] Cliente já existe:`, clienteExistente.nome_cliente);
+      console.log(`⚠️ [Max Webhook ${requestId}] CLIENTE DUPLICADO - Nome: ${clienteExistente.nome_cliente} | ID: ${clienteExistente.id}`);
       
       if (logData?.id) {
         await supabase
@@ -280,7 +339,7 @@ serve(async (req) => {
             status: 'duplicado',
             cliente_criado_id: clienteExistente.id,
             gestor_atribuido: config.gestor_email,
-            erro_detalhes: `Cliente já existe: ${clienteExistente.nome_cliente}`
+            erro_detalhes: `Cliente já existe no sistema - Nome: ${clienteExistente.nome_cliente} | ID: ${clienteExistente.id}`
           })
           .eq('id', logData.id);
       }
@@ -290,7 +349,8 @@ serve(async (req) => {
           message: 'Cliente já existe no sistema',
           cliente_id: clienteExistente.id,
           cliente_nome: clienteExistente.nome_cliente,
-          request_id: requestId
+          request_id: requestId,
+          status: 'duplicado'
         }),
         { 
           status: 200, 
@@ -312,10 +372,11 @@ serve(async (req) => {
       comissao: 'Pendente',
       site_status: 'pendente',
       site_pago: false,
-      descricao_problema: `${clienteData.observacoes} | Pedido App Max #${clienteData.id} | Valor: R$ ${clienteData.valor || 0}`
+      descricao_problema: `${clienteData.observacoes} | Pedido App Max #${clienteData.id} | Valor: R$ ${clienteData.valor || 0} | Request ID: ${requestId}`
     };
 
-    console.log(`💾 [Max Webhook ${requestId}] Criando cliente:`, novoCliente.nome_cliente);
+    console.log(`💾 [Max Webhook ${requestId}] Criando novo cliente: ${novoCliente.nome_cliente}`);
+    console.log(`📋 [Max Webhook ${requestId}] Dados do cliente:`, JSON.stringify(novoCliente, null, 2));
 
     const { data: clienteCriado, error: clienteError } = await supabase
       .from('todos_clientes')
@@ -324,7 +385,7 @@ serve(async (req) => {
       .single();
 
     if (clienteError) {
-      console.error(`❌ [Max Webhook ${requestId}] Erro ao criar cliente:`, clienteError);
+      console.error(`❌ [Max Webhook ${requestId}] ERRO AO CRIAR CLIENTE:`, clienteError);
       
       if (logData?.id) {
         await supabase
@@ -332,7 +393,7 @@ serve(async (req) => {
           .update({
             status: 'erro',
             gestor_atribuido: config.gestor_email,
-            erro_detalhes: `Erro ao criar cliente: ${clienteError.message}`
+            erro_detalhes: `Erro ao criar cliente: ${clienteError.message} | Código: ${clienteError.code}`
           })
           .eq('id', logData.id);
       }
@@ -341,6 +402,7 @@ serve(async (req) => {
         JSON.stringify({ 
           error: 'Erro ao criar cliente', 
           details: clienteError.message,
+          code: clienteError.code,
           request_id: requestId
         }),
         { 
@@ -363,12 +425,13 @@ serve(async (req) => {
         .eq('id', logData.id);
     }
 
-    console.log(`✅ [Max Webhook ${requestId}] Cliente criado com sucesso:`, {
-      id: clienteCriado.id,
-      nome: clienteCriado.nome_cliente,
-      gestor: config.gestor_nome,
-      request_id: requestId
-    });
+    console.log(`🎉 [Max Webhook ${requestId}] ===== CLIENTE CRIADO COM SUCESSO =====`);
+    console.log(`✅ [Max Webhook ${requestId}] ID do Cliente: ${clienteCriado.id}`);
+    console.log(`✅ [Max Webhook ${requestId}] Nome: ${clienteCriado.nome_cliente}`);
+    console.log(`✅ [Max Webhook ${requestId}] Gestor: ${config.gestor_nome}`);
+    console.log(`✅ [Max Webhook ${requestId}] Email Gestor: ${config.gestor_email}`);
+    console.log(`✅ [Max Webhook ${requestId}] Request ID: ${requestId}`);
+    console.log(`🏁 [Max Webhook ${requestId}] ===== PROCESSAMENTO CONCLUÍDO =====`);
 
     return new Response(
       JSON.stringify({ 
@@ -377,7 +440,8 @@ serve(async (req) => {
         cliente_id: clienteCriado.id,
         cliente_nome: clienteCriado.nome_cliente,
         gestor_atribuido: config.gestor_nome,
-        request_id: requestId
+        request_id: requestId,
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 200, 
@@ -386,26 +450,38 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error(`💥 [Max Webhook ${requestId}] Erro inesperado:`, error);
+    console.error(`💥 [Max Webhook ${requestId}] ===== ERRO CRÍTICO =====`);
+    console.error(`💥 [Max Webhook ${requestId}] Erro:`, error);
+    console.error(`💥 [Max Webhook ${requestId}] Stack:`, error.stack);
     
     // Tentar salvar erro no log mesmo em caso de falha crítica
     try {
       await logToDatabase(supabase, {
         pedido_id: pedidoId,
         status: 'erro',
-        dados_originais: rawBody || { error: 'Falha ao capturar dados' },
+        dados_originais: {
+          ...(rawBody || { error: 'Falha ao capturar dados' }),
+          _webhook_meta: {
+            request_id: requestId,
+            timestamp: new Date().toISOString(),
+            critical_error: true,
+            error_message: error.message,
+            error_stack: error.stack
+          }
+        },
         gestor_atribuido: null,
-        erro_detalhes: `Erro crítico: ${error.message}`
+        erro_detalhes: `ERRO CRÍTICO: ${error.message} | Request ID: ${requestId}`
       });
     } catch (logErr) {
-      console.error(`💥 [Max Webhook ${requestId}] Falha crítica ao salvar log de erro:`, logErr);
+      console.error(`💥 [Max Webhook ${requestId}] FALHA CRÍTICA ao salvar log de erro:`, logErr);
     }
     
     return new Response(
       JSON.stringify({ 
         error: 'Erro interno do servidor', 
         details: error.message,
-        request_id: requestId
+        request_id: requestId,
+        timestamp: new Date().toISOString()
       }),
       { 
         status: 500, 

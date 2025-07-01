@@ -1,177 +1,183 @@
 
-import { useMemo } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { MaxIntegrationLog } from '@/hooks/useMaxIntegration'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { 
   TrendingUp, 
-  Users, 
-  CheckCircle, 
-  XCircle, 
+  TrendingDown, 
+  BarChart3, 
   Clock,
-  AlertTriangle
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+  Users
 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 
 interface MaxIntegrationStatsProps {
   logs: MaxIntegrationLog[]
 }
 
 export function MaxIntegrationStats({ logs }: MaxIntegrationStatsProps) {
-  const stats = useMemo(() => {
-    const today = new Date().toDateString()
-    const thisWeek = new Date()
-    thisWeek.setDate(thisWeek.getDate() - 7)
-
-    // Filtrar logs por período
-    const logsToday = logs.filter(log => 
-      new Date(log.created_at).toDateString() === today
-    )
-    
-    const logsThisWeek = logs.filter(log => 
-      new Date(log.created_at) >= thisWeek
-    )
-
-    // Contar por status
-    const countByStatus = (logsList: MaxIntegrationLog[]) => {
-      return logsList.reduce((acc, log) => {
-        acc[log.status] = (acc[log.status] || 0) + 1
-        return acc
-      }, {} as Record<string, number>)
-    }
-
-    const todayStats = countByStatus(logsToday)
-    const weekStats = countByStatus(logsThisWeek)
-
-    return {
-      today: {
-        total: logsToday.length,
-        sucesso: todayStats.sucesso || 0,
-        erro: todayStats.erro || 0,
-        processando: todayStats.processando || 0,
-        duplicado: todayStats.duplicado || 0
-      },
-      week: {
-        total: logsThisWeek.length,
-        sucesso: weekStats.sucesso || 0,
-        erro: weekStats.erro || 0,
-        processando: weekStats.processando || 0,
-        duplicado: weekStats.duplicado || 0
-      }
-    }
-  }, [logs])
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'sucesso':
-        return <CheckCircle className="w-4 h-4 text-green-500" />
-      case 'erro':
-        return <XCircle className="w-4 h-4 text-red-500" />
-      case 'processando':
-        return <Clock className="w-4 h-4 text-yellow-500" />
-      case 'duplicado':
-        return <AlertTriangle className="w-4 h-4 text-orange-500" />
-      default:
-        return null
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'sucesso':
-        return 'bg-green-500/20 text-green-400 border-green-500/30'
-      case 'erro':
-        return 'bg-red-500/20 text-red-400 border-red-500/30'
-      case 'processando':
-        return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-      case 'duplicado':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/30'
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/30'
-    }
-  }
+  // Calcular estatísticas
+  const totalLogs = logs.length
+  const sucessos = logs.filter(log => log.status === 'sucesso').length
+  const erros = logs.filter(log => log.status === 'erro').length
+  const duplicados = logs.filter(log => log.status === 'duplicado').length
+  const processando = logs.filter(log => log.status === 'processando').length
+  
+  const taxaSucesso = totalLogs > 0 ? Math.round((sucessos / totalLogs) * 100) : 0
+  const taxaErro = totalLogs > 0 ? Math.round((erros / totalLogs) * 100) : 0
+  
+  // Últimas 24h
+  const agora = new Date()
+  const ontemAgora = new Date(agora.getTime() - 24 * 60 * 60 * 1000)
+  const logsUltimas24h = logs.filter(log => new Date(log.created_at) > ontemAgora)
+  const sucessosUltimas24h = logsUltimas24h.filter(log => log.status === 'sucesso').length
+  
+  // Último log
+  const ultimoLog = logs[0]
+  
+  // Clientes únicos criados
+  const clientesCriados = logs.filter(log => log.cliente_criado_id).length
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-2">
-        <TrendingUp className="w-5 h-5 text-blue-400" />
-        <h3 className="text-lg font-semibold text-white">Estatísticas de Integração</h3>
-      </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* Total de Integrações */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Total de Tentativas</CardTitle>
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-white">{totalLogs}</div>
+          <p className="text-xs text-muted-foreground">
+            <span className="text-green-400">+{logsUltimas24h.length}</span> nas últimas 24h
+          </p>
+        </CardContent>
+      </Card>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        {/* Estatísticas de Hoje */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users className="w-4 h-4" />
-              Pedidos de Hoje
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-2xl font-bold text-white">
-              {stats.today.total}
+      {/* Taxa de Sucesso */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Taxa de Sucesso</CardTitle>
+          {taxaSucesso >= 80 ? (
+            <TrendingUp className="h-4 w-4 text-green-500" />
+          ) : (
+            <TrendingDown className="h-4 w-4 text-red-500" />
+          )}
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-green-400">{taxaSucesso}%</div>
+          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+            <span>{sucessos} sucessos</span>
+            <span>•</span>
+            <span>{erros} erros</span>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Clientes Criados */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Clientes Criados</CardTitle>
+          <Users className="h-4 w-4 text-blue-500" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold text-blue-400">{clientesCriados}</div>
+          <p className="text-xs text-muted-foreground">
+            <span className="text-green-400">+{sucessosUltimas24h}</span> nas últimas 24h
+          </p>
+        </CardContent>
+      </Card>
+
+      {/* Status da Última Integração */}
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">Última Integração</CardTitle>
+          <Clock className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          {ultimoLog ? (
+            <>
+              <div className="flex items-center space-x-2 mb-1">
+                {ultimoLog.status === 'sucesso' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                {ultimoLog.status === 'erro' && <XCircle className="w-4 h-4 text-red-500" />}
+                {ultimoLog.status === 'duplicado' && <AlertTriangle className="w-4 h-4 text-orange-500" />}
+                {ultimoLog.status === 'processando' && <Clock className="w-4 h-4 text-yellow-500" />}
+                
+                <Badge 
+                  variant="outline" 
+                  className={
+                    ultimoLog.status === 'sucesso' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                    ultimoLog.status === 'erro' ? 'bg-red-500/20 text-red-400 border-red-500/30' :
+                    ultimoLog.status === 'duplicado' ? 'bg-orange-500/20 text-orange-400 border-orange-500/30' :
+                    'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
+                  }
+                >
+                  {ultimoLog.status}
+                </Badge>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {formatDistanceToNow(new Date(ultimoLog.created_at), {
+                  addSuffix: true,
+                  locale: ptBR
+                })}
+              </p>
+            </>
+          ) : (
+            <div className="text-sm text-gray-400">
+              Nenhuma integração detectada
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Resumo de Status */}
+      <Card className="md:col-span-2 lg:col-span-4">
+        <CardHeader>
+          <CardTitle className="text-sm font-medium">Distribuição de Status</CardTitle>
+          <CardDescription>
+            Análise detalhada dos resultados das integrações
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <CheckCircle className="w-8 h-8 text-green-500" />
+              </div>
+              <div className="text-lg font-bold text-green-400">{sucessos}</div>
+              <div className="text-xs text-muted-foreground">Sucessos</div>
             </div>
             
-            <div className="space-y-2">
-              {[
-                { status: 'sucesso', label: 'Sucesso', count: stats.today.sucesso },
-                { status: 'erro', label: 'Erro', count: stats.today.erro },
-                { status: 'duplicado', label: 'Duplicado', count: stats.today.duplicado },
-                { status: 'processando', label: 'Processando', count: stats.today.processando }
-              ].map(({ status, label, count }) => (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(status)}
-                    <span className="text-sm text-gray-300">{label}</span>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={getStatusColor(status)}
-                  >
-                    {count.toString()}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Estatísticas da Semana */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TrendingUp className="w-4 h-4" />
-              Pedidos dos Últimos 7 Dias
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="text-2xl font-bold text-white">
-              {stats.week.total}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <XCircle className="w-8 h-8 text-red-500" />
+              </div>
+              <div className="text-lg font-bold text-red-400">{erros}</div>
+              <div className="text-xs text-muted-foreground">Erros</div>
             </div>
             
-            <div className="space-y-2">
-              {[
-                { status: 'sucesso', label: 'Sucesso', count: stats.week.sucesso },
-                { status: 'erro', label: 'Erro', count: stats.week.erro },
-                { status: 'duplicado', label: 'Duplicado', count: stats.week.duplicado },
-                { status: 'processando', label: 'Processando', count: stats.week.processando }
-              ].map(({ status, label, count }) => (
-                <div key={status} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(status)}
-                    <span className="text-sm text-gray-300">{label}</span>
-                  </div>
-                  <Badge 
-                    variant="outline" 
-                    className={getStatusColor(status)}
-                  >
-                    {count.toString()}
-                  </Badge>
-                </div>
-              ))}
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <AlertTriangle className="w-8 h-8 text-orange-500" />
+              </div>
+              <div className="text-lg font-bold text-orange-400">{duplicados}</div>
+              <div className="text-xs text-muted-foreground">Duplicados</div>
             </div>
-          </CardContent>
-        </Card>
-      </div>
+            
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-2">
+                <Clock className="w-8 h-8 text-yellow-500" />
+              </div>
+              <div className="text-lg font-bold text-yellow-400">{processando}</div>
+              <div className="text-xs text-muted-foreground">Processando</div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   )
 }

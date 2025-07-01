@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useMaxIntegration } from '@/hooks/useMaxIntegration'
 import { useGestores } from '@/hooks/useGestores'
@@ -19,13 +18,16 @@ import {
   AlertCircle,
   CheckCircle,
   Globe,
-  RefreshCw
+  RefreshCw,
+  FileText
 } from 'lucide-react'
+import { WebhookMonitoringDashboard } from './WebhookMonitoringDashboard'
 
 export function MaxIntegrationDashboard() {
   const { config, logs, loading, updating, changeActiveGestor, toggleIntegration, testWebhook, refetch } = useMaxIntegration()
   const { gestores, loading: gestoresLoading } = useGestores()
   const [testingWebhook, setTestingWebhook] = useState(false)
+  const [activeTab, setActiveTab] = useState<'config' | 'monitor' | 'logs'>('config')
 
   const handleGestorChange = async (gestorEmail: string) => {
     const gestor = gestores.find(g => g.email === gestorEmail)
@@ -80,157 +82,207 @@ export function MaxIntegrationDashboard() {
         </Button>
       </div>
 
-      {/* Status Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Status da Integração</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center space-x-2">
-              {config.integration_active ? (
-                <>
-                  <CheckCircle className="w-5 h-5 text-green-500" />
-                  <Badge variant="secondary" className="bg-green-500/20 text-green-400">
-                    Ativa
-                  </Badge>
-                </>
-              ) : (
-                <>
-                  <AlertCircle className="w-5 h-5 text-orange-500" />
-                  <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
-                    Inativa
-                  </Badge>
-                </>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Gestor Ativo</CardTitle>
-            <User className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-lg font-semibold text-white">
-              {config.gestor_nome}
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {config.gestor_email}
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Webhook URL</CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-xs font-mono text-gray-400 break-all">
-              {config.webhook_url}
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tabs de Navegação */}
+      <div className="flex space-x-1 bg-gray-800 p-1 rounded-lg">
+        <button
+          onClick={() => setActiveTab('config')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'config' 
+              ? 'bg-blue-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          <Settings className="w-4 h-4 mr-2 inline" />
+          Configurações
+        </button>
+        <button
+          onClick={() => setActiveTab('monitor')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'monitor' 
+              ? 'bg-blue-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          <Activity className="w-4 h-4 mr-2 inline" />
+          Monitor em Tempo Real
+        </button>
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            activeTab === 'logs' 
+              ? 'bg-blue-600 text-white' 
+              : 'text-gray-400 hover:text-white hover:bg-gray-700'
+          }`}
+        >
+          <FileText className="w-4 h-4 mr-2 inline" />
+          Logs
+        </button>
       </div>
 
-      {/* Configurações */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
-            Configurações
-          </CardTitle>
-          <CardDescription>
-            Configure o gestor que receberá os novos pedidos do App Max
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          {/* Ativar/Desativar Integração */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-sm font-medium text-white">
-                Integração Ativa
-              </label>
-              <p className="text-xs text-gray-400">
-                Ativar ou desativar o recebimento de pedidos do App Max
-              </p>
-            </div>
-            <Switch
-              checked={config.integration_active}
-              onCheckedChange={handleToggleIntegration}
-              disabled={updating}
-            />
+      {/* Conteúdo das Tabs */}
+      {activeTab === 'config' && (
+        <>
+          {/* Status Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Status da Integração</CardTitle>
+                <Activity className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center space-x-2">
+                  {config.integration_active ? (
+                    <>
+                      <CheckCircle className="w-5 h-5 text-green-500" />
+                      <Badge variant="secondary" className="bg-green-500/20 text-green-400">
+                        Ativa
+                      </Badge>
+                    </>
+                  ) : (
+                    <>
+                      <AlertCircle className="w-5 h-5 text-orange-500" />
+                      <Badge variant="secondary" className="bg-orange-500/20 text-orange-400">
+                        Inativa
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Gestor Ativo</CardTitle>
+                <User className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg font-semibold text-white">
+                  {config.gestor_nome}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {config.gestor_email}
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Webhook URL</CardTitle>
+                <Globe className="w-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-xs font-mono text-gray-400 break-all">
+                  {config.webhook_url}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <Separator />
+          {/* Configurações */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configurações
+              </CardTitle>
+              <CardDescription>
+                Configure o gestor que receberá os novos pedidos do App Max
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Ativar/Desativar Integração */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-white">
+                    Integração Ativa
+                  </label>
+                  <p className="text-xs text-gray-400">
+                    Ativar ou desativar o recebimento de pedidos do App Max
+                  </p>
+                </div>
+                <Switch
+                  checked={config.integration_active}
+                  onCheckedChange={handleToggleIntegration}
+                  disabled={updating}
+                />
+              </div>
 
-          {/* Seletor de Gestor */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-white">
-              Gestor que receberá os pedidos
-            </label>
-            <Select
-              value={config.gestor_email}
-              onValueChange={handleGestorChange}
-              disabled={updating}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecionar gestor..." />
-              </SelectTrigger>
-              <SelectContent>
-                {gestores
-                  .filter(g => g.ativo)
-                  .map(gestor => (
-                    <SelectItem key={gestor.id} value={gestor.email}>
-                      <div className="flex items-center space-x-2">
-                        <span>{gestor.nome}</span>
-                        <span className="text-xs text-gray-400">
-                          ({gestor.email})
-                        </span>
-                      </div>
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
-            <p className="text-xs text-gray-400">
-              Todos os novos pedidos do App Max serão atribuídos automaticamente 
-              ao gestor selecionado
-            </p>
-          </div>
+              <Separator />
 
-          <Separator />
+              {/* Seletor de Gestor */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-white">
+                  Gestor que receberá os pedidos
+                </label>
+                <Select
+                  value={config.gestor_email}
+                  onValueChange={handleGestorChange}
+                  disabled={updating}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar gestor..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {gestores
+                      .filter(g => g.ativo)
+                      .map(gestor => (
+                        <SelectItem key={gestor.id} value={gestor.email}>
+                          <div className="flex items-center space-x-2">
+                            <span>{gestor.nome}</span>
+                            <span className="text-xs text-gray-400">
+                              ({gestor.email})
+                            </span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-400">
+                  Todos os novos pedidos do App Max serão atribuídos automaticamente 
+                  ao gestor selecionado
+                </p>
+              </div>
 
-          {/* Teste do Webhook */}
-          <div className="flex items-center justify-between">
-            <div>
-              <label className="text-sm font-medium text-white">
-                Testar Integração
-              </label>
-              <p className="text-xs text-gray-400">
-                Enviar um pedido de teste para validar a configuração
-              </p>
-            </div>
-            <Button
-              onClick={handleTestWebhook}
-              disabled={testingWebhook || !config.integration_active}
-              variant="outline"
-              size="sm"
-            >
-              <TestTube className="w-4 h-4 mr-2" />
-              {testingWebhook ? 'Testando...' : 'Testar'}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+              <Separator />
 
-      {/* Estatísticas */}
-      <MaxIntegrationStats logs={logs} />
+              {/* Teste do Webhook */}
+              <div className="flex items-center justify-between">
+                <div>
+                  <label className="text-sm font-medium text-white">
+                    Testar Integração
+                  </label>
+                  <p className="text-xs text-gray-400">
+                    Enviar um pedido de teste para validar a configuração
+                  </p>
+                </div>
+                <Button
+                  onClick={handleTestWebhook}
+                  disabled={testingWebhook || !config.integration_active}
+                  variant="outline"
+                  size="sm"
+                >
+                  <TestTube className="w-4 h-4 mr-2" />
+                  {testingWebhook ? 'Testando...' : 'Testar'}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </>
+      )}
 
-      {/* Logs de Integração */}
-      <MaxIntegrationLogs logs={logs} />
+      {activeTab === 'monitor' && (
+        <WebhookMonitoringDashboard />
+      )}
+
+      {activeTab === 'logs' && (
+        <>
+          {/* Estatísticas */}
+          <MaxIntegrationStats logs={logs} />
+
+          {/* Logs de Integração */}
+          <MaxIntegrationLogs logs={logs} />
+        </>
+      )}
     </div>
   )
 }
