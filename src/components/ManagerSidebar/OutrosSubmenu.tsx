@@ -53,8 +53,7 @@ export function OutrosSubmenu({ activeTab, onTabSelect, isCollapsed = false }: O
       label: 'Integração App Max',
       icon: Zap,
       description: 'Configurar integração automática',
-      isNew: true,
-      disabled: true // Temporariamente desabilitado
+      isNew: true
     },
     {
       id: 'sac-relatorio',
@@ -146,18 +145,15 @@ export function OutrosSubmenu({ activeTab, onTabSelect, isCollapsed = false }: O
               <Button
                 key={item.id}
                 variant="ghost"
-                disabled={item.disabled}
                 className={`
                   w-full justify-start text-left h-auto py-2 px-3 rounded-md
                   ${isActive 
                     ? 'bg-blue-500/30 text-blue-300 border border-blue-500/50' 
-                    : item.disabled
-                      ? 'text-gray-500 cursor-not-allowed opacity-50'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800/40'
+                    : 'text-gray-400 hover:text-white hover:bg-gray-800/40'
                   }
                   transition-all duration-200
                 `}
-                onClick={() => !item.disabled && onTabSelect(item.id)}
+                onClick={() => onTabSelect(item.id)}
               >
                 <Icon className="h-4 w-4 mr-2 flex-shrink-0" />
                 <div className="flex items-center justify-between w-full text-xs">
@@ -174,15 +170,7 @@ export function OutrosSubmenu({ activeTab, onTabSelect, isCollapsed = false }: O
                         NOVO
                       </Badge>
                     )}
-                    {item.disabled && (
-                      <Badge 
-                        variant="secondary" 
-                        className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs px-1 py-0"
-                      >
-                        EM BREVE
-                      </Badge>
-                    )}
-                    {item.badge && !item.disabled && (
+                    {item.badge && (
                       <Badge 
                         variant="secondary" 
                         className="bg-red-500 text-white border-red-600 hover:bg-red-600 text-xs"
