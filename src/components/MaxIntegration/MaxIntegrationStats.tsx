@@ -113,11 +113,11 @@ export function MaxIntegrationStats({ logs }: MaxIntegrationStatsProps) {
             
             <div className="space-y-2">
               {[
-                ['sucesso', 'Sucesso', stats.today.sucesso],
-                ['erro', 'Erro', stats.today.erro],
-                ['duplicado', 'Duplicado', stats.today.duplicado],
-                ['processando', 'Processando', stats.today.processando]
-              ].map(([status, label, count]) => (
+                { status: 'sucesso', label: 'Sucesso', count: stats.today.sucesso },
+                { status: 'erro', label: 'Erro', count: stats.today.erro },
+                { status: 'duplicado', label: 'Duplicado', count: stats.today.duplicado },
+                { status: 'processando', label: 'Processando', count: stats.today.processando }
+              ].map(({ status, label, count }) => (
                 <div key={status} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(status)}
@@ -127,7 +127,7 @@ export function MaxIntegrationStats({ logs }: MaxIntegrationStatsProps) {
                     variant="outline" 
                     className={getStatusColor(status)}
                   >
-                    {count}
+                    {count.toString()}
                   </Badge>
                 </div>
               ))}
@@ -150,11 +150,11 @@ export function MaxIntegrationStats({ logs }: MaxIntegrationStatsProps) {
             
             <div className="space-y-2">
               {[
-                ['sucesso', 'Sucesso', stats.week.sucesso],
-                ['erro', 'Erro', stats.week.erro],
-                ['duplicado', 'Duplicado', stats.week.duplicado],
-                ['processando', 'Processando', stats.week.processando]
-              ].map(([status, label, count]) => (
+                { status: 'sucesso', label: 'Sucesso', count: stats.week.sucesso },
+                { status: 'erro', label: 'Erro', count: stats.week.erro },
+                { status: 'duplicado', label: 'Duplicado', count: stats.week.duplicado },
+                { status: 'processando', label: 'Processando', count: stats.week.processando }
+              ].map(({ status, label, count }) => (
                 <div key={status} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     {getStatusIcon(status)}
@@ -164,7 +164,7 @@ export function MaxIntegrationStats({ logs }: MaxIntegrationStatsProps) {
                     variant="outline" 
                     className={getStatusColor(status)}
                   >
-                    {count}
+                    {count.toString()}
                   </Badge>
                 </div>
               ))}
