@@ -1,4 +1,5 @@
-import { useState, useEffect, Suspense, lazy } from 'react'
+
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { ClientesTable } from './ClientesTable'
@@ -10,6 +11,7 @@ import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
+import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 
@@ -58,13 +60,29 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     // Navegação por abas
     switch (activeTab) {
       case 'dashboard':
-        // Usar o novo dashboard aprimorado para a aba dashboard
         return (
-          <div className="w-full">
-            <LazyEnhancedAdminDashboard 
-              selectedManager={selectedManager}
-              onManagerSelect={onManagerSelect}
-            />
+          <div className="space-y-6">
+            {/* Seletor de gestores */}
+            <div className="bg-card border rounded-lg p-4">
+              <ManagerSelector 
+                selectedManager={selectedManager}
+                onManagerSelect={onManagerSelect}
+                isAdminContext={true}
+              />
+            </div>
+            
+            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
+            {useOptimized ? (
+              <OptimizedAdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            ) : (
+              <AdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            )}
           </div>
         )
 
@@ -76,9 +94,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'sac-relatorio':
         return (
-          <div className="w-full">
-            <p className="text-muted-foreground">SAC Relatório em desenvolvimento</p>
-          </div>
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyRelatorioSacGestores />
+          </Suspense>
         )
 
       case 'documentacao':
@@ -125,13 +143,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     </div>
   )
 }
-
-// Add Lazy loading for the new Enhanced dashboard
-const LazyEnhancedAdminDashboard = lazy(() => 
-  import('./AdminDashboard/EnhancedAdminDashboard').then(module => ({
-    default: module.EnhancedAdminDashboard
-  }))
-)
 
 // Add default export for lazy loading
 export default AdminDashboard
