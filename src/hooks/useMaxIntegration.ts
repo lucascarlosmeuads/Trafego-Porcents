@@ -135,53 +135,81 @@ export function useMaxIntegration() {
     })
   }
 
-  // Testar webhook
+  // Testar webhook - CORRIGIDO para usar supabase.functions.invoke
   const testWebhook = async () => {
-    if (!config?.webhook_url) {
-      toast({
-        title: "Erro",
-        description: "URL do webhook não configurada",
-        variant: "destructive"
-      })
-      return false
-    }
-
+    console.log('🧪 [Max Integration] Iniciando teste do webhook...')
+    
     try {
       const testData = {
         id: `test-${Date.now()}`,
-        nome_cliente: 'Cliente Teste',
+        nome_cliente: 'Cliente Teste App Max',
         telefone: '(11) 99999-9999',
-        email_cliente: 'teste@exemplo.com',
+        email_cliente: 'teste@appmax.com',
         produto: 'Produto Teste',
+        valor: 197.00,
         data_pedido: new Date().toISOString(),
-        observacoes: 'Teste de integração App Max'
+        observacoes: 'Teste de integração automática do App Max'
       }
 
-      const response = await fetch(config.webhook_url, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(testData)
+      console.log('📦 [Max Integration] Dados de teste:', testData)
+
+      // Usar supabase.functions.invoke ao invés de fetch direto
+      const { data, error } = await supabase.functions.invoke('max-webhook', {
+        body: testData
       })
 
-      if (response.ok) {
+      console.log('📡 [Max Integration] Resposta do webhook:', { data, error })
+
+      if (error) {
+        console.error('❌ [Max Integration] Erro na invocação:', error)
+        throw error
+      }
+
+      // Verificar se a resposta indica sucesso
+      if (data?.success || data?.message?.includes('sucesso')) {
         toast({
           title: "Sucesso",
-          description: "Teste do webhook realizado com sucesso"
+          description: "Teste do webhook realizado com sucesso! Verifique os logs para detalhes.",
         })
-        fetchLogs() // Recarregar logs
+        
+        // Recarregar logs após teste bem-sucedido
+        setTimeout(() => {
+          fetchLogs()
+        }, 1000)
+        
         return true
       } else {
-        throw new Error(`Erro HTTP ${response.status}`)
+        // Se não houve erro mas também não foi sucesso, pode ser duplicata ou outro caso
+        const message = data?.message || 'Teste realizado, verifique os logs'
+        toast({
+          title: "Teste Realizado",
+          description: message,
+        })
+        
+        // Recarregar logs mesmo assim
+        setTimeout(() => {
+          fetchLogs()
+        }, 1000)
+        
+        return true
       }
-    } catch (error) {
-      console.error('Erro no teste do webhook:', error)
+    } catch (error: any) {
+      console.error('💥 [Max Integration] Erro no teste do webhook:', error)
+      
+      let errorMessage = 'Falha no teste do webhook'
+      
+      if (error.message) {
+        errorMessage = `Erro: ${error.message}`
+      } else if (typeof error === 'string') {
+        errorMessage = error
+      }
+      
       toast({
-        title: "Erro",
-        description: "Falha no teste do webhook",
+        title: "Erro no Teste",
+        description: errorMessage,
         variant: "destructive"
       })
+      
       return false
     }
   }
