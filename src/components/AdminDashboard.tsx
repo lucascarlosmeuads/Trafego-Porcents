@@ -14,6 +14,7 @@ import { SacDashboard } from './SAC/SacDashboard'
 import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
+import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -85,6 +86,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             )}
           </div>
         )
+
+      case 'max-integration':
+        return <MaxIntegrationDashboard />
 
       case 'solicitacoes-site':
         return <SiteRequestsDashboard />

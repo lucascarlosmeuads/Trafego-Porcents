@@ -454,6 +454,75 @@ export type Database = {
           },
         ]
       }
+      max_integration_config: {
+        Row: {
+          created_at: string
+          gestor_email: string
+          gestor_nome: string
+          id: string
+          integration_active: boolean
+          updated_at: string
+          webhook_secret: string | null
+          webhook_url: string | null
+        }
+        Insert: {
+          created_at?: string
+          gestor_email: string
+          gestor_nome: string
+          id?: string
+          integration_active?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Update: {
+          created_at?: string
+          gestor_email?: string
+          gestor_nome?: string
+          id?: string
+          integration_active?: boolean
+          updated_at?: string
+          webhook_secret?: string | null
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      max_integration_logs: {
+        Row: {
+          cliente_criado_id: number | null
+          created_at: string
+          dados_originais: Json
+          erro_detalhes: string | null
+          gestor_atribuido: string | null
+          id: string
+          pedido_id: string | null
+          processed_at: string
+          status: string
+        }
+        Insert: {
+          cliente_criado_id?: number | null
+          created_at?: string
+          dados_originais: Json
+          erro_detalhes?: string | null
+          gestor_atribuido?: string | null
+          id?: string
+          pedido_id?: string | null
+          processed_at?: string
+          status?: string
+        }
+        Update: {
+          cliente_criado_id?: number | null
+          created_at?: string
+          dados_originais?: Json
+          erro_detalhes?: string | null
+          gestor_atribuido?: string | null
+          id?: string
+          pedido_id?: string | null
+          processed_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       meta_ads_configs: {
         Row: {
           access_token: string
