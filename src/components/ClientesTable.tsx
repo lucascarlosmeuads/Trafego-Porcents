@@ -1,3 +1,4 @@
+
 import {
   useState,
   useEffect,
@@ -78,7 +79,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { DatePicker } from "@/components/ui/date-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { CalendarIcon } from "@radix-ui/react-icons"
+import { CalendarIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ComissaoButton } from './ClientesTable/ComissaoButton'
 import { TableActions } from './ClientesTable/TableActions'
@@ -87,7 +88,7 @@ import { TableActions } from './ClientesTable/TableActions'
 type FilterValue = string | [Date | undefined, Date | undefined] | null
 
 // Extend the ColumnDef type to include a filterValue
-interface EnhancedColumnDef<TData, TValue> extends ColumnDef<TData, TValue> {
+interface EnhancedColumnDef<TData, TValue = unknown> extends ColumnDef<TData, TValue> {
   filterValue?: FilterValue
   onFilterChange?: OnChangeFn<FilterValue>
 }
@@ -121,8 +122,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
   const { clientes: fetchedClientes, loading: dataLoading } = useManagerData(
     user?.email || '',
     isAdmin,
-    selectedManager,
-    shouldFetchData
+    selectedManager
   )
 
   // Use provided initial clientes or fetched clientes
@@ -184,7 +184,6 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
       toast({
         title: "Nenhum dado para exportar",
         description: "Não há dados de clientes para exportar.",
-        variant: "warning",
       })
       return
     }
@@ -198,7 +197,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     // Linhas de dados
     for (const row of data) {
       const values = headers.map(header => {
-        const value = row[header]
+        const value = row[header as keyof Cliente]
         return typeof value === 'string' ? `"${value}"` : value
       })
       csvRows.push(values.join(','))
@@ -345,7 +344,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     }
   }
 
-  const columns = useMemo<EnhancedColumnDef<Cliente>[]>(() => [
+  const columns = useMemo<ColumnDef<Cliente>[]>(() => [
     {
       id: "select",
       header: ({ table }) => (
@@ -371,7 +370,6 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     {
       accessorKey: 'id',
       header: 'ID',
-      filterValue: globalFilter,
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <span className="max-w-[220px] truncate font-medium">{row.getValue('id')}</span>
@@ -431,7 +429,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
       accessorKey: 'status_campanha',
       header: 'Status',
       cell: ({ row }) => {
-        const status = row.getValue('status_campanha')
+        const status = row.getValue('status_campanha') as string
         const label = getStatusDisplayLabel(status)
 
         // Determine badge color based on status
@@ -495,12 +493,6 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
             {label}
           </Badge>
         )
-      },
-      filterValue: globalFilter,
-      filterFn: (row, id, value) => {
-        const status = row.getValue(id) as string
-        const label = getStatusDisplayLabel(status)
-        return label.toLowerCase().includes(value.toString().toLowerCase())
       },
     },
     {
