@@ -4,7 +4,7 @@ import { lazy } from 'react'
 // Lazy-load components to improve initial load time
 export const LazyStatusFunnelDashboard = lazy(() => 
   import('./Dashboard/StatusFunnelDashboard').then(module => ({
-    default: module.StatusFunnelDashboard || module.default
+    default: module.StatusFunnelDashboard
   })).catch(() => ({
     default: () => <div>Componente não encontrado</div>
   }))
@@ -12,7 +12,7 @@ export const LazyStatusFunnelDashboard = lazy(() =>
 
 export const LazyDocumentationViewer = lazy(() => 
   import('./Documentation/DocumentationViewer').then(module => ({
-    default: module.DocumentationViewer || module.default
+    default: module.DocumentationViewer
   })).catch(() => ({
     default: () => <div>Componente não encontrado</div>
   }))
