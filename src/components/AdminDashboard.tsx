@@ -1,4 +1,3 @@
-
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
@@ -15,6 +14,8 @@ import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
+import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
+import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -71,6 +72,12 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
                 isAdminContext={true}
               />
             </div>
+
+            {/* Configuração Meta Ads Global */}
+            <AdminMetaAdsConfig />
+
+            {/* Métricas Meta Ads */}
+            <AdminMetaAdsMetrics />
             
             {/* Métricas do Admin - Usar versão otimizada quando disponível */}
             {useOptimized ? (
