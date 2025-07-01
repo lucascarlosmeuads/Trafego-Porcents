@@ -1,3 +1,4 @@
+
 import {
   useState,
   useEffect,
@@ -302,7 +303,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     }
   }
 
-  const updateClienteStatus = async (clienteId: string, newStatus: keyof typeof STATUS_CAMPANHA | string) => {
+  const updateClienteStatus = async (clienteId: string, newStatus: string) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
@@ -505,7 +506,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
       header: 'Comissão',
       cell: ({ row }) => {
         const cliente = row.original
-        return <ComissaoButton cliente={cliente} onComissionUpdate={handleRefresh} isAdmin={isAdmin} />
+        return <ComissaoButton cliente={cliente} onComissionUpdate={handleRefresh} isAdmin={isAdmin || false} />
       }
     },
     {
