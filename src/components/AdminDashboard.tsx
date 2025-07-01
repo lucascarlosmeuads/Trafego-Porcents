@@ -10,7 +10,6 @@ import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
-import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 
@@ -77,9 +76,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
 
       case 'sac-relatorio':
         return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyRelatorioSacGestores />
-          </Suspense>
+          <div className="w-full">
+            <p className="text-muted-foreground">SAC Relatório em desenvolvimento</p>
+          </div>
         )
 
       case 'documentacao':

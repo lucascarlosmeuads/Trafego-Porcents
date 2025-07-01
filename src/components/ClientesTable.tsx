@@ -302,7 +302,7 @@ export function ClientesTable({ selectedManager = null, initialClientes }: Clien
     }
   }
 
-  const updateClienteStatus = async (clienteId: string, newStatus: STATUS_CAMPANHA) => {
+  const updateClienteStatus = async (clienteId: string, newStatus: keyof typeof STATUS_CAMPANHA | string) => {
     try {
       const { error } = await supabase
         .from('todos_clientes')
