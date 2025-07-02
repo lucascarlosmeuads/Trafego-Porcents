@@ -1,7 +1,6 @@
 
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { OutrosSubmenu } from './OutrosSubmenu'
 import { 
   LayoutDashboard, 
   Users, 
@@ -68,15 +67,6 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
           </div>
         </Button>
       ))}
-
-      {/* Separador */}
-      <div className="border-t border-gray-700/50 my-4"></div>
-
-      {/* Submenu "Outros" */}
-      <OutrosSubmenu 
-        activeTab={activeTab}
-        onTabSelect={onTabSelect}
-      />
     </nav>
   )
 }
