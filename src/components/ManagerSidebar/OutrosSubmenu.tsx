@@ -12,7 +12,7 @@ import {
   Globe, 
   Zap,
   BarChart3,
-  Headphones
+  ExternalLink
 } from 'lucide-react'
 
 interface OutrosSubmenuProps {
@@ -29,6 +29,12 @@ export function OutrosSubmenu({ activeTab, onTabSelect, isCollapsed = false }: O
   const pendingSiteRequests = solicitations.filter(s => s.status === 'pendente').length
 
   const subMenuItems = [
+    {
+      id: 'cadastro-campanha',
+      label: 'Cadastro de Campanha',
+      icon: ExternalLink,
+      description: 'Cadastrar e gerenciar campanhas'
+    },
     {
       id: 'sugestoes',
       label: 'Sugestões',

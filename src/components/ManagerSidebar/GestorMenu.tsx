@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Headphones, ExternalLink } from 'lucide-react'
+import { BarChart3, Users, Headphones } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { OutrosSubmenu } from './OutrosSubmenu'
 
@@ -27,17 +27,10 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       color: 'from-green-500 to-green-600'
     },
     {
-      id: 'cadastro-campanha',
-      label: 'Cadastro de Campanha',
-      icon: ExternalLink,
-      description: 'Cadastrar e gerenciar campanhas',
-      color: 'from-pink-500 to-pink-600'
-    },
-    {
       id: 'sac',
-      label: 'SAC',
+      label: 'RECLAMAÇÕES',
       icon: Headphones,
-      description: 'Suporte aos clientes',
+      description: 'Suporte e reclamações',
       color: 'from-orange-500 to-orange-600'
     }
   ]
