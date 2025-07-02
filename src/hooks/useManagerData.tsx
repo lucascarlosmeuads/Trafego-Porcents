@@ -1,8 +1,10 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { formatCliente, validateSecurityForNonAdmin } from '@/utils/clienteFormatter'
+import { useClienteOperations } from '@/hooks/useClienteOperations'
 
 interface UseManagerDataReturn {
   clientes: Cliente[]
@@ -10,22 +12,43 @@ interface UseManagerDataReturn {
   error: any
   totalClientes: number
   refetch: () => Promise<void>
+  updateCliente: (clienteId: string, field: string, value: any) => Promise<boolean>
+  addCliente: (clienteData: any) => Promise<boolean>
+  currentManager: string | null
+  setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
 }
 
-export function useManagerData(): UseManagerDataReturn {
+export function useManagerData(
+  userEmail?: string,
+  isAdminUser?: boolean,
+  selectedManager?: string,
+  filterType?: 'sites-pendentes' | 'sites-finalizados'
+): UseManagerDataReturn {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<any>(null)
   const [totalClientes, setTotalClientes] = useState(0)
-  const { user } = useAuth()
+  const { user, isAdmin } = useAuth()
   const [forceUpdate, setForceUpdate] = useState(0)
+
+  // Determine the actual user email and admin status
+  const actualUserEmail = userEmail || user?.email || ''
+  const actualIsAdmin = isAdminUser !== undefined ? isAdminUser : isAdmin
+  const currentManager = selectedManager || null
+
+  // Get client operations
+  const { updateCliente, addCliente } = useClienteOperations(actualUserEmail, actualIsAdmin, refetch)
 
   useEffect(() => {
     fetchClientes()
-  }, [user?.email, forceUpdate])
+  }, [actualUserEmail, forceUpdate, selectedManager, filterType])
+
+  async function refetch() {
+    setForceUpdate(prev => prev + 1)
+  }
 
   const fetchClientes = async () => {
-    if (!user?.email) {
+    if (!actualUserEmail) {
       console.log('🚫 [useManagerData] Usuário não autenticado')
       return
     }
@@ -46,10 +69,6 @@ export function useManagerData(): UseManagerDataReturn {
     }
   }
 
-  const refetch = async () => {
-    setForceUpdate(prev => prev + 1)
-  }
-
   const fetchAllDataInChunks = async (chunkSize: number = 1000) => {
     const allData: Cliente[] = []
     let from = 0
@@ -58,7 +77,7 @@ export function useManagerData(): UseManagerDataReturn {
     while (hasMore) {
       console.log(`🔄 [useManagerData] Buscando chunk ${from} a ${from + chunkSize - 1}`)
       
-      const { data, error } = await supabase
+      let query = supabase
         .from('todos_clientes')
         .select(`
           *,
@@ -66,6 +85,21 @@ export function useManagerData(): UseManagerDataReturn {
         `)
         .range(from, from + chunkSize - 1)
         .order('created_at', { ascending: false })
+
+      // Apply filters based on context
+      if (filterType === 'sites-pendentes') {
+        query = query.eq('site_status', 'aguardando_link')
+      } else if (filterType === 'sites-finalizados') {
+        query = query.eq('site_status', 'finalizado')
+      } else if (!actualIsAdmin) {
+        // Non-admin users only see their own clients
+        query = query.eq('email_gestor', actualUserEmail)
+      } else if (actualIsAdmin && selectedManager && selectedManager !== 'Todos os Gestores' && selectedManager !== 'Todos os Clientes') {
+        // Admin viewing specific manager's clients
+        query = query.eq('email_gestor', selectedManager)
+      }
+
+      const { data, error } = await query
 
       if (error) {
         console.error(`❌ [useManagerData] Erro no chunk ${from}:`, error)
@@ -109,5 +143,9 @@ export function useManagerData(): UseManagerDataReturn {
     error,
     totalClientes,
     refetch,
+    updateCliente,
+    addCliente,
+    currentManager,
+    setClientes,
   }
 }
