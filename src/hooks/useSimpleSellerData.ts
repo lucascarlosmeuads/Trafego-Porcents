@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -106,7 +105,8 @@ export function useSimpleSellerData(sellerEmail: string) {
     data_venda: string
     produto_nicho?: string
     senha_cliente?: string
-    valor_venda_inicial?: number
+    valor_venda_inicial?: number | null
+    valor_comissao?: number | null
   }) => {
     try {
       console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
@@ -129,7 +129,12 @@ export function useSimpleSellerData(sellerEmail: string) {
       let valorComissao = 60.00 // Valor padrão
       let comissaoCalculadaAutomaticamente = false
 
-      if (isValidSaleValue(clienteData.valor_venda_inicial)) {
+      if (clienteData.valor_comissao) {
+        // Se uma comissão foi definida manualmente, usar ela
+        valorComissao = clienteData.valor_comissao
+        console.log(`⚙️ [useSimpleSellerData] Comissão manual definida: R$ ${valorComissao}`)
+      } else if (isValidSaleValue(clienteData.valor_venda_inicial)) {
+        // Se não há comissão manual mas há valor de venda válido, calcular automaticamente
         valorComissao = calculateCommission(clienteData.valor_venda_inicial)
         comissaoCalculadaAutomaticamente = true
         console.log(`🧮 [useSimpleSellerData] Comissão calculada automaticamente: R$ ${valorComissao} (baseada em venda de R$ ${clienteData.valor_venda_inicial})`)

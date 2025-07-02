@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -11,6 +10,7 @@ import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
+import { CommissionCalculator } from '../CommissionCalculator'
 
 interface GestorOption {
   nome: string
@@ -34,7 +34,9 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
     telefone: '',
     senha: 'parceriadesucesso',
     email_gestor: '',
-    resumo_conversa_vendedor: ''
+    resumo_conversa_vendedor: '',
+    valor_venda_inicial: null as number | null,
+    valor_comissao: null as number | null
   })
 
   // Verificar autenticação
@@ -152,7 +154,8 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
         data_venda: new Date().toISOString().split('T')[0],
         produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha,
-        valor_comissao: 60.00
+        valor_venda_inicial: formData.valor_venda_inicial,
+        valor_comissao: formData.valor_comissao
       }
 
       console.log("🔵 [NewSellerAddClientForm] Dados para addCliente:", clienteData)
@@ -196,7 +199,9 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
           telefone: '',
           senha: 'parceriadesucesso',
           email_gestor: '',
-          resumo_conversa_vendedor: ''
+          resumo_conversa_vendedor: '',
+          valor_venda_inicial: null,
+          valor_comissao: null
         })
         
         // Chamar callback para atualizar a lista no dashboard pai
@@ -226,6 +231,17 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
               title: "🔐 Senha padrão definida",
               description: "Senha padrão definida como: parceriadesucesso",
               duration: 8000
+            })
+          }, 1000)
+        }
+        
+        // Mostrar informação sobre comissão se foi calculada automaticamente
+        if (result.comissaoCalculadaAutomaticamente) {
+          setTimeout(() => {
+            toast({
+              title: "🧮 Comissão calculada automaticamente",
+              description: `Comissão de R$ ${result.valorComissao} baseada em venda de R$ ${formData.valor_venda_inicial}`,
+              duration: 6000
             })
           }, 1000)
         }
@@ -378,6 +394,15 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               </SelectContent>
             </Select>
           </div>
+
+          {/* Calculadora de Comissão */}
+          <CommissionCalculator
+            saleValue={formData.valor_venda_inicial}
+            commissionValue={formData.valor_comissao}
+            onSaleValueChange={(value) => setFormData(prev => ({ ...prev, valor_venda_inicial: value }))}
+            onCommissionChange={(value) => setFormData(prev => ({ ...prev, valor_comissao: value }))}
+            showRules={true}
+          />
 
           <div className="grid gap-2">
             <Label htmlFor="resumo_conversa_vendedor">Resumo da Conversa com o Cliente</Label>
