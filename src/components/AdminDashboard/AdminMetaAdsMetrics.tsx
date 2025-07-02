@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
 import { AdminMetaAdsDateFilter } from './AdminMetaAdsDateFilter'
+import { AdminCustoLucroReport } from './AdminCustoLucroReport'
 import { formatCurrency } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { 
@@ -235,6 +236,15 @@ export function AdminMetaAdsMetrics() {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Relatório de Custos e Lucro */}
+      {insights && (
+        <AdminCustoLucroReport 
+          vendasDia={vendasDia}
+          investimentoTrafego={insights.spend}
+          loadingVendas={loadingVendas}
+        />
       )}
 
       {/* Estado vazio */}
