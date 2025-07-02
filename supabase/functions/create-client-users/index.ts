@@ -22,6 +22,17 @@ serve(async (req) => {
   try {
     console.log('🚀 [CreateClientUsers] Iniciando processamento de usuários clientes')
 
+    // Parse request body to check for specific client email
+    let requestBody: any = {}
+    try {
+      const text = await req.text()
+      if (text) {
+        requestBody = JSON.parse(text)
+      }
+    } catch (error) {
+      console.log('📝 [CreateClientUsers] Sem body na requisição ou body inválido, processando todos os clientes')
+    }
+
     // Criar cliente Supabase com service_role para privilégios administrativos
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
@@ -32,6 +43,170 @@ serve(async (req) => {
         persistSession: false
       }
     })
+
+    const SENHA_PADRAO = 'parceriadesucesso'
+    const results: ProcessResult[] = []
+
+    // Verificar se foi solicitado processamento de cliente específico
+    if (requestBody.clientEmail) {
+      console.log(`🎯 [CreateClientUsers] Processamento específico para: ${requestBody.clientEmail}`)
+      
+      const clientEmail = requestBody.clientEmail.trim().toLowerCase()
+      
+      // Validar formato de e-mail básico
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+      if (!emailRegex.test(clientEmail)) {
+        return new Response(
+          JSON.stringify({
+            success: false,
+            error: 'Email inválido fornecido'
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 400,
+          },
+        )
+      }
+
+      // Excluir e-mails do sistema
+      if (clientEmail.includes('@trafegoporcents.com') || clientEmail.startsWith('admin@')) {
+        return new Response(
+          JSON.stringify({
+            success: true,
+            message: 'Email do sistema - não processado',
+            statistics: { total: 0, created: 0, updated: 0, skipped: 1, errors: 0 },
+            results: [{
+              email: clientEmail,
+              operation: 'skipped',
+              message: 'E-mail pertence ao sistema - não processado'
+            }]
+          }),
+          {
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            status: 200,
+          },
+        )
+      }
+
+      // Verificar se usuário já existe
+      const { data: existingUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
+      
+      if (usersError) {
+        console.error('❌ [CreateClientUsers] Erro ao buscar usuários existentes:', usersError)
+        throw usersError
+      }
+
+      const existingUser = existingUsers.users.find(u => u.email?.toLowerCase() === clientEmail)
+      let result: ProcessResult
+
+      if (existingUser) {
+        // Verificar se é um gestor/admin
+        const { data: gestorCheck } = await supabaseAdmin
+          .from('gestores')
+          .select('email')
+          .eq('email', clientEmail)
+          .single()
+
+        if (gestorCheck) {
+          result = {
+            email: clientEmail,
+            operation: 'skipped',
+            message: 'E-mail pertence a um gestor - não alterado'
+          }
+          console.log(`⏭️ [CreateClientUsers] ${clientEmail} - Gestor detectado, pulando`)
+        } else {
+          // É um cliente - atualizar senha
+          const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            existingUser.id,
+            { password: SENHA_PADRAO }
+          )
+
+          if (updateError) {
+            result = {
+              email: clientEmail,
+              operation: 'error',
+              message: `Erro ao atualizar senha: ${updateError.message}`
+            }
+            console.error(`❌ [CreateClientUsers] ${clientEmail} - Erro ao atualizar:`, updateError)
+          } else {
+            result = {
+              email: clientEmail,
+              operation: 'updated',
+              message: 'Senha atualizada para padrão do sistema'
+            }
+            console.log(`✅ [CreateClientUsers] ${clientEmail} - Senha atualizada`)
+          }
+        }
+      } else {
+        // Usuário não existe - criar novo
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: clientEmail,
+          password: SENHA_PADRAO,
+          email_confirm: true, // Confirmar e-mail automaticamente
+          user_metadata: {
+            user_type: 'cliente',
+            created_by_system: true,
+            created_at: new Date().toISOString()
+          }
+        })
+
+        if (createError) {
+          result = {
+            email: clientEmail,
+            operation: 'error',
+            message: `Erro ao criar usuário: ${createError.message}`
+          }
+          console.error(`❌ [CreateClientUsers] ${clientEmail} - Erro ao criar:`, createError)
+        } else {
+          result = {
+            email: clientEmail,
+            operation: 'created',
+            message: 'Usuário criado com sucesso'
+          }
+          console.log(`✅ [CreateClientUsers] ${clientEmail} - Usuário criado`)
+        }
+      }
+
+      results.push(result)
+
+      // Log da operação no banco (sem aguardar)
+      supabaseAdmin
+        .from('client_user_creation_log')
+        .insert({
+          email_cliente: clientEmail,
+          operation_type: result.operation,
+          result_message: result.message
+        })
+        .then(() => console.log(`📝 [CreateClientUsers] Log registrado para ${clientEmail}`))
+        .catch(error => console.error(`❌ [CreateClientUsers] Erro ao registrar log:`, error))
+
+      // Estatísticas finais
+      const stats = {
+        total: 1,
+        created: result.operation === 'created' ? 1 : 0,
+        updated: result.operation === 'updated' ? 1 : 0,
+        skipped: result.operation === 'skipped' ? 1 : 0,
+        errors: result.operation === 'error' ? 1 : 0
+      }
+
+      console.log(`🎯 [CreateClientUsers] Processamento específico concluído:`, stats)
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: `Processamento de cliente específico concluído: ${result.operation}`,
+          statistics: stats,
+          results: results
+        }),
+        {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+          status: 200,
+        },
+      )
+    }
+
+    // Processamento em lote (comportamento original)
+    console.log('📊 [CreateClientUsers] Iniciando processamento em lote de todos os clientes')
 
     // Buscar todos os e-mails únicos da tabela todos_clientes
     const { data: clientes, error: clientesError } = await supabaseAdmin
@@ -61,16 +236,12 @@ serve(async (req) => {
           // Excluir e-mails do sistema
           if (email.includes('@trafegoporcents.com')) return false
           if (email.startsWith('admin@')) return false
-          if (email.startsWith('gestor@')) return false
           
           return true
         }) || []
     )]
 
     console.log(`✅ [CreateClientUsers] ${emailsUnicos.length} e-mails únicos e válidos para processar`)
-
-    const results: ProcessResult[] = []
-    const SENHA_PADRAO = 'parceriadesucesso'
 
     // Buscar todos os usuários existentes para verificação
     const { data: existingUsers, error: usersError } = await supabaseAdmin.auth.admin.listUsers()
@@ -180,7 +351,7 @@ serve(async (req) => {
             result_message: result.message
           })
 
-        // Rate limiting - pausa entre operações
+        // Rate limiting - pausa entre operações apenas no processamento em lote
         await new Promise(resolve => setTimeout(resolve, 100))
 
       } catch (error) {
@@ -212,7 +383,7 @@ serve(async (req) => {
       errors: results.filter(r => r.operation === 'error').length
     }
 
-    console.log(`📈 [CreateClientUsers] Processamento concluído:`, stats)
+    console.log(`📈 [CreateClientUsers] Processamento em lote concluído:`, stats)
 
     return new Response(
       JSON.stringify({

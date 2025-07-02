@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -10,6 +11,7 @@ import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
+import { CommissionCalculator } from '../CommissionCalculator'
 
 interface AddClientModalProps {
   selectedManager?: string
@@ -25,6 +27,8 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
   const [showInstructions, setShowInstructions] = useState(false)
   const [newClientData, setNewClientData] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [saleValue, setSaleValue] = useState<number | null>(null)
+  const [commissionValue, setCommissionValue] = useState<number | null>(60)
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
@@ -93,6 +97,8 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
   const handleSubmit = async () => {
     console.log("🔵 [AddClientModal] === INICIANDO VALIDAÇÕES ===")
     console.log("🔵 [AddClientModal] Dados do formulário:", formData)
+    console.log("🔵 [AddClientModal] Valor da venda:", saleValue)
+    console.log("🔵 [AddClientModal] Valor da comissão:", commissionValue)
     console.log("🔵 [AddClientModal] Gestor selecionado:", selectedGestor)
     console.log("🔵 [AddClientModal] É admin:", isAdmin)
     console.log("🔵 [AddClientModal] Modo gestor:", gestorMode)
@@ -188,7 +194,8 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         email_gestor: emailGestorFinal,
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
-        valor_comissao: 60.00,
+        valor_venda_inicial: saleValue,
+        valor_comissao: commissionValue || 60.00,
         comissao_paga: false
       }
 
@@ -210,6 +217,8 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           status_campanha: 'Cliente Novo',
           data_venda: new Date().toISOString().split('T')[0]
         })
+        setSaleValue(null)
+        setCommissionValue(60)
         setSelectedGestor('')
         setOpen(false)
         
@@ -296,7 +305,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
@@ -380,6 +389,18 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                 value={formData.email_cliente}
                 onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
                 placeholder="cliente@email.com"
+              />
+            </div>
+
+            {/* Calculadora de Comissão */}
+            <div className="border-t pt-4">
+              <CommissionCalculator
+                saleValue={saleValue}
+                commissionValue={commissionValue}
+                onSaleValueChange={setSaleValue}
+                onCommissionChange={setCommissionValue}
+                disabled={loading}
+                showRules={false}
               />
             </div>
 
