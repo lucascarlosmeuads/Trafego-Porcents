@@ -102,6 +102,7 @@ export function useSimpleSellerData(sellerEmail: string) {
     email_gestor: string
     status_campanha: string
     data_venda: string
+    valor_venda_inicial?: number // Novo campo
     produto_nicho?: string
     senha_cliente?: string
   }) => {
@@ -152,7 +153,8 @@ export function useSimpleSellerData(sellerEmail: string) {
             vendedor: vendorName,
             status_campanha: clienteData.status_campanha,
             data_venda: clienteData.data_venda,
-            valor_comissao: 60.00
+            valor_comissao: 60.00,
+            valor_venda_inicial: clienteData.valor_venda_inicial || null // Novo campo
           })
           .eq('id', existingClient.id)
 
@@ -169,12 +171,13 @@ export function useSimpleSellerData(sellerEmail: string) {
         const novoCliente = {
           nome_cliente: clienteData.nome_cliente,
           telefone: clienteData.telefone,
-          email_cliente: normalizedEmail, // Usar email normalizado
+          email_cliente: normalizedEmail,
           email_gestor: clienteData.email_gestor,
           vendedor: vendorName,
           status_campanha: clienteData.status_campanha,
           data_venda: clienteData.data_venda,
           valor_comissao: 60.00,
+          valor_venda_inicial: clienteData.valor_venda_inicial || null, // Novo campo
           comissao_paga: false,
           site_status: 'pendente'
         }
