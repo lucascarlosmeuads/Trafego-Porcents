@@ -269,7 +269,7 @@ export function useAdminMetaAds() {
     }
   }
 
-  // MELHORIA: Buscar insights com diferentes períodos automaticamente
+  // CORREÇÃO: Buscar insights sem fallback automático
   const fetchInsightsWithPeriod = async (
     period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom' = 'today',
     customStartDate?: string,
@@ -373,7 +373,30 @@ export function useAdminMetaAds() {
       } else {
         console.log(`ℹ️ [useAdminMetaAds] Nenhum insight disponível para ${period}`)
         
-        // Se não encontrou dados, tentar sugestões da API
+        // CORREÇÃO: Para período "today", retornar valores zerados em vez de erro
+        if (period === 'today') {
+          const emptyInsights = {
+            spend: 0,
+            impressions: 0,
+            clicks: 0,
+            cpc: 0,
+            cpm: 0,
+            ctr: 0,
+            cost_per_message: 0
+          }
+          
+          setInsights(emptyInsights)
+          
+          console.log('📊 [useAdminMetaAds] Exibindo valores zerados para hoje')
+          
+          return { 
+            success: true, 
+            period_used: 'hoje',
+            message: 'Nenhum gasto registrado para hoje até o momento'
+          }
+        }
+        
+        // Para outros períodos, mostrar mensagem de erro
         const message = data.message || `Nenhum dado encontrado para ${period}`
         
         if (data.campaigns_info) {
@@ -398,8 +421,42 @@ export function useAdminMetaAds() {
     }
   }
 
-  // Função principal que tenta diferentes períodos automaticamente
+  // CORREÇÃO: Função simplificada que busca apenas dados de hoje
   const fetchTodayInsights = async () => {
+    console.log('📊 [useAdminMetaAds] Buscando dados apenas para hoje...')
+    
+    const result = await fetchInsightsWithPeriod('today')
+    
+    if (result.success) {
+      return result
+    }
+    
+    // Se não encontrou dados para hoje, não fazer fallback automático
+    console.log('ℹ️ [useAdminMetaAds] Sem dados para hoje - exibindo valores zerados')
+    
+    // Definir insights zerados
+    const emptyInsights = {
+      spend: 0,
+      impressions: 0,
+      clicks: 0,
+      cpc: 0,
+      cpm: 0,
+      ctr: 0,
+      cost_per_message: 0
+    }
+    
+    setInsights(emptyInsights)
+    setLastError(null) // Limpar erro anterior
+    
+    return {
+      success: true,
+      period_used: 'hoje',
+      message: 'Nenhum gasto registrado para hoje até o momento'
+    }
+  }
+
+  // Função com fallback manual - mantida para uso via seletor de datas
+  const fetchWithManualFallback = async () => {
     // Primeiro tentar hoje
     const todayResult = await fetchInsightsWithPeriod('today')
     
@@ -483,8 +540,9 @@ export function useAdminMetaAds() {
     isConfigured: !!config,
     saveConfig,
     testConnection,
-    fetchTodayInsights,
-    fetchInsightsWithPeriod, // Função atualizada exportada
+    fetchTodayInsights, // Versão sem fallback automático
+    fetchInsightsWithPeriod, // Função para períodos específicos
+    fetchWithManualFallback, // Função com fallback manual (opcional)
     refetchConfig: fetchConfig
   }
 }

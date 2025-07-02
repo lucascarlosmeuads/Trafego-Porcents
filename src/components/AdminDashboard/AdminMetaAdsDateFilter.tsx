@@ -25,7 +25,7 @@ export function AdminMetaAdsDateFilter({ onDateRangeChange, loading, lastFetchIn
   })
 
   const presetLabels = {
-    today: 'Hoje (automático)',
+    today: 'Hoje',
     yesterday: 'Ontem',
     last_7_days: 'Últimos 7 dias',
     last_30_days: 'Últimos 30 dias',
@@ -165,11 +165,11 @@ export function AdminMetaAdsDateFilter({ onDateRangeChange, loading, lastFetchIn
           </>
         )}
 
-        {/* Info sobre período automático */}
+        {/* Info sobre comportamento de hoje */}
         {selectedPreset === 'today' && (
-          <div className="text-sm text-blue-600 bg-blue-50 p-3 rounded-lg">
-            <strong>Modo Automático:</strong> Se não houver dados para hoje, 
-            o sistema buscará automaticamente dados de ontem ou dos últimos 7 dias.
+          <div className="text-sm text-green-600 bg-green-50 p-3 rounded-lg">
+            <strong>Dados de Hoje:</strong> Mostra apenas o investimento realizado hoje até o momento atual.
+            Se não houver gastos hoje, será exibido valor zero.
           </div>
         )}
       </CardContent>

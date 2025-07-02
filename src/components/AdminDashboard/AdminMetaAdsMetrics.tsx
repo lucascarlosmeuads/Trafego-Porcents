@@ -141,11 +141,11 @@ export function AdminMetaAdsMetrics() {
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-green-600">
+              <div className={`text-2xl font-bold ${insights.spend === 0 ? 'text-gray-500' : 'text-green-600'}`}>
                 {formatCurrency(insights.spend)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Total investido nas campanhas
+                {insights.spend === 0 ? 'Nenhum gasto registrado' : 'Total investido nas campanhas'}
               </p>
             </CardContent>
           </Card>
@@ -157,11 +157,11 @@ export function AdminMetaAdsMetrics() {
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold text-blue-600">
-                {formatCurrency(insights.cost_per_message || 0)}
+              <div className={`text-2xl font-bold ${insights.cost_per_message === 0 ? 'text-gray-500' : 'text-blue-600'}`}>
+                {insights.cost_per_message === 0 ? 'R$ 0,00' : formatCurrency(insights.cost_per_message || 0)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Baseado em {insights.clicks} cliques
+                {insights.clicks === 0 ? 'Nenhum clique registrado' : `Baseado em ${insights.clicks} cliques`}
               </p>
             </CardContent>
           </Card>
