@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
+import { toast } from '@/hooks/use-toast'
 import { 
   Settings, 
   ChevronDown, 
