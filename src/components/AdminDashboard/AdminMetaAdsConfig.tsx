@@ -17,7 +17,8 @@ import {
   AlertCircle, 
   Loader2,
   Eye,
-  EyeOff
+  EyeOff,
+  Info
 } from 'lucide-react'
 
 export function AdminMetaAdsConfig() {
@@ -68,16 +69,16 @@ export function AdminMetaAdsConfig() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log('💾 [AdminMetaAdsConfig] Submetendo formulário:', formData)
+    console.log('💾 [AdminMetaAdsConfig] Submetendo formulário:', {
+      ...formData,
+      app_secret: '***HIDDEN***',
+      access_token: '***HIDDEN***'
+    })
+    
     const result = await saveConfig(formData)
     if (result.success) {
       console.log('✅ [AdminMetaAdsConfig] Configuração salva com sucesso')
-      // CORREÇÃO: Não fechar modal automaticamente, manter dados carregados
-      toast({
-        title: "Sucesso",
-        description: "configuração salva! Agora você pode testar a conexão.",
-      })
-      // Atualizar a configuração no estado
+      // Atualizar a configuração no estado após salvar
       await refetchConfig()
     }
   }
@@ -93,7 +94,7 @@ export function AdminMetaAdsConfig() {
       <Card className="w-full">
         <CardContent className="flex items-center justify-center p-6">
           <Loader2 className="h-6 w-6 animate-spin mr-2" />
-          Carregando configuração...
+          Carregando configuração Meta Ads...
         </CardContent>
       </Card>
     )
@@ -114,14 +115,14 @@ export function AdminMetaAdsConfig() {
                     Configurado
                   </Badge>
                 )}
-              </div>
-              <div className="flex items-center gap-2">
                 {!isConfigured && (
-                  <Badge variant="outline" className="text-yellow-600 border-yellow-600">
-                    <AlertCircle className="h-3 w-3 mr-1" />
-                    Não Configurado
+                  <Badge variant="outline" className="text-orange-600 border-orange-600">
+                    <Info className="h-3 w-3 mr-1" />
+                    Clique para configurar
                   </Badge>
                 )}
+              </div>
+              <div className="flex items-center gap-2">
                 {isOpen ? (
                   <ChevronUp className="h-5 w-5" />
                 ) : (
@@ -185,16 +186,24 @@ export function AdminMetaAdsConfig() {
               <Alert className="mb-4 border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4 text-red-600" />
                 <AlertDescription className="text-red-800">
-                  {lastError}
+                  <strong>Erro:</strong> {lastError}
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Info sobre configuração global */}
+            <Alert className="mb-4 border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <strong>Configuração Global:</strong> Esta configuração será usada por todo o sistema para conectar com Meta Ads e buscar relatórios globais.
+              </AlertDescription>
+            </Alert>
 
             {/* Formulário */}
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="api_id">App ID</Label>
+                  <Label htmlFor="api_id">App ID *</Label>
                   <Input
                     id="api_id"
                     value={formData.api_id}
@@ -202,10 +211,13 @@ export function AdminMetaAdsConfig() {
                     placeholder="Seu App ID do Facebook"
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encontre no Facebook Developers
+                  </p>
                 </div>
 
                 <div>
-                  <Label htmlFor="ad_account_id">Ad Account ID</Label>
+                  <Label htmlFor="ad_account_id">Ad Account ID *</Label>
                   <Input
                     id="ad_account_id"
                     value={formData.ad_account_id}
@@ -213,12 +225,15 @@ export function AdminMetaAdsConfig() {
                     placeholder="act_1234567890"
                     required
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encontre no Facebook Ads Manager
+                  </p>
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <Label htmlFor="app_secret">App Secret</Label>
+                  <Label htmlFor="app_secret">App Secret *</Label>
                   <Button
                     type="button"
                     variant="ghost"
@@ -226,6 +241,7 @@ export function AdminMetaAdsConfig() {
                     onClick={() => setShowTokens(!showTokens)}
                   >
                     {showTokens ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showTokens ? 'Ocultar' : 'Mostrar'}
                   </Button>
                 </div>
                 <Input
@@ -239,7 +255,7 @@ export function AdminMetaAdsConfig() {
               </div>
 
               <div>
-                <Label htmlFor="access_token">Access Token</Label>
+                <Label htmlFor="access_token">Access Token *</Label>
                 <Input
                   id="access_token"
                   type={showTokens ? "text" : "password"}
@@ -253,7 +269,7 @@ export function AdminMetaAdsConfig() {
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 pt-4">
                 <Button
                   type="submit"
                   disabled={saving}
@@ -265,7 +281,10 @@ export function AdminMetaAdsConfig() {
                       Salvando...
                     </>
                   ) : (
-                    'Salvar Configuração'
+                    <>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Salvar Configuração Global
+                    </>
                   )}
                 </Button>
 

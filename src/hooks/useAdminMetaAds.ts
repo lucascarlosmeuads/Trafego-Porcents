@@ -47,11 +47,18 @@ export function useAdminMetaAds() {
     try {
       console.log('🔍 [useAdminMetaAds] Buscando configuração global...')
       
+      // Primeiro verificar dados do usuário atual
+      const { data: userData } = await supabase.auth.getUser()
+      console.log('👤 [useAdminMetaAds] Usuário atual:', {
+        email: userData.user?.email,
+        uid: userData.user?.id
+      })
+
       const { data, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
         .is('cliente_id', null) // Configuração global
-        .maybeSingle() // CORREÇÃO: Usar maybeSingle para evitar erro quando não há dados
+        .maybeSingle()
 
       if (error) {
         console.error('❌ [useAdminMetaAds] Erro ao buscar config:', error)
@@ -59,15 +66,19 @@ export function useAdminMetaAds() {
       }
 
       if (data) {
-        console.log('✅ [useAdminMetaAds] Configuração encontrada:', data)
+        console.log('✅ [useAdminMetaAds] Configuração encontrada:', {
+          id: data.id,
+          email_usuario: data.email_usuario,
+          api_id: data.api_id?.substring(0, 10) + '...'
+        })
         setConfig(data)
       } else {
         console.log('ℹ️ [useAdminMetaAds] Nenhuma configuração global encontrada')
         setConfig(null)
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('💥 [useAdminMetaAds] Erro:', error)
-      setLastError('Erro ao carregar configuração')
+      setLastError('Erro ao carregar configuração: ' + error.message)
     } finally {
       setLoading(false)
     }
@@ -79,24 +90,30 @@ export function useAdminMetaAds() {
     setLastError(null)
     
     try {
-      console.log('💾 [useAdminMetaAds] Salvando configuração global...', configData)
+      console.log('💾 [useAdminMetaAds] Salvando configuração global...')
       
-      // CORREÇÃO: Usar o email do usuário atual para compatibilidade com RLS
+      // Verificar dados do usuário atual
       const { data: userData } = await supabase.auth.getUser()
       const userEmail = userData.user?.email || ''
       
-      console.log('👤 [useAdminMetaAds] Email do usuário atual:', userEmail)
+      console.log('👤 [useAdminMetaAds] Salvando com email:', userEmail)
       
       const payload = {
         ...configData,
-        email_usuario: userEmail, // CORREÇÃO: Usar email real do usuário
+        email_usuario: userEmail,
         cliente_id: null // Marca como configuração global
       }
+
+      console.log('📦 [useAdminMetaAds] Payload para salvar:', {
+        ...payload,
+        app_secret: '***HIDDEN***',
+        access_token: '***HIDDEN***'
+      })
 
       let result
       if (config?.id) {
         // Atualizar existente
-        console.log('📝 [useAdminMetaAds] Atualizando configuração existente...')
+        console.log('📝 [useAdminMetaAds] Atualizando configuração existente ID:', config.id)
         result = await supabase
           .from('meta_ads_configs')
           .update(payload)
@@ -118,17 +135,28 @@ export function useAdminMetaAds() {
         throw result.error
       }
 
-      console.log('✅ [useAdminMetaAds] Configuração salva com sucesso:', result.data)
+      console.log('✅ [useAdminMetaAds] Configuração salva com sucesso:', {
+        id: result.data.id,
+        email_usuario: result.data.email_usuario
+      })
+      
       setConfig(result.data)
       toast({
         title: "Sucesso",
-        description: "Configuração Meta Ads salva com sucesso",
+        description: "Configuração Meta Ads Global salva com sucesso!",
       })
       
       return { success: true }
     } catch (error: any) {
       console.error('❌ [useAdminMetaAds] Erro ao salvar:', error)
-      const errorMessage = error.message || 'Erro ao salvar configuração'
+      let errorMessage = 'Erro ao salvar configuração'
+      
+      if (error.message?.includes('permission denied')) {
+        errorMessage = 'Sem permissão para salvar. Verifique se você é um administrador.'
+      } else if (error.message) {
+        errorMessage = error.message
+      }
+      
       setLastError(errorMessage)
       toast({
         title: "Erro",
@@ -157,13 +185,8 @@ export function useAdminMetaAds() {
     setConnectionSteps(null)
 
     try {
-      console.log('🔗 [useAdminMetaAds] Testando conexão com config:', {
-        api_id: config.api_id,
-        ad_account_id: config.ad_account_id,
-        // Não loggar tokens por segurança
-      })
+      console.log('🔗 [useAdminMetaAds] Testando conexão...')
       
-      // Mapear os campos corretamente para a função edge
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'test_connection',
@@ -185,22 +208,41 @@ export function useAdminMetaAds() {
 
       if (data.success) {
         console.log('✅ [useAdminMetaAds] Conexão testada com sucesso')
-        // Verificar ambos os possíveis locais da resposta
         const steps = data.connection_steps || data.steps
         if (steps) {
           setConnectionSteps(steps)
         }
+        
+        toast({
+          title: "Sucesso",
+          description: "Conexão Meta Ads estabelecida com sucesso!",
+        })
+        
         return { success: true, message: data.message }
       } else {
         console.error('❌ [useAdminMetaAds] Falha no teste:', data.error || data.message)
         const errorMsg = data.error || data.message || 'Erro desconhecido'
         setLastError(errorMsg)
+        
+        toast({
+          title: "Erro na Conexão",
+          description: errorMsg,
+          variant: "destructive"
+        })
+        
         return { success: false, message: errorMsg }
       }
     } catch (error: any) {
       console.error('💥 [useAdminMetaAds] Erro no teste:', error)
       const errorMessage = error.message || 'Erro ao testar conexão'
       setLastError(errorMessage)
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      })
+      
       return { success: false, message: errorMessage }
     } finally {
       setTestingConnection(false)
@@ -211,6 +253,7 @@ export function useAdminMetaAds() {
   const fetchTodayInsights = async () => {
     if (!config) {
       console.log('⚠️ [useAdminMetaAds] Sem configuração para buscar insights')
+      setLastError('Configure primeiro as credenciais Meta Ads')
       return
     }
 
@@ -220,7 +263,6 @@ export function useAdminMetaAds() {
     try {
       console.log('📊 [useAdminMetaAds] Buscando insights do dia...')
       
-      // Usar os campos mapeados corretamente
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_insights',
@@ -247,7 +289,7 @@ export function useAdminMetaAds() {
           ? (parseFloat(todayInsights.spend) / todayInsights.clicks).toFixed(2)
           : '0'
 
-        setInsights({
+        const processedInsights = {
           spend: parseFloat(todayInsights.spend) || 0,
           impressions: todayInsights.impressions || 0,
           clicks: todayInsights.clicks || 0,
@@ -255,17 +297,36 @@ export function useAdminMetaAds() {
           cpm: parseFloat(todayInsights.cpm) || 0,
           ctr: parseFloat(todayInsights.ctr) || 0,
           cost_per_message: parseFloat(costPerMessage)
-        })
+        }
+
+        setInsights(processedInsights)
 
         // Salvar no histórico
         await saveInsightsToHistory(todayInsights)
+        
+        toast({
+          title: "Sucesso",
+          description: "Dados Meta Ads atualizados!",
+        })
       } else {
         console.log('ℹ️ [useAdminMetaAds] Nenhum insight disponível para hoje')
         setInsights(null)
+        
+        toast({
+          title: "Info",
+          description: "Nenhum dado encontrado para hoje",
+        })
       }
     } catch (error: any) {
       console.error('❌ [useAdminMetaAds] Erro ao buscar insights:', error)
-      setLastError(error.message || 'Erro ao buscar dados de hoje')
+      const errorMessage = error.message || 'Erro ao buscar dados de hoje'
+      setLastError(errorMessage)
+      
+      toast({
+        title: "Erro",
+        description: errorMessage,
+        variant: "destructive"
+      })
     } finally {
       setFetchingInsights(false)
     }
@@ -277,7 +338,7 @@ export function useAdminMetaAds() {
       const { error } = await supabase
         .from('meta_ads_reports')
         .upsert({
-          email_usuario: config?.email_usuario || 'admin-global',
+          email_usuario: config?.email_usuario || '',
           ad_account_id: config?.ad_account_id || '',
           report_date: new Date().toISOString().split('T')[0],
           spend: parseFloat(insightsData.spend) || 0,
