@@ -17,7 +17,8 @@ export function AdminTable() {
     gestores,
     transferindoCliente,
     handleTransferirCliente,
-    handleStatusChange
+    handleStatusChange,
+    handleComissionUpdate
   } = useAdminTableLogic()
 
   if (loading) {
@@ -71,6 +72,7 @@ export function AdminTable() {
             gestores={gestores}
             transferindoCliente={transferindoCliente}
             onTransferirCliente={handleTransferirCliente}
+            onComissionUpdate={handleComissionUpdate}
             formatDate={formatDate}
             getStatusColor={getStatusColor}
           />
@@ -84,6 +86,7 @@ export function AdminTable() {
             transferindoCliente={transferindoCliente}
             onTransferirCliente={handleTransferirCliente}
             onStatusChange={handleStatusChange}
+            onComissionUpdate={handleComissionUpdate}
             formatDate={formatDate}
             getStatusColor={getStatusColor}
           />

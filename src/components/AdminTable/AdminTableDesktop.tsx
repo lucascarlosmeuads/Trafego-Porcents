@@ -6,6 +6,7 @@ import { Calendar } from 'lucide-react'
 import { Cliente, STATUS_CAMPANHA } from '@/lib/supabase'
 import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 import { TransferirModal } from './TransferirModal'
+import { ComissaoSimples } from '@/components/ClientesTable/ComissaoSimples'
 
 interface AdminTableDesktopProps {
   clientes: Cliente[]
@@ -13,6 +14,7 @@ interface AdminTableDesktopProps {
   transferindoCliente: string | null
   onTransferirCliente: (clienteId: string, novoEmailGestor: string) => void
   onStatusChange: (id: string, newStatus: string) => void
+  onComissionUpdate: () => void
   formatDate: (dateString: string | null) => string
   getStatusColor: (status: string) => string
 }
@@ -23,6 +25,7 @@ export function AdminTableDesktop({
   transferindoCliente, 
   onTransferirCliente, 
   onStatusChange, 
+  onComissionUpdate,
   formatDate, 
   getStatusColor 
 }: AdminTableDesktopProps) {
@@ -38,6 +41,7 @@ export function AdminTableDesktop({
             <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
             <TableHead className="min-w-[180px] text-muted-foreground">Status Campanha</TableHead>
             <TableHead className="min-w-[180px] text-muted-foreground">Data Limite</TableHead>
+            <TableHead className="min-w-[120px] text-muted-foreground">Comissão</TableHead>
             <TableHead className="min-w-[120px] text-muted-foreground">Transferir</TableHead>
           </TableRow>
         </TableHeader>
@@ -101,6 +105,14 @@ export function AdminTableDesktop({
                   <span className={`text-xs font-medium ${dataLimiteDisplay.classeCor}`}>
                     {dataLimiteDisplay.texto}
                   </span>
+                </TableCell>
+                <TableCell>
+                  <ComissaoSimples
+                    cliente={cliente}
+                    isAdmin={true}
+                    onComissionUpdate={onComissionUpdate}
+                    compact={true}
+                  />
                 </TableCell>
                 <TableCell>
                   <TransferirModal

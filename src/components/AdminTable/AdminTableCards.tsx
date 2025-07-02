@@ -4,12 +4,14 @@ import { Badge } from '@/components/ui/badge'
 import { Cliente } from '@/lib/supabase'
 import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 import { TransferirModal } from './TransferirModal'
+import { ComissaoSimples } from '@/components/ClientesTable/ComissaoSimples'
 
 interface AdminTableCardsProps {
   clientes: Cliente[]
   gestores: Array<{ email: string, nome: string }>
   transferindoCliente: string | null
   onTransferirCliente: (clienteId: string, novoEmailGestor: string) => void
+  onComissionUpdate: () => void
   formatDate: (dateString: string | null) => string
   getStatusColor: (status: string) => string
 }
@@ -19,6 +21,7 @@ export function AdminTableCards({
   gestores, 
   transferindoCliente, 
   onTransferirCliente, 
+  onComissionUpdate,
   formatDate, 
   getStatusColor 
 }: AdminTableCardsProps) {
@@ -63,6 +66,17 @@ export function AdminTableCards({
                 <span className={`ml-2 text-xs font-medium ${dataLimiteDisplay.classeCor}`}>
                   {dataLimiteDisplay.texto}
                 </span>
+              </div>
+              <div>
+                <span className="font-medium text-muted-foreground">Comissão:</span>
+                <div className="mt-1">
+                  <ComissaoSimples
+                    cliente={cliente}
+                    isAdmin={true}
+                    onComissionUpdate={onComissionUpdate}
+                    compact={true}
+                  />
+                </div>
               </div>
               <div className="pt-2">
                 <TransferirModal

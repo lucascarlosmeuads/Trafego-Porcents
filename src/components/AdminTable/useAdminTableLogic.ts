@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -234,12 +235,18 @@ export function useAdminTableLogic() {
     updateField(id, 'status_campanha', newStatus)
   }
 
+  const handleComissionUpdate = () => {
+    // Recarregar os dados quando uma comissão for atualizada
+    fetchAllClientes()
+  }
+
   return {
     clientes,
     loading,
     gestores,
     transferindoCliente,
     handleTransferirCliente,
-    handleStatusChange
+    handleStatusChange,
+    handleComissionUpdate
   }
 }
