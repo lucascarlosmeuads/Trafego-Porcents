@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -27,6 +26,16 @@ export function ManagerSelector({
 }: ManagerSelectorProps) {
   const [managers, setManagers] = useState<Manager[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Lista de emails dos gestores que devem ser removidos do filtro
+  const gestoresParaRemover = [
+    'rullian@trafegoporcents.com',
+    'carol@trafegoporcents.com',
+    'junior@trafegoporcents.com',
+    'lucas@trafegoporcents.com',
+    'falcao@trafegoporcents.com',
+    'emily@trafegoporcents.com'
+  ]
 
   const ensureCarolInList = (managersList: Manager[]) => {
     const hasCarol = managersList.some(m => m.email === 'carol@trafegoporcents.com')
@@ -66,6 +75,13 @@ export function ManagerSelector({
         // Garantir que Carol está sempre na lista
         let managersWithCarol = ensureCarolInList([...(gestores || [])])
 
+        // Filtrar os gestores que devem ser removidos do filtro
+        managersWithCarol = managersWithCarol.filter(gestor => 
+          !gestoresParaRemover.includes(gestor.email)
+        )
+
+        console.log('🔍 [ManagerSelector] Gestores após filtro:', managersWithCarol)
+
         // Se precisar mostrar métricas, buscar contagem de clientes
         if (showMetrics) {
           managersWithCarol = await Promise.all(
@@ -96,14 +112,8 @@ export function ManagerSelector({
       } catch (error) {
         console.error('❌ [ManagerSelector] Erro ao carregar gestores:', error)
         
-        // Fallback com gestores essenciais
+        // Fallback com gestores essenciais (apenas Andreza neste caso)
         const fallbackManagers = [
-          {
-            email: 'carol@trafegoporcents.com',
-            nome: 'Carol',
-            ativo: true,
-            clientesCount: 0
-          },
           {
             email: 'andreza@trafegoporcents.com',
             nome: 'Andreza',
