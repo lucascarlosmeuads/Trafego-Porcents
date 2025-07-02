@@ -122,31 +122,80 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
   }
 
   const marcarComoUltimoPago = async (clienteId: string): Promise<boolean> => {
+    console.log('🌟 [useComissaoAvancada] === MARCAR COMO ÚLTIMO PAGO ===')
+    console.log('🌟 [useComissaoAvancada] Cliente ID:', clienteId)
+    console.log('🌟 [useComissaoAvancada] Usuário atual:', user?.email)
+    
     setLoading(true)
     try {
-      // Primeiro, remover marcação de outros clientes
-      await supabase
+      // Primeiro, verificar se o cliente existe
+      console.log('🔍 [useComissaoAvancada] Verificando se cliente existe...')
+      const { data: clienteExiste, error: checkError } = await supabase
+        .from('todos_clientes')
+        .select('id, nome_cliente, eh_ultimo_pago')
+        .eq('id', clienteId)
+        .single()
+
+      if (checkError) {
+        console.error('❌ [useComissaoAvancada] Erro ao verificar cliente:', checkError)
+        throw checkError
+      }
+
+      console.log('✅ [useComissaoAvancada] Cliente encontrado:', clienteExiste)
+
+      // Remover marcação de outros clientes primeiro
+      console.log('🔄 [useComissaoAvancada] Removendo marcação de outros clientes...')
+      const { error: removeError } = await supabase
         .from('todos_clientes')
         .update({ eh_ultimo_pago: false })
         .neq('id', clienteId)
 
+      if (removeError) {
+        console.error('❌ [useComissaoAvancada] Erro ao remover outras marcações:', removeError)
+        throw removeError
+      }
+
+      console.log('✅ [useComissaoAvancada] Outras marcações removidas')
+
       // Marcar este cliente como último pago
-      const { error } = await supabase
+      console.log('⭐ [useComissaoAvancada] Marcando cliente como último pago...')
+      const { data: updateData, error: updateError } = await supabase
         .from('todos_clientes')
         .update({ eh_ultimo_pago: true })
         .eq('id', clienteId)
+        .select('id, nome_cliente, eh_ultimo_pago')
 
-      if (error) throw error
+      if (updateError) {
+        console.error('❌ [useComissaoAvancada] Erro ao marcar como último pago:', updateError)
+        throw updateError
+      }
+
+      console.log('✅ [useComissaoAvancada] Cliente marcado com sucesso:', updateData)
+
+      // Verificar se a atualização realmente aconteceu
+      const { data: verificacao, error: verifyError } = await supabase
+        .from('todos_clientes')
+        .select('id, nome_cliente, eh_ultimo_pago')
+        .eq('id', clienteId)
+        .single()
+
+      if (verifyError) {
+        console.error('❌ [useComissaoAvancada] Erro na verificação:', verifyError)
+      } else {
+        console.log('🔍 [useComissaoAvancada] Verificação final:', verificacao)
+        console.log('🔍 [useComissaoAvancada] eh_ultimo_pago atual:', verificacao.eh_ultimo_pago)
+      }
 
       toast({
         title: "⭐ Cliente marcado",
-        description: "Cliente marcado como último pago",
+        description: `${clienteExiste.nome_cliente} marcado como último pago`,
       })
       return true
     } catch (error: any) {
+      console.error('💥 [useComissaoAvancada] Erro geral:', error)
       toast({
         title: "❌ Erro",
-        description: error.message,
+        description: `Erro ao marcar cliente: ${error.message}`,
         variant: "destructive"
       })
       return false
@@ -156,14 +205,24 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
   }
 
   const removerMarcacaoUltimoPago = async (clienteId: string): Promise<boolean> => {
+    console.log('🌟 [useComissaoAvancada] === REMOVER MARCAÇÃO ÚLTIMO PAGO ===')
+    console.log('🌟 [useComissaoAvancada] Cliente ID:', clienteId)
+    
     setLoading(true)
     try {
-      const { error } = await supabase
+      console.log('🔄 [useComissaoAvancada] Removendo marcação de último pago...')
+      const { data: updateData, error } = await supabase
         .from('todos_clientes')
         .update({ eh_ultimo_pago: false })
         .eq('id', clienteId)
+        .select('id, nome_cliente, eh_ultimo_pago')
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [useComissaoAvancada] Erro ao remover marcação:', error)
+        throw error
+      }
+
+      console.log('✅ [useComissaoAvancada] Marcação removida:', updateData)
 
       toast({
         title: "✅ Marcação removida",
@@ -171,9 +230,10 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
       })
       return true
     } catch (error: any) {
+      console.error('💥 [useComissaoAvancada] Erro geral:', error)
       toast({
         title: "❌ Erro",
-        description: error.message,
+        description: `Erro ao remover marcação: ${error.message}`,
         variant: "destructive"
       })
       return false

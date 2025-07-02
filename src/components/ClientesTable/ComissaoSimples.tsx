@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -25,6 +24,7 @@ export function ComissaoSimples({
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor] = useState((cliente.valor_comissao || 60).toString())
   const [clickTimeout, setClickTimeout] = useState(false)
+  const [ultimoPagoLocal, setUltimoPagoLocal] = useState(cliente.eh_ultimo_pago || false)
   
   const { atualizarComissao, loading, operationLock } = useComissaoOperations()
   const { atualizarValorComissao, marcarComoUltimoPago, removerMarcacaoUltimoPago, loading: loadingAvancado } = useComissaoAvancada()
@@ -32,7 +32,7 @@ export function ComissaoSimples({
   const clienteId = cliente.id?.toString() || ''
   const valorComissao = cliente.valor_comissao || 60
   const isPago = cliente.comissao === 'Pago'
-  const isUltimoPago = cliente.eh_ultimo_pago || false
+  const isUltimoPago = ultimoPagoLocal // Usar estado local para feedback imediato
   const canEdit = isAdmin
 
   // Toggle entre Pago/Pendente
@@ -78,18 +78,46 @@ export function ComissaoSimples({
     setEditandoValor(false)
   }
 
-  // Toggle estrela último pago
+  // Toggle estrela último pago com otimistic update
   const handleToggleUltimoPago = async (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (!canEdit) return
+    if (!canEdit || loadingAvancado) return
 
-    if (isUltimoPago) {
-      await removerMarcacaoUltimoPago(clienteId)
-    } else {
-      await marcarComoUltimoPago(clienteId)
+    console.log('🌟 [ComissaoSimples] Toggle último pago iniciado')
+    console.log('🌟 [ComissaoSimples] Cliente:', cliente.nome_cliente)
+    console.log('🌟 [ComissaoSimples] Estado atual:', isUltimoPago)
+
+    // Otimistic update - atualizar UI imediatamente
+    const novoEstado = !isUltimoPago
+    setUltimoPagoLocal(novoEstado)
+
+    try {
+      let sucesso = false
+      
+      if (isUltimoPago) {
+        console.log('🔄 [ComissaoSimples] Removendo marcação...')
+        sucesso = await removerMarcacaoUltimoPago(clienteId)
+      } else {
+        console.log('⭐ [ComissaoSimples] Adicionando marcação...')
+        sucesso = await marcarComoUltimoPago(clienteId)
+      }
+
+      if (sucesso) {
+        console.log('✅ [ComissaoSimples] Operação realizada com sucesso')
+        // Aguardar um pouco antes de recarregar para dar tempo do banco processar
+        setTimeout(() => {
+          onComissionUpdate?.()
+        }, 1000)
+      } else {
+        console.log('❌ [ComissaoSimples] Operação falhou, revertendo estado local')
+        // Reverter otimistic update se falhou
+        setUltimoPagoLocal(!novoEstado)
+      }
+    } catch (error) {
+      console.error('💥 [ComissaoSimples] Erro no toggle:', error)
+      // Reverter otimistic update em caso de erro
+      setUltimoPagoLocal(!novoEstado)
     }
-    
-    onComissionUpdate?.()
   }
 
   const isDisabled = loading || operationLock || !canEdit || clickTimeout || loadingAvancado
@@ -201,19 +229,22 @@ export function ComissaoSimples({
             </TooltipContent>
           </Tooltip>
 
-          {/* Estrela Último Pago */}
+          {/* Estrela Último Pago com indicador de loading */}
           {canEdit && (
             <Button
               size="sm"
               variant="ghost"
               onClick={handleToggleUltimoPago}
+              disabled={loadingAvancado}
               className="h-6 w-6 p-0"
               title={isUltimoPago ? "Remover marcação de último pago" : "Marcar como último pago"}
             >
-              {isUltimoPago ? (
-                <StarOff className="h-3 w-3 text-yellow-500" />
+              {loadingAvancado ? (
+                <Loader2 className="h-3 w-3 animate-spin text-yellow-500" />
+              ) : isUltimoPago ? (
+                <Star className="h-3 w-3 text-yellow-500 fill-current" />
               ) : (
-                <Star className="h-3 w-3 text-gray-400 hover:text-yellow-500" />
+                <StarOff className="h-3 w-3 text-gray-400 hover:text-yellow-500" />
               )}
             </Button>
           )}
@@ -310,20 +341,23 @@ export function ComissaoSimples({
         )}
       </Button>
 
-      {/* Estrela */}
+      {/* Estrela com loading */}
       {canEdit && (
         <div className="flex justify-center">
           <Button
             size="sm"
             variant="ghost"
             onClick={handleToggleUltimoPago}
+            disabled={loadingAvancado}
             className="h-6 w-6 p-0"
             title={isUltimoPago ? "Remover marcação de último pago" : "Marcar como último pago"}
           >
-            {isUltimoPago ? (
-              <StarOff className="h-3 w-3 text-yellow-500" />
+            {loadingAvancado ? (
+              <Loader2 className="h-3 w-3 animate-spin text-yellow-500" />
+            ) : isUltimoPago ? (
+              <Star className="h-3 w-3 text-yellow-500 fill-current" />
             ) : (
-              <Star className="h-3 w-3 text-gray-400 hover:text-yellow-500" />
+              <StarOff className="h-3 w-3 text-gray-400 hover:text-yellow-500" />
             )}
           </Button>
         </div>
