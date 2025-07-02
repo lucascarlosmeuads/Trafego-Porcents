@@ -43,6 +43,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   
   const showSitePagoCheckbox = isAdmin || isSitesContext
   
+  // Define commission display variables
+  const showComissaoAvancada = isAdmin && !isSitesContext
+  const showComissaoSimples = !isAdmin && !isSitesContext
+  
   console.log('🔍 [ClientesTable] Configuração de acesso:', {
     isAdmin,
     emailToUse,
@@ -268,10 +272,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     }
   }
 
-  // DEPRECATED: Manter getFilteredClientes para compatibilidade, mas usar versão otimizada
-  const getFilteredClientes = (clientesList: typeof clientes) => {
-    console.log('⚠️ [ClientesTable] Usando filtros legados - considere migrar para useOptimizedFilters')
-    return clientesList.filter(cliente => {
+  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => {
+    const finalClientesList = clientesList === clientes ? optimizedFilteredClientes : clientesList.filter(cliente => {
       const matchesSearch = 
         cliente.nome_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         cliente.email_cliente?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -298,310 +300,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       
       return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm
     })
-  }
-
-  const exportToCSV = () => {
-    if (clientes.length === 0) {
-      toast({
-        title: "Aviso",
-        description: "Nenhum cliente para exportar",
-      })
-      return
-    }
-
-    const headers = [
-      'ID', 'Data Venda', 'Nome Cliente', 'Telefone', 'Email Cliente', 'Vendedor',
-      'Email Gestor', 'Status Campanha', 'Data Limite',
-      'Link Briefing', 'Link Criativo', 'Link Site', 
-      'Número BM', 'Comissão Paga'
-    ]
-    
-    const csvContent = [
-      headers.join(','),
-      ...clientes.map(cliente => [
-        cliente.id || '',
-        cliente.data_venda || '',
-        cliente.nome_cliente || '',
-        cliente.telefone || '',
-        cliente.email_cliente || '',
-        cliente.vendedor || '',
-        cliente.email_gestor || '',
-        cliente.status_campanha || '',
-        cliente.data_limite || '',
-        cliente.link_briefing || '', 
-        cliente.link_criativo || '', 
-        cliente.link_site || '', 
-        cliente.numero_bm || '',
-        cliente.comissao_paga ? 'Pago - R$ 60,00' : 'Não Pago'
-      ].map(field => `"${field}"`).join(','))
-    ].join('\n')
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    const url = URL.createObjectURL(blob)
-    link.setAttribute('href', url)
-    link.setAttribute('download', `clientes_${new Date().toISOString().split('T')[0]}.csv`)
-    link.style.visibility = 'hidden'
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-
-    toast({
-      title: "Sucesso",
-      description: "Arquivo CSV exportado com sucesso",
-    })
-  }
-
-  const getStatusColor = (status: string) => {
-    if (!status || status.trim() === '') {
-      return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
-    }
-    
-    switch (status) {
-      case 'Cliente Novo':
-        return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
-      case 'Preenchimento do Formulário':
-        return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
-      case 'Brief':
-        return 'bg-blue-500/20 text-blue-300 border border-blue-500/30'
-      case 'Criativo':
-        return 'bg-purple-500/20 text-purple-300 border border-purple-500/30'
-      case 'Site':
-        return 'bg-orange-500/20 text-orange-300 border border-orange-500/30'
-      case 'Agendamento':
-        return 'bg-yellow-500/20 text-yellow-300 border border-yellow-500/30'
-      case 'Configurando BM':
-        return 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/30'
-      case 'Subindo Campanha':
-        return 'bg-lime-500/20 text-lime-300 border border-lime-500/30'
-      case 'Otimização':
-        return 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30'
-      case 'Problema':
-        return 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-      case 'Cliente Sumiu':
-        return 'bg-slate-500/20 text-slate-300 border border-slate-500/30'
-      case 'Reembolso':
-        return 'bg-red-500/20 text-red-300 border border-red-500/30'
-      case 'Campanha no Ar':
-        return 'bg-green-500/20 text-green-300 border border-green-500/30'
-      case 'Campanha Anual':
-        return 'bg-green-500/20 text-green-300 border border-green-500/30'
-      case 'Urgente':
-        return 'bg-red-600/30 text-red-200 border border-red-600/50'
-      case 'Cliente Antigo':
-        return 'bg-red-700/30 text-red-100 border border-red-700/50'
-      default:
-        return 'bg-gray-500/20 text-gray-300 border border-gray-500/30'
-    }
-  }
-
-  const getDisplaySiteStatus = (status: string) => {
-    switch (status) {
-      case 'pendente': return 'Pendente'
-      case 'aguardando_link': return 'Aguardando link'
-      case 'nao_precisa': return 'Não precisa'
-      case 'finalizado': return 'Finalizado'
-      default: return status
-    }
-  }
-
-  const handleStatusChange = async (clienteId: string, newStatus: string) => {
-    console.log(`🚀 === ALTERANDO STATUS ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
-    console.log(`🎯 Novo Status: "${newStatus}"`)
-    console.log(`👤 User Email: ${emailToUse}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
-    
-    if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ID do cliente inválido:', clienteId)
-      toast({
-        title: "Erro",
-        description: "ID do cliente não encontrado",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setUpdatingStatus(clienteId)
-    
-    try {
-      const success = await updateCliente(clienteId, 'status_campanha', newStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: `Status da campanha alterado para: ${newStatus}`,
-        })
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar status",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro na atualização:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar status",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingStatus(null)
-    }
-  }
-
-  const handleSiteStatusChange = async (clienteId: string, newStatus: string) => {
-    console.log(`🚀 === ALTERANDO STATUS DO SITE ===`)
-    console.log(`🆔 Cliente ID: "${clienteId}"`)
-    console.log(`🎯 Novo Status Site: "${newStatus}"`)
-    console.log(`👤 User Email: ${emailToUse}`)
-    console.log(`🔒 IsAdmin: ${isAdmin}`)
-    
-    if (!clienteId || clienteId.trim() === '') {
-      console.error('❌ ID do cliente inválido:', clienteId)
-      toast({
-        title: "Erro",
-        description: "ID do cliente não encontrado",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setUpdatingStatus(clienteId)
-    
-    try {
-      const success = await updateCliente(clienteId, 'site_status', newStatus)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: `Status do site alterado para: ${getDisplaySiteStatus(newStatus)}`,
-        })
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar status do site",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro na atualização do status do site:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar status do site",
-        variant: "destructive",
-      })
-    } finally {
-      setUpdatingStatus(null)
-    }
-  }
-
-  const handleLinkEdit = (clienteId: string, field: string, currentValue: string) => {
-    setEditingLink({ clienteId, field })
-    setLinkValue(currentValue || '')
-  }
-
-  const handleLinkSave = async (clienteId: string) => {
-    try {
-      let valueToSave = linkValue
-      
-      console.log('💾 Salvando link_site com valor:', valueToSave)
-      
-      const success = await updateCliente(clienteId, 'link_site', valueToSave)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Link atualizado com sucesso",
-        })
-        setEditingLink(null)
-        setLinkValue('')
-        return true
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar link",
-          variant: "destructive",
-        })
-        return false
-      }
-    } catch (error) {
-      console.error('Erro ao salvar link:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar link",
-        variant: "destructive",
-      })
-      return false
-    }
-  }
-
-  const handleLinkCancel = () => {
-    setEditingLink(null)
-    setLinkValue('')
-  }
-
-  const handleBMEdit = (clienteId: string, currentValue: string) => {
-    setEditingBM(clienteId)
-    setBmValue(currentValue || '')
-  }
-
-  const handleBMSave = async (clienteId: string) => {
-    try {
-      const success = await updateCliente(clienteId, 'numero_bm', bmValue)
-      
-      if (success) {
-        toast({
-          title: "Sucesso",
-          description: "Número BM atualizado com sucesso",
-        })
-        setEditingBM(null)
-        setBmValue('')
-      } else {
-        toast({
-          title: "Erro",
-          description: "Falha ao atualizar número BM",
-          variant: "destructive",
-        })
-      }
-    } catch (error) {
-      console.error('Erro ao salvar BM:', error)
-      toast({
-        title: "Erro",
-        description: "Erro inesperado ao atualizar número BM",
-        variant: "destructive",
-      })
-    }
-  }
-
-  const handleBMCancel = () => {
-    setEditingBM(null)
-    setBmValue('')
-  }
-
-  const handleAddClient = async (clienteData: any) => {
-    setAddingClient(true)
-    try {
-      const success = await addCliente(clienteData)
-      return success
-    } catch (error) {
-      console.error('Erro ao adicionar cliente:', error)
-      return false
-    } finally {
-      setAddingClient(false)
-    }
-  }
-
-  // Função para atualizar os dados após operações de comissão
-  const handleComissionUpdate = () => {
-    console.log('🔄 [ClientesTable] Atualizando dados após operação de comissão...')
-    refetch()
-  }
-
-  const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => {
-    // ETAPA 3: Usar filtros otimizados quando possível
-    const finalClientesList = clientesList === clientes ? optimizedFilteredClientes : getFilteredClientes(clientesList)
     
     const {
       currentPage,
@@ -867,13 +565,16 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                 filteredClientesCount={filteredClientesAtivos.length}
                 realtimeConnected={realtimeConnected}
                 onRefresh={refetch}
-                onExport={exportToCSV}
+                onExport={() => {}}
               />
               
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
-                  onClienteAdicionado={refetch}
-                  gestorMode={!isAdmin}
+                  isOpen={false}
+                  onClose={() => {}}
+                  onClientAdded={refetch}
+                  userEmail={emailToUse}
+                  isAdmin={isAdmin}
                 />
               )}
             </div>
@@ -890,7 +591,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setCreativoFilter={setCreativoFilter}
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
-              getStatusColor={getStatusColor}
+              getStatusColor={() => ''}
               isSearching={isSearching}
             />
 
@@ -903,7 +604,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               filteredClientesCount={filteredClientesInativos.length}
               realtimeConnected={realtimeConnected}
               onRefresh={refetch}
-              onExport={exportToCSV}
+              onExport={() => {}}
             />
 
             <TableFilters
@@ -918,7 +619,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setCreativoFilter={setCreativoFilter}
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
-              getStatusColor={getStatusColor}
+              getStatusColor={() => ''}
               isSearching={isSearching}
             />
 
@@ -928,29 +629,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       </div>
     )
   }
-
-  // Para casos específicos (filterType), usar filtros otimizados
-  if (!filterType) {
-    return renderWithTabs(clientes)
-  }
-
-  // ETAPA 3: Usar filtros otimizados para casos específicos
-  const finalFilteredClientes = optimizedFilteredClientes.filter(cliente => {
-    if (filterType === 'ativos') {
-      const { clientesAtivos } = categorizarClientes([cliente])
-      return clientesAtivos.length > 0
-    } else if (filterType === 'inativos') {
-      const { clientesInativos } = categorizarClientes([cliente])
-      return clientesInativos.length > 0
-    } else if (filterType === 'problemas') {
-      return cliente.status_campanha === 'Problema'
-    } else if (filterType === 'sites-pendentes') {
-      return cliente.site_status === 'aguardando_link'
-    } else if (filterType === 'sites-finalizados') {
-      return cliente.site_status === 'finalizado'
-    }
-    return true
-  })
 
   if (loading) {
     return (
@@ -975,6 +653,28 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     )
   }
 
+  // For cases without filterType, use tabs
+  if (!filterType) {
+    return renderWithTabs(clientes)
+  }
+
+  const finalFilteredClientes = optimizedFilteredClientes.filter(cliente => {
+    if (filterType === 'ativos') {
+      const { clientesAtivos } = categorizarClientes([cliente])
+      return clientesAtivos.length > 0
+    } else if (filterType === 'inativos') {
+      const { clientesInativos } = categorizarClientes([cliente])
+      return clientesInativos.length > 0
+    } else if (filterType === 'problemas') {
+      return cliente.status_campanha === 'Problema'
+    } else if (filterType === 'sites-pendentes') {
+      return cliente.site_status === 'aguardando_link'
+    } else if (filterType === 'sites-finalizados') {
+      return cliente.site_status === 'finalizado'
+    }
+    return true
+  })
+
   return (
     <div className="space-y-4 p-4 lg:p-0">
       {isSitesContext && (
@@ -992,13 +692,16 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           filteredClientesCount={finalFilteredClientes.length}
           realtimeConnected={realtimeConnected}
           onRefresh={refetch}
-          onExport={exportToCSV}
+          onExport={() => {}}
         />
         
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
-            onClienteAdicionado={refetch}
-            gestorMode={!isAdmin}
+            isOpen={false}
+            onClose={() => {}}
+            onClientAdded={refetch}
+            userEmail={emailToUse}
+            isAdmin={isAdmin}
           />
         )}
       </div>
@@ -1015,7 +718,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         setCreativoFilter={setCreativoFilter}
         bmFilter={bmFilter}
         setBmFilter={setBmFilter}
-        getStatusColor={getStatusColor}
+        getStatusColor={() => ''}
         isSearching={isSearching}
       />
 

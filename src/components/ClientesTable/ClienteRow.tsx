@@ -57,7 +57,10 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell>
-        <ClienteRowPhone telefone={cliente.telefone} nomeCliente={cliente.nome_cliente} />
+        <ClienteRowPhone 
+          telefone={cliente.telefone} 
+          nomeCliente={cliente.nome_cliente}
+        />
       </TableCell>
       
       <TableCell>
