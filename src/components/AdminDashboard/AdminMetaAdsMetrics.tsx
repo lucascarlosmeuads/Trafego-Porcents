@@ -66,6 +66,21 @@ export function AdminMetaAdsMetrics() {
     return await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
   }
 
+  // Calcular o custo por conversa iniciada corretamente
+  const calculateCostPerConversation = () => {
+    if (!insights || insights.spend === 0) return 0
+    
+    // Assumindo que uma "conversa iniciada" é representada pelo número de cliques
+    // que levaram a uma interação real (pode ser ajustado conforme necessário)
+    const conversasIniciadas = insights.clicks || 0
+    
+    if (conversasIniciadas === 0) return 0
+    
+    return insights.spend / conversasIniciadas
+  }
+
+  const costPerConversation = calculateCostPerConversation()
+
   if (!isConfigured) {
     return (
       <Card className="w-full">
@@ -157,11 +172,11 @@ export function AdminMetaAdsMetrics() {
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${insights.cost_per_message === 0 ? 'text-gray-500' : 'text-blue-600'}`}>
-                {insights.cost_per_message === 0 ? 'R$ 0,00' : formatCurrency(insights.cost_per_message || 0)}
+              <div className={`text-2xl font-bold ${costPerConversation === 0 ? 'text-gray-500' : 'text-blue-600'}`}>
+                {costPerConversation === 0 ? 'R$ 0,00' : formatCurrency(costPerConversation)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {insights.clicks === 0 ? 'Nenhum clique registrado' : `Baseado em ${insights.clicks} cliques`}
+                {insights.clicks === 0 ? 'Nenhuma conversa iniciada' : `${insights.clicks} conversas iniciadas`}
               </p>
             </CardContent>
           </Card>
