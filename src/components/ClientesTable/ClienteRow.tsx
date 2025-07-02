@@ -74,10 +74,12 @@ export function ClienteRow({
       
       <TableCell>
         <StatusSelect
-          currentStatus={cliente.status_campanha}
-          onStatusChange={handleStatusChange}
-          userEmail={userEmail}
-          isAdmin={isAdmin}
+          value={cliente.status_campanha}
+          onValueChange={handleStatusChange}
+          disabled={false}
+          isUpdating={false}
+          getStatusColor={() => ''}
+          compact={false}
         />
       </TableCell>
 
