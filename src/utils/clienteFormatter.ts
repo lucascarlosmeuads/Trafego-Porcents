@@ -22,6 +22,17 @@ export function formatCliente(item: any): Cliente | null {
   if (!item) return null
 
   try {
+    // CORREÇÃO 3: Melhorar a formatação do campo eh_ultimo_pago com logging
+    const ehUltimoPago = Boolean(item.eh_ultimo_pago === true)
+    
+    console.log('📋 [formatCliente] Formatando cliente:', {
+      id: item.id,
+      nome: item.nome_cliente,
+      eh_ultimo_pago_original: item.eh_ultimo_pago,
+      eh_ultimo_pago_formatado: ehUltimoPago,
+      tipo_original: typeof item.eh_ultimo_pago
+    })
+
     return {
       id: String(item.id || ''),
       data_venda: item.data_venda || '',
@@ -50,7 +61,7 @@ export function formatCliente(item: any): Cliente | null {
       ultimo_pagamento_em: item.ultimo_pagamento_em || null,
       ultimo_valor_pago: item.ultimo_valor_pago || null,
       total_pago_comissao: Number(item.total_pago_comissao || 0),
-      eh_ultimo_pago: Boolean(item.eh_ultimo_pago || false)
+      eh_ultimo_pago: ehUltimoPago // CORREÇÃO: Usar a variável formatada
     }
   } catch (error) {
     console.error('❌ [formatCliente] Erro ao formatar cliente:', error, item)

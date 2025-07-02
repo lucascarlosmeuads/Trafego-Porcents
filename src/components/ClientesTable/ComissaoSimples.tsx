@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
@@ -30,6 +30,19 @@ export function ComissaoSimples({
   const { atualizarComissao, loading, operationLock } = useComissaoOperations()
   const { atualizarValorComissao, marcarComoUltimoPago, removerMarcacaoUltimoPago, loading: loadingAvancado } = useComissaoAvancada()
   
+  // CORREÇÃO 1: Sincronizar estado local quando os dados do cliente mudarem
+  useEffect(() => {
+    console.log('🔄 [ComissaoSimples] Sincronizando estado local com dados do cliente')
+    console.log('🔄 [ComissaoSimples] Cliente eh_ultimo_pago:', cliente.eh_ultimo_pago)
+    console.log('🔄 [ComissaoSimples] Estado local anterior:', ultimoPagoLocal)
+    
+    const novoEstado = Boolean(cliente.eh_ultimo_pago === true)
+    if (novoEstado !== ultimoPagoLocal) {
+      console.log('🔄 [ComissaoSimples] Atualizando estado local para:', novoEstado)
+      setUltimoPagoLocal(novoEstado)
+    }
+  }, [cliente.eh_ultimo_pago, cliente.id]) // Dependências específicas
+
   const clienteId = cliente.id?.toString() || ''
   const valorComissao = cliente.valor_comissao || 60
   const isPago = cliente.comissao === 'Pago'
@@ -79,7 +92,7 @@ export function ComissaoSimples({
     setEditandoValor(false)
   }
 
-  // Toggle estrela último pago com melhor tratamento de erro
+  // Toggle estrela último pago com melhor tratamento de erro e sincronização
   const handleToggleUltimoPago = async (e: React.MouseEvent) => {
     e.stopPropagation()
     if (!canEdit || isProcessingUltimoPago) return
@@ -87,12 +100,14 @@ export function ComissaoSimples({
     console.log('🌟 [ComissaoSimples] Toggle último pago iniciado')
     console.log('🌟 [ComissaoSimples] Cliente:', cliente.nome_cliente)
     console.log('🌟 [ComissaoSimples] Estado atual:', isUltimoPago)
+    console.log('🌟 [ComissaoSimples] Cliente data original:', cliente.eh_ultimo_pago)
 
     setIsProcessingUltimoPago(true)
 
     // Otimistic update - atualizar UI imediatamente
     const novoEstado = !isUltimoPago
     setUltimoPagoLocal(novoEstado)
+    console.log('⚡ [ComissaoSimples] Otimistic update aplicado:', novoEstado)
 
     try {
       let sucesso = false
@@ -107,10 +122,12 @@ export function ComissaoSimples({
 
       if (sucesso) {
         console.log('✅ [ComissaoSimples] Operação realizada com sucesso')
-        // Aguardar um pouco antes de recarregar para dar tempo do banco processar
+        
+        // CORREÇÃO: Aguardar mais tempo e forçar recarregamento para garantir sincronização
         setTimeout(() => {
+          console.log('🔄 [ComissaoSimples] Forçando atualização da lista após sucesso')
           onComissionUpdate?.()
-        }, 1500) // Aumentado para 1.5s para garantir persistência
+        }, 2000) // Aumentado para 2s para garantir persistência
       } else {
         console.log('❌ [ComissaoSimples] Operação falhou, revertendo estado local')
         // Reverter otimistic update se falhou
@@ -126,6 +143,12 @@ export function ComissaoSimples({
   }
 
   const isDisabled = loading || operationLock || !canEdit || clickTimeout || loadingAvancado || isProcessingUltimoPago
+
+  // CORREÇÃO 2: Adicionar loading state visual
+  if (!clienteId) {
+    console.warn('⚠️ [ComissaoSimples] Cliente sem ID, não renderizando')
+    return null
+  }
 
   if (compact) {
     return (
@@ -234,7 +257,7 @@ export function ComissaoSimples({
             </TooltipContent>
           </Tooltip>
 
-          {/* Estrela Último Pago com melhor feedback visual */}
+          {/* Estrela Último Pago com melhor feedback visual e logging */}
           {canEdit && (
             <Button
               size="sm"
