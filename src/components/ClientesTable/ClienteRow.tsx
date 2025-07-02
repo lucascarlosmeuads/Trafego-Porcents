@@ -1,3 +1,4 @@
+
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { MoreHorizontal, ArrowRight, Copy, Mail, Phone } from 'lucide-react'
@@ -29,8 +30,8 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const { toast } = useToast()
 
-  const handleStatusChange = (id: string, newStatus: string) => {
-    onUpdate(id, 'status_campanha', newStatus)
+  const handleStatusChange = (newStatus: string) => {
+    onUpdate(String(cliente.id), 'status_campanha', newStatus)
   }
 
   const handleCopyEmail = (email: string) => {
@@ -56,7 +57,7 @@ export function ClienteRow({
       </TableCell>
       
       <TableCell>
-        <ClienteRowPhone telefone={cliente.telefone} />
+        <ClienteRowPhone telefone={cliente.telefone} nomeCliente={cliente.nome_cliente} />
       </TableCell>
       
       <TableCell>
@@ -70,7 +71,6 @@ export function ClienteRow({
       
       <TableCell>
         <StatusSelect
-          clienteId={String(cliente.id)}
           currentStatus={cliente.status_campanha}
           onStatusChange={handleStatusChange}
           userEmail={userEmail}

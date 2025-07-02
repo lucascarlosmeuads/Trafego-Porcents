@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -640,7 +639,15 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               <Table className="table-dark">
-                <TableHeader isAdmin={isAdmin} showEmailGestor={isSitesContext} />
+                <TableHeader 
+                  sortField={null}
+                  sortDirection={null}
+                  onSort={() => {}}
+                  showComissaoAvancada={showComissaoAvancada}
+                  showComissaoSimples={showComissaoSimples}
+                  isAdmin={isAdmin}
+                  showEmailGestor={isSitesContext}
+                />
                 <TableBody>
                   {paginatedData.length === 0 ? (
                     <TableRow className="border-border hover:bg-muted/20">
@@ -658,29 +665,11 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       <ClienteRow
                         key={`${emailToUse}-${cliente.id}-${currentPage}-${index}`}
                         cliente={cliente}
-                        selectedManager={currentManager || selectedManager || 'Próprios dados'}
-                        index={(currentPage - 1) * itemsPerPage + index}
+                        userEmail={emailToUse}
                         isAdmin={isAdmin}
-                        showEmailGestor={isSitesContext}
-                        showSitePagoCheckbox={showSitePagoCheckbox}
-                        updatingStatus={updatingStatus}
-                        editingLink={editingLink}
-                        linkValue={linkValue}
-                        setLinkValue={setLinkValue}
-                        editingBM={editingBM}
-                        bmValue={bmValue}
-                        setBmValue={setBmValue}
-                        getStatusColor={getStatusColor}
-                        onStatusChange={handleStatusChange}
-                        onSiteStatusChange={handleSiteStatusChange}
-                        onLinkEdit={handleLinkEdit}
-                        onLinkSave={handleLinkSave}
-                        onLinkCancel={handleLinkCancel}
-                        onBMEdit={handleBMEdit}
-                        onBMSave={handleBMSave}
-                        onBMCancel={handleBMCancel}
-                        onComissionUpdate={handleComissionUpdate}
-                        onSitePagoChange={handleSitePagoChange}
+                        onUpdate={updateCliente}
+                        showComissaoAvancada={showComissaoAvancada}
+                        showComissaoSimples={showComissaoSimples}
                       />
                     ))
                   )}
@@ -883,7 +872,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               
               {podeAdicionarCliente && !loadingPermissoes && (
                 <AddClientModal
-                  selectedManager={currentManager || selectedManager || 'Próprios dados'}
                   onClienteAdicionado={refetch}
                   gestorMode={!isAdmin}
                 />
@@ -1009,7 +997,6 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         
         {podeAdicionarCliente && !loadingPermissoes && filterType === 'ativos' && (
           <AddClientModal
-            selectedManager={currentManager || selectedManager || 'Próprios dados'}
             onClienteAdicionado={refetch}
             gestorMode={!isAdmin}
           />

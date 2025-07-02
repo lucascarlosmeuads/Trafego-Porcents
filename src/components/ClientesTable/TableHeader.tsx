@@ -1,8 +1,10 @@
+
 import {
   TableHead,
-  TableRow,
-  TableHeaderCell
+  TableRow
 } from '@/components/ui/table'
+import { ArrowUpDown } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface TableHeaderProps {
   sortField: string | null
@@ -10,6 +12,35 @@ interface TableHeaderProps {
   onSort: (field: string) => void
   showComissaoAvancada?: boolean
   showComissaoSimples?: boolean
+  isAdmin?: boolean
+  showEmailGestor?: boolean
+}
+
+function TableHeaderCell({ 
+  field, 
+  label, 
+  sortField, 
+  sortDirection, 
+  onSort 
+}: {
+  field: string
+  label: string
+  sortField: string | null
+  sortDirection: 'asc' | 'desc' | null
+  onSort: (field: string) => void
+}) {
+  return (
+    <TableHead>
+      <Button
+        variant="ghost"
+        onClick={() => onSort(field)}
+        className="h-auto p-0 font-semibold text-white hover:text-gray-300"
+      >
+        {label}
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      </Button>
+    </TableHead>
+  )
 }
 
 export function TableHeader({ 
@@ -17,7 +48,9 @@ export function TableHeader({
   sortDirection, 
   onSort,
   showComissaoAvancada = false,
-  showComissaoSimples = false 
+  showComissaoSimples = false,
+  isAdmin = false,
+  showEmailGestor = false
 }: TableHeaderProps) {
   return (
     <TableHead className="w-full">
@@ -33,22 +66,6 @@ export function TableHeader({
         <TableHeaderCell 
           field="email_cliente" 
           label="Email" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="vendedor" 
-          label="Vendedor" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="email_gestor" 
-          label="Gestor" 
           sortField={sortField}
           sortDirection={sortDirection}
           onSort={onSort}
@@ -107,37 +124,7 @@ export function TableHeader({
           />
         )}
 
-        <TableHeaderCell 
-          field="site_status" 
-          label="Site" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="data_venda" 
-          label="Data Venda" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="created_at" 
-          label="Criado em" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="data_limite" 
-          label="Data Limite" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
+        <TableHead>Ações</TableHead>
       </TableRow>
     </TableHead>
   )
