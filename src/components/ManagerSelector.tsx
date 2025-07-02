@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -29,6 +30,7 @@ export function ManagerSelector({
 
   // Lista de emails dos gestores que devem ser removidos do filtro
   const gestoresParaRemover = [
+    'jose@trafegoporcents.com',
     'rullian@trafegoporcents.com',
     'carol@trafegoporcents.com',
     'junior@trafegoporcents.com',
