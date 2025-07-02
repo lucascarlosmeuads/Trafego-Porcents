@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -10,14 +11,15 @@ import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
+import { CurrencyInput } from '@/components/ui/currency-input'
 
 interface AddClientModalProps {
   selectedManager?: string
-  onClienteAdicionado: () => void
+  onClientAdded: () => void
   gestorMode?: boolean
 }
 
-export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMode = false }: AddClientModalProps) {
+export function AddClientModal({ selectedManager, onClientAdded, gestorMode = false }: AddClientModalProps) {
   const { user, currentManagerName, isAdmin } = useAuth()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -31,9 +33,10 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     email_cliente: '',
     vendedor: '',
     status_campanha: 'Cliente Novo',
-    data_venda: new Date().toISOString().split('T')[0]
+    data_venda: new Date().toISOString().split('T')[0],
+    valor_venda_inicial: 0 // Novo campo
   })
-  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
+  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClientAdded)
 
   const managerOptions = [
     { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
@@ -126,6 +129,16 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       return
     }
 
+    // Validação do valor da venda
+    if (!formData.valor_venda_inicial || formData.valor_venda_inicial <= 0) {
+      toast({
+        title: "Erro",
+        description: "Valor da venda é obrigatório e deve ser maior que R$ 0,00",
+        variant: "destructive"
+      })
+      return
+    }
+
     // CORREÇÃO: Determinar email_gestor baseado no contexto
     let emailGestorFinal: string
 
@@ -188,6 +201,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         email_gestor: emailGestorFinal,
         status_campanha: formData.status_campanha,
         data_venda: formData.data_venda,
+        valor_venda_inicial: formData.valor_venda_inicial, // Incluir valor da venda
         valor_comissao: 60.00,
         comissao_paga: false
       }
@@ -208,13 +222,14 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           email_cliente: '',
           vendedor: '',
           status_campanha: 'Cliente Novo',
-          data_venda: new Date().toISOString().split('T')[0]
+          data_venda: new Date().toISOString().split('T')[0],
+          valor_venda_inicial: 0
         })
         setSelectedGestor('')
         setOpen(false)
         
         // Atualizar dados
-        onClienteAdicionado()
+        onClientAdded()
 
         // Toast de sucesso
         toast({
@@ -381,6 +396,21 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                 onChange={(e) => setFormData(prev => ({ ...prev, email_cliente: e.target.value }))}
                 placeholder="cliente@email.com"
               />
+            </div>
+
+            {/* Novo campo: Valor da Venda */}
+            <div className="grid gap-2">
+              <Label htmlFor="valor_venda">💰 Valor da Venda (R$) *</Label>
+              <CurrencyInput
+                id="valor_venda"
+                value={formData.valor_venda_inicial}
+                onChange={(value) => setFormData(prev => ({ ...prev, valor_venda_inicial: value }))}
+                placeholder="R$ 0,00"
+                required
+              />
+              <p className="text-xs text-gray-500">
+                Este valor será usado para cálculos de ROI e relatórios financeiros
+              </p>
             </div>
 
             {/* Campo de gestor para admin (agora com fallback automático) */}

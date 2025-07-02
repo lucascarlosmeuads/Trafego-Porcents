@@ -29,6 +29,17 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
       return { success: false, error: 'Email do gestor é obrigatório' }
     }
 
+    // Validação do valor da venda
+    if (!clienteData.valor_venda_inicial || clienteData.valor_venda_inicial <= 0) {
+      console.error('❌ [useClienteAdd] Valor da venda não fornecido ou inválido')
+      toast({
+        title: "Erro",
+        description: "Valor da venda é obrigatório e deve ser maior que R$ 0,00",
+        variant: "destructive"
+      })
+      return { success: false, error: 'Valor da venda é obrigatório' }
+    }
+
     try {
       // Preparar dados para inserção
       const dataToInsert = {
@@ -39,6 +50,7 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         email_gestor: clienteData.email_gestor,
         status_campanha: clienteData.status_campanha || 'Cliente Novo',
         data_venda: clienteData.data_venda,
+        valor_venda_inicial: clienteData.valor_venda_inicial, // Novo campo
         valor_comissao: clienteData.valor_comissao || 60.00,
         comissao: 'Pendente',
         site_status: 'pendente',
