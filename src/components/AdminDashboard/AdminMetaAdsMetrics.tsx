@@ -152,10 +152,10 @@ export function AdminMetaAdsMetrics() {
             </CardContent>
           </Card>
 
-          {/* Custo por Mensagem */}
+          {/* Custo por Conversa Iniciada */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Custo por Lead</CardTitle>
+              <CardTitle className="text-sm font-medium">Custo por Conversa Iniciada</CardTitle>
               <MessageCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
