@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -5,14 +6,15 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
 import { AdminMetaAdsDateFilter } from './AdminMetaAdsDateFilter'
 import { formatCurrency } from '@/lib/utils'
+import { supabase } from '@/lib/supabase'
 import { 
   DollarSign, 
-  MessageCircle, 
   RefreshCw, 
   TrendingUp,
   Activity,
   Target,
-  AlertCircle
+  AlertCircle,
+  ShoppingCart
 } from 'lucide-react'
 
 export function AdminMetaAdsMetrics() {
@@ -26,13 +28,70 @@ export function AdminMetaAdsMetrics() {
   } = useAdminMetaAds()
 
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
+  const [vendasDia, setVendasDia] = useState<number>(0)
+  const [loadingVendas, setLoadingVendas] = useState(false)
 
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
     if (isConfigured) {
       fetchTodayInsights()
+      fetchVendasDia()
     }
   }, [isConfigured])
+
+  // Buscar vendas do dia
+  const fetchVendasDia = async () => {
+    setLoadingVendas(true)
+    try {
+      const hoje = new Date().toISOString().split('T')[0]
+      
+      console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do dia:', hoje)
+      
+      // Buscar vendas de hoje da tabela vendas_cliente
+      const { data: vendasCliente, error: errorVendasCliente } = await supabase
+        .from('vendas_cliente')
+        .select('valor_venda')
+        .eq('data_venda', hoje)
+
+      if (errorVendasCliente) {
+        console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas_cliente:', errorVendasCliente)
+      }
+
+      // Buscar vendas de hoje da tabela todos_clientes (data_venda >= 01/07/2025)
+      const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
+        .from('todos_clientes')
+        .select('valor_venda_inicial')
+        .eq('data_venda', hoje)
+        .gte('data_venda', '2025-07-01')
+
+      if (errorTodosClientes) {
+        console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
+      }
+
+      // Somar todas as vendas
+      let totalVendas = 0
+
+      if (vendasCliente) {
+        const somaVendasCliente = vendasCliente.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0)
+        totalVendas += somaVendasCliente
+        console.log('💰 [AdminMetaAdsMetrics] Vendas de vendas_cliente:', somaVendasCliente)
+      }
+
+      if (vendasTodosClientes) {
+        const somaVendasTodos = vendasTodosClientes.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
+        totalVendas += somaVendasTodos
+        console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
+      }
+
+      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do dia:', totalVendas)
+      setVendasDia(totalVendas)
+
+    } catch (error) {
+      console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)
+    } finally {
+      setLoadingVendas(false)
+    }
+  }
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
@@ -42,6 +101,8 @@ export function AdminMetaAdsMetrics() {
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
       }
+      // Buscar vendas quando mudar para hoje
+      await fetchVendasDia()
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
@@ -49,57 +110,23 @@ export function AdminMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
+      // Para outros períodos, não buscar vendas por enquanto
+      setVendasDia(0)
     } else if (preset === 'custom' && startDate && endDate) {
-      // Para período personalizado, chamar a edge function diretamente com datas específicas
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result?.success) {
         setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
       } else {
         setLastFetchInfo('')
       }
+      // Para período personalizado, não buscar vendas por enquanto
+      setVendasDia(0)
     }
   }
 
   const fetchInsightsWithCustomDates = async (startDate: string, endDate: string) => {
-    // Usar a função existente mas com período personalizado
     return await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
   }
-
-  // CORREÇÃO: Calcular o custo por conversa iniciada usando dados reais do Meta Ads
-  const calculateCostPerConversation = () => {
-    if (!insights || insights.spend === 0) return 0
-    
-    // Debug: Vamos logar os valores para verificar o que está acontecendo
-    console.log('🔍 [AdminMetaAdsMetrics] Dados para cálculo:', {
-      spend: insights.spend,
-      clicks: insights.clicks,
-      impressions: insights.impressions,
-      cost_per_message: insights.cost_per_message
-    })
-    
-    // CORREÇÃO: Usar o cost_per_message se estiver disponível na API, 
-    // caso contrário calcular baseado em spend/clicks
-    if (insights.cost_per_message && insights.cost_per_message > 0) {
-      console.log('✅ [AdminMetaAdsMetrics] Usando cost_per_message da API:', insights.cost_per_message)
-      return insights.cost_per_message
-    }
-    
-    // Fallback: calcular manualmente se não tiver cost_per_message
-    const conversasIniciadas = insights.clicks || 0
-    
-    if (conversasIniciadas === 0) return 0
-    
-    const custoCalculado = insights.spend / conversasIniciadas
-    console.log('⚠️ [AdminMetaAdsMetrics] Calculando manualmente:', {
-      spend: insights.spend,
-      clicks: conversasIniciadas,
-      resultado: custoCalculado
-    })
-    
-    return custoCalculado
-  }
-
-  const costPerConversation = calculateCostPerConversation()
 
   if (!isConfigured) {
     return (
@@ -130,7 +157,7 @@ export function AdminMetaAdsMetrics() {
           Meta Ads - Relatórios
         </h3>
         <p className="text-sm text-muted-foreground">
-          Dados das campanhas ativas
+          Investimento em tráfego vs. Retorno em vendas
         </p>
       </div>
 
@@ -169,39 +196,42 @@ export function AdminMetaAdsMetrics() {
       {/* Métricas principais */}
       {insights && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Valor Gasto */}
+          {/* Valor Investido */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Investimento</CardTitle>
+              <CardTitle className="text-sm font-medium">Investimento em Tráfego</CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${insights.spend === 0 ? 'text-gray-500' : 'text-green-600'}`}>
+              <div className={`text-2xl font-bold ${insights.spend === 0 ? 'text-gray-500' : 'text-red-600'}`}>
                 {formatCurrency(insights.spend)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {insights.spend === 0 ? 'Nenhum gasto registrado' : 'Total investido nas campanhas'}
+                {insights.spend === 0 ? 'Nenhum gasto registrado' : 'Total investido em campanhas hoje'}
               </p>
             </CardContent>
           </Card>
 
-          {/* Custo por Conversa Iniciada */}
+          {/* Vendas do Dia */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Custo por Conversa Iniciada</CardTitle>
-              <MessageCircle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Vendas do Dia</CardTitle>
+              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className={`text-2xl font-bold ${costPerConversation === 0 ? 'text-gray-500' : 'text-blue-600'}`}>
-                {costPerConversation === 0 ? 'R$ 0,00' : formatCurrency(costPerConversation)}
+              <div className={`text-2xl font-bold ${vendasDia === 0 ? 'text-gray-500' : 'text-green-600'}`}>
+                {loadingVendas ? '...' : formatCurrency(vendasDia)}
               </div>
               <p className="text-xs text-muted-foreground">
-                {insights.clicks === 0 ? 'Nenhuma conversa iniciada' : `${insights.clicks} conversas iniciadas`}
+                {vendasDia === 0 ? 'Nenhuma venda registrada hoje' : 'Total de vendas realizadas hoje'}
               </p>
-              {/* Debug info - remover após correção */}
-              <p className="text-xs text-orange-600 mt-1">
-                Debug: G={formatCurrency(insights.spend)} ÷ C={insights.clicks} = {costPerConversation > 0 ? formatCurrency(costPerConversation) : 'N/A'}
-              </p>
+              {/* ROI Info */}
+              {insights.spend > 0 && vendasDia > 0 && (
+                <p className="text-xs text-blue-600 mt-1">
+                  ROI: {((vendasDia / insights.spend - 1) * 100).toFixed(1)}% 
+                  {vendasDia > insights.spend ? ' 📈' : ' 📉'}
+                </p>
+              )}
             </CardContent>
           </Card>
         </div>
