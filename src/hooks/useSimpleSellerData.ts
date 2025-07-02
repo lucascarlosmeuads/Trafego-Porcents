@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -112,6 +113,11 @@ export function useSimpleSellerData(sellerEmail: string) {
       console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
       console.log('📧 [useSimpleSellerData] Email do cliente:', clienteData.email_cliente)
       
+      // ⚡ SALVAR SESSÃO ATUAL DO VENDEDOR ANTES DE CRIAR CLIENTE
+      const { data: currentSession } = await supabase.auth.getSession()
+      const vendorSession = currentSession.session
+      console.log('💾 [useSimpleSellerData] Sessão do vendedor salva:', vendorSession?.user?.email)
+      
       // Normalizar email para comparação case-insensitive
       const normalizedEmail = clienteData.email_cliente.toLowerCase().trim()
       
@@ -216,12 +222,16 @@ export function useSimpleSellerData(sellerEmail: string) {
         clientId = insertData.id
       }
 
-      // Step 3: DEPOIS criar conta no Supabase Auth (apenas para clientes novos)
+      // Step 3: CRIAR CONTA NO SUPABASE AUTH SEM INTERFERIR NA SESSÃO ATUAL
       let senhaDefinida = false
       if (!clienteJaExistia) {
         console.log('🔐 [useSimpleSellerData] Criando conta no Supabase Auth...')
         
         try {
+          // ⚡ IMPORTANTE: Fazer logout temporário para evitar interferência na sessão
+          console.log('🔄 [useSimpleSellerData] Fazendo logout temporário...')
+          await supabase.auth.signOut()
+          
           // Criar conta usando signUp com a senha informada e email normalizado
           const { data: authData, error: authError } = await supabase.auth.signUp({
             email: normalizedEmail,
@@ -244,9 +254,27 @@ export function useSimpleSellerData(sellerEmail: string) {
             console.log('✅ [useSimpleSellerData] Conta criada com sucesso!')
             senhaDefinida = true
           }
+
+          // ⚡ RESTAURAR SESSÃO DO VENDEDOR IMEDIATAMENTE
+          if (vendorSession) {
+            console.log('🔄 [useSimpleSellerData] Restaurando sessão do vendedor...')
+            await supabase.auth.setSession(vendorSession)
+            console.log('✅ [useSimpleSellerData] Sessão do vendedor restaurada:', vendorSession.user?.email)
+          }
+          
         } catch (authErr) {
           console.error('⚠️ [useSimpleSellerData] Erro na criação da conta (catch):', authErr)
-          // Continuar mesmo se houver erro na criação da conta
+          
+          // ⚡ GARANTIR QUE A SESSÃO DO VENDEDOR SEJA RESTAURADA MESMO EM CASO DE ERRO
+          if (vendorSession) {
+            console.log('🔄 [useSimpleSellerData] Restaurando sessão do vendedor após erro...')
+            try {
+              await supabase.auth.setSession(vendorSession)
+              console.log('✅ [useSimpleSellerData] Sessão do vendedor restaurada após erro')
+            } catch (restoreError) {
+              console.error('❌ [useSimpleSellerData] Erro ao restaurar sessão:', restoreError)
+            }
+          }
         }
       }
 
