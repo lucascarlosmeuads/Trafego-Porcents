@@ -1,83 +1,46 @@
+
 import { createClient } from '@supabase/supabase-js'
+import { type Database } from '@/integrations/supabase/types'
 
-// Usando os valores do arquivo de configuração do Supabase
-const supabaseUrl = "https://rxpgqunqsegypssoqpyf.supabase.co"
-const supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4cGdxdW5xc2VneXBzc29xcHlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NzEyODcsImV4cCI6MjA2MzE0NzI4N30.9ZzV-alsdI4EqrzRwFDxP9Vjr2l_KXHMPN9dVyf5ZWI"
+const supabaseUrl = 'https://rxpgqunqsegypssqpyf.supabase.co'
+const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4cGdxdW5xc2VneXBzc29xcHlmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDc1NzEyODcsImV4cCI6MjA2MzE0NzI4N30.9ZzV-alsdI4EqrzRwFDxP9Vjr2l_KXHMPN9dVyf5ZWI'
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey)
 
-export type Cliente = {
-  id: string
-  data_venda: string
-  nome_cliente: string
-  telefone: string
-  email_cliente: string
-  vendedor: string
-  email_gestor: string
-  status_campanha: string
-  data_limite: string
-  link_grupo: string
-  link_briefing: string
-  link_criativo: string
-  link_site: string
-  link_campanha: string
-  numero_bm: string
-  comissao_paga: boolean
-  valor_comissao: number
-  created_at: string
-  site_status: string
-  descricao_problema: string
-  saque_solicitado: boolean
-  comissao: string
-  site_pago: boolean
-  // Novas colunas para sistema avançado de comissões
-  ultimo_pagamento_em: string | null
-  ultimo_valor_pago: number | null
-  total_pago_comissao: number
-  eh_ultimo_pago: boolean
-}
+// Export database types
+export type Cliente = Database['public']['Tables']['todos_clientes']['Row']
+export type StatusCampanha = 
+  | 'Cliente Novo'
+  | 'Preenchimento do Formulário'
+  | 'Brief'
+  | 'Criativo'
+  | 'Site'
+  | 'Agendamento'
+  | 'Configurando BM'
+  | 'Subindo Campanha'
+  | 'Otimização'
+  | 'Problema'
+  | 'Cliente Sumiu'
+  | 'Reembolso'
+  | 'Campanha no Ar'
+  | 'Campanha Anual'
+  | 'Urgente'
+  | 'Cliente Antigo'
+  | 'Cancelado'
+  | 'Cancelamento'
+  | 'Inativo'
+  | 'Off'
+  | 'Pausado'
+  | 'Parado'
+  | 'Finalizado'
+  | 'Encerrado'
+  | 'Saque Pendente'
 
-export type HistoricoPagamentoComissao = {
-  id: string
-  cliente_id: number
-  valor_pago: number
-  data_pagamento: string
-  pago_por: string
-  observacoes: string | null
-  created_at: string
-  updated_at: string
-}
-
-export type Gestor = {
-  id: string
-  user_id?: string
-  nome: string
-  email: string
-  pode_adicionar_cliente: boolean
-  ativo: boolean
-  created_at: string
-  updated_at: string
-}
-
-export type SolicitacaoSaque = {
-  id: string
-  email_gestor: string
-  nome_gestor: string
-  cliente_id: number
-  valor_comissao: number
-  data_solicitacao: string
-  status_saque: string
-  processado_em: string | null
-  created_at: string
-  updated_at: string
-}
-
-// Status operacionais disponíveis - Status atualizados e organizados com os novos status
-export const STATUS_CAMPANHA = [
+export const STATUS_CAMPANHA: StatusCampanha[] = [
   'Cliente Novo',
-  'Formulário',
+  'Preenchimento do Formulário',
   'Brief',
-  'Criativo', 
+  'Criativo',
   'Site',
   'Agendamento',
   'Configurando BM',
@@ -86,35 +49,27 @@ export const STATUS_CAMPANHA = [
   'Problema',
   'Cliente Sumiu',
   'Reembolso',
-  'Saque Pendente',
+  'Campanha no Ar',
   'Campanha Anual',
   'Urgente',
-  'Cliente Antigo'
-] as const
+  'Cliente Antigo',
+  'Cancelado',
+  'Cancelamento',
+  'Inativo',
+  'Off',
+  'Pausado',
+  'Parado',
+  'Finalizado',
+  'Encerrado',
+  'Saque Pendente'
+]
 
-export type StatusCampanha = typeof STATUS_CAMPANHA[number]
-
-// Mapeamento para exibição visual - labels atualizados com os novos status
-export const STATUS_DISPLAY_MAP: Record<StatusCampanha, string> = {
-  'Cliente Novo': 'Cliente Novo',
-  'Formulário': 'Formulário',
-  'Brief': 'Brief',
-  'Criativo': 'Criativo',
-  'Site': 'Site',
-  'Agendamento': 'Agendamento',
-  'Configurando BM': 'Configurando BM',
-  'Subindo Campanha': 'Subindo Campanha',
-  'Otimização': 'Otimização',
-  'Problema': 'Problema',
-  'Cliente Sumiu': 'Cliente Sumiu',
-  'Reembolso': 'Reembolso',
-  'Saque Pendente': 'Campanha no Ar',  // ✅ Apenas mudança visual
-  'Campanha Anual': 'Campanha Anual',
-  'Urgente': 'Urgente',
-  'Cliente Antigo': 'Cliente Antigo'
-}
-
-// Função para obter o rótulo visual do status
-export const getStatusDisplayLabel = (status: StatusCampanha): string => {
-  return STATUS_DISPLAY_MAP[status] || status
-}
+export type Gestor = Database['public']['Tables']['gestores']['Row']
+export type SacCliente = Database['public']['Tables']['sac_clientes']['Row']
+export type ArquivoCliente = Database['public']['Tables']['arquivos_cliente']['Row']
+export type BriefingCliente = Database['public']['Tables']['briefings_cliente']['Row']
+export type ChatMensagem = Database['public']['Tables']['chat_mensagens']['Row']
+export type VendasCliente = Database['public']['Tables']['vendas_cliente']['Row']
+export type ClienteProfile = Database['public']['Tables']['cliente_profiles']['Row']
+export type SugestaoMelhoria = Database['public']['Tables']['sugestoes_melhorias']['Row']
+export type ComissaoHistorico = Database['public']['Tables']['historico_pagamentos_comissao']['Row']

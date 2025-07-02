@@ -7,7 +7,7 @@ import { SiteStatusSelect } from './SiteStatusSelect'
 import { ComissaoButton } from './ComissaoButton'
 import { BriefingMaterialsModal } from './BriefingMaterialsModal'
 import { ClienteRowName } from './ClienteRowName'
-import { ClienteRowPhone } from './ClienteRowPhone'
+import { ClienteRowPhone from './ClienteRowPhone'
 import { ClienteRowDataLimite } from './ClienteRowDataLimite'
 import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
@@ -157,10 +157,10 @@ export function ClienteRow({
           />
         </TableCell>
 
-        {/* Nova coluna para Valor da Venda */}
+        {/* Valor da Venda Cell */}
         <ClienteRowValorVenda
           clienteId={cliente.id!.toString()}
-          valorVenda={cliente.valor_venda_inicial}
+          valorVenda={cliente.valor_venda_inicial || null}
           isAdmin={isAdmin}
           onSave={handleSaveValorVenda}
           compact={true}
