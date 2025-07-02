@@ -59,7 +59,7 @@ export function useAdminMetaAds() {
       }
 
       if (data) {
-        console.log('✅ [useAdminMetaAds] Configuração encontrada')
+        console.log('✅ [useAdminMetaAds] Configuração encontrada:', data)
         setConfig(data)
       } else {
         console.log('ℹ️ [useAdminMetaAds] Nenhuma configuração global encontrada')
@@ -79,7 +79,7 @@ export function useAdminMetaAds() {
     setLastError(null)
     
     try {
-      console.log('💾 [useAdminMetaAds] Salvando configuração global...')
+      console.log('💾 [useAdminMetaAds] Salvando configuração global...', configData)
       
       const payload = {
         ...configData,
@@ -89,6 +89,7 @@ export function useAdminMetaAds() {
       let result
       if (config?.id) {
         // Atualizar existente
+        console.log('📝 [useAdminMetaAds] Atualizando configuração existente...')
         result = await supabase
           .from('meta_ads_configs')
           .update(payload)
@@ -97,6 +98,7 @@ export function useAdminMetaAds() {
           .single()
       } else {
         // Criar nova
+        console.log('🆕 [useAdminMetaAds] Criando nova configuração...')
         result = await supabase
           .from('meta_ads_configs')
           .insert([payload])
@@ -105,10 +107,11 @@ export function useAdminMetaAds() {
       }
 
       if (result.error) {
+        console.error('❌ [useAdminMetaAds] Erro no banco:', result.error)
         throw result.error
       }
 
-      console.log('✅ [useAdminMetaAds] Configuração salva com sucesso')
+      console.log('✅ [useAdminMetaAds] Configuração salva com sucesso:', result.data)
       setConfig(result.data)
       toast({
         title: "Sucesso",
@@ -147,32 +150,45 @@ export function useAdminMetaAds() {
     setConnectionSteps(null)
 
     try {
-      console.log('🔗 [useAdminMetaAds] Testando conexão...')
+      console.log('🔗 [useAdminMetaAds] Testando conexão com config:', {
+        api_id: config.api_id,
+        ad_account_id: config.ad_account_id,
+        // Não loggar tokens por segurança
+      })
       
+      // CORREÇÃO: Mapear os campos corretamente para a função edge
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'test_connection',
           config: {
-            app_id: config.api_id,
-            app_secret: config.app_secret,
-            access_token: config.access_token,
-            ad_account_id: config.ad_account_id
+            appId: config.api_id,        // api_id → appId
+            appSecret: config.app_secret, // app_secret → appSecret
+            accessToken: config.access_token, // access_token → accessToken
+            adAccountId: config.ad_account_id // ad_account_id → adAccountId
           }
         }
       })
 
       if (error) {
+        console.error('❌ [useAdminMetaAds] Erro na função edge:', error)
         throw error
       }
 
+      console.log('📊 [useAdminMetaAds] Resposta da função edge:', data)
+
       if (data.success) {
         console.log('✅ [useAdminMetaAds] Conexão testada com sucesso')
-        setConnectionSteps(data.connection_steps)
+        // CORREÇÃO: Verificar ambos os possíveis locais da resposta
+        const steps = data.connection_steps || data.steps
+        if (steps) {
+          setConnectionSteps(steps)
+        }
         return { success: true, message: data.message }
       } else {
-        console.error('❌ [useAdminMetaAds] Falha no teste:', data.error)
-        setLastError(data.error)
-        return { success: false, message: data.error }
+        console.error('❌ [useAdminMetaAds] Falha no teste:', data.error || data.message)
+        const errorMsg = data.error || data.message || 'Erro desconhecido'
+        setLastError(errorMsg)
+        return { success: false, message: errorMsg }
       }
     } catch (error: any) {
       console.error('💥 [useAdminMetaAds] Erro no teste:', error)
@@ -197,14 +213,15 @@ export function useAdminMetaAds() {
     try {
       console.log('📊 [useAdminMetaAds] Buscando insights do dia...')
       
+      // CORREÇÃO: Usar os campos mapeados corretamente
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_insights',
           config: {
-            app_id: config.api_id,
-            app_secret: config.app_secret,
-            access_token: config.access_token,
-            ad_account_id: config.ad_account_id
+            appId: config.api_id,
+            appSecret: config.app_secret,
+            accessToken: config.access_token,
+            adAccountId: config.ad_account_id
           },
           date_preset: 'today'
         }

@@ -29,43 +29,56 @@ export function AdminMetaAdsConfig() {
     connectionSteps,
     isConfigured,
     saveConfig, 
-    testConnection 
+    testConnection,
+    refetchConfig
   } = useAdminMetaAds()
   
   const [isOpen, setIsOpen] = useState(false)
   const [showTokens, setShowTokens] = useState(false)
   const [formData, setFormData] = useState({
-    api_id: config?.api_id || '',
-    app_secret: config?.app_secret || '',
-    access_token: config?.access_token || '',
-    ad_account_id: config?.ad_account_id || '',
+    api_id: '',
+    app_secret: '',
+    access_token: '',
+    ad_account_id: '',
     email_usuario: 'admin-global'
   })
 
-  // Atualizar form quando config carrega
+  // Atualizar form quando config carrega E manter dados no form
   useEffect(() => {
+    console.log('🔄 [AdminMetaAdsConfig] Config mudou:', config)
     if (config) {
       setFormData({
-        api_id: config.api_id,
-        app_secret: config.app_secret,
-        access_token: config.access_token,
-        ad_account_id: config.ad_account_id,
-        email_usuario: config.email_usuario
+        api_id: config.api_id || '',
+        app_secret: config.app_secret || '',
+        access_token: config.access_token || '',
+        ad_account_id: config.ad_account_id || '',
+        email_usuario: config.email_usuario || 'admin-global'
       })
     }
   }, [config])
 
+  // Buscar configuração ao montar o componente
+  useEffect(() => {
+    if (!config && !loading) {
+      console.log('🔄 [AdminMetaAdsConfig] Refazendo busca da configuração...')
+      refetchConfig()
+    }
+  }, [])
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    console.log('💾 [AdminMetaAdsConfig] Submetendo formulário:', formData)
     const result = await saveConfig(formData)
     if (result.success) {
+      console.log('✅ [AdminMetaAdsConfig] Configuração salva, fechando modal')
       setIsOpen(false)
     }
   }
 
   const handleTestConnection = async () => {
+    console.log('🔗 [AdminMetaAdsConfig] Testando conexão...')
     const result = await testConnection()
-    console.log('Resultado do teste:', result)
+    console.log('📊 [AdminMetaAdsConfig] Resultado do teste:', result)
   }
 
   if (loading) {

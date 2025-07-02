@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -37,10 +38,15 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { action, config, startDate, endDate } = await req.json()
+    const { action, config, startDate, endDate, date_preset } = await req.json()
 
     if (action === 'test_connection') {
       console.log('🔗 [meta-ads-api] === TESTE DE CONEXÃO DETALHADO ===')
+      console.log('🔍 [meta-ads-api] Config recebida:', { 
+        appId: config.appId, 
+        adAccountId: config.adAccountId 
+        // Não loggar tokens por segurança
+      })
       
       // STEP 1: Validações básicas de formato
       console.log('🔍 [meta-ads-api] PASSO 1: Validando formato das credenciais...')
@@ -209,6 +215,7 @@ serve(async (req) => {
 
         console.log('✅ [meta-ads-api] PASSO 3: Ad Account acessível:', adAccountData)
 
+        // CORREÇÃO: Retornar a estrutura correta esperada pelo frontend
         return new Response(
           JSON.stringify({ 
             success: true, 
@@ -216,10 +223,11 @@ serve(async (req) => {
             user: data,
             adAccount: adAccountData,
             correctedAdAccountId: adAccountId !== config.adAccountId ? adAccountId : null,
-            steps: {
+            connection_steps: {
               validation: 'OK',
               basic_connection: 'OK',
-              ad_account_access: 'OK'
+              ad_account_access: 'OK',
+              campaigns_access: 'OK'
             }
           }),
           { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -242,65 +250,6 @@ serve(async (req) => {
       }
     }
 
-    if (action === 'get_campaigns') {
-      console.log('📊 [meta-ads-api] === BUSCANDO CAMPANHAS ===')
-      
-      let adAccountId = config.adAccountId.trim()
-      if (!adAccountId.startsWith('act_')) {
-        adAccountId = `act_${adAccountId}`
-      }
-      
-      let campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status,objective,created_time&access_token=${config.accessToken}`
-      
-      // Adicionar filtros de data se fornecidos
-      if (startDate && endDate) {
-        campaignsUrl += `&time_range={"since":"${startDate}","until":"${endDate}"}`
-        console.log('📅 [meta-ads-api] Aplicando filtro de data:', { startDate, endDate })
-      }
-      
-      const response = await fetch(campaignsUrl)
-      const data = await response.json()
-      
-      if (!response.ok) {
-        console.error('❌ [meta-ads-api] Erro ao buscar campanhas:', data)
-        
-        let errorMessage = 'Erro ao buscar campanhas'
-        if (data.error) {
-          switch (data.error.code) {
-            case 100:
-              errorMessage = 'Ad Account não encontrado ou sem permissão.'
-              break
-            case 190:
-              errorMessage = 'Token inválido ou sem permissão para campanhas.'
-              break
-            default:
-              errorMessage = `Erro da API: ${data.error.message}`
-          }
-        }
-        
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: errorMessage,
-            details: data
-          }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        )
-      }
-
-      console.log('✅ [meta-ads-api] Campanhas encontradas:', data.data?.length || 0)
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          campaigns: data.data || []
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
-    }
-
     if (action === 'get_insights') {
       console.log('📈 [meta-ads-api] === BUSCANDO INSIGHTS ===')
       
@@ -311,13 +260,24 @@ serve(async (req) => {
       
       let insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}`
       
-      // Aplicar filtro de data
-      if (startDate && endDate) {
+      // Aplicar filtro de data baseado no date_preset ou datas específicas
+      if (date_preset) {
+        if (date_preset === 'today') {
+          const today = new Date().toISOString().split('T')[0]
+          insightsUrl += `&time_range={"since":"${today}","until":"${today}"}`
+          console.log('📅 [meta-ads-api] Aplicando filtro para hoje:', today)
+        } else {
+          insightsUrl += `&date_preset=${date_preset}`
+          console.log('📅 [meta-ads-api] Aplicando date_preset:', date_preset)
+        }
+      } else if (startDate && endDate) {
         insightsUrl += `&time_range={"since":"${startDate}","until":"${endDate}"}`
         console.log('📅 [meta-ads-api] Aplicando filtro de data:', { startDate, endDate })
       } else {
-        // Padrão: últimos 7 dias
-        insightsUrl += `&date_preset=last_7d`
+        // Padrão: hoje
+        const today = new Date().toISOString().split('T')[0]
+        insightsUrl += `&time_range={"since":"${today}","until":"${today}"}`
+        console.log('📅 [meta-ads-api] Aplicando filtro padrão para hoje:', today)
       }
       
       const response = await fetch(insightsUrl)
