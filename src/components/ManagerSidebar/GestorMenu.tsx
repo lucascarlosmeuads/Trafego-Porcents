@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Headphones, Lightbulb } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb, AlertTriangle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 interface GestorMenuProps {
@@ -27,10 +27,10 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
     },
     {
       id: 'sac',
-      label: 'RECLAMAÇÕES',
-      icon: Headphones,
+      label: 'Urgente',
+      icon: AlertTriangle,
       description: 'Suporte e reclamações',
-      color: 'from-orange-500 to-orange-600'
+      color: 'from-red-500 to-red-600'
     },
     {
       id: 'sugestoes',
