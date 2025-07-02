@@ -1,7 +1,6 @@
 
-import { BarChart3, Users, Headphones } from 'lucide-react'
+import { BarChart3, Users, Headphones, Lightbulb } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { OutrosSubmenu } from './OutrosSubmenu'
 
 interface GestorMenuProps {
   activeTab: string
@@ -32,6 +31,13 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
       icon: Headphones,
       description: 'Suporte e reclamações',
       color: 'from-orange-500 to-orange-600'
+    },
+    {
+      id: 'sugestoes',
+      label: 'Sugestões',
+      icon: Lightbulb,
+      description: 'Feedback e melhorias',
+      color: 'from-yellow-500 to-yellow-600'
     }
   ]
 
@@ -79,16 +85,6 @@ export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isC
           </Button>
         )
       })}
-
-      {/* Separador */}
-      {!isCollapsed && <div className="border-t border-gray-700/50 my-4"></div>}
-
-      {/* Submenu "Outros" */}
-      <OutrosSubmenu 
-        activeTab={activeTab}
-        onTabSelect={onTabChange}
-        isCollapsed={isCollapsed}
-      />
     </nav>
   )
 }
