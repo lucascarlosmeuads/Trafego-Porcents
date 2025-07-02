@@ -3,19 +3,27 @@ import { useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 
+interface AddClienteResult {
+  success: boolean
+  error?: string
+  clientData?: any
+  senhaDefinida?: boolean
+}
+
 export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: () => Promise<void>) {
   const [loading, setLoading] = useState(false)
   const { toast } = useToast()
 
-  const addCliente = async (clienteData: any): Promise<boolean> => {
+  const addCliente = async (clienteData: any): Promise<AddClienteResult> => {
     setLoading(true)
     
     try {
       console.log('🔄 [useClienteAdd] Adicionando novo cliente:', clienteData)
       
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('todos_clientes')
         .insert([clienteData])
+        .select()
 
       if (error) {
         console.error('❌ [useClienteAdd] Erro ao adicionar cliente:', error)
@@ -24,7 +32,10 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
           description: "Falha ao adicionar cliente",
           variant: "destructive",
         })
-        return false
+        return {
+          success: false,
+          error: error.message
+        }
       }
 
       console.log('✅ [useClienteAdd] Cliente adicionado com sucesso')
@@ -37,15 +48,22 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
       // Refetch data after successful addition
       await refetchData()
       
-      return true
-    } catch (error) {
+      return {
+        success: true,
+        clientData: data?.[0],
+        senhaDefinida: true
+      }
+    } catch (error: any) {
       console.error('❌ [useClienteAdd] Erro inesperado:', error)
       toast({
         title: "Erro",
         description: "Erro inesperado ao adicionar cliente",
         variant: "destructive",
       })
-      return false
+      return {
+        success: false,
+        error: error.message || 'Erro inesperado'
+      }
     } finally {
       setLoading(false)
     }

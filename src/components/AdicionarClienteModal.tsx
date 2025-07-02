@@ -30,7 +30,13 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
     vendedor: '',
     status_campanha: 'Cliente Novo'
   })
-  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
+  
+  // Create async wrapper for onClienteAdicionado
+  const refetchData = async () => {
+    onClienteAdicionado()
+  }
+  
+  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, refetchData)
 
   // Predefined manager emails for admin selection
   const managerOptions = [
@@ -142,8 +148,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
 
       const result = await addCliente(clienteData)
       
-      // Type guard to check if result is not false
-      if (result && typeof result === 'object' && result.success) {
+      if (result && result.success) {
         setFormData({
           nome_cliente: '',
           telefone: '',
@@ -153,11 +158,12 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         })
         setSelectedGestor('')
         setOpen(false)
-        onClienteAdicionado()
 
         // Always show instructions modal for successfully created clients
-        setNewClientData(result.clientData)
-        setShowInstructions(true)
+        if (result.clientData) {
+          setNewClientData(result.clientData)
+          setShowInstructions(true)
+        }
       }
     } catch (error: any) {
       console.error('Erro ao adicionar cliente:', error)

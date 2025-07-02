@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -37,7 +36,13 @@ export function AddClientModal({ selectedManager, onClienteAdicionado, gestorMod
     status_campanha: 'Cliente Novo',
     data_venda: new Date().toISOString().split('T')[0]
   })
-  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, onClienteAdicionado)
+  
+  // Create async wrapper for onClienteAdicionado
+  const refetchData = async () => {
+    onClienteAdicionado()
+  }
+  
+  const { addCliente } = useClienteOperations(user?.email || '', isAdmin, refetchData)
 
   const managerOptions = [
     { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
@@ -221,9 +226,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         setCommissionValue(60)
         setSelectedGestor('')
         setOpen(false)
-        
-        // Atualizar dados
-        onClienteAdicionado()
 
         // Toast de sucesso
         toast({
