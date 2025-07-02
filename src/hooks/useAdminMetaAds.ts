@@ -270,7 +270,11 @@ export function useAdminMetaAds() {
   }
 
   // MELHORIA: Buscar insights com diferentes períodos automaticamente
-  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' = 'today') => {
+  const fetchInsightsWithPeriod = async (
+    period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom' = 'today',
+    customStartDate?: string,
+    customEndDate?: string
+  ) => {
     if (!config) {
       console.log('⚠️ [useAdminMetaAds] Sem configuração para buscar insights')
       setLastError('Configure primeiro as credenciais Meta Ads')
@@ -310,6 +314,9 @@ export function useAdminMetaAds() {
         const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         requestBody.startDate = lastMonth
         requestBody.endDate = today
+      } else if (period === 'custom' && customStartDate && customEndDate) {
+        requestBody.startDate = customStartDate
+        requestBody.endDate = customEndDate
       }
 
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
@@ -353,7 +360,8 @@ export function useAdminMetaAds() {
           today: 'hoje',
           yesterday: 'ontem', 
           last_7_days: 'últimos 7 dias',
-          last_30_days: 'últimos 30 dias'
+          last_30_days: 'últimos 30 dias',
+          custom: 'período personalizado'
         }
         
         toast({
@@ -476,7 +484,7 @@ export function useAdminMetaAds() {
     saveConfig,
     testConnection,
     fetchTodayInsights,
-    fetchInsightsWithPeriod, // Nova função exportada
+    fetchInsightsWithPeriod, // Função atualizada exportada
     refetchConfig: fetchConfig
   }
 }

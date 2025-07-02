@@ -2,10 +2,9 @@
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
+import { AdminMetaAdsDateFilter } from './AdminMetaAdsDateFilter'
 import { formatCurrency } from '@/lib/utils'
 import { 
   DollarSign, 
@@ -16,9 +15,7 @@ import {
   TrendingUp,
   Activity,
   Target,
-  Calendar,
-  AlertCircle,
-  Info
+  AlertCircle
 } from 'lucide-react'
 
 export function AdminMetaAdsMetrics() {
@@ -31,7 +28,6 @@ export function AdminMetaAdsMetrics() {
     fetchInsightsWithPeriod
   } = useAdminMetaAds()
 
-  const [selectedPeriod, setSelectedPeriod] = useState<'today' | 'yesterday' | 'last_7_days' | 'last_30_days'>('today')
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
 
   // Buscar insights automaticamente ao montar o componente
@@ -41,37 +37,35 @@ export function AdminMetaAdsMetrics() {
     }
   }, [isConfigured])
 
-  const handleRefresh = async () => {
-    if (selectedPeriod === 'today') {
+  const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
+    setLastFetchInfo('')
+    
+    if (preset === 'today') {
       const result = await fetchTodayInsights()
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
       }
-    } else {
-      const result = await fetchInsightsWithPeriod(selectedPeriod)
+    } else if (preset && preset !== 'custom') {
+      const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
-        setLastFetchInfo(`Dados encontrados para: ${result.period_used || selectedPeriod}`)
+        setLastFetchInfo(`Dados encontrados para: ${result.period_used || preset}`)
+      } else {
+        setLastFetchInfo('')
+      }
+    } else if (preset === 'custom' && startDate && endDate) {
+      // Para período personalizado, chamar a edge function diretamente com datas específicas
+      const result = await fetchInsightsWithCustomDates(startDate, endDate)
+      if (result?.success) {
+        setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
       } else {
         setLastFetchInfo('')
       }
     }
   }
 
-  const handlePeriodChange = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days') => {
-    setSelectedPeriod(period)
-    setLastFetchInfo('')
-    
-    if (period === 'today') {
-      const result = await fetchTodayInsights()
-      if (result?.period_used) {
-        setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
-      }
-    } else {
-      const result = await fetchInsightsWithPeriod(period)
-      if (result?.success) {
-        setLastFetchInfo(`Dados encontrados para: ${result.period_used || period}`)
-      }
-    }
+  const fetchInsightsWithCustomDates = async (startDate: string, endDate: string) => {
+    // Usar a função existente mas com período personalizado
+    return await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
   }
 
   if (!isConfigured) {
@@ -94,71 +88,25 @@ export function AdminMetaAdsMetrics() {
     )
   }
 
-  const periodLabels = {
-    today: 'Hoje (automático)',
-    yesterday: 'Ontem',
-    last_7_days: 'Últimos 7 dias',
-    last_30_days: 'Últimos 30 dias'
-  }
-
   return (
     <div className="space-y-6">
-      {/* Header com seletor de período e botão de refresh */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h3 className="text-lg font-semibold flex items-center gap-2">
-            <Activity className="h-5 w-5" />
-            Meta Ads - Relatórios
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Dados das campanhas ativas
-          </p>
-          {lastFetchInfo && (
-            <p className="text-xs text-blue-600 mt-1 flex items-center gap-1">
-              <Info className="h-3 w-3" />
-              {lastFetchInfo}
-            </p>
-          )}
-        </div>
-        
-        <div className="flex items-center gap-3">
-          <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {Object.entries(periodLabels).map(([value, label]) => (
-                <SelectItem key={value} value={value}>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-4 w-4" />
-                    {label}
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          
-          <Button 
-            onClick={handleRefresh} 
-            disabled={fetchingInsights}
-            variant="outline"
-            size="sm"
-          >
-            <RefreshCw className={`h-4 w-4 mr-2 ${fetchingInsights ? 'animate-spin' : ''}`} />
-            Atualizar
-          </Button>
-        </div>
+      {/* Header */}
+      <div>
+        <h3 className="text-lg font-semibold flex items-center gap-2">
+          <Activity className="h-5 w-5" />
+          Meta Ads - Relatórios
+        </h3>
+        <p className="text-sm text-muted-foreground">
+          Dados das campanhas ativas
+        </p>
       </div>
 
-      {/* Info sobre período "Hoje (automático)" */}
-      {selectedPeriod === 'today' && (
-        <Alert className="border-blue-200 bg-blue-50">
-          <Info className="h-4 w-4 text-blue-600" />
-          <AlertDescription className="text-blue-800">
-            <strong>Modo Automático:</strong> Se não houver dados para hoje, o sistema buscará automaticamente dados de ontem ou dos últimos 7 dias.
-          </AlertDescription>
-        </Alert>
-      )}
+      {/* Filtro de datas */}
+      <AdminMetaAdsDateFilter 
+        onDateRangeChange={handleDateRangeChange}
+        loading={fetchingInsights}
+        lastFetchInfo={lastFetchInfo}
+      />
 
       {/* Status de erro */}
       {lastError && (
@@ -261,16 +209,8 @@ export function AdminMetaAdsMetrics() {
             <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="font-medium text-muted-foreground">Nenhum dado disponível</p>
             <p className="text-sm text-muted-foreground mt-1">
-              Selecione um período e clique em "Atualizar" para buscar os dados
+              Selecione um período acima para buscar os dados
             </p>
-            <Button 
-              onClick={handleRefresh} 
-              variant="outline" 
-              className="mt-4"
-            >
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Buscar Dados
-            </Button>
           </CardContent>
         </Card>
       )}
