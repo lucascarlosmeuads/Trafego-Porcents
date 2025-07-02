@@ -8,8 +8,6 @@ import { AdminMetaAdsDateFilter } from './AdminMetaAdsDateFilter'
 import { formatCurrency } from '@/lib/utils'
 import { 
   DollarSign, 
-  Eye, 
-  MousePointer, 
   MessageCircle, 
   RefreshCw, 
   TrendingUp,
@@ -135,7 +133,7 @@ export function AdminMetaAdsMetrics() {
 
       {/* Métricas principais */}
       {insights && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Valor Gasto */}
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -164,38 +162,6 @@ export function AdminMetaAdsMetrics() {
               </div>
               <p className="text-xs text-muted-foreground">
                 Baseado em {insights.clicks} cliques
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Impressões */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Impressões</CardTitle>
-              <Eye className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {insights.impressions.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                CPM: {formatCurrency(insights.cpm)}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Cliques */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Cliques</CardTitle>
-              <MousePointer className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {insights.clicks.toLocaleString()}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                CTR: {insights.ctr.toFixed(2)}% | CPC: {formatCurrency(insights.cpc)}
               </p>
             </CardContent>
           </Card>
