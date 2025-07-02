@@ -1,12 +1,10 @@
 
+import { useState } from 'react'
+import { TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
-import { Save, X, Edit, Settings, Wifi, WifiOff } from 'lucide-react'
+import { Edit2, Check, X, MessageSquare } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { useState, useEffect } from 'react'
-import { ClienteMetaAdsModal } from './ClienteMetaAdsModal'
-import { supabase } from '@/lib/supabase'
 
 interface ClienteRowBMProps {
   clienteId: string
@@ -34,227 +32,101 @@ export function ClienteRowBM({
   compact = false
 }: ClienteRowBMProps) {
   const isEditing = editingBM === clienteId
-  const [metaAdsModalOpen, setMetaAdsModalOpen] = useState(false)
-  const [hasMetaAdsConfig, setHasMetaAdsConfig] = useState(false)
-  const [loading, setLoading] = useState(true)
 
-  // Verificar se cliente tem configuração Meta Ads
-  useEffect(() => {
-    const checkMetaAdsConfig = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('meta_ads_configs')
-          .select('id, api_id, access_token, ad_account_id')
-          .eq('cliente_id', clienteId)
-          .single()
-
-        if (data && data.api_id && data.access_token && data.ad_account_id) {
-          setHasMetaAdsConfig(true)
-        } else {
-          setHasMetaAdsConfig(false)
-        }
-      } catch (error) {
-        console.log('Cliente sem configuração Meta Ads')
-        setHasMetaAdsConfig(false)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    checkMetaAdsConfig()
-  }, [clienteId])
-
-  const handleBMClick = () => {
-    // Se já tem configuração do Meta Ads, abrir modal
-    if (hasMetaAdsConfig) {
-      setMetaAdsModalOpen(true)
-    } else {
-      // Se não tem, abrir modal para configurar pela primeira vez
-      setMetaAdsModalOpen(true)
-    }
+  const handleEdit = () => {
+    onBMEdit(clienteId, numeroBM || '')
   }
 
-  const getBMStatus = () => {
-    if (loading) return 'loading'
-    if (hasMetaAdsConfig) return 'configured'
-    if (numeroBM && numeroBM.trim() !== '') return 'legacy'
-    return 'empty'
+  const handleSave = () => {
+    onBMSave(clienteId)
   }
 
-  const getBMDisplay = () => {
-    const status = getBMStatus()
-    
-    switch (status) {
-      case 'configured':
-        return {
-          icon: <Wifi className="h-3 w-3" />,
-          text: 'ADS',
-          variant: 'default' as const,
-          tooltip: 'Meta Ads configurado - Clique para ver métricas'
-        }
-      case 'legacy':
-        return {
-          icon: <Edit className="h-3 w-3" />,
-          text: 'BM',
-          variant: 'outline' as const,
-          tooltip: `BM: ${numeroBM} - Clique para configurar Meta Ads`
-        }
-      case 'loading':
-        return {
-          icon: <Settings className="h-3 w-3 animate-spin" />,
-          text: '...',
-          variant: 'outline' as const,
-          tooltip: 'Verificando configuração...'
-        }
-      default:
-        return {
-          icon: <WifiOff className="h-3 w-3" />,
-          text: 'BM',
-          variant: 'outline' as const,
-          tooltip: 'Clique para configurar Meta Ads'
-        }
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave()
+    } else if (e.key === 'Escape') {
+      onBMCancel()
     }
   }
 
   if (compact) {
     return (
-      <TooltipProvider>
-        <div className="flex items-center gap-1">
-          {isEditing ? (
-            <>
-              <Input
-                value={bmValue}
-                onChange={(e) => setBmValue(e.target.value)}
-                placeholder="BM"
-                className="h-6 w-16 bg-background text-white text-xs"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    onBMSave(clienteId)
-                  }
-                  if (e.key === 'Escape') {
-                    onBMCancel()
-                  }
-                }}
-              />
-              <Button 
-                size="sm" 
-                onClick={() => onBMSave(clienteId)}
-                className="h-6 w-6 p-0 bg-green-600 hover:bg-green-700"
-              >
-                <Save className="h-2 w-2" />
-              </Button>
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={onBMCancel}
-                className="h-6 w-6 p-0"
-              >
-                <X className="h-2 w-2" />
-              </Button>
-            </>
-          ) : (
-            <>
-              <Tooltip>
-                <TooltipTrigger>
-                  <Button
-                    size="sm"
-                    variant={getBMDisplay().variant}
-                    onClick={handleBMClick}
-                    className={`h-6 w-6 p-0 text-xs font-bold ${
-                      hasMetaAdsConfig 
-                        ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
-                        : ''
-                    }`}
-                  >
-                    {getBMDisplay().icon}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>{getBMDisplay().tooltip}</p>
-                </TooltipContent>
-              </Tooltip>
-            </>
-          )}
-
-          <ClienteMetaAdsModal
-            open={metaAdsModalOpen}
-            onOpenChange={setMetaAdsModalOpen}
-            clienteId={clienteId}
-            nomeCliente={nomeCliente}
-          />
-        </div>
-      </TooltipProvider>
+      <TableCell className="p-1">
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex items-center justify-center">
+                {numeroBM ? (
+                  <div className="flex items-center space-x-1">
+                    <MessageSquare className="h-3 w-3 text-blue-400" />
+                    <span className="text-xs text-blue-400 font-medium">
+                      {numeroBM.substring(0, 8)}...
+                    </span>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <MessageSquare className="h-3 w-3 text-gray-400" />
+                  </div>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{numeroBM || 'BM não configurado'}</p>
+              <p className="text-xs text-gray-400">Clique para editar</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </TableCell>
     )
   }
 
   return (
-    <div className="flex items-center gap-2">
+    <TableCell className="p-2">
       {isEditing ? (
-        <>
+        <div className="flex items-center space-x-1">
           <Input
+            type="text"
             value={bmValue}
             onChange={(e) => setBmValue(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-32 h-6 text-xs"
             placeholder="Número BM"
-            className="h-8 w-32 bg-background text-white"
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') {
-                onBMSave(clienteId)
-              }
-              if (e.key === 'Escape') {
-                onBMCancel()
-              }
-            }}
+            autoFocus
           />
-          <Button 
-            size="sm" 
-            onClick={() => onBMSave(clienteId)}
-            className="h-8 w-8 p-0 bg-green-600 hover:bg-green-700"
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-green-600 hover:text-green-700"
+            onClick={handleSave}
           >
-            <Save className="h-3 w-3" />
+            <Check className="h-3 w-3" />
           </Button>
-          <Button 
-            size="sm" 
-            variant="outline" 
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0 text-red-600 hover:text-red-700"
             onClick={onBMCancel}
-            className="h-8 w-8 p-0"
           >
             <X className="h-3 w-3" />
           </Button>
-        </>
+        </div>
       ) : (
-        <>
-          <div className="flex items-center gap-2">
-            {/* Badge do BM legado se existir */}
-            {numeroBM && numeroBM.trim() !== '' && (
-              <Badge variant="outline" className="text-white border-white">
-                {numeroBM}
-              </Badge>
+        <div className="flex items-center space-x-2">
+          <span className="text-sm font-medium">
+            {numeroBM || (
+              <span className="text-gray-400">Não configurado</span>
             )}
-            
-            {/* Botão principal do Meta Ads */}
-            <Button
-              size="sm"
-              variant={getBMDisplay().variant}
-              onClick={handleBMClick}
-              className={`h-8 flex items-center gap-2 ${
-                hasMetaAdsConfig 
-                  ? 'bg-green-600 hover:bg-green-700 text-white border-green-600' 
-                  : 'text-white'
-              }`}
-            >
-              {getBMDisplay().icon}
-              {hasMetaAdsConfig ? 'Ver Métricas' : 'Configurar Meta Ads'}
-            </Button>
-          </div>
-
-          <ClienteMetaAdsModal
-            open={metaAdsModalOpen}
-            onOpenChange={setMetaAdsModalOpen}
-            clienteId={clienteId}
-            nomeCliente={nomeCliente}
-          />
-        </>
+          </span>
+          <Button
+            size="sm"
+            variant="ghost"
+            className="h-6 w-6 p-0"
+            onClick={handleEdit}
+          >
+            <Edit2 className="h-3 w-3" />
+          </Button>
+        </div>
       )}
-    </div>
+    </TableCell>
   )
 }

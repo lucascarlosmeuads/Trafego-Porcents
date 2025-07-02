@@ -7,7 +7,7 @@ import { DateFilters } from './DateFilters'
 import { useClientFilters } from '@/hooks/useClientFilters'
 
 interface ClienteSimples {
-  id: string
+  id: number
   nome_cliente: string
   telefone: string
   email_cliente: string
@@ -27,6 +27,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
   // Convert ClienteSimples to Cliente format for the filter hook
   const clientesFormatted = clientes.map(cliente => ({
     ...cliente,
+    id: cliente.id,
     data_venda: '',
     data_limite: '',
     link_grupo: '',
@@ -42,6 +43,11 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     saque_solicitado: false,
     comissao: 'Pendente',
     site_pago: false,
+    created_at_br: null,
+    data_agendamento: '',
+    data_subida_campanha: '',
+    status_envio: '',
+    valor_venda_inicial: null,
     // Novas propriedades do sistema avançado de comissões
     ultimo_pagamento_em: null,
     ultimo_valor_pago: null,

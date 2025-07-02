@@ -77,7 +77,7 @@ export function AdminTableDesktop({
                 <TableCell>
                   <Select 
                     value={cliente.status_campanha || ''}
-                    onValueChange={(value) => onStatusChange(cliente.id, value)}
+                    onValueChange={(value) => onStatusChange(cliente.id?.toString() || '', value)}
                   >
                     <SelectTrigger className="h-8 w-48 bg-background border-border text-foreground">
                       <SelectValue>
@@ -106,7 +106,7 @@ export function AdminTableDesktop({
                   <TransferirModal
                     cliente={cliente}
                     onTransferirCliente={onTransferirCliente}
-                    isLoading={transferindoCliente === cliente.id}
+                    isLoading={transferindoCliente === cliente.id?.toString()}
                     gestores={gestores}
                   />
                 </TableCell>
