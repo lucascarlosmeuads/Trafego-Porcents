@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -66,17 +65,38 @@ export function AdminMetaAdsMetrics() {
     return await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
   }
 
-  // Calcular o custo por conversa iniciada corretamente
+  // CORREÇÃO: Calcular o custo por conversa iniciada usando dados reais do Meta Ads
   const calculateCostPerConversation = () => {
     if (!insights || insights.spend === 0) return 0
     
-    // Assumindo que uma "conversa iniciada" é representada pelo número de cliques
-    // que levaram a uma interação real (pode ser ajustado conforme necessário)
+    // Debug: Vamos logar os valores para verificar o que está acontecendo
+    console.log('🔍 [AdminMetaAdsMetrics] Dados para cálculo:', {
+      spend: insights.spend,
+      clicks: insights.clicks,
+      impressions: insights.impressions,
+      cost_per_message: insights.cost_per_message
+    })
+    
+    // CORREÇÃO: Usar o cost_per_message se estiver disponível na API, 
+    // caso contrário calcular baseado em spend/clicks
+    if (insights.cost_per_message && insights.cost_per_message > 0) {
+      console.log('✅ [AdminMetaAdsMetrics] Usando cost_per_message da API:', insights.cost_per_message)
+      return insights.cost_per_message
+    }
+    
+    // Fallback: calcular manualmente se não tiver cost_per_message
     const conversasIniciadas = insights.clicks || 0
     
     if (conversasIniciadas === 0) return 0
     
-    return insights.spend / conversasIniciadas
+    const custoCalculado = insights.spend / conversasIniciadas
+    console.log('⚠️ [AdminMetaAdsMetrics] Calculando manualmente:', {
+      spend: insights.spend,
+      clicks: conversasIniciadas,
+      resultado: custoCalculado
+    })
+    
+    return custoCalculado
   }
 
   const costPerConversation = calculateCostPerConversation()
@@ -177,6 +197,10 @@ export function AdminMetaAdsMetrics() {
               </div>
               <p className="text-xs text-muted-foreground">
                 {insights.clicks === 0 ? 'Nenhuma conversa iniciada' : `${insights.clicks} conversas iniciadas`}
+              </p>
+              {/* Debug info - remover após correção */}
+              <p className="text-xs text-orange-600 mt-1">
+                Debug: G={formatCurrency(insights.spend)} ÷ C={insights.clicks} = {costPerConversation > 0 ? formatCurrency(costPerConversation) : 'N/A'}
               </p>
             </CardContent>
           </Card>

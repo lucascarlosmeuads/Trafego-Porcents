@@ -336,10 +336,26 @@ export function useAdminMetaAds() {
         
         const todayInsights = data.insights[0]
         
+        // CORREÇÃO: Log dos dados originais da API
+        console.log('🔍 [useAdminMetaAds] Dados ORIGINAIS da API Meta:', {
+          spend: todayInsights.spend,
+          clicks: todayInsights.clicks,
+          impressions: todayInsights.impressions,
+          cpc: todayInsights.cpc,
+          cpm: todayInsights.cpm,
+          ctr: todayInsights.ctr
+        })
+        
         // Calcular custo por mensagem (assumindo que mensagens = clicks)
         const costPerMessage = todayInsights.clicks > 0 
-          ? (parseFloat(todayInsights.spend) / todayInsights.clicks).toFixed(2)
-          : '0'
+          ? (parseFloat(todayInsights.spend) / todayInsights.clicks)
+          : 0
+
+        console.log('💰 [useAdminMetaAds] Cálculo custo por mensagem:', {
+          spend: parseFloat(todayInsights.spend),
+          clicks: todayInsights.clicks,
+          resultado: costPerMessage
+        })
 
         const processedInsights = {
           spend: parseFloat(todayInsights.spend) || 0,
@@ -348,8 +364,10 @@ export function useAdminMetaAds() {
           cpc: parseFloat(todayInsights.cpc) || 0,
           cpm: parseFloat(todayInsights.cpm) || 0,
           ctr: parseFloat(todayInsights.ctr) || 0,
-          cost_per_message: parseFloat(costPerMessage)
+          cost_per_message: costPerMessage
         }
+
+        console.log('📊 [useAdminMetaAds] Insights PROCESSADOS:', processedInsights)
 
         setInsights(processedInsights)
 
