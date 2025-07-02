@@ -7,7 +7,6 @@ import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
 import { AdminMetaAdsDateFilter } from './AdminMetaAdsDateFilter'
 import { AdminCustoLucroReport } from './AdminCustoLucroReport'
 import { formatCurrency } from '@/lib/utils'
-import { supabase } from '@/lib/supabase'
 import { 
   RefreshCw, 
   Activity,
@@ -26,70 +25,13 @@ export function AdminMetaAdsMetrics() {
   } = useAdminMetaAds()
 
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
-  const [vendasDia, setVendasDia] = useState<number>(0)
-  const [loadingVendas, setLoadingVendas] = useState(false)
 
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
     if (isConfigured) {
       fetchTodayInsights()
-      fetchVendasDia()
     }
   }, [isConfigured])
-
-  // Buscar vendas do dia
-  const fetchVendasDia = async () => {
-    setLoadingVendas(true)
-    try {
-      const hoje = new Date().toISOString().split('T')[0]
-      
-      console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do dia:', hoje)
-      
-      // Buscar vendas de hoje da tabela vendas_cliente
-      const { data: vendasCliente, error: errorVendasCliente } = await supabase
-        .from('vendas_cliente')
-        .select('valor_venda')
-        .eq('data_venda', hoje)
-
-      if (errorVendasCliente) {
-        console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas_cliente:', errorVendasCliente)
-      }
-
-      // Buscar vendas de hoje da tabela todos_clientes (data_venda >= 01/07/2025)
-      const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
-        .from('todos_clientes')
-        .select('valor_venda_inicial')
-        .eq('data_venda', hoje)
-        .gte('data_venda', '2025-07-01')
-
-      if (errorTodosClientes) {
-        console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
-      }
-
-      // Somar todas as vendas
-      let totalVendas = 0
-
-      if (vendasCliente) {
-        const somaVendasCliente = vendasCliente.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0)
-        totalVendas += somaVendasCliente
-        console.log('💰 [AdminMetaAdsMetrics] Vendas de vendas_cliente:', somaVendasCliente)
-      }
-
-      if (vendasTodosClientes) {
-        const somaVendasTodos = vendasTodosClientes.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
-        totalVendas += somaVendasTodos
-        console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
-      }
-
-      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do dia:', totalVendas)
-      setVendasDia(totalVendas)
-
-    } catch (error) {
-      console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)
-    } finally {
-      setLoadingVendas(false)
-    }
-  }
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
@@ -99,8 +41,6 @@ export function AdminMetaAdsMetrics() {
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
       }
-      // Buscar vendas quando mudar para hoje
-      await fetchVendasDia()
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
@@ -108,8 +48,6 @@ export function AdminMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      // Para outros períodos, não buscar vendas por enquanto
-      setVendasDia(0)
     } else if (preset === 'custom' && startDate && endDate) {
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result?.success) {
@@ -117,8 +55,6 @@ export function AdminMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      // Para período personalizado, não buscar vendas por enquanto
-      setVendasDia(0)
     }
   }
 
@@ -191,12 +127,11 @@ export function AdminMetaAdsMetrics() {
         </Card>
       )}
 
-      {/* Relatório de Custos e Lucro - Agora é o componente principal */}
+      {/* Relatório de Custos e Lucro - Agora corrigido */}
       {insights && (
         <AdminCustoLucroReport 
-          vendasDia={vendasDia}
           investimentoTrafego={insights.spend}
-          loadingVendas={loadingVendas}
+          loadingVendas={false}
         />
       )}
 
