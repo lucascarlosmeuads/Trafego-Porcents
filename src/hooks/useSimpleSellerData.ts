@@ -1,6 +1,8 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import { calculateCommission, isValidSaleValue } from '@/utils/commissionCalculator'
 
 interface ClienteSimples {
   id: string
@@ -104,6 +106,7 @@ export function useSimpleSellerData(sellerEmail: string) {
     data_venda: string
     produto_nicho?: string
     senha_cliente?: string
+    valor_venda_inicial?: number
   }) => {
     try {
       console.log('🔵 [useSimpleSellerData] === INICIANDO CRIAÇÃO DE CLIENTE ===')
@@ -122,12 +125,24 @@ export function useSimpleSellerData(sellerEmail: string) {
       // Usar senha customizada ou padrão
       const senhaParaUsar = clienteData.senha_cliente || SENHA_PADRAO_CLIENTE
 
+      // Calcular comissão automaticamente se valor da venda foi fornecido
+      let valorComissao = 60.00 // Valor padrão
+      let comissaoCalculadaAutomaticamente = false
+
+      if (isValidSaleValue(clienteData.valor_venda_inicial)) {
+        valorComissao = calculateCommission(clienteData.valor_venda_inicial)
+        comissaoCalculadaAutomaticamente = true
+        console.log(`🧮 [useSimpleSellerData] Comissão calculada automaticamente: R$ ${valorComissao} (baseada em venda de R$ ${clienteData.valor_venda_inicial})`)
+      } else {
+        console.log(`📋 [useSimpleSellerData] Sem valor de venda válido. Usando comissão padrão: R$ ${valorComissao}`)
+      }
+
       // Step 1: Verificar se cliente já existe na tabela (CASE-INSENSITIVE)
       console.log('🔍 [useSimpleSellerData] Verificando se cliente já existe na tabela...')
       const { data: existingClient, error: checkError } = await supabase
         .from('todos_clientes')
         .select('id, email_cliente, nome_cliente')
-        .ilike('email_cliente', normalizedEmail) // Mudança: usando ilike para case-insensitive
+        .ilike('email_cliente', normalizedEmail)
         .maybeSingle()
 
       if (checkError && checkError.code !== 'PGRST116') {
@@ -152,7 +167,8 @@ export function useSimpleSellerData(sellerEmail: string) {
             vendedor: vendorName,
             status_campanha: clienteData.status_campanha,
             data_venda: clienteData.data_venda,
-            valor_comissao: 60.00
+            valor_comissao: valorComissao,
+            valor_venda_inicial: clienteData.valor_venda_inicial || null
           })
           .eq('id', existingClient.id)
 
@@ -169,12 +185,13 @@ export function useSimpleSellerData(sellerEmail: string) {
         const novoCliente = {
           nome_cliente: clienteData.nome_cliente,
           telefone: clienteData.telefone,
-          email_cliente: normalizedEmail, // Usar email normalizado
+          email_cliente: normalizedEmail,
           email_gestor: clienteData.email_gestor,
           vendedor: vendorName,
           status_campanha: clienteData.status_campanha,
           data_venda: clienteData.data_venda,
-          valor_comissao: 60.00,
+          valor_comissao: valorComissao,
+          valor_venda_inicial: clienteData.valor_venda_inicial || null,
           comissao_paga: false,
           site_status: 'pendente'
         }
@@ -202,7 +219,7 @@ export function useSimpleSellerData(sellerEmail: string) {
         try {
           // Criar conta usando signUp com a senha informada e email normalizado
           const { data: authData, error: authError } = await supabase.auth.signUp({
-            email: normalizedEmail, // Usar email normalizado
+            email: normalizedEmail,
             password: senhaParaUsar,
             options: {
               data: {
@@ -233,12 +250,20 @@ export function useSimpleSellerData(sellerEmail: string) {
       
       // Mostrar mensagem de sucesso
       if (!clienteJaExistia) {
+        let successMessage = `Cliente ${clienteData.nome_cliente} foi adicionado.`
+        
+        if (comissaoCalculadaAutomaticamente) {
+          successMessage += `\n🧮 Comissão: R$ ${valorComissao} (calculada automaticamente)`
+        }
+        
+        if (senhaDefinida) {
+          successMessage += `\n🔐 Senha: ${senhaParaUsar}`
+        }
+
         toast({
           title: "✅ Cliente cadastrado com sucesso!",
-          description: senhaDefinida 
-            ? `Cliente ${clienteData.nome_cliente} foi adicionado.\n🔐 Senha: ${senhaParaUsar}`
-            : `Cliente ${clienteData.nome_cliente} foi adicionado.`,
-          duration: 5000
+          description: successMessage,
+          duration: 6000
         })
       } else {
         toast({
@@ -254,6 +279,8 @@ export function useSimpleSellerData(sellerEmail: string) {
         success: true, 
         isNewClient: !clienteJaExistia,
         senhaDefinida,
+        comissaoCalculadaAutomaticamente,
+        valorComissao,
         clientData: {
           id: clientId,
           email_cliente: normalizedEmail,

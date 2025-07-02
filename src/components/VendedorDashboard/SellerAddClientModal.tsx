@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -6,10 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Copy, Check } from 'lucide-react'
+import { Plus, Copy, Check, Calculator } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { ClientInstructionsModal } from '../ClientInstructionsModal'
+import { CommissionCalculator } from '../CommissionCalculator'
 import { supabase } from '@/integrations/supabase/client'
 
 interface SellerAddClientModalProps {
@@ -30,7 +32,9 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     email_cliente: '',
     status_campanha: 'Cliente Novo',
     data_venda: new Date().toISOString().split('T')[0],
-    resumo_conversa_vendedor: ''
+    resumo_conversa_vendedor: '',
+    valor_venda_inicial: null as number | null,
+    valor_comissao: null as number | null
   })
 
   const managerOptions = [
@@ -136,7 +140,8 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         email_cliente: formData.email_cliente,
         email_gestor: selectedGestor,
         status_campanha: formData.status_campanha,
-        data_venda: formData.data_venda
+        data_venda: formData.data_venda,
+        valor_venda_inicial: formData.valor_venda_inicial
       }
 
       console.log("🔵 [SellerAddClientModal] Dados para adicionar:", clienteData)
@@ -179,7 +184,9 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           email_cliente: '',
           status_campanha: 'Cliente Novo',
           data_venda: new Date().toISOString().split('T')[0],
-          resumo_conversa_vendedor: ''
+          resumo_conversa_vendedor: '',
+          valor_venda_inicial: null,
+          valor_comissao: null
         })
         setSelectedGestor('')
         setOpen(false)
@@ -230,7 +237,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             Adicionar Cliente
           </Button>
         </DialogTrigger>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
@@ -325,6 +332,15 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
                 </SelectContent>
               </Select>
             </div>
+
+            {/* Calculadora de Comissão */}
+            <CommissionCalculator
+              saleValue={formData.valor_venda_inicial}
+              commissionValue={formData.valor_comissao}
+              onSaleValueChange={(value) => setFormData(prev => ({ ...prev, valor_venda_inicial: value }))}
+              onCommissionChange={(value) => setFormData(prev => ({ ...prev, valor_comissao: value }))}
+              showRules={true}
+            />
 
             <div className="grid gap-2">
               <Label htmlFor="resumo_conversa_vendedor">Resumo da Conversa com o Cliente</Label>

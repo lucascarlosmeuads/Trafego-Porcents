@@ -1,6 +1,7 @@
 
 import { supabase } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
+import { calculateCommission, isValidSaleValue } from '@/utils/commissionCalculator'
 
 export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: () => void) {
   const addCliente = async (clienteData: any) => {
@@ -30,6 +31,25 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
     }
 
     try {
+      // Calcular comissão automaticamente se valor da venda foi fornecido
+      let valorComissao = clienteData.valor_comissao || 60.00 // Valor padrão
+      let comissaoCalculadaAutomaticamente = false
+
+      if (isValidSaleValue(clienteData.valor_venda_inicial)) {
+        const comissaoCalculada = calculateCommission(clienteData.valor_venda_inicial)
+        
+        // Se não foi fornecida uma comissão manual, usar a calculada
+        if (!clienteData.valor_comissao) {
+          valorComissao = comissaoCalculada
+          comissaoCalculadaAutomaticamente = true
+          console.log(`🧮 [useClienteAdd] Comissão calculada automaticamente: R$ ${valorComissao} (baseada em venda de R$ ${clienteData.valor_venda_inicial})`)
+        } else {
+          console.log(`⚙️ [useClienteAdd] Comissão manual mantida: R$ ${clienteData.valor_comissao} (calculada seria R$ ${comissaoCalculada})`)
+        }
+      } else {
+        console.log(`📋 [useClienteAdd] Sem valor de venda válido. Usando comissão padrão: R$ ${valorComissao}`)
+      }
+
       // Preparar dados para inserção
       const dataToInsert = {
         nome_cliente: clienteData.nome_cliente,
@@ -39,7 +59,8 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         email_gestor: clienteData.email_gestor,
         status_campanha: clienteData.status_campanha || 'Cliente Novo',
         data_venda: clienteData.data_venda,
-        valor_comissao: clienteData.valor_comissao || 60.00,
+        valor_comissao: valorComissao,
+        valor_venda_inicial: clienteData.valor_venda_inicial || null,
         comissao: 'Pendente',
         site_status: 'pendente',
         site_pago: false,
@@ -138,6 +159,17 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         description: `Cliente ${clienteData.nome_cliente} adicionado com sucesso!`,
       })
 
+      // Mostrar informação sobre comissão se foi calculada automaticamente
+      if (comissaoCalculadaAutomaticamente) {
+        setTimeout(() => {
+          toast({
+            title: "🧮 Comissão calculada automaticamente",
+            description: `Comissão de R$ ${valorComissao} baseada em venda de R$ ${clienteData.valor_venda_inicial}`,
+            duration: 6000
+          })
+        }, 1000)
+      }
+
       // Mostrar informação sobre senha se foi definida
       if (senhaDefinida) {
         setTimeout(() => {
@@ -146,7 +178,7 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
             description: "Senha padrão definida como: parceriadesucesso",
             duration: 8000
           })
-        }, 1000)
+        }, 2000)
       }
 
       // Refresh dos dados
@@ -159,6 +191,8 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         success: true,
         clientData: clienteCriado,
         senhaDefinida,
+        comissaoCalculadaAutomaticamente,
+        valorComissao,
         message: 'Cliente adicionado com sucesso!'
       }
 
