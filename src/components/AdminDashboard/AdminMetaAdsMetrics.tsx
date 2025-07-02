@@ -9,13 +9,10 @@ import { AdminCustoLucroReport } from './AdminCustoLucroReport'
 import { formatCurrency } from '@/lib/utils'
 import { supabase } from '@/lib/supabase'
 import { 
-  DollarSign, 
   RefreshCw, 
-  TrendingUp,
   Activity,
   Target,
-  AlertCircle,
-  ShoppingCart
+  AlertCircle
 } from 'lucide-react'
 
 export function AdminMetaAdsMetrics() {
@@ -194,51 +191,7 @@ export function AdminMetaAdsMetrics() {
         </Card>
       )}
 
-      {/* Métricas principais */}
-      {insights && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {/* Valor Investido */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Investimento em Tráfego</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${insights.spend === 0 ? 'text-gray-500' : 'text-red-600'}`}>
-                {formatCurrency(insights.spend)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {insights.spend === 0 ? 'Nenhum gasto registrado' : 'Total investido em campanhas hoje'}
-              </p>
-            </CardContent>
-          </Card>
-
-          {/* Vendas do Dia */}
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Vendas do Dia</CardTitle>
-              <ShoppingCart className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className={`text-2xl font-bold ${vendasDia === 0 ? 'text-gray-500' : 'text-green-600'}`}>
-                {loadingVendas ? '...' : formatCurrency(vendasDia)}
-              </div>
-              <p className="text-xs text-muted-foreground">
-                {vendasDia === 0 ? 'Nenhuma venda registrada hoje' : 'Total de vendas realizadas hoje'}
-              </p>
-              {/* ROI Info */}
-              {insights.spend > 0 && vendasDia > 0 && (
-                <p className="text-xs text-blue-600 mt-1">
-                  ROI: {((vendasDia / insights.spend - 1) * 100).toFixed(1)}% 
-                  {vendasDia > insights.spend ? ' 📈' : ' 📉'}
-                </p>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Relatório de Custos e Lucro */}
+      {/* Relatório de Custos e Lucro - Agora é o componente principal */}
       {insights && (
         <AdminCustoLucroReport 
           vendasDia={vendasDia}
@@ -251,7 +204,7 @@ export function AdminMetaAdsMetrics() {
       {!fetchingInsights && !insights && !lastError && (
         <Card>
           <CardContent className="text-center py-8">
-            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+            <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
             <p className="font-medium text-muted-foreground">Nenhum dado disponível</p>
             <p className="text-sm text-muted-foreground mt-1">
               Selecione um período acima para buscar os dados
