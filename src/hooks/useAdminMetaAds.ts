@@ -51,9 +51,9 @@ export function useAdminMetaAds() {
         .from('meta_ads_configs')
         .select('*')
         .is('cliente_id', null) // Configuração global
-        .single()
+        .maybeSingle() // CORREÇÃO: Usar maybeSingle para evitar erro quando não há dados
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows found
+      if (error) {
         console.error('❌ [useAdminMetaAds] Erro ao buscar config:', error)
         throw error
       }
@@ -81,8 +81,15 @@ export function useAdminMetaAds() {
     try {
       console.log('💾 [useAdminMetaAds] Salvando configuração global...', configData)
       
+      // CORREÇÃO: Usar o email do usuário atual para compatibilidade com RLS
+      const { data: userData } = await supabase.auth.getUser()
+      const userEmail = userData.user?.email || ''
+      
+      console.log('👤 [useAdminMetaAds] Email do usuário atual:', userEmail)
+      
       const payload = {
         ...configData,
+        email_usuario: userEmail, // CORREÇÃO: Usar email real do usuário
         cliente_id: null // Marca como configuração global
       }
 
@@ -156,15 +163,15 @@ export function useAdminMetaAds() {
         // Não loggar tokens por segurança
       })
       
-      // CORREÇÃO: Mapear os campos corretamente para a função edge
+      // Mapear os campos corretamente para a função edge
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'test_connection',
           config: {
-            appId: config.api_id,        // api_id → appId
-            appSecret: config.app_secret, // app_secret → appSecret
-            accessToken: config.access_token, // access_token → accessToken
-            adAccountId: config.ad_account_id // ad_account_id → adAccountId
+            appId: config.api_id,
+            appSecret: config.app_secret,
+            accessToken: config.access_token,
+            adAccountId: config.ad_account_id
           }
         }
       })
@@ -178,7 +185,7 @@ export function useAdminMetaAds() {
 
       if (data.success) {
         console.log('✅ [useAdminMetaAds] Conexão testada com sucesso')
-        // CORREÇÃO: Verificar ambos os possíveis locais da resposta
+        // Verificar ambos os possíveis locais da resposta
         const steps = data.connection_steps || data.steps
         if (steps) {
           setConnectionSteps(steps)
@@ -213,7 +220,7 @@ export function useAdminMetaAds() {
     try {
       console.log('📊 [useAdminMetaAds] Buscando insights do dia...')
       
-      // CORREÇÃO: Usar os campos mapeados corretamente
+      // Usar os campos mapeados corretamente
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_insights',

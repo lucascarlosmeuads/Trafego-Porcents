@@ -43,7 +43,7 @@ export function AdminMetaAdsConfig() {
     email_usuario: 'admin-global'
   })
 
-  // Atualizar form quando config carrega E manter dados no form
+  // Atualizar form quando config carrega
   useEffect(() => {
     console.log('🔄 [AdminMetaAdsConfig] Config mudou:', config)
     if (config) {
@@ -70,8 +70,14 @@ export function AdminMetaAdsConfig() {
     console.log('💾 [AdminMetaAdsConfig] Submetendo formulário:', formData)
     const result = await saveConfig(formData)
     if (result.success) {
-      console.log('✅ [AdminMetaAdsConfig] Configuração salva, fechando modal')
-      setIsOpen(false)
+      console.log('✅ [AdminMetaAdsConfig] Configuração salva com sucesso')
+      // CORREÇÃO: Não fechar modal automaticamente, manter dados carregados
+      toast({
+        title: "Sucesso",
+        description: "configuração salva! Agora você pode testar a conexão.",
+      })
+      // Atualizar a configuração no estado
+      await refetchConfig()
     }
   }
 
