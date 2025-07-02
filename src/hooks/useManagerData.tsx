@@ -1,10 +1,16 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { formatCliente, validateSecurityForNonAdmin } from '@/utils/clienteFormatter'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
+
+interface AddClienteResult {
+  success: boolean
+  error?: string
+  clientData?: any
+  senhaDefinida?: boolean
+}
 
 interface UseManagerDataReturn {
   clientes: Cliente[]
@@ -13,7 +19,7 @@ interface UseManagerDataReturn {
   totalClientes: number
   refetch: () => Promise<void>
   updateCliente: (clienteId: string, field: string, value: any) => Promise<boolean>
-  addCliente: (clienteData: any) => Promise<boolean>
+  addCliente: (clienteData: any) => Promise<AddClienteResult>
   currentManager: string | null
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
 }
