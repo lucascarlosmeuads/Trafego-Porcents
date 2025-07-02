@@ -218,7 +218,7 @@ export function VendedorDashboard() {
         return <SellerClientsList clientes={clientes} loading={loading} onRefresh={refetch} />
 
       case 'adicionar-cliente':
-        return <NewSellerAddClientForm userEmail={user?.email || ''} onClientAdded={handleClientAdded} />
+        return <NewSellerAddClientForm onClientAdded={handleClientAdded} />
 
       default:
         return <div>Página não encontrada</div>

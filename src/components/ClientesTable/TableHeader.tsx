@@ -1,131 +1,178 @@
 
-import {
-  TableHead,
-  TableRow
-} from '@/components/ui/table'
-import { ArrowUpDown } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { TableHead, TableHeader as TableHeaderComponent, TableRow } from '@/components/ui/table'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
+import { Folder, Upload, AtSign, User, Calendar, Phone, Building, Globe, Target, DollarSign } from 'lucide-react'
 
 interface TableHeaderProps {
-  sortField: string | null
-  sortDirection: 'asc' | 'desc' | null
-  onSort: (field: string) => void
-  showComissaoAvancada?: boolean
-  showComissaoSimples?: boolean
   isAdmin?: boolean
   showEmailGestor?: boolean
 }
 
-function TableHeaderCell({ 
-  field, 
-  label, 
-  sortField, 
-  sortDirection, 
-  onSort 
-}: {
-  field: string
-  label: string
-  sortField: string | null
-  sortDirection: 'asc' | 'desc' | null
-  onSort: (field: string) => void
-}) {
+export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableHeaderProps) {
   return (
-    <TableHead>
-      <Button
-        variant="ghost"
-        onClick={() => onSort(field)}
-        className="h-auto p-0 font-semibold text-white hover:text-gray-300"
-      >
-        {label}
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    </TableHead>
-  )
-}
-
-export function TableHeader({ 
-  sortField, 
-  sortDirection, 
-  onSort,
-  showComissaoAvancada = false,
-  showComissaoSimples = false,
-  isAdmin = false,
-  showEmailGestor = false
-}: TableHeaderProps) {
-  return (
-    <TableHead className="w-full">
-      <TableRow>
-        <TableHeaderCell 
-          field="nome_cliente" 
-          label="Cliente" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="email_cliente" 
-          label="Email" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="telefone" 
-          label="Telefone" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="valor_venda_inicial" 
-          label="Valor Venda" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-        
-        <TableHeaderCell 
-          field="status_campanha" 
-          label="Status" 
-          sortField={sortField}
-          sortDirection={sortDirection}
-          onSort={onSort}
-        />
-
-        {showComissaoAvancada && (
-          <>
-            <TableHeaderCell 
-              field="comissao" 
-              label="Comissão" 
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={onSort}
-            />
-            <TableHeaderCell 
-              field="saque_solicitado" 
-              label="Saque" 
-              sortField={sortField}
-              sortDirection={sortDirection}
-              onSort={onSort}
-            />
-          </>
-        )}
-
-        {showComissaoSimples && (
-          <TableHeaderCell 
-            field="comissao" 
-            label="Comissão" 
-            sortField={sortField}
-            sortDirection={sortDirection}
-            onSort={onSort}
-          />
-        )}
-
-        <TableHead>Ações</TableHead>
-      </TableRow>
-    </TableHead>
+    <TooltipProvider>
+      <TableHeaderComponent>
+        <TableRow className="border-border hover:bg-transparent">
+          <TableHead className="text-white font-semibold w-16 text-xs sticky left-0 bg-card z-10">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Calendar className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Data</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-24 text-xs sticky left-16 bg-card z-10">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Building className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Cliente</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center text-xs font-bold">
+                  🤖
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Origem</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-20 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Phone className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Telefone</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <User className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Email Cliente</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          {(isAdmin || showEmailGestor) && (
+            <TableHead className="text-white font-semibold w-8 text-xs">
+              <Tooltip>
+                <TooltipTrigger>
+                  <div className="flex items-center justify-center">
+                    <AtSign className="h-3 w-3" />
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Email Gestor</p>
+                </TooltipContent>
+              </Tooltip>
+            </TableHead>
+          )}
+          <TableHead className="text-white font-semibold w-24 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Target className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Status Campanha</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-20 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Globe className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Status Site</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-16 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Calendar className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Data Limite</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Folder className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Materiais</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <Upload className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Site</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-8 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center text-xs font-bold">
+                  BM
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Número BM</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+          <TableHead className="text-white font-semibold w-12 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <DollarSign className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Comissão</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
+        </TableRow>
+      </TableHeaderComponent>
+    </TooltipProvider>
   )
 }

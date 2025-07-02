@@ -818,7 +818,6 @@ export type Database = {
           ultimo_pagamento_em: string | null
           ultimo_valor_pago: number | null
           valor_comissao: number | null
-          valor_venda_inicial: number | null
           vendedor: string | null
         }
         Insert: {
@@ -852,7 +851,6 @@ export type Database = {
           ultimo_pagamento_em?: string | null
           ultimo_valor_pago?: number | null
           valor_comissao?: number | null
-          valor_venda_inicial?: number | null
           vendedor?: string | null
         }
         Update: {
@@ -886,7 +884,6 @@ export type Database = {
           ultimo_pagamento_em?: string | null
           ultimo_valor_pago?: number | null
           valor_comissao?: number | null
-          valor_venda_inicial?: number | null
           vendedor?: string | null
         }
         Relationships: []

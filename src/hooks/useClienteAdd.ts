@@ -40,7 +40,6 @@ export function useClienteAdd(userEmail: string, isAdmin: boolean, refetchData: 
         status_campanha: clienteData.status_campanha || 'Cliente Novo',
         data_venda: clienteData.data_venda,
         valor_comissao: clienteData.valor_comissao || 60.00,
-        valor_venda_inicial: clienteData.valor_venda_inicial || null, // Novo campo
         comissao: 'Pendente',
         site_status: 'pendente',
         site_pago: false,
