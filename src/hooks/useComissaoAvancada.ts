@@ -128,6 +128,29 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
     
     setLoading(true)
     try {
+      // Verificar permissões antes da operação
+      if (!user?.email) {
+        throw new Error('Usuário não autenticado')
+      }
+
+      // Verificar se é admin ou gestor
+      const isAdmin = user.email.includes('@admin') || user.email === 'lucas@admin.com' || user.email === 'andreza@trafegoporcents.com'
+      
+      if (!isAdmin) {
+        // Verificar se é gestor ativo
+        const { data: gestorData, error: gestorError } = await supabase
+          .from('gestores')
+          .select('ativo')
+          .eq('email', user.email)
+          .single()
+
+        if (gestorError || !gestorData?.ativo) {
+          throw new Error('Usuário não tem permissão para esta operação')
+        }
+      }
+
+      console.log('✅ [useComissaoAvancada] Permissões verificadas')
+
       // Primeiro, verificar se o cliente existe
       console.log('🔍 [useComissaoAvancada] Verificando se cliente existe...')
       const { data: clienteExiste, error: checkError } = await supabase
@@ -152,10 +175,11 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
 
       if (removeError) {
         console.error('❌ [useComissaoAvancada] Erro ao remover outras marcações:', removeError)
-        throw removeError
+        // Não falhar aqui, continuar com a operação principal
+        console.warn('⚠️ [useComissaoAvancada] Continuando apesar do erro ao remover outras marcações')
+      } else {
+        console.log('✅ [useComissaoAvancada] Outras marcações removidas')
       }
-
-      console.log('✅ [useComissaoAvancada] Outras marcações removidas')
 
       // Marcar este cliente como último pago
       console.log('⭐ [useComissaoAvancada] Marcando cliente como último pago...')
@@ -167,10 +191,24 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
 
       if (updateError) {
         console.error('❌ [useComissaoAvancada] Erro ao marcar como último pago:', updateError)
-        throw updateError
-      }
+        
+        // Tentar novamente com retry
+        console.log('🔄 [useComissaoAvancada] Tentando novamente...')
+        const { data: retryData, error: retryError } = await supabase
+          .from('todos_clientes')
+          .update({ eh_ultimo_pago: true })
+          .eq('id', clienteId)
+          .select('id, nome_cliente, eh_ultimo_pago')
 
-      console.log('✅ [useComissaoAvancada] Cliente marcado com sucesso:', updateData)
+        if (retryError) {
+          console.error('❌ [useComissaoAvancada] Erro no retry:', retryError)
+          throw retryError
+        }
+
+        console.log('✅ [useComissaoAvancada] Sucesso no retry:', retryData)
+      } else {
+        console.log('✅ [useComissaoAvancada] Cliente marcado com sucesso:', updateData)
+      }
 
       // Verificar se a atualização realmente aconteceu
       const { data: verificacao, error: verifyError } = await supabase
@@ -184,6 +222,11 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
       } else {
         console.log('🔍 [useComissaoAvancada] Verificação final:', verificacao)
         console.log('🔍 [useComissaoAvancada] eh_ultimo_pago atual:', verificacao.eh_ultimo_pago)
+        
+        if (!verificacao.eh_ultimo_pago) {
+          console.warn('⚠️ [useComissaoAvancada] ATENÇÃO: Campo não foi salvo corretamente')
+          throw new Error('A marcação não foi salva corretamente no banco de dados')
+        }
       }
 
       toast({
@@ -193,9 +236,18 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
       return true
     } catch (error: any) {
       console.error('💥 [useComissaoAvancada] Erro geral:', error)
+      
+      // Mensagem de erro mais específica baseada no tipo de erro
+      let errorMessage = error.message
+      if (error.message.includes('permission denied') || error.message.includes('policy')) {
+        errorMessage = 'Sem permissão para realizar esta operação. Verifique se você é um gestor ou admin ativo.'
+      } else if (error.message.includes('not found')) {
+        errorMessage = 'Cliente não encontrado no sistema.'
+      }
+      
       toast({
         title: "❌ Erro",
-        description: `Erro ao marcar cliente: ${error.message}`,
+        description: errorMessage,
         variant: "destructive"
       })
       return false
@@ -210,6 +262,11 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
     
     setLoading(true)
     try {
+      // Verificar permissões antes da operação
+      if (!user?.email) {
+        throw new Error('Usuário não autenticado')
+      }
+
       console.log('🔄 [useComissaoAvancada] Removendo marcação de último pago...')
       const { data: updateData, error } = await supabase
         .from('todos_clientes')
@@ -231,9 +288,16 @@ export function useComissaoAvancada(): ComissaoOperacoes & { loading: boolean } 
       return true
     } catch (error: any) {
       console.error('💥 [useComissaoAvancada] Erro geral:', error)
+      
+      // Mensagem de erro mais específica
+      let errorMessage = error.message
+      if (error.message.includes('permission denied') || error.message.includes('policy')) {
+        errorMessage = 'Sem permissão para realizar esta operação.'
+      }
+      
       toast({
         title: "❌ Erro",
-        description: `Erro ao remover marcação: ${error.message}`,
+        description: errorMessage,
         variant: "destructive"
       })
       return false
