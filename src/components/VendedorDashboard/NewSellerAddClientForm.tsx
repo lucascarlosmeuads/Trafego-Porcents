@@ -11,7 +11,6 @@ import { toast } from '@/hooks/use-toast'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
-import { CurrencyInput } from '@/components/ui/currency-input'
 
 interface GestorOption {
   nome: string
@@ -35,7 +34,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
     telefone: '',
     senha: 'parceriadesucesso',
     email_gestor: '',
-    valor_venda_inicial: 0, // Novo campo obrigatório
     resumo_conversa_vendedor: ''
   })
 
@@ -139,16 +137,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
       return
     }
 
-    // Validação do valor da venda
-    if (!formData.valor_venda_inicial || formData.valor_venda_inicial <= 0) {
-      toast({
-        title: "Erro",
-        description: "Valor da venda é obrigatório e deve ser maior que R$ 0,00",
-        variant: "destructive"
-      })
-      return
-    }
-
     setLoading(true)
 
     try {
@@ -162,7 +150,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
         email_gestor: formData.email_gestor,
         status_campanha: 'Cliente Novo',
         data_venda: new Date().toISOString().split('T')[0],
-        valor_venda_inicial: formData.valor_venda_inicial, // Incluir valor da venda
         produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha,
         valor_comissao: 60.00
@@ -209,7 +196,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
           telefone: '',
           senha: 'parceriadesucesso',
           email_gestor: '',
-          valor_venda_inicial: 0,
           resumo_conversa_vendedor: ''
         })
         
@@ -225,7 +211,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
           description: `Cliente: ${clienteData.nome_cliente}
 E-mail: ${clienteData.email_cliente}
 Senha: ${clienteData.senha_cliente}
-💰 Valor: R$ ${clienteData.valor_venda_inicial.toFixed(2)}
 Gestor: ${formData.email_gestor}
 
 O cliente pode fazer login imediatamente com essas credenciais.`,
@@ -269,7 +254,6 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
     const clienteName = formData.nome_cliente || '[Nome do Cliente]'
     const clienteEmail = formData.email_cliente || '[Email do Cliente]'
     const clienteSenha = formData.senha || 'parceriadesucesso'
-    const valorVenda = formData.valor_venda_inicial || 0
     
     return `Olá ${clienteName}! 🎉
 
@@ -277,7 +261,6 @@ Conta criada com sucesso! Para acessar aqui está seu email e sua senha:
 
 📧 Email: ${clienteEmail}
 🔐 Senha: ${clienteSenha}
-💰 Valor do investimento: R$ ${valorVenda.toFixed(2)}
 
 🔗 Acesse: https://login.trafegoporcents.com
 
@@ -380,21 +363,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             />
           </div>
 
-          {/* Novo campo: Valor da Venda */}
-          <div className="grid gap-2">
-            <Label htmlFor="valor_venda_inicial">💰 Valor da Venda (R$) *</Label>
-            <CurrencyInput
-              id="valor_venda_inicial"
-              value={formData.valor_venda_inicial}
-              onChange={(value) => setFormData(prev => ({ ...prev, valor_venda_inicial: value }))}
-              placeholder="R$ 0,00"
-              required
-            />
-            <p className="text-sm text-muted-foreground">
-              💡 Este valor será usado para análises de ROI e relatórios financeiros
-            </p>
-          </div>
-
           <div className="grid gap-2">
             <Label htmlFor="email_gestor">Gestor Responsável *</Label>
             <Select value={formData.email_gestor} onValueChange={(value) => setFormData(prev => ({ ...prev, email_gestor: value }))}>
@@ -453,7 +421,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           </div>
 
           {/* Mensagem personalizada para o cliente */}
-          {formData.nome_cliente && formData.email_cliente && formData.valor_venda_inicial > 0 && (
+          {formData.nome_cliente && formData.email_cliente && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-semibold text-blue-800 text-sm">📱 Mensagem para enviar ao cliente:</h3>

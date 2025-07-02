@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -166,7 +165,7 @@ export function useAdminTableLogic() {
       const { error } = await supabase
         .from('todos_clientes')
         .update({ [field]: value })
-        .eq('id', parseInt(id))
+        .eq('id', id)
 
       if (error) {
         console.error('❌ Erro ao atualizar:', error)
@@ -177,7 +176,7 @@ export function useAdminTableLogic() {
         })
       } else {
         setClientes(prev => prev.map(cliente => 
-          cliente.id?.toString() === id ? { ...cliente, [field]: value } : cliente
+          cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
         toast({
           title: "Sucesso",
@@ -201,7 +200,7 @@ export function useAdminTableLogic() {
       const { error } = await supabase
         .from('todos_clientes')
         .update({ email_gestor: novoEmailGestor })
-        .eq('id', parseInt(clienteId))
+        .eq('id', clienteId)
 
       if (error) {
         console.error('❌ Erro ao transferir cliente:', error)
@@ -212,7 +211,7 @@ export function useAdminTableLogic() {
         })
       } else {
         setClientes(prev => prev.map(cliente => 
-          cliente.id?.toString() === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
+          cliente.id === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
         ))
         toast({
           title: "Sucesso",

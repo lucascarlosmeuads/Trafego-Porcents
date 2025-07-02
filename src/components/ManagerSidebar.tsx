@@ -1,220 +1,201 @@
-
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Badge } from '@/components/ui/badge'
-import { Users, RefreshCw, UserCheck, AlertCircle, Database, CheckCircle2 } from 'lucide-react'
+import { useAuth } from '@/hooks/useAuth'
+import { useProfileData } from '@/hooks/useProfileData'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/hooks/use-toast'
-
-interface ManagerData {
-  email: string
-  totalClientes: number
-  clientesAtivos: number
-  clientesProblema: number
-}
+import { AdminMainMenu } from './ManagerSidebar/AdminMainMenu'
+import { GestorMenu } from './ManagerSidebar/GestorMenu'
+import { Button } from '@/components/ui/button'
+import { LogOut, ChevronLeft, ChevronRight } from 'lucide-react'
+import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 
 interface ManagerSidebarProps {
-  selectedManager: string
-  onManagerChange: (manager: string) => void
-  managersData: ManagerData[]
-  onRefresh: () => void
-  isLoading: boolean
+  selectedManager: string | null
+  onManagerSelect: (manager: string | null) => void
+  activeTab: string
+  onTabChange: (tab: string) => void
 }
 
-export function ManagerSidebar({
-  selectedManager,
-  onManagerChange,
-  managersData,
-  onRefresh,
-  isLoading
+export function ManagerSidebar({ 
+  selectedManager, 
+  onManagerSelect, 
+  activeTab, 
+  onTabChange 
 }: ManagerSidebarProps) {
-  const [totalSystemClients, setTotalSystemClients] = useState<number>(0)
-  const [loadingSystemTotal, setLoadingSystemTotal] = useState(false)
-  const { toast } = useToast()
+  const { isAdmin, signOut, currentManagerName } = useAuth()
+  const { profileData, updateProfileData } = useProfileData('gestor')
+  const [problemasPendentes, setProblemasPendentes] = useState(0)
+  const [isSigningOut, setIsSigningOut] = useState(false)
+  const [isCollapsed, setIsCollapsed] = useState(false)
 
-  const fetchSystemTotal = async () => {
-    setLoadingSystemTotal(true)
+  useEffect(() => {
+    if (isAdmin) {
+      fetchProblemasPendentes()
+    }
+  }, [isAdmin])
+
+  const fetchProblemasPendentes = async () => {
     try {
-      const { count, error } = await supabase
-        .from('todos_clientes')
-        .select('*', { count: 'exact', head: true })
+      const { data, error } = await supabase
+        .from('clientes')
+        .select('id')
+        .not('descricao_problema', 'is', null)
+        .neq('descricao_problema', '')
 
-      if (error) {
-        console.error('Erro ao buscar total do sistema:', error)
-        return
+      if (!error && data) {
+        setProblemasPendentes(data.length)
       }
-
-      setTotalSystemClients(count || 0)
     } catch (error) {
-      console.error('Erro:', error)
-    } finally {
-      setLoadingSystemTotal(false)
+      console.error('Erro ao buscar problemas pendentes:', error)
     }
   }
 
-  useEffect(() => {
-    fetchSystemTotal()
-  }, [])
+  const handleSignOut = async () => {
+    setIsSigningOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Erro ao fazer logout:', error)
+    } finally {
+      setIsSigningOut(false)
+    }
+  }
 
-  const totalManagedClients = managersData.reduce((acc, manager) => acc + manager.totalClientes, 0)
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed)
+  }
+
+  const handleAvatarChange = (newUrl: string | null) => {
+    updateProfileData({ avatar_url: newUrl })
+  }
 
   return (
-    <Card className="w-80 h-fit bg-card border-border">
-      <CardHeader className="pb-4">
-        <CardTitle className="flex items-center gap-2 text-card-foreground">
-          <Users className="w-5 h-5" />
-          Gestores
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="ml-auto"
-          >
-            <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
-          </Button>
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        {/* Seletor de Gestor */}
-        <div>
-          <Select value={selectedManager} onValueChange={onManagerChange}>
-            <SelectTrigger className="bg-background border-border text-foreground">
-              <SelectValue placeholder="Selecione um gestor..." />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-border">
-              <SelectItem value="Todos os Clientes">
-                <div className="flex items-center gap-2">
-                  <Database className="w-4 h-4" />
-                  <span>Todos os Clientes</span>
-                </div>
-              </SelectItem>
-              {managersData
-                .filter(manager => manager.totalClientes > 0)
-                .map((manager) => (
-                  <SelectItem key={manager.email} value={manager.email}>
-                    <div className="flex items-center justify-between w-full">
-                      <span>{manager.email}</span>
-                      <Badge variant="secondary" className="ml-2">
-                        {manager.totalClientes}
-                      </Badge>
-                    </div>
-                  </SelectItem>
-                ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        {/* Resumo do Sistema */}
-        <div className="bg-muted/20 rounded-lg p-4 space-y-3">
-          <h3 className="font-semibold text-foreground flex items-center gap-2">
-            <Database className="w-4 h-4" />
-            Resumo do Sistema
-          </h3>
-          
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="bg-card rounded p-3 border">
-              <div className="flex items-center gap-2 text-blue-600 mb-1">
-                <Database className="w-3 h-3" />
-                <span className="font-medium">Total Sistema</span>
-              </div>
-              <div className="text-xl font-bold text-foreground">
-                {loadingSystemTotal ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  totalSystemClients.toLocaleString()
-                )}
+    <div 
+      className={`
+        ${isCollapsed ? 'w-16' : 'w-64'} 
+        bg-gray-900 border-r border-gray-800 h-screen 
+        transition-all duration-300 ease-in-out overflow-y-auto flex flex-col
+        flex-shrink-0 sticky top-0 left-0 z-40 shadow-2xl
+      `}
+    >
+      {/* Header reorganizado */}
+      <div className="p-3 border-b border-gray-800">
+        {isCollapsed ? (
+          /* Layout quando colapsado */
+          <div className="flex flex-col items-center space-y-3">
+            {/* Logo pequena centralizada */}
+            <div className="relative group cursor-pointer">
+              <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-2 py-1.5 text-xs transition-transform duration-300 hover:scale-105">
+                <span className="text-orange-300">TP%</span>
               </div>
             </div>
             
-            <div className="bg-card rounded p-3 border">
-              <div className="flex items-center gap-2 text-green-600 mb-1">
-                <UserCheck className="w-3 h-3" />
-                <span className="font-medium">Gerenciados</span>
-              </div>
-              <div className="text-xl font-bold text-foreground">
-                {totalManagedClients.toLocaleString()}
-              </div>
-            </div>
+            {/* Avatar do perfil */}
+            <ProfileAvatarUpload
+              currentAvatarUrl={profileData?.avatar_url}
+              userName={currentManagerName}
+              userType="gestor"
+              onAvatarChange={handleAvatarChange}
+              size="sm"
+              showEditButton={true}
+            />
+            
+            {/* Botão de toggle bem visível */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleSidebar}
+              className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg"
+              title="Expandir menu"
+            >
+              <ChevronRight className="h-4 w-4" />
+            </Button>
           </div>
-
-          {totalSystemClients > 0 && (
-            <div className="pt-2 border-t border-border">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Cobertura de Gestão:</span>
-                <span className="font-medium">
-                  {((totalManagedClients / totalSystemClients) * 100).toFixed(1)}%
-                </span>
-              </div>
-              <div className="mt-1 w-full bg-muted rounded-full h-2">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min((totalManagedClients / totalSystemClients) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Lista de Gestores */}
-        <div className="space-y-2 max-h-96 overflow-y-auto">
-          {managersData
-            .filter(manager => manager.totalClientes > 0)
-            .sort((a, b) => b.totalClientes - a.totalClientes)
-            .map((manager) => {
-              const isSelected = selectedManager === manager.email
-              const hasProblems = manager.clientesProblema > 0
-              
-              return (
-                <div
-                  key={manager.email}
-                  className={`p-3 rounded-lg border transition-all cursor-pointer ${
-                    isSelected 
-                      ? 'bg-primary/10 border-primary' 
-                      : 'bg-card border-border hover:bg-muted/50'
-                  }`}
-                  onClick={() => onManagerChange(manager.email)}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="font-medium text-sm text-foreground truncate">
-                      {manager.email}
-                    </span>
-                    {hasProblems && (
-                      <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0 ml-1" />
-                    )}
-                  </div>
-                  
-                  <div className="grid grid-cols-3 gap-2 text-xs">
-                    <div className="text-center">
-                      <div className="font-semibold text-foreground">{manager.totalClientes}</div>
-                      <div className="text-muted-foreground">Total</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="font-semibold text-green-600">{manager.clientesAtivos}</div>
-                      <div className="text-muted-foreground">Ativos</div>
-                    </div>
-                    <div className="text-center">
-                      <div className={`font-semibold ${hasProblems ? 'text-red-600' : 'text-muted-foreground'}`}>
-                        {manager.clientesProblema}
-                      </div>
-                      <div className="text-muted-foreground">Problemas</div>
-                    </div>
+        ) : (
+          /* Layout quando expandido */
+          <div className="space-y-4">
+            {/* Header com logo e botão de toggle */}
+            <div className="flex items-center justify-between">
+              {/* Logo */}
+              <div className="flex-1">
+                <div className="relative group cursor-pointer">
+                  <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
+                  <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-4 py-2 text-lg transition-transform duration-300 hover:scale-105">
+                    <span>Tráfego</span>
+                    <span className="text-orange-300">Porcents</span>
                   </div>
                 </div>
-              )
-            })}
-        </div>
+              </div>
 
-        {managersData.length === 0 && !isLoading && (
-          <div className="text-center py-8 text-muted-foreground">
-            <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
-            <p className="text-sm">Nenhum gestor encontrado</p>
+              {/* Botão de toggle separado */}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg ml-3"
+                title="Minimizar menu"
+              >
+                <ChevronLeft className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Perfil do gestor - mais discreto */}
+            <div className="flex items-center space-x-3 p-3 rounded-lg bg-gray-800/20 border border-gray-700/20 hover:bg-gray-800/30 transition-colors duration-200">
+              <ProfileAvatarUpload
+                currentAvatarUrl={profileData?.avatar_url}
+                userName={currentManagerName}
+                userType="gestor"
+                onAvatarChange={handleAvatarChange}
+                size="md"
+                showEditButton={true}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-gray-300 truncate">
+                  {currentManagerName}
+                </p>
+                <p className="text-xs text-gray-500">
+                  {isAdmin ? 'Administrador' : 'Gestor'}
+                </p>
+              </div>
+            </div>
           </div>
         )}
-      </CardContent>
-    </Card>
+      </div>
+
+      {/* Menu Principal */}
+      <div className="p-4 flex-1">
+        {isAdmin ? (
+          <AdminMainMenu
+            activeTab={activeTab}
+            onTabSelect={onTabChange}
+          />
+        ) : (
+          <GestorMenu
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            problemasPendentes={problemasPendentes}
+            isCollapsed={isCollapsed}
+          />
+        )}
+      </div>
+      
+      {/* Logout Button */}
+      <div className="p-4 border-t border-gray-800">
+        <Button
+          variant="ghost"
+          className={`
+            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'} 
+            text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30
+            transition-all duration-200
+          `}
+          onClick={handleSignOut}
+          disabled={isSigningOut}
+          title={isCollapsed ? (isSigningOut ? 'Saindo...' : 'Sair do Sistema') : ''}
+        >
+          <LogOut className={`h-4 w-4 ${!isCollapsed ? 'mr-2' : ''}`} />
+          {!isCollapsed && (isSigningOut ? 'Saindo...' : 'Sair do Sistema')}
+        </Button>
+      </div>
+    </div>
   )
 }

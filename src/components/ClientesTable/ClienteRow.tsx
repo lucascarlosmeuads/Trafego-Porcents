@@ -11,12 +11,10 @@ import { ClienteRowPhone } from './ClienteRowPhone'
 import { ClienteRowDataLimite } from './ClienteRowDataLimite'
 import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
-import { ClienteRowValorVenda } from './ClienteRowValorVenda' // Importar novo componente
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
-import { supabase } from '@/lib/supabase' // Importar supabase
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -96,32 +94,6 @@ export function ClienteRow({
     }
   }
 
-  // Função para salvar valor da venda
-  const handleSaveValorVenda = async (clienteId: string, novoValor: number): Promise<boolean> => {
-    try {
-      const { error } = await supabase
-        .from('todos_clientes')
-        .update({ valor_venda_inicial: novoValor })
-        .eq('id', parseInt(clienteId))
-
-      if (error) {
-        console.error('Erro ao atualizar valor da venda:', error)
-        toast({
-          title: "Erro",
-          description: "Erro ao salvar valor da venda",
-          variant: "destructive"
-        })
-        return false
-      }
-
-      onComissionUpdate() // Refresh dos dados
-      return true
-    } catch (error) {
-      console.error('Erro ao salvar valor da venda:', error)
-      return false
-    }
-  }
-
   const clienteOrigem = getClienteOrigem(cliente.id!.toString())
 
   return (
@@ -156,15 +128,6 @@ export function ClienteRow({
             nomeCliente={cliente.nome_cliente || ''}
           />
         </TableCell>
-
-        {/* Valor da Venda Cell */}
-        <ClienteRowValorVenda
-          clienteId={cliente.id!.toString()}
-          valorVenda={cliente.valor_venda_inicial || null}
-          isAdmin={isAdmin}
-          onSave={handleSaveValorVenda}
-          compact={true}
-        />
 
         <TableCell className="text-white text-xs p-1">
           <Tooltip>
