@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Users, UserCheck, Settings } from 'lucide-react'
 
@@ -153,18 +153,10 @@ export function ManagerSelector({
     }
   }
 
-  const getDisplayValue = () => {
+  const getActiveTab = () => {
     if (!selectedManager) return 'all'
     if (selectedManager === '__GESTORES__') return '__GESTORES__'
     return selectedManager
-  }
-
-  const getSelectedManagerName = () => {
-    if (!selectedManager) return 'Todos os gestores'
-    if (selectedManager === '__GESTORES__') return 'Gerenciar gestores'
-    
-    const manager = managers.find(m => m.email === selectedManager)
-    return manager ? manager.nome : selectedManager
   }
 
   const getTotalClientes = () => {
@@ -187,64 +179,60 @@ export function ManagerSelector({
         <span className="text-sm font-medium text-foreground">Filtrar por Gestor:</span>
       </div>
 
-      <Select value={getDisplayValue()} onValueChange={handleManagerChange}>
-        <SelectTrigger className="w-full">
-          <SelectValue placeholder="Selecione um gestor">
-            <div className="flex items-center gap-2">
-              <UserCheck className="h-4 w-4" />
-              <span>{getSelectedManagerName()}</span>
-            </div>
-          </SelectValue>
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="all">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              <span>Todos os gestores</span>
+      <Tabs value={getActiveTab()} onValueChange={handleManagerChange} className="w-full">
+        <TabsList className="flex flex-wrap justify-start gap-1 h-auto p-1 bg-muted/50 overflow-x-auto">
+          {/* Aba "Todos" */}
+          <TabsTrigger value="all" className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap">
+            <Users className="h-3 w-3" />
+            <span>Todos</span>
+            {showMetrics && (
+              <Badge variant="secondary" className="ml-1 text-xs">
+                {getTotalClientes()}
+              </Badge>
+            )}
+          </TabsTrigger>
+          
+          {/* Abas dos gestores */}
+          {managers.map((manager) => (
+            <TabsTrigger 
+              key={manager.email} 
+              value={manager.email}
+              className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap"
+            >
+              <UserCheck className="h-3 w-3" />
+              <span>{manager.nome}</span>
               {showMetrics && (
-                <Badge variant="secondary" className="ml-auto">
-                  {getTotalClientes()} clientes
+                <Badge variant="outline" className="ml-1 text-xs">
+                  {manager.clientesCount || 0}
                 </Badge>
               )}
-            </div>
-          </SelectItem>
-          
-          {managers.map((manager) => (
-            <SelectItem key={manager.email} value={manager.email}>
-              <div className="flex items-center gap-2 w-full">
-                <UserCheck className="h-4 w-4" />
-                <div className="flex-1">
-                  <div className="font-medium">{manager.nome}</div>
-                  <div className="text-xs text-muted-foreground">{manager.email}</div>
-                </div>
-                {showMetrics && (
-                  <Badge variant="outline" className="ml-auto">
-                    {manager.clientesCount || 0} clientes
-                  </Badge>
-                )}
-              </div>
-            </SelectItem>
+            </TabsTrigger>
           ))}
 
+          {/* Aba "Gerenciar" para admins */}
           {isAdminContext && (
-            <>
-              <div className="border-t my-1" />
-              <SelectItem value="__GESTORES__">
-                <div className="flex items-center gap-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Gerenciar gestores</span>
-                </div>
-              </SelectItem>
-            </>
+            <TabsTrigger value="__GESTORES__" className="flex items-center gap-2 px-3 py-2 text-xs whitespace-nowrap">
+              <Settings className="h-3 w-3" />
+              <span>Gerenciar</span>
+            </TabsTrigger>
           )}
-        </SelectContent>
-      </Select>
+        </TabsList>
+
+        {/* Conteúdo das abas (invisível, só para funcionalidade) */}
+        <TabsContent value="all" className="hidden"></TabsContent>
+        {managers.map((manager) => (
+          <TabsContent key={manager.email} value={manager.email} className="hidden"></TabsContent>
+        ))}
+        {isAdminContext && (
+          <TabsContent value="__GESTORES__" className="hidden"></TabsContent>
+        )}
+      </Tabs>
 
       {selectedManager && selectedManager !== '__GESTORES__' && (
         <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
           {selectedManager === null 
             ? `Mostrando todos os gestores (${managers.length} ativos)`
-            : `Filtrado por: ${getSelectedManagerName()}`
+            : `Filtrado por: ${managers.find(m => m.email === selectedManager)?.nome || selectedManager}`
           }
         </div>
       )}

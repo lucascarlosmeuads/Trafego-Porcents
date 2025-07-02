@@ -1,0 +1,30 @@
+
+/* Estilos personalizados para as abas do ManagerSelector */
+.manager-tabs-list {
+  overflow-x: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.manager-tabs-list::-webkit-scrollbar {
+  display: none;
+}
+
+/* Melhor responsividade para mobile */
+@media (max-width: 768px) {
+  .manager-tabs-list {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .manager-tab-trigger {
+    flex-shrink: 0;
+    min-width: fit-content;
+  }
+}
+
+/* Estilo para abas ativas */
+.manager-tab-active {
+  background-color: hsl(var(--primary));
+  color: hsl(var(--primary-foreground));
+}
