@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
@@ -54,11 +53,14 @@ export function useAdminMetaAds() {
         uid: userData.user?.id
       })
 
+      // CORREÇÃO: Buscar apenas a configuração global mais recente
       const { data, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
         .is('cliente_id', null) // Configuração global
-        .maybeSingle()
+        .order('created_at', { ascending: false }) // Mais recente primeiro
+        .limit(1) // Apenas uma linha
+        .maybeSingle() // Pode não ter nenhuma
 
       if (error) {
         console.error('❌ [useAdminMetaAds] Erro ao buscar config:', error)
@@ -121,13 +123,32 @@ export function useAdminMetaAds() {
           .select()
           .single()
       } else {
-        // Criar nova
-        console.log('🆕 [useAdminMetaAds] Criando nova configuração...')
-        result = await supabase
+        // CORREÇÃO: Verificar se já existe uma configuração global antes de criar
+        const { data: existingConfig } = await supabase
           .from('meta_ads_configs')
-          .insert([payload])
-          .select()
-          .single()
+          .select('id')
+          .is('cliente_id', null)
+          .limit(1)
+          .maybeSingle()
+
+        if (existingConfig) {
+          // Se já existe, atualizar
+          console.log('📝 [useAdminMetaAds] Atualizando configuração global existente:', existingConfig.id)
+          result = await supabase
+            .from('meta_ads_configs')
+            .update(payload)
+            .eq('id', existingConfig.id)
+            .select()
+            .single()
+        } else {
+          // Criar nova apenas se não existir nenhuma
+          console.log('🆕 [useAdminMetaAds] Criando nova configuração global...')
+          result = await supabase
+            .from('meta_ads_configs')
+            .insert([payload])
+            .select()
+            .single()
+        }
       }
 
       if (result.error) {
@@ -169,7 +190,6 @@ export function useAdminMetaAds() {
     }
   }
 
-  // Testar conexão
   const testConnection = async () => {
     if (!config) {
       toast({
@@ -249,7 +269,6 @@ export function useAdminMetaAds() {
     }
   }
 
-  // Buscar insights do dia atual
   const fetchTodayInsights = async () => {
     if (!config) {
       console.log('⚠️ [useAdminMetaAds] Sem configuração para buscar insights')
@@ -332,7 +351,6 @@ export function useAdminMetaAds() {
     }
   }
 
-  // Salvar insights no histórico
   const saveInsightsToHistory = async (insightsData: any) => {
     try {
       const { error } = await supabase
