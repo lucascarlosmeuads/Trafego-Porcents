@@ -258,69 +258,139 @@ serve(async (req) => {
         adAccountId = `act_${adAccountId}`
       }
       
-      let insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}`
+      // MELHORIA: Determinar automaticamente o melhor período se não houver dados
+      const periods = []
       
-      // Aplicar filtro de data baseado no date_preset ou datas específicas
-      if (date_preset) {
-        if (date_preset === 'today') {
-          const today = new Date().toISOString().split('T')[0]
-          insightsUrl += `&time_range={"since":"${today}","until":"${today}"}`
-          console.log('📅 [meta-ads-api] Aplicando filtro para hoje:', today)
-        } else {
-          insightsUrl += `&date_preset=${date_preset}`
-          console.log('📅 [meta-ads-api] Aplicando date_preset:', date_preset)
-        }
-      } else if (startDate && endDate) {
-        insightsUrl += `&time_range={"since":"${startDate}","until":"${endDate}"}`
-        console.log('📅 [meta-ads-api] Aplicando filtro de data:', { startDate, endDate })
-      } else {
-        // Padrão: hoje
+      if (date_preset === 'today') {
         const today = new Date().toISOString().split('T')[0]
-        insightsUrl += `&time_range={"since":"${today}","until":"${today}"}`
-        console.log('📅 [meta-ads-api] Aplicando filtro padrão para hoje:', today)
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        
+        periods.push(
+          { name: 'hoje', range: `{"since":"${today}","until":"${today}"}` },
+          { name: 'ontem', range: `{"since":"${yesterday}","until":"${yesterday}"}` },
+          { name: 'últimos 7 dias', range: `{"since":"${lastWeek}","until":"${today}"}` }
+        )
+      } else if (startDate && endDate) {
+        periods.push({ name: 'período solicitado', range: `{"since":"${startDate}","until":"${endDate}"}` })
+      } else {
+        // Padrão: últimos 7 dias
+        const today = new Date().toISOString().split('T')[0]
+        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        periods.push({ name: 'últimos 7 dias', range: `{"since":"${lastWeek}","until":"${today}"}` })
       }
-      
-      const response = await fetch(insightsUrl)
-      const data = await response.json()
-      
-      if (!response.ok) {
-        console.error('❌ [meta-ads-api] Erro ao buscar insights:', data)
+
+      console.log('📅 [meta-ads-api] Períodos a testar:', periods.map(p => p.name))
+
+      for (const period of periods) {
+        console.log(`🔍 [meta-ads-api] Testando período: ${period.name}`)
         
-        let errorMessage = 'Erro ao buscar insights'
-        if (data.error) {
-          switch (data.error.code) {
-            case 100:
-              errorMessage = 'Ad Account não encontrado ou sem permissão para insights.'
-              break
-            case 190:
-              errorMessage = 'Token sem permissão para acessar insights.'
-              break
-            default:
-              errorMessage = `Erro da API: ${data.error.message}`
+        let insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}&time_range=${period.range}`
+        
+        const response = await fetch(insightsUrl)
+        const data = await response.json()
+        
+        if (!response.ok) {
+          console.error(`❌ [meta-ads-api] Erro ao buscar insights para ${period.name}:`, data)
+          
+          let errorMessage = 'Erro ao buscar insights'
+          if (data.error) {
+            switch (data.error.code) {
+              case 100:
+                errorMessage = 'Ad Account não encontrado ou sem permissão para insights.'
+                break
+              case 190:
+                errorMessage = 'Token sem permissão para acessar insights.'
+                break
+              default:
+                errorMessage = `Erro da API: ${data.error.message}`
+            }
           }
+          
+          // Se é o último período e ainda não temos sucesso, retornar erro
+          if (period === periods[periods.length - 1]) {
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                message: errorMessage,
+                details: data,
+                periods_tested: periods.map(p => p.name)
+              }),
+              { 
+                status: 400,
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+              }
+            )
+          }
+          
+          continue // Tentar próximo período
         }
+
+        console.log(`📊 [meta-ads-api] Resposta para ${period.name}:`, {
+          total_insights: data.data?.length || 0,
+          sample: data.data?.[0] || 'nenhum'
+        })
+
+        if (data.data && data.data.length > 0) {
+          console.log(`✅ [meta-ads-api] Insights encontrados para ${period.name}:`, data.data.length)
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              insights: data.data,
+              period_used: period.name,
+              total_periods_tested: periods.indexOf(period) + 1
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          )
+        }
+      }
+
+      // Se chegou até aqui, não encontrou dados em nenhum período
+      console.log('⚠️ [meta-ads-api] Nenhum insight encontrado em nenhum período testado')
+      
+      // Verificar se há campanhas ativas
+      const campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status&limit=5&access_token=${config.accessToken}`
+      
+      try {
+        const campaignsResponse = await fetch(campaignsUrl)
+        const campaignsData = await campaignsResponse.json()
         
+        let suggestion = 'Nenhum dado de insights encontrado'
+        if (campaignsData.data && campaignsData.data.length > 0) {
+          const activeCampaigns = campaignsData.data.filter(c => c.status === 'ACTIVE')
+          if (activeCampaigns.length === 0) {
+            suggestion = 'Você tem campanhas criadas, mas nenhuma está ativa. Ative suas campanhas no Facebook Ads Manager.'
+          } else {
+            suggestion = `Você tem ${activeCampaigns.length} campanha(s) ativa(s), mas sem dados de impressões/cliques recentes. Isso pode ser normal para contas novas ou campanhas com orçamento baixo.`
+          }
+        } else {
+          suggestion = 'Não há campanhas criadas neste Ad Account. Crie campanhas no Facebook Ads Manager para começar a ver dados.'
+        }
+
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: errorMessage,
-            details: data
+            message: suggestion,
+            insights: [],
+            periods_tested: periods.map(p => p.name),
+            campaigns_info: {
+              total: campaignsData.data?.length || 0,
+              active: campaignsData.data?.filter(c => c.status === 'ACTIVE')?.length || 0
+            }
           }),
-          { 
-            status: 400,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      } catch (error) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            message: 'Nenhum dado encontrado nos períodos testados. Verifique se há campanhas ativas no Facebook Ads Manager.',
+            insights: [],
+            periods_tested: periods.map(p => p.name)
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
-
-      console.log('✅ [meta-ads-api] Insights encontrados:', data.data?.length || 0)
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          insights: data.data || []
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      )
     }
 
     return new Response(

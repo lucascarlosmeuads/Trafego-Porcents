@@ -269,7 +269,8 @@ export function useAdminMetaAds() {
     }
   }
 
-  const fetchTodayInsights = async () => {
+  // MELHORIA: Buscar insights com diferentes períodos automaticamente
+  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' = 'today') => {
     if (!config) {
       console.log('⚠️ [useAdminMetaAds] Sem configuração para buscar insights')
       setLastError('Configure primeiro as credenciais Meta Ads')
@@ -280,19 +281,39 @@ export function useAdminMetaAds() {
     setLastError(null)
 
     try {
-      console.log('📊 [useAdminMetaAds] Buscando insights do dia...')
+      console.log(`📊 [useAdminMetaAds] Buscando insights - período: ${period}`)
       
-      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
-        body: {
-          action: 'get_insights',
-          config: {
-            appId: config.api_id,
-            appSecret: config.app_secret,
-            accessToken: config.access_token,
-            adAccountId: config.ad_account_id
-          },
-          date_preset: 'today'
+      let requestBody: any = {
+        action: 'get_insights',
+        config: {
+          appId: config.api_id,
+          appSecret: config.app_secret,
+          accessToken: config.access_token,
+          adAccountId: config.ad_account_id
         }
+      }
+
+      // Definir período baseado no parâmetro
+      if (period === 'today') {
+        requestBody.date_preset = 'today'
+      } else if (period === 'yesterday') {
+        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        requestBody.startDate = yesterday
+        requestBody.endDate = yesterday
+      } else if (period === 'last_7_days') {
+        const today = new Date().toISOString().split('T')[0]
+        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        requestBody.startDate = lastWeek
+        requestBody.endDate = today
+      } else if (period === 'last_30_days') {
+        const today = new Date().toISOString().split('T')[0]
+        const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        requestBody.startDate = lastMonth
+        requestBody.endDate = today
+      }
+
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: requestBody
       })
 
       if (error) {
@@ -300,7 +321,12 @@ export function useAdminMetaAds() {
       }
 
       if (data.success && data.insights && data.insights.length > 0) {
-        console.log('✅ [useAdminMetaAds] Insights recebidos:', data.insights[0])
+        console.log(`✅ [useAdminMetaAds] Insights recebidos para ${period}:`, {
+          quantidade: data.insights.length,
+          periodo_usado: data.period_used || period,
+          amostra: data.insights[0]
+        })
+        
         const todayInsights = data.insights[0]
         
         // Calcular custo por mensagem (assumindo que mensagens = clicks)
@@ -323,32 +349,86 @@ export function useAdminMetaAds() {
         // Salvar no histórico
         await saveInsightsToHistory(todayInsights)
         
-        toast({
-          title: "Sucesso",
-          description: "Dados Meta Ads atualizados!",
-        })
-      } else {
-        console.log('ℹ️ [useAdminMetaAds] Nenhum insight disponível para hoje')
-        setInsights(null)
+        const periodNames = {
+          today: 'hoje',
+          yesterday: 'ontem', 
+          last_7_days: 'últimos 7 dias',
+          last_30_days: 'últimos 30 dias'
+        }
         
         toast({
-          title: "Info",
-          description: "Nenhum dado encontrado para hoje",
+          title: "Sucesso",
+          description: `Dados Meta Ads encontrados para ${data.period_used || periodNames[period]}!`,
         })
+        
+        return { success: true, period_used: data.period_used || period }
+      } else {
+        console.log(`ℹ️ [useAdminMetaAds] Nenhum insight disponível para ${period}`)
+        
+        // Se não encontrou dados, tentar sugestões da API
+        const message = data.message || `Nenhum dado encontrado para ${period}`
+        
+        if (data.campaigns_info) {
+          console.log('📊 [useAdminMetaAds] Info das campanhas:', data.campaigns_info)
+        }
+        
+        return { 
+          success: false, 
+          message, 
+          campaigns_info: data.campaigns_info,
+          periods_tested: data.periods_tested 
+        }
       }
     } catch (error: any) {
       console.error('❌ [useAdminMetaAds] Erro ao buscar insights:', error)
-      const errorMessage = error.message || 'Erro ao buscar dados de hoje'
+      const errorMessage = error.message || `Erro ao buscar dados de ${period}`
       setLastError(errorMessage)
       
-      toast({
-        title: "Erro",
-        description: errorMessage,
-        variant: "destructive"
-      })
+      return { success: false, message: errorMessage }
     } finally {
       setFetchingInsights(false)
     }
+  }
+
+  // Função principal que tenta diferentes períodos automaticamente
+  const fetchTodayInsights = async () => {
+    // Primeiro tentar hoje
+    const todayResult = await fetchInsightsWithPeriod('today')
+    
+    if (todayResult.success) {
+      return todayResult
+    }
+    
+    console.log('🔄 [useAdminMetaAds] Não encontrou dados para hoje, tentando ontem...')
+    
+    // Se não encontrou hoje, tentar ontem
+    const yesterdayResult = await fetchInsightsWithPeriod('yesterday')
+    
+    if (yesterdayResult.success) {
+      return yesterdayResult
+    }
+    
+    console.log('🔄 [useAdminMetaAds] Não encontrou dados para ontem, tentando últimos 7 dias...')
+    
+    // Se não encontrou ontem, tentar últimos 7 dias
+    const weekResult = await fetchInsightsWithPeriod('last_7_days')
+    
+    if (weekResult.success) {
+      return weekResult
+    }
+    
+    // Se chegou até aqui, mostrar erro mais específico
+    setInsights(null)
+    const finalMessage = weekResult.message || 'Nenhum dado encontrado nos últimos períodos testados'
+    setLastError(finalMessage)
+    
+    toast({
+      title: "Nenhum dado encontrado",
+      description: finalMessage,
+      variant: "destructive"
+    })
+    
+    return weekResult
   }
 
   const saveInsightsToHistory = async (insightsData: any) => {
@@ -396,6 +476,7 @@ export function useAdminMetaAds() {
     saveConfig,
     testConnection,
     fetchTodayInsights,
+    fetchInsightsWithPeriod, // Nova função exportada
     refetchConfig: fetchConfig
   }
 }
