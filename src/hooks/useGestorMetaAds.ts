@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -94,7 +93,7 @@ export function useGestorMetaAds() {
     loadConfig()
   }, [loadConfig])
 
-  // Salvar configuração GLOBAL
+  // Salvar configuração GLOBAL usando transação
   const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
     if (!user?.email) {
       toast({
@@ -109,36 +108,56 @@ export function useGestorMetaAds() {
     setLastError('')
     
     try {
-      console.log('💾 [useGestorMetaAds] Salvando config GLOBAL...')
+      console.log('💾 [useGestorMetaAds] Salvando config GLOBAL com transação...')
       
-      // Primeiro, deletar configuração existente para evitar conflitos
-      await supabase
-        .from('meta_ads_configs')
-        .delete()
-        .eq('email_usuario', user.email)
-        .is('cliente_id', null)
-
-      // Inserir nova configuração
-      const { error } = await supabase
-        .from('meta_ads_configs')
-        .insert({
-          email_usuario: user.email,
-          cliente_id: null, // IMPORTANTE: Config global
-          api_id: newConfig.api_id,
-          app_secret: newConfig.app_secret,
-          access_token: newConfig.access_token,
-          ad_account_id: newConfig.ad_account_id,
-          updated_at: new Date().toISOString()
-        })
+      // Usar transação para garantir consistência
+      const { error } = await supabase.rpc('save_gestor_meta_ads_config', {
+        p_email_usuario: user.email,
+        p_api_id: newConfig.api_id,
+        p_app_secret: newConfig.app_secret,
+        p_access_token: newConfig.access_token,
+        p_ad_account_id: newConfig.ad_account_id
+      })
 
       if (error) {
-        console.error('❌ [useGestorMetaAds] Erro ao salvar:', error)
-        toast({
-          title: "Erro",
-          description: "Falha ao salvar configuração",
-          variant: "destructive",
-        })
-        return { success: false }
+        console.error('❌ [useGestorMetaAds] Erro ao salvar via RPC:', error)
+        
+        // Fallback: usar delete + insert manual
+        console.log('🔄 [useGestorMetaAds] Tentando salvamento manual...')
+        
+        // 1. Deletar configuração existente
+        const { error: deleteError } = await supabase
+          .from('meta_ads_configs')
+          .delete()
+          .eq('email_usuario', user.email)
+          .is('cliente_id', null)
+
+        if (deleteError) {
+          console.error('❌ [useGestorMetaAds] Erro ao deletar config existente:', deleteError)
+        }
+
+        // 2. Inserir nova configuração
+        const { error: insertError } = await supabase
+          .from('meta_ads_configs')
+          .insert({
+            email_usuario: user.email,
+            cliente_id: null, // IMPORTANTE: Config global
+            api_id: newConfig.api_id,
+            app_secret: newConfig.app_secret,
+            access_token: newConfig.access_token,
+            ad_account_id: newConfig.ad_account_id,
+            updated_at: new Date().toISOString()
+          })
+
+        if (insertError) {
+          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config:', insertError)
+          toast({
+            title: "Erro",
+            description: `Falha ao salvar: ${insertError.message}`,
+            variant: "destructive",
+          })
+          return { success: false }
+        }
       }
 
       setConfig({
@@ -158,7 +177,7 @@ export function useGestorMetaAds() {
       console.error('❌ [useGestorMetaAds] Erro inesperado:', error)
       toast({
         title: "Erro",
-        description: "Erro inesperado ao salvar configuração",
+        description: `Erro inesperado: ${error}`,
         variant: "destructive",
       })
       return { success: false }
@@ -167,7 +186,6 @@ export function useGestorMetaAds() {
     }
   }
 
-  // Testar conexão
   const testConnection = async () => {
     if (!config) return { success: false, message: 'Configuração necessária' }
 
@@ -216,7 +234,6 @@ export function useGestorMetaAds() {
     }
   }
 
-  // Buscar insights hoje
   const fetchTodayInsights = async (): Promise<FetchInsightsResult> => {
     if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
@@ -305,7 +322,6 @@ export function useGestorMetaAds() {
     }
   }
 
-  // Buscar insights com período
   const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom', startDate?: string, endDate?: string): Promise<FetchInsightsResult> => {
     if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
