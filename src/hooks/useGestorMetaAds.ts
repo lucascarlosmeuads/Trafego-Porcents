@@ -93,15 +93,16 @@ export function useGestorMetaAds() {
     loadConfig()
   }, [loadConfig])
 
-  // Fallback manual melhorado - sem usar ON CONFLICT
-  const manualSaveFallback = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
+  // Abordagem completamente nova para salvar - sem usar ON CONFLICT
+  const saveConfigDirectly = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
     if (!user?.email) return { success: false }
     
-    console.log('🔧 [useGestorMetaAds] Executando fallback manual melhorado...')
+    console.log('🔧 [useGestorMetaAds] === SALVAMENTO DIRETO INICIADO ===')
+    console.log('👤 [useGestorMetaAds] Usuário:', user.email)
     
     try {
-      // Etapa 1: Verificar se já existe configuração
-      console.log('📋 [useGestorMetaAds] Verificando configuração existente...')
+      // Etapa 1: Verificar se existe configuração
+      console.log('🔍 [useGestorMetaAds] Verificando configuração existente...')
       const { data: existingConfig, error: selectError } = await supabase
         .from('meta_ads_configs')
         .select('id')
@@ -111,9 +112,11 @@ export function useGestorMetaAds() {
 
       if (selectError) {
         console.error('❌ [useGestorMetaAds] Erro ao verificar config existente:', selectError)
-        return { success: false }
+        return { success: false, error: selectError.message }
       }
 
+      let result;
+      
       if (existingConfig) {
         // Etapa 2a: Atualizar configuração existente
         console.log('🔄 [useGestorMetaAds] Atualizando configuração existente ID:', existingConfig.id)
@@ -130,13 +133,14 @@ export function useGestorMetaAds() {
 
         if (updateError) {
           console.error('❌ [useGestorMetaAds] Erro ao atualizar config:', updateError)
-          return { success: false }
+          return { success: false, error: updateError.message }
         }
 
-        console.log('✅ [useGestorMetaAds] Configuração atualizada com sucesso via fallback')
+        result = { success: true, operation: 'update' }
+        console.log('✅ [useGestorMetaAds] Configuração atualizada com sucesso')
       } else {
         // Etapa 2b: Inserir nova configuração
-        console.log('➕ [useGestorMetaAds] Inserindo nova configuração via fallback...')
+        console.log('➕ [useGestorMetaAds] Inserindo nova configuração...')
         const { error: insertError } = await supabase
           .from('meta_ads_configs')
           .insert({
@@ -151,21 +155,22 @@ export function useGestorMetaAds() {
           })
 
         if (insertError) {
-          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config via fallback:', insertError)
-          return { success: false }
+          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config:', insertError)
+          return { success: false, error: insertError.message }
         }
 
-        console.log('✅ [useGestorMetaAds] Nova configuração inserida com sucesso via fallback')
+        result = { success: true, operation: 'insert' }
+        console.log('✅ [useGestorMetaAds] Nova configuração inserida com sucesso')
       }
 
-      return { success: true }
+      return result
     } catch (error) {
-      console.error('❌ [useGestorMetaAds] Erro inesperado no fallback manual:', error)
-      return { success: false }
+      console.error('❌ [useGestorMetaAds] Erro inesperado no salvamento direto:', error)
+      return { success: false, error: `Erro inesperado: ${error}` }
     }
   }
 
-  // Salvar configuração GLOBAL usando RPC function melhorada
+  // Salvar configuração GLOBAL usando abordagem híbrida
   const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
     if (!user?.email) {
       toast({
@@ -180,11 +185,11 @@ export function useGestorMetaAds() {
     setLastError('')
     
     try {
-      console.log('💾 [useGestorMetaAds] === INICIANDO SALVAMENTO DEFINITIVO ===')
+      console.log('💾 [useGestorMetaAds] === INICIANDO SALVAMENTO HÍBRIDO ===')
       console.log('👤 [useGestorMetaAds] Usuário:', user.email)
-      console.log('🔧 [useGestorMetaAds] Tentativa 1: RPC Function...')
       
-      // Tentar usar a função RPC melhorada primeiro
+      // Método 1: Tentar RPC function primeiro
+      console.log('🔧 [useGestorMetaAds] Tentativa 1: RPC Function...')
       const { data: rpcResult, error: rpcError } = await supabase.rpc('save_gestor_meta_ads_config', {
         p_email_usuario: user.email,
         p_api_id: newConfig.api_id,
@@ -193,61 +198,71 @@ export function useGestorMetaAds() {
         p_ad_account_id: newConfig.ad_account_id
       })
 
-      if (rpcError) {
-        console.error('❌ [useGestorMetaAds] RPC Error:', rpcError)
-        console.log('🔧 [useGestorMetaAds] Tentativa 2: Fallback Manual...')
-        
-        // Usar fallback manual melhorado
-        const fallbackResult = await manualSaveFallback(newConfig)
-        
-        if (!fallbackResult.success) {
-          toast({
-            title: "Erro",
-            description: "Falha ao salvar configuração mesmo com fallback",
-            variant: "destructive",
-          })
-          return { success: false }
-        }
-      } else if (rpcResult && !rpcResult.success) {
-        console.error('❌ [useGestorMetaAds] RPC falhou:', rpcResult)
-        console.log('🔧 [useGestorMetaAds] Tentativa 2: Fallback Manual...')
-        
-        // Usar fallback manual melhorado
-        const fallbackResult = await manualSaveFallback(newConfig)
-        
-        if (!fallbackResult.success) {
-          toast({
-            title: "Erro",
-            description: `Falha no RPC e fallback: ${rpcResult.error_message || 'Erro desconhecido'}`,
-            variant: "destructive",
-          })
-          return { success: false }
-        }
-      } else {
+      // Se RPC funcionou, usar o resultado
+      if (!rpcError && rpcResult?.success) {
         console.log('✅ [useGestorMetaAds] RPC executado com sucesso:', rpcResult)
+        
+        // Atualizar estado local
+        setConfig({
+          ...newConfig,
+          email_usuario: user.email
+        })
+
+        toast({
+          title: "Sucesso!",
+          description: "Configuração Meta Ads global salva com sucesso via RPC",
+        })
+
+        console.log('🎉 [useGestorMetaAds] === SALVAMENTO VIA RPC CONCLUÍDO ===')
+        return { success: true }
       }
 
-      // Atualizar estado local
-      setConfig({
-        ...newConfig,
-        email_usuario: user.email
-      })
+      // Método 2: Se RPC falhou, usar método direto
+      console.log('🔧 [useGestorMetaAds] RPC falhou, tentando método direto...')
+      console.log('❌ [useGestorMetaAds] RPC Error:', rpcError || rpcResult)
+      
+      const directResult = await saveConfigDirectly(newConfig)
+      
+      if (directResult.success) {
+        // Atualizar estado local
+        setConfig({
+          ...newConfig,
+          email_usuario: user.email
+        })
 
-      toast({
-        title: "Sucesso!",
-        description: "Configuração Meta Ads global salva com sucesso",
-      })
+        toast({
+          title: "Sucesso!",
+          description: "Configuração Meta Ads global salva com sucesso via método direto",
+        })
 
-      console.log('🎉 [useGestorMetaAds] === SALVAMENTO CONCLUÍDO COM SUCESSO ===')
-      return { success: true }
+        console.log('🎉 [useGestorMetaAds] === SALVAMENTO VIA MÉTODO DIRETO CONCLUÍDO ===')
+        return { success: true }
+      } else {
+        // Ambos os métodos falharam
+        const errorMsg = directResult.error || 'Erro desconhecido'
+        console.error('❌ [useGestorMetaAds] Ambos os métodos falharam:', errorMsg)
+        
+        toast({
+          title: "Erro",
+          description: `Falha ao salvar configuração: ${errorMsg}`,
+          variant: "destructive",
+        })
+        
+        setLastError(errorMsg)
+        return { success: false }
+      }
 
     } catch (error) {
       console.error('❌ [useGestorMetaAds] Erro inesperado no salvamento:', error)
+      const errorMsg = `Erro inesperado: ${error}`
+      
       toast({
         title: "Erro",
-        description: `Erro inesperado: ${error}`,
+        description: errorMsg,
         variant: "destructive",
       })
+      
+      setLastError(errorMsg)
       return { success: false }
     } finally {
       setSaving(false)
