@@ -51,7 +51,7 @@ export function useAdminMetaAds() {
         .from('meta_ads_configs')
         .select('*')
         .eq('email_usuario', user.email)
-        .is('cliente_id', null)  // IMPORTANTE: Apenas configs globais
+        .is('cliente_id', null)
         .maybeSingle()
 
       if (error) {
@@ -104,20 +104,24 @@ export function useAdminMetaAds() {
     try {
       console.log('💾 [useAdminMetaAds] Salvando config GLOBAL...')
       
-      // Upsert com cliente_id = NULL (configuração global)
+      // Primeiro, deletar configuração existente para evitar conflitos
+      await supabase
+        .from('meta_ads_configs')
+        .delete()
+        .eq('email_usuario', user.email)
+        .is('cliente_id', null)
+
+      // Inserir nova configuração
       const { error } = await supabase
         .from('meta_ads_configs')
-        .upsert({
+        .insert({
           email_usuario: user.email,
-          cliente_id: null, // IMPORTANTE: Config global
+          cliente_id: null,
           api_id: newConfig.api_id,
           app_secret: newConfig.app_secret,
           access_token: newConfig.access_token,
           ad_account_id: newConfig.ad_account_id,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'email_usuario',
-          ignoreDuplicates: false
         })
 
       if (error) {
@@ -190,7 +194,7 @@ export function useAdminMetaAds() {
         setLastError(data?.message || 'Erro na conexão')
         console.error('❌ [useAdminMetaAds] Teste falhou:', data?.message)
       } else {
-        setConnectionSteps(data.steps)
+        setConnectionSteps(data.connection_steps || data.steps)
         console.log('✅ [useAdminMetaAds] Conexão testada com sucesso')
       }
       
@@ -224,7 +228,7 @@ export function useAdminMetaAds() {
             accessToken: config.access_token,
             adAccountId: config.ad_account_id
           },
-          period: 'today'
+          date_preset: 'today'
         }
       })
 
@@ -241,9 +245,9 @@ export function useAdminMetaAds() {
           impressions: (parseInt(acc.impressions || '0') + parseInt(insight.impressions || '0')).toString(),
           clicks: (parseInt(acc.clicks || '0') + parseInt(insight.clicks || '0')).toString(),
           spend: (parseFloat(acc.spend || '0') + parseFloat(insight.spend || '0')).toFixed(2),
-          cpm: '0', // Será recalculado
-          cpc: '0', // Será recalculado
-          ctr: '0'  // Será recalculado
+          cpm: '0',
+          cpc: '0', 
+          ctr: '0'
         }), {
           impressions: '0',
           clicks: '0',
@@ -268,12 +272,14 @@ export function useAdminMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useAdminMetaAds] Insights carregados:', totalInsights)
+        return { success: true, period_used: data.period_used }
       } else {
+        setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado')
         console.log('📊 [useAdminMetaAds] Nenhum insight encontrado')
+        return { success: false, message: data?.message }
       }
 
-      return data
     } catch (error) {
       console.error('❌ [useAdminMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
@@ -294,19 +300,25 @@ export function useAdminMetaAds() {
     try {
       console.log('📊 [useAdminMetaAds] Buscando insights, período:', period)
       
-      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
-        body: {
-          action: 'get_insights',
-          config: {
-            appId: config.api_id,
-            appSecret: config.app_secret,
-            accessToken: config.access_token,
-            adAccountId: config.ad_account_id
-          },
-          period,
-          startDate,
-          endDate
+      const requestBody: any = {
+        action: 'get_insights',
+        config: {
+          appId: config.api_id,
+          appSecret: config.app_secret,
+          accessToken: config.access_token,
+          adAccountId: config.ad_account_id
         }
+      }
+
+      if (period === 'custom' && startDate && endDate) {
+        requestBody.startDate = startDate
+        requestBody.endDate = endDate
+      } else {
+        requestBody.date_preset = period
+      }
+
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: requestBody
       })
 
       if (error) {
@@ -349,13 +361,14 @@ export function useAdminMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useAdminMetaAds] Insights carregados:', totalInsights)
+        return { success: true, period_used: data.period_used }
       } else {
         setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado para o período')
         console.log('📊 [useAdminMetaAds] Nenhum insight encontrado')
+        return { success: false, message: data?.message }
       }
 
-      return data
     } catch (error) {
       console.error('❌ [useAdminMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
