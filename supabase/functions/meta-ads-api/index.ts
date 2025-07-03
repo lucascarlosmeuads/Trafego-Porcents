@@ -1,4 +1,3 @@
-
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -252,46 +251,70 @@ serve(async (req) => {
 
     if (action === 'get_insights') {
       console.log('📈 [meta-ads-api] === BUSCANDO INSIGHTS ===')
+      console.log('📅 [meta-ads-api] Parâmetros recebidos:', { date_preset, startDate, endDate })
       
       let adAccountId = config.adAccountId.trim()
       if (!adAccountId.startsWith('act_')) {
         adAccountId = `act_${adAccountId}`
       }
       
-      // MELHORIA: Determinar automaticamente o melhor período se não houver dados
-      const periods = []
+      // CORREÇÃO: Lógica mais precisa para determinação do período
+      let timeRange = ''
+      let periodName = ''
       
-      if (date_preset === 'today') {
+      if (startDate && endDate) {
+        // Período customizado
+        timeRange = `{"since":"${startDate}","until":"${endDate}"}`
+        periodName = `${startDate} até ${endDate}`
+        console.log('📅 [meta-ads-api] Usando período customizado:', periodName)
+      } else if (date_preset) {
+        // Usar preset, mas com cálculo correto das datas
         const today = new Date().toISOString().split('T')[0]
         const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
         
-        periods.push(
-          { name: 'hoje', range: `{"since":"${today}","until":"${today}"}` },
-          { name: 'ontem', range: `{"since":"${yesterday}","until":"${yesterday}"}` },
-          { name: 'últimos 7 dias', range: `{"since":"${lastWeek}","until":"${today}"}` }
-        )
-      } else if (startDate && endDate) {
-        periods.push({ name: 'período solicitado', range: `{"since":"${startDate}","until":"${endDate}"}` })
+        switch (date_preset) {
+          case 'today':
+            timeRange = `{"since":"${today}","until":"${today}"}`
+            periodName = `hoje (${today})`
+            break
+          case 'yesterday':
+            timeRange = `{"since":"${yesterday}","until":"${yesterday}"}`
+            periodName = `ontem (${yesterday})`
+            break
+          case 'last_7_days':
+            const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            timeRange = `{"since":"${lastWeek}","until":"${today}"}`
+            periodName = `últimos 7 dias (${lastWeek} até ${today})`
+            break
+          case 'last_30_days':
+            const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            timeRange = `{"since":"${lastMonth}","until":"${today}"}`
+            periodName = `últimos 30 dias (${lastMonth} até ${today})`
+            break
+          default:
+            timeRange = `{"since":"${today}","until":"${today}"}`
+            periodName = `hoje (${today})`
+        }
+        console.log('📅 [meta-ads-api] Período calculado:', periodName)
       } else {
-        // Padrão: últimos 7 dias
+        // Fallback para hoje
         const today = new Date().toISOString().split('T')[0]
-        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        periods.push({ name: 'últimos 7 dias', range: `{"since":"${lastWeek}","until":"${today}"}` })
+        timeRange = `{"since":"${today}","until":"${today}"}`
+        periodName = `hoje (${today})`
       }
 
-      console.log('📅 [meta-ads-api] Períodos a testar:', periods.map(p => p.name))
+      console.log('🔍 [meta-ads-api] Buscando dados para período específico:', periodName)
+      
+      const insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}&time_range=${timeRange}`
+      
+      console.log('🌐 [meta-ads-api] URL da API:', insightsUrl.replace(config.accessToken, '[TOKEN_HIDDEN]'))
 
-      for (const period of periods) {
-        console.log(`🔍 [meta-ads-api] Testando período: ${period.name}`)
-        
-        let insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}&time_range=${period.range}`
-        
+      try {
         const response = await fetch(insightsUrl)
         const data = await response.json()
         
         if (!response.ok) {
-          console.error(`❌ [meta-ads-api] Erro ao buscar insights para ${period.name}:`, data)
+          console.error('❌ [meta-ads-api] Erro ao buscar insights:', data)
           
           let errorMessage = 'Erro ao buscar insights'
           if (data.error) {
@@ -307,88 +330,139 @@ serve(async (req) => {
             }
           }
           
-          // Se é o último período e ainda não temos sucesso, retornar erro
-          if (period === periods[periods.length - 1]) {
-            return new Response(
-              JSON.stringify({ 
-                success: false, 
-                message: errorMessage,
-                details: data,
-                periods_tested: periods.map(p => p.name)
-              }),
-              { 
-                status: 400,
-                headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-              }
-            )
-          }
-          
-          continue // Tentar próximo período
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              message: errorMessage,
+              details: data,
+              period_used: periodName
+            }),
+            { 
+              status: 400,
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
         }
 
-        console.log(`📊 [meta-ads-api] Resposta para ${period.name}:`, {
+        console.log('📊 [meta-ads-api] Resposta da API:', {
           total_insights: data.data?.length || 0,
-          sample: data.data?.[0] || 'nenhum'
+          period_requested: periodName,
+          raw_data: data.data
         })
 
         if (data.data && data.data.length > 0) {
-          console.log(`✅ [meta-ads-api] Insights encontrados para ${period.name}:`, data.data.length)
+          // Processar e somar os insights
+          const totalInsights = data.data.reduce((acc: any, insight: any) => {
+            console.log(`💰 [meta-ads-api] Processando insight: spend=${insight.spend}, impressions=${insight.impressions}, clicks=${insight.clicks}`)
+            
+            return {
+              impressions: (parseInt(acc.impressions || '0') + parseInt(insight.impressions || '0')).toString(),
+              clicks: (parseInt(acc.clicks || '0') + parseInt(insight.clicks || '0')).toString(),
+              spend: (parseFloat(acc.spend || '0') + parseFloat(insight.spend || '0')).toFixed(2),
+              cpm: '0',
+              cpc: '0', 
+              ctr: '0'
+            }
+          }, {
+            impressions: '0',
+            clicks: '0',
+            spend: '0',
+            cpm: '0',
+            cpc: '0',
+            ctr: '0'
+          })
+
+          // Recalcular métricas derivadas
+          const impressions = parseInt(totalInsights.impressions)
+          const clicks = parseInt(totalInsights.clicks)
+          const spend = parseFloat(totalInsights.spend)
+
+          if (impressions > 0) {
+            totalInsights.cpm = (spend / impressions * 1000).toFixed(2)
+            totalInsights.ctr = (clicks / impressions * 100).toFixed(2)
+          }
+          if (clicks > 0) {
+            totalInsights.cpc = (spend / clicks).toFixed(2)
+          }
+
+          console.log('✅ [meta-ads-api] Insights processados:', {
+            period: periodName,
+            campaigns_count: data.data.length,
+            total_spend: totalInsights.spend,
+            total_impressions: totalInsights.impressions,
+            total_clicks: totalInsights.clicks
+          })
+
           return new Response(
             JSON.stringify({ 
               success: true, 
-              insights: data.data,
-              period_used: period.name,
-              total_periods_tested: periods.indexOf(period) + 1
+              insights: [totalInsights], // Retornar como array para compatibilidade
+              period_used: periodName,
+              campaigns_count: data.data.length,
+              raw_campaigns: data.data.length // Para transparência
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
-        }
-      }
-
-      // Se chegou até aqui, não encontrou dados em nenhum período
-      console.log('⚠️ [meta-ads-api] Nenhum insight encontrado em nenhum período testado')
-      
-      // Verificar se há campanhas ativas
-      const campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status&limit=5&access_token=${config.accessToken}`
-      
-      try {
-        const campaignsResponse = await fetch(campaignsUrl)
-        const campaignsData = await campaignsResponse.json()
-        
-        let suggestion = 'Nenhum dado de insights encontrado'
-        if (campaignsData.data && campaignsData.data.length > 0) {
-          const activeCampaigns = campaignsData.data.filter(c => c.status === 'ACTIVE')
-          if (activeCampaigns.length === 0) {
-            suggestion = 'Você tem campanhas criadas, mas nenhuma está ativa. Ative suas campanhas no Facebook Ads Manager.'
-          } else {
-            suggestion = `Você tem ${activeCampaigns.length} campanha(s) ativa(s), mas sem dados de impressões/cliques recentes. Isso pode ser normal para contas novas ou campanhas com orçamento baixo.`
-          }
         } else {
-          suggestion = 'Não há campanhas criadas neste Ad Account. Crie campanhas no Facebook Ads Manager para começar a ver dados.'
+          console.log('⚠️ [meta-ads-api] Nenhum insight encontrado para o período:', periodName)
+          
+          // Verificar se há campanhas ativas para dar contexto
+          const campaignsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/campaigns?fields=id,name,status&limit=5&access_token=${config.accessToken}`
+          
+          try {
+            const campaignsResponse = await fetch(campaignsUrl)
+            const campaignsData = await campaignsResponse.json()
+            
+            let suggestion = `Nenhum dado encontrado para ${periodName}`
+            if (campaignsData.data && campaignsData.data.length > 0) {
+              const activeCampaigns = campaignsData.data.filter(c => c.status === 'ACTIVE')
+              if (activeCampaigns.length === 0) {
+                suggestion = `Sem dados para ${periodName}. Você tem campanhas criadas, mas nenhuma está ativa. Ative suas campanhas no Facebook Ads Manager.`
+              } else {
+                suggestion = `Sem dados para ${periodName}. Você tem ${activeCampaigns.length} campanha(s) ativa(s), mas sem gastos no período solicitado.`
+              }
+            } else {
+              suggestion = `Sem dados para ${periodName}. Não há campanhas criadas neste Ad Account.`
+            }
+
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                message: suggestion,
+                insights: [],
+                period_used: periodName,
+                campaigns_info: {
+                  total: campaignsData.data?.length || 0,
+                  active: campaignsData.data?.filter(c => c.status === 'ACTIVE')?.length || 0
+                }
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          } catch (error) {
+            return new Response(
+              JSON.stringify({ 
+                success: false, 
+                message: `Nenhum dado encontrado para ${periodName}. Verifique se há campanhas ativas no Facebook Ads Manager.`,
+                insights: [],
+                period_used: periodName
+              }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          }
         }
 
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            message: suggestion,
-            insights: [],
-            periods_tested: periods.map(p => p.name),
-            campaigns_info: {
-              total: campaignsData.data?.length || 0,
-              active: campaignsData.data?.filter(c => c.status === 'ACTIVE')?.length || 0
-            }
-          }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        )
       } catch (error) {
+        console.error('❌ [meta-ads-api] Erro inesperado ao buscar insights:', error)
         return new Response(
           JSON.stringify({ 
             success: false, 
-            message: 'Nenhum dado encontrado nos períodos testados. Verifique se há campanhas ativas no Facebook Ads Manager.',
-            insights: [],
-            periods_tested: periods.map(p => p.name)
+            message: `Erro inesperado: ${error.message}`,
+            period_used: periodName
           }),
-          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { 
+            status: 500,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
         )
       }
     }

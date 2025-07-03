@@ -12,7 +12,8 @@ import {
   RefreshCw, 
   Activity,
   Target,
-  AlertCircle
+  AlertCircle,
+  Info
 } from 'lucide-react'
 
 export function AdminMetaAdsMetrics() {
@@ -26,6 +27,7 @@ export function AdminMetaAdsMetrics() {
   } = useAdminMetaAds()
 
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
+  const [campaignsInfo, setCampaignsInfo] = useState<{count: number, details?: string}>({count: 0})
   const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
   const [loadingVendas, setLoadingVendas] = useState(false)
 
@@ -129,6 +131,7 @@ export function AdminMetaAdsMetrics() {
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
+    setCampaignsInfo({count: 0})
     
     // Calcular as datas corretas baseadas no preset ou usar as datas fornecidas
     let finalStartDate = startDate
@@ -144,20 +147,40 @@ export function AdminMetaAdsMetrics() {
       const result = await fetchTodayInsights()
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
+        if (result?.campaigns_count) {
+          setCampaignsInfo({
+            count: result.campaigns_count,
+            details: `${result.campaigns_count} campanha(s) processada(s)`
+          })
+        }
       }
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used || preset}`)
+        if (result?.campaigns_count) {
+          setCampaignsInfo({
+            count: result.campaigns_count,
+            details: `${result.campaigns_count} campanha(s) processada(s)`
+          })
+        }
       } else {
         setLastFetchInfo('')
+        setCampaignsInfo({count: 0})
       }
     } else if (preset === 'custom' && startDate && endDate) {
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result?.success) {
         setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
+        if (result?.campaigns_count) {
+          setCampaignsInfo({
+            count: result.campaigns_count,
+            details: `${result.campaigns_count} campanha(s) processada(s)`
+          })
+        }
       } else {
         setLastFetchInfo('')
+        setCampaignsInfo({count: 0})
       }
     }
     
@@ -208,6 +231,26 @@ export function AdminMetaAdsMetrics() {
         loading={fetchingInsights}
         lastFetchInfo={lastFetchInfo}
       />
+
+      {/* Informações sobre os dados */}
+      {lastFetchInfo && (
+        <Alert className="border-blue-200 bg-blue-50">
+          <Info className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            <div className="font-medium mb-1">✅ {lastFetchInfo}</div>
+            {campaignsInfo.details && (
+              <div className="text-sm">
+                📊 {campaignsInfo.details}
+              </div>
+            )}
+            {insights && (
+              <div className="text-sm mt-1">
+                💰 Investimento total: {formatCurrency(parseFloat(insights.spend || '0'))}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Status de erro */}
       {lastError && (
