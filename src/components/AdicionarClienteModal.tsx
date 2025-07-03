@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -5,11 +6,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { Plus, Copy, Check } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Plus, Copy, Check, Info } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
 import { useClienteOperations } from '@/hooks/useClienteOperations'
 import { ClientInstructionsModal } from './ClientInstructionsModal'
+import { DateTimePicker } from '@/components/ui/datetime-picker'
 
 interface AdicionarClienteModalProps {
   onClienteAdicionado: () => void
@@ -23,12 +26,14 @@ export function AdicionarClienteModal({ onClienteAdicionado }: AdicionarClienteM
   const [showInstructions, setShowInstructions] = useState(false)
   const [newClientData, setNewClientData] = useState<any>(null)
   const [copied, setCopied] = useState(false)
+  const [isClienteAntigo, setIsClienteAntigo] = useState(true) // Por padrão marcado para admin
   const [formData, setFormData] = useState({
     nome_cliente: '',
     telefone: '',
     email_cliente: '',
     vendedor: '',
-    status_campanha: 'Cliente Novo'
+    status_campanha: 'Cliente Novo',
+    data_cadastro_desejada: null as Date | null
   })
   
   // Create async wrapper for onClienteAdicionado
@@ -123,6 +128,31 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       return
     }
 
+    // Validar data de cadastro se fornecida
+    if (formData.data_cadastro_desejada) {
+      const now = new Date()
+      const oneYearAgo = new Date()
+      oneYearAgo.setFullYear(now.getFullYear() - 1)
+
+      if (formData.data_cadastro_desejada > now) {
+        toast({
+          title: "Data Inválida",
+          description: "A data de cadastro não pode ser no futuro",
+          variant: "destructive"
+        })
+        return
+      }
+
+      if (formData.data_cadastro_desejada < oneYearAgo) {
+        toast({
+          title: "Data Inválida",
+          description: "A data de cadastro não pode ser mais antiga que 1 ano",
+          variant: "destructive"
+        })
+        return
+      }
+    }
+
     setLoading(true)
 
     try {
@@ -141,7 +171,9 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
         status_campanha: formData.status_campanha,
         data_venda: new Date().toISOString().split('T')[0],
         valor_comissao: 60.00,
-        comissao_paga: false
+        comissao_paga: false,
+        origem_cadastro: isClienteAntigo ? 'admin' as const : 'venda' as const,
+        data_cadastro_desejada: formData.data_cadastro_desejada?.toISOString()
       }
 
       console.log("🟡 [AdicionarClienteModal] Dados para adicionar:", clienteData)
@@ -154,9 +186,11 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
           telefone: '',
           email_cliente: '',
           vendedor: '',
-          status_campanha: 'Cliente Novo'
+          status_campanha: 'Cliente Novo',
+          data_cadastro_desejada: null
         })
         setSelectedGestor('')
+        setIsClienteAntigo(true)
         setOpen(false)
 
         // Always show instructions modal for successfully created clients
@@ -191,38 +225,81 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             <DialogTitle>Adicionar Novo Cliente</DialogTitle>
           </DialogHeader>
           
-          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE */}
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
-            <div className="flex items-start justify-between mb-2">
-              <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
-              <Button
-                onClick={handleCopy}
-                size="sm"
-                className="ml-2"
-                variant={copied ? "default" : "outline"}
-              >
-                {copied ? (
-                  <>
-                    <Check className="w-3 h-3 mr-1" />
-                    Copiado!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="w-3 h-3 mr-1" />
-                    Copiar
-                  </>
-                )}
-              </Button>
+          {/* Checkbox para Cliente Antigo - apenas admin */}
+          {isAdmin && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="clienteAntigo"
+                  checked={isClienteAntigo}
+                  onCheckedChange={(checked) => setIsClienteAntigo(checked === true)}
+                />
+                <div className="space-y-1">
+                  <Label 
+                    htmlFor="clienteAntigo" 
+                    className="text-sm font-medium cursor-pointer flex items-center gap-2"
+                  >
+                    Cliente antigo (não conta como venda nova)
+                    <Info className="h-3 w-3 text-blue-500" />
+                  </Label>
+                  <p className="text-xs text-blue-700">
+                    {isClienteAntigo 
+                      ? "✅ Este cliente será adicionado como histórico e NÃO contará nas métricas de vendas"
+                      : "⚠️ Este cliente será contado como uma nova venda nas métricas"
+                    }
+                  </p>
+                </div>
+              </div>
             </div>
-            <div className="bg-white border rounded p-3 text-sm">
-              <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800">
-                {instructions}
-              </pre>
-            </div>
-            <p className="text-yellow-700 text-xs mt-2">
-              💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
+          )}
+
+          {/* Campo de Data de Cadastro */}
+          <div className="grid gap-2 mb-4">
+            <Label htmlFor="data_cadastro">Data e Hora do Cadastro (Opcional)</Label>
+            <DateTimePicker
+              date={formData.data_cadastro_desejada || undefined}
+              onDateChange={(date) => setFormData(prev => ({ ...prev, data_cadastro_desejada: date || null }))}
+              placeholder="Deixe vazio para usar data/hora atual"
+            />
+            <p className="text-sm text-muted-foreground">
+              💡 Use este campo para definir quando o cliente deve aparecer como cadastrado no sistema
             </p>
           </div>
+
+          {/* INSTRUÇÕES PARA ENVIAR AO CLIENTE - apenas se não for cliente antigo */}
+          {!isClienteAntigo && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+              <div className="flex items-start justify-between mb-2">
+                <h3 className="font-semibold text-yellow-800 text-sm">📋 Mensagem para enviar ao cliente:</h3>
+                <Button
+                  onClick={handleCopy}
+                  size="sm"
+                  className="ml-2"
+                  variant={copied ? "default" : "outline"}
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3 h-3 mr-1" />
+                      Copiado!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3 h-3 mr-1" />
+                      Copiar
+                    </>
+                  )}
+                </Button>
+              </div>
+              <div className="bg-white border rounded p-3 text-sm">
+                <pre className="whitespace-pre-wrap font-mono text-xs text-gray-800">
+                  {instructions}
+                </pre>
+              </div>
+              <p className="text-yellow-700 text-xs mt-2">
+                💡 Após cadastrar o cliente, envie essa mensagem via WhatsApp
+              </p>
+            </div>
+          )}
 
           <div className="grid gap-4 py-4">
             <div className="grid gap-2">

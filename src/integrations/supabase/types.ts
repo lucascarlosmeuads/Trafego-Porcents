@@ -793,6 +793,7 @@ export type Database = {
           created_at: string
           created_at_br: string | null
           data_agendamento: string | null
+          data_cadastro_desejada: string | null
           data_limite: string | null
           data_subida_campanha: string | null
           data_venda: string | null
@@ -808,6 +809,7 @@ export type Database = {
           link_site: string | null
           nome_cliente: string | null
           numero_bm: string | null
+          origem_cadastro: string | null
           saque_solicitado: boolean | null
           site_pago: boolean | null
           site_status: string | null
@@ -827,6 +829,7 @@ export type Database = {
           created_at?: string
           created_at_br?: string | null
           data_agendamento?: string | null
+          data_cadastro_desejada?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null
           data_venda?: string | null
@@ -842,6 +845,7 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
+          origem_cadastro?: string | null
           saque_solicitado?: boolean | null
           site_pago?: boolean | null
           site_status?: string | null
@@ -861,6 +865,7 @@ export type Database = {
           created_at?: string
           created_at_br?: string | null
           data_agendamento?: string | null
+          data_cadastro_desejada?: string | null
           data_limite?: string | null
           data_subida_campanha?: string | null
           data_venda?: string | null
@@ -876,6 +881,7 @@ export type Database = {
           link_site?: string | null
           nome_cliente?: string | null
           numero_bm?: string | null
+          origem_cadastro?: string | null
           saque_solicitado?: boolean | null
           site_pago?: boolean | null
           site_status?: string | null
