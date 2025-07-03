@@ -26,40 +26,76 @@ export function AdminMetaAdsMetrics() {
   } = useAdminMetaAds()
 
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
-  const [vendasDia, setVendasDia] = useState<number>(0)
+  const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
   const [loadingVendas, setLoadingVendas] = useState(false)
 
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
     if (isConfigured) {
       fetchTodayInsights()
-      fetchVendasDia()
+      fetchVendasPeriodo(new Date().toISOString().split('T')[0], new Date().toISOString().split('T')[0])
     }
   }, [isConfigured])
 
-  // Buscar vendas do dia
-  const fetchVendasDia = async () => {
+  // Função para calcular datas baseadas no preset
+  const getDateRangeFromPreset = (preset: string) => {
+    const hoje = new Date()
+    const ontem = new Date(hoje.getTime() - 24 * 60 * 60 * 1000)
+    
+    switch (preset) {
+      case 'today':
+        return {
+          startDate: hoje.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      case 'yesterday':
+        return {
+          startDate: ontem.toISOString().split('T')[0],
+          endDate: ontem.toISOString().split('T')[0]
+        }
+      case 'last_7_days':
+        const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000)
+        return {
+          startDate: sete_dias_atras.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      case 'last_30_days':
+        const trinta_dias_atras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000)
+        return {
+          startDate: trinta_dias_atras.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      default:
+        return {
+          startDate: hoje.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+    }
+  }
+
+  // Buscar vendas do período
+  const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
     setLoadingVendas(true)
     try {
-      const hoje = new Date().toISOString().split('T')[0]
+      console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do período:', { startDate, endDate })
       
-      console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do dia:', hoje)
-      
-      // Buscar vendas de hoje da tabela vendas_cliente
+      // Buscar vendas de vendas_cliente no período
       const { data: vendasCliente, error: errorVendasCliente } = await supabase
         .from('vendas_cliente')
         .select('valor_venda')
-        .eq('data_venda', hoje)
+        .gte('data_venda', startDate)
+        .lte('data_venda', endDate)
 
       if (errorVendasCliente) {
         console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas_cliente:', errorVendasCliente)
       }
 
-      // Buscar vendas de hoje da tabela todos_clientes (data_venda >= 01/07/2025)
+      // Buscar vendas de todos_clientes no período (data_venda >= 01/07/2025)
       const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
         .select('valor_venda_inicial')
-        .eq('data_venda', hoje)
+        .gte('data_venda', startDate)
+        .lte('data_venda', endDate)
         .gte('data_venda', '2025-07-01')
 
       if (errorTodosClientes) {
@@ -81,8 +117,8 @@ export function AdminMetaAdsMetrics() {
         console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
       }
 
-      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do dia:', totalVendas)
-      setVendasDia(totalVendas)
+      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do período:', totalVendas)
+      setVendasPeriodo(totalVendas)
 
     } catch (error) {
       console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)
@@ -94,13 +130,21 @@ export function AdminMetaAdsMetrics() {
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
     
+    // Calcular as datas corretas baseadas no preset ou usar as datas fornecidas
+    let finalStartDate = startDate
+    let finalEndDate = endDate
+    
+    if (preset && preset !== 'custom') {
+      const dateRange = getDateRangeFromPreset(preset)
+      finalStartDate = dateRange.startDate
+      finalEndDate = dateRange.endDate
+    }
+    
     if (preset === 'today') {
       const result = await fetchTodayInsights()
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
       }
-      // Buscar vendas quando mudar para hoje
-      await fetchVendasDia()
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
@@ -108,8 +152,6 @@ export function AdminMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      // Para outros períodos, não buscar vendas por enquanto
-      setVendasDia(0)
     } else if (preset === 'custom' && startDate && endDate) {
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result?.success) {
@@ -117,9 +159,10 @@ export function AdminMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      // Para período personalizado, não buscar vendas por enquanto
-      setVendasDia(0)
     }
+    
+    // SEMPRE buscar vendas para o período selecionado
+    await fetchVendasPeriodo(finalStartDate, finalEndDate)
   }
 
   const fetchInsightsWithCustomDates = async (startDate: string, endDate: string) => {
@@ -194,7 +237,7 @@ export function AdminMetaAdsMetrics() {
       {/* Relatório de Custos e Lucro - Agora é o componente principal */}
       {insights && (
         <AdminCustoLucroReport 
-          vendasDia={vendasDia}
+          vendasDia={vendasPeriodo}
           investimentoTrafego={insights.spend}
           loadingVendas={loadingVendas}
         />

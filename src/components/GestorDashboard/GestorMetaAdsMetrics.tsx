@@ -31,10 +31,6 @@ export function GestorMetaAdsMetrics() {
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
   const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
   const [loadingVendas, setLoadingVendas] = useState(false)
-  const [periodoAtual, setPeriodoAtual] = useState<{start: string, end: string}>({
-    start: new Date().toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  })
 
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
@@ -43,6 +39,42 @@ export function GestorMetaAdsMetrics() {
       fetchVendasPeriodo(new Date().toISOString().split('T')[0], new Date().toISOString().split('T')[0])
     }
   }, [isConfigured])
+
+  // Função para calcular datas baseadas no preset
+  const getDateRangeFromPreset = (preset: string) => {
+    const hoje = new Date()
+    const ontem = new Date(hoje.getTime() - 24 * 60 * 60 * 1000)
+    
+    switch (preset) {
+      case 'today':
+        return {
+          startDate: hoje.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      case 'yesterday':
+        return {
+          startDate: ontem.toISOString().split('T')[0],
+          endDate: ontem.toISOString().split('T')[0]
+        }
+      case 'last_7_days':
+        const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000)
+        return {
+          startDate: sete_dias_atras.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      case 'last_30_days':
+        const trinta_dias_atras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000)
+        return {
+          startDate: trinta_dias_atras.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+      default:
+        return {
+          startDate: hoje.toISOString().split('T')[0],
+          endDate: hoje.toISOString().split('T')[0]
+        }
+    }
+  }
 
   // Buscar vendas do período para os clientes do gestor
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
@@ -107,14 +139,22 @@ export function GestorMetaAdsMetrics() {
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
-    setPeriodoAtual({ start: startDate, end: endDate })
+    
+    // Calcular as datas corretas baseadas no preset ou usar as datas fornecidas
+    let finalStartDate = startDate
+    let finalEndDate = endDate
+    
+    if (preset && preset !== 'custom') {
+      const dateRange = getDateRangeFromPreset(preset)
+      finalStartDate = dateRange.startDate
+      finalEndDate = dateRange.endDate
+    }
     
     if (preset === 'today') {
       const result = await fetchTodayInsights()
       if (result?.period_used) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
       }
-      await fetchVendasPeriodo(startDate, endDate)
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result?.success) {
@@ -122,7 +162,6 @@ export function GestorMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      await fetchVendasPeriodo(startDate, endDate)
     } else if (preset === 'custom' && startDate && endDate) {
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result?.success) {
@@ -130,8 +169,10 @@ export function GestorMetaAdsMetrics() {
       } else {
         setLastFetchInfo('')
       }
-      await fetchVendasPeriodo(startDate, endDate)
     }
+    
+    // SEMPRE buscar vendas para o período selecionado
+    await fetchVendasPeriodo(finalStartDate, finalEndDate)
   }
 
   const fetchInsightsWithCustomDates = async (startDate: string, endDate: string) => {
