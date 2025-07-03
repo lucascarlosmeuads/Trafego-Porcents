@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -21,6 +20,13 @@ interface InsightData {
   ctr: string
   date_start?: string
   date_stop?: string
+}
+
+interface FetchInsightsResult {
+  success: boolean
+  message?: string
+  period_used?: string
+  campaigns_count?: number
 }
 
 export function useAdminMetaAds() {
@@ -210,8 +216,8 @@ export function useAdminMetaAds() {
   }
 
   // Buscar insights hoje
-  const fetchTodayInsights = async () => {
-    if (!config) return { success: false, message: 'Configuração necessária' }
+  const fetchTodayInsights = async (): Promise<FetchInsightsResult> => {
+    if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
     setFetchingInsights(true)
     setLastError('')
@@ -236,7 +242,7 @@ export function useAdminMetaAds() {
         console.error('❌ [useAdminMetaAds] Erro ao buscar insights:', error)
         const errorMsg = 'Erro ao buscar insights'
         setLastError(errorMsg)
-        return { success: false, message: errorMsg }
+        return { success: false, message: errorMsg, campaigns_count: 0 }
       }
 
       if (data?.success && data.insights?.length > 0) {
@@ -272,27 +278,35 @@ export function useAdminMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useAdminMetaAds] Insights carregados:', totalInsights)
-        return { success: true, period_used: data.period_used }
+        return { 
+          success: true, 
+          period_used: data.period_used,
+          campaigns_count: data.campaigns_count || 0
+        }
       } else {
         setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado')
         console.log('📊 [useAdminMetaAds] Nenhum insight encontrado')
-        return { success: false, message: data?.message }
+        return { 
+          success: false, 
+          message: data?.message,
+          campaigns_count: data?.campaigns_count || 0
+        }
       }
 
     } catch (error) {
       console.error('❌ [useAdminMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
-      return { success: false, message: errorMsg }
+      return { success: false, message: errorMsg, campaigns_count: 0 }
     } finally {
       setFetchingInsights(false)
     }
   }
 
   // Buscar insights com período
-  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom', startDate?: string, endDate?: string) => {
-    if (!config) return { success: false, message: 'Configuração necessária' }
+  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom', startDate?: string, endDate?: string): Promise<FetchInsightsResult> => {
+    if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
     setFetchingInsights(true)
     setLastError('')
@@ -325,7 +339,7 @@ export function useAdminMetaAds() {
         console.error('❌ [useAdminMetaAds] Erro ao buscar insights:', error)
         const errorMsg = 'Erro ao buscar insights'
         setLastError(errorMsg)
-        return { success: false, message: errorMsg }
+        return { success: false, message: errorMsg, campaigns_count: 0 }
       }
 
       if (data?.success && data.insights?.length > 0) {
@@ -361,19 +375,27 @@ export function useAdminMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useAdminMetaAds] Insights carregados:', totalInsights)
-        return { success: true, period_used: data.period_used }
+        return { 
+          success: true, 
+          period_used: data.period_used,
+          campaigns_count: data.campaigns_count || 0
+        }
       } else {
         setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado para o período')
         console.log('📊 [useAdminMetaAds] Nenhum insight encontrado')
-        return { success: false, message: data?.message }
+        return { 
+          success: false, 
+          message: data?.message,
+          campaigns_count: data?.campaigns_count || 0
+        }
       }
 
     } catch (error) {
       console.error('❌ [useAdminMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
-      return { success: false, message: errorMsg }
+      return { success: false, message: errorMsg, campaigns_count: 0 }
     } finally {
       setFetchingInsights(false)
     }

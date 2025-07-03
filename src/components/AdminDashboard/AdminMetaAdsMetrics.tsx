@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -145,39 +144,33 @@ export function AdminMetaAdsMetrics() {
     
     if (preset === 'today') {
       const result = await fetchTodayInsights()
-      if (result?.period_used) {
-        setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
-        if (result?.campaigns_count) {
-          setCampaignsInfo({
-            count: result.campaigns_count,
-            details: `${result.campaigns_count} campanha(s) processada(s)`
-          })
-        }
+      if (result.success) {
+        setLastFetchInfo(`Dados encontrados para: ${result.period_used || 'hoje'}`)
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       }
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
-      if (result?.success) {
+      if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used || preset}`)
-        if (result?.campaigns_count) {
-          setCampaignsInfo({
-            count: result.campaigns_count,
-            details: `${result.campaigns_count} campanha(s) processada(s)`
-          })
-        }
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       } else {
         setLastFetchInfo('')
         setCampaignsInfo({count: 0})
       }
     } else if (preset === 'custom' && startDate && endDate) {
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
-      if (result?.success) {
+      if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
-        if (result?.campaigns_count) {
-          setCampaignsInfo({
-            count: result.campaigns_count,
-            details: `${result.campaigns_count} campanha(s) processada(s)`
-          })
-        }
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       } else {
         setLastFetchInfo('')
         setCampaignsInfo({count: 0})
