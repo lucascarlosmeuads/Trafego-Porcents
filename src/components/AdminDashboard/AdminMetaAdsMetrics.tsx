@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -238,7 +237,7 @@ export function AdminMetaAdsMetrics() {
       {insights && (
         <AdminCustoLucroReport 
           vendasDia={vendasPeriodo}
-          investimentoTrafego={insights.spend}
+          investimentoTrafego={parseFloat(insights?.spend || '0')}
           loadingVendas={loadingVendas}
         />
       )}
