@@ -3,10 +3,9 @@ import { useState } from 'react'
 import { Cliente } from '@/lib/supabase'
 
 export function useSitePagoUpdate(clientes: Cliente[], setClientes: (clientes: Cliente[]) => void) {
-  const handleSitePagoChange = (clienteId: string | number, newValue: boolean) => {
-    const id = String(clienteId)
+  const handleSitePagoChange = (clienteId: string, newValue: boolean) => {
     setClientes(clientes.map(cliente => 
-      String(cliente.id) === id
+      cliente.id === clienteId 
         ? { ...cliente, site_pago: newValue }
         : cliente
     ))

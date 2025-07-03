@@ -1,10 +1,21 @@
-
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { ClientesTable } from './ClientesTable'
+import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { ClientesAntigosTab } from './AdminDashboard/ClientesAntigosTab'
-import { supabase } from '@/lib/supabase'
+import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from './LazyComponents'
+import { LoadingFallback } from './LoadingFallback'
+import { ManagerSelector } from './ManagerSelector'
+import { useManagerData } from '@/hooks/useManagerData'
+import { SacDashboard } from './SAC/SacDashboard'
+import { LazyRelatorioSacGestores } from './LazyComponents'
+import { AdminSugestoes } from './AdminSugestoes'
+import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
+import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
+import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
+import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -13,88 +24,136 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
-  const { user } = useAuth()
-  const [clientes, setClientes] = useState([])
+  const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
+  const { useOptimized } = useOptimizedComponents()
+  
+  // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
+  // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
+  const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
+    user?.email || '', // userEmail: email do admin atual
+    true, // isAdminUser: true para admin
+    selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
+  )
 
   console.log('🔍 [AdminDashboard] === DEBUG ADMIN DASHBOARD ===')
-  console.log('👤 [AdminDashboard] User email:', user?.email)
-  console.log('🎯 [AdminDashboard] Active tab:', activeTab)
-  console.log('👨‍💼 [AdminDashboard] Selected manager:', selectedManager)
+  console.log('👤 [AdminDashboard] Admin user email:', user?.email)
+  console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
+  console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
+  console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
+  console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
 
   useEffect(() => {
-    fetchClientes()
-  }, [selectedManager])
-
-  const fetchClientes = async () => {
-    setLoading(true)
-    try {
-      let query = supabase
-        .from('todos_clientes')
-        .select('*')
-        .order('created_at', { ascending: false })
-
-      if (selectedManager && selectedManager !== 'Todos os Gestores' && selectedManager !== 'Todos os Clientes') {
-        query = query.eq('email_gestor', selectedManager)
-      }
-
-      const { data, error } = await query
-
-      if (error) {
-        console.error('❌ [AdminDashboard] Erro ao buscar clientes:', error)
-        return
-      }
-
-      setClientes(data || [])
-    } catch (error) {
-      console.error('💥 [AdminDashboard] Erro crítico:', error)
-    } finally {
+    if (user && isAdmin) {
       setLoading(false)
     }
+  }, [user, isAdmin])
+
+  if (loading) {
+    return <LoadingFallback />
   }
 
   const renderContent = () => {
+    // Gerenciamento de gestores
+    if (selectedManager === '__GESTORES__') {
+      return <GestoresManagement />
+    }
+    
+    // Navegação por abas
     switch (activeTab) {
       case 'dashboard':
         return (
-          <AdminDashboardMetrics 
-            clientes={clientes}
-            selectedManager={selectedManager}
-          />
-        )
-      case 'clientes':
-        return (
-          <div className="bg-gray-950 min-h-screen">
-            <ClientesTable 
-              selectedManager={selectedManager}
-              onManagerSelect={onManagerSelect}
-            />
+          <div className="space-y-6">
+            {/* Seletor de gestores */}
+            <div className="bg-card border rounded-lg p-4">
+              <ManagerSelector 
+                selectedManager={selectedManager}
+                onManagerSelect={onManagerSelect}
+                isAdminContext={true}
+              />
+            </div>
+
+            {/* Configuração Meta Ads Global */}
+            <AdminMetaAdsConfig />
+
+            {/* Métricas Meta Ads */}
+            <AdminMetaAdsMetrics />
+            
+            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
+            {useOptimized ? (
+              <OptimizedAdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            ) : (
+              <AdminDashboardMetrics 
+                clientes={gestorClientes} 
+                selectedManager={selectedManager}
+              />
+            )}
           </div>
         )
-      case 'clientes-antigos':
-        return <ClientesAntigosTab />
+
+      case 'max-integration':
+        return <MaxIntegrationDashboard />
+
+      case 'solicitacoes-site':
+        return <SiteRequestsDashboard />
+
       case 'sac':
+        return <SacDashboard />
+
+      case 'sac-relatorio':
         return (
-          <div className="p-6">
-            <h2 className="text-2xl font-bold text-white mb-4">SAC Dashboard</h2>
-            <p className="text-gray-400">Módulo SAC em desenvolvimento...</p>
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyRelatorioSacGestores />
+          </Suspense>
+        )
+
+      case 'documentacao':
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyDocumentationViewer />
+          </Suspense>
+        )
+
+      case 'sugestoes':
+        return (
+          <div className="w-full">
+            <AdminSugestoes />
           </div>
         )
+      
+      case 'clientes':
       default:
         return (
-          <AdminDashboardMetrics 
-            clientes={clientes}
-            selectedManager={selectedManager}
-          />
+          <div className="space-y-4 w-full">
+            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
+            {selectedManager !== '__GESTORES__' && (
+              <div className="bg-card border rounded-lg p-4">
+                <ManagerSelector 
+                  selectedManager={selectedManager}
+                  onManagerSelect={onManagerSelect}
+                  isAdminContext={true}
+                />
+              </div>
+            )}
+            
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
+            <div className="w-full">
+              <ClientesTable selectedManager={selectedManager} />
+            </div>
+          </div>
         )
     }
   }
 
   return (
-    <div className="bg-gray-950 min-h-screen p-6">
+    <div className="w-full">
       {renderContent()}
     </div>
   )
 }
 
+// Add default export for lazy loading
 export default AdminDashboard

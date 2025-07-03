@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { Button } from '@/components/ui/button'
@@ -12,7 +11,6 @@ import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
 import { CommissionCalculator } from '../CommissionCalculator'
-import { DateTimePicker } from '@/components/ui/datetime-picker'
 
 interface GestorOption {
   nome: string
@@ -38,8 +36,7 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
     email_gestor: '',
     resumo_conversa_vendedor: '',
     valor_venda_inicial: null as number | null,
-    valor_comissao: null as number | null,
-    data_cadastro_desejada: null as Date | null
+    valor_comissao: null as number | null
   })
 
   // Verificar autenticação
@@ -142,31 +139,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
       return
     }
 
-    // Validar data de cadastro se fornecida
-    if (formData.data_cadastro_desejada) {
-      const now = new Date()
-      const oneYearAgo = new Date()
-      oneYearAgo.setFullYear(now.getFullYear() - 1)
-
-      if (formData.data_cadastro_desejada > now) {
-        toast({
-          title: "Data Inválida",
-          description: "A data de cadastro não pode ser no futuro",
-          variant: "destructive"
-        })
-        return
-      }
-
-      if (formData.data_cadastro_desejada < oneYearAgo) {
-        toast({
-          title: "Data Inválida",
-          description: "A data de cadastro não pode ser mais antiga que 1 ano",
-          variant: "destructive"
-        })
-        return
-      }
-    }
-
     setLoading(true)
 
     try {
@@ -183,9 +155,7 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
         produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha,
         valor_venda_inicial: formData.valor_venda_inicial,
-        valor_comissao: formData.valor_comissao,
-        origem_cadastro: 'venda' as const,
-        data_cadastro_desejada: formData.data_cadastro_desejada?.toISOString()
+        valor_comissao: formData.valor_comissao
       }
 
       console.log("🔵 [NewSellerAddClientForm] Dados para addCliente:", clienteData)
@@ -207,7 +177,7 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
               .upsert({
                 email_cliente: formData.email_cliente.toLowerCase().trim(),
                 resumo_conversa_vendedor: formData.resumo_conversa_vendedor.trim(),
-                nome_produto: 'Tráfego Pago',
+                nome_produto: 'Tráfego Pago', // Valor padrão
               }, {
                 onConflict: 'email_cliente'
               })
@@ -231,8 +201,7 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
           email_gestor: '',
           resumo_conversa_vendedor: '',
           valor_venda_inicial: null,
-          valor_comissao: null,
-          data_cadastro_desejada: null
+          valor_comissao: null
         })
         
         // Chamar callback para atualizar a lista no dashboard pai
@@ -254,6 +223,28 @@ O cliente pode fazer login imediatamente com essas credenciais.`,
         })
         
         console.log("🎉 [NewSellerAddClientForm] Processo completo - cliente pode fazer login!")
+        
+        // Mostrar aviso sobre senha padrão se foi definida
+        if (result.senhaDefinida) {
+          setTimeout(() => {
+            toast({
+              title: "🔐 Senha padrão definida",
+              description: "Senha padrão definida como: parceriadesucesso",
+              duration: 8000
+            })
+          }, 1000)
+        }
+        
+        // Mostrar informação sobre comissão se foi calculada automaticamente
+        if (result.comissaoCalculadaAutomaticamente) {
+          setTimeout(() => {
+            toast({
+              title: "🧮 Comissão calculada automaticamente",
+              description: `Comissão de R$ ${result.valorComissao} baseada em venda de R$ ${formData.valor_venda_inicial}`,
+              duration: 6000
+            })
+          }, 1000)
+        }
         
       } else {
         console.error("❌ [NewSellerAddClientForm] Resultado indica falha:", result)
@@ -354,18 +345,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="data_cadastro">Data e Hora do Cadastro (Opcional)</Label>
-            <DateTimePicker
-              date={formData.data_cadastro_desejada || undefined}
-              onDateChange={(date) => setFormData(prev => ({ ...prev, data_cadastro_desejada: date || null }))}
-              placeholder="Deixe vazio para usar data/hora atual"
-            />
-            <p className="text-sm text-muted-foreground">
-              💡 Use este campo para definir quando o cliente deve aparecer como cadastrado no sistema
-            </p>
-          </div>
-
           <div className="grid gap-2">
             <Label htmlFor="nome_cliente">Nome do Cliente *</Label>
             <Input

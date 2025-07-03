@@ -5,8 +5,7 @@ import {
   LayoutDashboard, 
   Users, 
   Headphones, 
-  BarChart3,
-  UserCheck
+  BarChart3
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -27,13 +26,7 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      description: 'Gerenciar clientes'  
-    },
-    {
-      id: 'clientes-antigos',
-      label: 'Clientes Antigos',
-      icon: UserCheck,
-      description: 'Histórico e dados antigos'
+      description: 'Gerenciar clientes'
     },
     {
       id: 'sac',
@@ -94,11 +87,6 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
             <div className="flex-1 min-w-0">
               <div className="flex items-center justify-between">
                 <span className="font-medium truncate">{item.label}</span>
-                {item.id === 'clientes-antigos' && (
-                  <Badge variant="secondary" className="text-xs bg-gray-700 text-gray-300">
-                    Histórico
-                  </Badge>
-                )}
               </div>
               <div className="text-xs text-gray-500 truncate">
                 {item.description}

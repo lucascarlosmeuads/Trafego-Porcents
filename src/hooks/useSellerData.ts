@@ -180,9 +180,9 @@ export function useSellerData(sellerEmail: string) {
           console.log(`   ${index + 1}. ${cliente.nome_cliente} (${cliente.email_cliente}) - Vendedor: ${cliente.vendedor} - Created At: ${cliente.created_at}`)
         })
 
-        // Format data to match Cliente type - ensure id is number
+        // Format data to match Cliente type
         const formattedClientes: Cliente[] = clientesData.map(item => ({
-          id: Number(item.id), // Convert to number to match Cliente type
+          id: String(item.id || ''),
           data_venda: '', // Not using data_venda anymore
           nome_cliente: item.nome_cliente || '',
           telefone: item.telefone || '',
@@ -378,7 +378,7 @@ export function useSellerData(sellerEmail: string) {
         })
 
         const formattedClient: Cliente = {
-          id: Number(existingClient.id), // Convert to number to match Cliente type
+          id: String(existingClient.id || ''),
           data_venda: existingClient.data_venda || '',
           nome_cliente: existingClient.nome_cliente || '',
           telefone: existingClient.telefone || '',

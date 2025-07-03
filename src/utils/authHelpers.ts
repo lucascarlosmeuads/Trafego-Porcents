@@ -1,5 +1,5 @@
 
-import { supabase } from '@/integrations/supabase/client'
+import { supabase } from '@/lib/supabase'
 
 export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()

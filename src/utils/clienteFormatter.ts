@@ -34,7 +34,7 @@ export function formatCliente(item: any): Cliente | null {
     })
 
     return {
-      id: Number(item.id || 0), // Ensure id is a number
+      id: String(item.id || ''),
       data_venda: item.data_venda || '',
       nome_cliente: item.nome_cliente || '',
       telefone: item.telefone || '',

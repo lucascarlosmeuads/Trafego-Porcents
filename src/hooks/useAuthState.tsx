@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { User } from '@supabase/supabase-js'
-import { supabase } from '@/integrations/supabase/client'
+import { supabase } from '@/lib/supabase'
 import type { UserType } from '@/types/auth'
 import { checkUserType, getManagerName } from '@/utils/authHelpers'
 

@@ -27,7 +27,6 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
   // Convert ClienteSimples to Cliente format for the filter hook
   const clientesFormatted = clientes.map(cliente => ({
     ...cliente,
-    id: Number(cliente.id), // Convert string id to number for Cliente type
     data_venda: '',
     data_limite: '',
     link_grupo: '',
@@ -326,16 +325,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {organizedClientes.hoje.map((cliente) => renderClienteCard({
-                      id: String(cliente.id),
-                      nome_cliente: cliente.nome_cliente,
-                      telefone: cliente.telefone,
-                      email_cliente: cliente.email_cliente,
-                      vendedor: cliente.vendedor,
-                      email_gestor: cliente.email_gestor,
-                      status_campanha: cliente.status_campanha,
-                      created_at: cliente.created_at
-                    }, true))}
+                    {organizedClientes.hoje.map((cliente) => renderClienteCard(cliente, true))}
                   </div>
                 </div>
               )}
@@ -350,16 +340,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {organizedClientes.ontem.map((cliente) => renderClienteCard({
-                      id: String(cliente.id),
-                      nome_cliente: cliente.nome_cliente,
-                      telefone: cliente.telefone,
-                      email_cliente: cliente.email_cliente,
-                      vendedor: cliente.vendedor,
-                      email_gestor: cliente.email_gestor,
-                      status_campanha: cliente.status_campanha,
-                      created_at: cliente.created_at
-                    }))}
+                    {organizedClientes.ontem.map((cliente) => renderClienteCard(cliente))}
                   </div>
                 </div>
               )}
@@ -374,16 +355,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {organizedClientes.ultimos7Dias.map((cliente) => renderClienteCard({
-                      id: String(cliente.id),
-                      nome_cliente: cliente.nome_cliente,
-                      telefone: cliente.telefone,
-                      email_cliente: cliente.email_cliente,
-                      vendedor: cliente.vendedor,
-                      email_gestor: cliente.email_gestor,
-                      status_campanha: cliente.status_campanha,
-                      created_at: cliente.created_at
-                    }))}
+                    {organizedClientes.ultimos7Dias.map((cliente) => renderClienteCard(cliente))}
                   </div>
                 </div>
               )}
@@ -398,16 +370,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                     </h3>
                   </div>
                   <div className="space-y-3">
-                    {organizedClientes.anteriores.map((cliente) => renderClienteCard({
-                      id: String(cliente.id),
-                      nome_cliente: cliente.nome_cliente,
-                      telefone: cliente.telefone,
-                      email_cliente: cliente.email_cliente,
-                      vendedor: cliente.vendedor,
-                      email_gestor: cliente.email_gestor,
-                      status_campanha: cliente.status_campanha,
-                      created_at: cliente.created_at
-                    }))}
+                    {organizedClientes.anteriores.map((cliente) => renderClienteCard(cliente))}
                   </div>
                 </div>
               )}

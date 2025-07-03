@@ -6,30 +6,27 @@ export function useGestorStatusRestrictions() {
   // Mantém registro dos clientes que já foram marcados como "Saque Pendente"
   const [clientesTravedos, setClientesTravedos] = useState<Set<string>>(new Set())
 
-  const marcarClienteComoTravado = (clienteId: string | number) => {
-    const id = String(clienteId)
-    setClientesTravedos(prev => new Set([...prev, id]))
+  const marcarClienteComoTravado = (clienteId: string) => {
+    setClientesTravedos(prev => new Set([...prev, clienteId]))
   }
 
-  const clienteEstaTravado = (clienteId: string | number) => {
-    const id = String(clienteId)
-    return clientesTravedos.has(id)
+  const clienteEstaTravado = (clienteId: string) => {
+    return clientesTravedos.has(clienteId)
   }
 
   // Verificar se um cliente deve ter status travado
   const verificarStatusTravado = (cliente: Cliente) => {
-    const clienteId = String(cliente.id)
     // Se já foi marcado como "Saque Pendente" anteriormente ou tem saque solicitado
     return cliente.status_campanha === 'Saque Pendente' || 
            cliente.saque_solicitado || 
-           clienteEstaTravado(clienteId)
+           clienteEstaTravado(cliente.id)
   }
 
   // Marcar automaticamente clientes que já estão "Saque Pendente"
   const inicializarClientesTravados = (clientes: Cliente[]) => {
     const clientesNoAr = clientes
       .filter(cliente => cliente.status_campanha === 'Saque Pendente' || cliente.saque_solicitado)
-      .map(cliente => String(cliente.id))
+      .map(cliente => cliente.id)
     
     if (clientesNoAr.length > 0) {
       setClientesTravedos(prev => new Set([...prev, ...clientesNoAr]))

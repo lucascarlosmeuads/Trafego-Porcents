@@ -166,7 +166,7 @@ export function useAdminTableLogic() {
       const { error } = await supabase
         .from('todos_clientes')
         .update({ [field]: value })
-        .eq('id', Number(id)) // Convert string to number for database
+        .eq('id', id)
 
       if (error) {
         console.error('❌ Erro ao atualizar:', error)
@@ -177,7 +177,7 @@ export function useAdminTableLogic() {
         })
       } else {
         setClientes(prev => prev.map(cliente => 
-          String(cliente.id) === id ? { ...cliente, [field]: value } : cliente
+          cliente.id === id ? { ...cliente, [field]: value } : cliente
         ))
         toast({
           title: "Sucesso",
@@ -201,7 +201,7 @@ export function useAdminTableLogic() {
       const { error } = await supabase
         .from('todos_clientes')
         .update({ email_gestor: novoEmailGestor })
-        .eq('id', Number(clienteId)) // Convert string to number for database
+        .eq('id', clienteId)
 
       if (error) {
         console.error('❌ Erro ao transferir cliente:', error)
@@ -212,7 +212,7 @@ export function useAdminTableLogic() {
         })
       } else {
         setClientes(prev => prev.map(cliente => 
-          String(cliente.id) === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
+          cliente.id === clienteId ? { ...cliente, email_gestor: novoEmailGestor } : cliente
         ))
         toast({
           title: "Sucesso",
