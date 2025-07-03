@@ -4,9 +4,10 @@ import { BarChart3, Users, Activity, Globe, MessageSquare, Lightbulb } from 'luc
 interface GestorMenuProps {
   activeTab: string
   onTabChange: (tab: string) => void
+  isCollapsed?: boolean
 }
 
-export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
+export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: GestorMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
@@ -51,6 +52,33 @@ export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
       color: 'bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/20'
     }
   ]
+
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col space-y-2">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`
+              w-10 h-10 rounded-lg border transition-all duration-200 group flex items-center justify-center
+              ${activeTab === item.id 
+                ? 'bg-gray-700/60 border-gray-600 shadow-lg' 
+                : `${item.color} hover:transform hover:scale-105 hover:shadow-md`
+              }
+            `}
+            onClick={() => onTabChange(item.id)}
+            title={item.label}
+          >
+            <item.icon className={`h-4 w-4 ${
+              activeTab === item.id 
+                ? 'text-white' 
+                : 'text-gray-400 group-hover:text-white'
+            }`} />
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 gap-3">

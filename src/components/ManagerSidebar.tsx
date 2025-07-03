@@ -84,33 +84,37 @@ export function ManagerSidebar({
           /* Layout quando colapsado */
           <div className="flex flex-col items-center space-y-3">
             {/* Logo pequena centralizada */}
-            <div className="relative group cursor-pointer">
+            <div className="relative group cursor-pointer flex justify-center">
               <div className="absolute inset-0 bg-gradient-hero rounded-lg blur-sm opacity-20 group-hover:opacity-40 transition-opacity duration-300"></div>
-              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-2 py-1.5 text-xs transition-transform duration-300 hover:scale-105">
+              <div className="relative bg-gradient-hero text-white rounded-lg font-bold px-2 py-1.5 text-xs transition-transform duration-300 hover:scale-105 flex items-center justify-center">
                 <span className="text-orange-300">TP%</span>
               </div>
             </div>
             
-            {/* Avatar do perfil */}
-            <ProfileAvatarUpload
-              currentAvatarUrl={profileData?.avatar_url}
-              userName={currentManagerName}
-              userType="gestor"
-              onAvatarChange={handleAvatarChange}
-              size="sm"
-              showEditButton={true}
-            />
+            {/* Avatar do perfil centralizado */}
+            <div className="flex justify-center">
+              <ProfileAvatarUpload
+                currentAvatarUrl={profileData?.avatar_url}
+                userName={currentManagerName}
+                userType="gestor"
+                onAvatarChange={handleAvatarChange}
+                size="sm"
+                showEditButton={true}
+              />
+            </div>
             
-            {/* Botão de toggle bem visível */}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={toggleSidebar}
-              className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg"
-              title="Expandir menu"
-            >
-              <ChevronRight className="h-4 w-4" />
-            </Button>
+            {/* Botão de toggle centralizado */}
+            <div className="flex justify-center">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={toggleSidebar}
+                className="p-2 hover:bg-gray-700/60 text-gray-400 hover:text-white transition-all duration-200 bg-gray-800/40 border border-gray-600/40 hover:border-gray-500/60 rounded-lg"
+                title="Expandir menu"
+              >
+                <ChevronRight className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         ) : (
           /* Layout quando expandido */
@@ -164,16 +168,18 @@ export function ManagerSidebar({
       </div>
 
       {/* Menu Principal */}
-      <div className="p-4 flex-1">
+      <div className={`${isCollapsed ? 'p-2' : 'p-4'} flex-1`}>
         {isAdmin ? (
           <AdminMainMenu
             activeTab={activeTab}
             onTabSelect={onTabChange}
+            isCollapsed={isCollapsed}
           />
         ) : (
           <GestorMenu
             activeTab={activeTab}
             onTabChange={onTabChange}
+            isCollapsed={isCollapsed}
           />
         )}
       </div>
@@ -183,7 +189,7 @@ export function ManagerSidebar({
         <Button
           variant="ghost"
           className={`
-            ${isCollapsed ? 'w-8 p-2' : 'w-full justify-start'} 
+            ${isCollapsed ? 'w-8 p-2 justify-center' : 'w-full justify-start'} 
             text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/20 hover:border-red-500/30
             transition-all duration-200
           `}
