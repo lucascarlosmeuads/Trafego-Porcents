@@ -19,7 +19,7 @@ export function TransferirModal({ cliente, onTransferirCliente, isLoading, gesto
 
   const handleTransferir = () => {
     if (!novoEmailGestor) return
-    onTransferirCliente(cliente.id, novoEmailGestor)
+    onTransferirCliente(String(cliente.id), novoEmailGestor)
     setOpen(false)
     setNovoEmailGestor('')
   }

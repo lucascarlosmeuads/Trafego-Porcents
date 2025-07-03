@@ -82,7 +82,7 @@ export function AdminTableCards({
                 <TransferirModal
                   cliente={cliente}
                   onTransferirCliente={onTransferirCliente}
-                  isLoading={transferindoCliente === cliente.id}
+                  isLoading={transferindoCliente === String(cliente.id)}
                   gestores={gestores}
                 />
               </div>

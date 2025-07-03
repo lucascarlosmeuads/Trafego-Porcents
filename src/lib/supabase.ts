@@ -1,3 +1,4 @@
+
 import { createClient } from '@supabase/supabase-js'
 
 // Define types for Supabase data
@@ -79,6 +80,25 @@ export interface ArquivoCliente {
   tamanho_arquivo?: number
   created_at: string
   author_type: string
+}
+
+// Status campaign constants and types
+export const STATUS_CAMPANHA = [
+  'Cliente Novo',
+  'Aguardando briefing',
+  'Briefing em análise',
+  'Criativo em produção',
+  'Aguardando aprovação',
+  'Campanha ativa',
+  'Concluído',
+  'Cancelado',
+  'Pausado'
+] as const
+
+export type StatusCampanha = typeof STATUS_CAMPANHA[number]
+
+export const getStatusDisplayLabel = (status: string): string => {
+  return status || 'Sem status'
 }
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ''
