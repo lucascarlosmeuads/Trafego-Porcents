@@ -18,6 +18,12 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   const [totalInDatabase, setTotalInDatabase] = useState<number | null>(null)
   const { toast } = useToast()
 
+  // Filter out admin-added clients for metrics (only count 'venda' origin)
+  const clientesVenda = useMemo(() => 
+    clientes.filter(c => !c.origem_cadastro || c.origem_cadastro === 'venda'), 
+    [clientes]
+  )
+
   // Verificar total real no banco de dados
   const checkDatabaseTotal = async () => {
     setRefreshing(true)
@@ -25,6 +31,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
       const { count, error } = await supabase
         .from('todos_clientes')
         .select('*', { count: 'exact', head: true })
+        .or('origem_cadastro.is.null,origem_cadastro.eq.venda')
 
       if (error) {
         console.error('❌ Erro ao verificar total:', error)
@@ -37,10 +44,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
         setTotalInDatabase(count)
         console.log(`📊 [AdminDashboard] Total real no banco: ${count}`)
         
-        if (count && count > clientes.length) {
+        if (count && count > clientesVenda.length) {
           toast({
             title: "Discrepância Detectada",
-            description: `Existem ${count} clientes no banco, mas apenas ${clientes.length} foram carregados. Recarregue a página.`,
+            description: `Existem ${count} clientes no banco, mas apenas ${clientesVenda.length} foram carregados. Recarregue a página.`,
             variant: "destructive"
           })
         } else {
@@ -64,21 +71,21 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   }
 
   const metrics = useMemo(() => {
-    const totalClientes = clientes.length
-    const clientesComVenda = clientes.filter(c => c.data_venda).length
-    const clientesAtivos = clientes.filter(c => 
+    const totalClientes = clientesVenda.length
+    const clientesComVenda = clientesVenda.filter(c => c.data_venda).length
+    const clientesAtivos = clientesVenda.filter(c => 
       c.status_campanha && !['Concluído', 'Cancelado'].includes(c.status_campanha)
     ).length
     
-    const totalComissoes = clientes.reduce((sum, cliente) => {
+    const totalComissoes = clientesVenda.reduce((sum, cliente) => {
       return sum + (Number(cliente.valor_comissao) || 60)
     }, 0)
 
-    const comissoesPagas = clientes
+    const comissoesPagas = clientesVenda
       .filter(c => c.comissao_paga || c.comissao === 'Pago')
       .reduce((sum, cliente) => sum + (Number(cliente.valor_comissao) || 60), 0)
 
-    const clientesHoje = clientes.filter(c => {
+    const clientesHoje = clientesVenda.filter(c => {
       if (!c.created_at) return false
       const hoje = new Date().toDateString()
       const clienteData = new Date(c.created_at).toDateString()
@@ -86,7 +93,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
     }).length
 
     // Estatísticas por gestor
-    const gestorStats = clientes.reduce((acc, cliente) => {
+    const gestorStats = clientesVenda.reduce((acc, cliente) => {
       const gestor = cliente.email_gestor || 'Sem Gestor'
       if (!acc[gestor]) {
         acc[gestor] = { total: 0, ativos: 0, comissoes: 0 }
@@ -108,10 +115,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
       clientesHoje,
       gestorStats
     }
-  }, [clientes])
+  }, [clientesVenda])
 
-  const isDiscrepancy = totalInDatabase && totalInDatabase !== clientes.length
-  const isFullyLoaded = totalInDatabase && totalInDatabase === clientes.length
+  const isDiscrepancy = totalInDatabase && totalInDatabase !== clientesVenda.length
+  const isFullyLoaded = totalInDatabase && totalInDatabase === clientesVenda.length
 
   return (
     <div className="space-y-6">
@@ -124,6 +131,9 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
               ? `Dados do gestor: ${selectedManager}`
               : 'Visão geral de todos os clientes'
             }
+          </p>
+          <p className="text-sm text-gray-500 mt-1">
+            * Apenas clientes de vendas são contabilizados (não inclui clientes antigos)
           </p>
         </div>
         <Button onClick={checkDatabaseTotal} disabled={refreshing} variant="outline">
@@ -154,10 +164,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
           <div className="flex items-center justify-between">
             <div>
               <div className={`text-2xl font-bold ${isFullyLoaded ? 'text-green-700' : isDiscrepancy ? 'text-orange-700' : 'text-blue-700'}`}>
-                {clientes.length}
+                {clientesVenda.length}
               </div>
               <p className={`${isFullyLoaded ? 'text-green-600' : isDiscrepancy ? 'text-orange-600' : 'text-blue-600'}`}>
-                clientes carregados
+                clientes de venda carregados
               </p>
             </div>
             {totalInDatabase && (
@@ -182,7 +192,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
           {isDiscrepancy && (
             <div className="mt-2">
               <p className="text-sm text-orange-600 font-medium">
-                ⚠️ Discrepância detectada: {totalInDatabase} no banco vs {clientes.length} carregados
+                ⚠️ Discrepância detectada: {totalInDatabase} no banco vs {clientesVenda.length} carregados
               </p>
               <p className="text-sm text-orange-600 mt-1">
                 Recarregue a página para garantir que todos os dados sejam exibidos.
@@ -190,7 +200,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
             </div>
           )}
           
-          {clientes.length >= 1000 && !totalInDatabase && (
+          {clientesVenda.length >= 1000 && !totalInDatabase && (
             <p className="text-sm text-blue-600 mt-2">
               📊 Carregando grandes volumes - clique em "Verificar Total" para validar
             </p>
