@@ -1,3 +1,4 @@
+
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -96,13 +97,13 @@ export function ClienteRowSite({
         console.error('❌ Erro ao atualizar site_pago:', error)
         toast({
           title: "Erro",
-          description: "Falha ao atualizar status de pagamento do site",
+          description: "Falha ao atualizar último pedido pago",
           variant: "destructive"
         })
       } else {
         toast({
           title: "Sucesso",
-          description: newSitePagoValue ? "Site marcado como pago" : "Site marcado como não pago"
+          description: newSitePagoValue ? "Marcado como último pedido pago" : "Desmarcado como último pedido pago"
         })
         
         if (onSitePagoChange) {
@@ -113,7 +114,7 @@ export function ClienteRowSite({
       console.error('💥 Erro ao atualizar site_pago:', error)
       toast({
         title: "Erro",
-        description: "Erro inesperado ao atualizar status de pagamento",
+        description: "Erro inesperado ao atualizar último pedido pago",
         variant: "destructive"
       })
     } finally {
@@ -201,12 +202,19 @@ export function ClienteRowSite({
               )}
               
               {showSitePagoCheckbox && (
-                <Checkbox
-                  checked={sitePago || false}
-                  onCheckedChange={handleSitePagoToggle}
-                  disabled={updatingSitePago}
-                  className="h-3 w-3 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
-                />
+                <Tooltip>
+                  <TooltipTrigger>
+                    <Checkbox
+                      checked={sitePago || false}
+                      onCheckedChange={handleSitePagoToggle}
+                      disabled={updatingSitePago}
+                      className="h-3 w-3 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Último Pedido Pago</p>
+                  </TooltipContent>
+                </Tooltip>
               )}
             </>
           )}
@@ -303,7 +311,7 @@ export function ClienteRowSite({
                   disabled={updatingSitePago}
                   className="h-4 w-4 data-[state=checked]:bg-green-600 data-[state=checked]:border-green-600"
                 />
-                <span className="text-xs text-white">Pago</span>
+                <span className="text-xs text-white">Último Pedido Pago</span>
               </div>
             )}
           </div>
