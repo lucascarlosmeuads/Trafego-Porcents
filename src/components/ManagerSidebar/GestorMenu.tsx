@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Activity, Plus, Globe, MessageSquare, Lightbulb } from 'lucide-react'
+import { BarChart3, Users, Activity, Globe, MessageSquare, Lightbulb } from 'lucide-react'
 
 interface GestorMenuProps {
   activeTab: string
@@ -28,13 +28,6 @@ export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
       icon: Activity,
       description: 'Relatórios Meta Ads',
       color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
-    },
-    {
-      id: 'cadastro-campanha',
-      label: 'Campanhas',
-      icon: Plus,
-      description: 'Cadastrar campanhas',
-      color: 'bg-orange-500/10 hover:bg-orange-500/20 border-orange-500/20'
     },
     {
       id: 'solicitacoes-site',

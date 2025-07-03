@@ -110,8 +110,6 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             </div>
           </div>
         )
-      case 'cadastro-campanha':
-        return <CadastroCampanhaDashboard />
       case 'solicitacoes-site':
         return <SiteRequestsDashboard />
       case 'sac':
