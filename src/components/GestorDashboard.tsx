@@ -1,4 +1,3 @@
-
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -15,6 +14,8 @@ import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User } from 'lucide-react'
+import { GestorMetaAdsConfig } from './GestorDashboard/GestorMetaAdsConfig'
+import { GestorMetaAdsMetrics } from './GestorDashboard/GestorMetaAdsMetrics'
 
 interface GestorDashboardProps {
   activeTab: string
@@ -98,6 +99,15 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
         return (
           <div className="bg-gray-950 min-h-screen">
             <ClientesTable />
+          </div>
+        )
+      case 'meta-ads':
+        return (
+          <div className="bg-gray-950 min-h-screen p-6">
+            <div className="space-y-6">
+              <GestorMetaAdsConfig />
+              <GestorMetaAdsMetrics />
+            </div>
           </div>
         )
       case 'cadastro-campanha':

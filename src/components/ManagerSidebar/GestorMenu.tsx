@@ -1,90 +1,69 @@
-
-import { BarChart3, Users, Headphones, Lightbulb, AlertTriangle } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { BarChart3, Users, Activity, Plus, Globe, MessageSquare, Lightbulb } from 'lucide-react'
 
 interface GestorMenuProps {
   activeTab: string
   onTabChange: (tab: string) => void
-  problemasPendentes?: number
-  isCollapsed?: boolean
 }
 
-export function GestorMenu({ activeTab, onTabChange, problemasPendentes = 0, isCollapsed = false }: GestorMenuProps) {
+export function GestorMenu({ activeTab, onTabChange }: GestorMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
       icon: BarChart3,
-      description: 'Visão geral e métricas',
-      color: 'from-blue-500 to-blue-600'
+      description: 'Visão geral e métricas'
     },
     {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
-      description: 'Gerenciar clientes',
-      color: 'from-green-500 to-green-600'
+      description: 'Gerenciar clientes'
+    },
+    {
+      id: 'meta-ads',
+      label: 'Meta Ads',
+      icon: Activity,
+      description: 'Relatórios Meta Ads'
+    },
+    {
+      id: 'cadastro-campanha',
+      label: 'Campanhas',
+      icon: Plus,
+      description: 'Cadastrar campanhas'
+    },
+    {
+      id: 'solicitacoes-site',
+      label: 'Sites',
+      icon: Globe,
+      description: 'Solicitações de site'
     },
     {
       id: 'sac',
-      label: 'Urgente',
-      icon: AlertTriangle,
-      description: 'Suporte e reclamações',
-      color: 'from-red-500 to-red-600'
+      label: 'SAC',
+      icon: MessageSquare,
+      description: 'Suporte ao cliente'
     },
     {
       id: 'sugestoes',
       label: 'Sugestões',
       icon: Lightbulb,
-      description: 'Feedback e melhorias',
-      color: 'from-yellow-500 to-yellow-600'
+      description: 'Melhorias do sistema'
     }
   ]
 
   return (
-    <nav className="space-y-3">
-      {menuItems.map((item) => {
-        const Icon = item.icon
-        const isActive = activeTab === item.id
-        
-        return (
-          <Button
-            key={item.id}
-            variant="ghost"
-            className={`
-              ${isCollapsed ? 'w-10 p-2' : 'w-full justify-start'}
-              ${isActive 
-                ? 'bg-gradient-to-r from-blue-500/20 to-purple-500/20 border border-blue-500/30 text-white shadow-md' 
-                : 'text-gray-300 hover:text-white hover:bg-gray-800/60 border border-transparent hover:border-gray-700/50'
-              }
-              transition-all duration-200 h-auto py-3 group
-            `}
-            onClick={() => onTabChange(item.id)}
-            title={isCollapsed ? item.label : ''}
-          >
-            <div className={`
-              ${isCollapsed ? 'w-6 h-6' : 'w-8 h-8 mr-3'} 
-              rounded-lg flex items-center justify-center
-              ${isActive 
-                ? `bg-gradient-to-r ${item.color} shadow-md` 
-                : 'bg-gray-800/60 group-hover:bg-gray-700/80'
-              }
-              transition-all duration-200
-            `}>
-              <Icon className={`${isCollapsed ? 'h-3 w-3' : 'h-4 w-4'} text-white`} />
-            </div>
-            
-            {!isCollapsed && (
-              <div className="flex flex-col items-start text-left flex-1">
-                <div className="flex items-center justify-between w-full">
-                  <span className="font-medium text-sm leading-tight">{item.label}</span>
-                </div>
-                <span className="text-xs text-gray-400 leading-tight mt-0.5">{item.description}</span>
-              </div>
-            )}
-          </Button>
-        )
-      })}
-    </nav>
+    <div className="flex flex-col space-y-1">
+      {menuItems.map(item => (
+        <button
+          key={item.id}
+          className={`flex items-center space-x-2 px-4 py-2 rounded-md text-sm font-medium transition-colors hover:bg-gray-800 focus:outline-none focus:bg-gray-700 ${activeTab === item.id ? 'bg-gray-700 text-white' : 'text-gray-400'
+            }`}
+          onClick={() => onTabChange(item.id)}
+        >
+          <item.icon className="h-4 w-4" />
+          <span>{item.label}</span>
+        </button>
+      ))}
+    </div>
   )
 }
