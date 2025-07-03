@@ -4,50 +4,31 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp, CircleDollarSign, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
-import type { DateFilterState } from './AdminDateFilter'
-import { getDateRangeFromFilter, isClienteInDateRange, formatDateRange } from '@/utils/dateFilterUtils'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
   selectedManager?: string | null
-  dateFilter?: DateFilterState
 }
 
 // Optimize AdminDashboardMetrics with React.memo
 export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashboardMetrics({ 
   clientes, 
-  selectedManager,
-  dateFilter 
+  selectedManager
 }: AdminDashboardMetricsProps) {
   
-  // Filtrar clientes baseado no período selecionado
-  const filteredClientes = useMemo(() => {
-    if (!dateFilter || dateFilter.type === 'today') {
-      return clientes
-    }
-
-    const dateRange = getDateRangeFromFilter(
-      dateFilter.type, 
-      dateFilter.startDate, 
-      dateFilter.endDate
-    )
-
-    return clientes.filter(cliente => isClienteInDateRange(cliente, dateRange))
-  }, [clientes, dateFilter])
-
   // Memoize expensive metric calculations
   const metrics = useMemo(() => {
-    console.log('📊 [OptimizedAdminDashboardMetrics] Calculando métricas para', filteredClientes.length, 'clientes no período')
+    console.log('📊 [OptimizedAdminDashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
     
-    const totalClientes = filteredClientes.length
+    const totalClientes = clientes.length
 
     // Campanhas no ar (status "Campanha no Ar" ou "Otimização")
-    const clientesNoAr = filteredClientes.filter(cliente => 
+    const clientesNoAr = clientes.filter(cliente => 
       cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
     )
 
     // Total pendente - APENAS clientes com status "Pendente" (vermelhinhos)
-    const clientesPendentes = filteredClientes.filter(cliente => 
+    const clientesPendentes = clientes.filter(cliente => 
       cliente.comissao === 'Pendente'
     )
     const totalPendente = clientesPendentes.reduce((total, cliente) => 
@@ -55,7 +36,7 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
     )
 
     // Total já recebido - clientes com comissão paga
-    const clientesPagos = filteredClientes.filter(cliente => 
+    const clientesPagos = clientes.filter(cliente => 
       cliente.comissao === 'Pago'
     )
     const totalRecebido = clientesPagos.reduce((total, cliente) => 
@@ -63,16 +44,16 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
     )
 
     // Clientes com problemas
-    const clientesProblemas = filteredClientes.filter(cliente => 
+    const clientesProblemas = clientes.filter(cliente => 
       cliente.status_campanha === 'Problema'
     )
 
     // Sites pendentes
-    const sitesPendentes = filteredClientes.filter(cliente => 
+    const sitesPendentes = clientes.filter(cliente => 
       cliente.site_status === 'pendente' || cliente.site_status === 'aguardando_link'
     )
 
-    console.log('📈 [OptimizedAdminDashboardMetrics] Métricas calculadas para o período:', {
+    console.log('📈 [OptimizedAdminDashboardMetrics] Métricas calculadas:', {
       totalClientes,
       clientesNoAr: clientesNoAr.length,
       clientesPendentes: clientesPendentes.length,
@@ -93,39 +74,34 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
       clientesProblemas,
       sitesPendentes
     }
-  }, [filteredClientes])
+  }, [clientes])
 
   // Memoize the header text to prevent unnecessary recalculations
   const headerText = useMemo(() => {
-    const periodText = dateFilter ? formatDateRange(
-      getDateRangeFromFilter(dateFilter.type, dateFilter.startDate, dateFilter.endDate).startDate,
-      getDateRangeFromFilter(dateFilter.type, dateFilter.startDate, dateFilter.endDate).endDate
-    ) : 'Hoje'
-
     if (!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') {
-      return `Métricas Gerais - ${periodText}`
+      return 'Métricas Gerais'
     }
-    return `Métricas do Gestor: ${selectedManager} - ${periodText}`
-  }, [selectedManager, dateFilter])
+    return `Métricas do Gestor: ${selectedManager}`
+  }, [selectedManager])
 
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-bold text-contrast">{headerText}</h2>
         <span className="text-sm text-contrast-secondary">
-          Dados do período selecionado
+          Dados atuais do sistema
         </span>
       </div>
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card className="bg-card border-border">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-contrast">Clientes do Período</CardTitle>
+            <CardTitle className="text-sm font-medium text-contrast">Total de Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-contrast">{metrics.totalClientes}</div>
-            <p className="text-xs text-contrast-secondary">no período selecionado</p>
+            <p className="text-xs text-contrast-secondary">cadastrados no sistema</p>
           </CardContent>
         </Card>
 

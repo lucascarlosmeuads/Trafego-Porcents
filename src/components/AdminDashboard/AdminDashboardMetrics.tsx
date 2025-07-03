@@ -7,35 +7,16 @@ import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
-import type { DateFilterState } from './AdminDateFilter'
-import { getDateRangeFromFilter, isClienteInDateRange, formatDateRange } from '@/utils/dateFilterUtils'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
   selectedManager: string | null
-  dateFilter?: DateFilterState
 }
 
-export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }: AdminDashboardMetricsProps) {
+export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashboardMetricsProps) {
   const [refreshing, setRefreshing] = useState(false)
   const [totalInDatabase, setTotalInDatabase] = useState<number | null>(null)
   const { toast } = useToast()
-
-  // Filtrar clientes baseado no período selecionado
-  const filteredClientes = useMemo(() => {
-    if (!dateFilter || dateFilter.type === 'today') {
-      // Para "hoje", mantém o comportamento original
-      return clientes
-    }
-
-    const dateRange = getDateRangeFromFilter(
-      dateFilter.type, 
-      dateFilter.startDate, 
-      dateFilter.endDate
-    )
-
-    return clientes.filter(cliente => isClienteInDateRange(cliente, dateRange))
-  }, [clientes, dateFilter])
 
   // Verificar total real no banco de dados
   const checkDatabaseTotal = async () => {
@@ -83,21 +64,21 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
   }
 
   const metrics = useMemo(() => {
-    const totalClientes = filteredClientes.length
-    const clientesComVenda = filteredClientes.filter(c => c.data_venda).length
-    const clientesAtivos = filteredClientes.filter(c => 
+    const totalClientes = clientes.length
+    const clientesComVenda = clientes.filter(c => c.data_venda).length
+    const clientesAtivos = clientes.filter(c => 
       c.status_campanha && !['Concluído', 'Cancelado'].includes(c.status_campanha)
     ).length
     
-    const totalComissoes = filteredClientes.reduce((sum, cliente) => {
+    const totalComissoes = clientes.reduce((sum, cliente) => {
       return sum + (Number(cliente.valor_comissao) || 60)
     }, 0)
 
-    const comissoesPagas = filteredClientes
+    const comissoesPagas = clientes
       .filter(c => c.comissao_paga || c.comissao === 'Pago')
       .reduce((sum, cliente) => sum + (Number(cliente.valor_comissao) || 60), 0)
 
-    const clientesHoje = filteredClientes.filter(c => {
+    const clientesHoje = clientes.filter(c => {
       if (!c.created_at) return false
       const hoje = new Date().toDateString()
       const clienteData = new Date(c.created_at).toDateString()
@@ -105,7 +86,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
     }).length
 
     // Estatísticas por gestor
-    const gestorStats = filteredClientes.reduce((acc, cliente) => {
+    const gestorStats = clientes.reduce((acc, cliente) => {
       const gestor = cliente.email_gestor || 'Sem Gestor'
       if (!acc[gestor]) {
         acc[gestor] = { total: 0, ativos: 0, comissoes: 0 }
@@ -127,25 +108,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
       clientesHoje,
       gestorStats
     }
-  }, [filteredClientes])
+  }, [clientes])
 
   const isDiscrepancy = totalInDatabase && totalInDatabase !== clientes.length
   const isFullyLoaded = totalInDatabase && totalInDatabase === clientes.length
-
-  // Determinar o período para exibição
-  const periodText = useMemo(() => {
-    if (!dateFilter || dateFilter.type === 'today') {
-      return 'hoje'
-    }
-    
-    const dateRange = getDateRangeFromFilter(
-      dateFilter.type, 
-      dateFilter.startDate, 
-      dateFilter.endDate
-    )
-    
-    return formatDateRange(dateRange.startDate, dateRange.endDate)
-  }, [dateFilter])
 
   return (
     <div className="space-y-6">
@@ -155,8 +121,8 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
           <h2 className="text-2xl font-bold">Métricas do Sistema</h2>
           <p className="text-muted-foreground">
             {selectedManager && selectedManager !== 'Todos os Gestores' && selectedManager !== 'Todos os Clientes'
-              ? `Dados do gestor: ${selectedManager} - Período: ${periodText}`
-              : `Visão geral de todos os clientes - Período: ${periodText}`
+              ? `Dados do gestor: ${selectedManager}`
+              : `Visão geral de todos os clientes`
             }
           </p>
         </div>
@@ -188,10 +154,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
           <div className="flex items-center justify-between">
             <div>
               <div className={`text-2xl font-bold ${isFullyLoaded ? 'text-green-700' : isDiscrepancy ? 'text-orange-700' : 'text-blue-700'}`}>
-                {filteredClientes.length}
+                {clientes.length}
               </div>
               <p className={`${isFullyLoaded ? 'text-green-600' : isDiscrepancy ? 'text-orange-600' : 'text-blue-600'}`}>
-                clientes no período
+                clientes carregados
               </p>
             </div>
             {totalInDatabase && (
@@ -230,7 +196,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Clientes no Período</CardTitle>
+            <CardTitle className="text-sm font-medium">Total de Clientes</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -249,14 +215,14 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
           <CardContent>
             <div className="text-2xl font-bold">{metrics.clientesAtivos}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics.totalClientes > 0 ? Math.round((metrics.clientesAtivos / metrics.totalClientes) * 100) : 0}% do período
+              {metrics.totalClientes > 0 ? Math.round((metrics.clientesAtivos / metrics.totalClientes) * 100) : 0}% do total
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Comissões do Período</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Comissões</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -275,7 +241,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(metrics.comissoesPagas)}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics.totalComissoes > 0 ? Math.round((metrics.comissoesPagas / metrics.totalComissoes) * 100) : 0}% do período
+              {metrics.totalComissoes > 0 ? Math.round((metrics.comissoesPagas / metrics.totalComissoes) * 100) : 0}% do total
             </p>
           </CardContent>
         </Card>
@@ -285,7 +251,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager, dateFilter }:
       {(!selectedManager || selectedManager === 'Todos os Gestores' || selectedManager === 'Todos os Clientes') && (
         <Card>
           <CardHeader>
-            <CardTitle>Distribuição por Gestor - {periodText}</CardTitle>
+            <CardTitle>Distribuição por Gestor</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">

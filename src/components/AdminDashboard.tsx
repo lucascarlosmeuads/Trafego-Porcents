@@ -1,3 +1,4 @@
+
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
@@ -16,8 +17,6 @@ import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
 import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
-import { AdminDateFilter } from './AdminDashboard/AdminDateFilter'
-import type { DateFilterState } from './AdminDashboard/AdminDateFilter'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -29,12 +28,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   const { useOptimized } = useOptimizedComponents()
-  
-  // Estado para controlar o filtro de data
-  const [dateFilter, setDateFilter] = useState<DateFilterState>({
-    type: 'today',
-    label: 'Hoje'
-  })
   
   // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
   // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
@@ -50,7 +43,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
   console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
   console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
-  console.log('📅 [AdminDashboard] Filtro de data atual:', dateFilter)
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -82,12 +74,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               />
             </div>
 
-            {/* Filtro de Data */}
-            <AdminDateFilter 
-              onDateFilterChange={setDateFilter}
-              loading={clientesLoading}
-            />
-
             {/* Configuração Meta Ads Global */}
             <AdminMetaAdsConfig />
 
@@ -99,13 +85,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               <OptimizedAdminDashboardMetrics 
                 clientes={gestorClientes} 
                 selectedManager={selectedManager}
-                dateFilter={dateFilter}
               />
             ) : (
               <AdminDashboardMetrics 
                 clientes={gestorClientes} 
                 selectedManager={selectedManager}
-                dateFilter={dateFilter}
               />
             )}
           </div>
