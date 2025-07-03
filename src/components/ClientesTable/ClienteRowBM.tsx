@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge'
 import { Save, X, Edit, Settings, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useState, useEffect } from 'react'
-import { ClienteMetaAdsModal } from './ClienteMetaAdsModal'
+import { ClienteMetaAdsModalSimplified } from './ClienteMetaAdsModalSimplified'
 import { supabase } from '@/lib/supabase'
 
 interface ClienteRowBMProps {
@@ -45,35 +45,14 @@ export function ClienteRowBM({
       setRefreshing(true)
       console.log('🔍 [ClienteRowBM] Verificando config Meta Ads para cliente:', clienteId)
       
-      // Primeiro verificar config específica do cliente
-      let { data: configData, error } = await supabase
+      // Verificar config específica do cliente
+      const { data: configData, error } = await supabase
         .from('meta_ads_configs')
         .select('id, api_id, access_token, ad_account_id')
         .eq('cliente_id', parseInt(clienteId))
         .maybeSingle()
 
-      console.log('🔍 [ClienteRowBM] Config específica resultado:', { configData, error })
-
-      // Se não encontrou, verificar config global do gestor
-      if (!configData && !error) {
-        const { data: clienteData } = await supabase
-          .from('todos_clientes')
-          .select('email_gestor')
-          .eq('id', parseInt(clienteId))
-          .single()
-
-        if (clienteData?.email_gestor) {
-          const { data: globalConfig } = await supabase
-            .from('meta_ads_configs')
-            .select('id, api_id, access_token, ad_account_id')
-            .eq('email_usuario', clienteData.email_gestor)
-            .is('cliente_id', null)
-            .maybeSingle()
-
-          configData = globalConfig
-          console.log('🔍 [ClienteRowBM] Config global resultado:', globalConfig)
-        }
-      }
+      console.log('🔍 [ClienteRowBM] Config resultado:', { configData, error })
 
       if (configData && configData.api_id && configData.access_token && configData.ad_account_id) {
         setHasMetaAdsConfig(true)
@@ -95,7 +74,7 @@ export function ClienteRowBM({
     checkMetaAdsConfig()
   }, [clienteId])
 
-  // Refresh depois que o modal fecha (para atualizar o status)
+  // Refresh depois que o modal fecha
   const handleModalClose = (open: boolean) => {
     setMetaAdsModalOpen(open)
     if (!open) {
@@ -211,7 +190,7 @@ export function ClienteRowBM({
                 </TooltipContent>
               </Tooltip>
 
-              {/* Botão de refresh para debug */}
+              {/* Botão de refresh simplificado */}
               {!loading && (
                 <Tooltip>
                   <TooltipTrigger>
@@ -233,7 +212,7 @@ export function ClienteRowBM({
             </>
           )}
 
-          <ClienteMetaAdsModal
+          <ClienteMetaAdsModalSimplified
             open={metaAdsModalOpen}
             onOpenChange={handleModalClose}
             clienteId={clienteId}
@@ -312,7 +291,7 @@ export function ClienteRowBM({
             </Button>
           </div>
 
-          <ClienteMetaAdsModal
+          <ClienteMetaAdsModalSimplified
             open={metaAdsModalOpen}
             onOpenChange={handleModalClose}
             clienteId={clienteId}
