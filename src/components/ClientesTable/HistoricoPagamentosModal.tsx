@@ -52,7 +52,7 @@ export function HistoricoPagamentosModal({
   }, [open, cliente.id])
 
   const carregarHistorico = async () => {
-    const dados = await buscarHistoricoPagamentos(cliente.id)
+    const dados = await buscarHistoricoPagamentos(String(cliente.id))
     setHistorico(dados)
   }
 
@@ -64,7 +64,7 @@ export function HistoricoPagamentosModal({
     }
 
     setAdicionandoPagamento(true)
-    const sucesso = await registrarPagamento(cliente.id, valor, observacoes)
+    const sucesso = await registrarPagamento(String(cliente.id), valor, observacoes)
     
     if (sucesso) {
       setNovoValor('')
