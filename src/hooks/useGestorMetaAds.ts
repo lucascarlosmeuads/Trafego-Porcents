@@ -93,51 +93,50 @@ export function useGestorMetaAds() {
     loadConfig()
   }, [loadConfig])
 
-  // Salvar configuração GLOBAL usando RPC function
-  const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
-    if (!user?.email) {
-      toast({
-        title: "Erro",
-        description: "Usuário não autenticado",
-        variant: "destructive",
-      })
-      return { success: false }
-    }
-
-    setSaving(true)
-    setLastError('')
+  // Fallback manual melhorado - sem usar ON CONFLICT
+  const manualSaveFallback = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
+    if (!user?.email) return { success: false }
+    
+    console.log('🔧 [useGestorMetaAds] Executando fallback manual melhorado...')
     
     try {
-      console.log('💾 [useGestorMetaAds] Salvando config GLOBAL via RPC...')
-      
-      // Tentar usar a função RPC primeiro
-      const { error: rpcError } = await supabase.rpc('save_gestor_meta_ads_config', {
-        p_email_usuario: user.email,
-        p_api_id: newConfig.api_id,
-        p_app_secret: newConfig.app_secret,
-        p_access_token: newConfig.access_token,
-        p_ad_account_id: newConfig.ad_account_id
-      })
+      // Etapa 1: Verificar se já existe configuração
+      console.log('📋 [useGestorMetaAds] Verificando configuração existente...')
+      const { data: existingConfig, error: selectError } = await supabase
+        .from('meta_ads_configs')
+        .select('id')
+        .eq('email_usuario', user.email)
+        .is('cliente_id', null)
+        .maybeSingle()
 
-      if (rpcError) {
-        console.error('❌ [useGestorMetaAds] Erro no RPC, tentando fallback manual:', rpcError)
-        
-        // Fallback manual melhorado
-        console.log('🔄 [useGestorMetaAds] Executando fallback manual...')
-        
-        // 1. Deletar configuração existente
-        const { error: deleteError } = await supabase
+      if (selectError) {
+        console.error('❌ [useGestorMetaAds] Erro ao verificar config existente:', selectError)
+        return { success: false }
+      }
+
+      if (existingConfig) {
+        // Etapa 2a: Atualizar configuração existente
+        console.log('🔄 [useGestorMetaAds] Atualizando configuração existente ID:', existingConfig.id)
+        const { error: updateError } = await supabase
           .from('meta_ads_configs')
-          .delete()
-          .eq('email_usuario', user.email)
-          .is('cliente_id', null)
+          .update({
+            api_id: newConfig.api_id,
+            app_secret: newConfig.app_secret,
+            access_token: newConfig.access_token,
+            ad_account_id: newConfig.ad_account_id,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingConfig.id)
 
-        if (deleteError) {
-          console.error('❌ [useGestorMetaAds] Erro ao deletar config existente:', deleteError)
-          // Não falha aqui, pode ser que não existia config anterior
+        if (updateError) {
+          console.error('❌ [useGestorMetaAds] Erro ao atualizar config:', updateError)
+          return { success: false }
         }
 
-        // 2. Inserir nova configuração
+        console.log('✅ [useGestorMetaAds] Configuração atualizada com sucesso via fallback')
+      } else {
+        // Etapa 2b: Inserir nova configuração
+        console.log('➕ [useGestorMetaAds] Inserindo nova configuração via fallback...')
         const { error: insertError } = await supabase
           .from('meta_ads_configs')
           .insert({
@@ -152,18 +151,80 @@ export function useGestorMetaAds() {
           })
 
         if (insertError) {
-          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config:', insertError)
+          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config via fallback:', insertError)
+          return { success: false }
+        }
+
+        console.log('✅ [useGestorMetaAds] Nova configuração inserida com sucesso via fallback')
+      }
+
+      return { success: true }
+    } catch (error) {
+      console.error('❌ [useGestorMetaAds] Erro inesperado no fallback manual:', error)
+      return { success: false }
+    }
+  }
+
+  // Salvar configuração GLOBAL usando RPC function melhorada
+  const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
+    if (!user?.email) {
+      toast({
+        title: "Erro",
+        description: "Usuário não autenticado",
+        variant: "destructive",
+      })
+      return { success: false }
+    }
+
+    setSaving(true)
+    setLastError('')
+    
+    try {
+      console.log('💾 [useGestorMetaAds] === INICIANDO SALVAMENTO DEFINITIVO ===')
+      console.log('👤 [useGestorMetaAds] Usuário:', user.email)
+      console.log('🔧 [useGestorMetaAds] Tentativa 1: RPC Function...')
+      
+      // Tentar usar a função RPC melhorada primeiro
+      const { data: rpcResult, error: rpcError } = await supabase.rpc('save_gestor_meta_ads_config', {
+        p_email_usuario: user.email,
+        p_api_id: newConfig.api_id,
+        p_app_secret: newConfig.app_secret,
+        p_access_token: newConfig.access_token,
+        p_ad_account_id: newConfig.ad_account_id
+      })
+
+      if (rpcError) {
+        console.error('❌ [useGestorMetaAds] RPC Error:', rpcError)
+        console.log('🔧 [useGestorMetaAds] Tentativa 2: Fallback Manual...')
+        
+        // Usar fallback manual melhorado
+        const fallbackResult = await manualSaveFallback(newConfig)
+        
+        if (!fallbackResult.success) {
           toast({
             title: "Erro",
-            description: `Falha ao salvar configuração: ${insertError.message}`,
+            description: "Falha ao salvar configuração mesmo com fallback",
             variant: "destructive",
           })
           return { success: false }
         }
-
-        console.log('✅ [useGestorMetaAds] Fallback manual executado com sucesso')
+      } else if (rpcResult && !rpcResult.success) {
+        console.error('❌ [useGestorMetaAds] RPC falhou:', rpcResult)
+        console.log('🔧 [useGestorMetaAds] Tentativa 2: Fallback Manual...')
+        
+        // Usar fallback manual melhorado
+        const fallbackResult = await manualSaveFallback(newConfig)
+        
+        if (!fallbackResult.success) {
+          toast({
+            title: "Erro",
+            description: `Falha no RPC e fallback: ${rpcResult.error_message || 'Erro desconhecido'}`,
+            variant: "destructive",
+          })
+          return { success: false }
+        }
       } else {
-        console.log('✅ [useGestorMetaAds] RPC executado com sucesso')
+        console.log('✅ [useGestorMetaAds] RPC executado com sucesso:', rpcResult)
       }
 
       // Atualizar estado local
@@ -177,7 +238,7 @@ export function useGestorMetaAds() {
         description: "Configuração Meta Ads global salva com sucesso",
       })
 
-      console.log('✅ [useGestorMetaAds] Config global salva com sucesso')
+      console.log('🎉 [useGestorMetaAds] === SALVAMENTO CONCLUÍDO COM SUCESSO ===')
       return { success: true }
 
     } catch (error) {

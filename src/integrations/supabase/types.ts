@@ -951,7 +951,7 @@ export type Database = {
           p_access_token: string
           p_ad_account_id: string
         }
-        Returns: undefined
+        Returns: Json
       }
     }
     Enums: {
