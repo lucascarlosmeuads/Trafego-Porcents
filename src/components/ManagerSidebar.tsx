@@ -174,8 +174,6 @@ export function ManagerSidebar({
           <GestorMenu
             activeTab={activeTab}
             onTabChange={onTabChange}
-            problemasPendentes={problemasPendentes}
-            isCollapsed={isCollapsed}
           />
         )}
       </div>

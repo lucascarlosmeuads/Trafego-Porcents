@@ -1,3 +1,4 @@
+
 import { BarChart3, Users, Activity, Plus, Globe, MessageSquare, Lightbulb } from 'lucide-react'
 
 interface GestorMenuProps {

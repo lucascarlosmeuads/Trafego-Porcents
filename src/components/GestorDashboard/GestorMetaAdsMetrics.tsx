@@ -207,7 +207,7 @@ export function GestorMetaAdsMetrics() {
       {insights && (
         <AdminCustoLucroReport 
           vendasDia={vendasPeriodo}
-          investimentoTrafego={insights.spend}
+          investimentoTrafego={parseFloat(insights.spend) || 0}
           loadingVendas={loadingVendas}
         />
       )}
