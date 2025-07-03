@@ -3,21 +3,21 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useGestorMetaAds } from '@/hooks/useGestorMetaAds'
-import { useManagerData } from '@/hooks/useManagerData'
-import { useAuth } from '@/hooks/useAuth'
-import { AdminMetaAdsDateFilter } from '../AdminDashboard/AdminMetaAdsDateFilter'
-import { AdminCustoLucroReport } from '../AdminDashboard/AdminCustoLucroReport'
+import { GestorMetaAdsDateFilter } from './GestorMetaAdsDateFilter'
 import { formatCurrency } from '@/lib/utils'
-import { supabase } from '@/lib/supabase'
 import { 
   RefreshCw, 
   Activity,
   Target,
-  AlertCircle
+  AlertCircle,
+  Info,
+  Eye,
+  MousePointer,
+  DollarSign,
+  TrendingUp
 } from 'lucide-react'
 
 export function GestorMetaAdsMetrics() {
-  const { user } = useAuth()
   const { 
     insights, 
     fetchingInsights, 
@@ -27,16 +27,21 @@ export function GestorMetaAdsMetrics() {
     fetchInsightsWithPeriod
   } = useGestorMetaAds()
 
-  const { clientes } = useManagerData(user?.email || '')
   const [lastFetchInfo, setLastFetchInfo] = useState<string>('')
-  const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
-  const [loadingVendas, setLoadingVendas] = useState(false)
+  const [campaignsInfo, setCampaignsInfo] = useState<{count: number, details?: string}>({count: 0})
 
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
     if (isConfigured) {
-      fetchTodayInsights()
-      fetchVendasPeriodo(new Date().toISOString().split('T')[0], new Date().toISOString().split('T')[0])
+      fetchTodayInsights().then((result) => {
+        if (result.success) {
+          setLastFetchInfo(`Dados encontrados para: ${result.period_used || 'hoje'}`)
+          setCampaignsInfo({
+            count: result.campaigns_count || 0,
+            details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+          })
+        }
+      })
     }
   }, [isConfigured])
 
@@ -76,107 +81,44 @@ export function GestorMetaAdsMetrics() {
     }
   }
 
-  // Buscar vendas do período para os clientes do gestor
-  const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
-    if (!user?.email) return
-
-    setLoadingVendas(true)
-    try {
-      console.log('💰 [GestorMetaAdsMetrics] Buscando vendas do período:', { startDate, endDate, gestor: user.email })
-      
-      // Buscar vendas dos clientes do gestor no período
-      const { data: vendasCliente, error: errorVendasCliente } = await supabase
-        .from('vendas_cliente')
-        .select('valor_venda, email_cliente')
-        .gte('data_venda', startDate)
-        .lte('data_venda', endDate)
-
-      if (errorVendasCliente) {
-        console.error('❌ [GestorMetaAdsMetrics] Erro ao buscar vendas_cliente:', errorVendasCliente)
-      }
-
-      // Buscar vendas da tabela todos_clientes para o gestor
-      const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
-        .from('todos_clientes')
-        .select('valor_venda_inicial, email_cliente')
-        .eq('email_gestor', user.email)
-        .gte('data_venda', startDate)
-        .lte('data_venda', endDate)
-
-      if (errorTodosClientes) {
-        console.error('❌ [GestorMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
-      }
-
-      // Filtrar vendas apenas dos clientes do gestor
-      const emailsClientesGestor = clientes.map(c => c.email_cliente).filter(Boolean)
-      
-      let totalVendas = 0
-
-      if (vendasCliente) {
-        const vendasFiltradas = vendasCliente.filter(venda => 
-          emailsClientesGestor.includes(venda.email_cliente)
-        )
-        const somaVendasCliente = vendasFiltradas.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0)
-        totalVendas += somaVendasCliente
-        console.log('💰 [GestorMetaAdsMetrics] Vendas de vendas_cliente (filtradas):', somaVendasCliente)
-      }
-
-      if (vendasTodosClientes) {
-        const somaVendasTodos = vendasTodosClientes.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
-        totalVendas += somaVendasTodos
-        console.log('💰 [GestorMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
-      }
-
-      console.log('💰 [GestorMetaAdsMetrics] Total de vendas do período:', totalVendas)
-      setVendasPeriodo(totalVendas)
-
-    } catch (error) {
-      console.error('❌ [GestorMetaAdsMetrics] Erro ao buscar vendas:', error)
-    } finally {
-      setLoadingVendas(false)
-    }
-  }
-
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')
-    
-    // Calcular as datas corretas baseadas no preset ou usar as datas fornecidas
-    let finalStartDate = startDate
-    let finalEndDate = endDate
-    
-    if (preset && preset !== 'custom') {
-      const dateRange = getDateRangeFromPreset(preset)
-      finalStartDate = dateRange.startDate
-      finalEndDate = dateRange.endDate
-    }
+    setCampaignsInfo({count: 0})
     
     if (preset === 'today') {
       const result = await fetchTodayInsights()
-      if (result?.period_used) {
-        setLastFetchInfo(`Dados encontrados para: ${result.period_used}`)
+      if (result.success) {
+        setLastFetchInfo(`Dados encontrados para: ${result.period_used || 'hoje'}`)
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       }
     } else if (preset && preset !== 'custom') {
       const result = await fetchInsightsWithPeriod(preset as any)
-      if (result?.success) {
+      if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used || preset}`)
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       } else {
         setLastFetchInfo('')
+        setCampaignsInfo({count: 0})
       }
     } else if (preset === 'custom' && startDate && endDate) {
-      const result = await fetchInsightsWithCustomDates(startDate, endDate)
-      if (result?.success) {
+      const result = await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
+      if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
+        setCampaignsInfo({
+          count: result.campaigns_count || 0,
+          details: `${result.campaigns_count || 0} campanha(s) processada(s)`
+        })
       } else {
         setLastFetchInfo('')
+        setCampaignsInfo({count: 0})
       }
     }
-    
-    // SEMPRE buscar vendas para o período selecionado
-    await fetchVendasPeriodo(finalStartDate, finalEndDate)
-  }
-
-  const fetchInsightsWithCustomDates = async (startDate: string, endDate: string) => {
-    return await fetchInsightsWithPeriod('custom' as any, startDate, endDate)
   }
 
   if (!isConfigured) {
@@ -184,7 +126,7 @@ export function GestorMetaAdsMetrics() {
       <Card className="w-full bg-gray-900 border-gray-800">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-white">
-            <Activity className="h-5 w-5 text-purple-400" />
+            <Activity className="h-5 w-5" />
             Meta Ads - Métricas
           </CardTitle>
         </CardHeader>
@@ -204,20 +146,40 @@ export function GestorMetaAdsMetrics() {
       {/* Header */}
       <div>
         <h3 className="text-lg font-semibold flex items-center gap-2 text-white">
-          <Activity className="h-5 w-5 text-purple-400" />
-          Meta Ads - Relatórios dos Seus Clientes
+          <Activity className="h-5 w-5" />
+          Meta Ads - Relatórios
         </h3>
         <p className="text-sm text-gray-400">
-          Investimento em tráfego vs. Retorno em vendas dos seus clientes
+          Métricas das suas campanhas de tráfego pago
         </p>
       </div>
 
       {/* Filtro de datas */}
-      <AdminMetaAdsDateFilter 
+      <GestorMetaAdsDateFilter 
         onDateRangeChange={handleDateRangeChange}
         loading={fetchingInsights}
         lastFetchInfo={lastFetchInfo}
       />
+
+      {/* Informações sobre os dados */}
+      {lastFetchInfo && (
+        <Alert className="border-green-800 bg-green-900/20">
+          <Info className="h-4 w-4 text-green-400" />
+          <AlertDescription className="text-green-300">
+            <div className="font-medium mb-1">✅ {lastFetchInfo}</div>
+            {campaignsInfo.details && (
+              <div className="text-sm">
+                📊 {campaignsInfo.details}
+              </div>
+            )}
+            {insights && (
+              <div className="text-sm mt-1">
+                💰 Investimento total: {formatCurrency(parseFloat(insights.spend || '0'))}
+              </div>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Status de erro */}
       {lastError && (
@@ -227,7 +189,7 @@ export function GestorMetaAdsMetrics() {
             <div className="font-medium mb-1">Erro ao buscar dados:</div>
             <div className="text-sm">{lastError}</div>
             {lastError.includes('campanhas') && (
-              <div className="text-sm mt-2 text-red-300">
+              <div className="text-sm mt-2 text-red-400">
                 💡 <strong>Dica:</strong> Acesse o Facebook Ads Manager para verificar suas campanhas e certificar-se de que estão ativas.
               </div>
             )}
@@ -244,20 +206,84 @@ export function GestorMetaAdsMetrics() {
         </Card>
       )}
 
-      {/* Relatório de Custos e Lucro */}
+      {/* Cards de métricas */}
       {insights && (
-        <AdminCustoLucroReport 
-          vendasDia={vendasPeriodo}
-          investimentoTrafego={parseFloat(insights.spend) || 0}
-          loadingVendas={loadingVendas}
-        />
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">
+                Impressões
+              </CardTitle>
+              <Eye className="h-4 w-4 text-blue-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {parseInt(insights.impressions || '0').toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-400">
+                Visualizações dos anúncios
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">
+                Cliques
+              </CardTitle>
+              <MousePointer className="h-4 w-4 text-green-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {parseInt(insights.clicks || '0').toLocaleString()}
+              </div>
+              <p className="text-xs text-gray-400">
+                CTR: {parseFloat(insights.ctr || '0').toFixed(2)}%
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">
+                Investimento
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-red-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {formatCurrency(parseFloat(insights.spend || '0'))}
+              </div>
+              <p className="text-xs text-gray-400">
+                CPC: {formatCurrency(parseFloat(insights.cpc || '0'))}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-gray-300">
+                CPM
+              </CardTitle>
+              <TrendingUp className="h-4 w-4 text-purple-400" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-white">
+                {formatCurrency(parseFloat(insights.cpm || '0'))}
+              </div>
+              <p className="text-xs text-gray-400">
+                Custo por mil impressões
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       )}
 
       {/* Estado vazio */}
       {!fetchingInsights && !insights && !lastError && (
         <Card className="bg-gray-900 border-gray-800">
           <CardContent className="text-center py-8">
-            <Target className="h-12 w-12 mx-auto mb-4 text-gray-500 opacity-50" />
+            <Target className="h-12 w-12 mx-auto mb-4 text-gray-600 opacity-50" />
             <p className="font-medium text-gray-400">Nenhum dado disponível</p>
             <p className="text-sm text-gray-500 mt-1">
               Selecione um período acima para buscar os dados

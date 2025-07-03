@@ -178,7 +178,7 @@ export function GestorMetaAdsConfig() {
             <Alert className="mb-4 border-blue-800 bg-blue-900/20">
               <Info className="h-4 w-4 text-blue-400" />
               <AlertDescription className="text-blue-300">
-                <strong>Configuração do Gestor:</strong> Esta configuração será usada para buscar relatórios Meta Ads dos seus clientes.
+                <strong>Configuração do Gestor:</strong> Esta configuração será usada para buscar relatórios Meta Ads globais.
               </AlertDescription>
             </Alert>
 

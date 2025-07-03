@@ -23,6 +23,13 @@ interface InsightData {
   date_stop?: string
 }
 
+interface FetchInsightsResult {
+  success: boolean
+  message?: string
+  period_used?: string
+  campaigns_count: number
+}
+
 export function useGestorMetaAds() {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -104,10 +111,17 @@ export function useGestorMetaAds() {
     try {
       console.log('💾 [useGestorMetaAds] Salvando config GLOBAL...')
       
-      // Upsert com cliente_id = NULL (configuração global)
+      // Primeiro, deletar configuração existente para evitar conflitos
+      await supabase
+        .from('meta_ads_configs')
+        .delete()
+        .eq('email_usuario', user.email)
+        .is('cliente_id', null)
+
+      // Inserir nova configuração
       const { error } = await supabase
         .from('meta_ads_configs')
-        .upsert({
+        .insert({
           email_usuario: user.email,
           cliente_id: null, // IMPORTANTE: Config global
           api_id: newConfig.api_id,
@@ -115,9 +129,6 @@ export function useGestorMetaAds() {
           access_token: newConfig.access_token,
           ad_account_id: newConfig.ad_account_id,
           updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'email_usuario',
-          ignoreDuplicates: false
         })
 
       if (error) {
@@ -206,8 +217,8 @@ export function useGestorMetaAds() {
   }
 
   // Buscar insights hoje
-  const fetchTodayInsights = async () => {
-    if (!config) return { success: false, message: 'Configuração necessária' }
+  const fetchTodayInsights = async (): Promise<FetchInsightsResult> => {
+    if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
     setFetchingInsights(true)
     setLastError('')
@@ -224,7 +235,7 @@ export function useGestorMetaAds() {
             accessToken: config.access_token,
             adAccountId: config.ad_account_id
           },
-          period: 'today'
+          date_preset: 'today'
         }
       })
 
@@ -232,7 +243,7 @@ export function useGestorMetaAds() {
         console.error('❌ [useGestorMetaAds] Erro ao buscar insights:', error)
         const errorMsg = 'Erro ao buscar insights'
         setLastError(errorMsg)
-        return { success: false, message: errorMsg }
+        return { success: false, message: errorMsg, campaigns_count: 0 }
       }
 
       if (data?.success && data.insights?.length > 0) {
@@ -241,9 +252,9 @@ export function useGestorMetaAds() {
           impressions: (parseInt(acc.impressions || '0') + parseInt(insight.impressions || '0')).toString(),
           clicks: (parseInt(acc.clicks || '0') + parseInt(insight.clicks || '0')).toString(),
           spend: (parseFloat(acc.spend || '0') + parseFloat(insight.spend || '0')).toFixed(2),
-          cpm: '0', // Será recalculado
-          cpc: '0', // Será recalculado
-          ctr: '0'  // Será recalculado
+          cpm: '0',
+          cpc: '0', 
+          ctr: '0'
         }), {
           impressions: '0',
           clicks: '0',
@@ -268,25 +279,35 @@ export function useGestorMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useGestorMetaAds] Insights carregados:', totalInsights)
+        return { 
+          success: true, 
+          period_used: data.period_used,
+          campaigns_count: data.campaigns_count || 0
+        }
       } else {
+        setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado')
         console.log('📊 [useGestorMetaAds] Nenhum insight encontrado')
+        return { 
+          success: false, 
+          message: data?.message,
+          campaigns_count: data?.campaigns_count || 0
+        }
       }
 
-      return data
     } catch (error) {
       console.error('❌ [useGestorMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
-      return { success: false, message: errorMsg }
+      return { success: false, message: errorMsg, campaigns_count: 0 }
     } finally {
       setFetchingInsights(false)
     }
   }
 
   // Buscar insights com período
-  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom', startDate?: string, endDate?: string) => {
-    if (!config) return { success: false, message: 'Configuração necessária' }
+  const fetchInsightsWithPeriod = async (period: 'today' | 'yesterday' | 'last_7_days' | 'last_30_days' | 'custom', startDate?: string, endDate?: string): Promise<FetchInsightsResult> => {
+    if (!config) return { success: false, message: 'Configuração necessária', campaigns_count: 0 }
 
     setFetchingInsights(true)
     setLastError('')
@@ -294,26 +315,32 @@ export function useGestorMetaAds() {
     try {
       console.log('📊 [useGestorMetaAds] Buscando insights, período:', period)
       
-      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
-        body: {
-          action: 'get_insights',
-          config: {
-            appId: config.api_id,
-            appSecret: config.app_secret,
-            accessToken: config.access_token,
-            adAccountId: config.ad_account_id
-          },
-          period,
-          startDate,
-          endDate
+      const requestBody: any = {
+        action: 'get_insights',
+        config: {
+          appId: config.api_id,
+          appSecret: config.app_secret,
+          accessToken: config.access_token,
+          adAccountId: config.ad_account_id
         }
+      }
+
+      if (period === 'custom' && startDate && endDate) {
+        requestBody.startDate = startDate
+        requestBody.endDate = endDate
+      } else {
+        requestBody.date_preset = period
+      }
+
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: requestBody
       })
 
       if (error) {
         console.error('❌ [useGestorMetaAds] Erro ao buscar insights:', error)
         const errorMsg = 'Erro ao buscar insights'
         setLastError(errorMsg)
-        return { success: false, message: errorMsg }
+        return { success: false, message: errorMsg, campaigns_count: 0 }
       }
 
       if (data?.success && data.insights?.length > 0) {
@@ -349,18 +376,27 @@ export function useGestorMetaAds() {
 
         setInsights(totalInsights)
         console.log('✅ [useGestorMetaAds] Insights carregados:', totalInsights)
+        return { 
+          success: true, 
+          period_used: data.period_used,
+          campaigns_count: data.campaigns_count || 0
+        }
       } else {
         setInsights(null)
         setLastError(data?.message || 'Nenhum insight encontrado para o período')
         console.log('📊 [useGestorMetaAds] Nenhum insight encontrado')
+        return { 
+          success: false, 
+          message: data?.message,
+          campaigns_count: data?.campaigns_count || 0
+        }
       }
 
-      return data
     } catch (error) {
       console.error('❌ [useGestorMetaAds] Erro inesperado:', error)
       const errorMsg = 'Erro inesperado ao buscar insights'
       setLastError(errorMsg)
-      return { success: false, message: errorMsg }
+      return { success: false, message: errorMsg, campaigns_count: 0 }
     } finally {
       setFetchingInsights(false)
     }
