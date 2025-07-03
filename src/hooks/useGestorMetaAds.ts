@@ -93,7 +93,7 @@ export function useGestorMetaAds() {
     loadConfig()
   }, [loadConfig])
 
-  // Salvar configuração GLOBAL usando transação
+  // Salvar configuração GLOBAL usando RPC function
   const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
     if (!user?.email) {
       toast({
@@ -108,10 +108,10 @@ export function useGestorMetaAds() {
     setLastError('')
     
     try {
-      console.log('💾 [useGestorMetaAds] Salvando config GLOBAL com transação...')
+      console.log('💾 [useGestorMetaAds] Salvando config GLOBAL via RPC...')
       
-      // Usar transação para garantir consistência
-      const { error } = await supabase.rpc('save_gestor_meta_ads_config', {
+      // Tentar usar a função RPC primeiro
+      const { error: rpcError } = await supabase.rpc('save_gestor_meta_ads_config', {
         p_email_usuario: user.email,
         p_api_id: newConfig.api_id,
         p_app_secret: newConfig.app_secret,
@@ -119,11 +119,11 @@ export function useGestorMetaAds() {
         p_ad_account_id: newConfig.ad_account_id
       })
 
-      if (error) {
-        console.error('❌ [useGestorMetaAds] Erro ao salvar via RPC:', error)
+      if (rpcError) {
+        console.error('❌ [useGestorMetaAds] Erro no RPC, tentando fallback manual:', rpcError)
         
-        // Fallback: usar delete + insert manual
-        console.log('🔄 [useGestorMetaAds] Tentando salvamento manual...')
+        // Fallback manual melhorado
+        console.log('🔄 [useGestorMetaAds] Executando fallback manual...')
         
         // 1. Deletar configuração existente
         const { error: deleteError } = await supabase
@@ -134,6 +134,7 @@ export function useGestorMetaAds() {
 
         if (deleteError) {
           console.error('❌ [useGestorMetaAds] Erro ao deletar config existente:', deleteError)
+          // Não falha aqui, pode ser que não existia config anterior
         }
 
         // 2. Inserir nova configuração
@@ -146,6 +147,7 @@ export function useGestorMetaAds() {
             app_secret: newConfig.app_secret,
             access_token: newConfig.access_token,
             ad_account_id: newConfig.ad_account_id,
+            created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
 
@@ -153,13 +155,18 @@ export function useGestorMetaAds() {
           console.error('❌ [useGestorMetaAds] Erro ao inserir nova config:', insertError)
           toast({
             title: "Erro",
-            description: `Falha ao salvar: ${insertError.message}`,
+            description: `Falha ao salvar configuração: ${insertError.message}`,
             variant: "destructive",
           })
           return { success: false }
         }
+
+        console.log('✅ [useGestorMetaAds] Fallback manual executado com sucesso')
+      } else {
+        console.log('✅ [useGestorMetaAds] RPC executado com sucesso')
       }
 
+      // Atualizar estado local
       setConfig({
         ...newConfig,
         email_usuario: user.email
@@ -174,7 +181,7 @@ export function useGestorMetaAds() {
       return { success: true }
 
     } catch (error) {
-      console.error('❌ [useGestorMetaAds] Erro inesperado:', error)
+      console.error('❌ [useGestorMetaAds] Erro inesperado no salvamento:', error)
       toast({
         title: "Erro",
         description: `Erro inesperado: ${error}`,

@@ -943,6 +943,16 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      save_gestor_meta_ads_config: {
+        Args: {
+          p_email_usuario: string
+          p_api_id: string
+          p_app_secret: string
+          p_access_token: string
+          p_ad_account_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       email_gestor_enum:
