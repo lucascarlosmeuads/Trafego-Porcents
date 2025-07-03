@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
 
@@ -47,82 +47,104 @@ export function useClienteMetaAds(clienteId: string) {
   const [dateRange, setDateRange] = useState({ startDate: '', endDate: '' })
   const [autoLoadingData, setAutoLoadingData] = useState(false)
   const [lastDataUpdate, setLastDataUpdate] = useState<Date | null>(null)
+  const [configLoadAttempts, setConfigLoadAttempts] = useState(0)
 
-  // Carregar configuração do cliente específico
-  useEffect(() => {
-    const loadConfig = async () => {
-      if (!clienteId) {
-        setLoading(false)
-        return
-      }
-
-      console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', { clienteId })
-      
-      try {
-        // Primeiro, tentar buscar configuração específica do cliente
-        let { data: configData, error } = await supabase
-          .from('meta_ads_configs')
-          .select('*')
-          .eq('cliente_id', parseInt(clienteId))
-          .single()
-
-        // Se não encontrou configuração específica, buscar configuração global do gestor
-        if (error || !configData) {
-          console.log('🔍 [useClienteMetaAds] Buscando config global do gestor...')
-          
-          // Buscar o email do gestor do cliente
-          const { data: clienteData } = await supabase
-            .from('todos_clientes')
-            .select('email_gestor')
-            .eq('id', parseInt(clienteId))
-            .single()
-
-          if (clienteData?.email_gestor) {
-            const { data: globalConfig, error: globalError } = await supabase
-              .from('meta_ads_configs')
-              .select('*')
-              .eq('email_usuario', clienteData.email_gestor)
-              .is('cliente_id', null)
-              .single()
-
-            if (!globalError && globalConfig) {
-              configData = globalConfig
-              console.log('✅ [useClienteMetaAds] Config global encontrada:', globalConfig)
-            }
-          }
-        } else {
-          console.log('✅ [useClienteMetaAds] Config específica encontrada:', configData)
-        }
-
-        if (configData) {
-          const newConfig = {
-            appId: configData.api_id || '',
-            appSecret: configData.app_secret || '',
-            accessToken: configData.access_token || '',
-            adAccountId: configData.ad_account_id || ''
-          }
-          setConfig(newConfig)
-          
-          // Auto-carregar dados se configuração está completa
-          if (newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId) {
-            console.log('🚀 [useClienteMetaAds] Config completa, carregando dados automaticamente...')
-            await autoLoadData()
-          }
-        } else {
-          console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
-        }
-      } catch (error) {
-        console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
-      } finally {
-        setLoading(false)
-      }
+  // Função melhorada para carregar configuração
+  const loadConfig = useCallback(async (forceReload = false) => {
+    if (!clienteId) {
+      setLoading(false)
+      return
     }
 
+    console.log('🔍 [useClienteMetaAds] Carregando config do cliente:', { 
+      clienteId, 
+      forceReload,
+      attempt: configLoadAttempts + 1
+    })
+    
+    try {
+      // Primeiro, tentar buscar configuração específica do cliente
+      let { data: configData, error } = await supabase
+        .from('meta_ads_configs')
+        .select('*')
+        .eq('cliente_id', parseInt(clienteId))
+        .maybeSingle()
+
+      console.log('🔍 [useClienteMetaAds] Config específica resultado:', { configData, error })
+
+      // Se não encontrou configuração específica, buscar configuração global do gestor
+      if (!configData && !error) {
+        console.log('🔍 [useClienteMetaAds] Buscando config global do gestor...')
+        
+        // Buscar o email do gestor do cliente
+        const { data: clienteData } = await supabase
+          .from('todos_clientes')
+          .select('email_gestor')
+          .eq('id', parseInt(clienteId))
+          .single()
+
+        console.log('🔍 [useClienteMetaAds] Cliente data:', clienteData)
+
+        if (clienteData?.email_gestor) {
+          const { data: globalConfig, error: globalError } = await supabase
+            .from('meta_ads_configs')
+            .select('*')
+            .eq('email_usuario', clienteData.email_gestor)
+            .is('cliente_id', null)
+            .maybeSingle()
+
+          console.log('🔍 [useClienteMetaAds] Config global resultado:', { globalConfig, globalError })
+
+          if (!globalError && globalConfig) {
+            configData = globalConfig
+            console.log('✅ [useClienteMetaAds] Config global encontrada:', globalConfig)
+          }
+        }
+      }
+
+      if (configData) {
+        const newConfig = {
+          appId: configData.api_id || '',
+          appSecret: configData.app_secret || '',
+          accessToken: configData.access_token || '',
+          adAccountId: configData.ad_account_id || ''
+        }
+        setConfig(newConfig)
+        console.log('✅ [useClienteMetaAds] Config carregada:', newConfig)
+        
+        // Auto-carregar dados se configuração está completa e é um reload forçado
+        if (newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId && forceReload) {
+          console.log('🚀 [useClienteMetaAds] Config completa, carregando dados automaticamente...')
+          await autoLoadData(newConfig)
+        }
+      } else {
+        console.log('📝 [useClienteMetaAds] Nenhuma config encontrada')
+        setConfig({
+          appId: '',
+          appSecret: '',
+          accessToken: '',
+          adAccountId: ''
+        })
+      }
+
+      setConfigLoadAttempts(prev => prev + 1)
+    } catch (error) {
+      console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
+      setLastError('Erro ao carregar configuração')
+    } finally {
+      setLoading(false)
+    }
+  }, [clienteId, configLoadAttempts])
+
+  // Carregar configuração quando o clienteId mudar
+  useEffect(() => {
+    setConfigLoadAttempts(0)
     loadConfig()
   }, [clienteId])
 
   // Função para carregar dados automaticamente
-  const autoLoadData = async () => {
+  const autoLoadData = async (configToUse?: ClienteMetaAdsConfig) => {
+    const currentConfig = configToUse || config
     setAutoLoadingData(true)
     
     try {
@@ -134,8 +156,8 @@ export function useClienteMetaAds(clienteId: string) {
       
       // Carregar campanhas e insights em paralelo
       await Promise.all([
-        loadCampaigns(startDate, endDate),
-        loadInsights(startDate, endDate)
+        loadCampaigns(startDate, endDate, currentConfig),
+        loadInsights(startDate, endDate, currentConfig)
       ])
       
       setLastDataUpdate(new Date())
@@ -173,6 +195,12 @@ export function useClienteMetaAds(clienteId: string) {
 
       setConfig(newConfig)
       console.log('✅ [useClienteMetaAds] Config salva com sucesso')
+      
+      // Forçar reload da configuração para garantir persistência
+      setTimeout(() => {
+        loadConfig(true)
+      }, 500)
+      
       return { success: true }
     } catch (error) {
       console.error('❌ [useClienteMetaAds] Erro inesperado ao salvar:', error)
@@ -224,14 +252,15 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const loadCampaigns = async (startDate?: string, endDate?: string) => {
+  const loadCampaigns = async (startDate?: string, endDate?: string, configToUse?: ClienteMetaAdsConfig) => {
+    const currentConfig = configToUse || config
     console.log('📊 [useClienteMetaAds] Buscando campanhas do cliente:', clienteId)
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_campaigns',
-          config: config,
+          config: currentConfig,
           startDate,
           endDate
         }
@@ -256,14 +285,15 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const loadInsights = async (startDate?: string, endDate?: string) => {
+  const loadInsights = async (startDate?: string, endDate?: string, configToUse?: ClienteMetaAdsConfig) => {
+    const currentConfig = configToUse || config
     console.log('📈 [useClienteMetaAds] Buscando insights do cliente:', clienteId)
     
     try {
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'get_insights',
-          config: config,
+          config: currentConfig,
           startDate,
           endDate
         }
@@ -340,6 +370,11 @@ export function useClienteMetaAds(clienteId: string) {
     return await saveConfig(newConfig)
   }
 
+  const refreshConfig = useCallback(() => {
+    setLoading(true)
+    loadConfig(true)
+  }, [loadConfig])
+
   const isConfigured = config.appId && config.appSecret && config.accessToken && config.adAccountId
 
   return {
@@ -361,6 +396,8 @@ export function useClienteMetaAds(clienteId: string) {
     updateAdAccountId,
     dateRange,
     autoLoadingData,
-    lastDataUpdate
+    lastDataUpdate,
+    refreshConfig,
+    autoLoadData
   }
 }
