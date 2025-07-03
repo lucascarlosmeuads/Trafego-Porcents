@@ -11,9 +11,10 @@ import {
 interface AdminMainMenuProps {
   activeTab: string
   onTabSelect: (tab: string) => void
+  isCollapsed?: boolean
 }
 
-export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
+export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: AdminMainMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
@@ -34,6 +35,33 @@ export function AdminMainMenu({ activeTab, onTabSelect }: AdminMainMenuProps) {
       description: 'Central de atendimento'
     }
   ]
+
+  if (isCollapsed) {
+    return (
+      <div className="flex flex-col space-y-2">
+        {menuItems.map(item => (
+          <button
+            key={item.id}
+            className={`
+              w-10 h-10 rounded-lg border transition-all duration-200 group flex items-center justify-center
+              ${activeTab === item.id 
+                ? 'bg-gray-700/60 border-gray-600 shadow-lg' 
+                : 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20 hover:transform hover:scale-105 hover:shadow-md'
+              }
+            `}
+            onClick={() => onTabSelect(item.id)}
+            title={item.label}
+          >
+            <item.icon className={`h-4 w-4 ${
+              activeTab === item.id 
+                ? 'text-white' 
+                : 'text-gray-400 group-hover:text-white'
+            }`} />
+          </button>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <nav className="space-y-2">
