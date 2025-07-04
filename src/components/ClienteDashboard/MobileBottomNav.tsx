@@ -2,15 +2,13 @@
 import React from 'react'
 import { cn } from '@/lib/utils'
 import { 
-  Home, 
   FileText, 
   Upload, 
   Headphones, 
   DollarSign,
   Globe,
   BarChart3,
-  CheckSquare,
-  MessageCircle 
+  CheckSquare
 } from 'lucide-react'
 
 interface MobileBottomNavProps {
@@ -20,9 +18,9 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
   const navItems = [
-    { id: 'overview', icon: Home, label: 'Início' },
     { id: 'briefing', icon: FileText, label: 'Form' },
     { id: 'arquivos', icon: Upload, label: 'Upload' },
+    { id: 'suporte', icon: Headphones, label: 'Suporte' },
     { id: 'comissao', icon: DollarSign, label: 'Comissão' },
     { id: 'steps', icon: CheckSquare, label: 'Passos' }
   ]

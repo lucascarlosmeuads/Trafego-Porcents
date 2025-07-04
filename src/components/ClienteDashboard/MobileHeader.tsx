@@ -11,24 +11,20 @@ export function MobileHeader({ activeTab }: MobileHeaderProps) {
 
   const getTabTitle = (tab: string) => {
     switch (tab) {
-      case 'overview':
-        return 'Painel Principal'
       case 'briefing':
-        return 'Formulário'
+        return '1. Formulário'
       case 'arquivos':
-        return 'Materiais'
+        return '2. Materiais'
       case 'suporte':
-        return 'Suporte'
+        return '3. Suporte'
       case 'comissao':
-        return 'Comissão'
+        return '4. Comissão'
       case 'site':
-        return 'Site'
+        return '5. Site'
       case 'vendas':
-        return 'Métricas'
+        return '6. Métricas'
       case 'steps':
         return 'Guia Completo'
-      case 'chat':
-        return 'Chat'
       default:
         return 'Dashboard'
     }

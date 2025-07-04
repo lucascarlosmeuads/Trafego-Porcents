@@ -7,23 +7,20 @@ import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
-import { ClienteDashboardOverview } from './ClienteDashboard/ClienteDashboardOverview'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
 import { SuporteRapido } from './ClienteDashboard/SuporteRapido'
-import { ClienteComissaoConfirmacao } from './ClienteDashboard/ClienteComissaoConfirmacao'
+import { ComissaoInputManual } from './ClienteDashboard/ComissaoInputManual'
 import { ClienteSiteDescricao } from './ClienteDashboard/ClienteSiteDescricao'
-import { VendasManager } from './ClienteDashboard/VendasManager'
-import { OnboardingSteps } from './ClienteDashboard/OnboardingSteps'
-import { MobileOnboardingSteps } from './ClienteDashboard/MobileOnboardingSteps'
-import { ClienteChat } from './Chat/ClienteChat'
+import { MetricasMetaAds } from './ClienteDashboard/MetricasMetaAds'
+import { GuiaCompletoSimplificado } from './ClienteDashboard/GuiaCompletoSimplificado'
 import { LoadingFallback } from './LoadingFallback'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState('overview')
+  const [activeTab, setActiveTab] = useState('briefing') // Começar no primeiro passo
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   if (loading) {
@@ -47,15 +44,6 @@ export function ClienteDashboard() {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'overview':
-        return (
-          <ClienteDashboardOverview 
-            cliente={cliente}
-            briefing={briefing}
-            vendas={vendas}
-            arquivos={arquivos}
-          />
-        )
       case 'briefing':
         return (
           <BriefingForm 
@@ -74,34 +62,22 @@ export function ClienteDashboard() {
       case 'suporte':
         return (
           <SuporteRapido 
-            onBack={() => setActiveTab('overview')}
+            onBack={() => setActiveTab('briefing')}
           />
         )
       case 'comissao':
-        return <ClienteComissaoConfirmacao />
+        return <ComissaoInputManual />
       case 'site':
         return <ClienteSiteDescricao />
       case 'vendas':
-        return (
-          <VendasManager 
-            emailCliente={user?.email || ''}
-            vendas={vendas}
-            onVendasUpdated={refetch}
-          />
-        )
+        return <MetricasMetaAds />
       case 'steps':
-        return isMobile ? 
-          <MobileOnboardingSteps onTabChange={setActiveTab} /> : 
-          <OnboardingSteps onTabChange={setActiveTab} />
-      case 'chat':
-        return <ClienteChat />
+        return <GuiaCompletoSimplificado onTabChange={setActiveTab} />
       default:
         return (
-          <ClienteDashboardOverview 
-            cliente={cliente}
-            briefing={briefing}
-            vendas={vendas}
-            arquivos={arquivos}
+          <BriefingForm 
+            emailCliente={user?.email || ''}
+            onBriefingUpdated={refetch}
           />
         )
     }

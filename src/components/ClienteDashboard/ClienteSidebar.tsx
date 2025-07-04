@@ -5,7 +5,6 @@ import { ClienteProfileSection } from './ClienteProfileSection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { 
-  Home, 
   FileText, 
   Upload, 
   Headphones, 
@@ -13,7 +12,6 @@ import {
   Globe,
   BarChart3,
   CheckSquare,
-  MessageCircle,
   CheckCircle
 } from 'lucide-react'
 
@@ -25,12 +23,6 @@ interface ClienteSidebarProps {
 
 export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteSidebarProps) {
   const menuItems = [
-    {
-      id: 'overview',
-      label: 'Painel Principal',
-      icon: Home,
-      badge: null
-    },
     {
       id: 'briefing',
       label: '1. Formulário',
@@ -77,12 +69,6 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
       id: 'steps',
       label: 'Guia Completo',
       icon: CheckSquare,
-      badge: null
-    },
-    {
-      id: 'chat',
-      label: 'Chat Direto',
-      icon: MessageCircle,
       badge: null
     }
   ]
