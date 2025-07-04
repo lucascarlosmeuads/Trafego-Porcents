@@ -52,9 +52,6 @@ const etapa2Schema = z.object({
   abrangencia_atendimento: z.enum(['brasil', 'regiao'], {
     required_error: "Selecione a abrangência do atendimento",
   }),
-  tipo_prestacao_servico: z.enum(['produto_digital', 'produto_fisico', 'servico'], {
-    required_error: "Selecione o tipo de prestação",
-  }),
   forma_pagamento: z.enum(['cartao', 'pix', 'boleto'], {
     required_error: "Selecione a forma de pagamento",
   }),
@@ -108,7 +105,6 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
       investimento_diario: briefing?.investimento_diario || 0,
       direcionamento_campanha: briefing?.direcionamento_campanha || undefined,
       abrangencia_atendimento: briefing?.abrangencia_atendimento || undefined,
-      tipo_prestacao_servico: briefing?.tipo_prestacao_servico || undefined,
       forma_pagamento: briefing?.forma_pagamento as any || undefined,
       possui_facebook: briefing?.possui_facebook || false,
       possui_instagram: briefing?.possui_instagram || false,
@@ -148,7 +144,6 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         investimento_diario: form.getValues('investimento_diario'),
         direcionamento_campanha: form.getValues('direcionamento_campanha'),
         abrangencia_atendimento: form.getValues('abrangencia_atendimento'),
-        tipo_prestacao_servico: form.getValues('tipo_prestacao_servico'),
         forma_pagamento: form.getValues('forma_pagamento'),
         possui_facebook: form.getValues('possui_facebook'),
         possui_instagram: form.getValues('possui_instagram'),
@@ -196,7 +191,6 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         investimento_diario: values.investimento_diario,
         direcionamento_campanha: values.direcionamento_campanha,
         abrangencia_atendimento: values.abrangencia_atendimento,
-        tipo_prestacao_servico: values.tipo_prestacao_servico,
         forma_pagamento: values.forma_pagamento,
         possui_facebook: values.possui_facebook,
         possui_instagram: values.possui_instagram,
@@ -532,7 +526,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel className="text-gray-900 font-semibold">
-                            3️⃣ Você atende ou vende o seu produto em todo Brasil, ou apenas uma região específica?
+                            3️⃣ Sua empresa atende:
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
@@ -561,50 +555,11 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
 
                     <FormField
                       control={form.control}
-                      name="tipo_prestacao_servico"
-                      render={({ field }) => (
-                        <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-900 font-semibold">
-                            4️⃣ Qual é o tipo da sua prestação?
-                          </FormLabel>
-                          <FormControl>
-                            <RadioGroup
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              className="flex flex-col space-y-2"
-                            >
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="produto_digital" id="prestacao-produto-digital" />
-                                <Label htmlFor="prestacao-produto-digital" className="text-gray-800 cursor-pointer">
-                                  Venda produto digital
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="produto_fisico" id="prestacao-produto-fisico" />
-                                <Label htmlFor="prestacao-produto-fisico" className="text-gray-800 cursor-pointer">
-                                  Venda produto físico
-                                </Label>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <RadioGroupItem value="servico" id="prestacao-servico" />
-                                <Label htmlFor="prestacao-servico" className="text-gray-800 cursor-pointer">
-                                  Venda serviço
-                                </Label>
-                              </div>
-                            </RadioGroup>
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    <FormField
-                      control={form.control}
                       name="forma_pagamento"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel className="text-gray-900 font-semibold">
-                            5️⃣ Como deseja inserir o investimento para a campanha?
+                            4️⃣ Como deseja inserir o investimento para a campanha?
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
@@ -651,7 +606,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                6️⃣ Você já possui conta no Facebook?
+                                5️⃣ Você já possui conta no Facebook?
                               </FormLabel>
                             </div>
                           </FormItem>
@@ -671,7 +626,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                7️⃣ Você já possui conta no Instagram?
+                                6️⃣ Você já possui conta no Instagram?
                               </FormLabel>
                             </div>
                           </FormItem>
@@ -691,7 +646,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                8️⃣ Você utiliza WhatsApp Business?
+                                7️⃣ Você utiliza WhatsApp Business?
                               </FormLabel>
                             </div>
                           </FormItem>
