@@ -10,19 +10,19 @@ export function ClienteProfileSection() {
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardContent className="pt-6">
-        <div className="flex flex-col items-center space-y-6">
-          {/* Logo da Tráfego Por Cents - TAMANHO MÁXIMO */}
-          <div className="flex justify-center">
+        <div className="flex flex-col items-center space-y-2">
+          {/* Logo da Tráfego Por Cents - OCUPANDO TODO O ESPAÇO */}
+          <div className="flex justify-center w-full">
             <img 
               src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png" 
               alt="Tráfego Por Cents" 
-              className="h-48 w-auto object-contain"
+              className="h-56 w-auto object-contain max-w-full"
             />
           </div>
           
-          {/* Informações do usuário - bem menores */}
+          {/* Informações do usuário - bem próximas da logo */}
           <div className="text-center space-y-1">
-            <h3 className="text-xs font-medium text-white opacity-70">
+            <h3 className="text-sm font-medium text-white opacity-70">
               {profileData?.nome_display || 'Cliente'}
             </h3>
             <p className="text-gray-500 text-xs opacity-60">
