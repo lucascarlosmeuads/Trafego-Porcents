@@ -2,7 +2,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
-import { ClientesTable } from './ClientesTable'
+import { AdminTable } from './AdminTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
@@ -128,22 +128,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       case 'clientes':
       default:
         return (
-          <div className="space-y-4 w-full">
-            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
-            {selectedManager !== '__GESTORES__' && (
-              <div className="bg-card border rounded-lg p-4">
-                <ManagerSelector 
-                  selectedManager={selectedManager}
-                  onManagerSelect={onManagerSelect}
-                  isAdminContext={true}
-                />
-              </div>
-            )}
-            
-            {/* Admin panel: Pass selectedManager directly for proper filtering */}
-            <div className="w-full">
-              <ClientesTable selectedManager={selectedManager} />
-            </div>
+          <div className="w-full">
+            {/* Usar AdminTable em vez de ClientesTable */}
+            <AdminTable />
           </div>
         )
     }
