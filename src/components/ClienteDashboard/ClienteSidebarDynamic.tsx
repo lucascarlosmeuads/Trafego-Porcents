@@ -1,3 +1,4 @@
+
 import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -83,18 +84,20 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
   return (
     <Sidebar className="bg-background border-r border-border">
       <SidebarHeader className="p-4 border-b border-border">
-        {/* Logo Section - Visível tanto no Desktop quanto Mobile */}
-        <div className="flex flex-col items-center space-y-3">
-          <img 
-            src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-            alt="Tráfego Por Cents" 
-            className="h-12 w-auto object-contain"
-          />
-          <div className="text-center">
-            <p className="text-sm font-medium text-foreground">
+        {/* Logo Section - Sempre Visível */}
+        <div className="flex flex-col items-center space-y-3 w-full">
+          <div className="w-full flex justify-center">
+            <img 
+              src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+              alt="Tráfego Por Cents" 
+              className="h-16 w-auto object-contain max-w-full"
+            />
+          </div>
+          <div className="text-center w-full">
+            <p className="text-sm font-medium text-foreground truncate">
               {clienteInfo?.nome_cliente || 'Cliente'}
             </p>
-            <p className="text-xs text-muted-foreground opacity-60">
+            <p className="text-xs text-muted-foreground opacity-60 truncate">
               {user?.email}
             </p>
           </div>
