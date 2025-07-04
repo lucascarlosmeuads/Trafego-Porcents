@@ -28,7 +28,7 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
   ]
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 px-2 py-2 z-50">
+    <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border px-2 py-2 z-50 mobile-safe-nav">
       <div className="flex justify-around">
         {navItems.map((item) => {
           const Icon = item.icon
@@ -41,8 +41,8 @@ export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps
               className={cn(
                 "flex flex-col items-center justify-center py-2 px-3 rounded-lg transition-colors min-w-0 flex-1",
                 isActive 
-                  ? "bg-blue-50 text-blue-600" 
-                  : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+                  ? "bg-primary text-primary-foreground" 
+                  : "text-muted-foreground hover:text-foreground hover:bg-accent"
               )}
             >
               <Icon className="h-5 w-5 mb-1" />

@@ -32,12 +32,12 @@ export function ClienteDashboard() {
 
   if (!cliente) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-foreground mb-2">
             Acesso não encontrado
           </h2>
-          <p className="text-gray-600">
+          <p className="text-muted-foreground">
             Não foi possível encontrar suas informações. Entre em contato com seu gestor.
           </p>
         </div>
@@ -109,13 +109,15 @@ export function ClienteDashboard() {
 
   if (isMobile) {
     return (
-      <div className="flex flex-col h-screen bg-gray-50">
+      <div className="flex flex-col h-screen bg-background mobile-container">
         <MobileHeader 
           activeTab={activeTab}
         />
         
-        <main className="flex-1 overflow-y-auto pb-16">
-          {renderContent()}
+        <main className="flex-1 overflow-y-auto pb-16 bg-background">
+          <div className="min-h-full">
+            {renderContent()}
+          </div>
         </main>
 
         <MobileBottomNav 
@@ -132,15 +134,15 @@ export function ClienteDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background overflow-hidden">
       <ClienteSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         clienteInfo={cliente}
       />
       
-      <main className="flex-1 overflow-y-auto">
-        <div className="p-6">
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="p-6 min-h-full">
           {renderContent()}
         </div>
       </main>
