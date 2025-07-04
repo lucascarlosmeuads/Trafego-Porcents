@@ -240,6 +240,11 @@ export function useAdminTableLogic() {
     fetchAllClientes()
   }
 
+  // Função para recarregar clientes (nova)
+  const refetchClientes = () => {
+    fetchAllClientes()
+  }
+
   return {
     clientes,
     loading,
@@ -247,6 +252,7 @@ export function useAdminTableLogic() {
     transferindoCliente,
     handleTransferirCliente,
     handleStatusChange,
-    handleComissionUpdate
+    handleComissionUpdate,
+    refetchClientes
   }
 }
