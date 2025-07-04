@@ -10,22 +10,22 @@ export function ClienteProfileSection() {
   return (
     <Card className="bg-gray-900 border-gray-800">
       <CardContent className="pt-6">
-        <div className="flex flex-col items-center space-y-4">
-          {/* Logo da Tráfego Por Cents */}
+        <div className="flex flex-col items-center space-y-6">
+          {/* Logo da Tráfego Por Cents - DESTAQUE */}
           <div className="flex justify-center">
             <img 
               src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png" 
               alt="Tráfego Por Cents" 
-              className="h-16 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
           
-          {/* Informações do usuário */}
+          {/* Informações do usuário - menores */}
           <div className="text-center space-y-1">
-            <h3 className="text-lg font-semibold text-white">
+            <h3 className="text-sm font-medium text-white opacity-80">
               {profileData?.nome_display || 'Cliente'}
             </h3>
-            <p className="text-gray-400 text-sm">
+            <p className="text-gray-500 text-xs">
               {user?.email}
             </p>
           </div>
