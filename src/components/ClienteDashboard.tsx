@@ -87,6 +87,8 @@ export function ClienteDashboard() {
       <div className="flex flex-col h-screen bg-background mobile-container">
         <MobileHeader 
           activeTab={activeTab}
+          onTabChange={setActiveTab}
+          clienteInfo={cliente}
         />
         
         <main className="flex-1 overflow-y-auto pb-16 bg-background">

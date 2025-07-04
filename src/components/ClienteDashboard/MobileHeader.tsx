@@ -1,12 +1,15 @@
 
 import React from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { MobileSidebar } from './MobileSidebar'
 
 interface MobileHeaderProps {
   activeTab: string
+  onTabChange: (tab: string) => void
+  clienteInfo: any
 }
 
-export function MobileHeader({ activeTab }: MobileHeaderProps) {
+export function MobileHeader({ activeTab, onTabChange, clienteInfo }: MobileHeaderProps) {
   const { user } = useAuth()
 
   const getTabTitle = (tab: string) => {
@@ -34,6 +37,11 @@ export function MobileHeader({ activeTab }: MobileHeaderProps) {
     <header className="bg-card border-b border-border px-4 py-3 mobile-safe">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
+          <MobileSidebar 
+            activeTab={activeTab}
+            onTabChange={onTabChange}
+            clienteInfo={clienteInfo}
+          />
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">TP</span>
           </div>
