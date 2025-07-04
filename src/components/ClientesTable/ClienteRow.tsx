@@ -208,7 +208,6 @@ export function ClienteRow({
         <TableCell className="p-1">
           <BriefingMaterialsModal 
             emailCliente={clienteInfo.emailCliente}
-            clienteName={clienteInfo.nomeCliente}
             trigger={
               <Button
                 size="sm"
