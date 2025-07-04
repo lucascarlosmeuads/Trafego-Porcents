@@ -100,3 +100,52 @@ export const logVendasQuery = (startDate: string, endDate: string, context: stri
     currentTimeBrazil: getBrazilDate().toLocaleString('pt-BR', { timeZone: BRAZIL_TIMEZONE })
   })
 }
+
+// Debug: Log detalhado de vendas encontradas para auditoria
+export const logVendasAuditoria = (
+  startDate: string, 
+  endDate: string, 
+  vendasCliente: any[], 
+  vendasTodosClientes: any[], 
+  context: string
+) => {
+  console.log(`🔍 [${context}] === AUDITORIA DETALHADA DE VENDAS ===`)
+  console.log(`📅 Período: ${startDate} até ${endDate}`)
+  
+  // Log vendas_cliente
+  if (vendasCliente && vendasCliente.length > 0) {
+    console.log(`💰 VENDAS_CLIENTE encontradas: ${vendasCliente.length}`)
+    vendasCliente.forEach((venda, index) => {
+      console.log(`  ${index + 1}. Email: ${venda.email_cliente} | Data: ${venda.data_venda} | Valor: R$ ${venda.valor_venda}`)
+    })
+    const totalVendasCliente = vendasCliente.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0)
+    console.log(`💵 Total vendas_cliente: R$ ${totalVendasCliente.toFixed(2)}`)
+  } else {
+    console.log(`❌ VENDAS_CLIENTE: Nenhuma venda encontrada`)
+  }
+  
+  // Log todos_clientes
+  if (vendasTodosClientes && vendasTodosClientes.length > 0) {
+    console.log(`👥 TODOS_CLIENTES encontrados: ${vendasTodosClientes.length}`)
+    vendasTodosClientes.forEach((cliente, index) => {
+      console.log(`  ${index + 1}. Email: ${cliente.email_cliente} | Data: ${cliente.data_venda} | Valor Inicial: R$ ${cliente.valor_venda_inicial || 0} | Created: ${cliente.created_at}`)
+    })
+    const totalTodosClientes = vendasTodosClientes.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
+    console.log(`💵 Total todos_clientes: R$ ${totalTodosClientes.toFixed(2)}`)
+  } else {
+    console.log(`❌ TODOS_CLIENTES: Nenhum cliente encontrado`)
+  }
+  
+  const totalGeral = (vendasCliente?.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0) || 0) +
+                     (vendasTodosClientes?.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0) || 0)
+  
+  console.log(`🎯 TOTAL GERAL: R$ ${totalGeral.toFixed(2)}`)
+  console.log(`🔍 [${context}] === FIM AUDITORIA ===`)
+  
+  return {
+    vendasClienteCount: vendasCliente?.length || 0,
+    todosClientesCount: vendasTodosClientes?.length || 0,
+    totalValue: totalGeral,
+    totalCount: (vendasCliente?.length || 0) + (vendasTodosClientes?.length || 0)
+  }
+}
