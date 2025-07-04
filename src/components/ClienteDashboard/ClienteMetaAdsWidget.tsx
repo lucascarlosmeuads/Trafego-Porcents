@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -39,23 +38,16 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const [lastFetchInfo, setLastFetchInfo] = useState('')
   const [fallbackMessage, setFallbackMessage] = useState('')
   const [showDiagnostic, setShowDiagnostic] = useState(false)
+  const [currentPeriod, setCurrentPeriod] = useState('today')
 
   // Auto-carregar métricas quando configurado
   useEffect(() => {
-    console.log('🔍 [WIDGET DIAGNÓSTICO] useEffect disparado:', {
-      isConfigured,
-      hasInsights: insights.length > 0,
-      clienteId,
-      diagnosticInfo
-    })
-    
     if (isConfigured && insights.length === 0) {
-      console.log('🔄 [WIDGET DIAGNÓSTICO] Carregando métricas automaticamente...')
       handleLoadMetrics()
     }
   }, [isConfigured])
 
-  const handleLoadMetrics = async (period: string = 'today') => {
+  const handleLoadMetrics = async (period: string = currentPeriod) => {
     console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId })
     setLoadingData(true)
     setLastFetchInfo('')
@@ -78,6 +70,12 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     }
     
     setLoadingData(false)
+  }
+
+  const handlePeriodSelect = async (period: string) => {
+    console.log('📅 [WIDGET] Selecionando período:', period)
+    setCurrentPeriod(period)
+    await handleLoadMetrics(period)
   }
 
   const handleRefreshConfig = async () => {
@@ -305,10 +303,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <div className="space-y-2">
                 <p>{lastError}</p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('yesterday')}>
+                  <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('yesterday')}>
                     Tentar Ontem
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('last_7_days')}>
+                  <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('last_7_days')}>
                     Últimos 7 dias
                   </Button>
                 </div>
@@ -360,14 +358,14 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             <p className="text-sm text-gray-500 mb-3">
               Carregue as métricas Meta Ads
             </p>
-            <div className="flex gap-2 justify-center">
-              <Button size="sm" onClick={() => handleLoadMetrics('today')}>
+            <div className="flex gap-2 justify-center flex-wrap">
+              <Button size="sm" onClick={() => handlePeriodSelect('today')}>
                 Hoje
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('yesterday')}>
+              <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('yesterday')}>
                 Ontem
               </Button>
-              <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('last_7_days')}>
+              <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('last_7_days')}>
                 7 dias
               </Button>
             </div>

@@ -1,11 +1,11 @@
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useClienteMetaAds } from '@/hooks/useClienteMetaAds'
+import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { formatCurrency } from '@/lib/utils'
@@ -29,51 +29,66 @@ interface ClienteCampanhasProps {
 export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
+  
+  // Usando o hook simplificado unificado
   const {
     loading,
-    fetchInsights,
-    fetchDataWithDateRange,
     insights,
     isConfigured,
     lastError,
-    autoLoadingData
-  } = useClienteMetaAds(cliente?.id?.toString() || '')
+    loadMetricsWithPeriod
+  } = useClienteMetaAdsSimplified(cliente?.id?.toString() || '')
 
   const [selectedPeriod, setSelectedPeriod] = useState('last_7_days')
   const [loadingData, setLoadingData] = useState(false)
+  const [lastFetchInfo, setLastFetchInfo] = useState('')
+
+  // Auto-carregar métricas quando configurado
+  useEffect(() => {
+    console.log('🔍 [ClienteCampanhas] useEffect disparado:', {
+      isConfigured,
+      hasInsights: insights.length > 0,
+      clienteId: cliente?.id
+    })
+    
+    if (isConfigured && insights.length === 0) {
+      console.log('🔄 [ClienteCampanhas] Carregando métricas automaticamente...')
+      handleLoadData()
+    }
+  }, [isConfigured])
 
   const handleLoadData = async () => {
+    console.log('📊 [ClienteCampanhas] Carregando dados para período:', selectedPeriod)
     setLoadingData(true)
+    setLastFetchInfo('')
     
-    let startDate = ''
-    let endDate = ''
+    const result = await loadMetricsWithPeriod(selectedPeriod)
     
-    const today = new Date()
+    console.log('📊 [ClienteCampanhas] Resultado do carregamento:', result)
     
-    switch (selectedPeriod) {
-      case 'today':
-        startDate = endDate = today.toISOString().split('T')[0]
-        break
-      case 'yesterday':
-        const yesterday = new Date(today)
-        yesterday.setDate(yesterday.getDate() - 1)
-        startDate = endDate = yesterday.toISOString().split('T')[0]
-        break
-      case 'last_7_days':
-        const week = new Date(today)
-        week.setDate(week.getDate() - 7)
-        startDate = week.toISOString().split('T')[0]
-        endDate = today.toISOString().split('T')[0]
-        break
-      case 'last_30_days':
-        const month = new Date(today)
-        month.setDate(month.getDate() - 30)
-        startDate = month.toISOString().split('T')[0]
-        endDate = today.toISOString().split('T')[0]
-        break
+    if (result.success) {
+      setLastFetchInfo(`Dados carregados: ${result.period_used || selectedPeriod}`)
+    } else {
+      setLastFetchInfo('')
     }
     
-    await fetchDataWithDateRange(startDate, endDate)
+    setLoadingData(false)
+  }
+
+  const handlePeriodChange = async (newPeriod: string) => {
+    console.log('📅 [ClienteCampanhas] Mudando período de', selectedPeriod, 'para', newPeriod)
+    setSelectedPeriod(newPeriod)
+    
+    // Carregar dados automaticamente quando o período muda
+    setLoadingData(true)
+    setLastFetchInfo('')
+    
+    const result = await loadMetricsWithPeriod(newPeriod)
+    
+    if (result.success) {
+      setLastFetchInfo(`Dados carregados: ${result.period_used || newPeriod}`)
+    }
+    
     setLoadingData(false)
   }
 
@@ -164,11 +179,14 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
                   <Calendar className="w-5 h-5" />
                   Período das Métricas
                 </CardTitle>
+                {lastFetchInfo && (
+                  <p className="text-sm text-green-400">{lastFetchInfo}</p>
+                )}
               </CardHeader>
               <CardContent>
                 <div className="flex gap-4 items-end">
                   <div className="flex-1">
-                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                    <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
                       <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
                         <SelectValue />
                       </SelectTrigger>
@@ -183,9 +201,9 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
 
                   <Button 
                     onClick={handleLoadData}
-                    disabled={loadingData || autoLoadingData}
+                    disabled={loadingData}
                   >
-                    {(loadingData || autoLoadingData) ? (
+                    {loadingData ? (
                       <RefreshCw className="w-4 h-4 animate-spin mr-2" />
                     ) : (
                       <RefreshCw className="w-4 h-4 mr-2" />
@@ -295,6 +313,18 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
                   </Button>
                 </CardContent>
               </Card>
+            )}
+
+            {/* Loading state durante carregamento */}
+            {loadingData && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-gray-900 p-6 rounded-lg border border-gray-700">
+                  <div className="text-center">
+                    <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
+                    <p className="text-white">Carregando métricas para {getPeriodLabel()}...</p>
+                  </div>
+                </div>
+              </div>
             )}
           </div>
         )}
