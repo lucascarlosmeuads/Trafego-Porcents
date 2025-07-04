@@ -1,5 +1,3 @@
-
-
 import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -94,7 +92,7 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
           </div>
         </div>
 
-        {/* Logo Section - Espaço completo sem interferência */}
+        {/* Logo Section - Igual ao mobile, só email cinza */}
         <div className="flex flex-col items-center space-y-4 w-full">
           <div className="w-full flex justify-center py-3">
             <img 
@@ -104,9 +102,6 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
             />
           </div>
           <div className="text-center w-full px-2">
-            <p className="text-sm font-medium text-foreground truncate">
-              {clienteInfo?.nome_cliente || 'Cliente'}
-            </p>
             <p className="text-xs text-muted-foreground opacity-60 truncate">
               {user?.email}
             </p>
@@ -194,4 +189,3 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
     </Sidebar>
   )
 }
-
