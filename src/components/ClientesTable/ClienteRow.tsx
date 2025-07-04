@@ -1,5 +1,5 @@
 
-import { TableRow } from '@/components/ui/table'
+import { TableRow, TableCell } from '@/components/ui/table'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
