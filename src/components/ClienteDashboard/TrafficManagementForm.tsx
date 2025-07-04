@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -48,6 +49,9 @@ const etapa2Schema = z.object({
   investimento_diario: z.number().min(1, "Investimento deve ser maior que R$ 1"),
   direcionamento_campanha: z.enum(['whatsapp', 'site'], {
     required_error: "Selecione o direcionamento da campanha",
+  }),
+  tipo_prestacao_servico: z.enum(['produto_digital', 'produto_fisico', 'servico'], {
+    required_error: "Selecione o tipo da sua prestação",
   }),
   abrangencia_atendimento: z.enum(['brasil', 'regiao'], {
     required_error: "Selecione a abrangência do atendimento",
@@ -104,6 +108,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
       quer_site: briefing?.quer_site ? 'sim' : 'nao',
       investimento_diario: briefing?.investimento_diario || 0,
       direcionamento_campanha: briefing?.direcionamento_campanha || undefined,
+      tipo_prestacao_servico: briefing?.tipo_prestacao_servico || undefined,
       abrangencia_atendimento: briefing?.abrangencia_atendimento || undefined,
       forma_pagamento: briefing?.forma_pagamento as any || undefined,
       possui_facebook: briefing?.possui_facebook || false,
@@ -143,6 +148,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
       const etapa2Values = {
         investimento_diario: form.getValues('investimento_diario'),
         direcionamento_campanha: form.getValues('direcionamento_campanha'),
+        tipo_prestacao_servico: form.getValues('tipo_prestacao_servico'),
         abrangencia_atendimento: form.getValues('abrangencia_atendimento'),
         forma_pagamento: form.getValues('forma_pagamento'),
         possui_facebook: form.getValues('possui_facebook'),
@@ -190,6 +196,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         quer_site: values.quer_site === 'sim',
         investimento_diario: values.investimento_diario,
         direcionamento_campanha: values.direcionamento_campanha,
+        tipo_prestacao_servico: values.tipo_prestacao_servico,
         abrangencia_atendimento: values.abrangencia_atendimento,
         forma_pagamento: values.forma_pagamento,
         possui_facebook: values.possui_facebook,
@@ -522,11 +529,50 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
 
                     <FormField
                       control={form.control}
+                      name="tipo_prestacao_servico"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel className="text-gray-900 font-semibold">
+                            3️⃣ Qual é o tipo da sua prestação?
+                          </FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              value={field.value}
+                              className="flex flex-col space-y-2"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="produto_digital" id="tipo-digital" />
+                                <Label htmlFor="tipo-digital" className="text-gray-800 cursor-pointer">
+                                  Venda produto digital
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="produto_fisico" id="tipo-fisico" />
+                                <Label htmlFor="tipo-fisico" className="text-gray-800 cursor-pointer">
+                                  Venda produto físico
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="servico" id="tipo-servico" />
+                                <Label htmlFor="tipo-servico" className="text-gray-800 cursor-pointer">
+                                  Venda serviço
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
                       name="abrangencia_atendimento"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel className="text-gray-900 font-semibold">
-                            3️⃣ Sua empresa atende:
+                            4️⃣ Você atende ou vende o seu produto em todo Brasil, ou apenas uma região específica?
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
@@ -559,7 +605,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       render={({ field }) => (
                         <FormItem className="space-y-3">
                           <FormLabel className="text-gray-900 font-semibold">
-                            4️⃣ Como deseja inserir o investimento para a campanha?
+                            5️⃣ Como deseja inserir o investimento para a campanha?
                           </FormLabel>
                           <FormControl>
                             <RadioGroup
@@ -606,7 +652,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                5️⃣ Você já possui conta no Facebook?
+                                6️⃣ Você já possui conta no Facebook?
                               </FormLabel>
                             </div>
                           </FormItem>
@@ -626,7 +672,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                6️⃣ Você já possui conta no Instagram?
+                                7️⃣ Você já possui conta no Instagram?
                               </FormLabel>
                             </div>
                           </FormItem>
@@ -646,7 +692,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             </FormControl>
                             <div className="space-y-1 leading-none">
                               <FormLabel className="text-gray-900 font-semibold">
-                                7️⃣ Você utiliza WhatsApp Business?
+                                8️⃣ Você utiliza WhatsApp Business?
                               </FormLabel>
                             </div>
                           </FormItem>
