@@ -1,4 +1,3 @@
-
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, Mail, AtSign } from 'lucide-react'
@@ -16,7 +15,6 @@ import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
-import { useState } from 'react'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -72,7 +70,6 @@ export function ClienteRow({
   onSitePagoChange
 }: ClienteRowProps) {
   const { getClienteOrigem } = useClienteOrigem()
-  const [briefingModalOpen, setBriefingModalOpen] = useState(false)
   
   const formatDate = (dateString: string) => {
     if (!dateString || dateString.trim() === '') return 'N/A'
@@ -193,20 +190,18 @@ export function ClienteRow({
         />
 
         <TableCell className="p-1">
-          <Button
-            size="sm"
-            variant="outline"
-            className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
-            onClick={() => setBriefingModalOpen(true)}
-          >
-            <Folder className="h-2.5 w-2.5" />
-          </Button>
-          
           <BriefingMaterialsModal 
-            open={briefingModalOpen}
-            onClose={() => setBriefingModalOpen(false)}
-            briefing={null} // This will be fetched inside the modal
-            clienteName={cliente.nome_cliente || ''}
+            emailCliente={cliente.email_cliente || ''}
+            nomeCliente={cliente.nome_cliente || ''}
+            trigger={
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
+              >
+                <Folder className="h-2.5 w-2.5" />
+              </Button>
+            }
           />
         </TableCell>
 
