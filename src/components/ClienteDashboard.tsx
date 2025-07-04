@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { ClienteSidebarDynamic } from './ClienteDashboard/ClienteSidebarDynamic'
-import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
 import { ArquivosUpload } from './ClienteDashboard/ArquivosUpload'
@@ -98,16 +97,11 @@ export function ClienteDashboard() {
             clienteInfo={cliente}
           />
           
-          <main className="flex-1 overflow-y-auto pb-16 bg-background">
+          <main className="flex-1 overflow-y-auto bg-background">
             <div className="min-h-full">
               {renderContent()}
             </div>
           </main>
-
-          <MobileBottomNav 
-            activeTab={activeTab} 
-            onTabChange={setActiveTab}
-          />
         </div>
       )
     }

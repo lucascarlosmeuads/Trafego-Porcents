@@ -6,7 +6,6 @@ import { ProgressTracker } from './ProgressTracker'
 import { StepCard } from './StepCard'
 import { GameElements } from './GameElements'
 import { ImportantReminders } from './ImportantReminders'
-import { ClienteWelcomeHeader } from './ClienteWelcomeHeader'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface ClienteHomeDashboardProps {
@@ -123,9 +122,6 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
 
   return (
     <div className="p-6 space-y-6 min-h-screen">
-      {/* Header de Boas-vindas */}
-      <ClienteWelcomeHeader />
-
       {/* Barra de Progresso Principal */}
       <ProgressTracker
         percentage={progress.percentage}
