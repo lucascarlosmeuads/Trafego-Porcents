@@ -2,7 +2,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
-import { useToast } from '@/hooks/use-toast'
 
 interface ClienteMetaAdsConfig {
   appId: string
@@ -24,7 +23,6 @@ interface InsightData {
 
 export function useClienteMetaAdsSimplified(clienteId: string) {
   const { user } = useAuth()
-  const { toast } = useToast()
   
   const [config, setConfig] = useState<ClienteMetaAdsConfig>({
     appId: '',
@@ -34,14 +32,11 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
   })
   
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [testing, setTesting] = useState(false)
   const [insights, setInsights] = useState<InsightData[]>([])
   const [lastError, setLastError] = useState<string>('')
-  const [connectionSteps, setConnectionSteps] = useState<any>(null)
   const [isConfigured, setIsConfigured] = useState(false)
 
-  // Carregar configuração
+  // Carregar configuração (apenas visualização - salva pelo gestor)
   const loadConfig = useCallback(async () => {
     if (!clienteId) {
       setLoading(false)
@@ -51,17 +46,42 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     console.log('🔍 Carregando config do cliente:', clienteId)
     
     try {
-      const { data: configData, error } = await supabase
+      // Buscar configuração específica do cliente
+      let { data: configData, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
         .eq('cliente_id', parseInt(clienteId))
-        .eq('email_usuario', user?.email || '')
         .maybeSingle()
 
-      if (error) {
-        console.error('❌ Erro ao carregar config:', error)
-        setLastError('Erro ao carregar configuração')
-      } else if (configData) {
+      console.log('🔍 Config específica resultado:', { configData, error })
+
+      // Se não encontrou configuração específica, buscar configuração global do gestor
+      if (!configData && !error) {
+        console.log('🔍 Buscando config global do gestor...')
+        
+        // Buscar o email do gestor do cliente
+        const { data: clienteData } = await supabase
+          .from('todos_clientes')
+          .select('email_gestor')
+          .eq('id', parseInt(clienteId))
+          .single()
+
+        if (clienteData?.email_gestor) {
+          const { data: globalConfig, error: globalError } = await supabase
+            .from('meta_ads_configs')
+            .select('*')
+            .eq('email_usuario', clienteData.email_gestor)
+            .is('cliente_id', null)
+            .maybeSingle()
+
+          if (!globalError && globalConfig) {
+            configData = globalConfig
+            console.log('✅ Config global encontrada:', globalConfig)
+          }
+        }
+      }
+
+      if (configData) {
         const newConfig = {
           appId: configData.api_id || '',
           appSecret: configData.app_secret || '',
@@ -76,104 +96,16 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         setIsConfigured(false)
       }
     } catch (error) {
-      console.error('❌ Erro inesperado:', error)
-      setLastError('Erro inesperado ao carregar configuração')
+      console.error('❌ Erro ao carregar config:', error)
+      setLastError('Erro ao carregar configuração')
     } finally {
       setLoading(false)
     }
-  }, [clienteId, user?.email])
+  }, [clienteId])
 
   useEffect(() => {
     loadConfig()
   }, [loadConfig])
-
-  // Salvar e testar configuração
-  const saveAndTestConfig = async (newConfig: ClienteMetaAdsConfig) => {
-    if (!clienteId || !user?.email) {
-      toast({
-        title: "Erro",
-        description: "Cliente ID ou usuário necessário",
-        variant: "destructive",
-      })
-      return { success: false }
-    }
-
-    setSaving(true)
-    setTesting(true)
-    setLastError('')
-    
-    try {
-      console.log('💾 Salvando config via upsert...')
-      const { error: saveError } = await supabase
-        .from('meta_ads_configs')
-        .upsert({
-          cliente_id: parseInt(clienteId),
-          email_usuario: user.email,
-          api_id: newConfig.appId,
-          app_secret: newConfig.appSecret,
-          access_token: newConfig.accessToken,
-          ad_account_id: newConfig.adAccountId,
-          updated_at: new Date().toISOString()
-        }, {
-          onConflict: 'cliente_id,email_usuario'
-        })
-
-      if (saveError) {
-        console.error('❌ Erro ao salvar:', saveError)
-        toast({
-          title: "Erro",
-          description: `Falha ao salvar configuração: ${saveError.message}`,
-          variant: "destructive",
-        })
-        return { success: false }
-      }
-
-      console.log('🔗 Testando conexão...')
-      const { data: testData, error: testError } = await supabase.functions.invoke('meta-ads-api', {
-        body: {
-          action: 'test_connection',
-          config: newConfig
-        }
-      })
-
-      if (testError || !testData?.success) {
-        const errorMsg = testData?.message || 'Erro na conexão'
-        setLastError(errorMsg)
-        toast({
-          title: "Erro na Conexão",
-          description: errorMsg,
-          variant: "destructive",
-        })
-        return { success: false }
-      }
-
-      setConfig(newConfig)
-      setIsConfigured(true)
-      setConnectionSteps(testData.steps)
-      
-      toast({
-        title: "Sucesso!",
-        description: "Configuração Meta Ads salva e testada com sucesso",
-      })
-
-      console.log('✅ Config salva e testada com sucesso')
-      return { success: true }
-
-    } catch (error) {
-      console.error('❌ Erro inesperado:', error)
-      const errorMsg = 'Erro inesperado'
-      setLastError(errorMsg)
-      toast({
-        title: "Erro",
-        description: errorMsg,
-        variant: "destructive",
-      })
-      return { success: false }
-    } finally {
-      setSaving(false)
-      setTesting(false)
-    }
-  }
 
   // Carregar métricas com fallback inteligente
   const loadMetricsWithPeriod = async (period: string, startDate?: string, endDate?: string) => {
@@ -238,15 +170,10 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
 
   return {
     config,
-    setConfig,
     loading,
-    saving,
-    testing,
     insights,
     lastError,
-    connectionSteps,
     isConfigured,
-    saveAndTestConfig,
     loadMetricsWithPeriod,
     refreshConfig: loadConfig
   }

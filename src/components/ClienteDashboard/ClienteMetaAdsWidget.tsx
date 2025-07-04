@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
 import { formatCurrency } from '@/lib/utils'
@@ -14,7 +13,8 @@ import {
   RefreshCw,
   TrendingUp,
   Info,
-  AlertCircle
+  AlertCircle,
+  MessageSquare
 } from 'lucide-react'
 
 interface ClienteMetaAdsWidgetProps {
@@ -72,9 +72,52 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     handleLoadMetrics('last_7_days')
   }
 
-  // Se não está configurado, não mostrar nada
-  if (!isConfigured || loading) {
-    return null
+  // Se não está configurado, mostrar mensagem para contatar gestor
+  if (!isConfigured && !loading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Meta Ads
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Alert className="border-blue-200 bg-blue-50">
+            <MessageSquare className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              <div className="space-y-2">
+                <p className="font-medium">Meta Ads não configurado</p>
+                <p className="text-sm">
+                  Entre em contato com seu gestor para configurar a integração do Meta Ads 
+                  e começar a acompanhar suas métricas em tempo real.
+                </p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Se está carregando
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Meta Ads
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+            <p className="text-sm text-gray-500">Verificando configuração...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
   }
 
   // Calcular métricas totais

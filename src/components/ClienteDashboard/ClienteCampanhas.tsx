@@ -12,14 +12,14 @@ import { formatCurrency } from '@/lib/utils'
 import { 
   ArrowLeft, 
   BarChart3, 
-  Settings, 
   Eye, 
   MousePointer, 
   DollarSign,
   TrendingUp,
   RefreshCw,
   AlertCircle,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react'
 
 interface ClienteCampanhasProps {
@@ -30,38 +30,17 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
   const {
-    config,
-    setConfig,
     loading,
-    saving,
-    saveConfig,
-    testConnection,
     fetchInsights,
     fetchDataWithDateRange,
     insights,
     isConfigured,
     lastError,
-    connectionSteps,
-    dateRange,
     autoLoadingData
   } = useClienteMetaAds(cliente?.id?.toString() || '')
 
-  const [localConfig, setLocalConfig] = useState(config)
-  const [configStep, setConfigStep] = useState<'config' | 'results'>('config')
   const [selectedPeriod, setSelectedPeriod] = useState('last_7_days')
   const [loadingData, setLoadingData] = useState(false)
-
-  const handleSaveAndTest = async () => {
-    const result = await saveConfig(localConfig)
-    if (result.success) {
-      const testResult = await testConnection()
-      if (testResult.success) {
-        setConfigStep('results')
-        // Auto carregar dados
-        handleLoadData()
-      }
-    }
-  }
 
   const handleLoadData = async () => {
     setLoadingData(true)
@@ -132,7 +111,7 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
         <div className="flex items-center justify-center h-64">
           <div className="text-center">
             <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
-            <p className="text-gray-400">Carregando configuração...</p>
+            <p className="text-gray-400">Carregando dados...</p>
           </div>
         </div>
       </div>
@@ -155,87 +134,23 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
             </Button>
             <div>
               <h1 className="text-2xl font-bold text-white">Meta Ads</h1>
-              <p className="text-gray-400">Métricas e configurações da sua campanha</p>
+              <p className="text-gray-400">Métricas da sua campanha</p>
             </div>
           </div>
         </div>
 
-        {!isConfigured || configStep === 'config' ? (
-          /* Configuração */
+        {!isConfigured ? (
+          /* Não configurado - mensagem para contatar gestor */
           <Card className="bg-gray-900 border-gray-800">
-            <CardHeader>
-              <CardTitle className="text-white flex items-center gap-2">
-                <Settings className="w-5 h-5" />
-                Configuração Meta Ads
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">App ID</label>
-                  <input
-                    type="text"
-                    placeholder="ID do aplicativo Meta"
-                    value={localConfig.appId}
-                    onChange={(e) => setLocalConfig(prev => ({ ...prev, appId: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">App Secret</label>
-                  <input
-                    type="password"
-                    placeholder="Chave secreta do aplicativo"
-                    value={localConfig.appSecret}
-                    onChange={(e) => setLocalConfig(prev => ({ ...prev, appSecret: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Access Token</label>
-                  <input
-                    type="password"
-                    placeholder="Token de acesso de usuário"
-                    value={localConfig.accessToken}
-                    onChange={(e) => setLocalConfig(prev => ({ ...prev, accessToken: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-300">Ad Account ID</label>
-                  <input
-                    type="text"
-                    placeholder="ID da conta de anúncios (act_xxxxx)"
-                    value={localConfig.adAccountId}
-                    onChange={(e) => setLocalConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
-                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
-                  />
-                </div>
-              </div>
-
-              {lastError && (
-                <Alert className="border-red-600 bg-red-900/20">
-                  <AlertCircle className="h-4 w-4 text-red-400" />
-                  <AlertDescription className="text-red-300">
-                    {lastError}
-                  </AlertDescription>
-                </Alert>
-              )}
-
-              <Button 
-                onClick={handleSaveAndTest}
-                disabled={saving || !localConfig.appId || !localConfig.appSecret || !localConfig.accessToken || !localConfig.adAccountId}
-                className="w-full"
-              >
-                {saving ? (
-                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                ) : (
-                  <Settings className="w-4 h-4 mr-2" />
-                )}
-                {saving ? 'Salvando e Testando...' : 'Salvar e Testar Configuração'}
+            <CardContent className="text-center py-12">
+              <MessageSquare className="w-16 h-16 mx-auto text-blue-400 mb-4" />
+              <h3 className="font-medium text-white mb-2">Meta Ads não configurado</h3>
+              <p className="text-sm text-gray-400 max-w-md mx-auto mb-6">
+                Entre em contato com seu gestor para configurar a integração do Meta Ads 
+                e começar a acompanhar suas métricas em tempo real.
+              </p>
+              <Button onClick={onBack} variant="outline" className="border-gray-700 text-gray-300 hover:bg-gray-800">
+                Voltar ao Dashboard
               </Button>
             </CardContent>
           </Card>
@@ -280,6 +195,16 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Erro */}
+            {lastError && (
+              <Alert className="border-red-600 bg-red-900/20">
+                <AlertCircle className="h-4 w-4 text-red-400" />
+                <AlertDescription className="text-red-300">
+                  {lastError}
+                </AlertDescription>
+              </Alert>
+            )}
 
             {/* Cards de Métricas */}
             {insights.length > 0 ? (
@@ -371,18 +296,6 @@ export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
                 </CardContent>
               </Card>
             )}
-
-            {/* Botão para voltar à configuração */}
-            <div className="flex justify-center">
-              <Button 
-                variant="outline"
-                onClick={() => setConfigStep('config')}
-                className="border-gray-700 text-gray-300 hover:bg-gray-800"
-              >
-                <Settings className="w-4 h-4 mr-2" />
-                Editar Configuração
-              </Button>
-            </div>
           </div>
         )}
       </div>
