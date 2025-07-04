@@ -1,24 +1,21 @@
 
-import { TableRow, TableCell } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
-import { Folder, Mail, AtSign } from 'lucide-react'
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
-import { StatusSelect } from './StatusSelect'
-import { SiteStatusSelect } from './SiteStatusSelect'
-import { ComissaoButton } from './ComissaoButton'
-import { BriefingMaterialsModal } from './BriefingMaterialsModal'
+import { TableRow } from '@/components/ui/table'
+import { TooltipProvider } from '@/components/ui/tooltip'
+import { Cliente, type StatusCampanha } from '@/lib/supabase'
+import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
 import { ClienteRowName } from './ClienteRowName'
 import { ClienteRowPhone } from './ClienteRowPhone'
 import { ClienteRowDataLimite } from './ClienteRowDataLimite'
 import { ClienteRowBM } from './ClienteRowBM'
 import { ClienteRowSite } from './ClienteRowSite'
-import { Cliente, type StatusCampanha } from '@/lib/supabase'
-import { toast } from '@/hooks/use-toast'
-import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
+import { ComissaoButton } from './ComissaoButton'
+import { ClienteRowDateCell } from './ClienteRowDateCell'
+import { ClienteRowEmailCell } from './ClienteRowEmailCell'
+import { ClienteRowGestorCell } from './ClienteRowGestorCell'
+import { ClienteRowStatusCells } from './ClienteRowStatusCells'
+import { ClienteRowBriefingCell } from './ClienteRowBriefingCell'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
-import { tableLogger } from '@/utils/logger'
-import { MESSAGES } from '@/constants'
-import type { ClienteBasicInfo, StatusComponentProps, EditableFieldProps } from '@/types/shared'
+import type { ClienteBasicInfo } from '@/types/shared'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -75,32 +72,6 @@ export function ClienteRow({
 }: ClienteRowProps) {
   const { getClienteOrigem } = useClienteOrigem()
   
-  const formatDate = (dateString: string) => {
-    if (!dateString || dateString.trim() === '') return 'N/A'
-    try {
-      const date = new Date(dateString)
-      return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    } catch (error) {
-      tableLogger.error('Erro ao formatar data', { dateString, error })
-      return 'N/A'
-    }
-  }
-
-  const handleGestorClick = () => {
-    if (!isAdmin) {
-      toast({
-        title: MESSAGES.ERROR.PERMISSION,
-        variant: "destructive"
-      })
-      tableLogger.warn('Tentativa de edição de gestor sem permissão', { userType: 'non-admin' })
-    } else {
-      toast({
-        title: "Funcionalidade de edição em desenvolvimento"
-      })
-      tableLogger.info('Funcionalidade de edição de gestor solicitada')
-    }
-  }
-
   const clienteOrigem = getClienteOrigem(cliente.id!.toString())
 
   // Dados básicos do cliente para componentes
@@ -118,9 +89,11 @@ export function ClienteRow({
         className="border-border hover:bg-muted/20" 
         style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
       >
-        <TableCell className="text-white text-xs p-1 sticky left-0 bg-card z-10 border-r border-border">
-          {formatDate(cliente.data_venda || cliente.created_at)}
-        </TableCell>
+        <ClienteRowDateCell
+          dataVenda={cliente.data_venda || ''}
+          createdAt={cliente.created_at}
+          index={index}
+        />
 
         <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
           <ClienteRowName 
@@ -145,57 +118,23 @@ export function ClienteRow({
           />
         </TableCell>
 
-        <TableCell className="text-white text-xs p-1">
-          <Tooltip>
-            <TooltipTrigger>
-              <div className="flex items-center justify-center">
-                <Mail className="h-3 w-3 text-blue-400" />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p className="max-w-xs break-all">{clienteInfo.emailCliente || 'Não informado'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TableCell>
+        <ClienteRowEmailCell emailCliente={clienteInfo.emailCliente} />
 
-        {(isAdmin || showEmailGestor) && (
-          <TableCell className="text-white text-xs p-1">
-            <Tooltip>
-              <TooltipTrigger 
-                onClick={handleGestorClick}
-                className="cursor-pointer"
-              >
-                <div className="flex items-center justify-center">
-                  <AtSign className="h-3 w-3 text-green-400" />
-                </div>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="max-w-xs break-all">{clienteInfo.emailGestor || 'Não informado'}</p>
-              </TooltipContent>
-            </Tooltip>
-          </TableCell>
-        )}
+        <ClienteRowGestorCell 
+          emailGestor={clienteInfo.emailGestor}
+          isAdmin={isAdmin}
+          showEmailGestor={showEmailGestor}
+        />
 
-        <TableCell className="p-1">
-          <StatusSelect
-            value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
-            onValueChange={(newStatus) => onStatusChange(clienteInfo.clienteId, newStatus as StatusCampanha)}
-            disabled={updatingStatus === clienteInfo.clienteId}
-            isUpdating={updatingStatus === clienteInfo.clienteId}
-            getStatusColor={getStatusColor}
-            compact={false}
-          />
-        </TableCell>
-
-        <TableCell className="p-1">
-          <SiteStatusSelect
-            value={cliente.site_status || 'pendente'}
-            onValueChange={(newStatus) => onSiteStatusChange(clienteInfo.clienteId, newStatus)}
-            disabled={updatingStatus === clienteInfo.clienteId}
-            isUpdating={updatingStatus === clienteInfo.clienteId}
-            compact={false}
-          />
-        </TableCell>
+        <ClienteRowStatusCells
+          statusCampanha={cliente.status_campanha || 'Cliente Novo'}
+          siteStatus={cliente.site_status || 'pendente'}
+          clienteId={clienteInfo.clienteId}
+          updatingStatus={updatingStatus}
+          getStatusColor={getStatusColor}
+          onStatusChange={onStatusChange}
+          onSiteStatusChange={onSiteStatusChange}
+        />
 
         <ClienteRowDataLimite
           dataVenda={cliente.data_venda || ''}
@@ -205,21 +144,10 @@ export function ClienteRow({
           compact={true}
         />
 
-        <TableCell className="p-1">
-          <BriefingMaterialsModal 
-            emailCliente={clienteInfo.emailCliente}
-            nomeCliente={clienteInfo.nomeCliente}
-            trigger={
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-5 w-5 p-0 bg-blue-600 hover:bg-blue-700 border-blue-600"
-              >
-                <Folder className="h-2.5 w-2.5" />
-              </Button>
-            }
-          />
-        </TableCell>
+        <ClienteRowBriefingCell 
+          emailCliente={clienteInfo.emailCliente}
+          nomeCliente={clienteInfo.nomeCliente}
+        />
 
         <TableCell className="p-1">
           <ClienteRowSite
