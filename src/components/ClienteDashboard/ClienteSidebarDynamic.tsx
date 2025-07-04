@@ -124,63 +124,52 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className="p-2 border-t border-border space-y-2">
-        {/* Status da Campanha */}
-        <div className="bg-gradient-to-r from-primary/5 to-secondary/5 rounded-lg p-3 border border-border/50">
-          <div className="text-xs font-medium text-foreground mb-1">
-            Status da Campanha:
-          </div>
-          <div className="text-sm font-semibold text-primary">
-            {clienteInfo?.status_campanha || 'Em Configuração'}
-          </div>
-        </div>
-
+      <SidebarFooter className="p-3 border-t border-border space-y-3">
         {/* Termos de Uso */}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={() => setTermosModalOpen(true)}
-            className="w-full justify-start rounded-lg px-3 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/30"
-          >
-            <FileCheck className="h-4 w-4 mr-3 text-red-600 dark:text-red-400" />
-            <div className="flex items-center justify-between w-full">
-              <span className="text-sm font-medium text-red-700 dark:text-red-300">
-                Termos de Uso
-              </span>
-              <Badge variant="destructive" className="text-xs px-2 py-0">
-                IMPORTANTE
-              </Badge>
-            </div>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        <Button
+          onClick={() => setTermosModalOpen(true)}
+          className="w-full justify-start rounded-lg px-3 py-2.5 bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/30 h-auto"
+          variant="outline"
+        >
+          <FileCheck className="h-4 w-4 mr-3 text-red-600 dark:text-red-400" />
+          <div className="flex items-center justify-between w-full">
+            <span className="text-sm font-medium text-red-700 dark:text-red-300">
+              Termos de Uso
+            </span>
+            <Badge variant="destructive" className="text-xs px-2 py-0">
+              IMPORTANTE
+            </Badge>
+          </div>
+        </Button>
 
         {/* WhatsApp Suporte */}
-        <SidebarMenuItem>
-          <SidebarMenuButton asChild>
-            <a 
-              href="https://wa.me/5511940747924" 
-              target="_blank" 
-              rel="noopener noreferrer" 
-              className="w-full justify-start rounded-lg px-3 py-2.5 text-foreground hover:bg-accent hover:text-accent-foreground"
-            >
-              <MessageCircle className="h-4 w-4 mr-3" />
-              <span className="text-sm font-medium">Precisa de ajuda?</span>
-            </a>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        <Button
+          asChild
+          className="w-full justify-start rounded-lg px-3 py-2.5 text-foreground hover:bg-accent hover:text-accent-foreground h-auto"
+          variant="outline"
+        >
+          <a 
+            href="https://wa.me/5511940747924" 
+            target="_blank" 
+            rel="noopener noreferrer"
+          >
+            <MessageCircle className="h-4 w-4 mr-3" />
+            <span className="text-sm font-medium">Precisa de ajuda?</span>
+          </a>
+        </Button>
 
         {/* Sair do Sistema */}
-        <SidebarMenuItem>
-          <SidebarMenuButton
-            onClick={handleLogout}
-            disabled={isLoggingOut}
-            className="w-full justify-start rounded-lg px-3 py-2.5 hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive"
-          >
-            <LogOut className="h-4 w-4 mr-3 text-destructive" />
-            <span className="text-sm font-medium text-destructive">
-              {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
-            </span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        <Button
+          onClick={handleLogout}
+          disabled={isLoggingOut}
+          className="w-full justify-start rounded-lg px-3 py-2.5 hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive h-auto"
+          variant="outline"
+        >
+          <LogOut className="h-4 w-4 mr-3 text-destructive" />
+          <span className="text-sm font-medium text-destructive">
+            {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
+          </span>
+        </Button>
       </SidebarFooter>
 
       {/* Modal de Termos */}
