@@ -1,100 +1,125 @@
 
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { 
-  LayoutDashboard, 
+  BarChart3, 
   Users, 
-  Headphones, 
-  BarChart3
+  MessageSquare, 
+  FileText, 
+  Settings, 
+  HelpCircle,
+  Plug,
+  Globe,
+  UserCog,
+  TrendingUp,
+  Clock
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
   activeTab: string
-  onTabSelect: (tab: string) => void
-  isCollapsed?: boolean
+  onTabChange: (tab: string) => void
+  selectedManager: string | null
+  onManagerSelect: (manager: string | null) => void
 }
 
-export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: AdminMainMenuProps) {
+export function AdminMainMenu({ activeTab, onTabChange, selectedManager, onManagerSelect }: AdminMainMenuProps) {
   const menuItems = [
     {
       id: 'dashboard',
       label: 'Dashboard',
-      icon: LayoutDashboard,
-      description: 'Visão geral e métricas'
+      icon: BarChart3,
+      description: 'Métricas e visão geral'
     },
     {
       id: 'clientes',
-      label: 'Clientes',
+      label: 'Clientes Ativos',
       icon: Users,
-      description: 'Gerenciar clientes'
+      description: 'Gerenciar clientes ativos'
+    },
+    {
+      id: 'clientes-antigos',
+      label: 'Clientes Antigos', 
+      icon: Clock,
+      description: 'Gerenciar clientes antigos'
+    },
+    {
+      id: 'max-integration',
+      label: 'Integração Max',
+      icon: Plug,
+      description: 'Gerenciar integração com Max'
+    },
+    {
+      id: 'solicitacoes-site',
+      label: 'Solicitações de Site',
+      icon: Globe,
+      description: 'Gerenciar solicitações de site'
     },
     {
       id: 'sac',
       label: 'SAC',
-      icon: Headphones,
-      description: 'Central de atendimento'
+      icon: MessageSquare,
+      description: 'Atendimento ao cliente'
+    },
+    {
+      id: 'sac-relatorio',
+      label: 'Relatório SAC',
+      icon: TrendingUp,
+      description: 'Relatório de atendimentos'
+    },
+    {
+      id: 'documentacao',
+      label: 'Documentação',
+      icon: FileText,
+      description: 'Documentação do sistema'
+    },
+    {
+      id: 'sugestoes',
+      label: 'Sugestões',
+      icon: HelpCircle,
+      description: 'Sugestões de melhorias'
     }
   ]
 
-  if (isCollapsed) {
-    return (
-      <div className="flex flex-col space-y-2">
-        {menuItems.map(item => (
-          <button
-            key={item.id}
-            className={`
-              w-10 h-10 rounded-lg border transition-all duration-200 group flex items-center justify-center
-              ${activeTab === item.id 
-                ? 'bg-gray-700/60 border-gray-600 shadow-lg' 
-                : 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20 hover:transform hover:scale-105 hover:shadow-md'
-              }
-            `}
-            onClick={() => onTabSelect(item.id)}
-            title={item.label}
-          >
-            <item.icon className={`h-4 w-4 ${
-              activeTab === item.id 
-                ? 'text-white' 
-                : 'text-gray-400 group-hover:text-white'
-            }`} />
-          </button>
-        ))}
-      </div>
-    )
+  const handleGestoresClick = () => {
+    onManagerSelect('__GESTORES__')
+    onTabChange('clientes')
   }
 
   return (
-    <nav className="space-y-2">
-      <div className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-3">
-        Menu Principal
-      </div>
-      
-      {menuItems.map((item) => (
-        <Button
-          key={item.id}
-          variant={activeTab === item.id ? "secondary" : "ghost"}
-          className={`
-            w-full justify-start h-auto p-3 text-left
-            ${activeTab === item.id 
-              ? 'bg-blue-100 text-blue-900 border border-blue-200' 
-              : 'text-gray-300 hover:text-white hover:bg-gray-800'
-            }
-          `}
-          onClick={() => onTabSelect(item.id)}
-        >
-          <div className="flex items-center space-x-3 w-full">
-            <item.icon className="h-5 w-5 flex-shrink-0" />
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center justify-between">
-                <span className="font-medium truncate">{item.label}</span>
-              </div>
-              <div className="text-xs text-gray-500 truncate">
-                {item.description}
-              </div>
+    <div className="space-y-2">
+      {/* Botão especial para gestores */}
+      <Button
+        variant={selectedManager === '__GESTORES__' ? 'default' : 'ghost'}
+        onClick={handleGestoresClick}
+        className="w-full justify-start gap-3 h-12"
+      >
+        <UserCog className="w-5 h-5" />
+        <div className="flex-1 text-left">
+          <div className="font-medium">Gestores</div>
+          <div className="text-xs text-muted-foreground">Gerenciar gestores</div>
+        </div>
+      </Button>
+
+      {/* Menu principal */}
+      {menuItems.map((item) => {
+        const Icon = item.icon
+        const isActive = activeTab === item.id
+        
+        return (
+          <Button
+            key={item.id}
+            variant={isActive ? 'default' : 'ghost'}
+            onClick={() => onTabChange(item.id)}
+            className="w-full justify-start gap-3 h-12"
+          >
+            <Icon className="w-5 h-5" />
+            <div className="flex-1 text-left">
+              <div className="font-medium">{item.label}</div>
+              <div className="text-xs text-muted-foreground">{item.description}</div>
             </div>
-          </div>
-        </Button>
-      ))}
-    </nav>
+          </Button>
+        )
+      })}
+    </div>
   )
 }

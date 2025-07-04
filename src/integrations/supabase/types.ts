@@ -384,6 +384,69 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes_antigos: {
+        Row: {
+          comissao: string
+          created_at: string
+          data_venda: string
+          descricao_problema: string | null
+          email_cliente: string
+          email_gestor: string
+          id: string
+          link_briefing: string | null
+          link_criativo: string | null
+          link_site: string | null
+          nome_cliente: string
+          numero_bm: string | null
+          site_pago: boolean
+          site_status: string
+          telefone: string
+          updated_at: string
+          valor_comissao: number
+          vendedor: string
+        }
+        Insert: {
+          comissao?: string
+          created_at?: string
+          data_venda: string
+          descricao_problema?: string | null
+          email_cliente: string
+          email_gestor: string
+          id?: string
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_site?: string | null
+          nome_cliente: string
+          numero_bm?: string | null
+          site_pago?: boolean
+          site_status?: string
+          telefone: string
+          updated_at?: string
+          valor_comissao?: number
+          vendedor: string
+        }
+        Update: {
+          comissao?: string
+          created_at?: string
+          data_venda?: string
+          descricao_problema?: string | null
+          email_cliente?: string
+          email_gestor?: string
+          id?: string
+          link_briefing?: string | null
+          link_criativo?: string | null
+          link_site?: string | null
+          nome_cliente?: string
+          numero_bm?: string | null
+          site_pago?: boolean
+          site_status?: string
+          telefone?: string
+          updated_at?: string
+          valor_comissao?: number
+          vendedor?: string
+        }
+        Relationships: []
+      }
       comentarios_cliente: {
         Row: {
           autor: string
