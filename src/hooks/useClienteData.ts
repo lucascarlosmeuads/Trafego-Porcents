@@ -61,6 +61,7 @@ export interface ClienteData {
   created_at: string
   comissao_confirmada?: boolean | null
   site_descricao_personalizada?: string | null
+  data_subida_campanha?: string | null
 }
 
 export interface VendaCliente {
@@ -83,6 +84,8 @@ export interface ArquivoCliente {
   email_cliente: string
   author_type: string
   created_at: string
+  url_arquivo?: string
+  data_upload?: string
 }
 
 // Exportar tipos individuais para compatibilidade
