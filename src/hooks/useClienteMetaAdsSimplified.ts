@@ -22,14 +22,6 @@ interface InsightData {
   date_stop?: string
 }
 
-interface CampaignData {
-  id: string
-  name: string
-  status: string
-  objective: string
-  created_time: string
-}
-
 export function useClienteMetaAdsSimplified(clienteId: string) {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -44,7 +36,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([])
   const [insights, setInsights] = useState<InsightData[]>([])
   const [lastError, setLastError] = useState<string>('')
   const [connectionSteps, setConnectionSteps] = useState<any>(null)
@@ -60,7 +51,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     console.log('🔍 Carregando config do cliente:', clienteId)
     
     try {
-      // Buscar configuração do cliente específico
       const { data: configData, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
@@ -97,7 +87,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     loadConfig()
   }, [loadConfig])
 
-  // Salvar e testar configuração (agora usando upsert que deve funcionar)
+  // Salvar e testar configuração
   const saveAndTestConfig = async (newConfig: ClienteMetaAdsConfig) => {
     if (!clienteId || !user?.email) {
       toast({
@@ -113,7 +103,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     setLastError('')
     
     try {
-      // 1. Salvar configuração usando upsert
       console.log('💾 Salvando config via upsert...')
       const { error: saveError } = await supabase
         .from('meta_ads_configs')
@@ -139,7 +128,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         return { success: false }
       }
 
-      // 2. Testar conexão
       console.log('🔗 Testando conexão...')
       const { data: testData, error: testError } = await supabase.functions.invoke('meta-ads-api', {
         body: {
@@ -159,7 +147,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         return { success: false }
       }
 
-      // 3. Sucesso - atualizar estados
       setConfig(newConfig)
       setIsConfigured(true)
       setConnectionSteps(testData.steps)
@@ -188,53 +175,64 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     }
   }
 
-  // Carregar métricas com período
+  // Carregar métricas com fallback inteligente
   const loadMetricsWithPeriod = async (period: string, startDate?: string, endDate?: string) => {
     if (!isConfigured) return { success: false, message: 'Configuração necessária' }
 
     console.log('📊 Carregando métricas, período:', period)
     
     try {
-      const [campaignResult, insightResult] = await Promise.all([
-        supabase.functions.invoke('meta-ads-api', {
-          body: {
-            action: 'get_campaigns',
-            config: config,
-            startDate,
-            endDate
-          }
-        }),
-        supabase.functions.invoke('meta-ads-api', {
-          body: {
-            action: 'get_insights',
-            config: config,
-            period,
-            startDate,
-            endDate
-          }
-        })
-      ])
+      const { data: insightResult, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: {
+          action: 'get_insights',
+          config: config,
+          period,
+          startDate,
+          endDate
+        }
+      })
 
-      const campaignData = campaignResult.data
-      const insightData = insightResult.data
-
-      if (campaignData?.success) {
-        setCampaigns(campaignData.campaigns || [])
+      if (error) {
+        console.error('❌ Erro na edge function:', error)
+        return { success: false, message: 'Erro na conexão com o servidor' }
       }
 
-      if (insightData?.success) {
-        setInsights(insightData.insights || [])
-      }
+      if (insightResult?.success && insightResult.insights?.length > 0) {
+        setInsights(insightResult.insights)
+        setLastError('')
+        return { 
+          success: true, 
+          insights: insightResult.insights,
+          period_used: insightResult.period_used
+        }
+      } else {
+        // Se não há dados para "hoje", tentar "ontem" automaticamente
+        if (period === 'today') {
+          console.log('📊 Sem dados para hoje, tentando ontem...')
+          const yesterdayResult = await loadMetricsWithPeriod('yesterday')
+          if (yesterdayResult.success) {
+            return {
+              ...yesterdayResult,
+              fallback_used: 'yesterday',
+              message: 'Sem dados para hoje. Mostrando dados de ontem.'
+            }
+          }
+        }
 
-      return { 
-        success: true, 
-        campaigns: campaignData?.campaigns || [],
-        insights: insightData?.insights || []
+        setInsights([])
+        const message = insightResult?.message || 'Nenhum dado encontrado para o período selecionado'
+        setLastError(message)
+        return { 
+          success: false, 
+          message,
+          period_used: insightResult?.period_used,
+          suggestions: period === 'today' ? ['Tente "Ontem" ou "Últimos 7 dias"'] : []
+        }
       }
 
     } catch (error) {
       console.error('❌ Erro ao carregar métricas:', error)
-      return { success: false, message: 'Erro ao carregar métricas' }
+      return { success: false, message: 'Erro inesperado ao carregar métricas' }
     }
   }
 
@@ -244,7 +242,6 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     loading,
     saving,
     testing,
-    campaigns,
     insights,
     lastError,
     connectionSteps,

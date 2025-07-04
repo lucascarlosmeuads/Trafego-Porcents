@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
 import { formatCurrency } from '@/lib/utils'
 import { 
@@ -11,8 +12,9 @@ import {
   MousePointer, 
   DollarSign,
   RefreshCw,
-  Settings,
-  TrendingUp
+  TrendingUp,
+  Info,
+  AlertCircle
 } from 'lucide-react'
 
 interface ClienteMetaAdsWidgetProps {
@@ -22,14 +24,16 @@ interface ClienteMetaAdsWidgetProps {
 
 export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsWidgetProps) {
   const {
-    campaigns,
     insights,
     loading,
     isConfigured,
-    loadMetricsWithPeriod
+    loadMetricsWithPeriod,
+    lastError
   } = useClienteMetaAdsSimplified(clienteId)
 
   const [loadingData, setLoadingData] = useState(false)
+  const [lastFetchInfo, setLastFetchInfo] = useState('')
+  const [fallbackMessage, setFallbackMessage] = useState('')
 
   // Auto-carregar métricas quando configurado
   useEffect(() => {
@@ -38,10 +42,34 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     }
   }, [isConfigured])
 
-  const handleLoadMetrics = async () => {
+  const handleLoadMetrics = async (period: string = 'today') => {
     setLoadingData(true)
-    await loadMetricsWithPeriod('last_7_days')
+    setLastFetchInfo('')
+    setFallbackMessage('')
+    
+    const result = await loadMetricsWithPeriod(period)
+    
+    if (result.success) {
+      setLastFetchInfo(`Dados carregados: ${result.period_used || period}`)
+      if (result.fallback_used) {
+        setFallbackMessage(result.message || '')
+      }
+    } else {
+      setLastFetchInfo('')
+      if (result.suggestions?.length > 0) {
+        setFallbackMessage(`Dica: ${result.suggestions[0]}`)
+      }
+    }
+    
     setLoadingData(false)
+  }
+
+  const handleTryYesterday = () => {
+    handleLoadMetrics('yesterday')
+  }
+
+  const handleTryLast7Days = () => {
+    handleLoadMetrics('last_7_days')
   }
 
   // Se não está configurado, não mostrar nada
@@ -70,12 +98,12 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
-            Meta Ads - Últimos 7 dias
+            Meta Ads
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={handleLoadMetrics}
+            onClick={() => handleLoadMetrics()}
             disabled={loadingData}
           >
             {loadingData ? (
@@ -85,8 +113,41 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             )}
           </Button>
         </CardTitle>
+        {lastFetchInfo && (
+          <p className="text-xs text-green-600">{lastFetchInfo}</p>
+        )}
       </CardHeader>
       <CardContent>
+        {/* Mensagem de fallback */}
+        {fallbackMessage && (
+          <Alert className="mb-4 border-blue-200 bg-blue-50">
+            <Info className="h-4 w-4 text-blue-600" />
+            <AlertDescription className="text-blue-800">
+              {fallbackMessage}
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {/* Erro com sugestões */}
+        {lastError && !loadingData && (
+          <Alert className="mb-4 border-orange-200 bg-orange-50">
+            <AlertCircle className="h-4 w-4 text-orange-600" />
+            <AlertDescription className="text-orange-800">
+              <div className="space-y-2">
+                <p>{lastError}</p>
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleTryYesterday}>
+                    Tentar Ontem
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={handleTryLast7Days}>
+                    Últimos 7 dias
+                  </Button>
+                </div>
+              </div>
+            </AlertDescription>
+          </Alert>
+        )}
+
         {insights.length > 0 ? (
           <div className="space-y-4">
             {/* Métricas em Grid */}
@@ -123,43 +184,32 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 <div className="text-xs text-orange-600">CTR Médio</div>
               </div>
             </div>
-
-            {/* Campanhas Ativas */}
-            {campaigns.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="text-sm font-medium text-gray-700">Campanhas Ativas:</h4>
-                <div className="flex flex-wrap gap-2">
-                  {campaigns
-                    .filter(c => c.status === 'ACTIVE')
-                    .slice(0, 3)
-                    .map((campaign) => (
-                      <Badge key={campaign.id} variant="outline" className="text-xs">
-                        {campaign.name}
-                      </Badge>
-                    ))}
-                  {campaigns.filter(c => c.status === 'ACTIVE').length > 3 && (
-                    <Badge variant="secondary" className="text-xs">
-                      +{campaigns.filter(c => c.status === 'ACTIVE').length - 3} mais
-                    </Badge>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
-        ) : (
+        ) : !loadingData && !lastError ? (
           <div className="text-center py-4">
             <BarChart3 className="w-8 h-8 mx-auto text-gray-400 mb-2" />
             <p className="text-sm text-gray-500 mb-3">
-              Métricas Meta Ads não carregadas
+              Carregue as métricas Meta Ads
             </p>
-            <Button size="sm" onClick={handleLoadMetrics} disabled={loadingData}>
-              {loadingData ? (
-                <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-              ) : (
-                <BarChart3 className="w-4 h-4 mr-2" />
-              )}
-              Carregar Dados
-            </Button>
+            <div className="flex gap-2 justify-center">
+              <Button size="sm" onClick={() => handleLoadMetrics('today')}>
+                Hoje
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleTryYesterday}>
+                Ontem
+              </Button>
+              <Button size="sm" variant="outline" onClick={handleTryLast7Days}>
+                7 dias
+              </Button>
+            </div>
+          </div>
+        ) : null}
+
+        {/* Loading state */}
+        {loadingData && (
+          <div className="text-center py-4">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+            <p className="text-sm text-gray-500">Carregando métricas...</p>
           </div>
         )}
       </CardContent>
