@@ -83,15 +83,15 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
   }
 
   return (
-    <Sidebar className="bg-background border-r border-border w-80">
-      <SidebarHeader className="p-3 border-b border-border">
-        {/* Logo Section - Otimizada para Desktop */}
-        <div className="flex flex-col items-center space-y-2 w-full">
-          <div className="w-full flex justify-center px-2">
+    <Sidebar className="bg-background border-r border-border w-80 h-screen">
+      <SidebarHeader className="p-4 border-b border-border">
+        {/* Logo Section - Espaço otimizado para logo completa */}
+        <div className="flex flex-col items-center space-y-3 w-full">
+          <div className="w-full flex justify-center py-2">
             <img 
               src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
               alt="Tráfego Por Cents" 
-              className="h-20 w-auto object-contain"
+              className="h-24 w-auto object-contain"
             />
           </div>
           <div className="text-center w-full px-2">

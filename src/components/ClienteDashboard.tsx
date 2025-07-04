@@ -109,8 +109,8 @@ export function ClienteDashboard() {
     return (
       <SidebarProvider>
         <div className="flex h-screen bg-background overflow-hidden w-full">
-          {/* Header Limpo - Sem Logo Duplicada */}
-          <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b border-border flex items-center px-4">
+          {/* Header com altura reduzida para dar mais espaço à logo */}
+          <div className="fixed top-0 left-0 right-0 z-50 h-12 bg-background border-b border-border flex items-center px-4">
             <SidebarTrigger className="text-foreground hover:bg-accent" />
             <div className="flex items-center gap-3 ml-4">
               <div>
@@ -124,13 +124,16 @@ export function ClienteDashboard() {
             </div>
           </div>
 
-          <ClienteSidebarDynamic
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            clienteInfo={cliente}
-          />
+          {/* Sidebar com padding-top para compensar o header */}
+          <div className="pt-12">
+            <ClienteSidebarDynamic
+              activeTab={activeTab}
+              onTabChange={setActiveTab}
+              clienteInfo={cliente}
+            />
+          </div>
           
-          <main className="flex-1 overflow-y-auto bg-background pt-14">
+          <main className="flex-1 overflow-y-auto bg-background pt-12">
             <div className="p-6 min-h-full">
               {renderContent()}
             </div>
