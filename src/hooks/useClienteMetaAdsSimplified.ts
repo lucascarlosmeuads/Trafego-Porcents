@@ -97,7 +97,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     loadConfig()
   }, [loadConfig])
 
-  // Salvar e testar configuração
+  // Salvar e testar configuração (agora usando upsert que deve funcionar)
   const saveAndTestConfig = async (newConfig: ClienteMetaAdsConfig) => {
     if (!clienteId || !user?.email) {
       toast({
@@ -113,8 +113,8 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     setLastError('')
     
     try {
-      // 1. Salvar configuração
-      console.log('💾 Salvando config...')
+      // 1. Salvar configuração usando upsert
+      console.log('💾 Salvando config via upsert...')
       const { error: saveError } = await supabase
         .from('meta_ads_configs')
         .upsert({
@@ -133,7 +133,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         console.error('❌ Erro ao salvar:', saveError)
         toast({
           title: "Erro",
-          description: "Falha ao salvar configuração",
+          description: `Falha ao salvar configuração: ${saveError.message}`,
           variant: "destructive",
         })
         return { success: false }

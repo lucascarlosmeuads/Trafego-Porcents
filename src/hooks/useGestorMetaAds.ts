@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
@@ -93,84 +94,7 @@ export function useGestorMetaAds() {
     loadConfig()
   }, [loadConfig])
 
-  // Abordagem completamente nova para salvar - sem usar ON CONFLICT
-  const saveConfigDirectly = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
-    if (!user?.email) return { success: false }
-    
-    console.log('🔧 [useGestorMetaAds] === SALVAMENTO DIRETO INICIADO ===')
-    console.log('👤 [useGestorMetaAds] Usuário:', user.email)
-    
-    try {
-      // Etapa 1: Verificar se existe configuração
-      console.log('🔍 [useGestorMetaAds] Verificando configuração existente...')
-      const { data: existingConfig, error: selectError } = await supabase
-        .from('meta_ads_configs')
-        .select('id')
-        .eq('email_usuario', user.email)
-        .is('cliente_id', null)
-        .maybeSingle()
-
-      if (selectError) {
-        console.error('❌ [useGestorMetaAds] Erro ao verificar config existente:', selectError)
-        return { success: false, error: selectError.message }
-      }
-
-      let result;
-      
-      if (existingConfig) {
-        // Etapa 2a: Atualizar configuração existente
-        console.log('🔄 [useGestorMetaAds] Atualizando configuração existente ID:', existingConfig.id)
-        const { error: updateError } = await supabase
-          .from('meta_ads_configs')
-          .update({
-            api_id: newConfig.api_id,
-            app_secret: newConfig.app_secret,
-            access_token: newConfig.access_token,
-            ad_account_id: newConfig.ad_account_id,
-            updated_at: new Date().toISOString()
-          })
-          .eq('id', existingConfig.id)
-
-        if (updateError) {
-          console.error('❌ [useGestorMetaAds] Erro ao atualizar config:', updateError)
-          return { success: false, error: updateError.message }
-        }
-
-        result = { success: true, operation: 'update' }
-        console.log('✅ [useGestorMetaAds] Configuração atualizada com sucesso')
-      } else {
-        // Etapa 2b: Inserir nova configuração
-        console.log('➕ [useGestorMetaAds] Inserindo nova configuração...')
-        const { error: insertError } = await supabase
-          .from('meta_ads_configs')
-          .insert({
-            email_usuario: user.email,
-            cliente_id: null, // IMPORTANTE: Config global
-            api_id: newConfig.api_id,
-            app_secret: newConfig.app_secret,
-            access_token: newConfig.access_token,
-            ad_account_id: newConfig.ad_account_id,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
-
-        if (insertError) {
-          console.error('❌ [useGestorMetaAds] Erro ao inserir nova config:', insertError)
-          return { success: false, error: insertError.message }
-        }
-
-        result = { success: true, operation: 'insert' }
-        console.log('✅ [useGestorMetaAds] Nova configuração inserida com sucesso')
-      }
-
-      return result
-    } catch (error) {
-      console.error('❌ [useGestorMetaAds] Erro inesperado no salvamento direto:', error)
-      return { success: false, error: `Erro inesperado: ${error}` }
-    }
-  }
-
-  // Salvar configuração GLOBAL usando abordagem híbrida
+  // Salvar configuração GLOBAL usando upsert (agora deve funcionar com a constraint corrigida)
   const saveConfig = async (newConfig: Omit<GestorMetaAdsConfig, 'email_usuario'>) => {
     if (!user?.email) {
       toast({
@@ -185,72 +109,48 @@ export function useGestorMetaAds() {
     setLastError('')
     
     try {
-      console.log('💾 [useGestorMetaAds] === INICIANDO SALVAMENTO HÍBRIDO ===')
-      console.log('👤 [useGestorMetaAds] Usuário:', user.email)
+      console.log('💾 [useGestorMetaAds] Salvando configuração global via upsert...')
       
-      // Método 1: Tentar RPC function primeiro
-      console.log('🔧 [useGestorMetaAds] Tentativa 1: RPC Function...')
-      const { data: rpcResult, error: rpcError } = await supabase.rpc('save_gestor_meta_ads_config', {
-        p_email_usuario: user.email,
-        p_api_id: newConfig.api_id,
-        p_app_secret: newConfig.app_secret,
-        p_access_token: newConfig.access_token,
-        p_ad_account_id: newConfig.ad_account_id
-      })
-
-      // Se RPC funcionou, usar o resultado
-      if (!rpcError && rpcResult?.success) {
-        console.log('✅ [useGestorMetaAds] RPC executado com sucesso:', rpcResult)
-        
-        // Atualizar estado local
-        setConfig({
-          ...newConfig,
-          email_usuario: user.email
+      const { error } = await supabase
+        .from('meta_ads_configs')
+        .upsert({
+          email_usuario: user.email,
+          cliente_id: null, // IMPORTANTE: Config global
+          api_id: newConfig.api_id,
+          app_secret: newConfig.app_secret,
+          access_token: newConfig.access_token,
+          ad_account_id: newConfig.ad_account_id,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'cliente_id,email_usuario'
         })
 
-        toast({
-          title: "Sucesso!",
-          description: "Configuração Meta Ads global salva com sucesso via RPC",
-        })
-
-        console.log('🎉 [useGestorMetaAds] === SALVAMENTO VIA RPC CONCLUÍDO ===')
-        return { success: true }
-      }
-
-      // Método 2: Se RPC falhou, usar método direto
-      console.log('🔧 [useGestorMetaAds] RPC falhou, tentando método direto...')
-      console.log('❌ [useGestorMetaAds] RPC Error:', rpcError || rpcResult)
-      
-      const directResult = await saveConfigDirectly(newConfig)
-      
-      if (directResult.success) {
-        // Atualizar estado local
-        setConfig({
-          ...newConfig,
-          email_usuario: user.email
-        })
-
-        toast({
-          title: "Sucesso!",
-          description: "Configuração Meta Ads global salva com sucesso via método direto",
-        })
-
-        console.log('🎉 [useGestorMetaAds] === SALVAMENTO VIA MÉTODO DIRETO CONCLUÍDO ===')
-        return { success: true }
-      } else {
-        // Ambos os métodos falharam
-        const errorMsg = directResult.error || 'Erro desconhecido'
-        console.error('❌ [useGestorMetaAds] Ambos os métodos falharam:', errorMsg)
+      if (error) {
+        console.error('❌ [useGestorMetaAds] Erro no upsert:', error)
         
         toast({
           title: "Erro",
-          description: `Falha ao salvar configuração: ${errorMsg}`,
+          description: `Falha ao salvar configuração: ${error.message}`,
           variant: "destructive",
         })
         
-        setLastError(errorMsg)
+        setLastError(error.message)
         return { success: false }
       }
+
+      // Sucesso - atualizar estado local
+      setConfig({
+        ...newConfig,
+        email_usuario: user.email
+      })
+
+      toast({
+        title: "Sucesso!",
+        description: "Configuração Meta Ads global salva com sucesso",
+      })
+
+      console.log('✅ [useGestorMetaAds] Configuração salva com sucesso')
+      return { success: true }
 
     } catch (error) {
       console.error('❌ [useGestorMetaAds] Erro inesperado no salvamento:', error)
