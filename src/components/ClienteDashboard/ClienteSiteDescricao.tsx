@@ -18,17 +18,17 @@ import {
 
 export function ClienteSiteDescricao() {
   const { user } = useAuth()
-  const { clienteInfo, briefing } = useClienteData(user?.email || '')
+  const { cliente, briefing } = useClienteData(user?.email || '')
   const [descricao, setDescricao] = useState('')
   const [salvando, setSalvando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
 
   useEffect(() => {
-    if (clienteInfo?.site_descricao_personalizada) {
-      setDescricao(clienteInfo.site_descricao_personalizada)
+    if (cliente?.site_descricao_personalizada) {
+      setDescricao(cliente.site_descricao_personalizada)
     }
-  }, [clienteInfo])
+  }, [cliente])
 
   const handleSalvarDescricao = async () => {
     if (!user?.email) return

@@ -2,7 +2,7 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
-import { useMobile } from '@/hooks/use-mobile'
+import { useIsMobile } from '@/hooks/useIsMobile'
 import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
@@ -21,8 +21,8 @@ import { LoadingFallback } from './LoadingFallback'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
-  const { clienteInfo, loading } = useClienteData(user?.email || '')
-  const isMobile = useMobile()
+  const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
+  const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState('overview')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
@@ -30,7 +30,7 @@ export function ClienteDashboard() {
     return <LoadingFallback />
   }
 
-  if (!clienteInfo) {
+  if (!cliente) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <div className="text-center">
@@ -48,19 +48,47 @@ export function ClienteDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'overview':
-        return <ClienteDashboardOverview onTabChange={setActiveTab} />
+        return (
+          <ClienteDashboardOverview 
+            cliente={cliente}
+            briefing={briefing}
+            vendas={vendas}
+            arquivos={arquivos}
+          />
+        )
       case 'briefing':
-        return <BriefingForm />
+        return (
+          <BriefingForm 
+            emailCliente={user?.email || ''}
+            onBriefingUpdated={refetch}
+          />
+        )
       case 'arquivos':
-        return <ArquivosUpload />
+        return (
+          <ArquivosUpload 
+            emailCliente={user?.email || ''}
+            arquivos={arquivos}
+            onArquivosUpdated={refetch}
+          />
+        )
       case 'suporte':
-        return <SuporteRapido />
+        return (
+          <SuporteRapido 
+            onBack={() => setActiveTab('overview')}
+          />
+        )
       case 'comissao':
         return <ClienteComissaoConfirmacao />
       case 'site':
         return <ClienteSiteDescricao />
       case 'vendas':
-        return <VendasManager />
+        return (
+          <VendasManager 
+            emailCliente={user?.email || ''}
+            vendas={vendas}
+            onVendasUpdated={refetch}
+          />
+        )
       case 'steps':
         return isMobile ? 
           <MobileOnboardingSteps onTabChange={setActiveTab} /> : 
@@ -68,17 +96,21 @@ export function ClienteDashboard() {
       case 'chat':
         return <ClienteChat />
       default:
-        return <ClienteDashboardOverview onTabChange={setActiveTab} />
+        return (
+          <ClienteDashboardOverview 
+            cliente={cliente}
+            briefing={briefing}
+            vendas={vendas}
+            arquivos={arquivos}
+          />
+        )
     }
   }
 
   if (isMobile) {
     return (
       <div className="flex flex-col h-screen bg-gray-50">
-        <MobileHeader 
-          onMenuClick={() => setSidebarOpen(true)}
-          clienteInfo={clienteInfo}
-        />
+        <MobileHeader />
         
         <main className="flex-1 overflow-y-auto pb-16">
           {renderContent()}
@@ -90,11 +122,8 @@ export function ClienteDashboard() {
         />
 
         <ClienteSidebarResponsive
-          open={sidebarOpen}
-          onClose={() => setSidebarOpen(false)}
           activeTab={activeTab}
           onTabChange={setActiveTab}
-          clienteInfo={clienteInfo}
         />
       </div>
     )
@@ -105,7 +134,7 @@ export function ClienteDashboard() {
       <ClienteSidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
-        clienteInfo={clienteInfo}
+        clienteInfo={cliente}
       />
       
       <main className="flex-1 overflow-y-auto">

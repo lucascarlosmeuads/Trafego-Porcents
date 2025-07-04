@@ -17,13 +17,13 @@ import {
 
 export function ClienteComissaoConfirmacao() {
   const { user } = useAuth()
-  const { clienteInfo, briefing } = useClienteData(user?.email || '')
+  const { cliente, briefing } = useClienteData(user?.email || '')
   const [confirmando, setConfirmando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
 
-  const valorComissao = clienteInfo?.valor_comissao || 60.00
-  const comissaoConfirmada = clienteInfo?.comissao_confirmada || false
+  const valorComissao = cliente?.valor_comissao || 60.00
+  const comissaoConfirmada = cliente?.comissao_confirmada || false
 
   // Calcular valor sugerido baseado no briefing
   const calcularComissaoSugerida = () => {

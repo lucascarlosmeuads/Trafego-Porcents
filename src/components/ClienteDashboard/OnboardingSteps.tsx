@@ -1,271 +1,184 @@
 
 import React from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { useClienteProgresso } from '@/hooks/useClienteProgresso'
-import { useClienteData } from '@/hooks/useClienteData'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { useClienteData } from '@/hooks/useClienteData'
+import { useAuth } from '@/hooks/useAuth'
 import { 
   FileText, 
   Upload, 
-  BarChart3,
-  Headphones,
-  ArrowLeft,
-  CheckCircle2,
-  Clock,
-  ChevronRight,
-  Calendar,
+  Headphones, 
   DollarSign,
-  Globe
+  Globe,
+  BarChart3,
+  CheckCircle,
+  Circle,
+  ArrowRight
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
   onTabChange: (tab: string) => void
 }
 
-interface Step {
-  id: number
-  title: string
-  description: string
-  icon: any
-  action: () => void
-  actionText: string
-  canCheck: boolean
-  autoCheck?: boolean
-}
-
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
-  const { briefing, arquivos, clienteInfo } = useClienteData(user?.email || '')
-  const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-  const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
+  const { cliente, briefing, arquivos } = useClienteData(user?.email || '')
 
-  const steps: Step[] = React.useMemo(() => [
+  const steps = [
     {
-      id: 1,
-      title: 'Preencher Formulário',
-      description: 'Complete todas as informações sobre seu produto/serviço',
+      id: 'briefing',
+      title: '1. Preencha o Formulário',
+      description: 'Complete as informações sobre seu produto/serviço',
       icon: FileText,
-      action: () => onTabChange('briefing'),
-      actionText: 'Preencher Formulário',
-      canCheck: true,
-      autoCheck: !!(briefing && briefing.nome_produto && briefing.descricao_resumida)
+      completed: !!briefing,
+      required: true
     },
     {
-      id: 2,
-      title: 'Enviar Materiais Criativos',
-      description: 'Envie logos, fotos e materiais para criação dos criativos',
+      id: 'arquivos', 
+      title: '2. Envie os Materiais',
+      description: 'Faça upload de fotos e vídeos para criação dos anúncios',
       icon: Upload,
-      action: () => onTabChange('arquivos'),
-      actionText: 'Enviar Materiais',
-      canCheck: true,
-      autoCheck: !!(arquivos && arquivos.length > 0)
+      completed: arquivos.length > 0,
+      required: true
     },
     {
-      id: 3,
-      title: 'Contatar Suporte se Necessário',
-      description: 'Entre em contato com seu gestor para esclarecimentos ou suporte adicional',
+      id: 'suporte',
+      title: '3. Contrate o Suporte (Se Necessário)',
+      description: 'Suporte adicional especializado para seu negócio',
       icon: Headphones,
-      action: () => onTabChange('suporte'),
-      actionText: 'Acessar Suporte',
-      canCheck: true
+      completed: false, // Pode ser definido baseado em alguma lógica
+      required: false
     },
     {
-      id: 4,
-      title: 'Confirmar Valor da Comissão',
-      description: 'Visualize e confirme o valor da comissão mensal calculada para seu negócio',
+      id: 'comissao',
+      title: '4. Confirme o Valor da Comissão',
+      description: 'Revise e confirme o valor mensal da gestão',
       icon: DollarSign,
-      action: () => onTabChange('comissao'),
-      actionText: 'Confirmar Comissão',
-      canCheck: true,
-      autoCheck: !!(clienteInfo?.comissao_confirmada)
+      completed: cliente?.comissao_confirmada || false,
+      required: true
     },
     {
-      id: 5,
-      title: 'Descrever Como Deseja o Site',
-      description: 'Opcional: Descreva como você deseja que seja o seu site personalizado',
+      id: 'site',
+      title: '5. Descreva Como Deseja o Site (Opcional)',
+      description: 'Personalize seu site ou use o modelo padrão',
       icon: Globe,
-      action: () => onTabChange('site'),
-      actionText: 'Descrever Site',
-      canCheck: true,
-      autoCheck: !!(clienteInfo?.site_descricao_personalizada)
+      completed: !!cliente?.site_descricao_personalizada,
+      required: false
     },
     {
-      id: 6,
-      title: 'Visualizar Métricas da Campanha',
-      description: 'Acompanhe o desempenho da sua campanha em tempo real',
+      id: 'vendas',
+      title: '6. Visualize as Métricas da Campanha',
+      description: 'Acompanhe resultados após ativação da campanha',
       icon: BarChart3,
-      action: () => onTabChange('vendas'),
-      actionText: 'Ver Métricas',
-      canCheck: true
+      completed: false, // Será true quando campanhas estiverem ativas
+      required: false
     }
-  ], [briefing, arquivos, clienteInfo, onTabChange])
+  ]
 
-  const checkAutoSteps = React.useCallback(() => {
-    steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id) && !userManuallyUnchecked.has(step.id)) {
-        togglePasso(step.id)
-      }
-    })
-  }, [steps, progresso, togglePasso, userManuallyUnchecked])
-
-  React.useEffect(() => {
-    if (!loading && (briefing || arquivos || clienteInfo)) {
-      checkAutoSteps()
-    }
-  }, [loading, briefing, arquivos, clienteInfo, checkAutoSteps])
-
-  const totalSteps = steps.length
-  const completedSteps = progresso.size
-  const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
-
-  const handleStepToggle = React.useCallback(async (stepId: number) => {
-    const step = steps.find(s => s.id === stepId)
-    if (step?.autoCheck && progresso.has(stepId)) {
-      setUserManuallyUnchecked(prev => new Set(prev).add(stepId))
-    }
-    await togglePasso(stepId)
-  }, [togglePasso, steps, progresso])
-
-  const handleBackToOverview = () => {
-    onTabChange('overview')
-  }
-
-  if (loading) {
-    return (
-      <Card className="bg-white border-gray-200 shadow-lg">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span className="ml-2 text-gray-600">Carregando progresso...</span>
-          </div>
-        </CardContent>
-      </Card>
-    )
-  }
+  const completedSteps = steps.filter(step => step.completed).length
+  const requiredSteps = steps.filter(step => step.required)
+  const completedRequiredSteps = requiredSteps.filter(step => step.completed).length
+  const progress = (completedSteps / steps.length) * 100
 
   return (
-    <Card className="bg-white border-gray-200 shadow-lg">
+    <Card className="w-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handleBackToOverview}
-              className="text-gray-600 hover:text-gray-800 hover:bg-gray-100"
-            >
-              <ArrowLeft className="h-4 w-4 mr-1" />
-              Voltar
-            </Button>
-            <div>
-              <CardTitle className="text-gray-800 flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                  <CheckCircle2 className="h-4 w-4 text-white" />
-                </div>
-                Guia de Configuração
-              </CardTitle>
-              <CardDescription className="text-gray-600">
-                Siga estes 6 passos para configurar sua campanha corretamente
-              </CardDescription>
-            </div>
-          </div>
-          <Badge 
-            variant={completedSteps === totalSteps ? "default" : "secondary"}
-            className={`text-sm ${
-              completedSteps === totalSteps 
-                ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
-                : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-            }`}
-          >
-            {completedSteps}/{totalSteps} concluídos
+        <CardTitle className="flex items-center justify-between">
+          <span>Guia Completo - Configure Sua Campanha</span>
+          <Badge variant="outline" className="bg-blue-50 text-blue-700">
+            {completedSteps}/{steps.length} Concluído
           </Badge>
-        </div>
-        
-        <div className="space-y-2">
-          <div className="flex justify-between text-sm">
-            <span className="text-gray-800 font-medium">Progresso geral</span>
-            <span className="text-blue-600 font-bold">{progressPercentage}%</span>
-          </div>
-          {typeof progressPercentage === 'number' && !isNaN(progressPercentage) && (
-            <Progress 
-              value={progressPercentage} 
-              className="h-3"
-            />
-          )}
-        </div>
+        </CardTitle>
+        <Progress value={progress} className="w-full h-3" />
       </CardHeader>
-      
       <CardContent className="space-y-4">
+        {/* Status Geral */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
+          <h3 className="font-semibold text-gray-800 mb-2">Status da Configuração</h3>
+          <div className="text-sm text-gray-700">
+            <p>✅ <strong>Obrigatórios:</strong> {completedRequiredSteps}/{requiredSteps.length} concluídos</p>
+            <p>📊 <strong>Progresso geral:</strong> {Math.round(progress)}% completo</p>
+            {completedRequiredSteps === requiredSteps.length && (
+              <p className="text-green-600 font-medium mt-2">
+                🎉 Todos os passos obrigatórios foram concluídos!
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Lista de Passos */}
         <div className="space-y-3">
           {steps.map((step, index) => {
-            const isCompleted = progresso.has(step.id)
+            const Icon = step.icon
+            const isCompleted = step.completed
+            const isDisabled = index > 0 && !steps[0].completed // Bloquear se briefing não foi feito
             
             return (
-              <div
+              <div 
                 key={step.id}
-                className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all duration-200 ${
-                  isCompleted 
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-                    : 'bg-white border-gray-200 hover:border-gray-300'
-                } shadow-sm hover:shadow-md`}
+                className={`
+                  border rounded-lg p-4 transition-all duration-200
+                  ${isCompleted 
+                    ? 'bg-green-50 border-green-200' 
+                    : isDisabled 
+                      ? 'bg-gray-50 border-gray-200 opacity-60' 
+                      : 'bg-white border-gray-200 hover:border-blue-300 hover:shadow-sm'
+                  }
+                `}
               >
-                <div className="flex items-center space-x-3 flex-1">
-                  <Checkbox
-                    checked={isCompleted}
-                    onCheckedChange={() => handleStepToggle(step.id)}
-                    className="w-6 h-6 border-2"
-                  />
-                  
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 ${
-                    isCompleted 
-                      ? 'bg-green-600 border-green-600 text-white' 
-                      : 'bg-gray-100 border-gray-300 text-gray-600'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  
-                  <div className={`p-2 rounded-lg ${
-                    isCompleted 
-                      ? 'bg-green-600' 
-                      : 'bg-gray-400'
-                  }`}>
-                    <step.icon className="h-4 w-4 text-white" />
-                  </div>
-                  
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className={`font-medium ${isCompleted ? 'text-green-700' : 'text-gray-800'}`}>
-                        {step.title}
-                      </h4>
-                      {isCompleted && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      )}
-                      {step.id === 5 && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                          Opcional
-                        </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className={`
+                      w-10 h-10 rounded-full flex items-center justify-center
+                      ${isCompleted 
+                        ? 'bg-green-500 text-white' 
+                        : isDisabled 
+                          ? 'bg-gray-300 text-gray-500'
+                          : 'bg-blue-100 text-blue-600'
+                      }
+                    `}>
+                      {isCompleted ? (
+                        <CheckCircle className="w-5 h-5" />
+                      ) : (
+                        <Icon className="w-5 h-5" />
                       )}
                     </div>
-                    <p className="text-gray-600 text-sm">{step.description}</p>
+                    
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium text-gray-900">{step.title}</h4>
+                        {step.required && (
+                          <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200">
+                            Obrigatório
+                          </Badge>
+                        )}
+                        {!step.required && (
+                          <Badge variant="outline" className="text-xs bg-purple-50 text-purple-600 border-purple-200">
+                            Opcional
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center">
+                  
                   <Button
-                    onClick={step.action}
-                    className={`${
-                      isCompleted 
-                        ? 'bg-green-600 hover:bg-green-700 text-white' 
-                        : 'bg-gray-600 hover:bg-gray-700 text-white'
-                    } shadow-md`}
+                    onClick={() => onTabChange(step.id)}
+                    disabled={isDisabled}
+                    variant={isCompleted ? "outline" : "default"}
                     size="sm"
+                    className={isCompleted ? "text-green-600 border-green-300" : ""}
                   >
-                    {step.actionText}
-                    <ChevronRight className="h-4 w-4 ml-1" />
+                    {isCompleted ? (
+                      'Revisar'
+                    ) : (
+                      <>
+                        {isDisabled ? 'Bloqueado' : 'Iniciar'}
+                        {!isDisabled && <ArrowRight className="w-4 h-4 ml-1" />}
+                      </>
+                    )}
                   </Button>
                 </div>
               </div>
@@ -273,46 +186,15 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
           })}
         </div>
 
-        {/* Mensagem de Tranquilização */}
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <span className="text-blue-800 font-medium">Fique tranquilo!</span>
-          </div>
-          <p className="text-gray-700 text-sm leading-relaxed">
-            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão dos passos obrigatórios. 
-            É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
-          </p>
-        </div>
-
-        {completedSteps === totalSteps && (
-          <div className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-3">
-              <CheckCircle2 className="h-6 w-6 text-white" />
-            </div>
-            <h3 className="text-green-700 font-semibold text-lg mb-2">Parabéns! 🎉</h3>
-            <p className="text-gray-700 text-sm mb-4">
-              Você completou todos os passos! Agora suas campanhas estão prontas para decolar!
-            </p>
-            <Button
-              onClick={() => onTabChange('vendas')}
-              className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white shadow-lg"
-              size="sm"
-            >
-              Ver Métricas da Campanha
-            </Button>
-          </div>
-        )}
-
-        <div className="pt-4 border-t border-gray-200">
-          <Button
-            variant="outline"
-            onClick={handleBackToOverview}
-            className="w-full border-gray-300 text-gray-600 hover:text-gray-800 hover:bg-gray-50"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Painel Principal
-          </Button>
+        {/* Dicas */}
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+          <h4 className="font-medium text-yellow-800 mb-2">💡 Dicas Importantes:</h4>
+          <ul className="text-sm text-yellow-700 space-y-1">
+            <li>• Complete o formulário primeiro para liberar os outros passos</li>
+            <li>• Quanto mais materiais enviar, melhores serão seus anúncios</li>
+            <li>• As métricas só aparecerão após sua campanha estar ativa</li>
+            <li>• O site é opcional, mas recomendado para melhores conversões</li>
+          </ul>
         </div>
       </CardContent>
     </Card>

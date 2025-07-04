@@ -1,297 +1,172 @@
 
 import React from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { useClienteProgresso } from '@/hooks/useClienteProgresso'
-import { useClienteData } from '@/hooks/useClienteData'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Progress } from '@/components/ui/progress'
+import { useClienteData } from '@/hooks/useClienteData'
+import { useAuth } from '@/hooks/useAuth'
 import { 
   FileText, 
   Upload, 
-  Headphones,
-  BarChart3,
-  CheckCircle2,
-  Clock,
-  ChevronRight,
-  Calendar,
+  Headphones, 
   DollarSign,
-  Globe
+  Globe,
+  BarChart3,
+  CheckCircle,
+  ArrowRight
 } from 'lucide-react'
 
 interface MobileOnboardingStepsProps {
   onTabChange: (tab: string) => void
 }
 
-interface Step {
-  id: number
-  title: string
-  description: string
-  icon: any
-  action: () => void
-  actionText: string
-  canCheck: boolean
-  autoCheck?: boolean
-}
-
 export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProps) {
   const { user } = useAuth()
-  const { briefing, arquivos, clienteInfo } = useClienteData(user?.email || '')
-  const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
-  const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
+  const { cliente, briefing, arquivos } = useClienteData(user?.email || '')
 
-  const steps: Step[] = React.useMemo(() => [
+  const steps = [
     {
-      id: 1,
-      title: 'Preencher Formulário',
-      description: 'Complete todas as informações sobre seu produto/serviço',
+      id: 'briefing',
+      title: 'Formulário',
+      description: 'Complete as informações',
       icon: FileText,
-      action: () => onTabChange('briefing'),
-      actionText: 'Preencher Formulário',
-      canCheck: true,
-      autoCheck: !!(briefing && briefing.nome_produto && briefing.descricao_resumida)
+      completed: !!briefing,
+      required: true
     },
     {
-      id: 2,
-      title: 'Enviar Materiais Criativos',
-      description: 'Envie logos, fotos e materiais para criação dos criativos',
+      id: 'arquivos', 
+      title: 'Materiais',
+      description: 'Upload de fotos/vídeos',
       icon: Upload,
-      action: () => onTabChange('arquivos'),
-      actionText: 'Enviar Materiais',
-      canCheck: true,
-      autoCheck: !!(arquivos && arquivos.length > 0)
+      completed: arquivos.length > 0,
+      required: true
     },
     {
-      id: 3,
-      title: 'Contatar Suporte se Necessário',
-      description: 'Entre em contato com seu gestor para esclarecimentos ou suporte adicional',
+      id: 'suporte',
+      title: 'Suporte',
+      description: 'Se necessário',
       icon: Headphones,
-      action: () => onTabChange('suporte'),
-      actionText: 'Acessar Suporte',
-      canCheck: true
+      completed: false,
+      required: false
     },
     {
-      id: 4,
-      title: 'Confirmar Valor da Comissão',
-      description: 'Visualize e confirme o valor da comissão mensal calculada para seu negócio',
+      id: 'comissao',
+      title: 'Comissão',
+      description: 'Confirme o valor',
       icon: DollarSign,
-      action: () => onTabChange('comissao'),
-      actionText: 'Confirmar Comissão',
-      canCheck: true,
-      autoCheck: !!(clienteInfo?.comissao_confirmada)
+      completed: cliente?.comissao_confirmada || false,
+      required: true
     },
     {
-      id: 5,
-      title: 'Descrever Como Deseja o Site',
-      description: 'Opcional: Descreva como você deseja que seja o seu site personalizado',
+      id: 'site',
+      title: 'Site',
+      description: 'Descreva como deseja',
       icon: Globe,
-      action: () => onTabChange('site'),
-      actionText: 'Descrever Site',
-      canCheck: true,
-      autoCheck: !!(clienteInfo?.site_descricao_personalizada)
+      completed: !!cliente?.site_descricao_personalizada,
+      required: false
     },
     {
-      id: 6,
-      title: 'Visualizar Métricas da Campanha',
-      description: 'Acompanhe o desempenho da sua campanha em tempo real',
+      id: 'vendas',
+      title: 'Métricas',
+      description: 'Após campanha ativa',
       icon: BarChart3,
-      action: () => onTabChange('vendas'),
-      actionText: 'Ver Métricas',
-      canCheck: true
+      completed: false,
+      required: false
     }
-  ], [briefing, arquivos, clienteInfo, onTabChange])
+  ]
 
-  const checkAutoSteps = React.useCallback(() => {
-    steps.forEach(step => {
-      if (step.autoCheck && !progresso.has(step.id) && !userManuallyUnchecked.has(step.id)) {
-        togglePasso(step.id)
-      }
-    })
-  }, [steps, progresso, togglePasso, userManuallyUnchecked])
-
-  React.useEffect(() => {
-    if (!loading && (briefing || arquivos || clienteInfo)) {
-      checkAutoSteps()
-    }
-  }, [loading, briefing, arquivos, clienteInfo, checkAutoSteps])
-
-  const totalSteps = steps.length
-  const completedSteps = progresso.size
-  const progressPercentage = Math.round((completedSteps / totalSteps) * 100)
-
-  const nextStep = React.useMemo(() => {
-    return steps.find(step => !progresso.has(step.id))
-  }, [steps, progresso])
-
-  const handleStepToggle = React.useCallback(async (stepId: number) => {
-    const step = steps.find(s => s.id === stepId)
-    if (step?.autoCheck && progresso.has(stepId)) {
-      setUserManuallyUnchecked(prev => new Set(prev).add(stepId))
-    }
-    await togglePasso(stepId)
-  }, [togglePasso, steps, progresso])
-
-  if (loading) {
-    return (
-      <div className="p-4">
-        <Card className="bg-white border-gray-200 shadow-lg">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-center">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="ml-2 text-gray-600">Carregando progresso...</span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    )
-  }
+  const completedSteps = steps.filter(step => step.completed).length
+  const progress = (completedSteps / steps.length) * 100
 
   return (
-    <div className="p-4 space-y-4 bg-gray-50 min-h-screen">
-      {/* Header de Progresso */}
-      <Card className="bg-white border-gray-200 shadow-lg">
-        <CardHeader className="pb-4">
-          <div className="flex items-center justify-between mb-3">
-            <CardTitle className="text-gray-800 text-lg flex items-center gap-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-600 to-purple-600 flex items-center justify-center">
-                <CheckCircle2 className="h-3 w-3 text-white" />
-              </div>
-              Configuração da Campanha
-            </CardTitle>
-            <Badge 
-              variant={completedSteps === totalSteps ? "default" : "secondary"}
-              className={`text-sm ${
-                completedSteps === totalSteps 
-                  ? 'bg-gradient-to-r from-green-500 to-green-600 text-white' 
-                  : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-              }`}
-            >
-              {completedSteps}/{totalSteps}
+    <div className="p-4 space-y-4">
+      {/* Header */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg">Configure Sua Campanha</CardTitle>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-600">{completedSteps}/{steps.length} Concluído</span>
+            <Badge variant="outline" className="bg-blue-50 text-blue-700">
+              {Math.round(progress)}%
             </Badge>
           </div>
-          
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-800 font-medium">Progresso</span>
-              <span className="text-blue-600 font-bold">{progressPercentage}%</span>
-            </div>
-            <Progress value={progressPercentage} className="h-3" />
-          </div>
+          <Progress value={progress} className="w-full h-2" />
         </CardHeader>
       </Card>
 
-      {/* Próximo Passo em Destaque */}
-      {nextStep && (
-        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200 shadow-lg">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <Clock className="h-4 w-4 text-blue-600" />
-              <span className="text-sm text-blue-600 font-medium">Próximo passo:</span>
-            </div>
-            <div className="space-y-3">
-              <div>
-                <h4 className="text-gray-800 font-medium text-lg flex items-center gap-2">
-                  {nextStep.title}
-                  {nextStep.id === 5 && (
-                    <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
-                      Opcional
-                    </span>
-                  )}
-                </h4>
-                <p className="text-gray-600 text-sm mt-1">{nextStep.description}</p>
-              </div>
-              <Button
-                onClick={nextStep.action}
-                className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white py-3 text-base shadow-lg"
-                size="lg"
-              >
-                {nextStep.actionText}
-                <ChevronRight className="h-5 w-5 ml-2" />
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Lista de Passos */}
-      <div className="space-y-3">
+      {/* Steps Grid */}
+      <div className="grid grid-cols-1 gap-3">
         {steps.map((step, index) => {
-          const isCompleted = progresso.has(step.id)
-          const isNext = step.id === nextStep?.id
+          const Icon = step.icon
+          const isCompleted = step.completed
+          const isDisabled = index > 0 && !steps[0].completed
           
           return (
-            <Card
+            <Card 
               key={step.id}
-              className={`transition-all duration-200 shadow-lg ${
-                isCompleted 
-                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 border-green-200' 
-                  : isNext
-                  ? 'bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200'
-                  : 'bg-white border-gray-200'
-              }`}
+              className={`
+                transition-all duration-200
+                ${isCompleted 
+                  ? 'border-green-200 bg-green-50' 
+                  : isDisabled 
+                    ? 'border-gray-200 bg-gray-50 opacity-60' 
+                    : 'border-gray-200 hover:border-blue-300'
+                }
+              `}
             >
               <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <Checkbox
-                    checked={isCompleted}
-                    onCheckedChange={() => handleStepToggle(step.id)}
-                    className="w-6 h-6 flex-shrink-0 border-2"
-                  />
-                  
-                  <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm border-2 flex-shrink-0 ${
-                    isCompleted 
-                      ? 'bg-green-600 border-green-600 text-white' 
-                      : isNext
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 border-blue-600 text-white'
-                      : 'bg-gray-100 border-gray-300 text-gray-600'
-                  }`}>
-                    {index + 1}
-                  </div>
-                  
-                  <div className={`p-2 rounded-lg flex-shrink-0 ${
-                    isCompleted 
-                      ? 'bg-green-600' 
-                      : isNext 
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600' 
-                      : 'bg-gray-400'
-                  }`}>
-                    <step.icon className="h-4 w-4 text-white" />
-                  </div>
-                  
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h4 className={`font-medium text-sm ${isCompleted ? 'text-green-700' : 'text-gray-800'}`}>
-                        {step.title}
-                      </h4>
-                      {isCompleted && (
-                        <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />
-                      )}
-                      {step.id === 5 && (
-                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full flex-shrink-0">
-                          Opcional
-                        </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className={`
+                      w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0
+                      ${isCompleted 
+                        ? 'bg-green-500 text-white' 
+                        : isDisabled 
+                          ? 'bg-gray-300 text-gray-500'
+                          : 'bg-blue-100 text-blue-600'
+                      }
+                    `}>
+                      {isCompleted ? (
+                        <CheckCircle className="w-4 h-4" />
+                      ) : (
+                        <Icon className="w-4 h-4" />
                       )}
                     </div>
-                    <p className="text-gray-600 text-xs mt-1">{step.description}</p>
+                    
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h4 className="font-medium text-gray-900 text-sm truncate">
+                          {step.title}
+                        </h4>
+                        {step.required && (
+                          <Badge variant="outline" className="text-xs bg-red-50 text-red-600 border-red-200 flex-shrink-0">
+                            Obrig.
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-600 truncate">{step.description}</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="mt-3">
+                  
                   <Button
-                    onClick={step.action}
-                    className={`w-full ${
-                      isCompleted
-                        ? 'bg-green-600 hover:bg-green-700 text-white'
-                        : isNext
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white'
-                        : 'bg-gray-600 hover:bg-gray-700 text-white'
-                    } shadow-md`}
+                    onClick={() => onTabChange(step.id)}
+                    disabled={isDisabled}
+                    variant={isCompleted ? "outline" : "default"}
                     size="sm"
+                    className={`
+                      ml-2 flex-shrink-0
+                      ${isCompleted ? "text-green-600 border-green-300" : ""}
+                    `}
                   >
-                    {step.actionText}
-                    <ChevronRight className="h-4 w-4 ml-2" />
+                    {isCompleted ? (
+                      'Ver'
+                    ) : (
+                      <>
+                        {isDisabled ? 'Block.' : 'Ir'}
+                        {!isDisabled && <ArrowRight className="w-3 h-3 ml-1" />}
+                      </>
+                    )}
                   </Button>
                 </div>
               </CardContent>
@@ -300,41 +175,17 @@ export function MobileOnboardingSteps({ onTabChange }: MobileOnboardingStepsProp
         })}
       </div>
 
-      {/* Mensagem de Tranquilização */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 shadow-lg">
+      {/* Tips */}
+      <Card className="bg-yellow-50 border-yellow-200">
         <CardContent className="p-4">
-          <div className="flex items-center gap-2 mb-2">
-            <Calendar className="h-5 w-5 text-blue-600" />
-            <span className="text-blue-800 font-medium text-sm">Fique tranquilo!</span>
-          </div>
-          <p className="text-gray-700 text-xs leading-relaxed">
-            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão dos passos obrigatórios. 
-            É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
-          </p>
+          <h4 className="font-medium text-yellow-800 mb-2 text-sm">💡 Dicas:</h4>
+          <ul className="text-xs text-yellow-700 space-y-1">
+            <li>• Complete o briefing primeiro</li>
+            <li>• Envie bastante material visual</li>
+            <li>• Métricas aparecem após ativação</li>
+          </ul>
         </CardContent>
       </Card>
-
-      {/* Mensagem de Conclusão */}
-      {completedSteps === totalSteps && (
-        <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 shadow-lg">
-          <CardContent className="p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center mx-auto mb-3">
-              <CheckCircle2 className="h-6 w-6 text-white" />
-            </div>
-            <h3 className="text-green-700 font-semibold text-lg mb-2">Parabéns! 🎉</h3>
-            <p className="text-gray-700 text-sm mb-4">
-              Você completou todos os passos! Agora suas campanhas estão prontas para decolar!
-            </p>
-            <Button
-              onClick={() => onTabChange('vendas')}
-              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white py-3 shadow-lg"
-              size="lg"
-            >
-              Ver Métricas da Campanha
-            </Button>
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
