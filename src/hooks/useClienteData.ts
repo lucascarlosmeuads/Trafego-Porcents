@@ -84,8 +84,8 @@ export interface ArquivoCliente {
   email_cliente: string
   author_type: string
   created_at: string
-  url_arquivo?: string
-  data_upload?: string
+  url_arquivo: string
+  data_upload: string
 }
 
 // Exportar tipos individuais para compatibilidade
