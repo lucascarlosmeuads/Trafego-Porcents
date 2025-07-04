@@ -1,9 +1,11 @@
 
-import React from 'react'
+import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ClienteProfileSection } from './ClienteProfileSection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { TermosContratoModal } from './TermosContratoModal'
+import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { 
   FileText, 
   Upload, 
@@ -12,7 +14,8 @@ import {
   Globe,
   BarChart3,
   CheckSquare,
-  CheckCircle
+  CheckCircle,
+  AlertTriangle
 } from 'lucide-react'
 
 interface ClienteSidebarProps {
@@ -22,6 +25,9 @@ interface ClienteSidebarProps {
 }
 
 export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteSidebarProps) {
+  const { termosAceitos, clienteAntigo, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
+  const [termosModalOpen, setTermosModalOpen] = useState(false)
+
   const menuItems = [
     {
       id: 'briefing',
@@ -86,6 +92,28 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
     }
   }
 
+  const handleTermosClick = () => {
+    setTermosModalOpen(true)
+  }
+
+  const handleTermosAceitos = async () => {
+    try {
+      await marcarTermosAceitos()
+      setTermosModalOpen(false)
+    } catch (error) {
+      console.error('Erro ao aceitar termos:', error)
+    }
+  }
+
+  const handleTermosRejeitados = async () => {
+    try {
+      await marcarTermosRejeitados()
+      setTermosModalOpen(false)
+    } catch (error) {
+      console.error('Erro ao rejeitar termos:', error)
+    }
+  }
+
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col min-h-screen">
       <ClienteProfileSection />
@@ -122,6 +150,34 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
             </Button>
           )
         })}
+
+        {/* Divisor */}
+        <div className="my-4 border-t border-border"></div>
+
+        {/* Item Termos de Uso */}
+        <Button
+          variant="ghost"
+          className="w-full justify-start text-left h-auto py-3 px-3 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200 dark:border-red-800/30 hover:from-red-100 hover:to-red-150 dark:hover:from-red-900/30 dark:hover:to-red-800/30 transition-all duration-200"
+          onClick={handleTermosClick}
+        >
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
+                <FileText className="h-3 w-3 text-red-600 dark:text-red-400 absolute -bottom-1 -right-1" />
+              </div>
+              <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                Termos de Uso
+              </span>
+            </div>
+            <Badge 
+              variant="destructive" 
+              className="text-xs px-2 py-0 bg-red-600 text-white shadow-lg animate-pulse"
+            >
+              IMPORTANTE
+            </Badge>
+          </div>
+        </Button>
       </nav>
 
       {/* Status da Campanha */}
@@ -140,6 +196,15 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
           )}
         </div>
       </div>
+
+      {/* Modal de Termos */}
+      <TermosContratoModal
+        open={termosModalOpen}
+        onOpenChange={setTermosModalOpen}
+        onTermosAceitos={handleTermosAceitos}
+        onTermosRejeitados={handleTermosRejeitados}
+        showOnlyAccept={termosAceitos || clienteAntigo}
+      />
     </div>
   )
 }
