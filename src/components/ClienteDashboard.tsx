@@ -13,7 +13,7 @@ import { SuporteRapido } from './ClienteDashboard/SuporteRapido'
 import { ComissaoInputManual } from './ClienteDashboard/ComissaoInputManual'
 import { ClienteSiteDescricao } from './ClienteDashboard/ClienteSiteDescricao'
 import { MetricasMetaAds } from './ClienteDashboard/MetricasMetaAds'
-import { GuiaCompletoSimplificado } from './ClienteDashboard/GuiaCompletoSimplificado'
+import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { LoadingFallback } from './LoadingFallback'
 
 export function ClienteDashboard() {
@@ -72,7 +72,7 @@ export function ClienteDashboard() {
       case 'vendas':
         return <MetricasMetaAds />
       case 'steps':
-        return <GuiaCompletoSimplificado onTabChange={setActiveTab} />
+        return <TutorialVideos onBack={() => setActiveTab('briefing')} />
       default:
         return (
           <BriefingForm 
