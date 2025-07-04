@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { ClienteProfileSection } from './ClienteProfileSection'
@@ -6,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TermosContratoModal } from './TermosContratoModal'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
+import { useAuth } from '@/hooks/useAuth'
 import { 
   FileText, 
   Upload, 
@@ -15,7 +15,9 @@ import {
   BarChart3,
   CheckSquare,
   CheckCircle,
-  AlertTriangle
+  AlertTriangle,
+  LogOut,
+  Loader2
 } from 'lucide-react'
 
 interface ClienteSidebarProps {
@@ -26,7 +28,9 @@ interface ClienteSidebarProps {
 
 export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteSidebarProps) {
   const { termosAceitos, clienteAntigo, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
+  const { signOut } = useAuth()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   const menuItems = [
     {
@@ -114,6 +118,16 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
     }
   }
 
+  const handleSignOut = async () => {
+    setIsLoggingOut(true)
+    try {
+      await signOut()
+    } catch (error) {
+      console.error('Erro no logout:', error)
+      setIsLoggingOut(false)
+    }
+  }
+
   return (
     <div className="w-64 bg-card border-r border-border flex flex-col min-h-screen">
       <ClienteProfileSection />
@@ -195,6 +209,27 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
             </div>
           )}
         </div>
+      </div>
+
+      {/* Botão Sair do Sistema */}
+      <div className="p-4 border-t border-border">
+        <Button
+          onClick={handleSignOut}
+          disabled={isLoggingOut}
+          variant="outline"
+          className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-destructive hover:text-destructive-foreground border-destructive/20 hover:border-destructive"
+        >
+          <div className="flex items-center gap-3 w-full">
+            {isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            ) : (
+              <LogOut className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="text-sm font-medium">
+              {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
+            </span>
+          </div>
+        </Button>
       </div>
 
       {/* Modal de Termos */}

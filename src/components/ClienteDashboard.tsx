@@ -3,7 +3,7 @@ import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useIsMobile } from '@/hooks/useIsMobile'
-import { ClienteSidebar } from './ClienteDashboard/ClienteSidebar'
+import { ClienteSidebarDynamic } from './ClienteDashboard/ClienteSidebarDynamic'
 import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
@@ -15,6 +15,7 @@ import { ClienteSiteDescricao } from './ClienteDashboard/ClienteSiteDescricao'
 import { MetricasMetaAds } from './ClienteDashboard/MetricasMetaAds'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { LoadingFallback } from './LoadingFallback'
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
@@ -110,18 +111,35 @@ export function ClienteDashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-background overflow-hidden">
-      <ClienteSidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        clienteInfo={cliente}
-      />
-      
-      <main className="flex-1 overflow-y-auto bg-background">
-        <div className="p-6 min-h-full">
-          {renderContent()}
+    <SidebarProvider>
+      <div className="flex h-screen bg-background overflow-hidden w-full">
+        {/* Header com trigger da sidebar */}
+        <div className="fixed top-0 left-0 right-0 z-50 h-12 bg-card border-b border-border flex items-center px-4">
+          <SidebarTrigger />
+          <div className="flex items-center gap-3 ml-4">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <span className="text-primary-foreground font-bold text-sm">TP</span>
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-foreground">
+                Dashboard Cliente
+              </h1>
+            </div>
+          </div>
         </div>
-      </main>
-    </div>
+
+        <ClienteSidebarDynamic
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          clienteInfo={cliente}
+        />
+        
+        <main className="flex-1 overflow-y-auto bg-background pt-12">
+          <div className="p-6 min-h-full">
+            {renderContent()}
+          </div>
+        </main>
+      </div>
+    </SidebarProvider>
   )
 }
