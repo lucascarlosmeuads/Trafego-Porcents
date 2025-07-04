@@ -4,20 +4,38 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { FileText, Eye, AlertCircle, RefreshCw, Globe, Tag } from 'lucide-react'
+import { FileText, Eye, AlertCircle, RefreshCw, Globe, Tag, Palette, Camera } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 
 interface BriefingData {
   id: string
   nome_produto: string
+  nome_marca: string | null
   descricao_resumida: string
   publico_alvo: string
   diferencial: string
   investimento_diario: number
   quer_site: boolean | null
-  nome_marca: string | null
-  comissao_aceita: string
   observacoes_finais: string
+  // Novos campos da etapa 2
+  direcionamento_campanha: string | null
+  abrangencia_atendimento: string | null
+  forma_pagamento: string | null
+  possui_facebook: boolean | null
+  possui_instagram: boolean | null
+  utiliza_whatsapp_business: boolean | null
+  // Novos campos da etapa 3
+  criativos_prontos: boolean | null
+  videos_prontos: boolean | null
+  cores_desejadas: string | null
+  tipo_fonte: string | null
+  cores_proibidas: string | null
+  fonte_especifica: string | null
+  estilo_visual: string | null
+  tipos_imagens_preferidas: string[] | null
+  // Controle
+  etapa_atual: number | null
+  formulario_completo: boolean | null
   created_at: string
   updated_at: string
   email_cliente: string
@@ -55,7 +73,6 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
     })
 
     try {
-      // ESTRATÉGIA MELHORADA: Buscar todos os briefings e filtrar manualmente
       const { data: allBriefings, error: fetchError } = await supabase
         .from('briefings_cliente')
         .select('*')
@@ -166,16 +183,28 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
     fetchBriefing()
   }
 
+  const getProgressBadge = (etapaAtual: number | null, formularioCompleto: boolean | null) => {
+    if (formularioCompleto) {
+      return <Badge className="bg-green-500 hover:bg-green-600">✅ Completo</Badge>
+    }
+    if (etapaAtual) {
+      return <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-300">
+        📝 Etapa {etapaAtual}/3
+      </Badge>
+    }
+    return <Badge variant="secondary">📋 Formulário Básico</Badge>
+  }
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-500" />
-            Briefing - {nomeCliente}
+            Formulário de Gestão de Tráfego - {nomeCliente}
           </DialogTitle>
         </DialogHeader>
 
@@ -192,12 +221,8 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
           <div className="flex flex-col items-center justify-center py-12 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mb-4" />
             <h3 className="text-lg font-semibold mb-2">Erro ao carregar briefing</h3>
-            <p className="text-muted-foreground mb-4">
-              {error}
-            </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Email procurado: {emailCliente}
-            </p>
+            <p className="text-muted-foreground mb-4">{error}</p>
+            <p className="text-xs text-muted-foreground mb-4">Email procurado: {emailCliente}</p>
             <Button onClick={handleRetry} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Tentar novamente
@@ -212,9 +237,7 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
             <p className="text-muted-foreground mb-2">
               Não foi possível encontrar o briefing para este cliente.
             </p>
-            <p className="text-xs text-muted-foreground mb-4">
-              Email: {emailCliente}
-            </p>
+            <p className="text-xs text-muted-foreground mb-4">Email: {emailCliente}</p>
             <Button onClick={handleRetry} variant="outline" size="sm">
               <RefreshCw className="w-4 h-4 mr-2" />
               Verificar novamente
@@ -224,29 +247,39 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
 
         {!loading && !error && briefingData && (
           <div className="space-y-6">
+            {/* Header com Status */}
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Informações do Briefing</CardTitle>
-                  <Badge variant="outline" className="text-xs">
-                    Preenchido em {formatDate(briefingData.created_at)}
-                  </Badge>
+                  <CardTitle className="text-lg">Status do Formulário</CardTitle>
+                  <div className="flex gap-2">
+                    {getProgressBadge(briefingData.etapa_atual, briefingData.formulario_completo)}
+                    <Badge variant="outline" className="text-xs">
+                      Preenchido em {formatDate(briefingData.created_at)}
+                    </Badge>
+                  </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">📦 Nome do Produto/Serviço</h4>
-                  <p className="text-foreground">{briefingData.nome_produto || 'Não informado'}</p>
-                </div>
+            </Card>
 
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">💰 Investimento Diário</h4>
-                  <p className="text-foreground">
-                    {briefingData.investimento_diario 
-                      ? `R$ ${Number(briefingData.investimento_diario).toFixed(2)}`
-                      : 'Não informado'
-                    }
-                  </p>
+            {/* Etapa 1 - Informações do Negócio */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5 text-blue-500" />
+                  Etapa 1 - Informações do Negócio
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">📦 Nome do Produto/Serviço</h4>
+                    <p className="text-foreground">{briefingData.nome_produto || 'Não informado'}</p>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">🏷️ Nome da Marca</h4>
+                    <p className="text-foreground">{briefingData.nome_marca || 'Não informado'}</p>
+                  </div>
                 </div>
 
                 <div>
@@ -265,39 +298,26 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
                   </div>
                 </div>
 
-                {/* Seção para Site - Sempre mostrar quando há dados ou quando quer_site não é null */}
-                {(briefingData.quer_site !== null || briefingData.nome_marca) && (
-                  <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                    <h4 className="font-semibold text-sm text-blue-800 mb-3 flex items-center gap-2">
-                      <Globe className="w-4 h-4" />
-                      🌐 Informações do Site
-                    </h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-blue-600 font-medium mb-1">Quer Site?</p>
-                        <Badge 
-                          variant={briefingData.quer_site ? "default" : "secondary"}
-                          className={briefingData.quer_site ? "bg-green-500 hover:bg-green-600" : ""}
-                        >
-                          {briefingData.quer_site === true ? "✅ Sim" : briefingData.quer_site === false ? "❌ Não" : "❓ Não respondido"}
-                        </Badge>
-                      </div>
-                      {briefingData.quer_site && (
-                        <div>
-                          <p className="text-xs text-blue-600 font-medium mb-1">🏷️ Nome da Marca</p>
-                          <p className="text-blue-800 font-medium">
-                            {briefingData.nome_marca || 'Não informado'}
-                          </p>
-                          {briefingData.nome_marca && (
-                            <p className="text-xs text-blue-600 mt-1">
-                              ⚠️ Cliente deve enviar logo na seção Materiais
-                            </p>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">💰 Investimento Diário</h4>
+                    <p className="text-foreground">
+                      {briefingData.investimento_diario 
+                        ? `R$ ${Number(briefingData.investimento_diario).toFixed(2)}`
+                        : 'Não informado'
+                      }
+                    </p>
                   </div>
-                )}
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-1">🌐 Quer Site?</h4>
+                    <Badge 
+                      variant={briefingData.quer_site ? "default" : "secondary"}
+                      className={briefingData.quer_site ? "bg-green-500 hover:bg-green-600" : ""}
+                    >
+                      {briefingData.quer_site === true ? "✅ Sim" : briefingData.quer_site === false ? "❌ Não" : "❓ Não respondido"}
+                    </Badge>
+                  </div>
+                </div>
 
                 {briefingData.observacoes_finais && (
                   <div>
@@ -305,13 +325,159 @@ export function BriefingModal({ emailCliente, nomeCliente, trigger }: BriefingMo
                     <p className="text-foreground">{briefingData.observacoes_finais}</p>
                   </div>
                 )}
-
-                <div>
-                  <h4 className="font-semibold text-sm text-muted-foreground mb-1">Email do Cliente</h4>
-                  <p className="text-foreground text-xs">{briefingData.email_cliente}</p>
-                </div>
               </CardContent>
             </Card>
+
+            {/* Etapa 2 - Informações da Campanha */}
+            {(briefingData.direcionamento_campanha || briefingData.abrangencia_atendimento || briefingData.forma_pagamento || 
+              briefingData.possui_facebook !== null || briefingData.possui_instagram !== null || briefingData.utiliza_whatsapp_business !== null) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Tag className="h-5 w-5 text-green-500" />
+                    Etapa 2 - Informações da Campanha
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {briefingData.direcionamento_campanha && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">🎯 Direcionamento</h4>
+                        <Badge variant="outline">
+                          {briefingData.direcionamento_campanha === 'whatsapp' ? '📱 WhatsApp' : '🌐 Site'}
+                        </Badge>
+                      </div>
+                    )}
+                    {briefingData.abrangencia_atendimento && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">📍 Abrangência</h4>
+                        <Badge variant="outline">
+                          {briefingData.abrangencia_atendimento === 'brasil' ? '🇧🇷 Todo Brasil' : '📍 Região'}
+                        </Badge>
+                      </div>
+                    )}
+                    {briefingData.forma_pagamento && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">💳 Pagamento</h4>
+                        <Badge variant="outline">
+                          {briefingData.forma_pagamento === 'cartao' ? '💳 Cartão' : 
+                           briefingData.forma_pagamento === 'pix' ? '📱 Pix' : '🧾 Boleto'}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-sm text-muted-foreground mb-2">📱 Contas Sociais</h4>
+                    <div className="flex gap-2 flex-wrap">
+                      {briefingData.possui_facebook !== null && (
+                        <Badge variant={briefingData.possui_facebook ? "default" : "secondary"}>
+                          {briefingData.possui_facebook ? '✅ Facebook' : '❌ Facebook'}
+                        </Badge>
+                      )}
+                      {briefingData.possui_instagram !== null && (
+                        <Badge variant={briefingData.possui_instagram ? "default" : "secondary"}>
+                          {briefingData.possui_instagram ? '✅ Instagram' : '❌ Instagram'}
+                        </Badge>
+                      )}
+                      {briefingData.utiliza_whatsapp_business !== null && (
+                        <Badge variant={briefingData.utiliza_whatsapp_business ? "default" : "secondary"}>
+                          {briefingData.utiliza_whatsapp_business ? '✅ WhatsApp Business' : '❌ WhatsApp Business'}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Etapa 3 - Criativos */}
+            {(briefingData.criativos_prontos !== null || briefingData.videos_prontos !== null || 
+              briefingData.cores_desejadas || briefingData.tipo_fonte || briefingData.estilo_visual || 
+              briefingData.cores_proibidas || briefingData.fonte_especifica || briefingData.tipos_imagens_preferidas) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Palette className="h-5 w-5 text-purple-500" />
+                    Etapa 3 - Criativos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {briefingData.criativos_prontos !== null && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">🎨 Criativos Prontos</h4>
+                        <Badge variant={briefingData.criativos_prontos ? "default" : "secondary"}>
+                          {briefingData.criativos_prontos ? '✅ Sim' : '❌ Não'}
+                        </Badge>
+                      </div>
+                    )}
+                    {briefingData.videos_prontos !== null && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">🎬 Vídeos Prontos</h4>
+                        <Badge variant={briefingData.videos_prontos ? "default" : "secondary"}>
+                          {briefingData.videos_prontos ? '✅ Sim' : '❌ Não'}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {briefingData.cores_desejadas && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">🎨 Cores Desejadas</h4>
+                        <p className="text-foreground">{briefingData.cores_desejadas}</p>
+                      </div>
+                    )}
+                    {briefingData.tipo_fonte && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-muted-foreground mb-1">🔤 Tipo de Fonte</h4>
+                        <Badge variant="outline">
+                          {briefingData.tipo_fonte.charAt(0).toUpperCase() + briefingData.tipo_fonte.slice(1)}
+                        </Badge>
+                      </div>
+                    )}
+                  </div>
+
+                  {briefingData.cores_proibidas && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">🚫 Cores Proibidas</h4>
+                      <p className="text-foreground">{briefingData.cores_proibidas}</p>
+                    </div>
+                  )}
+
+                  {briefingData.fonte_especifica && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">📝 Fonte Específica</h4>
+                      <p className="text-foreground">{briefingData.fonte_especifica}</p>
+                    </div>
+                  )}
+
+                  {briefingData.estilo_visual && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-1">✨ Estilo Visual</h4>
+                      <Badge variant="outline">
+                        {briefingData.estilo_visual === 'limpo' ? '🎯 Visual Limpo' : '🎨 Visual com Elementos'}
+                      </Badge>
+                    </div>
+                  )}
+
+                  {briefingData.tipos_imagens_preferidas && briefingData.tipos_imagens_preferidas.length > 0 && (
+                    <div>
+                      <h4 className="font-semibold text-sm text-muted-foreground mb-2">📸 Tipos de Imagens Preferidas</h4>
+                      <div className="flex gap-2 flex-wrap">
+                        {briefingData.tipos_imagens_preferidas.map((tipo, index) => (
+                          <Badge key={index} variant="outline">
+                            <Camera className="w-3 h-3 mr-1" />
+                            {tipo.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {briefingData.updated_at !== briefingData.created_at && (
               <div className="text-xs text-muted-foreground text-center">

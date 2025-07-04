@@ -71,12 +71,21 @@ export type Database = {
       }
       briefings_cliente: {
         Row: {
+          abrangencia_atendimento: string | null
           comissao_aceita: string | null
+          cores_desejadas: string | null
+          cores_proibidas: string | null
           created_at: string
+          criativos_prontos: boolean | null
           descricao_resumida: string | null
           diferencial: string | null
+          direcionamento_campanha: string | null
           email_cliente: string
+          estilo_visual: string | null
+          etapa_atual: number | null
+          fonte_especifica: string | null
           forma_pagamento: string | null
+          formulario_completo: boolean | null
           id: string
           investimento_diario: number | null
           liberar_edicao: boolean | null
@@ -84,19 +93,34 @@ export type Database = {
           nome_marca: string | null
           nome_produto: string
           observacoes_finais: string | null
+          possui_facebook: boolean | null
+          possui_instagram: boolean | null
           publico_alvo: string | null
           quer_site: boolean | null
           resumo_conversa_vendedor: string | null
+          tipo_fonte: string | null
           tipo_prestacao_servico: string | null
+          tipos_imagens_preferidas: string[] | null
           updated_at: string
+          utiliza_whatsapp_business: boolean | null
+          videos_prontos: boolean | null
         }
         Insert: {
+          abrangencia_atendimento?: string | null
           comissao_aceita?: string | null
+          cores_desejadas?: string | null
+          cores_proibidas?: string | null
           created_at?: string
+          criativos_prontos?: boolean | null
           descricao_resumida?: string | null
           diferencial?: string | null
+          direcionamento_campanha?: string | null
           email_cliente: string
+          estilo_visual?: string | null
+          etapa_atual?: number | null
+          fonte_especifica?: string | null
           forma_pagamento?: string | null
+          formulario_completo?: boolean | null
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
@@ -104,19 +128,34 @@ export type Database = {
           nome_marca?: string | null
           nome_produto: string
           observacoes_finais?: string | null
+          possui_facebook?: boolean | null
+          possui_instagram?: boolean | null
           publico_alvo?: string | null
           quer_site?: boolean | null
           resumo_conversa_vendedor?: string | null
+          tipo_fonte?: string | null
           tipo_prestacao_servico?: string | null
+          tipos_imagens_preferidas?: string[] | null
           updated_at?: string
+          utiliza_whatsapp_business?: boolean | null
+          videos_prontos?: boolean | null
         }
         Update: {
+          abrangencia_atendimento?: string | null
           comissao_aceita?: string | null
+          cores_desejadas?: string | null
+          cores_proibidas?: string | null
           created_at?: string
+          criativos_prontos?: boolean | null
           descricao_resumida?: string | null
           diferencial?: string | null
+          direcionamento_campanha?: string | null
           email_cliente?: string
+          estilo_visual?: string | null
+          etapa_atual?: number | null
+          fonte_especifica?: string | null
           forma_pagamento?: string | null
+          formulario_completo?: boolean | null
           id?: string
           investimento_diario?: number | null
           liberar_edicao?: boolean | null
@@ -124,11 +163,17 @@ export type Database = {
           nome_marca?: string | null
           nome_produto?: string
           observacoes_finais?: string | null
+          possui_facebook?: boolean | null
+          possui_instagram?: boolean | null
           publico_alvo?: string | null
           quer_site?: boolean | null
           resumo_conversa_vendedor?: string | null
+          tipo_fonte?: string | null
           tipo_prestacao_servico?: string | null
+          tipos_imagens_preferidas?: string[] | null
           updated_at?: string
+          utiliza_whatsapp_business?: boolean | null
+          videos_prontos?: boolean | null
         }
         Relationships: []
       }
