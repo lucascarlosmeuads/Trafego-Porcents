@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -285,7 +284,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         </div>
 
         {/* Formulário */}
-        <Card className="bg-white/80 backdrop-blur-sm border-0 shadow-xl rounded-2xl overflow-hidden">
+        <Card className="bg-white/90 backdrop-blur-sm border-0 shadow-xl rounded-2xl overflow-hidden">
           <CardContent className="p-6 md:p-8">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -294,10 +293,10 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                 {currentStep === 1 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-800 mb-2">
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
                         Informações do Negócio
                       </h2>
-                      <p className="text-gray-600">Conte-nos sobre seu produto ou serviço</p>
+                      <p className="text-gray-700">Conte-nos sobre seu produto ou serviço</p>
                     </div>
 
                     <FormField
@@ -305,13 +304,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="nome_produto"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             1️⃣ O que é o seu produto?
                           </FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Ex: Curso de Marketing Digital" 
-                              className="h-12 border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
                               {...field} 
                             />
                           </FormControl>
@@ -325,13 +324,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="nome_marca"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             2️⃣ Nome da marca
                           </FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Ex: Minha Empresa Digital" 
-                              className="h-12 border-gray-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl"
                               {...field} 
                             />
                           </FormControl>
@@ -345,13 +344,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="descricao_resumida"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             3️⃣ Descrição resumida do seu produto/serviço
                           </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Ex: Curso completo de marketing digital com mais de 50 aulas..."
-                              className="min-h-[100px] border-gray-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl resize-none"
+                              className="min-h-[100px] border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -365,13 +364,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="publico_alvo"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             4️⃣ Quem é o seu público-alvo?
                           </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Ex: Empreendedores de 25 a 45 anos, interessados em marketing digital..."
-                              className="min-h-[100px] border-gray-200 bg-white focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl resize-none"
+                              className="min-h-[100px] border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 rounded-xl resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -385,13 +384,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="diferencial"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             5️⃣ Qual o diferencial do seu produto?
                           </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Ex: Único curso que oferece mentorias 1:1 semanais..."
-                              className="min-h-[100px] border-gray-200 bg-white focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl resize-none"
+                              className="min-h-[100px] border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-pink-500 focus:ring-2 focus:ring-pink-200 rounded-xl resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -405,13 +404,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="observacoes_finais"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             6️⃣ Observações finais (detalhes adicionais que queira compartilhar)
                           </FormLabel>
                           <FormControl>
                             <Textarea
                               placeholder="Informações adicionais que considera importante..."
-                              className="min-h-[80px] border-gray-200 bg-white focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl resize-none"
+                              className="min-h-[80px] border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 rounded-xl resize-none"
                               {...field}
                             />
                           </FormControl>
@@ -425,7 +424,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="quer_site"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             7️⃣ Você quer um site?
                           </FormLabel>
                           <FormControl>
@@ -436,13 +435,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="sim" id="site-sim" />
-                                <Label htmlFor="site-sim" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="site-sim" className="text-gray-800 cursor-pointer">
                                   Sim
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="nao" id="site-nao" />
-                                <Label htmlFor="site-nao" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="site-nao" className="text-gray-800 cursor-pointer">
                                   Não
                                 </Label>
                               </div>
@@ -459,10 +458,10 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                 {currentStep === 2 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-800 mb-2">
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
                         Informações da Campanha
                       </h2>
-                      <p className="text-gray-600">Configure os detalhes da sua campanha</p>
+                      <p className="text-gray-700">Configure os detalhes da sua campanha</p>
                     </div>
 
                     <FormField
@@ -470,7 +469,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="investimento_diario"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             1️⃣ Qual será o investimento diário em anúncios? (R$)
                           </FormLabel>
                           <FormControl>
@@ -478,7 +477,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               type="number" 
                               step="0.01" 
                               placeholder="Ex: 50.00"
-                              className="h-12 border-gray-200 bg-white focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-green-500 focus:ring-2 focus:ring-green-200 rounded-xl"
                               {...field}
                               onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                             />
@@ -493,7 +492,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="direcionamento_campanha"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             2️⃣ A campanha será direcionada para:
                           </FormLabel>
                           <FormControl>
@@ -504,13 +503,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="whatsapp" id="dir-whatsapp" />
-                                <Label htmlFor="dir-whatsapp" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="dir-whatsapp" className="text-gray-800 cursor-pointer">
                                   WhatsApp
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="site" id="dir-site" />
-                                <Label htmlFor="dir-site" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="dir-site" className="text-gray-800 cursor-pointer">
                                   Site
                                 </Label>
                               </div>
@@ -526,7 +525,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="abrangencia_atendimento"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             3️⃣ Sua empresa atende:
                           </FormLabel>
                           <FormControl>
@@ -537,13 +536,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="brasil" id="abr-brasil" />
-                                <Label htmlFor="abr-brasil" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="abr-brasil" className="text-gray-800 cursor-pointer">
                                   Todo o Brasil
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="regiao" id="abr-regiao" />
-                                <Label htmlFor="abr-regiao" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="abr-regiao" className="text-gray-800 cursor-pointer">
                                   Somente sua região
                                 </Label>
                               </div>
@@ -559,7 +558,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="forma_pagamento"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             4️⃣ Como deseja inserir o investimento para a campanha?
                           </FormLabel>
                           <FormControl>
@@ -570,19 +569,19 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="cartao" id="pag-cartao" />
-                                <Label htmlFor="pag-cartao" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="pag-cartao" className="text-gray-800 cursor-pointer">
                                   Cartão de crédito
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="pix" id="pag-pix" />
-                                <Label htmlFor="pag-pix" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="pag-pix" className="text-gray-800 cursor-pointer">
                                   Pix
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="boleto" id="pag-boleto" />
-                                <Label htmlFor="pag-boleto" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="pag-boleto" className="text-gray-800 cursor-pointer">
                                   Boleto
                                 </Label>
                               </div>
@@ -606,7 +605,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-gray-800 font-semibold">
+                              <FormLabel className="text-gray-900 font-semibold">
                                 5️⃣ Você já possui conta no Facebook?
                               </FormLabel>
                             </div>
@@ -626,7 +625,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-gray-800 font-semibold">
+                              <FormLabel className="text-gray-900 font-semibold">
                                 6️⃣ Você já possui conta no Instagram?
                               </FormLabel>
                             </div>
@@ -646,7 +645,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-gray-800 font-semibold">
+                              <FormLabel className="text-gray-900 font-semibold">
                                 7️⃣ Você utiliza WhatsApp Business?
                               </FormLabel>
                             </div>
@@ -661,10 +660,10 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                 {currentStep === 3 && (
                   <div className="space-y-6">
                     <div className="text-center mb-6">
-                      <h2 className="text-xl font-bold text-gray-800 mb-2">
+                      <h2 className="text-xl font-bold text-gray-900 mb-2">
                         Criativos
                       </h2>
-                      <p className="text-gray-600">Defina o estilo visual da sua campanha</p>
+                      <p className="text-gray-700">Defina o estilo visual da sua campanha</p>
                     </div>
 
                     <div className="space-y-4">
@@ -680,7 +679,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-gray-800 font-semibold">
+                              <FormLabel className="text-gray-900 font-semibold">
                                 1️⃣ Você já possui criativos prontos que podemos utilizar?
                               </FormLabel>
                             </div>
@@ -700,7 +699,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               />
                             </FormControl>
                             <div className="space-y-1 leading-none">
-                              <FormLabel className="text-gray-800 font-semibold">
+                              <FormLabel className="text-gray-900 font-semibold">
                                 2️⃣ Você tem vídeos prontos que podemos usar?
                               </FormLabel>
                             </div>
@@ -714,13 +713,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="cores_desejadas"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             3️⃣ Quais cores deseja utilizar nos anúncios?
                           </FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Ex: Azul, branco, dourado" 
-                              className="h-12 border-gray-200 bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 rounded-xl"
                               {...field} 
                             />
                           </FormControl>
@@ -729,13 +728,12 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       )}
                     />
 
-                    {/* ... resto dos campos da etapa 3 ... */}
                     <FormField
                       control={form.control}
                       name="tipo_fonte"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             4️⃣ Qual tipo de fonte prefere?
                           </FormLabel>
                           <FormControl>
@@ -754,7 +752,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                               ].map((option) => (
                                 <div key={option.value} className="flex items-center space-x-2">
                                   <RadioGroupItem value={option.value} id={`fonte-${option.value}`} />
-                                  <Label htmlFor={`fonte-${option.value}`} className="text-gray-700 cursor-pointer">
+                                  <Label htmlFor={`fonte-${option.value}`} className="text-gray-800 cursor-pointer">
                                     {option.label}
                                   </Label>
                                 </div>
@@ -771,13 +769,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="cores_proibidas"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             5️⃣ Existe alguma cor que não deve ser usada de jeito nenhum?
                           </FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Ex: Vermelho, rosa" 
-                              className="h-12 border-gray-200 bg-white focus:border-red-500 focus:ring-2 focus:ring-red-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-red-500 focus:ring-2 focus:ring-red-200 rounded-xl"
                               {...field} 
                             />
                           </FormControl>
@@ -791,13 +789,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="fonte_especifica"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             6️⃣ Tem alguma fonte específica que devemos usar?
                           </FormLabel>
                           <FormControl>
                             <Input 
                               placeholder="Ex: Arial, Roboto (opcional)" 
-                              className="h-12 border-gray-200 bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl"
+                              className="h-12 border-gray-300 bg-white text-gray-900 placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 rounded-xl"
                               {...field} 
                             />
                           </FormControl>
@@ -811,7 +809,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       name="estilo_visual"
                       render={({ field }) => (
                         <FormItem className="space-y-3">
-                          <FormLabel className="text-gray-800 font-semibold">
+                          <FormLabel className="text-gray-900 font-semibold">
                             7️⃣ Prefere um visual mais limpo ou com mais elementos?
                           </FormLabel>
                           <FormControl>
@@ -822,13 +820,13 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                             >
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="limpo" id="visual-limpo" />
-                                <Label htmlFor="visual-limpo" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="visual-limpo" className="text-gray-800 cursor-pointer">
                                   Visual Limpo
                                 </Label>
                               </div>
                               <div className="flex items-center space-x-2">
                                 <RadioGroupItem value="elementos" id="visual-elementos" />
-                                <Label htmlFor="visual-elementos" className="text-gray-700 cursor-pointer">
+                                <Label htmlFor="visual-elementos" className="text-gray-800 cursor-pointer">
                                   Visual com Mais Elementos
                                 </Label>
                               </div>
@@ -845,7 +843,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                       render={() => (
                         <FormItem>
                           <div className="mb-4">
-                            <FormLabel className="text-gray-800 font-semibold">
+                            <FormLabel className="text-gray-900 font-semibold">
                               8️⃣ Sobre as imagens dos anúncios, o que você gostaria?
                             </FormLabel>
                           </div>
@@ -881,7 +879,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                                           }}
                                         />
                                       </FormControl>
-                                      <FormLabel className="font-normal">
+                                      <FormLabel className="font-normal text-gray-800">
                                         {item.label}
                                       </FormLabel>
                                     </FormItem>
@@ -904,7 +902,7 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
                     variant="outline"
                     onClick={prevStep}
                     disabled={currentStep === 1}
-                    className="flex items-center gap-2"
+                    className="flex items-center gap-2 text-gray-700 border-gray-300 hover:bg-gray-50"
                   >
                     <ArrowLeft className="h-4 w-4" />
                     Voltar
