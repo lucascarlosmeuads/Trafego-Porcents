@@ -109,15 +109,10 @@ export function ClienteDashboard() {
     return (
       <SidebarProvider>
         <div className="flex h-screen bg-background overflow-hidden w-full">
-          {/* Header Limpo - Estilo Mobile */}
+          {/* Header Limpo - Sem Logo Duplicada */}
           <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b border-border flex items-center px-4">
             <SidebarTrigger className="text-foreground hover:bg-accent" />
             <div className="flex items-center gap-3 ml-4">
-              <img 
-                src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-                alt="Tráfego Por Cents" 
-                className="h-8 w-auto object-contain"
-              />
               <div>
                 <h1 className="text-lg font-semibold text-foreground">
                   Dashboard do Cliente
