@@ -15,7 +15,8 @@ import {
   Info,
   AlertCircle,
   MessageSquare,
-  Bug
+  Bug,
+  CheckCircle
 } from 'lucide-react'
 
 interface ClienteMetaAdsWidgetProps {
@@ -30,7 +31,8 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     isConfigured,
     loadMetricsWithPeriod,
     lastError,
-    diagnosticInfo
+    diagnosticInfo,
+    refreshConfig
   } = useClienteMetaAdsSimplified(clienteId)
 
   const [loadingData, setLoadingData] = useState(false)
@@ -38,7 +40,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const [fallbackMessage, setFallbackMessage] = useState('')
   const [showDiagnostic, setShowDiagnostic] = useState(false)
 
-  // FASE 4: Auto-carregar métricas quando configurado com diagnóstico
+  // Auto-carregar métricas quando configurado
   useEffect(() => {
     console.log('🔍 [WIDGET DIAGNÓSTICO] useEffect disparado:', {
       isConfigured,
@@ -78,15 +80,12 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     setLoadingData(false)
   }
 
-  const handleTryYesterday = () => {
-    handleLoadMetrics('yesterday')
+  const handleRefreshConfig = async () => {
+    console.log('🔄 [WIDGET] Refreshing config...')
+    await refreshConfig()
   }
 
-  const handleTryLast7Days = () => {
-    handleLoadMetrics('last_7_days')
-  }
-
-  // FASE 1: Diagnóstico visual para debug
+  // Painel de diagnóstico
   if (showDiagnostic) {
     return (
       <Card className="w-full border-orange-200">
@@ -109,28 +108,88 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           <div className="space-y-3 text-sm">
             <div><strong>Cliente ID:</strong> {diagnosticInfo.clienteId}</div>
             <div><strong>Email Usuário:</strong> {diagnosticInfo.userEmail}</div>
-            <div><strong>Config Carregada:</strong> {diagnosticInfo.configLoaded ? '✅ Sim' : '❌ Não'}</div>
-            <div><strong>Configurado:</strong> {isConfigured ? '✅ Sim' : '❌ Não'}</div>
-            <div><strong>Loading:</strong> {loading ? '🔄 Sim' : '✅ Não'}</div>
-            <div><strong>Tem Insights:</strong> {diagnosticInfo.hasInsights ? '✅ Sim' : '❌ Não'}</div>
+            <div className="flex items-center gap-2">
+              <strong>Config Carregada:</strong> 
+              {diagnosticInfo.configLoaded ? (
+                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim</>
+              ) : (
+                <><AlertCircle className="w-4 h-4 text-red-600" /> Não</>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <strong>Configurado:</strong> 
+              {isConfigured ? (
+                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim</>
+              ) : (
+                <><AlertCircle className="w-4 h-4 text-red-600" /> Não</>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <strong>Loading:</strong> 
+              {loading ? (
+                <><RefreshCw className="w-4 h-4 animate-spin text-blue-600" /> Sim</>
+              ) : (
+                <><CheckCircle className="w-4 h-4 text-green-600" /> Não</>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <strong>Tem Insights:</strong> 
+              {diagnosticInfo.hasInsights ? (
+                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim ({insights.length})</>
+              ) : (
+                <><AlertCircle className="w-4 h-4 text-yellow-600" /> Não</>
+              )}
+            </div>
             <div><strong>Último Erro:</strong> {lastError || 'Nenhum'}</div>
+            <div><strong>Última Check:</strong> {diagnosticInfo.lastConfigCheck}</div>
             
-            <Button 
-              onClick={() => handleLoadMetrics('today')} 
-              disabled={loadingData}
-              className="w-full mt-4"
-            >
-              {loadingData ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
-              Testar Carregamento
-            </Button>
+            <div className="flex gap-2 mt-4">
+              <Button 
+                onClick={handleRefreshConfig} 
+                disabled={loading}
+                size="sm"
+                variant="outline"
+              >
+                {loading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
+                Refresh Config
+              </Button>
+              <Button 
+                onClick={() => handleLoadMetrics('today')} 
+                disabled={loadingData || !isConfigured}
+                size="sm"
+              >
+                {loadingData ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
+                Testar Métricas
+              </Button>
+            </div>
           </div>
         </CardContent>
       </Card>
     )
   }
 
-  // Se não está configurado, mostrar mensagem para contatar gestor
-  if (!isConfigured && !loading) {
+  // Loading state
+  if (loading) {
+    return (
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BarChart3 className="w-5 h-5 text-blue-600" />
+            Meta Ads
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-4">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
+            <p className="text-sm text-gray-500">Verificando configuração...</p>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  // Se não está configurado
+  if (!isConfigured) {
     return (
       <Card className="w-full">
         <CardHeader>
@@ -159,29 +218,18 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                   Entre em contato com seu gestor para configurar a integração do Meta Ads 
                   e começar a acompanhar suas métricas em tempo real.
                 </p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleRefreshConfig}
+                  className="mt-2"
+                >
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Verificar Novamente
+                </Button>
               </div>
             </AlertDescription>
           </Alert>
-        </CardContent>
-      </Card>
-    )
-  }
-
-  // Se está carregando
-  if (loading) {
-    return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            Meta Ads
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="text-center py-4">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-            <p className="text-sm text-gray-500">Verificando configuração...</p>
-          </div>
         </CardContent>
       </Card>
     )
@@ -209,6 +257,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Meta Ads
+            <CheckCircle className="w-4 h-4 text-green-600" />
           </div>
           <div className="flex gap-1">
             <Button
@@ -256,10 +305,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <div className="space-y-2">
                 <p>{lastError}</p>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={handleTryYesterday}>
+                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('yesterday')}>
                     Tentar Ontem
                   </Button>
-                  <Button size="sm" variant="outline" onClick={handleTryLast7Days}>
+                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('last_7_days')}>
                     Últimos 7 dias
                   </Button>
                 </div>
@@ -315,10 +364,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <Button size="sm" onClick={() => handleLoadMetrics('today')}>
                 Hoje
               </Button>
-              <Button size="sm" variant="outline" onClick={handleTryYesterday}>
+              <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('yesterday')}>
                 Ontem
               </Button>
-              <Button size="sm" variant="outline" onClick={handleTryLast7Days}>
+              <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('last_7_days')}>
                 7 dias
               </Button>
             </div>

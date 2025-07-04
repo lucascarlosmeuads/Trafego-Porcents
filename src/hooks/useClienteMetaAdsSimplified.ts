@@ -36,7 +36,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
   const [lastError, setLastError] = useState<string>('')
   const [isConfigured, setIsConfigured] = useState(false)
 
-  // FASE 1: Diagnóstico detalhado com logs específicos
+  // Função de carregamento de configuração otimizada
   const loadConfig = useCallback(async () => {
     if (!clienteId) {
       console.log('❌ [useClienteMetaAdsSimplified] Cliente ID não fornecido')
@@ -44,59 +44,40 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
       return
     }
 
-    console.log('🔍 [DIAGNÓSTICO FASE 1] === INÍCIO CARREGAMENTO CONFIG ===')
+    console.log('🔍 [DIAGNÓSTICO] === INÍCIO CARREGAMENTO CONFIG ===')
     console.log('🔍 [DIAGNÓSTICO] Cliente ID:', clienteId)
     console.log('🔍 [DIAGNÓSTICO] Usuário autenticado:', user?.email)
     
     try {
-      // DIAGNÓSTICO: Verificar configuração específica do cliente primeiro
       const clienteIdNumber = parseInt(clienteId)
-      console.log('🔍 [DIAGNÓSTICO] Buscando config específica para cliente ID:', clienteIdNumber)
+      console.log('🔍 [DIAGNÓSTICO] Buscando configs com novas políticas RLS...')
       
-      let { data: configData, error } = await supabase
+      // Com as novas políticas RLS, uma única consulta deve retornar tanto configs específicas quanto globais
+      let { data: allConfigs, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
-        .eq('cliente_id', clienteIdNumber)
-        .maybeSingle()
+        .or(`cliente_id.eq.${clienteIdNumber},and(cliente_id.is.null,email_usuario.in.(${await getGestorEmail(clienteIdNumber)}))`)
 
-      console.log('🔍 [DIAGNÓSTICO] Resultado config específica:', { configData, error, clienteIdNumber })
+      console.log('🔍 [DIAGNÓSTICO] Resultado da consulta unificada:', { 
+        allConfigs, 
+        error,
+        configsLength: allConfigs?.length || 0 
+      })
 
-      // Se não encontrou configuração específica, buscar configuração global do gestor
-      if (!configData && !error) {
-        console.log('🔍 [DIAGNÓSTICO] Config específica não encontrada, buscando global do gestor...')
+      let configData = null
+
+      if (allConfigs && allConfigs.length > 0) {
+        // Priorizar configuração específica do cliente
+        const specificConfig = allConfigs.find(config => config.cliente_id === clienteIdNumber)
+        const globalConfig = allConfigs.find(config => config.cliente_id === null)
         
-        // Buscar o email do gestor do cliente com diagnóstico detalhado
-        const { data: clienteData, error: clienteError } = await supabase
-          .from('todos_clientes')
-          .select('email_gestor, nome_cliente')
-          .eq('id', clienteIdNumber)
-          .single()
-
-        console.log('👤 [DIAGNÓSTICO] Cliente data:', { clienteData, clienteError, clienteId: clienteIdNumber })
-
-        if (clienteData?.email_gestor) {
-          console.log('🔍 [DIAGNÓSTICO] Buscando config global do gestor:', clienteData.email_gestor)
-          
-          const { data: globalConfig, error: globalError } = await supabase
-            .from('meta_ads_configs')
-            .select('*')
-            .eq('email_usuario', clienteData.email_gestor)
-            .is('cliente_id', null)
-            .maybeSingle()
-
-          console.log('🌐 [DIAGNÓSTICO] Config global do gestor:', { 
-            globalConfig, 
-            globalError, 
-            gestorEmail: clienteData.email_gestor 
-          })
-
-          if (!globalError && globalConfig) {
-            configData = globalConfig
-            console.log('✅ [DIAGNÓSTICO] Usando config global do gestor')
-          }
-        } else {
-          console.log('❌ [DIAGNÓSTICO] Email do gestor não encontrado para o cliente')
-        }
+        configData = specificConfig || globalConfig
+        
+        console.log('✅ [DIAGNÓSTICO] Config encontrada:', {
+          hasSpecific: !!specificConfig,
+          hasGlobal: !!globalConfig,
+          usingType: specificConfig ? 'específica' : 'global'
+        })
       }
 
       if (configData) {
@@ -109,7 +90,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         
         const configured = !!(newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId)
         
-        console.log('✅ [DIAGNÓSTICO] Config encontrada e processada:', {
+        console.log('✅ [DIAGNÓSTICO] Config processada:', {
           hasAppId: !!newConfig.appId,
           hasAppSecret: !!newConfig.appSecret,
           hasAccessToken: !!newConfig.accessToken,
@@ -121,7 +102,7 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
         setIsConfigured(configured)
         setLastError('')
       } else {
-        console.log('❌ [DIAGNÓSTICO] Nenhuma configuração encontrada (nem específica nem global)')
+        console.log('❌ [DIAGNÓSTICO] Nenhuma configuração encontrada')
         setIsConfigured(false)
         setLastError('Configuração Meta Ads não encontrada')
       }
@@ -131,16 +112,32 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
       setIsConfigured(false)
     } finally {
       setLoading(false)
-      console.log('🔍 [DIAGNÓSTICO FASE 1] === FIM CARREGAMENTO CONFIG ===')
+      console.log('🔍 [DIAGNÓSTICO] === FIM CARREGAMENTO CONFIG ===')
     }
   }, [clienteId, user?.email])
+
+  // Função auxiliar para buscar email do gestor
+  const getGestorEmail = async (clienteIdNumber: number): Promise<string> => {
+    try {
+      const { data: clienteData } = await supabase
+        .from('todos_clientes')
+        .select('email_gestor')
+        .eq('id', clienteIdNumber)
+        .single()
+
+      return clienteData?.email_gestor || ''
+    } catch (error) {
+      console.error('❌ Erro ao buscar email do gestor:', error)
+      return ''
+    }
+  }
 
   useEffect(() => {
     console.log('🔄 [DIAGNÓSTICO] Hook useEffect disparado:', { clienteId, userEmail: user?.email })
     loadConfig()
   }, [loadConfig])
 
-  // FASE 3: Carregamento de métricas com retry e melhor tratamento de erros
+  // Função de carregamento de métricas otimizada
   const loadMetricsWithPeriod = async (period: string, startDate?: string, endDate?: string) => {
     console.log('📊 [DIAGNÓSTICO MÉTRICA] === INÍCIO CARREGAMENTO MÉTRICAS ===')
     console.log('📊 [DIAGNÓSTICO MÉTRICA] Parâmetros:', { period, startDate, endDate, isConfigured })
@@ -235,12 +232,13 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     isConfigured,
     loadMetricsWithPeriod,
     refreshConfig: loadConfig,
-    // FASE 4: Exposer dados de diagnóstico para debugging
+    // Dados de diagnóstico aprimorados
     diagnosticInfo: {
       clienteId,
       userEmail: user?.email,
       configLoaded: !!config.appId,
-      hasInsights: insights.length > 0
+      hasInsights: insights.length > 0,
+      lastConfigCheck: new Date().toISOString()
     }
   }
 }
