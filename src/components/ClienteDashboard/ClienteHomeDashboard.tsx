@@ -122,7 +122,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
   const progress = calculateProgress()
 
   return (
-    <div className="p-6 space-y-6 bg-gray-950 min-h-screen">
+    <div className="p-6 space-y-6 min-h-screen">
       {/* Header de Boas-vindas */}
       <ClienteWelcomeHeader />
 
@@ -154,24 +154,24 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
 
       {/* Seção de Status do Cliente */}
       {cliente && (
-        <Card className="bg-gray-900 border-gray-800">
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center">
               <div>
-                <p className="text-gray-400 text-sm">Status da Campanha</p>
-                <p className="text-white font-semibold">
+                <p className="text-muted-foreground text-sm">Status da Campanha</p>
+                <p className="text-foreground font-semibold">
                   {cliente.status_campanha || 'Cliente Novo'}
                 </p>
               </div>
               <div>
-                <p className="text-gray-400 text-sm">Valor da Comissão</p>
+                <p className="text-muted-foreground text-sm">Valor da Comissão</p>
                 <p className="text-green-400 font-semibold">
                   R$ {cliente.valor_comissao || 60}
                 </p>
               </div>
               <div>
-                <p className="text-gray-400 text-sm">Gestor Responsável</p>
-                <p className="text-white font-semibold">
+                <p className="text-muted-foreground text-sm">Gestor Responsável</p>
+                <p className="text-foreground font-semibold">
                   {cliente.email_gestor?.split('@')[0] || 'N/A'}
                 </p>
               </div>

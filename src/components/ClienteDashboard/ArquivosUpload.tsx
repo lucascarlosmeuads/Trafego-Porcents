@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
-import { format } from 'date-fns'
+import { format, isValid, parseISO } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CheckCircle, Paperclip, Upload, X, ArrowLeft } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -40,6 +40,31 @@ const sanitizeFileName = (fileName: string): string => {
     .replace(/^_+|_+$/g, '') // Remove underscores no início e fim
     .replace(/\s+/g, '_') // Substitui espaços por underscore
     .toLowerCase() // Converte para minúsculas
+}
+
+// Função para formatar data de forma segura
+const formatDateSafe = (dateString: string): string => {
+  if (!dateString || dateString.trim() === '') return 'Data inválida'
+  
+  try {
+    // Tenta converter string para Date
+    const date = new Date(dateString)
+    
+    // Verifica se a data é válida
+    if (!isValid(date)) {
+      // Tenta com parseISO se falhar
+      const parsedDate = parseISO(dateString)
+      if (!isValid(parsedDate)) {
+        return 'Data inválida'
+      }
+      return format(parsedDate, 'dd/MM/yyyy HH:mm', { locale: ptBR })
+    }
+    
+    return format(date, 'dd/MM/yyyy HH:mm', { locale: ptBR })
+  } catch (error) {
+    console.error('Erro ao formatar data:', error, 'Data original:', dateString)
+    return 'Data inválida'
+  }
 }
 
 export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBack }: ArquivosUploadProps) {
@@ -269,7 +294,7 @@ export function ArquivosUpload({ emailCliente, arquivos, onArquivosUpdated, onBa
                           {arquivo.nome_arquivo}
                         </a>
                         <p className="text-sm text-muted-foreground">
-                          Enviado em {format(new Date(arquivo.data_upload), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          Enviado em {formatDateSafe(arquivo.data_upload)}
                         </p>
                         {arquivo.descricao && (
                           <p className="text-sm mt-1">
