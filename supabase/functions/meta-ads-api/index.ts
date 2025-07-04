@@ -13,6 +13,19 @@ interface MetaAdsConfig {
   adAccountId: string
 }
 
+// CORREÇÃO: Função para obter data no timezone brasileiro
+const getBrazilianDate = (offsetDays: number = 0): string => {
+  const now = new Date()
+  // Aplicar offset de -3 horas (UTC-3 = Brasil)
+  const brazilTime = new Date(now.getTime() - (3 * 60 * 60 * 1000))
+  
+  if (offsetDays !== 0) {
+    brazilTime.setDate(brazilTime.getDate() + offsetDays)
+  }
+  
+  return brazilTime.toISOString().split('T')[0]
+}
+
 serve(async (req) => {
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
@@ -38,6 +51,8 @@ serve(async (req) => {
     }
 
     const { action, config, startDate, endDate, date_preset } = await req.json()
+
+    console.log('🔍 [meta-ads-api] Requisição recebida:', { action, date_preset, startDate, endDate, user_email: user.email })
 
     if (action === 'test_connection') {
       console.log('🔗 [meta-ads-api] === TESTE DE CONEXÃO DETALHADO ===')
@@ -258,7 +273,7 @@ serve(async (req) => {
         adAccountId = `act_${adAccountId}`
       }
       
-      // CORREÇÃO: Lógica mais precisa para determinação do período
+      // CORREÇÃO: Lógica com timezone brasileiro correto
       let timeRange = ''
       let periodName = ''
       
@@ -268,50 +283,60 @@ serve(async (req) => {
         periodName = `${startDate} até ${endDate}`
         console.log('📅 [meta-ads-api] Usando período customizado:', periodName)
       } else if (date_preset) {
-        // Usar preset, mas com cálculo correto das datas
-        const today = new Date().toISOString().split('T')[0]
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        // CORREÇÃO: Usar timezone brasileiro para cálculo das datas
+        const hoje = getBrazilianDate(0) // Hoje no Brasil
+        const ontem = getBrazilianDate(-1) // Ontem no Brasil
+        
+        console.log('🇧🇷 [meta-ads-api] Datas brasileiras calculadas:', { hoje, ontem })
         
         switch (date_preset) {
           case 'today':
-            timeRange = `{"since":"${today}","until":"${today}"}`
-            periodName = `hoje (${today})`
+            timeRange = `{"since":"${hoje}","until":"${hoje}"}`
+            periodName = `hoje (${hoje})`
             break
           case 'yesterday':
-            timeRange = `{"since":"${yesterday}","until":"${yesterday}"}`
-            periodName = `ontem (${yesterday})`
+            timeRange = `{"since":"${ontem}","until":"${ontem}"}`
+            periodName = `ontem (${ontem})`
             break
           case 'last_7_days':
-            const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-            timeRange = `{"since":"${lastWeek}","until":"${today}"}`
-            periodName = `últimos 7 dias (${lastWeek} até ${today})`
+            const seteDiasAtras = getBrazilianDate(-7)
+            timeRange = `{"since":"${seteDiasAtras}","until":"${hoje}"}`
+            periodName = `últimos 7 dias (${seteDiasAtras} até ${hoje})`
             break
           case 'last_30_days':
-            const lastMonth = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-            timeRange = `{"since":"${lastMonth}","until":"${today}"}`
-            periodName = `últimos 30 dias (${lastMonth} até ${today})`
+            const trintaDiasAtras = getBrazilianDate(-30)
+            timeRange = `{"since":"${trintaDiasAtras}","until":"${hoje}"}`
+            periodName = `últimos 30 dias (${trintaDiasAtras} até ${hoje})`
             break
           default:
-            timeRange = `{"since":"${today}","until":"${today}"}`
-            periodName = `hoje (${today})`
+            timeRange = `{"since":"${hoje}","until":"${hoje}"}`
+            periodName = `hoje (${hoje})`
         }
-        console.log('📅 [meta-ads-api] Período calculado:', periodName)
+        console.log('📅 [meta-ads-api] Período brasileiro calculado:', periodName)
       } else {
-        // Fallback para hoje
-        const today = new Date().toISOString().split('T')[0]
-        timeRange = `{"since":"${today}","until":"${today}"}`
-        periodName = `hoje (${today})`
+        // Fallback para hoje (horário brasileiro)
+        const hoje = getBrazilianDate(0)
+        timeRange = `{"since":"${hoje}","until":"${hoje}"}`
+        periodName = `hoje (${hoje})`
+        console.log('📅 [meta-ads-api] Fallback para hoje (Brasil):', periodName)
       }
 
-      console.log('🔍 [meta-ads-api] Buscando dados para período específico:', periodName)
+      console.log('🔍 [meta-ads-api] Buscando dados para período:', periodName)
       
       const insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}&time_range=${timeRange}`
       
-      console.log('🌐 [meta-ads-api] URL da API:', insightsUrl.replace(config.accessToken, '[TOKEN_HIDDEN]'))
+      console.log('🌐 [meta-ads-api] Fazendo chamada para Meta API:', insightsUrl.replace(config.accessToken, '[TOKEN_HIDDEN]'))
 
       try {
         const response = await fetch(insightsUrl)
         const data = await response.json()
+        
+        console.log('📊 [meta-ads-api] Resposta da Meta API:', {
+          ok: response.ok,
+          status: response.status,
+          data_length: data?.data?.length || 0,
+          error: data?.error || null
+        })
         
         if (!response.ok) {
           console.error('❌ [meta-ads-api] Erro ao buscar insights:', data)
@@ -343,12 +368,6 @@ serve(async (req) => {
             }
           )
         }
-
-        console.log('📊 [meta-ads-api] Resposta da API:', {
-          total_insights: data.data?.length || 0,
-          period_requested: periodName,
-          raw_data: data.data
-        })
 
         if (data.data && data.data.length > 0) {
           // Processar e somar os insights
@@ -385,7 +404,7 @@ serve(async (req) => {
             totalInsights.cpc = (spend / clicks).toFixed(2)
           }
 
-          console.log('✅ [meta-ads-api] Insights processados:', {
+          console.log('✅ [meta-ads-api] Insights processados com sucesso:', {
             period: periodName,
             campaigns_count: data.data.length,
             total_spend: totalInsights.spend,
@@ -413,6 +432,11 @@ serve(async (req) => {
             const campaignsResponse = await fetch(campaignsUrl)
             const campaignsData = await campaignsResponse.json()
             
+            console.log('🔍 [meta-ads-api] Verificação de campanhas:', {
+              ok: campaignsResponse.ok,
+              campaigns_count: campaignsData?.data?.length || 0
+            })
+            
             let suggestion = `Nenhum dado encontrado para ${periodName}`
             if (campaignsData.data && campaignsData.data.length > 0) {
               const activeCampaigns = campaignsData.data.filter(c => c.status === 'ACTIVE')
@@ -439,6 +463,7 @@ serve(async (req) => {
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
           } catch (error) {
+            console.error('❌ [meta-ads-api] Erro ao verificar campanhas:', error)
             return new Response(
               JSON.stringify({ 
                 success: false, 
