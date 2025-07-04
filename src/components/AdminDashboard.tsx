@@ -4,8 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
-import { AdminTable } from './AdminTable'
-import { ClientesAntigosTable } from './ClientesAntigos/ClientesAntigosTable'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
 import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from './LazyComponents'
@@ -126,13 +124,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             <AdminSugestoes />
           </div>
         )
-
-      case 'clientes-antigos':
-        return (
-          <div className="w-full">
-            <ClientesAntigosTable />
-          </div>
-        )
       
       case 'clientes':
       default:
@@ -149,9 +140,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
               </div>
             )}
             
-            {/* Admin panel: Use AdminTable instead of ClientesTable */}
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
             <div className="w-full">
-              <AdminTable />
+              <ClientesTable selectedManager={selectedManager} />
             </div>
           </div>
         )

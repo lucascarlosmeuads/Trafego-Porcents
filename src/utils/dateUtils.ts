@@ -1,3 +1,4 @@
+
 export const addBusinessDays = (startDate: Date, businessDays: number): Date => {
   const result = new Date(startDate)
   let daysAdded = 0
@@ -268,23 +269,4 @@ export const getDataLimiteStyle = (dataLimite: string, statusCampanha: string) =
   }
   
   return 'text-foreground'
-}
-
-// Função para formatar data em formato brasileiro
-export const formatDate = (dateString: string | null | undefined): string => {
-  if (!dateString) return '-'
-  
-  try {
-    const date = new Date(dateString)
-    if (isNaN(date.getTime())) return '-'
-    
-    return date.toLocaleDateString('pt-BR', {
-      day: '2-digit',
-      month: '2-digit', 
-      year: 'numeric'
-    })
-  } catch (error) {
-    console.error('Erro ao formatar data:', error)
-    return '-'
-  }
 }
