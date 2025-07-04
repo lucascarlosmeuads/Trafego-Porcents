@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -16,6 +15,7 @@ import {
   DollarSign,
   TrendingUp
 } from 'lucide-react'
+import { getDateRangeFromPresetBrazil } from '@/utils/timezoneUtils'
 
 export function GestorMetaAdsMetrics() {
   const { 
@@ -44,42 +44,6 @@ export function GestorMetaAdsMetrics() {
       })
     }
   }, [isConfigured])
-
-  // Função para calcular datas baseadas no preset
-  const getDateRangeFromPreset = (preset: string) => {
-    const hoje = new Date()
-    const ontem = new Date(hoje.getTime() - 24 * 60 * 60 * 1000)
-    
-    switch (preset) {
-      case 'today':
-        return {
-          startDate: hoje.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      case 'yesterday':
-        return {
-          startDate: ontem.toISOString().split('T')[0],
-          endDate: ontem.toISOString().split('T')[0]
-        }
-      case 'last_7_days':
-        const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000)
-        return {
-          startDate: sete_dias_atras.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      case 'last_30_days':
-        const trinta_dias_atras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000)
-        return {
-          startDate: trinta_dias_atras.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      default:
-        return {
-          startDate: hoje.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-    }
-  }
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('')

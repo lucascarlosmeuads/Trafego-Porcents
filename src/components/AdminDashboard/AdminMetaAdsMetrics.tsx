@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,6 +14,12 @@ import {
   AlertCircle,
   Info
 } from 'lucide-react'
+import { 
+  getDateRangeFromPresetBrazil, 
+  getTodayBrazil, 
+  getYesterdayBrazil,
+  logVendasQuery 
+} from '@/utils/timezoneUtils'
 
 export function AdminMetaAdsMetrics() {
   console.log('🚀 [AdminMetaAdsMetrics] Componente iniciado')
@@ -48,51 +53,16 @@ export function AdminMetaAdsMetrics() {
     if (isConfigured) {
       console.log('✅ [AdminMetaAdsMetrics] Configurado - buscando dados de hoje')
       fetchTodayInsights()
-      fetchVendasPeriodo(new Date().toISOString().split('T')[0], new Date().toISOString().split('T')[0])
+      const todayBrazil = getTodayBrazil()
+      fetchVendasPeriodo(todayBrazil, todayBrazil)
     } else {
       console.log('❌ [AdminMetaAdsMetrics] Não configurado ainda')
     }
   }, [isConfigured])
 
-  // Função para calcular datas baseadas no preset
-  const getDateRangeFromPreset = (preset: string) => {
-    const hoje = new Date()
-    const ontem = new Date(hoje.getTime() - 24 * 60 * 60 * 1000)
-    
-    switch (preset) {
-      case 'today':
-        return {
-          startDate: hoje.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      case 'yesterday':
-        return {
-          startDate: ontem.toISOString().split('T')[0],
-          endDate: ontem.toISOString().split('T')[0]
-        }
-      case 'last_7_days':
-        const sete_dias_atras = new Date(hoje.getTime() - 7 * 24 * 60 * 60 * 1000)
-        return {
-          startDate: sete_dias_atras.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      case 'last_30_days':
-        const trinta_dias_atras = new Date(hoje.getTime() - 30 * 24 * 60 * 60 * 1000)
-        return {
-          startDate: trinta_dias_atras.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-      default:
-        return {
-          startDate: hoje.toISOString().split('T')[0],
-          endDate: hoje.toISOString().split('T')[0]
-        }
-    }
-  }
-
-  // Buscar vendas do período
+  // Buscar vendas do período com timezone brasileiro
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
-    console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do período:', { startDate, endDate })
+    logVendasQuery(startDate, endDate, 'AdminMetaAdsMetrics')
     setLoadingVendas(true)
     
     try {
@@ -134,7 +104,14 @@ export function AdminMetaAdsMetrics() {
         console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
       }
 
-      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do período:', totalVendas)
+      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do período:', {
+        startDate,
+        endDate,
+        totalVendas,
+        vendasClienteCount: vendasCliente?.length || 0,
+        vendasTodosClientesCount: vendasTodosClientes?.length || 0
+      })
+      
       setVendasPeriodo(totalVendas)
 
     } catch (error) {
@@ -150,15 +127,19 @@ export function AdminMetaAdsMetrics() {
     setLastFetchInfo('')
     setCampaignsInfo({count: 0})
     
-    // Calcular as datas corretas baseadas no preset ou usar as datas fornecidas
+    // Calcular as datas corretas baseadas no preset usando timezone brasileiro
     let finalStartDate = startDate
     let finalEndDate = endDate
     
     if (preset && preset !== 'custom') {
-      const dateRange = getDateRangeFromPreset(preset)
+      const dateRange = getDateRangeFromPresetBrazil(preset)
       finalStartDate = dateRange.startDate
       finalEndDate = dateRange.endDate
-      console.log('📅 [AdminMetaAdsMetrics] Datas calculadas do preset:', { finalStartDate, finalEndDate })
+      console.log('📅 [AdminMetaAdsMetrics] Datas calculadas do preset (Brasil):', { 
+        preset, 
+        finalStartDate, 
+        finalEndDate 
+      })
     }
     
     // Buscar dados do Meta Ads
@@ -200,7 +181,7 @@ export function AdminMetaAdsMetrics() {
       }
     }
     
-    // SEMPRE buscar vendas para o período selecionado
+    // SEMPRE buscar vendas para o período selecionado (usando timezone brasileiro)
     console.log('💰 [AdminMetaAdsMetrics] Buscando vendas para:', { finalStartDate, finalEndDate })
     await fetchVendasPeriodo(finalStartDate, finalEndDate)
   }

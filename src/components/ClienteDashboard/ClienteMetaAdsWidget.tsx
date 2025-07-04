@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -17,6 +18,7 @@ import {
   Bug,
   CheckCircle
 } from 'lucide-react'
+import { getTodayBrazil, getYesterdayBrazil } from '@/utils/timezoneUtils'
 
 interface ClienteMetaAdsWidgetProps {
   clienteId: string
@@ -48,7 +50,12 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   }, [isConfigured])
 
   const handleLoadMetrics = async (period: string = currentPeriod) => {
-    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId })
+    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { 
+      period, 
+      clienteId,
+      todayBrazil: getTodayBrazil(),
+      yesterdayBrazil: getYesterdayBrazil()
+    })
     setLoadingData(true)
     setLastFetchInfo('')
     setFallbackMessage('')
