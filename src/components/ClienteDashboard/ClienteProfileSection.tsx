@@ -20,12 +20,9 @@ export function ClienteProfileSection() {
             />
           </div>
           
-          {/* Informações do usuário - bem próximas da logo */}
-          <div className="text-center space-y-1">
-            <h3 className="text-sm font-medium text-white opacity-70">
-              {profileData?.nome_display || 'Cliente'}
-            </h3>
-            <p className="text-gray-500 text-xs opacity-60">
+          {/* Email do usuário - bem fosco como fundo */}
+          <div className="text-center">
+            <p className="text-gray-500 text-xs opacity-30">
               {user?.email}
             </p>
           </div>
