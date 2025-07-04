@@ -4,7 +4,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useIsMobile } from '@/hooks/useIsMobile'
 import { ClienteSidebarDynamic } from './ClienteDashboard/ClienteSidebarDynamic'
-import { ClienteSidebarResponsive } from './ClienteDashboard/ClienteSidebarResponsive'
 import { MobileBottomNav } from './ClienteDashboard/MobileBottomNav'
 import { MobileHeader } from './ClienteDashboard/MobileHeader'
 import { BriefingForm } from './ClienteDashboard/BriefingForm'
@@ -21,8 +20,7 @@ export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState('briefing') // Começar no primeiro passo
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [activeTab, setActiveTab] = useState('briefing')
 
   if (loading) {
     return <LoadingFallback />
@@ -99,11 +97,6 @@ export function ClienteDashboard() {
 
         <MobileBottomNav 
           activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        />
-
-        <ClienteSidebarResponsive
-          activeTab={activeTab}
           onTabChange={setActiveTab}
         />
       </div>
