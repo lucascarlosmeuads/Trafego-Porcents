@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -5,7 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare } from 'lucide-react'
+import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare, CheckCircle, XCircle, Palette, Type, Monitor, Smartphone } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
@@ -26,6 +27,23 @@ interface BriefingData {
   forma_pagamento: string
   tipo_prestacao_servico: string
   localizacao_divulgacao: string
+  // Novos campos da etapa 2
+  direcionamento_campanha: string
+  abrangencia_atendimento: string
+  possui_facebook: boolean
+  possui_instagram: boolean
+  utiliza_whatsapp_business: boolean
+  // Novos campos da etapa 3
+  criativos_prontos: boolean
+  videos_prontos: boolean
+  cores_desejadas: string
+  tipo_fonte: string
+  cores_proibidas: string
+  fonte_especifica: string
+  estilo_visual: string
+  tipos_imagens_preferidas: string[]
+  etapa_atual: number
+  formulario_completo: boolean
 }
 
 interface ArquivoCliente {
@@ -437,7 +455,7 @@ export function BriefingMaterialsModal({
   const formatFormaPagamento = (forma: string) => {
     switch (forma) {
       case 'cartao':
-        return 'Cartão'
+        return 'Cartão de Crédito'
       case 'boleto':
         return 'Boleto'
       case 'pix':
@@ -460,6 +478,72 @@ export function BriefingMaterialsModal({
     }
   }
 
+  const formatDirecionamentoCampanha = (direcionamento: string) => {
+    switch (direcionamento) {
+      case 'whatsapp':
+        return 'WhatsApp'
+      case 'site':
+        return 'Site'
+      default:
+        return direcionamento || 'Não informado'
+    }
+  }
+
+  const formatAbrangenciaAtendimento = (abrangencia: string) => {
+    switch (abrangencia) {
+      case 'brasil':
+        return 'Todo o Brasil'
+      case 'regiao':
+        return 'Somente sua região'
+      default:
+        return abrangencia || 'Não informado'
+    }
+  }
+
+  const formatTipoFonte = (tipo: string) => {
+    switch (tipo) {
+      case 'moderna':
+        return 'Moderna'
+      case 'serifada':
+        return 'Serifada'
+      case 'bold':
+        return 'Bold'
+      case 'minimalista':
+        return 'Minimalista'
+      case 'tech':
+        return 'Tech'
+      case 'retro':
+        return 'Retrô'
+      default:
+        return tipo || 'Não informado'
+    }
+  }
+
+  const formatEstiloVisual = (estilo: string) => {
+    switch (estilo) {
+      case 'limpo':
+        return 'Visual Limpo'
+      case 'elementos':
+        return 'Visual com Mais Elementos'
+      default:
+        return estilo || 'Não informado'
+    }
+  }
+
+  const formatTiposImagens = (tipos: string[]) => {
+    if (!tipos || tipos.length === 0) return 'Não informado'
+    
+    const labels: { [key: string]: string } = {
+      'pessoas-reais': 'Pessoas reais',
+      'mockups-produto': 'Mockups de produto',
+      'vetores-ilustrativos': 'Vetores ilustrativos',
+      'fundos-texturizados': 'Fundos texturizados',
+      'outro': 'Outro'
+    }
+    
+    return tipos.map(tipo => labels[tipo] || tipo).join(', ')
+  }
+
   const arquivosCliente = arquivos.filter(arquivo => arquivo.author_type === 'cliente')
   const arquivosGestor = arquivos.filter(arquivo => arquivo.author_type === 'gestor')
 
@@ -468,7 +552,7 @@ export function BriefingMaterialsModal({
       <DialogTrigger asChild>
         {trigger}
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden">
+      <DialogContent className="max-w-6xl max-h-[90vh] overflow-hidden">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <User className="w-5 h-5" />
@@ -485,7 +569,7 @@ export function BriefingMaterialsModal({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 text-green-700">
                     <FileText className="w-5 h-5" />
-                    📝 Formulário Preenchido pelo Cliente
+                    📝 Formulário Completo Preenchido pelo Cliente
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -495,115 +579,241 @@ export function BriefingMaterialsModal({
                       <p className="text-sm text-green-600">Carregando formulário...</p>
                     </div>
                   ) : briefing ? (
-                    <div className="space-y-4">
+                    <div className="space-y-6">
                       <div className="flex items-center gap-2 text-xs text-green-600">
                         <Calendar className="w-3 h-3" />
                         Preenchido em {new Date(briefing.created_at).toLocaleDateString('pt-BR')}
                         {briefing.updated_at !== briefing.created_at && (
                           <span>• Atualizado em {new Date(briefing.updated_at).toLocaleDateString('pt-BR')}</span>
                         )}
-                      </div>
-
-                      {/* RESUMO DA CONVERSA COM VENDEDOR - NOVO CAMPO */}
-                      {briefing.resumo_conversa_vendedor && (
-                        <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
-                          <h4 className="font-semibold text-sm mb-2 text-blue-700 flex items-center gap-2">
-                            <MessageSquare className="w-4 h-4" />
-                            💬 Resumo da Conversa com Vendedor
-                          </h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
-                            {briefing.resumo_conversa_vendedor}
-                          </p>
-                        </div>
-                      )}
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">📦 Nome do Produto</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                            {briefing.nome_produto || 'Não informado'}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">💰 Investimento Diário</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                            R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* NOVAS INFORMAÇÕES ADICIONADAS */}
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">💳 Forma de Pagamento</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                            {formatFormaPagamento(briefing.forma_pagamento)}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">📍 Tipo de Prestação</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                            {formatTipoPrestacao(briefing.tipo_prestacao_servico)}
-                          </p>
-                        </div>
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">🌎 Localização</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                            {briefing.localizacao_divulgacao || 'Não informado'}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* VOCÊ QUER UM SITE? - NOVO CAMPO */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">🌐 Você quer um site?</h4>
-                          <div className="bg-white p-3 rounded border border-green-200">
-                            <Badge variant={briefing.quer_site ? 'default' : 'secondary'} className="bg-green-100 text-green-800">
-                              {briefing.quer_site ? '✅ Sim' : '❌ Não'}
-                            </Badge>
-                          </div>
-                        </div>
-                        {briefing.quer_site && briefing.nome_marca && (
-                          <div>
-                            <h4 className="font-semibold text-sm mb-2 text-green-700">🏷️ Nome da Marca</h4>
-                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200">
-                              {briefing.nome_marca}
-                            </p>
-                          </div>
+                        {briefing.formulario_completo && (
+                          <Badge className="bg-green-100 text-green-800 ml-2">
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Completo
+                          </Badge>
                         )}
                       </div>
-                      
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">📝 Descrição Resumida</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                          {briefing.descricao_resumida || 'Não informado'}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">🎯 Público-Alvo</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                          {briefing.publico_alvo || 'Não informado'}
-                        </p>
-                      </div>
-                      
-                      <div>
-                        <h4 className="font-semibold text-sm mb-2 text-green-700">⭐ Diferencial do Produto</h4>
-                        <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                          {briefing.diferencial || 'Não informado'}
-                        </p>
-                      </div>
-                      
-                      {briefing.observacoes_finais && (
-                        <div>
-                          <h4 className="font-semibold text-sm mb-2 text-green-700">💬 Observações Finais</h4>
-                          <p className="text-sm text-gray-700 bg-white p-3 rounded border border-green-200 whitespace-pre-wrap">
-                            {briefing.observacoes_finais}
-                          </p>
-                        </div>
-                      )}
 
+                      {/* ETAPA 1 - INFORMAÇÕES DO NEGÓCIO */}
+                      <Card className="bg-blue-50 border-2 border-blue-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-blue-700 text-lg flex items-center gap-2">
+                            <FileText className="w-5 h-5" />
+                            Etapa 1 - Informações do Negócio
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          {/* RESUMO DA CONVERSA COM VENDEDOR */}
+                          {briefing.resumo_conversa_vendedor && (
+                            <div className="bg-purple-50 border-2 border-purple-200 rounded-lg p-4">
+                              <h4 className="font-semibold text-sm mb-2 text-purple-700 flex items-center gap-2">
+                                <MessageSquare className="w-4 h-4" />
+                                💬 Resumo da Conversa com Vendedor
+                              </h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200 whitespace-pre-wrap">
+                                {briefing.resumo_conversa_vendedor}
+                              </p>
+                            </div>
+                          )}
+                          
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-blue-700">📦 Nome do Produto</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200">
+                                {briefing.nome_produto || 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-blue-700">🏷️ Nome da Marca</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200">
+                                {briefing.nome_marca || 'Não informado'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-blue-700">📝 Descrição Resumida</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
+                              {briefing.descricao_resumida || 'Não informado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-blue-700">🎯 Público-Alvo</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
+                              {briefing.publico_alvo || 'Não informado'}
+                            </p>
+                          </div>
+                          
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-blue-700">⭐ Diferencial do Produto</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
+                              {briefing.diferencial || 'Não informado'}
+                            </p>
+                          </div>
+
+                          <div className="flex items-center gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-blue-700">🌐 Quer um site?</h4>
+                              <Badge variant={briefing.quer_site ? 'default' : 'secondary'} className="bg-blue-100 text-blue-800">
+                                {briefing.quer_site ? '✅ Sim' : '❌ Não'}
+                              </Badge>
+                            </div>
+                          </div>
+                          
+                          {briefing.observacoes_finais && (
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-blue-700">💬 Observações Finais</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-blue-200 whitespace-pre-wrap">
+                                {briefing.observacoes_finais}
+                              </p>
+                            </div>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      {/* ETAPA 2 - INFORMAÇÕES DA CAMPANHA */}
+                      <Card className="bg-orange-50 border-2 border-orange-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-orange-700 text-lg flex items-center gap-2">
+                            <Monitor className="w-5 h-5" />
+                            Etapa 2 - Informações da Campanha
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">💰 Investimento Diário</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                R$ {briefing.investimento_diario ? briefing.investimento_diario.toFixed(2) : 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">🎯 Direcionamento</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                {formatDirecionamentoCampanha(briefing.direcionamento_campanha)}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">🌍 Abrangência</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                {formatAbrangenciaAtendimento(briefing.abrangencia_atendimento)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">💳 Forma de Pagamento</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                {formatFormaPagamento(briefing.forma_pagamento)}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">📍 Tipo de Prestação</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                {formatTipoPrestacao(briefing.tipo_prestacao_servico)}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-orange-700">🌎 Localização</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-orange-200">
+                                {briefing.localizacao_divulgacao || 'Não informado'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-sm mb-3 text-orange-700">📱 Redes Sociais e Ferramentas</h4>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={briefing.possui_facebook ? 'default' : 'secondary'} className="bg-orange-100 text-orange-800">
+                                {briefing.possui_facebook ? '✅' : '❌'} Facebook
+                              </Badge>
+                              <Badge variant={briefing.possui_instagram ? 'default' : 'secondary'} className="bg-orange-100 text-orange-800">
+                                {briefing.possui_instagram ? '✅' : '❌'} Instagram
+                              </Badge>
+                              <Badge variant={briefing.utiliza_whatsapp_business ? 'default' : 'secondary'} className="bg-orange-100 text-orange-800">
+                                {briefing.utiliza_whatsapp_business ? '✅' : '❌'} WhatsApp Business
+                              </Badge>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* ETAPA 3 - CRIATIVOS E DESIGN */}
+                      <Card className="bg-purple-50 border-2 border-purple-200">
+                        <CardHeader className="pb-3">
+                          <CardTitle className="text-purple-700 text-lg flex items-center gap-2">
+                            <Palette className="w-5 h-5" />
+                            Etapa 3 - Criativos e Design
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div>
+                            <h4 className="font-semibold text-sm mb-3 text-purple-700">🎨 Materiais Disponíveis</h4>
+                            <div className="flex flex-wrap gap-2">
+                              <Badge variant={briefing.criativos_prontos ? 'default' : 'secondary'} className="bg-purple-100 text-purple-800">
+                                {briefing.criativos_prontos ? '✅' : '❌'} Criativos Prontos
+                              </Badge>
+                              <Badge variant={briefing.videos_prontos ? 'default' : 'secondary'} className="bg-purple-100 text-purple-800">
+                                {briefing.videos_prontos ? '✅' : '❌'} Vídeos Prontos
+                              </Badge>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-purple-700 flex items-center gap-1">
+                                <Palette className="w-4 h-4" />
+                                Cores Desejadas
+                              </h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                                {briefing.cores_desejadas || 'Não informado'}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-purple-700 flex items-center gap-1">
+                                <Type className="w-4 h-4" />
+                                Tipo de Fonte
+                              </h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                                {formatTipoFonte(briefing.tipo_fonte)}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-purple-700">🚫 Cores Proibidas</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                                {briefing.cores_proibidas || 'Nenhuma restrição'}
+                              </p>
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2 text-purple-700">✍️ Fonte Específica</h4>
+                              <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                                {briefing.fonte_especifica || 'Sem preferência'}
+                              </p>
+                            </div>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-purple-700">🎨 Estilo Visual</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                              {formatEstiloVisual(briefing.estilo_visual)}
+                            </p>
+                          </div>
+
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2 text-purple-700">🖼️ Tipos de Imagens Preferidas</h4>
+                            <p className="text-sm text-gray-700 bg-white p-3 rounded border border-purple-200">
+                              {formatTiposImagens(briefing.tipos_imagens_preferidas)}
+                            </p>
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* INFORMAÇÕES ADICIONAIS */}
                       {briefing.comissao_aceita && (
                         <div className="flex items-center gap-2">
                           <h4 className="font-semibold text-sm text-green-700">💼 Comissão Aceita:</h4>
@@ -617,7 +827,7 @@ export function BriefingMaterialsModal({
                     <div className="text-center py-6">
                       <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                       <p className="text-gray-600 font-medium">Formulário ainda não preenchido</p>
-                      <p className="text-sm text-gray-500">O cliente ainda não preencheu o formulário de briefing.</p>
+                      <p className="text-sm text-gray-500">O cliente ainda não preencheu o formulário de gestão de tráfego.</p>
                     </div>
                   )}
                 </CardContent>
