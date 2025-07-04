@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -25,7 +24,6 @@ export function ClienteComissaoConfirmacao() {
   const valorComissao = cliente?.valor_comissao || 60.00
   const comissaoConfirmada = cliente?.comissao_confirmada || false
 
-  // Calcular valor sugerido baseado no briefing
   const calcularComissaoSugerida = () => {
     if (!briefing?.investimento_diario) return 60.00
     

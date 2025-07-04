@@ -27,6 +27,9 @@ export interface Cliente {
   valor_comissao: number
   saque_solicitado: boolean
   created_at: string
+  // Novos campos adicionados
+  comissao_confirmada: boolean
+  site_descricao_personalizada: string | null
 }
 
 export interface BriefingCliente {
@@ -89,7 +92,7 @@ export function useClienteData(emailCliente: string) {
       setLoading(true)
       console.log('🔍 [useClienteData] Buscando dados para email:', emailCliente)
 
-      // Buscar dados do cliente na tabela principal - incluindo link_campanha
+      // Buscar dados do cliente na tabela principal - incluindo os novos campos
       const { data: clienteData, error: clienteError } = await supabase
         .from('todos_clientes')
         .select('*')

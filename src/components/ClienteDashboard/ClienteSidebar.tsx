@@ -102,7 +102,7 @@ export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteS
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <ClienteProfileSection clienteInfo={clienteInfo} />
+      <ClienteProfileSection />
       
       <nav className="flex-1 px-4 py-4 space-y-1">
         {menuItems.map((item) => {

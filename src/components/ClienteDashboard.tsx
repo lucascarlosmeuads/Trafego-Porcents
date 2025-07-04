@@ -110,7 +110,9 @@ export function ClienteDashboard() {
   if (isMobile) {
     return (
       <div className="flex flex-col h-screen bg-gray-50">
-        <MobileHeader />
+        <MobileHeader 
+          activeTab={activeTab}
+        />
         
         <main className="flex-1 overflow-y-auto pb-16">
           {renderContent()}
