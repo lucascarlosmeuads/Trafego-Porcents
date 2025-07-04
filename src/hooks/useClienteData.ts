@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -65,6 +66,10 @@ export interface VendaCliente {
   observacoes: string | null
   created_at: string
   updated_at: string
+  // Additional properties expected by components
+  valor: number
+  data: string
+  produto: string
 }
 
 export interface ArquivoCliente {
@@ -76,6 +81,9 @@ export interface ArquivoCliente {
   tamanho_arquivo: number | null
   author_type: string
   created_at: string
+  // Additional properties expected by components
+  url_arquivo: string
+  data_upload: string
 }
 
 export function useClienteData(emailCliente: string) {
@@ -138,7 +146,15 @@ export function useClienteData(emailCliente: string) {
         console.error('❌ [useClienteData] Erro ao buscar vendas:', vendasError)
       }
 
-      setVendas(vendasData || [])
+      // Transform vendas data to match expected interface
+      const transformedVendas = (vendasData || []).map(venda => ({
+        ...venda,
+        valor: venda.valor_venda,
+        data: venda.data_venda,
+        produto: venda.produto_vendido
+      }))
+
+      setVendas(transformedVendas)
 
       // Buscar arquivos do cliente
       const { data: arquivosData, error: arquivosError } = await supabase
@@ -151,7 +167,14 @@ export function useClienteData(emailCliente: string) {
         console.error('❌ [useClienteData] Erro ao buscar arquivos:', arquivosError)
       }
 
-      setArquivos(arquivosData || [])
+      // Transform arquivos data to match expected interface
+      const transformedArquivos = (arquivosData || []).map(arquivo => ({
+        ...arquivo,
+        url_arquivo: arquivo.caminho_arquivo,
+        data_upload: arquivo.created_at
+      }))
+
+      setArquivos(transformedArquivos)
 
     } catch (error) {
       console.error('💥 [useClienteData] Erro crítico ao carregar dados do cliente:', error)
