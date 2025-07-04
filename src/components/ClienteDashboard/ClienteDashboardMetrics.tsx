@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -30,9 +29,7 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
   // Hook para buscar dados do Meta Ads do cliente específico
   const { 
     insights, 
-    campaigns, 
-    fetchInsights, 
-    fetchCampaigns,
+    fetchInsights,
     loading: metaAdsLoading,
     isConfigured,
     lastError,
@@ -51,10 +48,7 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
         setLoadingMetrics(true)
         try {
           console.log('🚀 [ClienteDashboardMetrics] Carregando dados Meta Ads automaticamente...')
-          await Promise.all([
-            fetchCampaigns(),
-            fetchInsights()
-          ])
+          await fetchInsights()
           console.log('✅ [ClienteDashboardMetrics] Dados Meta Ads carregados')
         } catch (error) {
           console.error('❌ [ClienteDashboardMetrics] Erro ao carregar dados Meta Ads:', error)
@@ -65,7 +59,7 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
     }
 
     loadMetaAdsData()
-  }, [cliente?.id, isConfigured, metaAdsLoading, fetchCampaigns, fetchInsights])
+  }, [cliente?.id, isConfigured, metaAdsLoading, fetchInsights])
 
   // Função para refresh manual dos dados
   const handleRefreshData = async () => {
@@ -376,32 +370,18 @@ export function ClienteDashboardMetrics({ cliente, briefing, vendas, arquivos }:
                 </div>
               </div>
               
-              {/* Lista de Campanhas */}
-              {campaigns.length > 0 && (
+              {/* Mostrar apenas informações de insights, sem campanhas */}
+              {insights.length > 0 && (
                 <div className="mt-6">
                   <h4 className="font-medium mb-3 flex items-center gap-2">
                     <BarChart className="w-4 h-4" />
-                    Campanhas Ativas ({campaigns.filter(c => c.status === 'ACTIVE').length})
+                    Dados dos Anúncios ({insights.length} registros)
                   </h4>
-                  <div className="space-y-2">
-                    {campaigns.slice(0, 5).map((campaign) => (
-                      <div key={campaign.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                        <div>
-                          <div className="font-medium text-sm">{campaign.name}</div>
-                          <div className="text-xs text-gray-500">
-                            {campaign.objective} • {new Date(campaign.created_time).toLocaleDateString('pt-BR')}
-                          </div>
-                        </div>
-                        <Badge variant={campaign.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                          {campaign.status}
-                        </Badge>
-                      </div>
-                    ))}
-                    {campaigns.length > 5 && (
-                      <p className="text-xs text-gray-500 text-center">
-                        +{campaigns.length - 5} campanhas adicionais
-                      </p>
-                    )}
+                  <div className="text-sm text-gray-600">
+                    <p>Últimas {insights.length} entradas de métricas disponíveis</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Dados agregados de impressões, cliques e investimento
+                    </p>
                   </div>
                 </div>
               )}

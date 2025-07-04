@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -43,9 +42,7 @@ export function ClienteMetaAdsModal({
     saving,
     saveConfig,
     testConnection,
-    fetchCampaigns,
     fetchInsights,
-    campaigns,
     insights,
     isConfigured,
     lastError,
@@ -103,10 +100,7 @@ export function ClienteMetaAdsModal({
   const handleLoadData = async () => {
     setLoadingData(true)
     try {
-      await Promise.all([
-        fetchCampaigns(),
-        fetchInsights()
-      ])
+      await fetchInsights()
       setActiveTab('metrics')
     } catch (error) {
       console.error('❌ [ClienteMetaAdsModal] Erro ao carregar dados:', error)
@@ -310,9 +304,9 @@ export function ClienteMetaAdsModal({
                       className="flex items-center gap-2"
                     >
                       {loadingData ? (
-                        <RefreshCw className="w-4 h-4 animate-spin" />
+                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
                       ) : (
-                        <BarChart3 className="w-4 h-4" />
+                        <BarChart3 className="w-4 h-4 mr-2" />
                       )}
                       Carregar Métricas
                     </Button>
@@ -418,41 +412,17 @@ export function ClienteMetaAdsModal({
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold text-orange-600">
-                        {campaigns.filter(c => c.status === 'ACTIVE').length}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        {campaigns.length} total
-                      </div>
+                      {/*  */}
                     </CardContent>
                   </Card>
                 </div>
 
-                {/* Lista de Campanhas */}
-                {campaigns.length > 0 && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-sm">Campanhas Ativas</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {campaigns.map((campaign) => (
-                          <div key={campaign.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <div className="font-medium text-sm">{campaign.name}</div>
-                              <div className="text-xs text-gray-500">
-                                {campaign.objective}
-                              </div>
-                            </div>
-                            <Badge variant={campaign.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                              {campaign.status}
-                            </Badge>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
+                {/* Remover seção de campanhas - mostrar apenas insights */}
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">
+                    Dados baseados em {insights.length} registros de insights
+                  </p>
+                </div>
 
                 {/* Botão de Atualização */}
                 <div className="flex justify-center">
