@@ -1,3 +1,4 @@
+
 import { TableRow, TableCell } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Folder, Mail, AtSign } from 'lucide-react'
@@ -15,6 +16,9 @@ import { Cliente, type StatusCampanha } from '@/lib/supabase'
 import { toast } from '@/hooks/use-toast'
 import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
+import { tableLogger } from '@/utils/logger'
+import { MESSAGES } from '@/constants'
+import type { ClienteBasicInfo, StatusComponentProps, EditableFieldProps } from '@/types/shared'
 
 interface ClienteRowProps {
   cliente: Cliente
@@ -76,7 +80,8 @@ export function ClienteRow({
     try {
       const date = new Date(dateString)
       return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
-    } catch {
+    } catch (error) {
+      tableLogger.error('Erro ao formatar data', { dateString, error })
       return 'N/A'
     }
   }
@@ -84,17 +89,28 @@ export function ClienteRow({
   const handleGestorClick = () => {
     if (!isAdmin) {
       toast({
-        title: "Apenas administradores podem editar gestores",
+        title: MESSAGES.ERROR.PERMISSION,
         variant: "destructive"
       })
+      tableLogger.warn('Tentativa de edição de gestor sem permissão', { userType: 'non-admin' })
     } else {
       toast({
         title: "Funcionalidade de edição em desenvolvimento"
       })
+      tableLogger.info('Funcionalidade de edição de gestor solicitada')
     }
   }
 
   const clienteOrigem = getClienteOrigem(cliente.id!.toString())
+
+  // Dados básicos do cliente para componentes
+  const clienteInfo: ClienteBasicInfo = {
+    clienteId: cliente.id!.toString(),
+    nomeCliente: cliente.nome_cliente || '',
+    emailCliente: cliente.email_cliente || '',
+    telefone: cliente.telefone || '',
+    emailGestor: cliente.email_gestor || ''
+  }
 
   return (
     <TooltipProvider>
@@ -108,8 +124,8 @@ export function ClienteRow({
 
         <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
           <ClienteRowName 
-            clienteId={cliente.id!.toString()}
-            nomeCliente={cliente.nome_cliente || ''}
+            clienteId={clienteInfo.clienteId}
+            nomeCliente={clienteInfo.nomeCliente}
           />
         </TableCell>
 
@@ -124,8 +140,8 @@ export function ClienteRow({
 
         <TableCell className="text-white text-xs p-1">
           <ClienteRowPhone 
-            telefone={cliente.telefone || ''}
-            nomeCliente={cliente.nome_cliente || ''}
+            telefone={clienteInfo.telefone}
+            nomeCliente={clienteInfo.nomeCliente}
           />
         </TableCell>
 
@@ -137,7 +153,7 @@ export function ClienteRow({
               </div>
             </TooltipTrigger>
             <TooltipContent>
-              <p className="max-w-xs break-all">{cliente.email_cliente || 'Não informado'}</p>
+              <p className="max-w-xs break-all">{clienteInfo.emailCliente || 'Não informado'}</p>
             </TooltipContent>
           </Tooltip>
         </TableCell>
@@ -154,7 +170,7 @@ export function ClienteRow({
                 </div>
               </TooltipTrigger>
               <TooltipContent>
-                <p className="max-w-xs break-all">{cliente.email_gestor || 'Não informado'}</p>
+                <p className="max-w-xs break-all">{clienteInfo.emailGestor || 'Não informado'}</p>
               </TooltipContent>
             </Tooltip>
           </TableCell>
@@ -163,9 +179,9 @@ export function ClienteRow({
         <TableCell className="p-1">
           <StatusSelect
             value={(cliente.status_campanha || 'Cliente Novo') as StatusCampanha}
-            onValueChange={(newStatus) => onStatusChange(cliente.id!.toString(), newStatus as StatusCampanha)}
-            disabled={updatingStatus === cliente.id!.toString()}
-            isUpdating={updatingStatus === cliente.id!.toString()}
+            onValueChange={(newStatus) => onStatusChange(clienteInfo.clienteId, newStatus as StatusCampanha)}
+            disabled={updatingStatus === clienteInfo.clienteId}
+            isUpdating={updatingStatus === clienteInfo.clienteId}
             getStatusColor={getStatusColor}
             compact={false}
           />
@@ -174,9 +190,9 @@ export function ClienteRow({
         <TableCell className="p-1">
           <SiteStatusSelect
             value={cliente.site_status || 'pendente'}
-            onValueChange={(newStatus) => onSiteStatusChange(cliente.id!.toString(), newStatus)}
-            disabled={updatingStatus === cliente.id!.toString()}
-            isUpdating={updatingStatus === cliente.id!.toString()}
+            onValueChange={(newStatus) => onSiteStatusChange(clienteInfo.clienteId, newStatus)}
+            disabled={updatingStatus === clienteInfo.clienteId}
+            isUpdating={updatingStatus === clienteInfo.clienteId}
             compact={false}
           />
         </TableCell>
@@ -185,14 +201,14 @@ export function ClienteRow({
           dataVenda={cliente.data_venda || ''}
           createdAt={cliente.created_at}
           statusCampanha={cliente.status_campanha || 'Cliente Novo'}
-          nomeCliente={cliente.nome_cliente || ''}
+          nomeCliente={clienteInfo.nomeCliente}
           compact={true}
         />
 
         <TableCell className="p-1">
           <BriefingMaterialsModal 
-            emailCliente={cliente.email_cliente || ''}
-            nomeCliente={cliente.nome_cliente || ''}
+            emailCliente={clienteInfo.emailCliente}
+            clienteName={clienteInfo.nomeCliente}
             trigger={
               <Button
                 size="sm"
@@ -207,7 +223,7 @@ export function ClienteRow({
 
         <TableCell className="p-1">
           <ClienteRowSite
-            clienteId={cliente.id!.toString()}
+            clienteId={clienteInfo.clienteId}
             linkSite={cliente.link_site || ''}
             sitePago={cliente.site_pago || false}
             showSitePagoCheckbox={showSitePagoCheckbox}
@@ -224,9 +240,9 @@ export function ClienteRow({
 
         <TableCell className="p-1">
           <ClienteRowBM
-            clienteId={cliente.id!.toString()}
+            clienteId={clienteInfo.clienteId}
             numeroBM={cliente.numero_bm || ''}
-            nomeCliente={cliente.nome_cliente || ''}
+            nomeCliente={clienteInfo.nomeCliente}
             editingBM={editingBM}
             bmValue={bmValue}
             setBmValue={setBmValue}
