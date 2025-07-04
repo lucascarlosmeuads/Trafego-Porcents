@@ -10,7 +10,8 @@ import {
   SidebarHeader, 
   SidebarMenu,
   SidebarMenuItem,
-  SidebarMenuButton
+  SidebarMenuButton,
+  SidebarTrigger
 } from '@/components/ui/sidebar'
 import { TermosContratoModal } from './TermosContratoModal'
 import { Button } from '@/components/ui/button'
@@ -85,13 +86,21 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
   return (
     <Sidebar className="bg-background border-r border-border w-80 h-screen">
       <SidebarHeader className="p-4 border-b border-border">
-        {/* Logo Section - Espaço otimizado para logo completa */}
-        <div className="flex flex-col items-center space-y-3 w-full">
-          <div className="w-full flex justify-center py-2">
+        {/* SidebarTrigger integrado no header do sidebar */}
+        <div className="flex items-center justify-between mb-4">
+          <SidebarTrigger className="text-foreground hover:bg-accent" />
+          <div className="text-xs text-muted-foreground">
+            Dashboard Cliente
+          </div>
+        </div>
+
+        {/* Logo Section - Espaço completo sem interferência */}
+        <div className="flex flex-col items-center space-y-4 w-full">
+          <div className="w-full flex justify-center py-3">
             <img 
               src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
               alt="Tráfego Por Cents" 
-              className="h-24 w-auto object-contain"
+              className="h-32 w-auto object-contain"
             />
           </div>
           <div className="text-center w-full px-2">
