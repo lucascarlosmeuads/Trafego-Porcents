@@ -17,7 +17,9 @@ import {
   CheckCircle2,
   Clock,
   ChevronRight,
-  Calendar
+  Calendar,
+  DollarSign,
+  Globe
 } from 'lucide-react'
 
 interface OnboardingStepsProps {
@@ -37,7 +39,7 @@ interface Step {
 
 export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   const { user } = useAuth()
-  const { briefing, arquivos } = useClienteData(user?.email || '')
+  const { briefing, arquivos, clienteInfo } = useClienteData(user?.email || '')
   const { progresso, loading, togglePasso } = useClienteProgresso(user?.email || '')
   const [userManuallyUnchecked, setUserManuallyUnchecked] = React.useState<Set<number>>(new Set())
 
@@ -65,7 +67,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     {
       id: 3,
       title: 'Contatar Suporte se Necessário',
-      description: 'Notifique seu gestor que você concluiu as etapas 1 e 2. Isso abre um chamado no painel do gestor para que ele possa te dar a atenção devida',
+      description: 'Entre em contato com seu gestor para esclarecimentos ou suporte adicional',
       icon: Headphones,
       action: () => onTabChange('suporte'),
       actionText: 'Acessar Suporte',
@@ -73,14 +75,34 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
     },
     {
       id: 4,
-      title: 'Analisar Métricas',
-      description: 'Acompanhe o desempenho da sua campanha',
+      title: 'Confirmar Valor da Comissão',
+      description: 'Visualize e confirme o valor da comissão mensal calculada para seu negócio',
+      icon: DollarSign,
+      action: () => onTabChange('comissao'),
+      actionText: 'Confirmar Comissão',
+      canCheck: true,
+      autoCheck: !!(clienteInfo?.comissao_confirmada)
+    },
+    {
+      id: 5,
+      title: 'Descrever Como Deseja o Site',
+      description: 'Opcional: Descreva como você deseja que seja o seu site personalizado',
+      icon: Globe,
+      action: () => onTabChange('site'),
+      actionText: 'Descrever Site',
+      canCheck: true,
+      autoCheck: !!(clienteInfo?.site_descricao_personalizada)
+    },
+    {
+      id: 6,
+      title: 'Visualizar Métricas da Campanha',
+      description: 'Acompanhe o desempenho da sua campanha em tempo real',
       icon: BarChart3,
       action: () => onTabChange('vendas'),
       actionText: 'Ver Métricas',
       canCheck: true
     }
-  ], [briefing, arquivos, onTabChange])
+  ], [briefing, arquivos, clienteInfo, onTabChange])
 
   const checkAutoSteps = React.useCallback(() => {
     steps.forEach(step => {
@@ -91,10 +113,10 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
   }, [steps, progresso, togglePasso, userManuallyUnchecked])
 
   React.useEffect(() => {
-    if (!loading && (briefing || arquivos)) {
+    if (!loading && (briefing || arquivos || clienteInfo)) {
       checkAutoSteps()
     }
-  }, [loading, briefing, arquivos, checkAutoSteps])
+  }, [loading, briefing, arquivos, clienteInfo, checkAutoSteps])
 
   const totalSteps = steps.length
   const completedSteps = progresso.size
@@ -147,7 +169,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                 Guia de Configuração
               </CardTitle>
               <CardDescription className="text-gray-600">
-                Siga estes 4 passos para configurar sua campanha corretamente
+                Siga estes 6 passos para configurar sua campanha corretamente
               </CardDescription>
             </div>
           </div>
@@ -222,6 +244,11 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
                       {isCompleted && (
                         <CheckCircle2 className="h-4 w-4 text-green-600" />
                       )}
+                      {step.id === 5 && (
+                        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full">
+                          Opcional
+                        </span>
+                      )}
                     </div>
                     <p className="text-gray-600 text-sm">{step.description}</p>
                   </div>
@@ -253,7 +280,7 @@ export function OnboardingSteps({ onTabChange }: OnboardingStepsProps) {
             <span className="text-blue-800 font-medium">Fique tranquilo!</span>
           </div>
           <p className="text-gray-700 text-sm leading-relaxed">
-            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão de todos os passos. 
+            Sua campanha estará no ar em até <strong>15 dias úteis</strong> após a conclusão dos passos obrigatórios. 
             É melhor fazer bem feito do que na pressa - isso garante os melhores resultados para o seu negócio.
           </p>
         </div>

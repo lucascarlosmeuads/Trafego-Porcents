@@ -789,6 +789,7 @@ export type Database = {
       todos_clientes: {
         Row: {
           comissao: string | null
+          comissao_confirmada: boolean | null
           comissao_paga: boolean | null
           created_at: string
           created_at_br: string | null
@@ -811,6 +812,7 @@ export type Database = {
           numero_bm: string | null
           origem_cadastro: string | null
           saque_solicitado: boolean | null
+          site_descricao_personalizada: string | null
           site_pago: boolean | null
           site_status: string | null
           status_campanha: string | null
@@ -825,6 +827,7 @@ export type Database = {
         }
         Insert: {
           comissao?: string | null
+          comissao_confirmada?: boolean | null
           comissao_paga?: boolean | null
           created_at?: string
           created_at_br?: string | null
@@ -847,6 +850,7 @@ export type Database = {
           numero_bm?: string | null
           origem_cadastro?: string | null
           saque_solicitado?: boolean | null
+          site_descricao_personalizada?: string | null
           site_pago?: boolean | null
           site_status?: string | null
           status_campanha?: string | null
@@ -861,6 +865,7 @@ export type Database = {
         }
         Update: {
           comissao?: string | null
+          comissao_confirmada?: boolean | null
           comissao_paga?: boolean | null
           created_at?: string
           created_at_br?: string | null
@@ -883,6 +888,7 @@ export type Database = {
           numero_bm?: string | null
           origem_cadastro?: string | null
           saque_solicitado?: boolean | null
+          site_descricao_personalizada?: string | null
           site_pago?: boolean | null
           site_status?: string | null
           status_campanha?: string | null

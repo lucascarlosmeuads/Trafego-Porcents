@@ -1,204 +1,159 @@
-import { useState } from 'react'
-import { useAuth } from '@/hooks/useAuth'
-import { useTermosAceitos } from '@/hooks/useTermosAceitos'
+
+import React from 'react'
+import { cn } from '@/lib/utils'
+import { ClienteProfileSection } from './ClienteProfileSection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { 
-  BarChart3, 
+  Home, 
   FileText, 
   Upload, 
-  TrendingUp, 
-  PlayCircle,
+  Headphones, 
+  DollarSign,
+  Globe,
+  BarChart3,
+  CheckSquare,
   MessageCircle,
-  LogOut,
-  User,
-  AlertTriangle
+  CheckCircle
 } from 'lucide-react'
-import { TermosContratoModal } from './TermosContratoModal'
 
 interface ClienteSidebarProps {
   activeTab: string
   onTabChange: (tab: string) => void
+  clienteInfo: any
 }
 
-// DEPRECATED: Use ClienteSidebarResponsive instead
-// This component is kept for backward compatibility
-export function ClienteSidebar({ activeTab, onTabChange }: ClienteSidebarProps) {
-  const { user, currentManagerName, signOut } = useAuth()
-  const { marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
-  const [isSigningOut, setIsSigningOut] = useState(false)
-  const [termosModalOpen, setTermosModalOpen] = useState(false)
-
+export function ClienteSidebar({ activeTab, onTabChange, clienteInfo }: ClienteSidebarProps) {
   const menuItems = [
     {
       id: 'overview',
-      label: 'Visão Geral',
-      icon: BarChart3,
-      description: 'Status da sua campanha'
+      label: 'Painel Principal',
+      icon: Home,
+      badge: null
     },
     {
       id: 'briefing',
-      label: 'Briefing',
+      label: '1. Formulário',
       icon: FileText,
-      description: 'Formulário do briefing'
+      badge: null,
+      step: 1
     },
     {
       id: 'arquivos',
-      label: 'Arquivos',
+      label: '2. Materiais',
       icon: Upload,
-      description: 'Upload de materiais'
+      badge: null,
+      step: 2
+    },
+    {
+      id: 'suporte',
+      label: '3. Suporte',
+      icon: Headphones,
+      badge: null,
+      step: 3
+    },
+    {
+      id: 'comissao',
+      label: '4. Comissão',
+      icon: DollarSign,
+      badge: clienteInfo?.comissao_confirmada ? 'confirmed' : null,
+      step: 4
+    },
+    {
+      id: 'site',
+      label: '5. Site (Opcional)',
+      icon: Globe,
+      badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional',
+      step: 5
     },
     {
       id: 'vendas',
-      label: 'Vendas',
-      icon: TrendingUp,
-      description: 'Registrar suas vendas'
+      label: '6. Métricas',
+      icon: BarChart3,
+      badge: null,
+      step: 6
+    },
+    {
+      id: 'steps',
+      label: 'Guia Completo',
+      icon: CheckSquare,
+      badge: null
     },
     {
       id: 'chat',
-      label: 'Chat',
+      label: 'Chat Direto',
       icon: MessageCircle,
-      description: 'Conversar com seu gestor'
-    },
-    {
-      id: 'tutoriais',
-      label: 'Tutoriais',
-      icon: PlayCircle,
-      description: 'Vídeos de ajuda'
+      badge: null
     }
   ]
 
-  const handleSignOut = async () => {
-    setIsSigningOut(true)
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Erro ao fazer logout:', error)
-    } finally {
-      setIsSigningOut(false)
+  const getBadgeContent = (badge: string | null) => {
+    switch (badge) {
+      case 'confirmed':
+        return <CheckCircle className="w-3 h-3 text-green-600" />
+      case 'described':
+        return <CheckCircle className="w-3 h-3 text-purple-600" />
+      case 'optional':
+        return <span className="text-xs text-purple-600">Opc</span>
+      default:
+        return null
     }
   }
 
-  const handleAbrirTermos = () => {
-    setTermosModalOpen(true)
-  }
-
-  const handleTermosAceitos = () => {
-    marcarTermosAceitos()
-  }
-
-  const handleTermosRejeitados = () => {
-    marcarTermosRejeitados()
-  }
-
-  // Função para gerar iniciais do nome
-  const getInitials = (name: string) => {
-    return name
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2)
-  }
-
   return (
-    <>
-      <aside className="w-64 bg-card border-r border-border flex-col hidden lg:flex">
-        {/* Header com informações do usuário */}
-        <div className="p-6 border-b border-border">
-          <h2 className="text-xl font-bold text-card-foreground mb-4">Painel do Cliente</h2>
+    <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <ClienteProfileSection clienteInfo={clienteInfo} />
+      
+      <nav className="flex-1 px-4 py-4 space-y-1">
+        {menuItems.map((item) => {
+          const Icon = item.icon
+          const isActive = activeTab === item.id
           
-          {/* Perfil do usuário */}
-          <div className="flex items-center space-x-3 p-3 rounded-lg bg-accent/50">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {currentManagerName ? getInitials(currentManagerName) : <User className="h-5 w-5" />}
-              </AvatarFallback>
-            </Avatar>
-            
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-card-foreground truncate">
-                {currentManagerName || 'Usuário'}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {user?.email || 'Carregando...'}
-              </p>
-            </div>
-          </div>
-        </div>
-        
-        {/* Menu de navegação */}
-        <nav className="flex-1 p-4 space-y-2">
-          {menuItems.map((item) => (
+          return (
             <Button
               key={item.id}
-              variant={activeTab === item.id ? 'default' : 'ghost'}
-              className={`w-full justify-start text-left h-auto py-3 ${
-                activeTab === item.id 
-                  ? 'bg-primary text-primary-foreground hover:bg-primary/90' 
-                  : 'text-card-foreground hover:bg-accent hover:text-accent-foreground'
-              }`}
+              variant="ghost"
+              className={cn(
+                "w-full justify-start text-left h-auto py-3 px-3",
+                isActive && "bg-blue-50 text-blue-700 border-l-4 border-blue-600"
+              )}
               onClick={() => onTabChange(item.id)}
             >
-              <div className="flex items-center">
-                <item.icon className="mr-3 h-5 w-5" />
-                <div>
-                  <div className="font-medium">{item.label}</div>
-                  <div className="text-xs opacity-70">{item.description}</div>
+              <div className="flex items-center justify-between w-full">
+                <div className="flex items-center gap-3">
+                  <Icon className={cn(
+                    "h-4 w-4 flex-shrink-0",
+                    isActive ? "text-blue-600" : "text-gray-500"
+                  )} />
+                  <span className="text-sm font-medium">{item.label}</span>
                 </div>
+                {item.badge && (
+                  <div className="flex-shrink-0">
+                    {getBadgeContent(item.badge)}
+                  </div>
+                )}
               </div>
             </Button>
-          ))}
+          )
+        })}
+      </nav>
 
-          {/* Item destacado para Termos de Uso - mesmo nível do botão do menu */}
-          <Button
-            variant="ghost"
-            className="sidebar-termos-button w-full justify-start text-left h-auto py-4 px-4 my-3"
-            onClick={handleAbrirTermos}
-          >
-            <div className="flex items-center w-full">
-              <div className="flex items-center gap-1 mr-3">
-                <AlertTriangle className="h-5 w-5 text-red-200" />
-                <FileText className="h-5 w-5 text-red-200" />
-              </div>
-              <div className="flex-1 flex items-center justify-between">
-                <div>
-                  <div className="font-semibold text-white">⚠️ Termos de Uso</div>
-                  <div className="text-xs text-red-100 opacity-90">Revisar condições importantes</div>
-                </div>
-                <div className="relative">
-                  <Badge variant="outline" className="text-xs bg-red-600/30 text-red-100 border-red-500/50 font-bold">
-                    IMPORTANTE
-                  </Badge>
-                  <div className="termos-indicator"></div>
-                </div>
-              </div>
+      {/* Status da Campanha */}
+      <div className="p-4 border-t border-gray-200">
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-3">
+          <div className="text-xs font-medium text-gray-800 mb-1">
+            Status da Campanha:
+          </div>
+          <div className="text-sm font-semibold text-blue-700">
+            {clienteInfo?.status_campanha || 'Em Configuração'}
+          </div>
+          {!clienteInfo?.status_campanha?.includes('Ativa') && (
+            <div className="text-xs text-gray-600 mt-1">
+              Complete os passos para ativar
             </div>
-          </Button>
-        </nav>
-
-        {/* Logout Button */}
-        <div className="p-4 border-t border-border">
-          <Button
-            variant="ghost"
-            className="w-full justify-start text-destructive hover:text-destructive hover:bg-destructive/10"
-            onClick={handleSignOut}
-            disabled={isSigningOut}
-          >
-            <LogOut className="mr-3 h-5 w-5" />
-            {isSigningOut ? 'Saindo...' : 'Sair do Sistema'}
-          </Button>
+          )}
         </div>
-      </aside>
-
-      {/* Modal de Termos */}
-      <TermosContratoModal
-        open={termosModalOpen}
-        onOpenChange={setTermosModalOpen}
-        onTermosAceitos={handleTermosAceitos}
-        onTermosRejeitados={handleTermosRejeitados}
-      />
-    </>
+      </div>
+    </div>
   )
 }
