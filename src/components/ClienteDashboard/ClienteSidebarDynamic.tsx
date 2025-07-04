@@ -1,5 +1,14 @@
+
 import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard } from 'lucide-react'
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarItem, SidebarTrigger } from '@/components/ui/sidebar'
+import { 
+  Sidebar, 
+  SidebarContent, 
+  SidebarFooter, 
+  SidebarHeader, 
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton
+} from '@/components/ui/sidebar'
 
 interface ClienteSidebarDynamicProps {
   activeTab: string
@@ -72,25 +81,38 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         </div>
       </SidebarHeader>
       <SidebarContent>
-        {menuItems.map((item) => (
-          <SidebarItem
-            key={item.id}
-            label={item.label}
-            icon={item.icon}
-            description={item.description}
-            active={activeTab === item.id}
-            onClick={() => onTabChange(item.id)}
-          />
-        ))}
+        <SidebarMenu>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.id}>
+              <SidebarMenuButton
+                onClick={() => onTabChange(item.id)}
+                isActive={activeTab === item.id}
+                className="w-full justify-start text-white hover:bg-gray-800"
+              >
+                <item.icon className="h-4 w-4 mr-2" />
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">{item.label}</span>
+                  <span className="text-xs text-gray-400">{item.description}</span>
+                </div>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <a href="https://wa.me/5511940747924" target="_blank" rel="noopener noreferrer">
-          <SidebarItem
-            label="Precisa de ajuda?"
-            icon={MessageCircle}
-            description="Fale conosco no WhatsApp"
-          />
-        </a>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton asChild>
+              <a href="https://wa.me/5511940747924" target="_blank" rel="noopener noreferrer" className="w-full justify-start text-white hover:bg-gray-800">
+                <MessageCircle className="h-4 w-4 mr-2" />
+                <div className="flex flex-col items-start">
+                  <span className="font-medium">Precisa de ajuda?</span>
+                  <span className="text-xs text-gray-400">Fale conosco no WhatsApp</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
   )

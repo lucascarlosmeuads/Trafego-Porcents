@@ -8,7 +8,10 @@ import {
   DollarSign,
   Globe,
   BarChart3,
-  CheckSquare
+  CheckSquare,
+  Home,
+  MessageCircle,
+  TrendingUp
 } from 'lucide-react'
 
 interface MobileBottomNavProps {
