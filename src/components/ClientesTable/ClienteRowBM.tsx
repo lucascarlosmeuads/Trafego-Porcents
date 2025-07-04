@@ -1,4 +1,3 @@
-
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -6,6 +5,8 @@ import { Save, X, Edit, Settings, Wifi, WifiOff, RefreshCw } from 'lucide-react'
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip'
 import { useState, useEffect } from 'react'
 import { ClienteMetaAdsModalSimplified } from './ClienteMetaAdsModalSimplified'
+import { ClienteMetaAdsModal } from './ClienteMetaAdsModal'
+import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/lib/supabase'
 
 interface ClienteRowBMProps {
@@ -38,6 +39,10 @@ export function ClienteRowBM({
   const [hasMetaAdsConfig, setHasMetaAdsConfig] = useState(false)
   const [loading, setLoading] = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const { isGestor, isAdmin } = useAuth()
+
+  // Determinar se deve usar o modal completo (para gestores) ou simplificado (para clientes)
+  const useFullModal = isGestor || isAdmin
 
   // Verificar se cliente tem configuração Meta Ads
   const checkMetaAdsConfig = async () => {
@@ -212,12 +217,22 @@ export function ClienteRowBM({
             </>
           )}
 
-          <ClienteMetaAdsModalSimplified
-            open={metaAdsModalOpen}
-            onOpenChange={handleModalClose}
-            clienteId={clienteId}
-            nomeCliente={nomeCliente}
-          />
+          {/* Renderizar modal baseado no tipo de usuário */}
+          {useFullModal ? (
+            <ClienteMetaAdsModal
+              open={metaAdsModalOpen}
+              onOpenChange={handleModalClose}
+              clienteId={clienteId}
+              nomeCliente={nomeCliente}
+            />
+          ) : (
+            <ClienteMetaAdsModalSimplified
+              open={metaAdsModalOpen}
+              onOpenChange={handleModalClose}
+              clienteId={clienteId}
+              nomeCliente={nomeCliente}
+            />
+          )}
         </div>
       </TooltipProvider>
     )
@@ -291,12 +306,22 @@ export function ClienteRowBM({
             </Button>
           </div>
 
-          <ClienteMetaAdsModalSimplified
-            open={metaAdsModalOpen}
-            onOpenChange={handleModalClose}
-            clienteId={clienteId}
-            nomeCliente={nomeCliente}
-          />
+          {/* Renderizar modal baseado no tipo de usuário */}
+          {useFullModal ? (
+            <ClienteMetaAdsModal
+              open={metaAdsModalOpen}
+              onOpenChange={handleModalClose}
+              clienteId={clienteId}
+              nomeCliente={nomeCliente}
+            />
+          ) : (
+            <ClienteMetaAdsModalSimplified
+              open={metaAdsModalOpen}
+              onOpenChange={handleModalClose}
+              clienteId={clienteId}
+              nomeCliente={nomeCliente}
+            />
+          )}
         </>
       )}
     </div>
