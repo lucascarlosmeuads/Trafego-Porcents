@@ -115,25 +115,22 @@ export function ClienteDashboard() {
     return (
       <SidebarProvider>
         <div className="flex h-screen bg-background overflow-hidden w-full">
-          {/* Header com Logo e Trigger da Sidebar */}
-          <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-gray-900 border-b border-gray-800 flex items-center px-4">
-            <SidebarTrigger className="text-white hover:bg-gray-800" />
-            <div className="flex items-center gap-4 ml-4">
-              {/* Logo da Tráfego Por Cents */}
-              <div className="flex items-center gap-3">
-                <img 
-                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-                  alt="Tráfego Por Cents" 
-                  className="h-10 w-auto object-contain"
-                />
-                <div>
-                  <h1 className="text-lg font-bold text-white">
-                    Tráfego Por Cents
-                  </h1>
-                  <p className="text-xs text-gray-400">
-                    Dashboard do Cliente
-                  </p>
-                </div>
+          {/* Header Limpo - Estilo Mobile */}
+          <div className="fixed top-0 left-0 right-0 z-50 h-14 bg-background border-b border-border flex items-center px-4">
+            <SidebarTrigger className="text-foreground hover:bg-accent" />
+            <div className="flex items-center gap-3 ml-4">
+              <img 
+                src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                alt="Tráfego Por Cents" 
+                className="h-8 w-auto object-contain"
+              />
+              <div>
+                <h1 className="text-lg font-semibold text-foreground">
+                  Dashboard do Cliente
+                </h1>
+                <p className="text-xs text-muted-foreground">
+                  {cliente?.nome_cliente || 'Cliente'}
+                </p>
               </div>
             </div>
           </div>
@@ -144,7 +141,7 @@ export function ClienteDashboard() {
             clienteInfo={cliente}
           />
           
-          <main className="flex-1 overflow-y-auto bg-background pt-16">
+          <main className="flex-1 overflow-y-auto bg-background pt-14">
             <div className="p-6 min-h-full">
               {renderContent()}
             </div>
