@@ -46,7 +46,6 @@ export function ClienteDashboard() {
       case 'briefing':
         return (
           <BriefingForm 
-            emailCliente={user?.email || ''}
             onBriefingUpdated={refetch}
           />
         )
@@ -75,7 +74,6 @@ export function ClienteDashboard() {
       default:
         return (
           <BriefingForm 
-            emailCliente={user?.email || ''}
             onBriefingUpdated={refetch}
           />
         )

@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
@@ -55,6 +56,7 @@ export interface ClienteData {
   link_briefing: string | null
   link_criativo: string | null
   link_site: string | null
+  link_campanha: string | null
   numero_bm: string | null
   created_at: string
   comissao_confirmada?: boolean | null
@@ -72,10 +74,25 @@ export interface VendaCliente {
   updated_at: string
 }
 
+export interface ArquivoCliente {
+  id: string
+  nome_arquivo: string
+  tipo_arquivo: string
+  tamanho_arquivo: number
+  caminho_arquivo: string
+  email_cliente: string
+  author_type: string
+  created_at: string
+}
+
+// Exportar tipos individuais para compatibilidade
+export type Cliente = ClienteData
+
 export function useClienteData(emailCliente: string) {
   const [cliente, setCliente] = useState<ClienteData | null>(null)
   const [briefing, setBriefing] = useState<BriefingCliente | null>(null)
   const [vendas, setVendas] = useState<VendaCliente[]>([])
+  const [arquivos, setArquivos] = useState<ArquivoCliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -135,6 +152,20 @@ export function useClienteData(emailCliente: string) {
         setVendas(vendasData || [])
       }
 
+      // Buscar arquivos
+      const { data: arquivosData, error: arquivosError } = await supabase
+        .from('arquivos_cliente')
+        .select('*')
+        .eq('email_cliente', emailCliente.trim())
+        .order('created_at', { ascending: false })
+
+      if (arquivosError) {
+        console.error('❌ [useClienteData] Erro ao buscar arquivos:', arquivosError)
+      } else {
+        console.log('📁 [useClienteData] Arquivos encontrados:', arquivosData?.length || 0)
+        setArquivos(arquivosData || [])
+      }
+
     } catch (error: any) {
       console.error('💥 [useClienteData] Erro crítico:', error)
       setError(error.message)
@@ -151,12 +182,17 @@ export function useClienteData(emailCliente: string) {
     fetchClienteData()
   }
 
+  // Alias para compatibilidade
+  const refetch = refreshData
+
   return {
     cliente,
     briefing,
     vendas,
+    arquivos,
     loading,
     error,
-    refreshData
+    refreshData,
+    refetch
   }
 }
