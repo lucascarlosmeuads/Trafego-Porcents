@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -16,6 +17,8 @@ import {
 } from 'lucide-react'
 
 export function AdminMetaAdsMetrics() {
+  console.log('🚀 [AdminMetaAdsMetrics] Componente iniciado')
+  
   const { 
     insights, 
     fetchingInsights, 
@@ -30,11 +33,24 @@ export function AdminMetaAdsMetrics() {
   const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
   const [loadingVendas, setLoadingVendas] = useState(false)
 
+  console.log('📊 [AdminMetaAdsMetrics] Estado atual:', {
+    insights,
+    fetchingInsights,
+    isConfigured,
+    lastError,
+    vendasPeriodo,
+    loadingVendas
+  })
+
   // Buscar insights automaticamente ao montar o componente
   useEffect(() => {
+    console.log('🔄 [AdminMetaAdsMetrics] useEffect - isConfigured:', isConfigured)
     if (isConfigured) {
+      console.log('✅ [AdminMetaAdsMetrics] Configurado - buscando dados de hoje')
       fetchTodayInsights()
       fetchVendasPeriodo(new Date().toISOString().split('T')[0], new Date().toISOString().split('T')[0])
+    } else {
+      console.log('❌ [AdminMetaAdsMetrics] Não configurado ainda')
     }
   }, [isConfigured])
 
@@ -76,10 +92,10 @@ export function AdminMetaAdsMetrics() {
 
   // Buscar vendas do período
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
+    console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do período:', { startDate, endDate })
     setLoadingVendas(true)
+    
     try {
-      console.log('💰 [AdminMetaAdsMetrics] Buscando vendas do período:', { startDate, endDate })
-      
       // Buscar vendas de vendas_cliente no período
       const { data: vendasCliente, error: errorVendasCliente } = await supabase
         .from('vendas_cliente')
@@ -129,6 +145,8 @@ export function AdminMetaAdsMetrics() {
   }
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
+    console.log('📅 [AdminMetaAdsMetrics] Mudança de período:', { startDate, endDate, preset })
+    
     setLastFetchInfo('')
     setCampaignsInfo({count: 0})
     
@@ -140,9 +158,12 @@ export function AdminMetaAdsMetrics() {
       const dateRange = getDateRangeFromPreset(preset)
       finalStartDate = dateRange.startDate
       finalEndDate = dateRange.endDate
+      console.log('📅 [AdminMetaAdsMetrics] Datas calculadas do preset:', { finalStartDate, finalEndDate })
     }
     
+    // Buscar dados do Meta Ads
     if (preset === 'today') {
+      console.log('📊 [AdminMetaAdsMetrics] Buscando insights de hoje')
       const result = await fetchTodayInsights()
       if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used || 'hoje'}`)
@@ -152,6 +173,7 @@ export function AdminMetaAdsMetrics() {
         })
       }
     } else if (preset && preset !== 'custom') {
+      console.log('📊 [AdminMetaAdsMetrics] Buscando insights com preset:', preset)
       const result = await fetchInsightsWithPeriod(preset as any)
       if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${result.period_used || preset}`)
@@ -164,6 +186,7 @@ export function AdminMetaAdsMetrics() {
         setCampaignsInfo({count: 0})
       }
     } else if (preset === 'custom' && startDate && endDate) {
+      console.log('📊 [AdminMetaAdsMetrics] Buscando insights com datas customizadas')
       const result = await fetchInsightsWithCustomDates(startDate, endDate)
       if (result.success) {
         setLastFetchInfo(`Dados encontrados para: ${startDate} até ${endDate}`)
@@ -178,6 +201,7 @@ export function AdminMetaAdsMetrics() {
     }
     
     // SEMPRE buscar vendas para o período selecionado
+    console.log('💰 [AdminMetaAdsMetrics] Buscando vendas para:', { finalStartDate, finalEndDate })
     await fetchVendasPeriodo(finalStartDate, finalEndDate)
   }
 
@@ -191,7 +215,7 @@ export function AdminMetaAdsMetrics() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Activity className="h-5 w-5" />
-            Meta Ads - Métricas
+            Meta Ads - Métricas Globais
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -211,10 +235,10 @@ export function AdminMetaAdsMetrics() {
       <div>
         <h3 className="text-lg font-semibold flex items-center gap-2">
           <Activity className="h-5 w-5" />
-          Meta Ads - Relatórios
+          Meta Ads - Relatórios Globais da Plataforma
         </h3>
         <p className="text-sm text-muted-foreground">
-          Investimento em tráfego vs. Retorno em vendas
+          Investimento em tráfego vs. Retorno em vendas (toda a plataforma)
         </p>
       </div>
 
@@ -270,7 +294,7 @@ export function AdminMetaAdsMetrics() {
         </Card>
       )}
 
-      {/* Relatório de Custos e Lucro - Agora é o componente principal */}
+      {/* Relatório de Custos e Lucro - Componente principal */}
       {insights && (
         <AdminCustoLucroReport 
           vendasDia={vendasPeriodo}

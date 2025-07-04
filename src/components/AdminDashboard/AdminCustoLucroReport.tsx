@@ -26,17 +26,32 @@ export function AdminCustoLucroReport({
   loadingVendas 
 }: AdminCustoLucroReportProps) {
   
-  // Calcular custos baseado nas vendas
-  const custoAppMax = vendasDia * 0.02 // 2% das vendas
-  const custoGestores = vendasDia > 0 ? (vendasDia / 350) * 100 : 0 // R$ 100 por venda
-  const custoComissao = vendasDia > 0 ? (vendasDia / 350) * 40 : 0 // R$ 40 por venda
-  const custoImposto = vendasDia * 0.19 // 19% das vendas
+  console.log('📊 [AdminCustoLucroReport] Props recebidas:', {
+    vendasDia,
+    investimentoTrafego,
+    loadingVendas
+  })
   
-  // Total de custos
+  // Calcular custos baseado nas vendas - corrigir lógica
+  const custoAppMax = vendasDia > 0 ? vendasDia * 0.02 : 0 // 2% das vendas
+  const custoGestores = vendasDia > 0 ? Math.floor(vendasDia / 350) * 100 : 0 // R$ 100 por venda (350 = ticket médio)
+  const custoComissao = vendasDia > 0 ? Math.floor(vendasDia / 350) * 40 : 0 // R$ 40 por venda
+  const custoImposto = vendasDia > 0 ? vendasDia * 0.19 : 0 // 19% das vendas
+  
+  // Total de custos - sempre incluir investimento em tráfego
   const totalCustos = investimentoTrafego + custoAppMax + custoGestores + custoComissao + custoImposto
   
   // Lucro líquido
   const lucroLiquido = vendasDia - totalCustos
+  
+  console.log('💰 [AdminCustoLucroReport] Cálculos:', {
+    custoAppMax,
+    custoGestores,
+    custoComissao,
+    custoImposto,
+    totalCustos,
+    lucroLiquido
+  })
 
   return (
     <div className="space-y-8">
@@ -72,7 +87,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(vendasDia)}
               </div>
               <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                Receita bruta do dia
+                Receita bruta do período
               </p>
             </CardContent>
           </Card>
@@ -157,7 +172,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(investimentoTrafego)}
               </div>
               <p className="text-xs text-red-600 dark:text-red-400 mt-1">
-                Custo com Meta Ads
+                Custo com Meta Ads Global
               </p>
             </CardContent>
           </Card>
@@ -175,7 +190,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(custoAppMax)}
               </div>
               <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
-                {custoAppMax > 0 ? `2% de ${formatCurrency(vendasDia)}` : 'Sem vendas'}
+                {vendasDia > 0 ? `2% de ${formatCurrency(vendasDia)}` : 'Sem vendas no período'}
               </p>
             </CardContent>
           </Card>
@@ -193,7 +208,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(custoImposto)}
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                {custoImposto > 0 ? `19% de ${formatCurrency(vendasDia)}` : 'Sem vendas'}
+                {vendasDia > 0 ? `19% de ${formatCurrency(vendasDia)}` : 'Sem vendas no período'}
               </p>
             </CardContent>
           </Card>
@@ -221,7 +236,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(custoGestores)}
               </div>
               <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                {Math.round(vendasDia / 350)} vendas × R$ 100
+                {vendasDia > 0 ? `${Math.floor(vendasDia / 350)} vendas × R$ 100` : 'Sem vendas no período'}
               </p>
             </CardContent>
           </Card>
@@ -239,7 +254,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(custoComissao)}
               </div>
               <p className="text-xs text-teal-600 dark:text-teal-400 mt-1">
-                {Math.round(vendasDia / 350)} vendas × R$ 40
+                {vendasDia > 0 ? `${Math.floor(vendasDia / 350)} vendas × R$ 40` : 'Sem vendas no período'}
               </p>
             </CardContent>
           </Card>
