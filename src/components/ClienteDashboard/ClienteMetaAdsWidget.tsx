@@ -14,7 +14,8 @@ import {
   TrendingUp,
   Info,
   AlertCircle,
-  MessageSquare
+  MessageSquare,
+  Bug
 } from 'lucide-react'
 
 interface ClienteMetaAdsWidgetProps {
@@ -28,26 +29,39 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     loading,
     isConfigured,
     loadMetricsWithPeriod,
-    lastError
+    lastError,
+    diagnosticInfo
   } = useClienteMetaAdsSimplified(clienteId)
 
   const [loadingData, setLoadingData] = useState(false)
   const [lastFetchInfo, setLastFetchInfo] = useState('')
   const [fallbackMessage, setFallbackMessage] = useState('')
+  const [showDiagnostic, setShowDiagnostic] = useState(false)
 
-  // Auto-carregar métricas quando configurado
+  // FASE 4: Auto-carregar métricas quando configurado com diagnóstico
   useEffect(() => {
+    console.log('🔍 [WIDGET DIAGNÓSTICO] useEffect disparado:', {
+      isConfigured,
+      hasInsights: insights.length > 0,
+      clienteId,
+      diagnosticInfo
+    })
+    
     if (isConfigured && insights.length === 0) {
+      console.log('🔄 [WIDGET DIAGNÓSTICO] Carregando métricas automaticamente...')
       handleLoadMetrics()
     }
   }, [isConfigured])
 
   const handleLoadMetrics = async (period: string = 'today') => {
+    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId })
     setLoadingData(true)
     setLastFetchInfo('')
     setFallbackMessage('')
     
     const result = await loadMetricsWithPeriod(period)
+    
+    console.log('📊 [WIDGET] Resultado do carregamento:', result)
     
     if (result.success) {
       setLastFetchInfo(`Dados carregados: ${result.period_used || period}`)
@@ -72,14 +86,67 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     handleLoadMetrics('last_7_days')
   }
 
+  // FASE 1: Diagnóstico visual para debug
+  if (showDiagnostic) {
+    return (
+      <Card className="w-full border-orange-200">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Bug className="w-5 h-5 text-orange-600" />
+              Diagnóstico Meta Ads
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDiagnostic(false)}
+            >
+              Fechar
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3 text-sm">
+            <div><strong>Cliente ID:</strong> {diagnosticInfo.clienteId}</div>
+            <div><strong>Email Usuário:</strong> {diagnosticInfo.userEmail}</div>
+            <div><strong>Config Carregada:</strong> {diagnosticInfo.configLoaded ? '✅ Sim' : '❌ Não'}</div>
+            <div><strong>Configurado:</strong> {isConfigured ? '✅ Sim' : '❌ Não'}</div>
+            <div><strong>Loading:</strong> {loading ? '🔄 Sim' : '✅ Não'}</div>
+            <div><strong>Tem Insights:</strong> {diagnosticInfo.hasInsights ? '✅ Sim' : '❌ Não'}</div>
+            <div><strong>Último Erro:</strong> {lastError || 'Nenhum'}</div>
+            
+            <Button 
+              onClick={() => handleLoadMetrics('today')} 
+              disabled={loadingData}
+              className="w-full mt-4"
+            >
+              {loadingData ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
+              Testar Carregamento
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   // Se não está configurado, mostrar mensagem para contatar gestor
   if (!isConfigured && !loading) {
     return (
       <Card className="w-full">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            Meta Ads
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              Meta Ads
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDiagnostic(true)}
+              className="text-xs"
+            >
+              <Bug className="w-3 h-3" />
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -143,18 +210,28 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             <BarChart3 className="w-5 h-5 text-blue-600" />
             Meta Ads
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => handleLoadMetrics()}
-            disabled={loadingData}
-          >
-            {loadingData ? (
-              <RefreshCw className="w-4 h-4 animate-spin" />
-            ) : (
-              <RefreshCw className="w-4 h-4" />
-            )}
-          </Button>
+          <div className="flex gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setShowDiagnostic(true)}
+              className="text-xs opacity-50 hover:opacity-100"
+            >
+              <Bug className="w-3 h-3" />
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleLoadMetrics()}
+              disabled={loadingData}
+            >
+              {loadingData ? (
+                <RefreshCw className="w-4 h-4 animate-spin" />
+              ) : (
+                <RefreshCw className="w-4 h-4" />
+              )}
+            </Button>
+          </div>
         </CardTitle>
         {lastFetchInfo && (
           <p className="text-xs text-green-600">{lastFetchInfo}</p>

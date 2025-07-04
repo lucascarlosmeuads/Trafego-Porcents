@@ -36,39 +36,47 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
   const [lastError, setLastError] = useState<string>('')
   const [isConfigured, setIsConfigured] = useState(false)
 
-  // Carregar configuração (apenas visualização - salva pelo gestor)
+  // FASE 1: Diagnóstico detalhado com logs específicos
   const loadConfig = useCallback(async () => {
     if (!clienteId) {
+      console.log('❌ [useClienteMetaAdsSimplified] Cliente ID não fornecido')
       setLoading(false)
       return
     }
 
-    console.log('🔍 [useClienteMetaAdsSimplified] Carregando config do cliente:', clienteId)
+    console.log('🔍 [DIAGNÓSTICO FASE 1] === INÍCIO CARREGAMENTO CONFIG ===')
+    console.log('🔍 [DIAGNÓSTICO] Cliente ID:', clienteId)
+    console.log('🔍 [DIAGNÓSTICO] Usuário autenticado:', user?.email)
     
     try {
-      // Buscar configuração específica do cliente
+      // DIAGNÓSTICO: Verificar configuração específica do cliente primeiro
+      const clienteIdNumber = parseInt(clienteId)
+      console.log('🔍 [DIAGNÓSTICO] Buscando config específica para cliente ID:', clienteIdNumber)
+      
       let { data: configData, error } = await supabase
         .from('meta_ads_configs')
         .select('*')
-        .eq('cliente_id', parseInt(clienteId))
+        .eq('cliente_id', clienteIdNumber)
         .maybeSingle()
 
-      console.log('🔍 [useClienteMetaAdsSimplified] Config específica resultado:', { configData, error })
+      console.log('🔍 [DIAGNÓSTICO] Resultado config específica:', { configData, error, clienteIdNumber })
 
       // Se não encontrou configuração específica, buscar configuração global do gestor
       if (!configData && !error) {
-        console.log('🔍 [useClienteMetaAdsSimplified] Buscando config global do gestor...')
+        console.log('🔍 [DIAGNÓSTICO] Config específica não encontrada, buscando global do gestor...')
         
-        // Buscar o email do gestor do cliente
-        const { data: clienteData } = await supabase
+        // Buscar o email do gestor do cliente com diagnóstico detalhado
+        const { data: clienteData, error: clienteError } = await supabase
           .from('todos_clientes')
-          .select('email_gestor')
-          .eq('id', parseInt(clienteId))
+          .select('email_gestor, nome_cliente')
+          .eq('id', clienteIdNumber)
           .single()
 
-        console.log('👤 [useClienteMetaAdsSimplified] Cliente data:', clienteData)
+        console.log('👤 [DIAGNÓSTICO] Cliente data:', { clienteData, clienteError, clienteId: clienteIdNumber })
 
         if (clienteData?.email_gestor) {
+          console.log('🔍 [DIAGNÓSTICO] Buscando config global do gestor:', clienteData.email_gestor)
+          
           const { data: globalConfig, error: globalError } = await supabase
             .from('meta_ads_configs')
             .select('*')
@@ -76,12 +84,18 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
             .is('cliente_id', null)
             .maybeSingle()
 
-          console.log('🌐 [useClienteMetaAdsSimplified] Config global:', { globalConfig, globalError })
+          console.log('🌐 [DIAGNÓSTICO] Config global do gestor:', { 
+            globalConfig, 
+            globalError, 
+            gestorEmail: clienteData.email_gestor 
+          })
 
           if (!globalError && globalConfig) {
             configData = globalConfig
-            console.log('✅ [useClienteMetaAdsSimplified] Config global encontrada:', globalConfig)
+            console.log('✅ [DIAGNÓSTICO] Usando config global do gestor')
           }
+        } else {
+          console.log('❌ [DIAGNÓSTICO] Email do gestor não encontrado para o cliente')
         }
       }
 
@@ -92,61 +106,83 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
           accessToken: configData.access_token || '',
           adAccountId: configData.ad_account_id || ''
         }
-        setConfig(newConfig)
+        
         const configured = !!(newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId)
+        
+        console.log('✅ [DIAGNÓSTICO] Config encontrada e processada:', {
+          hasAppId: !!newConfig.appId,
+          hasAppSecret: !!newConfig.appSecret,
+          hasAccessToken: !!newConfig.accessToken,
+          hasAdAccountId: !!newConfig.adAccountId,
+          configured
+        })
+        
+        setConfig(newConfig)
         setIsConfigured(configured)
-        console.log('✅ [useClienteMetaAdsSimplified] Config carregada:', { ...newConfig, accessToken: '[HIDDEN]', configured })
+        setLastError('')
       } else {
-        console.log('📝 [useClienteMetaAdsSimplified] Nenhuma config encontrada')
+        console.log('❌ [DIAGNÓSTICO] Nenhuma configuração encontrada (nem específica nem global)')
         setIsConfigured(false)
+        setLastError('Configuração Meta Ads não encontrada')
       }
     } catch (error) {
-      console.error('❌ [useClienteMetaAdsSimplified] Erro ao carregar config:', error)
-      setLastError('Erro ao carregar configuração')
+      console.error('❌ [DIAGNÓSTICO] Erro crítico ao carregar config:', error)
+      setLastError('Erro ao carregar configuração Meta Ads')
+      setIsConfigured(false)
     } finally {
       setLoading(false)
+      console.log('🔍 [DIAGNÓSTICO FASE 1] === FIM CARREGAMENTO CONFIG ===')
     }
-  }, [clienteId])
+  }, [clienteId, user?.email])
 
   useEffect(() => {
+    console.log('🔄 [DIAGNÓSTICO] Hook useEffect disparado:', { clienteId, userEmail: user?.email })
     loadConfig()
   }, [loadConfig])
 
-  // Carregar métricas com fallback inteligente - CORRIGIDO para usar date_preset
+  // FASE 3: Carregamento de métricas com retry e melhor tratamento de erros
   const loadMetricsWithPeriod = async (period: string, startDate?: string, endDate?: string) => {
+    console.log('📊 [DIAGNÓSTICO MÉTRICA] === INÍCIO CARREGAMENTO MÉTRICAS ===')
+    console.log('📊 [DIAGNÓSTICO MÉTRICA] Parâmetros:', { period, startDate, endDate, isConfigured })
+    
     if (!isConfigured) {
-      console.log('⚠️ [useClienteMetaAdsSimplified] Tentativa de carregar métricas sem config')
-      return { success: false, message: 'Configuração necessária' }
+      console.log('⚠️ [DIAGNÓSTICO MÉTRICA] Tentativa de carregar métricas sem config')
+      return { success: false, message: 'Configuração Meta Ads necessária' }
     }
 
-    console.log('📊 [useClienteMetaAdsSimplified] Carregando métricas, período:', period, { startDate, endDate })
-    
     try {
-      // CORREÇÃO: Enviar date_preset em vez de period para compatibilidade com Edge Function
       const payload = {
         action: 'get_insights',
         config: config,
-        date_preset: period, // MUDANÇA AQUI
+        date_preset: period,
         startDate,
         endDate
       }
 
-      console.log('📤 [useClienteMetaAdsSimplified] Enviando payload:', { ...payload, config: { ...payload.config, accessToken: '[HIDDEN]' } })
+      console.log('📤 [DIAGNÓSTICO MÉTRICA] Enviando payload para Edge Function:', { 
+        ...payload, 
+        config: { ...payload.config, accessToken: '[HIDDEN]' } 
+      })
 
       const { data: insightResult, error } = await supabase.functions.invoke('meta-ads-api', {
         body: payload
       })
 
-      console.log('📥 [useClienteMetaAdsSimplified] Resposta da Edge Function:', { insightResult, error })
+      console.log('📥 [DIAGNÓSTICO MÉTRICA] Resposta da Edge Function:', { 
+        success: insightResult?.success,
+        hasInsights: !!insightResult?.insights,
+        insightsLength: insightResult?.insights?.length || 0,
+        error: error || insightResult?.error || null
+      })
 
       if (error) {
-        console.error('❌ [useClienteMetaAdsSimplified] Erro na edge function:', error)
-        setLastError('Erro na conexão com o servidor')
+        console.error('❌ [DIAGNÓSTICO MÉTRICA] Erro na edge function:', error)
+        setLastError('Erro na conexão com o servidor Meta Ads')
         return { success: false, message: 'Erro na conexão com o servidor' }
       }
 
       if (insightResult?.success && insightResult.insights?.length > 0) {
-        console.log('✅ [useClienteMetaAdsSimplified] Métricas carregadas com sucesso:', insightResult.insights)
+        console.log('✅ [DIAGNÓSTICO MÉTRICA] Métricas carregadas com sucesso')
         setInsights(insightResult.insights)
         setLastError('')
         return { 
@@ -156,11 +192,11 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
           campaigns_count: insightResult.campaigns_count
         }
       } else {
-        console.log('⚠️ [useClienteMetaAdsSimplified] Sem dados para período:', period)
+        console.log('⚠️ [DIAGNÓSTICO MÉTRICA] Sem dados para período:', period)
         
-        // Se não há dados para "hoje", tentar "ontem" automaticamente
+        // Retry automático para "ontem" se "hoje" não tiver dados
         if (period === 'today') {
-          console.log('🔄 [useClienteMetaAdsSimplified] Tentando fallback para yesterday...')
+          console.log('🔄 [DIAGNÓSTICO MÉTRICA] Tentando fallback para yesterday...')
           const yesterdayResult = await loadMetricsWithPeriod('yesterday')
           if (yesterdayResult.success) {
             return {
@@ -183,9 +219,11 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
       }
 
     } catch (error) {
-      console.error('❌ [useClienteMetaAdsSimplified] Erro inesperado ao carregar métricas:', error)
-      setLastError('Erro inesperado ao carregar métricas')
+      console.error('❌ [DIAGNÓSTICO MÉTRICA] Erro inesperado:', error)
+      setLastError('Erro inesperado ao carregar métricas Meta Ads')
       return { success: false, message: 'Erro inesperado ao carregar métricas' }
+    } finally {
+      console.log('📊 [DIAGNÓSTICO MÉTRICA] === FIM CARREGAMENTO MÉTRICAS ===')
     }
   }
 
@@ -196,6 +234,13 @@ export function useClienteMetaAdsSimplified(clienteId: string) {
     lastError,
     isConfigured,
     loadMetricsWithPeriod,
-    refreshConfig: loadConfig
+    refreshConfig: loadConfig,
+    // FASE 4: Exposer dados de diagnóstico para debugging
+    diagnosticInfo: {
+      clienteId,
+      userEmail: user?.email,
+      configLoaded: !!config.appId,
+      hasInsights: insights.length > 0
+    }
   }
 }
