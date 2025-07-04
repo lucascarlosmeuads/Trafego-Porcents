@@ -156,8 +156,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
         </SheetTrigger>
         <SheetContent 
           side="left" 
-          className="w-80 p-0 bg-gray-900 border-r border-gray-800"
-          hideClose={true}
+          className="w-80 p-0 bg-gray-900 border-r border-gray-800 [&>button]:hidden"
         >
           <div className="flex flex-col h-full">
             {/* Header com botão fechar customizado */}
