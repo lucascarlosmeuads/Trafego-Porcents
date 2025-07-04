@@ -14,6 +14,8 @@ export function MobileHeader({ activeTab, onTabChange, clienteInfo }: MobileHead
 
   const getTabTitle = (tab: string) => {
     switch (tab) {
+      case 'home':
+        return 'Dashboard'
       case 'briefing':
         return '1. Formulário'
       case 'arquivos':
@@ -34,7 +36,7 @@ export function MobileHeader({ activeTab, onTabChange, clienteInfo }: MobileHead
   }
 
   return (
-    <header className="bg-card border-b border-border px-4 py-3 mobile-safe">
+    <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 mobile-safe">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <MobileSidebar 
@@ -42,14 +44,17 @@ export function MobileHeader({ activeTab, onTabChange, clienteInfo }: MobileHead
             onTabChange={onTabChange}
             clienteInfo={clienteInfo}
           />
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-            <span className="text-primary-foreground font-bold text-sm">TP</span>
-          </div>
+          {/* Logo da Tráfego Por Cents */}
+          <img 
+            src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+            alt="Tráfego Por Cents" 
+            className="h-8 w-auto object-contain"
+          />
           <div>
-            <h1 className="text-lg font-semibold text-foreground mobile-header">
+            <h1 className="text-lg font-semibold text-white mobile-header">
               {getTabTitle(activeTab)}
             </h1>
-            <p className="text-xs text-muted-foreground truncate">
+            <p className="text-xs text-gray-400 truncate">
               {user?.email?.split('@')[0]}
             </p>
           </div>

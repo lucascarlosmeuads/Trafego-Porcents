@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
@@ -15,12 +16,13 @@ import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { LoadingFallback } from './LoadingFallback'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
 import { ClienteHomeDashboard } from './ClienteDashboard/ClienteHomeDashboard'
+import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState('home') // Mudança: começar com 'home'
+  const [activeTab, setActiveTab] = useState('home')
 
   if (loading) {
     return <LoadingFallback />
@@ -86,59 +88,75 @@ export function ClienteDashboard() {
     }
   }
 
-  if (isMobile) {
-    return (
-      <div className="flex flex-col h-screen bg-background mobile-container">
-        <MobileHeader 
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          clienteInfo={cliente}
-        />
-        
-        <main className="flex-1 overflow-y-auto pb-16 bg-background">
-          <div className="min-h-full">
-            {renderContent()}
-          </div>
-        </main>
+  const dashboardContent = () => {
+    if (isMobile) {
+      return (
+        <div className="flex flex-col h-screen bg-background mobile-container">
+          <MobileHeader 
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            clienteInfo={cliente}
+          />
+          
+          <main className="flex-1 overflow-y-auto pb-16 bg-background">
+            <div className="min-h-full">
+              {renderContent()}
+            </div>
+          </main>
 
-        <MobileBottomNav 
-          activeTab={activeTab} 
-          onTabChange={setActiveTab}
-        />
-      </div>
+          <MobileBottomNav 
+            activeTab={activeTab} 
+            onTabChange={setActiveTab}
+          />
+        </div>
+      )
+    }
+
+    return (
+      <SidebarProvider>
+        <div className="flex h-screen bg-background overflow-hidden w-full">
+          {/* Header com Logo e Trigger da Sidebar */}
+          <div className="fixed top-0 left-0 right-0 z-50 h-16 bg-gray-900 border-b border-gray-800 flex items-center px-4">
+            <SidebarTrigger className="text-white hover:bg-gray-800" />
+            <div className="flex items-center gap-4 ml-4">
+              {/* Logo da Tráfego Por Cents */}
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                  alt="Tráfego Por Cents" 
+                  className="h-10 w-auto object-contain"
+                />
+                <div>
+                  <h1 className="text-lg font-bold text-white">
+                    Tráfego Por Cents
+                  </h1>
+                  <p className="text-xs text-gray-400">
+                    Dashboard do Cliente
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <ClienteSidebarDynamic
+            activeTab={activeTab}
+            onTabChange={setActiveTab}
+            clienteInfo={cliente}
+          />
+          
+          <main className="flex-1 overflow-y-auto bg-background pt-16">
+            <div className="p-6 min-h-full">
+              {renderContent()}
+            </div>
+          </main>
+        </div>
+      </SidebarProvider>
     )
   }
 
   return (
-    <SidebarProvider>
-      <div className="flex h-screen bg-background overflow-hidden w-full">
-        {/* Header com trigger da sidebar */}
-        <div className="fixed top-0 left-0 right-0 z-50 h-12 bg-card border-b border-border flex items-center px-4">
-          <SidebarTrigger />
-          <div className="flex items-center gap-3 ml-4">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">TP</span>
-            </div>
-            <div>
-              <h1 className="text-lg font-semibold text-foreground">
-                Dashboard Cliente
-              </h1>
-            </div>
-          </div>
-        </div>
-
-        <ClienteSidebarDynamic
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          clienteInfo={cliente}
-        />
-        
-        <main className="flex-1 overflow-y-auto bg-background pt-12">
-          <div className="p-6 min-h-full">
-            {renderContent()}
-          </div>
-        </main>
-      </div>
-    </SidebarProvider>
+    <TermosProtection>
+      {dashboardContent()}
+    </TermosProtection>
   )
 }
