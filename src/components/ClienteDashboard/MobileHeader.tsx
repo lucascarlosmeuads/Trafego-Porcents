@@ -39,17 +39,20 @@ export function MobileHeader({ activeTab, onTabChange, clienteInfo }: MobileHead
     <header className="bg-gray-900 border-b border-gray-800 px-4 py-3 mobile-safe">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
+          {/* Botão de Menu - Agora posicionado no canto superior esquerdo */}
           <MobileSidebar 
             activeTab={activeTab}
             onTabChange={onTabChange}
             clienteInfo={clienteInfo}
           />
+          
           {/* Logo da Tráfego Por Cents */}
           <img 
             src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
             alt="Tráfego Por Cents" 
             className="h-8 w-auto object-contain"
           />
+          
           <div>
             <h1 className="text-lg font-semibold text-white mobile-header">
               {getTabTitle(activeTab)}
