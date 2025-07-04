@@ -14,7 +14,7 @@ export function ClienteProfileSection() {
           {/* Logo da Tráfego Por Cents - OCUPANDO TODO O ESPAÇO */}
           <div className="flex justify-center w-full">
             <img 
-              src="/lovable-uploads/fd16b733-7b5d-498a-b2bd-19347f5f0518.png" 
+              src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
               alt="Tráfego Por Cents" 
               className="h-56 w-auto object-contain max-w-full"
             />
