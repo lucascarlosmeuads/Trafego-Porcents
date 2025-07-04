@@ -6,6 +6,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useComissaoOperations } from '@/hooks/useComissaoOperations'
+import { useComissaoAvancada } from '@/hooks/useComissaoAvancada'
 import { Edit3, Check, X, Loader2 } from 'lucide-react'
 
 interface ComissaoSimplesProps {
@@ -25,12 +26,14 @@ export function ComissaoSimples({
   const [novoValor, setNovoValor] = useState((cliente.valor_comissao || 60).toString())
   const [clickTimeout, setClickTimeout] = useState(false)
   
-  const { atualizarComissao, loading, operationLock } = useComissaoOperations()
+  const { atualizarComissao, loading: loadingStatus, operationLock } = useComissaoOperations()
+  const { atualizarValorComissao, loading: loadingValor } = useComissaoAvancada()
   
   const clienteId = cliente.id?.toString() || ''
   const valorComissao = cliente.valor_comissao || 60
   const isPago = cliente.comissao === 'Pago'
   const canEdit = isAdmin
+  const loading = loadingStatus || loadingValor
 
   // Toggle entre Pago/Pendente
   const handleToggleStatus = async () => {
@@ -63,15 +66,28 @@ export function ComissaoSimples({
       return
     }
 
-    // Aqui você pode implementar a atualização do valor da comissão se necessário
-    // Por enquanto vamos apenas fechar a edição
-    setEditandoValor(false)
-    onComissionUpdate?.()
+    console.log('🔄 [ComissaoSimples] Salvando novo valor da comissão:', { clienteId, valor })
+    
+    // Usar o hook useComissaoAvancada para atualizar o valor
+    const sucesso = await atualizarValorComissao(clienteId, valor)
+    
+    if (sucesso) {
+      setEditandoValor(false)
+      onComissionUpdate?.()
+    }
   }
 
   const handleCancelarEdicao = () => {
     setNovoValor(valorComissao.toString())
     setEditandoValor(false)
+  }
+
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSalvarValor()
+    } else if (e.key === 'Escape') {
+      handleCancelarEdicao()
+    }
   }
 
   const isDisabled = loading || operationLock || !canEdit || clickTimeout
@@ -95,6 +111,7 @@ export function ComissaoSimples({
                 max="1000"
                 value={novoValor}
                 onChange={(e) => setNovoValor(e.target.value)}
+                onKeyDown={handleKeyPress}
                 className="h-6 w-20 text-xs"
                 autoFocus
                 disabled={loading}
@@ -199,6 +216,7 @@ export function ComissaoSimples({
             max="1000"
             value={novoValor}
             onChange={(e) => setNovoValor(e.target.value)}
+            onKeyDown={handleKeyPress}
             className="h-7 text-xs w-20"
             autoFocus
             disabled={loading}
