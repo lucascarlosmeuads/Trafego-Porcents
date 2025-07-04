@@ -2,6 +2,7 @@
 import { lazy, Suspense } from 'react'
 import { LoadingFallback } from './LoadingFallback'
 import { SacDashboard } from './SAC/SacDashboard'
+import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
 // Lazy components principais
 const AdminDashboard = lazy(() => import('./AdminDashboard').then(module => ({ default: module.AdminDashboard })))
@@ -32,7 +33,9 @@ export const LazyGestorDashboard = (props: any) => (
 
 export const LazyClienteDashboard = () => (
   <Suspense fallback={<LoadingFallback />}>
-    <ClienteDashboard />
+    <TermosProtection>
+      <ClienteDashboard />
+    </TermosProtection>
   </Suspense>
 )
 
