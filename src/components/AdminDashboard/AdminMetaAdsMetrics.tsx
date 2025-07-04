@@ -18,7 +18,8 @@ import {
   getDateRangeFromPresetBrazil, 
   getTodayBrazil, 
   getYesterdayBrazil,
-  logVendasQuery 
+  logVendasQuery,
+  logVendasAuditoria
 } from '@/utils/timezoneUtils'
 
 export function AdminMetaAdsMetrics() {
@@ -60,16 +61,19 @@ export function AdminMetaAdsMetrics() {
     }
   }, [isConfigured])
 
-  // Buscar vendas do período com timezone brasileiro
+  // Buscar vendas do período com timezone brasileiro E auditoria detalhada
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
     logVendasQuery(startDate, endDate, 'AdminMetaAdsMetrics')
     setLoadingVendas(true)
     
     try {
+      console.log('🔍 [AdminMetaAdsMetrics] === INICIANDO BUSCA DETALHADA ===')
+      console.log('📅 Período solicitado:', { startDate, endDate })
+      
       // Buscar vendas de vendas_cliente no período
       const { data: vendasCliente, error: errorVendasCliente } = await supabase
         .from('vendas_cliente')
-        .select('valor_venda')
+        .select('*')
         .gte('data_venda', startDate)
         .lte('data_venda', endDate)
 
@@ -80,7 +84,7 @@ export function AdminMetaAdsMetrics() {
       // Buscar vendas de todos_clientes no período (data_venda >= 01/07/2025)
       const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
-        .select('valor_venda_inicial')
+        .select('*')
         .gte('data_venda', startDate)
         .lte('data_venda', endDate)
         .gte('data_venda', '2025-07-01')
@@ -88,6 +92,15 @@ export function AdminMetaAdsMetrics() {
       if (errorTodosClientes) {
         console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
       }
+
+      // Auditoria detalhada com logs
+      const auditoria = logVendasAuditoria(
+        startDate, 
+        endDate, 
+        vendasCliente || [], 
+        vendasTodosClientes || [], 
+        'AdminMetaAdsMetrics'
+      )
 
       // Somar todas as vendas
       let totalVendas = 0
@@ -104,13 +117,22 @@ export function AdminMetaAdsMetrics() {
         console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
       }
 
-      console.log('💰 [AdminMetaAdsMetrics] Total de vendas do período:', {
-        startDate,
-        endDate,
-        totalVendas,
+      console.log('💰 [AdminMetaAdsMetrics] === RESUMO FINAL ===')
+      console.log('📊 Contagem de vendas:', {
         vendasClienteCount: vendasCliente?.length || 0,
-        vendasTodosClientesCount: vendasTodosClientes?.length || 0
+        todosClientesCount: vendasTodosClientes?.length || 0,
+        totalCount: auditoria.totalCount,
+        totalValue: totalVendas
       })
+      
+      // Verificar se há discrepância
+      const expectedCount = (vendasCliente?.length || 0) + (vendasTodosClientes?.length || 0)
+      if (auditoria.totalCount !== expectedCount) {
+        console.warn('⚠️ [AdminMetaAdsMetrics] DISCREPÂNCIA DE CONTAGEM!', {
+          esperado: expectedCount,
+          encontrado: auditoria.totalCount
+        })
+      }
       
       setVendasPeriodo(totalVendas)
 
