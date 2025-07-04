@@ -113,7 +113,7 @@ export function ManagerSidebar({
                 title="Expandir menu"
               >
                 <ChevronRight className="h-4 w-4" />
-              </Button>
+              </Button>-
             </div>
           </div>
         ) : (
@@ -172,8 +172,9 @@ export function ManagerSidebar({
         {isAdmin ? (
           <AdminMainMenu
             activeTab={activeTab}
-            onTabSelect={onTabChange}
-            isCollapsed={isCollapsed}
+            onTabChange={onTabChange}
+            selectedManager={selectedManager}
+            onManagerSelect={onManagerSelect}
           />
         ) : (
           <GestorMenu
