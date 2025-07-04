@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { TermosContratoModal } from './TermosContratoModal'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { useAuth } from '@/hooks/useAuth'
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
 import { 
   FileText, 
   Upload, 
@@ -20,7 +20,8 @@ import {
   AlertTriangle,
   LogOut,
   Loader2,
-  Menu
+  Menu,
+  X
 } from 'lucide-react'
 
 interface MobileSidebarProps {
@@ -134,6 +135,10 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
 
   const handleMenuItemClick = (tab: string) => {
     onTabChange(tab)
+    setOpen(false) // Fecha o menu automaticamente
+  }
+
+  const closeMenu = () => {
     setOpen(false)
   }
 
@@ -141,14 +146,45 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
     <>
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetTrigger asChild>
-          <Button variant="ghost" size="icon" className="md:hidden">
-            <Menu className="h-5 w-5" />
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="md:hidden hover:bg-gray-800 transition-colors duration-200"
+          >
+            <Menu className="h-5 w-5 text-white" />
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="w-80 p-0">
+        <SheetContent 
+          side="left" 
+          className="w-80 p-0 bg-gray-900 border-r border-gray-800"
+        >
+          <SheetHeader className="sr-only">
+            <SheetTitle>Menu de Navegação</SheetTitle>
+          </SheetHeader>
+          
           <div className="flex flex-col h-full">
+            {/* Header com botão fechar customizado */}
+            <div className="flex items-center justify-between p-4 border-b border-gray-800">
+              <div className="flex items-center gap-3">
+                <img 
+                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                  alt="Tráfego Por Cents" 
+                  className="h-8 w-auto object-contain"
+                />
+                <span className="text-white font-semibold">Menu</span>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={closeMenu}
+                className="text-gray-400 hover:text-white hover:bg-gray-800 transition-colors duration-200"
+              >
+                <X className="h-5 w-5" />
+              </Button>
+            </div>
+
             {/* Profile Section */}
-            <div className="p-4 border-b border-border">
+            <div className="p-4 border-b border-gray-800">
               <ClienteProfileSection />
             </div>
 
@@ -164,16 +200,16 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                       key={item.id}
                       variant="ghost"
                       className={cn(
-                        "w-full justify-start text-left h-auto py-3 px-3 text-contrast hover:bg-accent hover:text-accent-foreground",
-                        isActive && "bg-primary text-primary-foreground border-l-4 border-primary-foreground/20"
+                        "w-full justify-start text-left h-auto py-3 px-3 text-white hover:bg-gray-800 hover:text-white transition-all duration-200 rounded-lg",
+                        isActive && "bg-blue-600 text-white hover:bg-blue-700 shadow-lg transform scale-[1.02]"
                       )}
                       onClick={() => handleMenuItemClick(item.id)}
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
                           <Icon className={cn(
-                            "h-4 w-4 flex-shrink-0",
-                            isActive ? "text-primary-foreground" : "text-muted-foreground"
+                            "h-4 w-4 flex-shrink-0 transition-colors duration-200",
+                            isActive ? "text-white" : "text-gray-400"
                           )} />
                           <span className="text-sm font-medium">{item.label}</span>
                         </div>
@@ -188,21 +224,21 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                 })}
 
                 {/* Divisor */}
-                <div className="my-4 border-t border-border"></div>
+                <div className="my-4 border-t border-gray-800"></div>
 
                 {/* Termos de Uso */}
                 <Button
                   variant="ghost"
-                  className="w-full justify-start text-left h-auto py-3 px-3 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200 dark:border-red-800/30 hover:from-red-100 hover:to-red-150 dark:hover:from-red-900/30 dark:hover:to-red-800/30 transition-all duration-200"
+                  className="w-full justify-start text-left h-auto py-3 px-3 bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700/50 hover:from-red-800/40 hover:to-red-700/40 transition-all duration-200 rounded-lg"
                   onClick={handleTermosClick}
                 >
                   <div className="flex items-center justify-between w-full">
                     <div className="flex items-center gap-3">
                       <div className="relative">
-                        <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                        <FileText className="h-3 w-3 text-red-600 dark:text-red-400 absolute -bottom-1 -right-1" />
+                        <AlertTriangle className="h-4 w-4 text-red-400" />
+                        <FileText className="h-3 w-3 text-red-400 absolute -bottom-1 -right-1" />
                       </div>
-                      <span className="text-sm font-medium text-red-700 dark:text-red-300">
+                      <span className="text-sm font-medium text-red-300">
                         Termos de Uso
                       </span>
                     </div>
@@ -218,16 +254,16 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
             </div>
 
             {/* Status da Campanha */}
-            <div className="p-4 border-t border-border">
-              <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-3 border border-border mb-4">
-                <div className="text-xs font-medium text-foreground mb-1">
+            <div className="p-4 border-t border-gray-800 space-y-4">
+              <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-lg p-3 border border-gray-700">
+                <div className="text-xs font-medium text-gray-300 mb-1">
                   Status da Campanha:
                 </div>
-                <div className="text-sm font-semibold text-primary">
+                <div className="text-sm font-semibold text-blue-400">
                   {clienteInfo?.status_campanha || 'Em Configuração'}
                 </div>
                 {!clienteInfo?.status_campanha?.includes('Ativa') && (
-                  <div className="text-xs text-muted-foreground mt-1">
+                  <div className="text-xs text-gray-400 mt-1">
                     Complete os passos para ativar
                   </div>
                 )}
@@ -238,15 +274,15 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                 onClick={handleSignOut}
                 disabled={isLoggingOut}
                 variant="outline"
-                className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-destructive hover:text-destructive-foreground border-destructive/20 hover:border-destructive"
+                className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-red-600/20 hover:text-red-400 border-red-700/50 hover:border-red-600 transition-all duration-200 rounded-lg"
               >
                 <div className="flex items-center gap-3 w-full">
                   {isLoggingOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                    <Loader2 className="h-4 w-4 animate-spin text-red-400" />
                   ) : (
-                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                    <LogOut className="h-4 w-4 text-red-400" />
                   )}
-                  <span className="text-sm font-medium">
+                  <span className="text-sm font-medium text-red-400">
                     {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
                   </span>
                 </div>
