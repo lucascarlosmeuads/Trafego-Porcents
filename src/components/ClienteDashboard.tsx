@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
@@ -15,12 +14,13 @@ import { MetricasMetaAds } from './ClienteDashboard/MetricasMetaAds'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { LoadingFallback } from './LoadingFallback'
 import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar'
+import { ClienteHomeDashboard } from './ClienteDashboard/ClienteHomeDashboard'
 
 export function ClienteDashboard() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
-  const [activeTab, setActiveTab] = useState('briefing')
+  const [activeTab, setActiveTab] = useState('home') // Mudança: começar com 'home'
 
   if (loading) {
     return <LoadingFallback />
@@ -43,6 +43,12 @@ export function ClienteDashboard() {
 
   const renderContent = () => {
     switch (activeTab) {
+      case 'home':
+        return (
+          <ClienteHomeDashboard 
+            onTabChange={setActiveTab}
+          />
+        )
       case 'briefing':
         return (
           <BriefingForm 
@@ -73,8 +79,8 @@ export function ClienteDashboard() {
         return <TutorialVideos onBack={() => setActiveTab('briefing')} />
       default:
         return (
-          <BriefingForm 
-            onBriefingUpdated={refetch}
+          <ClienteHomeDashboard 
+            onTabChange={setActiveTab}
           />
         )
     }

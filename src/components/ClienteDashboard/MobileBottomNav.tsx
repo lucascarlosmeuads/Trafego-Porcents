@@ -18,11 +18,11 @@ interface MobileBottomNavProps {
 
 export function MobileBottomNav({ activeTab, onTabChange }: MobileBottomNavProps) {
   const navItems = [
-    { id: 'briefing', icon: FileText, label: 'Form' },
-    { id: 'arquivos', icon: Upload, label: 'Upload' },
-    { id: 'suporte', icon: Headphones, label: 'Suporte' },
-    { id: 'comissao', icon: DollarSign, label: 'Comissão' },
-    { id: 'steps', icon: CheckSquare, label: 'Passos' }
+    { id: 'home', label: 'Início', icon: Home },
+    { id: 'briefing', label: 'Briefing', icon: FileText },
+    { id: 'arquivos', label: 'Materiais', icon: Upload },
+    { id: 'suporte', label: 'Suporte', icon: MessageCircle },
+    { id: 'vendas', label: 'Vendas', icon: TrendingUp }
   ]
 
   return (

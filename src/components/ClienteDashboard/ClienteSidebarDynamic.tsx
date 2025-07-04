@@ -1,35 +1,5 @@
-
-import React, { useState } from 'react'
-import { cn } from '@/lib/utils'
-import { ClienteProfileSection } from './ClienteProfileSection'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { TermosContratoModal } from './TermosContratoModal'
-import { useTermosAceitos } from '@/hooks/useTermosAceitos'
-import { useAuth } from '@/hooks/useAuth'
-import { 
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarMenu,
-  SidebarMenuItem,
-  SidebarMenuButton,
-  useSidebar
-} from '@/components/ui/sidebar'
-import { 
-  FileText, 
-  Upload, 
-  Headphones, 
-  DollarSign,
-  Globe,
-  BarChart3,
-  CheckSquare,
-  CheckCircle,
-  AlertTriangle,
-  LogOut,
-  Loader2
-} from 'lucide-react'
+import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard } from 'lucide-react'
+import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarItem, SidebarTrigger } from '@/components/ui/sidebar'
 
 interface ClienteSidebarDynamicProps {
   activeTab: string
@@ -38,228 +8,90 @@ interface ClienteSidebarDynamicProps {
 }
 
 export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: ClienteSidebarDynamicProps) {
-  const { termosAceitos, clienteAntigo, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
-  const { signOut } = useAuth()
-  const { state } = useSidebar()
-  const [termosModalOpen, setTermosModalOpen] = useState(false)
-  const [isLoggingOut, setIsLoggingOut] = useState(false)
-
   const menuItems = [
     {
+      id: 'home',
+      label: 'Início',
+      icon: Home,
+      description: 'Dashboard principal e progresso'
+    },
+    {
       id: 'briefing',
-      label: '1. Formulário',
+      label: 'Briefing',
       icon: FileText,
-      badge: null,
-      step: 1
+      description: 'Informações do projeto'
     },
     {
       id: 'arquivos',
-      label: '2. Materiais',
+      label: 'Materiais',
       icon: Upload,
-      badge: null,
-      step: 2
+      description: 'Upload de arquivos'
     },
     {
       id: 'suporte',
-      label: '3. Suporte',
-      icon: Headphones,
-      badge: null,
-      step: 3
-    },
-    {
-      id: 'comissao',
-      label: '4. Comissão',
-      icon: DollarSign,
-      badge: clienteInfo?.comissao_confirmada ? 'confirmed' : null,
-      step: 4
-    },
-    {
-      id: 'site',
-      label: '5. Site (Opcional)',
-      icon: Globe,
-      badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional',
-      step: 5
+      label: 'Suporte',
+      icon: MessageCircle,
+      description: 'Tire suas dúvidas'
     },
     {
       id: 'vendas',
-      label: '6. Métricas',
-      icon: BarChart3,
-      badge: null,
-      step: 6
+      label: 'Vendas',
+      icon: TrendingUp,
+      description: 'Métricas da campanha'
+    },
+    {
+      id: 'comissao',
+      label: 'Comissão',
+      icon: DollarSign,
+      description: 'Detalhes da comissão'
+    },
+    {
+      id: 'site',
+      label: 'Site',
+      icon: LayoutDashboard,
+      description: 'Informações do site'
     },
     {
       id: 'steps',
-      label: 'Guia Completo',
-      icon: CheckSquare,
-      badge: null
+      label: 'Tutoriais',
+      icon: Users,
+      description: 'Vídeos e guias'
     }
   ]
 
-  const getBadgeContent = (badge: string | null) => {
-    switch (badge) {
-      case 'confirmed':
-        return <CheckCircle className="w-3 h-3 text-green-400" />
-      case 'described':
-        return <CheckCircle className="w-3 h-3 text-purple-400" />
-      case 'optional':
-        return <span className="text-xs text-purple-400">Opc</span>
-      default:
-        return null
-    }
-  }
-
-  const handleTermosClick = () => {
-    setTermosModalOpen(true)
-  }
-
-  const handleTermosAceitos = async () => {
-    try {
-      await marcarTermosAceitos()
-      setTermosModalOpen(false)
-    } catch (error) {
-      console.error('Erro ao aceitar termos:', error)
-    }
-  }
-
-  const handleTermosRejeitados = async () => {
-    try {
-      await marcarTermosRejeitados()
-      setTermosModalOpen(false)
-    } catch (error) {
-      console.error('Erro ao rejeitar termos:', error)
-    }
-  }
-
-  const handleSignOut = async () => {
-    setIsLoggingOut(true)
-    try {
-      await signOut()
-    } catch (error) {
-      console.error('Erro no logout:', error)
-      setIsLoggingOut(false)
-    }
-  }
-
-  const isCollapsed = state === 'collapsed'
-
   return (
-    <Sidebar collapsible="icon" className="border-r">
+    <Sidebar className="bg-gray-950 border-r border-gray-800">
+      <SidebarHeader>
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 bg-primary rounded-md flex items-center justify-center">
+            <span className="text-primary-foreground font-bold text-sm">TP</span>
+          </div>
+          <h4 className="font-semibold text-sm text-white">
+            {clienteInfo?.nome_cliente || 'Cliente'}
+          </h4>
+        </div>
+      </SidebarHeader>
       <SidebarContent>
-        {/* Profile Section */}
-        {!isCollapsed && (
-          <div className="p-4 border-b border-border">
-            <ClienteProfileSection />
-          </div>
-        )}
-
-        {/* Main Navigation */}
-        <SidebarGroup>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => {
-                const Icon = item.icon
-                const isActive = activeTab === item.id
-                
-                return (
-                  <SidebarMenuItem key={item.id}>
-                    <SidebarMenuButton
-                      onClick={() => onTabChange(item.id)}
-                      isActive={isActive}
-                      className="h-12"
-                    >
-                      <Icon className="h-4 w-4" />
-                      {!isCollapsed && (
-                        <div className="flex items-center justify-between w-full">
-                          <span className="text-sm font-medium">{item.label}</span>
-                          {item.badge && (
-                            <div className="flex-shrink-0">
-                              {getBadgeContent(item.badge)}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )
-              })}
-
-              {/* Termos de Uso */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleTermosClick}
-                  className="h-12 bg-gradient-to-r from-red-50 to-red-100 dark:from-red-950/20 dark:to-red-900/20 border border-red-200 dark:border-red-800/30 hover:from-red-100 hover:to-red-150 dark:hover:from-red-900/30 dark:hover:to-red-800/30"
-                >
-                  <div className="relative">
-                    <AlertTriangle className="h-4 w-4 text-red-600 dark:text-red-400" />
-                    <FileText className="h-3 w-3 text-red-600 dark:text-red-400 absolute -bottom-1 -right-1" />
-                  </div>
-                  {!isCollapsed && (
-                    <div className="flex items-center justify-between w-full">
-                      <span className="text-sm font-medium text-red-700 dark:text-red-300">
-                        Termos de Uso
-                      </span>
-                      <Badge 
-                        variant="destructive" 
-                        className="text-xs px-2 py-0 bg-red-600 text-white shadow-lg animate-pulse"
-                      >
-                        IMPORTANTE
-                      </Badge>
-                    </div>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-
-              {/* Sair do Sistema */}
-              <SidebarMenuItem>
-                <SidebarMenuButton
-                  onClick={handleSignOut}
-                  disabled={isLoggingOut}
-                  className="h-12 hover:bg-destructive hover:text-destructive-foreground border-destructive/20 hover:border-destructive"
-                >
-                  {isLoggingOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <LogOut className="h-4 w-4" />
-                  )}
-                  {!isCollapsed && (
-                    <span className="text-sm font-medium">
-                      {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
-                    </span>
-                  )}
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        {/* Status da Campanha */}
-        {!isCollapsed && (
-          <div className="mt-auto p-4 border-t border-border">
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-3 border border-border">
-              <div className="text-xs font-medium text-foreground mb-1">
-                Status da Campanha:
-              </div>
-              <div className="text-sm font-semibold text-primary">
-                {clienteInfo?.status_campanha || 'Em Configuração'}
-              </div>
-              {!clienteInfo?.status_campanha?.includes('Ativa') && (
-                <div className="text-xs text-muted-foreground mt-1">
-                  Complete os passos para ativar
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        {menuItems.map((item) => (
+          <SidebarItem
+            key={item.id}
+            label={item.label}
+            icon={item.icon}
+            description={item.description}
+            active={activeTab === item.id}
+            onClick={() => onTabChange(item.id)}
+          />
+        ))}
       </SidebarContent>
-
-      {/* Modal de Termos */}
-      <TermosContratoModal
-        open={termosModalOpen}
-        onOpenChange={setTermosModalOpen}
-        onTermosAceitos={handleTermosAceitos}
-        onTermosRejeitados={handleTermosRejeitados}
-        showOnlyAccept={termosAceitos || clienteAntigo}
-      />
+      <SidebarFooter>
+        <a href="https://wa.me/5511940747924" target="_blank" rel="noopener noreferrer">
+          <SidebarItem
+            label="Precisa de ajuda?"
+            icon={MessageCircle}
+            description="Fale conosco no WhatsApp"
+          />
+        </a>
+      </SidebarFooter>
     </Sidebar>
   )
 }
