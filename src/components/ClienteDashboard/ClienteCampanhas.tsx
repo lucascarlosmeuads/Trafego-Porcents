@@ -1,14 +1,26 @@
+
+import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Skeleton } from '@/components/ui/skeleton'
-import { ArrowLeft, BarChart, Eye, Activity, DollarSign, Calendar, Target, TrendingUp, RefreshCw } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useClienteMetaAds } from '@/hooks/useClienteMetaAds'
-import { useClienteData } from '@/hooks/useClienteData'
 import { useAuth } from '@/hooks/useAuth'
+import { useClienteData } from '@/hooks/useClienteData'
 import { formatCurrency } from '@/lib/utils'
-import { useState, useEffect } from 'react'
-import { DateRangeFilter } from '@/components/DateRangeFilter'
+import { 
+  ArrowLeft, 
+  BarChart3, 
+  Settings, 
+  Eye, 
+  MousePointer, 
+  DollarSign,
+  TrendingUp,
+  RefreshCw,
+  AlertCircle,
+  Calendar
+} from 'lucide-react'
 
 interface ClienteCampanhasProps {
   onBack: () => void
@@ -17,388 +29,363 @@ interface ClienteCampanhasProps {
 export function ClienteCampanhas({ onBack }: ClienteCampanhasProps) {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
-  const [refreshing, setRefreshing] = useState(false)
-
-  const { 
-    insights, 
-    campaigns, 
+  const {
+    config,
+    setConfig,
+    loading,
+    saving,
+    saveConfig,
+    testConnection,
+    fetchInsights,
     fetchDataWithDateRange,
-    loading: metaAdsLoading,
+    insights,
     isConfigured,
     lastError,
     connectionSteps,
-    dateRange
+    dateRange,
+    autoLoadingData
   } = useClienteMetaAds(cliente?.id?.toString() || '')
 
-  // Carregar dados iniciais
-  useEffect(() => {
-    const loadInitialData = async () => {
-      if (cliente?.id && isConfigured) {
-        // Carregar dados dos últimos 7 dias por padrão
-        const endDate = new Date().toISOString().split('T')[0]
-        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        
-        try {
-          await fetchDataWithDateRange(startDate, endDate)
-        } catch (error) {
-          console.error('Erro ao carregar dados iniciais:', error)
-        }
+  const [localConfig, setLocalConfig] = useState(config)
+  const [configStep, setConfigStep] = useState<'config' | 'results'>('config')
+  const [selectedPeriod, setSelectedPeriod] = useState('last_7_days')
+  const [loadingData, setLoadingData] = useState(false)
+
+  const handleSaveAndTest = async () => {
+    const result = await saveConfig(localConfig)
+    if (result.success) {
+      const testResult = await testConnection()
+      if (testResult.success) {
+        setConfigStep('results')
+        // Auto carregar dados
+        handleLoadData()
       }
     }
-
-    loadInitialData()
-  }, [cliente?.id, isConfigured])
-
-  const handleDateRangeChange = async (startDate: string, endDate: string) => {
-    await fetchDataWithDateRange(startDate, endDate)
   }
 
-  const handleRefresh = async () => {
-    if (!isConfigured) return
+  const handleLoadData = async () => {
+    setLoadingData(true)
     
-    setRefreshing(true)
-    try {
-      if (dateRange.startDate && dateRange.endDate) {
-        await fetchDataWithDateRange(dateRange.startDate, dateRange.endDate)
-      } else {
-        // Usar últimos 7 dias como padrão
-        const endDate = new Date().toISOString().split('T')[0]
-        const startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-        await fetchDataWithDateRange(startDate, endDate)
-      }
-    } catch (error) {
-      console.error('Erro ao atualizar dados:', error)
-    } finally {
-      setRefreshing(false)
+    let startDate = ''
+    let endDate = ''
+    
+    const today = new Date()
+    
+    switch (selectedPeriod) {
+      case 'today':
+        startDate = endDate = today.toISOString().split('T')[0]
+        break
+      case 'yesterday':
+        const yesterday = new Date(today)
+        yesterday.setDate(yesterday.getDate() - 1)
+        startDate = endDate = yesterday.toISOString().split('T')[0]
+        break
+      case 'last_7_days':
+        const week = new Date(today)
+        week.setDate(week.getDate() - 7)
+        startDate = week.toISOString().split('T')[0]
+        endDate = today.toISOString().split('T')[0]
+        break
+      case 'last_30_days':
+        const month = new Date(today)
+        month.setDate(month.getDate() - 30)
+        startDate = month.toISOString().split('T')[0]
+        endDate = today.toISOString().split('T')[0]
+        break
     }
+    
+    await fetchDataWithDateRange(startDate, endDate)
+    setLoadingData(false)
   }
 
   // Calcular métricas agregadas
-  const metaAdsMetrics = insights.reduce((acc, insight) => ({
+  const totalMetrics = insights.reduce((acc, insight) => ({
     impressions: acc.impressions + parseInt(insight.impressions || '0'),
     clicks: acc.clicks + parseInt(insight.clicks || '0'),
     spend: acc.spend + parseFloat(insight.spend || '0'),
-    cpm: acc.cpm + parseFloat(insight.cpm || '0'),
-    cpc: acc.cpc + parseFloat(insight.cpc || '0'),
-    ctr: acc.ctr + parseFloat(insight.ctr || '0')
+    ctr: acc.ctr + parseFloat(insight.ctr || '0'),
+    cpc: acc.cpc + parseFloat(insight.cpc || '0')
   }), {
     impressions: 0,
     clicks: 0,
     spend: 0,
-    cpm: 0,
-    cpc: 0,
-    ctr: 0
+    ctr: 0,
+    cpc: 0
   })
 
-  const avgCPM = insights.length > 0 ? metaAdsMetrics.cpm / insights.length : 0
-  const avgCPC = insights.length > 0 ? metaAdsMetrics.cpc / insights.length : 0
-  const avgCTR = insights.length > 0 ? metaAdsMetrics.ctr / insights.length : 0
+  const avgCTR = insights.length > 0 ? totalMetrics.ctr / insights.length : 0
+  const avgCPC = insights.length > 0 ? totalMetrics.cpc / insights.length : 0
 
-  if (!isConfigured) {
-    return (
-      <div className="p-6 bg-gray-950 min-h-screen">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={onBack} className="text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <h1 className="text-2xl font-bold text-white">Campanhas Meta Ads</h1>
-        </div>
-
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center mb-4">
-              <BarChart className="w-8 h-8 text-gray-400" />
-            </div>
-            <h3 className="font-medium text-gray-600 mb-2">Meta Ads não configurado</h3>
-            <p className="text-sm text-gray-500 max-w-md mx-auto">
-              Entre em contato com seu gestor para configurar a integração do Meta Ads 
-              e começar a acompanhar suas campanhas em tempo real.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-    )
+  const getPeriodLabel = () => {
+    switch (selectedPeriod) {
+      case 'today': return 'Hoje'
+      case 'yesterday': return 'Ontem'
+      case 'last_7_days': return 'Últimos 7 dias'
+      case 'last_30_days': return 'Últimos 30 dias'
+      default: return 'Período selecionado'
+    }
   }
 
-  if (lastError) {
+  if (loading) {
     return (
       <div className="p-6 bg-gray-950 min-h-screen">
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" onClick={onBack} className="text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <h1 className="text-2xl font-bold text-white">Campanhas Meta Ads</h1>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-2 text-blue-600" />
+            <p className="text-gray-400">Carregando configuração...</p>
+          </div>
         </div>
-
-        <Card>
-          <CardContent className="p-12 text-center">
-            <div className="w-16 h-16 mx-auto bg-red-100 rounded-lg flex items-center justify-center mb-4">
-              <BarChart className="w-8 h-8 text-red-400" />
-            </div>
-            <h3 className="font-medium text-red-600 mb-2">Erro ao carregar campanhas</h3>
-            <p className="text-sm text-red-500 max-w-md mx-auto mb-4">
-              {lastError}
-            </p>
-            <Button onClick={handleRefresh} disabled={refreshing}>
-              <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-              Tentar novamente
-            </Button>
-          </CardContent>
-        </Card>
       </div>
     )
   }
 
   return (
     <div className="p-6 bg-gray-950 min-h-screen">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={onBack} className="text-white">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Voltar
-          </Button>
-          <h1 className="text-2xl font-bold text-white">Campanhas Meta Ads</h1>
-          <Badge variant="outline" className="text-green-400 border-green-400">
-            Conectado
-          </Badge>
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onBack}
+              className="text-gray-400 hover:text-white"
+            >
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold text-white">Meta Ads</h1>
+              <p className="text-gray-400">Métricas e configurações da sua campanha</p>
+            </div>
+          </div>
         </div>
-        <Button 
-          onClick={handleRefresh} 
-          disabled={refreshing || metaAdsLoading}
-          variant="outline"
-          className="text-white border-white"
-        >
-          <RefreshCw className={`w-4 h-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
-          Atualizar
-        </Button>
-      </div>
 
-      {/* Filtros de Data */}
-      <div className="mb-6">
-        <DateRangeFilter
-          onDateRangeChange={handleDateRangeChange}
-          onRefresh={handleRefresh}
-          loading={metaAdsLoading || refreshing}
-        />
-      </div>
+        {!isConfigured || configStep === 'config' ? (
+          /* Configuração */
+          <Card className="bg-gray-900 border-gray-800">
+            <CardHeader>
+              <CardTitle className="text-white flex items-center gap-2">
+                <Settings className="w-5 h-5" />
+                Configuração Meta Ads
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">App ID</label>
+                  <input
+                    type="text"
+                    placeholder="ID do aplicativo Meta"
+                    value={localConfig.appId}
+                    onChange={(e) => setLocalConfig(prev => ({ ...prev, appId: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+                  />
+                </div>
 
-      {/* Período atual */}
-      {dateRange.startDate && dateRange.endDate && (
-        <div className="mb-6">
-          <Card className="bg-blue-900/20 border-blue-700">
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 text-blue-300">
-                <Calendar className="h-4 w-4" />
-                <span className="text-sm font-medium">
-                  Período: {new Date(dateRange.startDate).toLocaleDateString('pt-BR')} - {new Date(dateRange.endDate).toLocaleDateString('pt-BR')}
-                </span>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">App Secret</label>
+                  <input
+                    type="password"
+                    placeholder="Chave secreta do aplicativo"
+                    value={localConfig.appSecret}
+                    onChange={(e) => setLocalConfig(prev => ({ ...prev, appSecret: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Access Token</label>
+                  <input
+                    type="password"
+                    placeholder="Token de acesso de usuário"
+                    value={localConfig.accessToken}
+                    onChange={(e) => setLocalConfig(prev => ({ ...prev, accessToken: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-300">Ad Account ID</label>
+                  <input
+                    type="text"
+                    placeholder="ID da conta de anúncios (act_xxxxx)"
+                    value={localConfig.adAccountId}
+                    onChange={(e) => setLocalConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
+                    className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-md text-white"
+                  />
+                </div>
               </div>
+
+              {lastError && (
+                <Alert className="border-red-600 bg-red-900/20">
+                  <AlertCircle className="h-4 w-4 text-red-400" />
+                  <AlertDescription className="text-red-300">
+                    {lastError}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <Button 
+                onClick={handleSaveAndTest}
+                disabled={saving || !localConfig.appId || !localConfig.appSecret || !localConfig.accessToken || !localConfig.adAccountId}
+                className="w-full"
+              >
+                {saving ? (
+                  <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                ) : (
+                  <Settings className="w-4 h-4 mr-2" />
+                )}
+                {saving ? 'Salvando e Testando...' : 'Salvar e Testar Configuração'}
+              </Button>
             </CardContent>
           </Card>
-        </div>
-      )}
-
-      {/* Métricas principais */}
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Impressões</CardTitle>
-            <Eye className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {metaAdsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-blue-400">
-                  {metaAdsMetrics.impressions.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  CPM: {formatCurrency(avgCPM)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Cliques</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {metaAdsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-green-400">
-                  {metaAdsMetrics.clicks.toLocaleString()}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  CTR: {avgCTR.toFixed(2)}%
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Investimento</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {metaAdsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-purple-400">
-                  {formatCurrency(metaAdsMetrics.spend)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  CPC: {formatCurrency(avgCPC)}
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Campanhas</CardTitle>
-            <BarChart className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {metaAdsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold text-orange-400">
-                  {campaigns.filter(c => c.status === 'ACTIVE').length}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {campaigns.length} campanhas totais
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Lista de campanhas */}
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Target className="w-5 h-5" />
-            Suas Campanhas
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {metaAdsLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-48" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              ))}
-            </div>
-          ) : campaigns.length === 0 ? (
-            <div className="text-center py-8 space-y-2">
-              <div className="w-16 h-16 mx-auto bg-gray-100 rounded-lg flex items-center justify-center">
-                <Target className="w-8 h-8 text-gray-400" />
-              </div>
-              <h3 className="font-medium text-gray-600">Nenhuma campanha encontrada</h3>
-              <p className="text-sm text-gray-500">
-                Suas campanhas aparecerão aqui assim que forem criadas.
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              {campaigns.map((campaign) => (
-                <div key={campaign.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+        ) : (
+          /* Métricas */
+          <div className="space-y-6">
+            {/* Seletor de Período */}
+            <Card className="bg-gray-900 border-gray-800">
+              <CardHeader>
+                <CardTitle className="text-white flex items-center gap-2">
+                  <Calendar className="w-5 h-5" />
+                  Período das Métricas
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex gap-4 items-end">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
-                      <h3 className="font-medium">{campaign.name}</h3>
-                      <Badge variant={campaign.status === 'ACTIVE' ? 'default' : 'secondary'}>
-                        {campaign.status}
-                      </Badge>
-                    </div>
-                    <div className="text-sm text-gray-600 space-y-1">
-                      <div className="flex items-center gap-4">
-                        <span>Objetivo: {campaign.objective}</span>
-                        <span>•</span>
-                        <span className="flex items-center gap-1">
-                          <Calendar className="w-3 h-3" />
-                          Criado em {new Date(campaign.created_time).toLocaleDateString('pt-BR')}
-                        </span>
-                      </div>
-                    </div>
+                    <Select value={selectedPeriod} onValueChange={setSelectedPeriod}>
+                      <SelectTrigger className="bg-gray-800 border-gray-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className="bg-gray-800 border-gray-700">
+                        <SelectItem value="today">Hoje</SelectItem>
+                        <SelectItem value="yesterday">Ontem</SelectItem>
+                        <SelectItem value="last_7_days">Últimos 7 dias</SelectItem>
+                        <SelectItem value="last_30_days">Últimos 30 dias</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                  <div className="text-right">
-                    <div className="text-sm text-gray-500">ID: {campaign.id}</div>
-                  </div>
+
+                  <Button 
+                    onClick={handleLoadData}
+                    disabled={loadingData || autoLoadingData}
+                  >
+                    {(loadingData || autoLoadingData) ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <RefreshCw className="w-4 h-4 mr-2" />
+                    )}
+                    Atualizar
+                  </Button>
                 </div>
-              ))}
+              </CardContent>
+            </Card>
+
+            {/* Cards de Métricas */}
+            {insights.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <Card className="bg-blue-900/20 border-blue-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2 text-blue-300">
+                      <Eye className="w-4 h-4" />
+                      Impressões
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-blue-200">
+                      {totalMetrics.impressions.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-blue-400">
+                      {getPeriodLabel()}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-green-900/20 border-green-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2 text-green-300">
+                      <MousePointer className="w-4 h-4" />
+                      Cliques
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-green-200">
+                      {totalMetrics.clicks.toLocaleString()}
+                    </div>
+                    <div className="text-xs text-green-400">
+                      CTR: {avgCTR.toFixed(2)}%
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-purple-900/20 border-purple-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2 text-purple-300">
+                      <DollarSign className="w-4 h-4" />
+                      Investido
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-purple-200">
+                      {formatCurrency(totalMetrics.spend)}
+                    </div>
+                    <div className="text-xs text-purple-400">
+                      CPC: {formatCurrency(avgCPC)}
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="bg-orange-900/20 border-orange-800">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-sm font-medium flex items-center gap-2 text-orange-300">
+                      <TrendingUp className="w-4 h-4" />
+                      Performance
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold text-orange-200">
+                      {avgCTR.toFixed(2)}%
+                    </div>
+                    <div className="text-xs text-orange-400">
+                      CTR médio
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            ) : (
+              <Card className="bg-gray-900 border-gray-800">
+                <CardContent className="text-center py-12">
+                  <BarChart3 className="w-16 h-16 mx-auto text-gray-600 mb-4" />
+                  <h3 className="font-medium text-white mb-2">Nenhum Dado Disponível</h3>
+                  <p className="text-sm text-gray-400 mb-6">
+                    Selecione um período e clique em "Atualizar" para carregar as métricas
+                  </p>
+                  <Button onClick={handleLoadData} disabled={loadingData}>
+                    {loadingData ? (
+                      <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                    ) : (
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                    )}
+                    Carregar Métricas
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Botão para voltar à configuração */}
+            <div className="flex justify-center">
+              <Button 
+                variant="outline"
+                onClick={() => setConfigStep('config')}
+                className="border-gray-700 text-gray-300 hover:bg-gray-800"
+              >
+                <Settings className="w-4 h-4 mr-2" />
+                Editar Configuração
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Performance insights */}
-      {insights.length > 0 && (
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Performance Detalhada
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <div className="text-center p-6 bg-blue-50 rounded-lg">
-                <Eye className="w-8 h-8 text-blue-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-600 mb-1">
-                  {metaAdsMetrics.impressions.toLocaleString()}
-                </div>
-                <div className="text-sm text-blue-600 mb-2">Impressões Totais</div>
-                <div className="text-xs text-gray-600">
-                  CPM Médio: {formatCurrency(avgCPM)}
-                </div>
-              </div>
-
-              <div className="text-center p-6 bg-green-50 rounded-lg">
-                <Activity className="w-8 h-8 text-green-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-600 mb-1">
-                  {metaAdsMetrics.clicks.toLocaleString()}
-                </div>
-                <div className="text-sm text-green-600 mb-2">Cliques Totais</div>
-                <div className="text-xs text-gray-600">
-                  CTR Médio: {avgCTR.toFixed(2)}%
-                </div>
-              </div>
-
-              <div className="text-center p-6 bg-purple-50 rounded-lg">
-                <DollarSign className="w-8 h-8 text-purple-500 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-600 mb-1">
-                  {formatCurrency(metaAdsMetrics.spend)}
-                </div>
-                <div className="text-sm text-purple-600 mb-2">Investimento Total</div>
-                <div className="text-xs text-gray-600">
-                  CPC Médio: {formatCurrency(avgCPC)}
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

@@ -10,14 +10,6 @@ interface ClienteMetaAdsConfig {
   adAccountId: string
 }
 
-interface CampaignData {
-  id: string
-  name: string
-  status: string
-  objective: string
-  created_time: string
-}
-
 interface InsightData {
   impressions: string
   clicks: string
@@ -39,7 +31,6 @@ export function useClienteMetaAds(clienteId: string) {
   })
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
-  const [campaigns, setCampaigns] = useState<CampaignData[]>([])
   const [insights, setInsights] = useState<InsightData[]>([])
   const [lastError, setLastError] = useState<string>('')
   const [lastErrorType, setLastErrorType] = useState<string>('')
@@ -154,11 +145,8 @@ export function useClienteMetaAds(clienteId: string) {
       
       setDateRange({ startDate, endDate })
       
-      // Carregar campanhas e insights em paralelo
-      await Promise.all([
-        loadCampaigns(startDate, endDate, currentConfig),
-        loadInsights(startDate, endDate, currentConfig)
-      ])
+      // Carregar apenas insights (campanhas removidas)
+      await loadInsights(startDate, endDate, currentConfig)
       
       setLastDataUpdate(new Date())
       console.log('✅ [useClienteMetaAds] Dados carregados automaticamente')
@@ -252,39 +240,6 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const loadCampaigns = async (startDate?: string, endDate?: string, configToUse?: ClienteMetaAdsConfig) => {
-    const currentConfig = configToUse || config
-    console.log('📊 [useClienteMetaAds] Buscando campanhas do cliente:', clienteId)
-    
-    try {
-      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
-        body: {
-          action: 'get_campaigns',
-          config: currentConfig,
-          startDate,
-          endDate
-        }
-      })
-
-      if (error) {
-        console.error('❌ [useClienteMetaAds] Erro ao buscar campanhas:', error)
-        throw new Error('Erro ao buscar campanhas')
-      }
-
-      if (data.success) {
-        setCampaigns(data.campaigns)
-        console.log('✅ [useClienteMetaAds] Campanhas carregadas:', data.campaigns.length)
-      } else {
-        throw new Error(data.message)
-      }
-
-      return data
-    } catch (error) {
-      console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
-      throw error
-    }
-  }
-
   const loadInsights = async (startDate?: string, endDate?: string, configToUse?: ClienteMetaAdsConfig) => {
     const currentConfig = configToUse || config
     console.log('📈 [useClienteMetaAds] Buscando insights do cliente:', clienteId)
@@ -318,20 +273,6 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
-  const fetchCampaigns = async (startDate?: string, endDate?: string) => {
-    setLastError('')
-    setLastErrorType('')
-    
-    try {
-      return await loadCampaigns(startDate, endDate)
-    } catch (error) {
-      const errorMsg = 'Erro inesperado ao buscar campanhas'
-      setLastError(errorMsg)
-      setLastErrorType('NETWORK_ERROR')
-      return { success: false, message: errorMsg }
-    }
-  }
-
   const fetchInsights = async (startDate?: string, endDate?: string) => {
     setLastError('')
     setLastErrorType('')
@@ -352,10 +293,7 @@ export function useClienteMetaAds(clienteId: string) {
     setLastErrorType('')
     
     try {
-      await Promise.all([
-        loadCampaigns(startDate, endDate),
-        loadInsights(startDate, endDate)
-      ])
+      await loadInsights(startDate, endDate)
       setLastDataUpdate(new Date())
     } catch (error) {
       console.error('❌ [useClienteMetaAds] Erro ao buscar dados:', error)
@@ -384,10 +322,8 @@ export function useClienteMetaAds(clienteId: string) {
     saving,
     saveConfig,
     testConnection,
-    fetchCampaigns,
     fetchInsights,
     fetchDataWithDateRange,
-    campaigns,
     insights,
     isConfigured,
     lastError,

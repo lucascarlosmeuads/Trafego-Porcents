@@ -11,6 +11,7 @@ import { ClienteWelcomeHeader } from './ClienteWelcomeHeader'
 import { ClienteProfileSection } from './ClienteProfileSection'
 import { ClienteQuickActions } from './ClienteQuickActions'
 import { SiteRequestPrompt } from './SiteRequestPrompt'
+import { ClienteMetaAdsWidget } from './ClienteMetaAdsWidget'
 
 interface ClienteWelcomeProps {
   onTabChange: (tab: string) => void
@@ -37,6 +38,14 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
           {!loading && cliente?.link_campanha && (
             <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
           )}
+          
+          {/* Widget Meta Ads - Mobile */}
+          {!loading && cliente && (
+            <ClienteMetaAdsWidget 
+              clienteId={cliente.id.toString()} 
+              nomeCliente={cliente.nome_cliente || 'Cliente'} 
+            />
+          )}
         </div>
         
         <MobileOnboardingSteps onTabChange={onTabChange} />
@@ -62,6 +71,14 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       {/* Card da Campanha */}
       {!loading && cliente?.link_campanha && (
         <CampanhaLinkCard linkCampanha={cliente.link_campanha} />
+      )}
+
+      {/* Widget Meta Ads - Desktop */}
+      {!loading && cliente && (
+        <ClienteMetaAdsWidget 
+          clienteId={cliente.id.toString()} 
+          nomeCliente={cliente.nome_cliente || 'Cliente'} 
+        />
       )}
 
       {/* Seção de Perfil */}
