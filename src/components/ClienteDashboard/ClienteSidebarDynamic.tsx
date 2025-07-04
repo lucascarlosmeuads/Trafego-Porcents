@@ -91,7 +91,7 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       className={`bg-background border-r border-border h-screen transition-all duration-300 ${
         isCollapsed ? 'w-14' : 'w-80'
       }`}
-      collapsible
+      collapsible="icon"
     >
       <SidebarHeader className={`p-4 border-b border-border ${isCollapsed ? 'p-2' : ''}`}>
         {/* SidebarTrigger sempre visível */}
