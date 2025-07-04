@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { TermosContratoModal } from './TermosContratoModal'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { useAuth } from '@/hooks/useAuth'
-import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from '@/components/ui/sheet'
+import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'
 import { 
   FileText, 
   Upload, 
@@ -157,11 +157,8 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
         <SheetContent 
           side="left" 
           className="w-80 p-0 bg-gray-900 border-r border-gray-800"
+          hideClose={true}
         >
-          <SheetHeader className="sr-only">
-            <SheetTitle>Menu de Navegação</SheetTitle>
-          </SheetHeader>
-          
           <div className="flex flex-col h-full">
             {/* Header com botão fechar customizado */}
             <div className="flex items-center justify-between p-4 border-b border-gray-800">
