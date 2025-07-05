@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
-import { Calendar, Clock, Filter, TrendingUp } from 'lucide-react'
+import { Calendar, Clock, Filter, TrendingUp, Sparkles, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface DateFilterWidgetProps {
@@ -18,13 +18,13 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
   const [customEndDate, setCustomEndDate] = useState('')
 
   const periodOptions = [
-    { value: 'today', label: 'Hoje', icon: '📅' },
-    { value: 'yesterday', label: 'Ontem', icon: '📆' },
-    { value: 'day_before_yesterday', label: 'Anteontem', icon: '📋' },
-    { value: 'last_7_days', label: 'Últimos 7 dias', icon: '📊' },
-    { value: 'last_15_days', label: 'Últimos 15 dias', icon: '📈' },
-    { value: 'last_30_days', label: 'Últimos 30 dias', icon: '📉' },
-    { value: 'custom', label: 'Personalizado', icon: '🎯' }
+    { value: 'today', label: 'Hoje', icon: '📅', description: 'Dados de hoje' },
+    { value: 'yesterday', label: 'Ontem', icon: '📆', description: 'Dados de ontem' },
+    { value: 'day_before_yesterday', label: 'Anteontem', icon: '📋', description: 'Dados anteontem' },
+    { value: 'last_7_days', label: '7 dias', icon: '📊', description: 'Últimos 7 dias' },
+    { value: 'last_15_days', label: '15 dias', icon: '📈', description: 'Últimos 15 dias' },
+    { value: 'last_30_days', label: '30 dias', icon: '📉', description: 'Últimos 30 dias' },
+    { value: 'custom', label: 'Personalizado', icon: '🎯', description: 'Período customizado' }
   ]
 
   const handlePeriodSelect = (period: string) => {
@@ -49,92 +49,134 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
   }
 
   return (
-    <Card className="mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 border-blue-200">
-      <CardContent className="pt-4">
-        <div className="space-y-4">
+    <Card className="info-card info-card-primary mb-6 animate-fade-in-up">
+      <CardContent className="p-6">
+        <div className="space-y-6">
           {/* Header com status */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-blue-600" />
-              <span className="font-medium text-blue-900">Período dos Dados</span>
-              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                Monitorado 24/7
-              </Badge>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-trafego text-white">
+                <Filter className="h-5 w-5" />
+              </div>
+              <div>
+                <h3 className="section-title">Período dos Dados</h3>
+                <p className="text-sm text-muted-foreground">Selecione o período para análise</p>
+              </div>
             </div>
-            <div className="text-sm text-blue-700 font-medium">
-              {getCurrentPeriodLabel()}
+            <div className="flex items-center gap-2">
+              <Badge className="monitoring-badge">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Tempo Real
+              </Badge>
+              <div className="text-sm font-medium text-foreground bg-gradient-card px-3 py-1.5 rounded-lg border border-border/50">
+                {getCurrentPeriodLabel()}
+              </div>
             </div>
           </div>
 
           {/* Botões de período */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-2">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
             {periodOptions.map((option) => (
               <Button
                 key={option.value}
                 size="sm"
-                variant={currentPeriod === option.value ? 'default' : 'outline'}
+                variant="outline"
                 onClick={() => handlePeriodSelect(option.value)}
                 disabled={loading}
-                className={`text-xs font-medium transition-all ${
+                className={`period-button group relative ${
                   currentPeriod === option.value 
-                    ? 'bg-blue-600 hover:bg-blue-700 text-white shadow-md' 
-                    : 'border-blue-200 text-blue-700 hover:bg-blue-100'
+                    ? 'period-button-active' 
+                    : 'hover:shadow-card-hover'
                 }`}
+                title={option.description}
               >
-                <span className="mr-1">{option.icon}</span>
-                {option.label}
+                <span className="text-base mr-2 group-hover:scale-110 transition-transform">
+                  {option.icon}
+                </span>
+                <span className="font-medium">{option.label}</span>
+                {currentPeriod === option.value && (
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                )}
               </Button>
             ))}
           </div>
 
           {/* Filtro personalizado */}
           {showCustom && (
-            <div className="bg-white p-4 rounded-lg border border-blue-200 space-y-3">
-              <div className="flex items-center gap-2 mb-3">
-                <Calendar className="h-4 w-4 text-blue-600" />
-                <span className="font-medium text-blue-900">Selecionar Período Personalizado</span>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="info-card bg-gradient-card p-5 space-y-4 animate-slide-up">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-trafego text-white">
+                  <Calendar className="h-4 w-4" />
+                </div>
                 <div>
-                  <label className="text-sm text-blue-700 font-medium mb-1 block">Data início:</label>
+                  <h4 className="font-semibold text-foreground">Período Personalizado</h4>
+                  <p className="text-sm text-muted-foreground">Defina suas datas específicas</p>
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    Data início:
+                  </label>
                   <Input
                     type="date"
                     value={customStartDate}
                     onChange={(e) => setCustomStartDate(e.target.value)}
-                    className="border-blue-200 focus:border-blue-400"
+                    className="border-border/50 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 bg-background/50 backdrop-blur-sm"
                   />
                 </div>
-                <div>
-                  <label className="text-sm text-blue-700 font-medium mb-1 block">Data fim:</label>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    Data fim:
+                  </label>
                   <Input
                     type="date"
                     value={customEndDate}
                     onChange={(e) => setCustomEndDate(e.target.value)}
-                    className="border-blue-200 focus:border-blue-400"
+                    className="border-border/50 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 bg-background/50 backdrop-blur-sm"
                   />
                 </div>
                 <div className="flex items-end">
                   <Button
                     onClick={handleCustomSubmit}
                     disabled={!customStartDate || !customEndDate || loading}
-                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    className="w-full bg-gradient-trafego hover:bg-gradient-trafego-hover text-white font-medium hover-lift"
                   >
                     <Clock className="h-4 w-4 mr-2" />
-                    Aplicar
+                    Aplicar Período
                   </Button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* Mensagem tranquilizadora */}
-          <div className="bg-blue-100 p-3 rounded-lg">
-            <div className="flex items-start gap-2">
-              <div className="text-blue-600 text-lg">🛡️</div>
-              <div className="text-sm text-blue-800">
-                <p className="font-medium mb-1">Estamos cuidando de tudo para você!</p>
-                <p>Nossa equipe monitora estes dados diariamente e faz ajustes constantes para otimizar seus resultados. Estes números são para você acompanhar nosso trabalho em tempo real.</p>
+          {/* Mensagem de confiança */}
+          <div className="info-card-success p-4 rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 text-green-600">
+                <Shield className="h-4 w-4" />
+              </div>
+              <div className="flex-1 space-y-2">
+                <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Monitoramento Profissional 24/7
+                </h4>
+                <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
+                  Nossa equipe de especialistas monitora estes dados continuamente e faz ajustes automáticos 
+                  para otimizar seus resultados. Você pode acompanhar nosso trabalho em tempo real através 
+                  destes relatórios profissionais.
+                </p>
+                <div className="flex items-center gap-4 pt-2">
+                  <Badge variant="secondary" className="trust-badge text-xs">
+                    ✅ Dados Verificados
+                  </Badge>
+                  <Badge variant="secondary" className="monitoring-badge text-xs">
+                    🔄 Auto-Otimização
+                  </Badge>
+                </div>
               </div>
             </div>
           </div>

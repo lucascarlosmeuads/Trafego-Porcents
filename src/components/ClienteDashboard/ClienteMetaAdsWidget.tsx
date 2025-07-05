@@ -22,8 +22,13 @@ import {
   ShoppingCart,
   Shield,
   Heart,
-  Clock
+  Clock,
+  Sparkles,
+  Activity,
+  Award,
+  Zap
 } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 interface ClienteMetaAdsWidgetProps {
   clienteId: string
@@ -162,18 +167,25 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   // Loading state
   if (loading) {
     return (
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            Relatório de Anúncios
-            {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
+      <Card className="info-card animate-fade-in-up">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-trafego text-white">
+              <BarChart3 className="w-5 h-5" />
+            </div>
+            <div>
+              <span className="page-title text-xl">Dados dos Anúncios</span>
+              {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600 ml-2" />}
+            </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-center py-4">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-            <p className="text-sm text-gray-500">Verificando configuração...</p>
+          <div className="text-center py-8">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-trafego flex items-center justify-center animate-pulse">
+              <RefreshCw className="w-8 h-8 text-white animate-spin" />
+            </div>
+            <h3 className="text-lg font-semibold text-foreground mb-2">Verificando configuração...</h3>
+            <p className="text-sm text-muted-foreground">Aguarde enquanto preparamos seus dados</p>
           </div>
         </CardContent>
       </Card>
@@ -183,35 +195,45 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   // Se não está configurado
   if (!isConfigured) {
     return (
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="info-card animate-fade-in-up">
+        <CardHeader className="pb-4">
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              Relatório de Anúncios
-              {connectionStatus === 'offline' && <WifiOff className="w-4 w-4 text-red-600" />}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 text-white">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="page-title text-xl">Relatório de Anúncios</span>
+                {connectionStatus === 'offline' && <WifiOff className="w-4 w-4 text-red-600 ml-2" />}
+              </div>
             </div>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <Alert className="border-blue-200 bg-blue-50">
-            <MessageSquare className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              <div className="space-y-3">
-                <p className="font-medium">📊 Relatório não configurado</p>
-                <p className="text-sm">
-                  Entre em contato com seu gestor para configurar os relatórios de anúncios 
-                  e começar a acompanhar seus resultados em tempo real.
-                </p>
+          <Alert className="info-card-warning border-0">
+            <MessageSquare className="h-5 w-5 text-amber-600" />
+            <AlertDescription className="text-amber-800 dark:text-amber-200">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
+                    <Sparkles className="h-5 w-5" />
+                    📊 Relatórios em Preparação
+                  </h4>
+                  <p className="text-sm leading-relaxed">
+                    Nosso time técnico está configurando seus relatórios personalizados. 
+                    Em breve você terá acesso a dados detalhados sobre o desempenho dos seus anúncios.
+                  </p>
+                </div>
                 <div className="flex gap-2">
                   <Button 
                     size="sm" 
                     variant="outline" 
                     onClick={handleRefreshConfig}
                     disabled={loading}
+                    className="hover-lift bg-gradient-card border-amber-300"
                   >
                     <RefreshCw className="w-4 h-4 mr-2" />
-                    Verificar Novamente
+                    Verificar Configuração
                   </Button>
                 </div>
               </div>
@@ -246,7 +268,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const estimativaCustoPorVenda = custoPorVisitante * 50 // Assumindo 2% de conversão para venda
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       {/* Filtro de Data no topo */}
       <DateFilterWidget
         currentPeriod={currentPeriod}
@@ -254,35 +276,54 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
         loading={loadingData}
       />
 
-      <Card className="w-full">
-        <CardHeader>
+      <Card className="info-card hover-lift">
+        <CardHeader className="pb-4">
           <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-blue-600" />
-              Dados dos Anúncios
-              <CheckCircle className="w-4 h-4 text-green-600" />
-              {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-trafego text-white">
+                <BarChart3 className="w-5 h-5" />
+              </div>
+              <div>
+                <span className="page-title text-xl">Dados dos Anúncios</span>
+                <div className="flex items-center gap-2 mt-1">
+                  <Badge className="trust-badge text-xs">
+                    <CheckCircle className="w-3 h-3 mr-1" />
+                    Verificado
+                  </Badge>
+                  {connectionStatus === 'offline' && (
+                    <Badge variant="destructive" className="text-xs">
+                      <WifiOff className="w-3 h-3 mr-1" />
+                      Offline
+                    </Badge>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="flex gap-1">
+            <div className="flex gap-2">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handleLoadMetrics()}
                 disabled={loadingData}
+                className="hover-lift bg-gradient-card border-border/50"
               >
                 {loadingData ? (
                   <RefreshCw className="w-4 h-4 animate-spin" />
                 ) : (
                   <RefreshCw className="w-4 h-4" />
                 )}
+                <span className="ml-2 hidden sm:inline">Atualizar</span>
               </Button>
             </div>
           </CardTitle>
           {lastFetchInfo && (
-            <p className="text-xs text-muted-foreground">{lastFetchInfo}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-2 mt-2">
+              <Activity className="w-3 h-3" />
+              {lastFetchInfo}
+            </p>
           )}
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           {/* Status de conexão */}
           {connectionStatus === 'offline' && (
             <Alert className="mb-4 border-red-200 bg-red-50">
@@ -328,142 +369,289 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           )}
 
           {displayData.length > 0 ? (
-            <div className="space-y-6">
+            <div className="space-y-8">
               {/* Indicador de dados do cache */}
               {cachedMetrics && insights.length === 0 && (
-                <div className="text-xs text-muted-foreground text-center py-2 bg-blue-50 rounded border">
-                  📦 Dados salvos localmente • {new Date(cachedMetrics.timestamp).toLocaleString('pt-BR')}
+                <div className="info-card p-3 text-center">
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    📦 Dados salvos localmente • {new Date(cachedMetrics.timestamp).toLocaleString('pt-BR')}
+                  </div>
                 </div>
               )}
 
-            {/* Métricas Principais em linguagem simples */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="text-center p-4 bg-blue-50 rounded-lg">
-                <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-blue-700">
-                  {totalMetrics.pessoasAlcancadas.toLocaleString()}
-                </div>
-                <div className="text-sm text-blue-600 font-medium">Pessoas Alcançadas</div>
-                <div className="text-xs text-blue-500 mt-1">
-                  Quantas pessoas viram seu anúncio
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-green-50 rounded-lg">
-                <MousePointer className="w-6 h-6 text-green-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-green-700">
-                  {totalMetrics.visitantesAnuncio.toLocaleString()}
-                </div>
-                <div className="text-sm text-green-600 font-medium">Visitantes do Anúncio</div>
-                <div className="text-xs text-green-500 mt-1">
-                  Pessoas que clicaram no seu anúncio
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-purple-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-purple-700">
-                  {formatCurrency(totalMetrics.investimento)}
-                </div>
-                <div className="text-sm text-purple-600 font-medium">Valor Investido</div>
-                <div className="text-xs text-purple-500 mt-1">
-                  Total gasto em anúncios
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-orange-50 rounded-lg">
-                <Target className="w-6 h-6 text-orange-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-orange-700">
-                  {taxaInteresseMedia.toFixed(1)}%
-                </div>
-                <div className="text-sm text-orange-600 font-medium">Taxa de Interesse</div>
-                <div className="text-xs text-orange-500 mt-1">
-                  % de pessoas que clicaram
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-cyan-50 rounded-lg">
-                <MessageSquare className="w-6 h-6 text-cyan-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-cyan-700">
-                  {formatCurrency(estimativaCustoPorConversa)}
-                </div>
-                <div className="text-sm text-cyan-600 font-medium">Custo por Conversa</div>
-                <div className="text-xs text-cyan-500 mt-1">
-                  Estimativa por contato gerado
-                </div>
-              </div>
-
-              <div className="text-center p-4 bg-emerald-50 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
-                <div className="text-2xl font-bold text-emerald-700">
-                  {formatCurrency(estimativaCustoPorVenda)}
-                </div>
-                <div className="text-sm text-emerald-600 font-medium">Custo por Venda</div>
-                <div className="text-xs text-emerald-500 mt-1">
-                  Estimativa para gerar uma venda
-                </div>
-              </div>
-            </div>
-
-              {/* Explicações mais tranquilizadoras */}
-              <Alert className="border-green-200 bg-green-50">
-                <Shield className="h-4 w-4 text-green-600" />
-                <AlertDescription className="text-green-800">
-                  <div className="space-y-3">
-                    <p className="font-medium flex items-center gap-2">
-                      <Heart className="h-4 w-4 text-green-600" />
-                      Como interpretar estes números com tranquilidade:
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                      <div className="space-y-2">
-                        <p>💙 <strong>Pessoas Alcançadas:</strong> Sua marca está sendo vista por milhares de pessoas interessadas!</p>
-                        <p>👆 <strong>Visitantes:</strong> Pessoas reais estão clicando porque se interessaram pelo seu produto!</p>
-                        <p>🎯 <strong>Taxa de Interesse:</strong> Estamos ajustando continuamente para atrair o público certo!</p>
-                      </div>
-                      <div className="space-y-2">
-                        <p>💰 <strong>Investimento:</strong> Cada real está trabalhando para gerar visibilidade e clientes!</p>
-                        <p>📞 <strong>Custo por Conversa:</strong> Estimativa de quanto custa gerar cada contato qualificado!</p>
-                        <p>🛒 <strong>Custo por Venda:</strong> Projeção baseada em dados do mercado - nossa equipe otimiza isso!</p>
-                      </div>
+              {/* Métricas Principais redesenhadas */}
+              <div className="metrics-grid">
+                {/* Pessoas Alcançadas */}
+                <div className="metric-card metric-card-reach p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <Users className="w-6 h-6 text-blue-600" />
                     </div>
-                    <div className="bg-green-100 p-3 rounded flex items-start gap-2">
-                      <Clock className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
-                      <p className="text-sm">
-                        <strong>🛡️ Fique tranquilo:</strong> Nossa equipe monitora estes dados 24/7 e faz ajustes automáticos. 
-                        Você não precisa se preocupar com os números - eles são apenas para sua transparência e confiança no nosso trabalho!
-                      </p>
+                    <Badge className="professional-badge bg-blue-50 text-blue-700 border-blue-200">
+                      <Eye className="w-3 h-3 mr-1" />
+                      Alcance
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-blue-600">
+                      {totalMetrics.pessoasAlcancadas.toLocaleString()}
+                    </div>
+                    <div className="metric-label">Pessoas Alcançadas</div>
+                    <div className="metric-description">
+                      Número de pessoas únicas que visualizaram seus anúncios
                     </div>
                   </div>
-                </AlertDescription>
+                </div>
+
+                {/* Visitantes do Anúncio */}
+                <div className="metric-card metric-card-clicks p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <MousePointer className="w-6 h-6 text-green-600" />
+                    </div>
+                    <Badge className="professional-badge bg-green-50 text-green-700 border-green-200">
+                      <Zap className="w-3 h-3 mr-1" />
+                      Cliques
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-green-600">
+                      {totalMetrics.visitantesAnuncio.toLocaleString()}
+                    </div>
+                    <div className="metric-label">Visitantes Interessados</div>
+                    <div className="metric-description">
+                      Pessoas que clicaram porque se interessaram pelo seu produto
+                    </div>
+                  </div>
+                </div>
+
+                {/* Valor Investido */}
+                <div className="metric-card metric-card-spend p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <DollarSign className="w-6 h-6 text-purple-600" />
+                    </div>
+                    <Badge className="professional-badge bg-purple-50 text-purple-700 border-purple-200">
+                      <TrendingUp className="w-3 h-3 mr-1" />
+                      Investimento
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-purple-600">
+                      {formatCurrency(totalMetrics.investimento)}
+                    </div>
+                    <div className="metric-label">Valor Investido</div>
+                    <div className="metric-description">
+                      Total investido trabalhando para gerar resultados
+                    </div>
+                  </div>
+                </div>
+
+                {/* Taxa de Interesse */}
+                <div className="metric-card metric-card-ctr p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <Target className="w-6 h-6 text-orange-600" />
+                    </div>
+                    <Badge className="professional-badge bg-orange-50 text-orange-700 border-orange-200">
+                      <Award className="w-3 h-3 mr-1" />
+                      Performance
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-orange-600">
+                      {taxaInteresseMedia.toFixed(1)}%
+                    </div>
+                    <div className="metric-label">Taxa de Interesse</div>
+                    <div className="metric-description">
+                      Percentual de pessoas que demonstraram interesse
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custo por Conversa */}
+                <div className="metric-card metric-card-cost p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <MessageSquare className="w-6 h-6 text-cyan-600" />
+                    </div>
+                    <Badge className="professional-badge bg-cyan-50 text-cyan-700 border-cyan-200">
+                      <MessageSquare className="w-3 h-3 mr-1" />
+                      Estimativa
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-cyan-600">
+                      {formatCurrency(estimativaCustoPorConversa)}
+                    </div>
+                    <div className="metric-label">Custo por Conversa</div>
+                    <div className="metric-description">
+                      Estimativa para gerar cada contato qualificado
+                    </div>
+                  </div>
+                </div>
+
+                {/* Custo por Venda */}
+                <div className="metric-card metric-card-conversion p-6 group hover-lift">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
+                      <ShoppingCart className="w-6 h-6 text-emerald-600" />
+                    </div>
+                    <Badge className="professional-badge bg-emerald-50 text-emerald-700 border-emerald-200">
+                      <ShoppingCart className="w-3 h-3 mr-1" />
+                      Projeção
+                    </Badge>
+                  </div>
+                  <div className="space-y-2">
+                    <div className="metric-number text-emerald-600">
+                      {formatCurrency(estimativaCustoPorVenda)}
+                    </div>
+                    <div className="metric-label">Custo por Venda</div>
+                    <div className="metric-description">
+                      Projeção baseada em dados do mercado
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Card de tranquilização redesenhado */}
+              <Alert className="info-card-success border-0 p-6">
+                <div className="flex items-start gap-4">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-green-500/20 text-green-600">
+                    <Shield className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 flex items-center gap-2 mb-2">
+                        <Heart className="h-5 w-5" />
+                        Como Interpretar Seus Resultados com Tranquilidade
+                      </h3>
+                      <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed mb-4">
+                        Estes números representam o trabalho constante da nossa equipe especializada. 
+                        Cada métrica é monitorada e otimizada diariamente para maximizar seus resultados.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Users className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">Pessoas Alcançadas</p>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Sua marca ganha visibilidade! Milhares visualizam seus anúncios diariamente.
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <MousePointer className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">Visitantes Interessados</p>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Cliques reais de pessoas interessadas no que você oferece!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-start gap-3">
+                          <Target className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">Taxa de Interesse</p>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Otimizamos continuamente para atrair o público ideal para você!
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-start gap-3">
+                          <DollarSign className="h-5 w-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                          <div>
+                            <p className="font-medium text-green-800 dark:text-green-200">Investimento Inteligente</p>
+                            <p className="text-sm text-green-700 dark:text-green-300">
+                              Cada real trabalha estrategicamente para gerar oportunidades reais!
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="info-card bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/50 dark:to-emerald-950/50 p-4 rounded-xl border border-green-200 dark:border-green-800/30">
+                      <div className="flex items-start gap-3">
+                        <Sparkles className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
+                        <div>
+                          <p className="font-semibold text-green-800 dark:text-green-200 mb-2">
+                            🛡️ Você Está em Boas Mãos!
+                          </p>
+                          <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
+                            Nossa equipe de especialistas analisa estes dados 24/7 e faz ajustes automáticos. 
+                            Estes relatórios são para sua <strong>transparência e confiança</strong> no nosso trabalho. 
+                            Relaxe e deixe nossa expertise maximizar seus resultados!
+                          </p>
+                          
+                          <div className="flex items-center gap-3 mt-3">
+                            <Badge className="trust-badge text-xs">
+                              ✅ Monitorado 24/7
+                            </Badge>
+                            <Badge className="monitoring-badge text-xs">
+                              🔄 Auto-Otimização
+                            </Badge>
+                            <Badge className="professional-badge text-xs">
+                              📊 Dados Reais
+                            </Badge>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </Alert>
             </div>
           ) : !loadingData && !lastError ? (
-            <div className="text-center py-8">
-              <BarChart3 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-              <p className="text-lg font-medium text-gray-600 mb-2">
-                Pronto para carregar seus dados! 📊
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-trafego flex items-center justify-center">
+                <BarChart3 className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">
+                Pronto para Mostrar Seus Resultados! 📊
+              </h3>
+              <p className="text-muted-foreground mb-6 max-w-md mx-auto leading-relaxed">
+                Selecione um período acima para visualizar como seus anúncios estão performando 
+                e gerando resultados reais para seu negócio.
               </p>
-              <p className="text-sm text-gray-500 mb-4">
-                Selecione um período acima para ver como seus anúncios estão performando
-              </p>
-              <div className="bg-blue-50 p-4 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  💡 <strong>Dica:</strong> Comece com "Ontem" ou "Últimos 7 dias" para ver dados mais consistentes!
+              <div className="info-card-primary p-6 rounded-xl max-w-lg mx-auto">
+                <div className="flex items-center gap-3 mb-3">
+                  <Sparkles className="h-5 w-5 text-blue-600" />
+                  <p className="font-semibold text-blue-800 dark:text-blue-200">💡 Dica Profissional</p>
+                </div>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Comece com <strong>"Ontem"</strong> ou <strong>"Últimos 7 dias"</strong> para ver dados mais consistentes e confiáveis!
                 </p>
               </div>
             </div>
           ) : null}
 
-          {/* Loading state */}
+          {/* Loading state redesenhado */}
           {loadingData && (
-            <div className="text-center py-8">
-              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-              <p className="text-lg font-medium text-gray-600 mb-2">
-                Buscando seus dados...
+            <div className="text-center py-12">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-trafego flex items-center justify-center animate-pulse">
+                <RefreshCw className="w-10 h-10 text-white animate-spin" />
+              </div>
+              <h3 className="text-xl font-semibold text-foreground mb-3">
+                Buscando Seus Dados...
+              </h3>
+              <p className="text-muted-foreground mb-4">
+                Nossa equipe mantém estas informações sempre atualizadas para você! ⚡
               </p>
-              <p className="text-sm text-gray-500">
-                Nossa equipe está sempre atualizando estas informações para você! ⚡
-              </p>
+              <div className="flex items-center justify-center gap-2">
+                <Badge className="monitoring-badge">
+                  <Activity className="w-3 h-3 mr-1 animate-pulse" />
+                  Processando...
+                </Badge>
+              </div>
             </div>
           )}
         </CardContent>
