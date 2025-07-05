@@ -88,15 +88,19 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
 
   return (
     <Sidebar 
-      className={`bg-background border-r border-border h-screen transition-all duration-300 ${
+      className={`bg-background border-r border-border h-screen transition-all duration-300 shadow-sm ${
         isCollapsed ? 'w-14' : 'w-80'
       }`}
       collapsible="icon"
     >
-      <SidebarHeader className={`p-4 border-b border-border ${isCollapsed ? 'p-2' : ''}`}>
+      <SidebarHeader className={`border-b border-border transition-all duration-300 ${
+        isCollapsed ? 'p-2' : 'p-6'
+      }`}>
         {/* SidebarTrigger sempre visível */}
-        <div className={`flex items-center mb-4 ${isCollapsed ? 'justify-center mb-2' : 'justify-between'}`}>
-          <SidebarTrigger className="text-foreground hover:bg-accent" />
+        <div className={`flex items-center transition-all duration-300 ${
+          isCollapsed ? 'justify-center mb-2' : 'justify-between mb-4'
+        }`}>
+          <SidebarTrigger className="text-foreground hover:bg-accent rounded-md" />
           {!isCollapsed && (
             <div className="text-xs text-muted-foreground">
               Dashboard Cliente
@@ -134,8 +138,10 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         )}
       </SidebarHeader>
       
-      <SidebarContent className={`px-2 py-4 ${isCollapsed ? 'px-1' : ''}`}>
-        <SidebarMenu className="space-y-1">
+      <SidebarContent className={`py-4 transition-all duration-300 ${
+        isCollapsed ? 'px-1' : 'px-4'
+      }`}>
+        <SidebarMenu className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -145,8 +151,8 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
                 <SidebarMenuButton
                   onClick={() => onTabChange(item.id)}
                   isActive={isActive}
-                  className={`w-full justify-start rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground ${
-                    isCollapsed ? 'px-2 py-2.5 justify-center' : 'px-3 py-2.5'
+                  className={`w-full rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground transition-all duration-200 ${
+                    isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
                   }`}
                   title={isCollapsed ? item.label : undefined}
                 >
@@ -161,12 +167,14 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className={`p-3 border-t border-border space-y-3 ${isCollapsed ? 'p-1 space-y-1' : ''}`}>
+      <SidebarFooter className={`border-t border-border space-y-3 transition-all duration-300 ${
+        isCollapsed ? 'p-2 space-y-2' : 'p-4'
+      }`}>
         {/* Termos de Uso */}
         <Button
           onClick={() => setTermosModalOpen(true)}
-          className={`w-full justify-start rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/30 h-auto ${
-            isCollapsed ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
+          className={`w-full rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/30 h-auto transition-all duration-200 ${
+            isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
           }`}
           variant="outline"
           title={isCollapsed ? 'Termos de Uso' : undefined}
@@ -187,8 +195,8 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         {/* WhatsApp Suporte */}
         <Button
           asChild
-          className={`w-full justify-start rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground h-auto ${
-            isCollapsed ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
+          className={`w-full rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground h-auto transition-all duration-200 ${
+            isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
           }`}
           variant="outline"
         >
@@ -209,8 +217,8 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         <Button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className={`w-full justify-start rounded-lg hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive h-auto ${
-            isCollapsed ? 'px-2 py-2 justify-center' : 'px-3 py-2.5'
+          className={`w-full rounded-lg hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive h-auto transition-all duration-200 ${
+            isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
           }`}
           variant="outline"
           title={isCollapsed ? 'Sair do Sistema' : undefined}

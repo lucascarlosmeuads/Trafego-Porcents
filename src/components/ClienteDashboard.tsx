@@ -13,15 +13,18 @@ import { ClienteSiteDescricao } from './ClienteDashboard/ClienteSiteDescricao'
 import { MetricasMetaAds } from './ClienteDashboard/MetricasMetaAds'
 import { TutorialVideos } from './ClienteDashboard/TutorialVideos'
 import { LoadingFallback } from './LoadingFallback'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarProvider, useSidebar } from '@/components/ui/sidebar'
 import { ClienteHomeDashboard } from './ClienteDashboard/ClienteHomeDashboard'
 import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
-export function ClienteDashboard() {
+function ClienteDashboardContent() {
   const { user } = useAuth()
   const { cliente, briefing, vendas, arquivos, loading, refetch } = useClienteData(user?.email || '')
   const isMobile = useIsMobile()
   const [activeTab, setActiveTab] = useState('home')
+  const { state } = useSidebar()
+
+  const isCollapsed = state === 'collapsed'
 
   if (loading) {
     return <LoadingFallback />
@@ -107,28 +110,36 @@ export function ClienteDashboard() {
     }
 
     return (
-      <SidebarProvider>
-        <div className="flex h-screen bg-background overflow-hidden w-full">
-          {/* Sidebar sem interferência do header - ocupa toda a altura */}
-          <ClienteSidebarDynamic
-            activeTab={activeTab}
-            onTabChange={setActiveTab}
-            clienteInfo={cliente}
-          />
-          
-          <main className="flex-1 overflow-y-auto bg-background">
-            <div className="p-6 min-h-full">
-              {renderContent()}
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
+      <div className="flex h-screen bg-background overflow-hidden w-full">
+        {/* Sidebar sem interferência do header - ocupa toda a altura */}
+        <ClienteSidebarDynamic
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          clienteInfo={cliente}
+        />
+        
+        <main className={`flex-1 overflow-y-auto bg-background transition-all duration-300 ${
+          isCollapsed ? 'ml-2' : 'ml-6'
+        }`}>
+          <div className={`min-h-full transition-all duration-300 ${
+            isCollapsed ? 'p-4' : 'p-8'
+          }`}>
+            {renderContent()}
+          </div>
+        </main>
+      </div>
     )
   }
 
+  return dashboardContent()
+}
+
+export function ClienteDashboard() {
   return (
     <TermosProtection>
-      {dashboardContent()}
+      <SidebarProvider>
+        <ClienteDashboardContent />
+      </SidebarProvider>
     </TermosProtection>
   )
 }
