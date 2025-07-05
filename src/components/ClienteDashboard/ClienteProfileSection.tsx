@@ -11,12 +11,12 @@ export function ClienteProfileSection() {
     <Card className="bg-gray-900 border-gray-800">
       <CardContent className="pt-4 pb-4">
         <div className="flex flex-col items-center space-y-2">
-          {/* Logo da Tráfego Por Cents - TAMANHO OTIMIZADO PARA MOBILE */}
+          {/* Logo da Tráfego Por Cents - TAMANHO OTIMIZADO E UM POUCO MAIOR */}
           <div className="flex justify-center w-full">
             <img 
               src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
               alt="Tráfego Por Cents" 
-              className="h-16 w-auto object-contain max-w-full"
+              className="h-20 w-auto object-contain max-w-full"
             />
           </div>
           

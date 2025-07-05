@@ -159,16 +159,8 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
           className="w-80 p-0 bg-gray-900 border-r border-gray-800 [&>button]:hidden"
         >
           <div className="flex flex-col h-full">
-            {/* Header com botão fechar customizado e logo menor */}
-            <div className="flex items-center justify-between p-3 border-b border-gray-800">
-              <div className="flex items-center gap-2">
-                <img 
-                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-                  alt="Tráfego Por Cents" 
-                  className="h-6 w-auto object-contain"
-                />
-                <span className="text-white font-medium text-sm">Menu</span>
-              </div>
+            {/* Header simplificado com apenas botão fechar */}
+            <div className="flex items-center justify-end p-3 border-b border-gray-800">
               <Button
                 variant="ghost"
                 size="icon"
