@@ -49,16 +49,17 @@ export function MetricasMetaAds() {
     )
   }
 
-  // Lógica corrigida para determinar se a campanha está ativa
-  // PRIORIDADE: Se há dados de insights (métricas reais), considera ativa
-  // FALLBACK: Verifica status da campanha
-  const temDadosReais = isConfigured && insights.length > 0
-  const statusCampanhaAtiva = cliente.status_campanha?.includes('Ativa') || 
-                              cliente.status_campanha?.includes('Otimização') ||
-                              cliente.status_campanha?.includes('Rodando')
+  // Lógica simplificada e correta para determinar se tem dados ativos
+  // Se está configurado E tem dados, então está ativa com dados
+  const temDadosAtivos = isConfigured && insights.length > 0
   
-  // Se tem dados reais das métricas, sempre considera ativa
-  const campanhaAtiva = temDadosReais || statusCampanhaAtiva
+  // Debug logs para entender o problema
+  console.log('🔍 [META ADS DEBUG] Estado atual:', {
+    isConfigured,
+    insightsLength: insights.length,
+    temDadosAtivos,
+    statusCampanha: cliente.status_campanha
+  })
 
   return (
     <div className="mobile-container mobile-content-spacing animate-fade-in-up">
@@ -94,16 +95,16 @@ export function MetricasMetaAds() {
         </div>
       </div>
 
-      {/* Status da Campanha com máximo aproveitamento das laterais */}
+      {/* Status da Campanha - só mostra "ativa" se tem dados ou status ativo */}
       <Card className="mobile-info-card hover-lift">
         <CardContent className="mobile-p">
           <div className="mobile-status-card">
             <div className={`flex items-center justify-center mobile-icon-lg rounded-xl flex-shrink-0 ${
-              campanhaAtiva 
+              temDadosAtivos 
                 ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white' 
                 : 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white'
             }`}>
-              {campanhaAtiva ? (
+              {temDadosAtivos ? (
                 <CheckCircle className="mobile-icon-md" />
               ) : (
                 <Clock className="mobile-icon-md" />
@@ -115,15 +116,15 @@ export function MetricasMetaAds() {
                   Status Atual: 
                 </h3>
                 <Badge className={`text-xs font-medium self-start ${
-                  campanhaAtiva 
+                  temDadosAtivos 
                     ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700' 
                     : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
                 }`}>
                   <Sparkles className="mobile-icon-sm mr-1" />
-                  {temDadosReais ? 'Campanha com Dados Ativos' : (campanhaAtiva ? 'Campanha Ativa' : (cliente.status_campanha || 'Em preparação'))}
+                  {temDadosAtivos ? '✅ Dados Ativos' : (cliente.status_campanha || 'Em preparação')}
                 </Badge>
               </div>
-              {!campanhaAtiva && (
+              {!temDadosAtivos && (
                 <p className="text-gray-600 dark:text-gray-400 leading-relaxed mobile-description">
                   Seus dados ficam disponíveis assim que os anúncios começarem a rodar. Nossa equipe está preparando tudo nos bastidores! 🚀
                 </p>
@@ -139,8 +140,8 @@ export function MetricasMetaAds() {
         nomeCliente={cliente.nome_cliente || 'Cliente'} 
       />
 
-      {/* Card informativo para campanhas inativas com aproveitamento total das laterais */}
-      {!campanhaAtiva && (
+      {/* Card informativo APENAS quando NÃO tem dados ativos */}
+      {!temDadosAtivos && (
         <Card className="mobile-info-card info-card-primary hover-lift">
           <CardContent className="mobile-p">
             <div className="text-center mobile-content-spacing">
@@ -218,8 +219,8 @@ export function MetricasMetaAds() {
         </Card>
       )}
 
-      {/* Card de confiança para campanhas ativas com aproveitamento total */}
-      {campanhaAtiva && (
+      {/* Card de confiança APENAS quando tem dados ativos */}
+      {temDadosAtivos && (
         <Card className="mobile-info-card info-card-success hover-lift">
           <CardContent className="mobile-p">
             <div className="mobile-content-spacing">
