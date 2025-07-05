@@ -1,7 +1,6 @@
 
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
-import { ClienteProfileSection } from './ClienteProfileSection'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { TermosContratoModal } from './TermosContratoModal'
@@ -21,7 +20,9 @@ import {
   LogOut,
   Loader2,
   Menu,
-  X
+  ChevronLeft,
+  Sparkles,
+  Activity
 } from 'lucide-react'
 
 interface MobileSidebarProps {
@@ -32,7 +33,7 @@ interface MobileSidebarProps {
 
 export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSidebarProps) {
   const { termosAceitos, clienteAntigo, marcarTermosAceitos, marcarTermosRejeitados } = useTermosAceitos()
-  const { signOut } = useAuth()
+  const { signOut, user } = useAuth()
   const [termosModalOpen, setTermosModalOpen] = useState(false)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [open, setOpen] = useState(false)
@@ -135,7 +136,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
 
   const handleMenuItemClick = (tab: string) => {
     onTabChange(tab)
-    setOpen(false) // Fecha o menu automaticamente
+    setOpen(false)
   }
 
   const closeMenu = () => {
@@ -149,36 +150,58 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
           <Button 
             variant="ghost" 
             size="icon" 
-            className="md:hidden hover:bg-gray-800 transition-colors duration-200"
+            className="md:hidden mobile-optimized-card bg-gradient-card hover:shadow-card-hover hover-lift border-border/50 transition-all duration-300"
           >
-            <Menu className="h-5 w-5 text-white" />
+            <Menu className="mobile-icon-sm text-foreground" />
           </Button>
         </SheetTrigger>
         <SheetContent 
           side="left" 
-          className="w-80 p-0 bg-gray-900 border-r border-gray-800 [&>button]:hidden"
+          className="w-80 p-0 bg-gradient-card border-r border-border/50 backdrop-blur-sm shadow-professional [&>button]:hidden"
         >
           <div className="flex flex-col h-full">
-            {/* Header simplificado com apenas botão fechar */}
-            <div className="flex items-center justify-end p-3 border-b border-gray-800">
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={closeMenu}
-                className="text-gray-400 hover:text-white hover:bg-gray-800 transition-colors duration-200"
-              >
-                <X className="h-5 w-5" />
-              </Button>
+            {/* Header Profissional com Logo no Topo */}
+            <div className="mobile-optimized-card info-card-primary border-b border-border/50">
+              <div className="mobile-optimized-p">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-trafego text-white">
+                      <Activity className="h-4 w-4" />
+                    </div>
+                    <span className="font-semibold text-foreground text-sm">Dashboard Cliente</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={closeMenu}
+                    className="text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200 hover-lift"
+                  >
+                    <ChevronLeft className="h-5 w-5" />
+                  </Button>
+                </div>
+                
+                {/* Logo Centralizada e Profissional */}
+                <div className="flex justify-center w-full mb-4">
+                  <img 
+                    src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                    alt="Tráfego Por Cents" 
+                    className="h-16 w-auto object-contain hover-lift transition-transform duration-300"
+                  />
+                </div>
+                
+                {/* Email Badge Profissional */}
+                <div className="flex justify-center">
+                  <Badge className="professional-badge text-xs">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    {user?.email?.split('@')[0]}
+                  </Badge>
+                </div>
+              </div>
             </div>
 
-            {/* Profile Section com padding reduzido */}
-            <div className="p-3 border-b border-gray-800">
-              <ClienteProfileSection />
-            </div>
-
-            {/* Menu Items */}
-            <div className="flex-1 overflow-y-auto px-3 py-3">
-              <div className="space-y-1">
+            {/* Menu Items com Design das Métricas */}
+            <div className="flex-1 overflow-y-auto mobile-optimized-p mobile-optimized-spacing">
+              <div className="space-y-2">
                 {menuItems.map((item) => {
                   const Icon = item.icon
                   const isActive = activeTab === item.id
@@ -188,18 +211,24 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                       key={item.id}
                       variant="ghost"
                       className={cn(
-                        "w-full justify-start text-left h-auto py-3 px-3 text-white hover:bg-gray-800 hover:text-white transition-all duration-200 rounded-lg",
-                        isActive && "bg-blue-600 text-white hover:bg-blue-700 shadow-lg transform scale-[1.02]"
+                        "w-full justify-start text-left mobile-touch-target mobile-optimized-card hover-lift transition-all duration-300",
+                        isActive 
+                          ? "bg-gradient-trafego text-white hover:bg-gradient-trafego-hover shadow-glow-blue font-semibold transform scale-[1.02]" 
+                          : "hover:bg-accent hover:text-accent-foreground bg-gradient-card border border-border/50"
                       )}
                       onClick={() => handleMenuItemClick(item.id)}
                     >
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
-                          <Icon className={cn(
-                            "h-4 w-4 flex-shrink-0 transition-colors duration-200",
-                            isActive ? "text-white" : "text-gray-400"
-                          )} />
-                          <span className="text-sm font-medium">{item.label}</span>
+                          <div className={cn(
+                            "flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200",
+                            isActive 
+                              ? "bg-white/20 text-white" 
+                              : "bg-primary/10 text-primary"
+                          )}>
+                            <Icon className="mobile-icon-sm" />
+                          </div>
+                          <span className="mobile-description font-medium">{item.label}</span>
                         </div>
                         {item.badge && (
                           <div className="flex-shrink-0">
@@ -210,67 +239,65 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                     </Button>
                   )
                 })}
-
-                {/* Divisor */}
-                <div className="my-3 border-t border-gray-800"></div>
-
-                {/* Termos de Uso */}
-                <Button
-                  variant="ghost"
-                  className="w-full justify-start text-left h-auto py-3 px-3 bg-gradient-to-r from-red-900/30 to-red-800/30 border border-red-700/50 hover:from-red-800/40 hover:to-red-700/40 transition-all duration-200 rounded-lg"
-                  onClick={handleTermosClick}
-                >
-                  <div className="flex items-center justify-between w-full">
-                    <div className="flex items-center gap-3">
-                      <div className="relative">
-                        <AlertTriangle className="h-4 w-4 text-red-400" />
-                        <FileText className="h-3 w-3 text-red-400 absolute -bottom-1 -right-1" />
-                      </div>
-                      <span className="text-sm font-medium text-red-300">
-                        Termos de Uso
-                      </span>
-                    </div>
-                    <Badge 
-                      variant="destructive" 
-                      className="text-xs px-2 py-0 bg-red-600 text-white shadow-lg animate-pulse"
-                    >
-                      IMPORTANTE
-                    </Badge>
-                  </div>
-                </Button>
               </div>
             </div>
 
-            {/* Status da Campanha e Botão Sair com padding reduzido */}
-            <div className="p-3 border-t border-gray-800 space-y-3">
-              <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-lg p-3 border border-gray-700">
-                <div className="text-xs font-medium text-gray-300 mb-1">
-                  Status da Campanha:
-                </div>
-                <div className="text-sm font-semibold text-blue-400">
-                  {clienteInfo?.status_campanha || 'Em Configuração'}
-                </div>
-                {!clienteInfo?.status_campanha?.includes('Ativa') && (
-                  <div className="text-xs text-gray-400 mt-1">
-                    Complete os passos para ativar
+            {/* Footer Profissional */}
+            <div className="mobile-optimized-p border-t border-border/50 space-y-3 bg-gradient-card">
+              {/* Termos de Uso Modernizado */}
+              <Button
+                variant="ghost"
+                className="w-full justify-start mobile-touch-target info-card-warning hover-lift transition-all duration-300"
+                onClick={handleTermosClick}
+              >
+                <div className="flex items-center justify-between w-full">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 text-red-600">
+                      <AlertTriangle className="h-4 w-4" />
+                    </div>
+                    <span className="mobile-description font-medium text-red-700 dark:text-red-300">
+                      Termos de Uso
+                    </span>
                   </div>
-                )}
+                  <Badge variant="destructive" className="text-xs px-2 py-0 animate-pulse">
+                    IMPORTANTE
+                  </Badge>
+                </div>
+              </Button>
+
+              {/* Status da Campanha */}
+              <div className="mobile-optimized-card info-card-success">
+                <div className="mobile-optimized-p">
+                  <div className="mobile-description font-medium text-green-900 dark:text-green-100 mb-1">
+                    Status da Campanha:
+                  </div>
+                  <div className="font-semibold text-green-700 dark:text-green-300 text-sm">
+                    {clienteInfo?.status_campanha || 'Em Configuração'}
+                  </div>
+                  {!clienteInfo?.status_campanha?.includes('Ativa') && (
+                    <div className="mobile-description text-green-600 dark:text-green-400 mt-1">
+                      Complete os passos para ativar
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Botão Sair */}
+              {/* Botão Sair Modernizado */}
               <Button
                 onClick={handleSignOut}
                 disabled={isLoggingOut}
                 variant="outline"
-                className="w-full justify-start text-left h-auto py-3 px-3 hover:bg-red-600/20 hover:text-red-400 border-red-700/50 hover:border-red-600 transition-all duration-200 rounded-lg"
+                className="w-full justify-start mobile-touch-target hover:bg-destructive/10 hover:text-destructive border-destructive/30 hover:border-destructive transition-all duration-300 hover-lift"
               >
                 <div className="flex items-center gap-3 w-full">
-                  {isLoggingOut ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-red-400" />
-                  ) : (
-                    <LogOut className="h-4 w-4 text-red-400" />
-                  )}
-                  <span className="text-sm font-medium text-red-400">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10 text-destructive">
+                    {isLoggingOut ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <LogOut className="h-4 w-4" />
+                    )}
+                  </div>
+                  <span className="mobile-description font-medium text-destructive">
                     {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
                   </span>
                 </div>

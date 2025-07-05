@@ -1,5 +1,5 @@
 
-import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck } from 'lucide-react'
+import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck, Activity, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { 
@@ -16,6 +16,7 @@ import {
 import { TermosContratoModal } from './TermosContratoModal'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { cn } from '@/lib/utils'
 
 interface ClienteSidebarDynamicProps {
   activeTab: string
@@ -88,58 +89,64 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
 
   return (
     <Sidebar 
-      className={`bg-background border-r border-border h-screen transition-all duration-300 shadow-sm ${
+      className={`bg-gradient-card border-r border-border/50 backdrop-blur-sm shadow-professional h-screen transition-all duration-300 ${
         isCollapsed ? 'w-14' : 'w-80'
       }`}
       collapsible="icon"
     >
-      <SidebarHeader className={`border-b border-border transition-all duration-300 ${
-        isCollapsed ? 'p-2' : 'p-6'
+      <SidebarHeader className={`border-b border-border/50 transition-all duration-300 ${
+        isCollapsed ? 'p-2' : 'p-4'
       }`}>
-        {/* SidebarTrigger sempre visível */}
+        {/* Header com Trigger Sempre Visível */}
         <div className={`flex items-center transition-all duration-300 ${
-          isCollapsed ? 'justify-center mb-2' : 'justify-between mb-4'
+          isCollapsed ? 'justify-center mb-2' : 'justify-between mb-3'
         }`}>
-          <SidebarTrigger className="text-foreground hover:bg-accent rounded-md" />
+          <SidebarTrigger className="text-foreground hover:bg-accent rounded-lg hover-lift transition-all duration-200" />
           {!isCollapsed && (
-            <div className="text-xs text-muted-foreground">
-              Dashboard Cliente
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center w-6 h-6 rounded-md bg-gradient-trafego text-white">
+                <Activity className="h-3 w-3" />
+              </div>
+              <span className="text-xs font-medium text-muted-foreground">Dashboard Cliente</span>
             </div>
           )}
         </div>
 
-        {/* Logo Section - Adaptativo ao estado collapsed */}
+        {/* Logo Section Profissional */}
         {!isCollapsed && (
-          <div className="flex flex-col items-center space-y-4 w-full">
-            <div className="w-full flex justify-center py-3">
-              <img 
-                src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-                alt="Tráfego Por Cents" 
-                className="h-32 w-auto object-contain"
-              />
-            </div>
-            <div className="text-center w-full px-2">
-              <p className="text-xs text-muted-foreground opacity-60 truncate">
-                {user?.email}
-              </p>
+          <div className="mobile-optimized-card info-card-primary">
+            <div className="mobile-optimized-p text-center">
+              <div className="flex justify-center mb-3">
+                <img 
+                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                  alt="Tráfego Por Cents" 
+                  className="h-16 w-auto object-contain hover-lift transition-transform duration-300"
+                />
+              </div>
+              <Badge className="professional-badge text-xs">
+                <Sparkles className="h-3 w-3 mr-1" />
+                {user?.email?.split('@')[0]}
+              </Badge>
             </div>
           </div>
         )}
 
-        {/* Logo mini quando collapsed */}
+        {/* Logo Mini Collapsed */}
         {isCollapsed && (
-          <div className="flex justify-center py-2">
-            <img 
-              src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-              alt="Tráfego Por Cents" 
-              className="h-8 w-auto object-contain"
-            />
+          <div className="flex justify-center">
+            <div className="mobile-optimized-card info-card-primary p-2 hover-lift">
+              <img 
+                src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                alt="Tráfego Por Cents" 
+                className="h-8 w-auto object-contain transition-transform duration-300"
+              />
+            </div>
           </div>
         )}
       </SidebarHeader>
       
       <SidebarContent className={`py-4 transition-all duration-300 ${
-        isCollapsed ? 'px-1' : 'px-4'
+        isCollapsed ? 'px-1' : 'px-3'
       }`}>
         <SidebarMenu className="space-y-2">
           {menuItems.map((item) => {
@@ -151,14 +158,25 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
                 <SidebarMenuButton
                   onClick={() => onTabChange(item.id)}
                   isActive={isActive}
-                  className={`w-full rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground data-[active=true]:bg-primary data-[active=true]:text-primary-foreground transition-all duration-200 ${
+                  className={cn(
+                    "w-full rounded-lg transition-all duration-300 hover-lift mobile-touch-target",
+                    isActive 
+                      ? "bg-gradient-trafego text-white hover:bg-gradient-trafego-hover shadow-glow-blue font-semibold" 
+                      : "mobile-optimized-card hover:bg-accent hover:text-accent-foreground border border-border/50",
                     isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
-                  }`}
+                  )}
                   title={isCollapsed ? item.label : undefined}
                 >
-                  <Icon className={`h-4 w-4 flex-shrink-0 ${isCollapsed ? '' : 'mr-3'}`} />
+                  <div className={cn(
+                    "flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200",
+                    isActive 
+                      ? "bg-white/20 text-white" 
+                      : "bg-primary/10 text-primary"
+                  )}>
+                    <Icon className="h-4 w-4 flex-shrink-0" />
+                  </div>
                   {!isCollapsed && (
-                    <span className="text-sm font-medium">{item.label}</span>
+                    <span className="text-sm font-medium ml-3">{item.label}</span>
                   )}
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -167,25 +185,28 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         </SidebarMenu>
       </SidebarContent>
       
-      <SidebarFooter className={`border-t border-border space-y-3 transition-all duration-300 ${
-        isCollapsed ? 'p-2 space-y-2' : 'p-4'
+      <SidebarFooter className={`border-t border-border/50 space-y-3 transition-all duration-300 ${
+        isCollapsed ? 'p-2 space-y-2' : 'p-3'
       }`}>
-        {/* Termos de Uso */}
+        {/* Termos de Uso Modernizado */}
         <Button
           onClick={() => setTermosModalOpen(true)}
-          className={`w-full rounded-lg bg-red-50 hover:bg-red-100 dark:bg-red-950/20 dark:hover:bg-red-900/30 border border-red-200 dark:border-red-800/30 h-auto transition-all duration-200 ${
+          className={cn(
+            "w-full rounded-lg info-card-warning hover-lift mobile-touch-target transition-all duration-300",
             isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
-          }`}
+          )}
           variant="outline"
           title={isCollapsed ? 'Termos de Uso' : undefined}
         >
-          <FileCheck className={`h-4 w-4 text-red-600 dark:text-red-400 ${isCollapsed ? '' : 'mr-3'}`} />
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 text-red-600">
+            <FileCheck className="h-4 w-4" />
+          </div>
           {!isCollapsed && (
-            <div className="flex items-center justify-between w-full">
+            <div className="flex items-center justify-between w-full ml-3">
               <span className="text-sm font-medium text-red-700 dark:text-red-300">
                 Termos de Uso
               </span>
-              <Badge variant="destructive" className="text-xs px-2 py-0">
+              <Badge variant="destructive" className="text-xs px-2 py-0 animate-pulse">
                 IMPORTANTE
               </Badge>
             </div>
@@ -195,9 +216,10 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         {/* WhatsApp Suporte */}
         <Button
           asChild
-          className={`w-full rounded-lg text-foreground hover:bg-accent hover:text-accent-foreground h-auto transition-all duration-200 ${
+          className={cn(
+            "w-full rounded-lg mobile-optimized-card hover:bg-accent hover:text-accent-foreground mobile-touch-target hover-lift transition-all duration-300",
             isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
-          }`}
+          )}
           variant="outline"
         >
           <a 
@@ -206,9 +228,11 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
             rel="noopener noreferrer"
             title={isCollapsed ? 'Precisa de ajuda?' : undefined}
           >
-            <MessageCircle className={`h-4 w-4 ${isCollapsed ? '' : 'mr-3'}`} />
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 text-green-600">
+              <MessageCircle className="h-4 w-4" />
+            </div>
             {!isCollapsed && (
-              <span className="text-sm font-medium">Precisa de ajuda?</span>
+              <span className="text-sm font-medium ml-3">Precisa de ajuda?</span>
             )}
           </a>
         </Button>
@@ -217,15 +241,22 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
         <Button
           onClick={handleLogout}
           disabled={isLoggingOut}
-          className={`w-full rounded-lg hover:bg-destructive hover:text-destructive-foreground border border-destructive/20 hover:border-destructive h-auto transition-all duration-200 ${
+          className={cn(
+            "w-full rounded-lg hover:bg-destructive/10 hover:text-destructive border-destructive/30 hover:border-destructive mobile-touch-target hover-lift transition-all duration-300",
             isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
-          }`}
+          )}
           variant="outline"
           title={isCollapsed ? 'Sair do Sistema' : undefined}
         >
-          <LogOut className={`h-4 w-4 text-destructive ${isCollapsed ? '' : 'mr-3'}`} />
+          <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10 text-destructive">
+            {isLoggingOut ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <LogOut className="h-4 w-4" />
+            )}
+          </div>
           {!isCollapsed && (
-            <span className="text-sm font-medium text-destructive">
+            <span className="text-sm font-medium text-destructive ml-3">
               {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
             </span>
           )}
