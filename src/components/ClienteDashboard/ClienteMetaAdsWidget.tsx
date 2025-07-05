@@ -1,10 +1,10 @@
-
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
 import { formatCurrency } from '@/lib/utils'
+import { DateFilterWidget } from './DateFilterWidget'
 import { 
   BarChart3, 
   Eye, 
@@ -19,7 +19,10 @@ import {
   WifiOff,
   Users,
   Target,
-  ShoppingCart
+  ShoppingCart,
+  Shield,
+  Heart,
+  Clock
 } from 'lucide-react'
 
 interface ClienteMetaAdsWidgetProps {
@@ -112,14 +115,14 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     }
   }, [isConfigured])
 
-  const handleLoadMetrics = async (period: string = currentPeriod) => {
-    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId })
+  const handleLoadMetrics = async (period: string = currentPeriod, startDate?: string, endDate?: string) => {
+    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId, startDate, endDate })
     
     setLoadingData(true)
     setLastFetchInfo('')
     setFallbackMessage('')
     
-    const result = await loadMetricsWithPeriod(period)
+    const result = await loadMetricsWithPeriod(period, startDate, endDate)
     
     console.log('📊 [WIDGET] Resultado do carregamento:', result)
     
@@ -139,10 +142,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     return result
   }
 
-  const handlePeriodSelect = async (period: string) => {
-    console.log('📅 [WIDGET] Selecionando período:', period)
+  const handlePeriodChange = async (period: string, startDate?: string, endDate?: string) => {
+    console.log('📅 [WIDGET] Mudando período:', { period, startDate, endDate })
     setCurrentPeriod(period)
-    await handleLoadMetrics(period)
+    await handleLoadMetrics(period, startDate, endDate)
   }
 
   const handleRefreshConfig = async () => {
@@ -186,7 +189,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
               Relatório de Anúncios
-              {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
+              {connectionStatus === 'offline' && <WifiOff className="w-4 w-4 text-red-600" />}
             </div>
           </CardTitle>
         </CardHeader>
@@ -243,87 +246,95 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const estimativaCustoPorVenda = custoPorVisitante * 50 // Assumindo 2% de conversão para venda
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <BarChart3 className="w-5 h-5 text-blue-600" />
-            Relatório de Anúncios
-            <CheckCircle className="w-4 h-4 text-green-600" />
-            {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
-          </div>
-          <div className="flex gap-1">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => handleLoadMetrics()}
-              disabled={loadingData}
-            >
-              {loadingData ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
-              ) : (
-                <RefreshCw className="w-4 h-4" />
-              )}
-            </Button>
-          </div>
-        </CardTitle>
-        {lastFetchInfo && (
-          <p className="text-xs text-muted-foreground">{lastFetchInfo}</p>
-        )}
-      </CardHeader>
-      <CardContent>
-        {/* Status de conexão */}
-        {connectionStatus === 'offline' && (
-          <Alert className="mb-4 border-red-200 bg-red-50">
-            <WifiOff className="h-4 w-4 text-red-600" />
-            <AlertDescription className="text-red-800">
-              Sem conexão com a internet. Mostrando dados salvos localmente.
-            </AlertDescription>
-          </Alert>
-        )}
+    <div className="space-y-6">
+      {/* Filtro de Data no topo */}
+      <DateFilterWidget
+        currentPeriod={currentPeriod}
+        onPeriodChange={handlePeriodChange}
+        loading={loadingData}
+      />
 
-        {/* Mensagem de fallback */}
-        {fallbackMessage && (
-          <Alert className="mb-4 border-blue-200 bg-blue-50">
-            <Info className="h-4 w-4 text-blue-600" />
-            <AlertDescription className="text-blue-800">
-              {fallbackMessage}
-            </AlertDescription>
-          </Alert>
-        )}
+      <Card className="w-full">
+        <CardHeader>
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="w-5 h-5 text-blue-600" />
+              Dados dos Anúncios
+              <CheckCircle className="w-4 h-4 text-green-600" />
+              {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
+            </div>
+            <div className="flex gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => handleLoadMetrics()}
+                disabled={loadingData}
+              >
+                {loadingData ? (
+                  <RefreshCw className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </CardTitle>
+          {lastFetchInfo && (
+            <p className="text-xs text-muted-foreground">{lastFetchInfo}</p>
+          )}
+        </CardHeader>
+        <CardContent>
+          {/* Status de conexão */}
+          {connectionStatus === 'offline' && (
+            <Alert className="mb-4 border-red-200 bg-red-50">
+              <WifiOff className="h-4 w-4 text-red-600" />
+              <AlertDescription className="text-red-800">
+                Sem conexão com a internet. Mostrando dados salvos localmente.
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {/* Erro com sugestões */}
-        {lastError && !loadingData && displayData.length === 0 && (
-          <Alert className="mb-4 border-orange-200 bg-orange-50">
-            <AlertCircle className="h-4 w-4 text-orange-600" />
-            <AlertDescription className="text-orange-800">
-              <div className="space-y-3">
-                <p>{lastError}</p>
-                <div className="flex gap-2 flex-wrap">
-                  <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('yesterday')}>
-                    Tentar Ontem
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('last_7_days')}>
-                    Últimos 7 dias
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics()}>
-                    <RefreshCw className="w-4 h-4 mr-1" />
-                    Tentar Novamente
-                  </Button>
+          {/* Mensagem de fallback */}
+          {fallbackMessage && (
+            <Alert className="mb-4 border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                {fallbackMessage}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Erro com sugestões */}
+          {lastError && !loadingData && displayData.length === 0 && (
+            <Alert className="mb-4 border-orange-200 bg-orange-50">
+              <AlertCircle className="h-4 w-4 text-orange-600" />
+              <AlertDescription className="text-orange-800">
+                <div className="space-y-3">
+                  <p>{lastError}</p>
+                  <div className="flex gap-2 flex-wrap">
+                    <Button size="sm" variant="outline" onClick={() => handlePeriodChange('yesterday')}>
+                      Tentar Ontem
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handlePeriodChange('last_7_days')}>
+                      Últimos 7 dias
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => handleLoadMetrics()}>
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      Tentar Novamente
+                    </Button>
+                  </div>
                 </div>
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
+              </AlertDescription>
+            </Alert>
+          )}
 
-        {displayData.length > 0 ? (
-          <div className="space-y-4">
-            {/* Indicador de dados do cache */}
-            {cachedMetrics && insights.length === 0 && (
-              <div className="text-xs text-muted-foreground text-center py-2 bg-blue-50 rounded border">
-                📦 Dados salvos localmente • {new Date(cachedMetrics.timestamp).toLocaleString('pt-BR')}
-              </div>
-            )}
+          {displayData.length > 0 ? (
+            <div className="space-y-6">
+              {/* Indicador de dados do cache */}
+              {cachedMetrics && insights.length === 0 && (
+                <div className="text-xs text-muted-foreground text-center py-2 bg-blue-50 rounded border">
+                  📦 Dados salvos localmente • {new Date(cachedMetrics.timestamp).toLocaleString('pt-BR')}
+                </div>
+              )}
 
             {/* Métricas Principais em linguagem simples */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -394,80 +405,69 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               </div>
             </div>
 
-            {/* Contexto educativo */}
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
-                <div className="space-y-2">
-                  <p className="font-medium">📈 Como interpretar seus resultados:</p>
-                  <ul className="text-sm space-y-1 ml-4">
-                    <li>• <strong>Pessoas Alcançadas:</strong> Mais pessoas = maior visibilidade da sua marca</li>
-                    <li>• <strong>Taxa de Interesse:</strong> Acima de 1% é considerado bom</li>
-                    <li>• <strong>Custo por Visitante:</strong> Quanto menor, melhor o aproveitamento</li>
-                    <li>• <strong>Estimativas:</strong> Valores aproximados baseados em médias do mercado</li>
-                  </ul>
-                </div>
-              </AlertDescription>
-            </Alert>
-
-            {/* Seletor de período */}
-            <div className="flex gap-2 justify-center flex-wrap pt-4 border-t">
-              <Button 
-                size="sm" 
-                variant={currentPeriod === 'today' ? 'default' : 'outline'}
-                onClick={() => handlePeriodSelect('today')}
-                disabled={loadingData}
-              >
-                Hoje
-              </Button>
-              <Button 
-                size="sm" 
-                variant={currentPeriod === 'yesterday' ? 'default' : 'outline'}
-                onClick={() => handlePeriodSelect('yesterday')}
-                disabled={loadingData}
-              >
-                Ontem
-              </Button>
-              <Button 
-                size="sm" 
-                variant={currentPeriod === 'last_7_days' ? 'default' : 'outline'}
-                onClick={() => handlePeriodSelect('last_7_days')}
-                disabled={loadingData}
-              >
-                7 dias
-              </Button>
+              {/* Explicações mais tranquilizadoras */}
+              <Alert className="border-green-200 bg-green-50">
+                <Shield className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  <div className="space-y-3">
+                    <p className="font-medium flex items-center gap-2">
+                      <Heart className="h-4 w-4 text-green-600" />
+                      Como interpretar estes números com tranquilidade:
+                    </p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                      <div className="space-y-2">
+                        <p>💙 <strong>Pessoas Alcançadas:</strong> Sua marca está sendo vista por milhares de pessoas interessadas!</p>
+                        <p>👆 <strong>Visitantes:</strong> Pessoas reais estão clicando porque se interessaram pelo seu produto!</p>
+                        <p>🎯 <strong>Taxa de Interesse:</strong> Estamos ajustando continuamente para atrair o público certo!</p>
+                      </div>
+                      <div className="space-y-2">
+                        <p>💰 <strong>Investimento:</strong> Cada real está trabalhando para gerar visibilidade e clientes!</p>
+                        <p>📞 <strong>Custo por Conversa:</strong> Estimativa de quanto custa gerar cada contato qualificado!</p>
+                        <p>🛒 <strong>Custo por Venda:</strong> Projeção baseada em dados do mercado - nossa equipe otimiza isso!</p>
+                      </div>
+                    </div>
+                    <div className="bg-green-100 p-3 rounded flex items-start gap-2">
+                      <Clock className="h-4 w-4 text-green-600 mt-0.5 flex-shrink-0" />
+                      <p className="text-sm">
+                        <strong>🛡️ Fique tranquilo:</strong> Nossa equipe monitora estes dados 24/7 e faz ajustes automáticos. 
+                        Você não precisa se preocupar com os números - eles são apenas para sua transparência e confiança no nosso trabalho!
+                      </p>
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             </div>
-          </div>
-        ) : !loadingData && !lastError ? (
-          <div className="text-center py-4">
-            <BarChart3 className="w-8 h-8 mx-auto text-gray-400 mb-2" />
-            <p className="text-sm text-gray-500 mb-3">
-              Carregue os dados dos seus anúncios
-            </p>
-            <div className="flex gap-2 justify-center flex-wrap">
-              <Button size="sm" onClick={() => handlePeriodSelect('today')}>
-                Hoje
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('yesterday')}>
-                Ontem
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('last_7_days')}>
-                7 dias
-              </Button>
+          ) : !loadingData && !lastError ? (
+            <div className="text-center py-8">
+              <BarChart3 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
+              <p className="text-lg font-medium text-gray-600 mb-2">
+                Pronto para carregar seus dados! 📊
+              </p>
+              <p className="text-sm text-gray-500 mb-4">
+                Selecione um período acima para ver como seus anúncios estão performando
+              </p>
+              <div className="bg-blue-50 p-4 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  💡 <strong>Dica:</strong> Comece com "Ontem" ou "Últimos 7 dias" para ver dados mais consistentes!
+                </p>
+              </div>
             </div>
-          </div>
-        ) : null}
+          ) : null}
 
-        {/* Loading state */}
-        {loadingData && (
-          <div className="text-center py-4">
-            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
-            <p className="text-sm text-gray-500">
-              Carregando dados dos anúncios...
-            </p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+          {/* Loading state */}
+          {loadingData && (
+            <div className="text-center py-8">
+              <RefreshCw className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
+              <p className="text-lg font-medium text-gray-600 mb-2">
+                Buscando seus dados...
+              </p>
+              <p className="text-sm text-gray-500">
+                Nossa equipe está sempre atualizando estas informações para você! ⚡
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   )
 }

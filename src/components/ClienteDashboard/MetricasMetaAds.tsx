@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ClienteMetaAdsWidget } from './ClienteMetaAdsWidget'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useAuth } from '@/hooks/useAuth'
-import { BarChart3, AlertCircle, CheckCircle, Clock, TrendingUp, Target } from 'lucide-react'
+import { BarChart3, AlertCircle, CheckCircle, Clock, TrendingUp, Target, Shield, Heart } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 
 export function MetricasMetaAds() {
@@ -42,7 +42,7 @@ export function MetricasMetaAds() {
         <p className="text-muted-foreground">Acompanhe como seus anúncios estão performando e gerando resultados</p>
       </div>
 
-      {/* Status da Campanha com linguagem mais simples */}
+      {/* Status da Campanha com linguagem mais tranquilizadora */}
       <Card className="w-full">
         <CardContent className="pt-6">
           <div className="flex items-center gap-3">
@@ -71,7 +71,7 @@ export function MetricasMetaAds() {
         nomeCliente={cliente.nome_cliente || 'Cliente'} 
       />
 
-      {/* Informação educativa para clientes novos */}
+      {/* Informação educativa e tranquilizadora para clientes novos */}
       {!campanhaAtiva && (
         <Card className="border-blue-200 bg-gradient-to-r from-blue-50 to-cyan-50">
           <CardContent className="pt-6">
@@ -96,10 +96,41 @@ export function MetricasMetaAds() {
                   </div>
                 </div>
                 
-                <div className="bg-blue-100 p-3 rounded">
-                  <p className="font-medium">💡 Dica importante:</p>
-                  <p>Estes relatórios são atualizados automaticamente e te ajudam a entender se seus anúncios estão trazendo bons resultados para seu negócio!</p>
+                <div className="bg-blue-100 p-3 rounded flex items-start gap-2">
+                  <Heart className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-medium">💙 Fique tranquilo!</p>
+                    <p>Nossa equipe cuida de tudo nos bastidores. Estes relatórios são para você se sentir seguro e ver o progresso do nosso trabalho em tempo real. Não precisa se preocupar - nós monitoramos e otimizamos constantemente!</p>
+                  </div>
                 </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Card de tranquilização para campanhas ativas */}
+      {campanhaAtiva && (
+        <Card className="border-green-200 bg-gradient-to-r from-green-50 to-emerald-50">
+          <CardContent className="pt-6">
+            <div className="space-y-3">
+              <div className="flex items-center gap-2">
+                <Shield className="h-5 w-5 text-green-600" />
+                <h3 className="font-semibold text-green-900">🛡️ Sua campanha está sendo monitorada</h3>
+              </div>
+              
+              <div className="text-sm text-green-800 space-y-2">
+                <p>✅ <strong>Equipe especializada</strong> analisando seus resultados diariamente</p>
+                <p>🔄 <strong>Otimizações automáticas</strong> para melhorar performance</p>
+                <p>📊 <strong>Ajustes inteligentes</strong> baseados nos dados em tempo real</p>
+                <p>💬 <strong>Suporte dedicado</strong> sempre disponível para você</p>
+              </div>
+              
+              <div className="bg-green-100 p-3 rounded">
+                <p className="text-sm text-green-800">
+                  <strong>🌟 Lembre-se:</strong> Estes dados são para sua tranquilidade e transparência. 
+                  Nossa equipe já está trabalhando com base neles para maximizar seus resultados!
+                </p>
               </div>
             </div>
           </CardContent>
