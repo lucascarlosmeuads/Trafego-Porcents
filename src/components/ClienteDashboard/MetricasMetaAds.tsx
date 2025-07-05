@@ -49,12 +49,16 @@ export function MetricasMetaAds() {
     )
   }
 
-  // Lógica melhorada para determinar se a campanha está ativa
-  // Agora considera tanto o status da campanha quanto se há dados do Meta Ads disponíveis
-  const campanhaAtiva = (cliente.status_campanha?.includes('Ativa') || 
-                        cliente.status_campanha?.includes('Otimização') ||
-                        cliente.status_campanha?.includes('Rodando')) ||
-                       (isConfigured && insights.length > 0) // Se tem config e dados, considera ativa
+  // Lógica corrigida para determinar se a campanha está ativa
+  // PRIORIDADE: Se há dados de insights (métricas reais), considera ativa
+  // FALLBACK: Verifica status da campanha
+  const temDadosReais = isConfigured && insights.length > 0
+  const statusCampanhaAtiva = cliente.status_campanha?.includes('Ativa') || 
+                              cliente.status_campanha?.includes('Otimização') ||
+                              cliente.status_campanha?.includes('Rodando')
+  
+  // Se tem dados reais das métricas, sempre considera ativa
+  const campanhaAtiva = temDadosReais || statusCampanhaAtiva
 
   return (
     <div className="mobile-container mobile-content-spacing animate-fade-in-up">
@@ -116,7 +120,7 @@ export function MetricasMetaAds() {
                     : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
                 }`}>
                   <Sparkles className="mobile-icon-sm mr-1" />
-                  {campanhaAtiva ? 'Campanha Ativa' : (cliente.status_campanha || 'Em preparação')}
+                  {temDadosReais ? 'Campanha com Dados Ativos' : (campanhaAtiva ? 'Campanha Ativa' : (cliente.status_campanha || 'Em preparação'))}
                 </Badge>
               </div>
               {!campanhaAtiva && (
