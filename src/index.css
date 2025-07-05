@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 @tailwind base;
@@ -355,6 +354,176 @@
   /* Animações de entrada */
   .animate-fade-in-up {
     animation: fade-in 0.5s ease-out, slide-up 0.3s ease-out;
+  }
+  
+  /* Mobile-optimized typography */
+  .mobile-title {
+    @apply text-xl md:text-3xl font-bold font-display tracking-tight;
+  }
+  
+  .mobile-subtitle {
+    @apply text-sm md:text-base font-medium;
+  }
+  
+  .mobile-section-title {
+    @apply text-base md:text-lg font-semibold font-display;
+  }
+
+  /* Mobile-optimized metrics grid */
+  .mobile-metrics-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6;
+  }
+
+  /* Mobile-optimized metric cards */
+  .mobile-metric-card {
+    @apply relative overflow-hidden rounded-xl border border-border/50 bg-gradient-card backdrop-blur-sm 
+           transition-all duration-300 hover:shadow-metric-hover hover:border-border 
+           p-4 md:p-6 space-y-3 md:space-y-4;
+  }
+
+  /* Mobile-optimized buttons */
+  .mobile-period-button {
+    @apply relative overflow-hidden rounded-lg px-3 py-2 md:px-4 md:py-2.5 
+           text-xs md:text-sm font-medium transition-all duration-200 
+           border border-border/50 bg-gradient-card hover:shadow-card-hover
+           min-h-[44px] flex items-center justify-center;
+  }
+
+  /* Mobile-optimized info cards */
+  .mobile-info-card {
+    @apply relative overflow-hidden rounded-xl bg-gradient-card border border-border/50 
+           backdrop-blur-sm shadow-professional p-4 md:p-6 space-y-4 md:space-y-6;
+  }
+
+  /* Mobile-optimized header spacing */
+  .mobile-header-section {
+    @apply space-y-3 md:space-y-6 text-center;
+  }
+
+  /* Mobile-optimized badge container */
+  .mobile-badge-container {
+    @apply flex flex-wrap items-center justify-center gap-2 md:gap-3;
+  }
+
+  /* Mobile-optimized date filter grid */
+  .mobile-date-grid {
+    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3;
+  }
+
+  /* Mobile-optimized content spacing */
+  .mobile-content-spacing {
+    @apply space-y-4 md:space-y-8;
+  }
+
+  /* Mobile-optimized form grid */
+  .mobile-form-grid {
+    @apply grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4;
+  }
+
+  /* Mobile touch optimization */
+  .mobile-touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+
+  /* Mobile icon sizes */
+  .mobile-icon-sm {
+    @apply w-4 h-4 md:w-5 md:h-5;
+  }
+  
+  .mobile-icon-md {
+    @apply w-6 h-6 md:w-8 md:w-8;
+  }
+  
+  .mobile-icon-lg {
+    @apply w-8 h-8 md:w-12 md:h-12;
+  }
+
+  /* Mobile number display */
+  .mobile-metric-number {
+    @apply text-2xl md:text-3xl lg:text-4xl font-bold font-display tracking-tight;
+  }
+
+  /* Mobile description text */
+  .mobile-description {
+    @apply text-xs md:text-sm leading-relaxed;
+  }
+
+  /* Mobile status cards */
+  .mobile-status-card {
+    @apply flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4;
+  }
+
+  /* Mobile grid layouts */
+  .mobile-grid-1-2 {
+    @apply grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6;
+  }
+  
+  .mobile-grid-1-2-4 {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4;
+  }
+
+  /* Mobile padding utilities */
+  .mobile-p {
+    @apply p-4 md:p-6;
+  }
+  
+  .mobile-px {
+    @apply px-4 md:px-6;
+  }
+  
+  .mobile-py {
+    @apply py-4 md:py-6;
+  }
+
+  /* Mobile margin utilities */
+  .mobile-mb {
+    @apply mb-4 md:mb-6;
+  }
+  
+  .mobile-mt {
+    @apply mt-4 md:mt-6;
+  }
+
+  /* Hide on mobile utility */
+  .mobile-hide {
+    @apply hidden md:block;
+  }
+  
+  /* Show only on mobile */
+  .mobile-only {
+    @apply block md:hidden;
+  }
+
+  /* Mobile text adjustments */
+  .mobile-text-balance {
+    text-wrap: balance;
+  }
+
+  @media (max-width: 768px) {
+    /* Additional mobile-specific styles */
+    .mobile-container {
+      @apply px-4 max-w-full;
+    }
+    
+    .mobile-scroll-container {
+      @apply overflow-x-auto pb-4;
+    }
+    
+    /* Ensure proper touch targets */
+    button, 
+    [role="button"],
+    input[type="submit"],
+    input[type="button"],
+    .mobile-touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+    
+    /* Better form inputs on mobile */
+    input[type="date"] {
+      min-height: 44px;
+      font-size: 16px;
+    }
   }
 }
 
