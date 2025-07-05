@@ -15,11 +15,12 @@ import {
   Info,
   AlertCircle,
   MessageSquare,
-  Bug,
   CheckCircle,
-  WifiOff
+  WifiOff,
+  Users,
+  Target,
+  ShoppingCart
 } from 'lucide-react'
-import { getTodayBrazil, getYesterdayBrazil } from '@/utils/timezoneUtils'
 
 interface ClienteMetaAdsWidgetProps {
   clienteId: string
@@ -46,9 +47,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const [loadingData, setLoadingData] = useState(false)
   const [lastFetchInfo, setLastFetchInfo] = useState('')
   const [fallbackMessage, setFallbackMessage] = useState('')
-  const [showDiagnostic, setShowDiagnostic] = useState(false)
   const [currentPeriod, setCurrentPeriod] = useState('today')
-  const [retryCount, setRetryCount] = useState(0)
   const [connectionStatus, setConnectionStatus] = useState<'online' | 'offline' | 'checking'>('online')
   const [cachedMetrics, setCachedMetrics] = useState<CachedMetrics | null>(null)
 
@@ -106,64 +105,17 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     loadFromCache()
   }, [clienteId])
 
-  // Auto-carregar métricas com retry
+  // Auto-carregar métricas apenas uma vez quando estiver configurado
   useEffect(() => {
-    if (isConfigured && insights.length === 0 && !cachedMetrics) {
-      handleLoadMetricsWithRetry()
+    if (isConfigured && insights.length === 0 && !cachedMetrics && !loadingData) {
+      handleLoadMetrics()
     }
   }, [isConfigured])
 
-  const handleLoadMetricsWithRetry = async (period: string = currentPeriod, maxRetries: number = 3) => {
-    console.log('🔄 [RETRY] Iniciando carregamento com retry:', { period, tentativa: retryCount + 1 })
+  const handleLoadMetrics = async (period: string = currentPeriod) => {
+    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { period, clienteId })
     
-    for (let attempt = 0; attempt <= maxRetries; attempt++) {
-      try {
-        setLoadingData(true)
-        setConnectionStatus('checking')
-        
-        const result = await handleLoadMetrics(period, false)
-        
-        if (result && (result.success || insights.length > 0)) {
-          setRetryCount(0)
-          setConnectionStatus('online')
-          return result
-        }
-        
-        if (attempt < maxRetries) {
-          console.log(`⏳ [RETRY] Tentativa ${attempt + 1} falhou, tentando novamente em 2s...`)
-          await new Promise(resolve => setTimeout(resolve, 2000))
-        }
-        
-      } catch (error) {
-        console.error(`❌ [RETRY] Erro na tentativa ${attempt + 1}:`, error)
-        if (attempt === maxRetries) {
-          setConnectionStatus('offline')
-        }
-      }
-    }
-    
-    setLoadingData(false)
-    setRetryCount(prev => prev + 1)
-    
-    // Se todas as tentativas falharam, mostrar dados do cache se houver
-    if (cachedMetrics) {
-      setFallbackMessage('Usando dados salvos (conexão instável)')
-      console.log('📦 [FALLBACK] Usando dados do cache após falha')
-    }
-  }
-
-  const handleLoadMetrics = async (period: string = currentPeriod, showLoader: boolean = true) => {
-    console.log('📊 [WIDGET] Iniciando carregamento de métricas:', { 
-      period, 
-      clienteId,
-      showLoader,
-      todayBrazil: getTodayBrazil(),
-      yesterdayBrazil: getYesterdayBrazil()
-    })
-    
-    if (showLoader) {
-      setLoadingData(true)
-    }
+    setLoadingData(true)
     setLastFetchInfo('')
     setFallbackMessage('')
     
@@ -176,7 +128,6 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
       if (result.fallback_used) {
         setFallbackMessage(result.message || '')
       }
-      setRetryCount(0)
     } else {
       setLastFetchInfo('❌ Falha no carregamento')
       if (result.suggestions?.length > 0) {
@@ -184,16 +135,14 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
       }
     }
     
-    if (showLoader) {
-      setLoadingData(false)
-    }
+    setLoadingData(false)
     return result
   }
 
   const handlePeriodSelect = async (period: string) => {
     console.log('📅 [WIDGET] Selecionando período:', period)
     setCurrentPeriod(period)
-    await handleLoadMetricsWithRetry(period, 2)
+    await handleLoadMetrics(period)
   }
 
   const handleRefreshConfig = async () => {
@@ -202,138 +151,9 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     await refreshConfig()
     setTimeout(() => {
       if (isConfigured) {
-        handleLoadMetricsWithRetry()
+        handleLoadMetrics()
       }
     }, 1000)
-  }
-
-  const handleClearCache = () => {
-    localStorage.removeItem(`metrics_cache_${clienteId}`)
-    setCachedMetrics(null)
-    setLastFetchInfo('')
-    setFallbackMessage('')
-    console.log('🗑️ [CACHE] Cache local limpo')
-  }
-
-  // Painel de diagnóstico melhorado
-  if (showDiagnostic) {
-    return (
-      <Card className="w-full border-orange-200">
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Bug className="w-5 h-5 text-orange-600" />
-              Diagnóstico Meta Ads
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setShowDiagnostic(false)}
-            >
-              Fechar
-            </Button>
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-3 text-sm">
-            <div><strong>Cliente ID:</strong> {diagnosticInfo.clienteId}</div>
-            <div><strong>Email Usuário:</strong> {diagnosticInfo.userEmail}</div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Status Conexão:</strong> 
-              {connectionStatus === 'online' && <><CheckCircle className="w-4 h-4 text-green-600" /> Online</>}
-              {connectionStatus === 'offline' && <><WifiOff className="w-4 h-4 text-red-600" /> Offline</>}
-              {connectionStatus === 'checking' && <><RefreshCw className="w-4 h-4 animate-spin text-blue-600" /> Verificando</>}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Config Carregada:</strong> 
-              {diagnosticInfo.configLoaded ? (
-                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim</>
-              ) : (
-                <><AlertCircle className="w-4 h-4 text-red-600" /> Não</>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Configurado:</strong> 
-              {isConfigured ? (
-                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim</>
-              ) : (
-                <><AlertCircle className="w-4 h-4 text-red-600" /> Não</>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Loading:</strong> 
-              {loading ? (
-                <><RefreshCw className="w-4 h-4 animate-spin text-blue-600" /> Sim</>
-              ) : (
-                <><CheckCircle className="w-4 h-4 text-green-600" /> Não</>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Tem Insights:</strong> 
-              {diagnosticInfo.hasInsights ? (
-                <><CheckCircle className="w-4 h-4 text-green-600" /> Sim ({insights.length})</>
-              ) : (
-                <><AlertCircle className="w-4 h-4 text-yellow-600" /> Não</>
-              )}
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <strong>Cache Local:</strong> 
-              {cachedMetrics ? (
-                <><CheckCircle className="w-4 h-4 text-green-600" /> Disponível ({cachedMetrics.data.length} registros)</>
-              ) : (
-                <><AlertCircle className="w-4 h-4 text-yellow-600" /> Vazio</>
-              )}
-            </div>
-            
-            <div><strong>Tentativas Retry:</strong> {retryCount}</div>
-            <div><strong>Último Erro:</strong> {lastError || 'Nenhum'}</div>
-            <div><strong>Última Info:</strong> {lastFetchInfo || 'Nenhuma'}</div>
-            <div><strong>Última Check:</strong> {diagnosticInfo.lastConfigCheck}</div>
-            
-            <div className="flex gap-2 mt-4 flex-wrap">
-              <Button 
-                onClick={handleRefreshConfig} 
-                disabled={loading}
-                size="sm"
-                variant="outline"
-              >
-                {loading ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
-                Refresh Config
-              </Button>
-              <Button 
-                onClick={() => handleLoadMetricsWithRetry('today', 1)} 
-                disabled={loadingData || !isConfigured}
-                size="sm"
-              >
-                {loadingData ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
-                Testar Hoje
-              </Button>
-              <Button 
-                onClick={() => handleLoadMetricsWithRetry('yesterday', 1)} 
-                disabled={loadingData || !isConfigured}
-                size="sm"
-                variant="outline"
-              >
-                Testar Ontem
-              </Button>
-              <Button 
-                onClick={handleClearCache}
-                size="sm"
-                variant="destructive"
-              >
-                Limpar Cache
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    )
   }
 
   // Loading state
@@ -343,7 +163,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
-            Meta Ads
+            Relatório de Anúncios
             {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
           </CardTitle>
         </CardHeader>
@@ -365,17 +185,9 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           <CardTitle className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BarChart3 className="w-5 h-5 text-blue-600" />
-              Meta Ads
+              Relatório de Anúncios
               {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDiagnostic(true)}
-              className="text-xs"
-            >
-              <Bug className="w-3 h-3" />
-            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -383,10 +195,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             <MessageSquare className="h-4 w-4 text-blue-600" />
             <AlertDescription className="text-blue-800">
               <div className="space-y-3">
-                <p className="font-medium">Meta Ads não configurado</p>
+                <p className="font-medium">📊 Relatório não configurado</p>
                 <p className="text-sm">
-                  Entre em contato com seu gestor para configurar a integração do Meta Ads 
-                  e começar a acompanhar suas métricas em tempo real.
+                  Entre em contato com seu gestor para configurar os relatórios de anúncios 
+                  e começar a acompanhar seus resultados em tempo real.
                 </p>
                 <div className="flex gap-2">
                   <Button 
@@ -398,16 +210,6 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Verificar Novamente
                   </Button>
-                  {retryCount > 0 && (
-                    <Button 
-                      size="sm" 
-                      variant="ghost" 
-                      onClick={() => setShowDiagnostic(true)}
-                    >
-                      <Bug className="w-4 h-4 mr-2" />
-                      Diagnóstico
-                    </Button>
-                  )}
                 </div>
               </div>
             </AlertDescription>
@@ -420,20 +222,25 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   // Usar dados do cache se insights estiver vazio
   const displayData = insights.length > 0 ? insights : (cachedMetrics?.data || [])
 
-  // Calcular métricas totais
+  // Calcular métricas totais com nomes mais simples
   const totalMetrics = displayData.reduce((acc, insight) => ({
-    impressions: acc.impressions + parseInt(insight.impressions || '0'),
-    clicks: acc.clicks + parseInt(insight.clicks || '0'),
-    spend: acc.spend + parseFloat(insight.spend || '0'),
-    ctr: acc.ctr + parseFloat(insight.ctr || '0')
+    pessoasAlcancadas: acc.pessoasAlcancadas + parseInt(insight.impressions || '0'),
+    visitantesAnuncio: acc.visitantesAnuncio + parseInt(insight.clicks || '0'),
+    investimento: acc.investimento + parseFloat(insight.spend || '0'),
+    taxaInteresse: acc.taxaInteresse + parseFloat(insight.ctr || '0')
   }), {
-    impressions: 0,
-    clicks: 0,
-    spend: 0,
-    ctr: 0
+    pessoasAlcancadas: 0,
+    visitantesAnuncio: 0,
+    investimento: 0,
+    taxaInteresse: 0
   })
 
-  const avgCTR = displayData.length > 0 ? totalMetrics.ctr / displayData.length : 0
+  const taxaInteresseMedia = displayData.length > 0 ? totalMetrics.taxaInteresse / displayData.length : 0
+  const custoPorVisitante = totalMetrics.visitantesAnuncio > 0 ? totalMetrics.investimento / totalMetrics.visitantesAnuncio : 0
+  
+  // Estimativas simples para métricas de negócio
+  const estimativaCustoPorConversa = custoPorVisitante * 10 // Assumindo 10% de conversão
+  const estimativaCustoPorVenda = custoPorVisitante * 50 // Assumindo 2% de conversão para venda
 
   return (
     <Card className="w-full">
@@ -441,23 +248,15 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <BarChart3 className="w-5 h-5 text-blue-600" />
-            Meta Ads
+            Relatório de Anúncios
             <CheckCircle className="w-4 h-4 text-green-600" />
             {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600" />}
           </div>
           <div className="flex gap-1">
             <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowDiagnostic(true)}
-              className="text-xs opacity-50 hover:opacity-100"
-            >
-              <Bug className="w-3 h-3" />
-            </Button>
-            <Button
               variant="outline"
               size="sm"
-              onClick={() => handleLoadMetricsWithRetry()}
+              onClick={() => handleLoadMetrics()}
               disabled={loadingData}
             >
               {loadingData ? (
@@ -493,7 +292,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           </Alert>
         )}
 
-        {/* Erro com sugestões e retry */}
+        {/* Erro com sugestões */}
         {lastError && !loadingData && displayData.length === 0 && (
           <Alert className="mb-4 border-orange-200 bg-orange-50">
             <AlertCircle className="h-4 w-4 text-orange-600" />
@@ -507,16 +306,11 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                   <Button size="sm" variant="outline" onClick={() => handlePeriodSelect('last_7_days')}>
                     Últimos 7 dias
                   </Button>
-                  <Button size="sm" variant="outline" onClick={() => handleLoadMetricsWithRetry()}>
+                  <Button size="sm" variant="outline" onClick={() => handleLoadMetrics()}>
                     <RefreshCw className="w-4 h-4 mr-1" />
                     Tentar Novamente
                   </Button>
                 </div>
-                {retryCount > 2 && (
-                  <p className="text-xs">
-                    💡 Após {retryCount} tentativas, considere entrar em contato com o suporte.
-                  </p>
-                )}
               </div>
             </AlertDescription>
           </Alert>
@@ -531,40 +325,90 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               </div>
             )}
 
-            {/* Métricas em Grid */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-3 bg-blue-50 rounded-lg">
-                <Eye className="w-6 h-6 text-blue-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold text-blue-700">
-                  {totalMetrics.impressions.toLocaleString()}
+            {/* Métricas Principais em linguagem simples */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="text-center p-4 bg-blue-50 rounded-lg">
+                <Users className="w-6 h-6 text-blue-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-blue-700">
+                  {totalMetrics.pessoasAlcancadas.toLocaleString()}
                 </div>
-                <div className="text-xs text-blue-600">Impressões</div>
+                <div className="text-sm text-blue-600 font-medium">Pessoas Alcançadas</div>
+                <div className="text-xs text-blue-500 mt-1">
+                  Quantas pessoas viram seu anúncio
+                </div>
               </div>
 
-              <div className="text-center p-3 bg-green-50 rounded-lg">
-                <MousePointer className="w-6 h-6 text-green-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold text-green-700">
-                  {totalMetrics.clicks.toLocaleString()}
+              <div className="text-center p-4 bg-green-50 rounded-lg">
+                <MousePointer className="w-6 h-6 text-green-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-green-700">
+                  {totalMetrics.visitantesAnuncio.toLocaleString()}
                 </div>
-                <div className="text-xs text-green-600">Cliques</div>
+                <div className="text-sm text-green-600 font-medium">Visitantes do Anúncio</div>
+                <div className="text-xs text-green-500 mt-1">
+                  Pessoas que clicaram no seu anúncio
+                </div>
               </div>
 
-              <div className="text-center p-3 bg-purple-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-purple-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold text-purple-700">
-                  {formatCurrency(totalMetrics.spend)}
+              <div className="text-center p-4 bg-purple-50 rounded-lg">
+                <DollarSign className="w-6 h-6 text-purple-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-purple-700">
+                  {formatCurrency(totalMetrics.investimento)}
                 </div>
-                <div className="text-xs text-purple-600">Investido</div>
+                <div className="text-sm text-purple-600 font-medium">Valor Investido</div>
+                <div className="text-xs text-purple-500 mt-1">
+                  Total gasto em anúncios
+                </div>
               </div>
 
-              <div className="text-center p-3 bg-orange-50 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-orange-600 mx-auto mb-1" />
-                <div className="text-lg font-semibold text-orange-700">
-                  {avgCTR.toFixed(2)}%
+              <div className="text-center p-4 bg-orange-50 rounded-lg">
+                <Target className="w-6 h-6 text-orange-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-orange-700">
+                  {taxaInteresseMedia.toFixed(1)}%
                 </div>
-                <div className="text-xs text-orange-600">CTR Médio</div>
+                <div className="text-sm text-orange-600 font-medium">Taxa de Interesse</div>
+                <div className="text-xs text-orange-500 mt-1">
+                  % de pessoas que clicaram
+                </div>
+              </div>
+
+              <div className="text-center p-4 bg-cyan-50 rounded-lg">
+                <MessageSquare className="w-6 h-6 text-cyan-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-cyan-700">
+                  {formatCurrency(estimativaCustoPorConversa)}
+                </div>
+                <div className="text-sm text-cyan-600 font-medium">Custo por Conversa</div>
+                <div className="text-xs text-cyan-500 mt-1">
+                  Estimativa por contato gerado
+                </div>
+              </div>
+
+              <div className="text-center p-4 bg-emerald-50 rounded-lg">
+                <ShoppingCart className="w-6 h-6 text-emerald-600 mx-auto mb-2" />
+                <div className="text-2xl font-bold text-emerald-700">
+                  {formatCurrency(estimativaCustoPorVenda)}
+                </div>
+                <div className="text-sm text-emerald-600 font-medium">Custo por Venda</div>
+                <div className="text-xs text-emerald-500 mt-1">
+                  Estimativa para gerar uma venda
+                </div>
               </div>
             </div>
+
+            {/* Contexto educativo */}
+            <Alert className="border-blue-200 bg-blue-50">
+              <Info className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800">
+                <div className="space-y-2">
+                  <p className="font-medium">📈 Como interpretar seus resultados:</p>
+                  <ul className="text-sm space-y-1 ml-4">
+                    <li>• <strong>Pessoas Alcançadas:</strong> Mais pessoas = maior visibilidade da sua marca</li>
+                    <li>• <strong>Taxa de Interesse:</strong> Acima de 1% é considerado bom</li>
+                    <li>• <strong>Custo por Visitante:</strong> Quanto menor, melhor o aproveitamento</li>
+                    <li>• <strong>Estimativas:</strong> Valores aproximados baseados em médias do mercado</li>
+                  </ul>
+                </div>
+              </AlertDescription>
+            </Alert>
 
             {/* Seletor de período */}
             <div className="flex gap-2 justify-center flex-wrap pt-4 border-t">
@@ -598,7 +442,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           <div className="text-center py-4">
             <BarChart3 className="w-8 h-8 mx-auto text-gray-400 mb-2" />
             <p className="text-sm text-gray-500 mb-3">
-              Carregue as métricas Meta Ads
+              Carregue os dados dos seus anúncios
             </p>
             <div className="flex gap-2 justify-center flex-wrap">
               <Button size="sm" onClick={() => handlePeriodSelect('today')}>
@@ -619,8 +463,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           <div className="text-center py-4">
             <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2 text-blue-600" />
             <p className="text-sm text-gray-500">
-              Carregando métricas...
-              {retryCount > 0 && ` (tentativa ${retryCount + 1})`}
+              Carregando dados dos anúncios...
             </p>
           </div>
         )}
