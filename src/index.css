@@ -1,3 +1,4 @@
+
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@300;400;500;600&display=swap');
 
 @tailwind base;
@@ -220,7 +221,7 @@
   }
   
   .dashboard-container {
-    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+    @apply max-w-full mx-auto px-2 sm:px-3 lg:px-4;
   }
 
   /* Micro-interações */
@@ -235,7 +236,7 @@
   /* Mobile optimizations */
   @media (max-width: 768px) {
     .metric-card {
-      @apply p-4;
+      @apply p-3;
     }
     
     .metric-number {
@@ -243,7 +244,7 @@
     }
     
     .period-button {
-      @apply px-3 py-2 text-xs;
+      @apply px-2.5 py-2 text-xs;
     }
     
     input[type="email"],
@@ -279,6 +280,8 @@
     .mobile-container {
       background-color: hsl(var(--background)) !important;
       min-height: 100vh;
+      padding-left: 8px !important;
+      padding-right: 8px !important;
     }
     
     button, 
@@ -371,19 +374,19 @@
 
   /* Mobile-optimized metrics grid */
   .mobile-metrics-grid {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-4;
   }
 
   /* Mobile-optimized metric cards */
   .mobile-metric-card {
     @apply relative overflow-hidden rounded-xl border border-border/50 bg-gradient-card backdrop-blur-sm 
            transition-all duration-300 hover:shadow-metric-hover hover:border-border 
-           p-4 md:p-6 space-y-3 md:space-y-4;
+           p-3 md:p-6 space-y-2 md:space-y-4;
   }
 
   /* Mobile-optimized buttons */
   .mobile-period-button {
-    @apply relative overflow-hidden rounded-lg px-3 py-2 md:px-4 md:py-2.5 
+    @apply relative overflow-hidden rounded-lg px-2 py-1.5 md:px-4 md:py-2.5 
            text-xs md:text-sm font-medium transition-all duration-200 
            border border-border/50 bg-gradient-card hover:shadow-card-hover
            min-h-[44px] flex items-center justify-center;
@@ -392,32 +395,32 @@
   /* Mobile-optimized info cards */
   .mobile-info-card {
     @apply relative overflow-hidden rounded-xl bg-gradient-card border border-border/50 
-           backdrop-blur-sm shadow-professional p-4 md:p-6 space-y-4 md:space-y-6;
+           backdrop-blur-sm shadow-professional p-3 md:p-6 space-y-3 md:space-y-6;
   }
 
   /* Mobile-optimized header spacing */
   .mobile-header-section {
-    @apply space-y-3 md:space-y-6 text-center;
+    @apply space-y-2 md:space-y-6 text-center;
   }
 
   /* Mobile-optimized badge container */
   .mobile-badge-container {
-    @apply flex flex-wrap items-center justify-center gap-2 md:gap-3;
+    @apply flex flex-wrap items-center justify-center gap-1 md:gap-3;
   }
 
   /* Mobile-optimized date filter grid */
   .mobile-date-grid {
-    @apply grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2 md:gap-3;
+    @apply grid grid-cols-3 sm:grid-cols-4 md:grid-cols-7 gap-1 md:gap-3;
   }
 
   /* Mobile-optimized content spacing */
   .mobile-content-spacing {
-    @apply space-y-4 md:space-y-8;
+    @apply space-y-3 md:space-y-8;
   }
 
   /* Mobile-optimized form grid */
   .mobile-form-grid {
-    @apply grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4;
+    @apply grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4;
   }
 
   /* Mobile touch optimization */
@@ -450,38 +453,38 @@
 
   /* Mobile status cards */
   .mobile-status-card {
-    @apply flex flex-col md:flex-row items-start md:items-center gap-3 md:gap-4;
+    @apply flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4;
   }
 
   /* Mobile grid layouts */
   .mobile-grid-1-2 {
-    @apply grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6;
+    @apply grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6;
   }
   
   .mobile-grid-1-2-4 {
-    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4;
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2 md:gap-4;
   }
 
-  /* Mobile padding utilities */
+  /* Mobile padding utilities - OTIMIZADO PARA MÁXIMO APROVEITAMENTO */
   .mobile-p {
-    @apply p-4 md:p-6;
+    @apply p-2 md:p-6;
   }
   
   .mobile-px {
-    @apply px-4 md:px-6;
+    @apply px-2 md:px-6;
   }
   
   .mobile-py {
-    @apply py-4 md:py-6;
+    @apply py-3 md:py-6;
   }
 
   /* Mobile margin utilities */
   .mobile-mb {
-    @apply mb-4 md:mb-6;
+    @apply mb-3 md:mb-6;
   }
   
   .mobile-mt {
-    @apply mt-4 md:mt-6;
+    @apply mt-3 md:mt-6;
   }
 
   /* Hide on mobile utility */
@@ -500,13 +503,13 @@
   }
 
   @media (max-width: 768px) {
-    /* Additional mobile-specific styles */
+    /* Additional mobile-specific styles - MÁXIMO APROVEITAMENTO */
     .mobile-container {
-      @apply px-4 max-w-full;
+      @apply px-2 max-w-full;
     }
     
     .mobile-scroll-container {
-      @apply overflow-x-auto pb-4;
+      @apply overflow-x-auto pb-2;
     }
     
     /* Ensure proper touch targets */
