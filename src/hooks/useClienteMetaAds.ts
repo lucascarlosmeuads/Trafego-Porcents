@@ -103,9 +103,9 @@ export function useClienteMetaAds(clienteId: string) {
         setConfig(newConfig)
         console.log('✅ [useClienteMetaAds] Config carregada:', newConfig)
         
-        // Auto-carregar dados se configuração está completa e é um reload forçado
-        if (newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId && forceReload) {
-          console.log('🚀 [useClienteMetaAds] Config completa, carregando dados automaticamente...')
+        // Auto-carregar dados quando configuração está completa
+        if (newConfig.appId && newConfig.appSecret && newConfig.accessToken && newConfig.adAccountId) {
+          console.log('🚀 [useClienteMetaAds] Config completa, auto-carregando dados...')
           await autoLoadData(newConfig)
         }
       } else {
@@ -145,7 +145,7 @@ export function useClienteMetaAds(clienteId: string) {
       
       setDateRange({ startDate, endDate })
       
-      // Carregar apenas insights (campanhas removidas)
+      // Carregar insights com período padrão
       await loadInsights(startDate, endDate, currentConfig)
       
       setLastDataUpdate(new Date())
@@ -273,6 +273,49 @@ export function useClienteMetaAds(clienteId: string) {
     }
   }
 
+  // Função para buscar dados com período pré-definido
+  const fetchDataWithPeriod = async (period: string) => {
+    setLastError('')
+    setLastErrorType('')
+    setAutoLoadingData(true)
+    
+    try {
+      console.log('📊 [useClienteMetaAds] Buscando dados para período:', period)
+      
+      const { data, error } = await supabase.functions.invoke('meta-ads-api', {
+        body: {
+          action: 'get_insights',
+          config: config,
+          date_preset: period
+        }
+      })
+
+      if (error) {
+        console.error('❌ [useClienteMetaAds] Erro ao buscar insights:', error)
+        throw new Error('Erro ao buscar insights')
+      }
+
+      if (data.success) {
+        setInsights(data.insights)
+        setLastDataUpdate(new Date())
+        console.log('✅ [useClienteMetaAds] Insights carregados para período:', period, data.insights.length)
+      } else {
+        setLastError(data.message)
+        setLastErrorType('API_ERROR')
+        console.error('❌ [useClienteMetaAds] Erro na API:', data.message)
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ [useClienteMetaAds] Erro inesperado:', error)
+      setLastError('Erro ao carregar dados')
+      setLastErrorType('NETWORK_ERROR')
+      return { success: false, message: 'Erro ao carregar dados' }
+    } finally {
+      setAutoLoadingData(false)
+    }
+  }
+
   const fetchInsights = async (startDate?: string, endDate?: string) => {
     setLastError('')
     setLastErrorType('')
@@ -291,6 +334,7 @@ export function useClienteMetaAds(clienteId: string) {
     setDateRange({ startDate, endDate })
     setLastError('')
     setLastErrorType('')
+    setAutoLoadingData(true)
     
     try {
       await loadInsights(startDate, endDate)
@@ -299,6 +343,8 @@ export function useClienteMetaAds(clienteId: string) {
       console.error('❌ [useClienteMetaAds] Erro ao buscar dados:', error)
       setLastError('Erro ao carregar dados')
       setLastErrorType('NETWORK_ERROR')
+    } finally {
+      setAutoLoadingData(false)
     }
   }
 
@@ -324,6 +370,7 @@ export function useClienteMetaAds(clienteId: string) {
     testConnection,
     fetchInsights,
     fetchDataWithDateRange,
+    fetchDataWithPeriod, // Nova função para períodos pré-definidos
     insights,
     isConfigured,
     lastError,

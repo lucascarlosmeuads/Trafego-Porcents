@@ -32,6 +32,7 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
       setShowCustom(true)
     } else {
       setShowCustom(false)
+      // Chamar com o período pré-definido (sem datas específicas)
       onPeriodChange(period)
     }
   }

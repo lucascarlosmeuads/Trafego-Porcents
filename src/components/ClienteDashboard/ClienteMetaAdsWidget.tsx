@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { useClienteMetaAds } from '@/hooks/useClienteMetaAds'
@@ -19,7 +20,9 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     insights: metricas, 
     loading: isLoading, 
     lastError: error,
-    fetchDataWithDateRange
+    fetchDataWithDateRange,
+    fetchDataWithPeriod, // Nova função para períodos pré-definidos
+    autoLoadingData
   } = useClienteMetaAds(clienteId)
 
   const handlePeriodChange = (newPeriod: string, startDate?: string, endDate?: string) => {
@@ -27,9 +30,14 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     setCustomStartDate(startDate)
     setCustomEndDate(endDate)
     
-    // Se temos datas customizadas, buscar os dados
+    console.log('📊 [ClienteMetaAdsWidget] Mudança de período:', { newPeriod, startDate, endDate })
+    
+    // Se temos datas customizadas, buscar os dados com range
     if (startDate && endDate) {
       fetchDataWithDateRange(startDate, endDate)
+    } else {
+      // Usar período pré-definido
+      fetchDataWithPeriod(newPeriod)
     }
   }
 
@@ -52,6 +60,8 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
   const metricasAgregadas = React.useMemo(() => {
     if (!metricas || metricas.length === 0) return null
     
+    console.log('🔢 [ClienteMetaAdsWidget] Calculando métricas agregadas:', metricas)
+    
     return metricas.reduce((acc, insight) => ({
       reach: acc.reach + (parseInt(insight.impressions) || 0),
       impressions: acc.impressions + (parseInt(insight.impressions) || 0),
@@ -69,6 +79,9 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     })
   }, [metricas])
 
+  // Loading state considera tanto loading inicial quanto auto loading
+  const isLoadingData = isLoading || autoLoadingData
+
   if (error) {
     return (
       <Card className="mobile-optimized-card info-card-warning">
@@ -78,7 +91,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           </div>
           <h3 className="font-semibold text-orange-900 dark:text-orange-100 mb-2">Dados Indisponíveis</h3>
           <p className="mobile-description text-orange-800 dark:text-orange-200">
-            Não foi possível carregar os dados dos anúncios no momento. Nossa equipe já foi notificada.
+            {error || 'Não foi possível carregar os dados dos anúncios no momento. Nossa equipe já foi notificada.'}
           </p>
         </CardContent>
       </Card>
@@ -91,11 +104,11 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
       <DateFilterWidget
         currentPeriod={period}
         onPeriodChange={handlePeriodChange}
-        loading={isLoading}
+        loading={isLoadingData}
       />
 
       {/* Cards de Métricas otimizados para mobile */}
-      {isLoading ? (
+      {isLoadingData ? (
         <div className="mobile-metrics-grid">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="mobile-optimized-card shimmer">

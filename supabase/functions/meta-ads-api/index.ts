@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -52,7 +53,15 @@ serve(async (req) => {
 
     const { action, config, startDate, endDate, date_preset } = await req.json()
 
-    console.log('🔍 [meta-ads-api] Requisição recebida:', { action, date_preset, startDate, endDate, user_email: user.email })
+    console.log('🔍 [meta-ads-api] Requisição recebida:', { 
+      action, 
+      date_preset, 
+      startDate, 
+      endDate, 
+      user_email: user.email,
+      config_has_token: !!config?.accessToken,
+      config_has_account: !!config?.adAccountId
+    })
 
     if (action === 'test_connection') {
       console.log('🔗 [meta-ads-api] === TESTE DE CONEXÃO DETALHADO ===')
@@ -286,8 +295,9 @@ serve(async (req) => {
         // CORREÇÃO: Usar timezone brasileiro para cálculo das datas
         const hoje = getBrazilianDate(0) // Hoje no Brasil
         const ontem = getBrazilianDate(-1) // Ontem no Brasil
+        const anteontem = getBrazilianDate(-2) // Anteontem no Brasil
         
-        console.log('🇧🇷 [meta-ads-api] Datas brasileiras calculadas:', { hoje, ontem })
+        console.log('🇧🇷 [meta-ads-api] Datas brasileiras calculadas:', { hoje, ontem, anteontem })
         
         switch (date_preset) {
           case 'today':
@@ -298,10 +308,19 @@ serve(async (req) => {
             timeRange = `{"since":"${ontem}","until":"${ontem}"}`
             periodName = `ontem (${ontem})`
             break
+          case 'day_before_yesterday':
+            timeRange = `{"since":"${anteontem}","until":"${anteontem}"}`
+            periodName = `anteontem (${anteontem})`
+            break
           case 'last_7_days':
             const seteDiasAtras = getBrazilianDate(-7)
             timeRange = `{"since":"${seteDiasAtras}","until":"${hoje}"}`
             periodName = `últimos 7 dias (${seteDiasAtras} até ${hoje})`
+            break
+          case 'last_15_days':
+            const quinzeDiasAtras = getBrazilianDate(-15)
+            timeRange = `{"since":"${quinzeDiasAtras}","until":"${hoje}"}`
+            periodName = `últimos 15 dias (${quinzeDiasAtras} até ${hoje})`
             break
           case 'last_30_days':
             const trintaDiasAtras = getBrazilianDate(-30)
@@ -325,7 +344,7 @@ serve(async (req) => {
       
       const insightsUrl = `https://graph.facebook.com/v18.0/${adAccountId}/insights?fields=impressions,clicks,spend,cpm,cpc,ctr&access_token=${config.accessToken}&time_range=${timeRange}`
       
-      console.log('🌐 [meta-ads-api] Fazendo chamada para Meta API:', insightsUrl.replace(config.accessToken, '[TOKEN_HIDDEN]'))
+      console.log('🌐 [meta-ads-api] Fazendo chamada para Meta API (token oculto):', insightsUrl.replace(config.accessToken, '[TOKEN_HIDDEN]'))
 
       try {
         const response = await fetch(insightsUrl)
@@ -409,7 +428,8 @@ serve(async (req) => {
             campaigns_count: data.data.length,
             total_spend: totalInsights.spend,
             total_impressions: totalInsights.impressions,
-            total_clicks: totalInsights.clicks
+            total_clicks: totalInsights.clicks,
+            date_preset_used: date_preset || 'custom'
           })
 
           return new Response(
@@ -418,7 +438,8 @@ serve(async (req) => {
               insights: [totalInsights], // Retornar como array para compatibilidade
               period_used: periodName,
               campaigns_count: data.data.length,
-              raw_campaigns: data.data.length // Para transparência
+              raw_campaigns: data.data.length, // Para transparência
+              date_preset_used: date_preset || 'custom'
             }),
             { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           )
@@ -458,7 +479,8 @@ serve(async (req) => {
                 campaigns_info: {
                   total: campaignsData.data?.length || 0,
                   active: campaignsData.data?.filter(c => c.status === 'ACTIVE')?.length || 0
-                }
+                },
+                date_preset_used: date_preset || 'custom'
               }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
@@ -469,7 +491,8 @@ serve(async (req) => {
                 success: false, 
                 message: `Nenhum dado encontrado para ${periodName}. Verifique se há campanhas ativas no Facebook Ads Manager.`,
                 insights: [],
-                period_used: periodName
+                period_used: periodName,
+                date_preset_used: date_preset || 'custom'
               }),
               { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
             )
@@ -482,7 +505,8 @@ serve(async (req) => {
           JSON.stringify({ 
             success: false, 
             message: `Erro inesperado: ${error.message}`,
-            period_used: periodName
+            period_used: periodName,
+            date_preset_used: date_preset || 'custom'
           }),
           { 
             status: 500,
