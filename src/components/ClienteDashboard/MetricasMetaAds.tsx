@@ -7,10 +7,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { BarChart3, AlertCircle, CheckCircle, Clock, TrendingUp, Target, Shield, Heart, Sparkles, Award, Activity } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
 
 export function MetricasMetaAds() {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
+  
+  // Hook para verificar se Meta Ads está configurado
+  const { isConfigured, insights } = useClienteMetaAdsSimplified(cliente?.id?.toString() || '')
 
   if (!cliente) {
     return (
@@ -45,8 +49,12 @@ export function MetricasMetaAds() {
     )
   }
 
-  const campanhaAtiva = cliente.status_campanha?.includes('Ativa') || 
-                      cliente.status_campanha?.includes('Otimização')
+  // Lógica melhorada para determinar se a campanha está ativa
+  // Agora considera tanto o status da campanha quanto se há dados do Meta Ads disponíveis
+  const campanhaAtiva = (cliente.status_campanha?.includes('Ativa') || 
+                        cliente.status_campanha?.includes('Otimização') ||
+                        cliente.status_campanha?.includes('Rodando')) ||
+                       (isConfigured && insights.length > 0) // Se tem config e dados, considera ativa
 
   return (
     <div className="mobile-container mobile-content-spacing animate-fade-in-up">
@@ -108,7 +116,7 @@ export function MetricasMetaAds() {
                     : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
                 }`}>
                   <Sparkles className="mobile-icon-sm mr-1" />
-                  {cliente.status_campanha || 'Em preparação'}
+                  {campanhaAtiva ? 'Campanha Ativa' : (cliente.status_campanha || 'Em preparação')}
                 </Badge>
               </div>
               {!campanhaAtiva && (
