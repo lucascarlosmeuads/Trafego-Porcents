@@ -159,15 +159,15 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
           className="w-80 p-0 bg-gray-900 border-r border-gray-800 [&>button]:hidden"
         >
           <div className="flex flex-col h-full">
-            {/* Header com botão fechar customizado */}
-            <div className="flex items-center justify-between p-4 border-b border-gray-800">
-              <div className="flex items-center gap-3">
+            {/* Header com botão fechar customizado e logo menor */}
+            <div className="flex items-center justify-between p-3 border-b border-gray-800">
+              <div className="flex items-center gap-2">
                 <img 
                   src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
                   alt="Tráfego Por Cents" 
-                  className="h-8 w-auto object-contain"
+                  className="h-6 w-auto object-contain"
                 />
-                <span className="text-white font-semibold">Menu</span>
+                <span className="text-white font-medium text-sm">Menu</span>
               </div>
               <Button
                 variant="ghost"
@@ -179,13 +179,13 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
               </Button>
             </div>
 
-            {/* Profile Section */}
-            <div className="p-4 border-b border-gray-800">
+            {/* Profile Section com padding reduzido */}
+            <div className="p-3 border-b border-gray-800">
               <ClienteProfileSection />
             </div>
 
             {/* Menu Items */}
-            <div className="flex-1 overflow-y-auto px-4 py-4">
+            <div className="flex-1 overflow-y-auto px-3 py-3">
               <div className="space-y-1">
                 {menuItems.map((item) => {
                   const Icon = item.icon
@@ -220,7 +220,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                 })}
 
                 {/* Divisor */}
-                <div className="my-4 border-t border-gray-800"></div>
+                <div className="my-3 border-t border-gray-800"></div>
 
                 {/* Termos de Uso */}
                 <Button
@@ -249,8 +249,8 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
               </div>
             </div>
 
-            {/* Status da Campanha */}
-            <div className="p-4 border-t border-gray-800 space-y-4">
+            {/* Status da Campanha e Botão Sair com padding reduzido */}
+            <div className="p-3 border-t border-gray-800 space-y-3">
               <div className="bg-gradient-to-r from-gray-800/50 to-gray-700/50 rounded-lg p-3 border border-gray-700">
                 <div className="text-xs font-medium text-gray-300 mb-1">
                   Status da Campanha:
