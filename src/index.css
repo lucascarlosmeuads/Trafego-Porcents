@@ -105,65 +105,65 @@
   }
 }
 
-/* Componentes profissionais para métricas */
+/* Componentes melhorados para métricas */
 @layer components {
-  /* Cards de métricas modernos */
+  /* Cards de métricas modernos com melhor contraste */
   .metric-card {
     @apply relative overflow-hidden rounded-2xl border border-border/50 bg-gradient-card backdrop-blur-sm transition-all duration-300 hover:shadow-metric-hover hover:border-border hover:-translate-y-1;
   }
   
   .metric-card-reach {
-    @apply bg-gradient-reach border-reach-500/20 shadow-[0_4px_20px_rgba(59,130,246,0.1)];
+    @apply bg-gradient-to-br from-blue-50/90 to-blue-100/90 dark:from-blue-950/40 dark:to-blue-900/40 border-blue-200/70 dark:border-blue-800/50 shadow-[0_4px_20px_rgba(59,130,246,0.1)];
   }
   
   .metric-card-clicks {
-    @apply bg-gradient-clicks border-clicks-500/20 shadow-[0_4px_20px_rgba(34,197,94,0.1)];
+    @apply bg-gradient-to-br from-green-50/90 to-green-100/90 dark:from-green-950/40 dark:to-green-900/40 border-green-200/70 dark:border-green-800/50 shadow-[0_4px_20px_rgba(34,197,94,0.1)];
   }
   
   .metric-card-spend {
-    @apply bg-gradient-spend border-spend-500/20 shadow-[0_4px_20px_rgba(168,85,247,0.1)];
+    @apply bg-gradient-to-br from-purple-50/90 to-purple-100/90 dark:from-purple-950/40 dark:to-purple-900/40 border-purple-200/70 dark:border-purple-800/50 shadow-[0_4px_20px_rgba(168,85,247,0.1)];
   }
   
   .metric-card-ctr {
-    @apply bg-gradient-ctr border-ctr-500/20 shadow-[0_4px_20px_rgba(251,146,60,0.1)];
+    @apply bg-gradient-to-br from-orange-50/90 to-orange-100/90 dark:from-orange-950/40 dark:to-orange-900/40 border-orange-200/70 dark:border-orange-800/50 shadow-[0_4px_20px_rgba(251,146,60,0.1)];
   }
   
   .metric-card-cost {
-    @apply bg-gradient-cost border-cost-500/20 shadow-[0_4px_20px_rgba(6,182,212,0.1)];
+    @apply bg-gradient-to-br from-cyan-50/90 to-cyan-100/90 dark:from-cyan-950/40 dark:to-cyan-900/40 border-cyan-200/70 dark:border-cyan-800/50 shadow-[0_4px_20px_rgba(6,182,212,0.1)];
   }
   
   .metric-card-conversion {
-    @apply bg-gradient-conversion border-conversion-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.1)];
+    @apply bg-gradient-to-br from-emerald-50/90 to-emerald-100/90 dark:from-emerald-950/40 dark:to-emerald-900/40 border-emerald-200/70 dark:border-emerald-800/50 shadow-[0_4px_20px_rgba(16,185,129,0.1)];
   }
 
-  /* Números das métricas */
+  /* Números das métricas com melhor contraste */
   .metric-number {
     @apply text-3xl md:text-4xl font-bold font-display tracking-tight;
   }
   
   .metric-label {
-    @apply text-sm font-medium text-foreground/80 tracking-wide;
+    @apply text-sm font-semibold tracking-wide;
   }
   
   .metric-description {
-    @apply text-xs text-muted-foreground mt-1 leading-relaxed;
+    @apply text-xs mt-1 leading-relaxed;
   }
 
-  /* Cards de informação profissionais */
+  /* Cards de informação com melhor legibilidade */
   .info-card {
     @apply relative overflow-hidden rounded-xl bg-gradient-card border border-border/50 backdrop-blur-sm shadow-professional;
   }
   
   .info-card-primary {
-    @apply bg-gradient-to-br from-blue-50/80 to-blue-100/80 dark:from-blue-950/30 dark:to-blue-900/30 border-blue-200 dark:border-blue-800/30;
+    @apply bg-gradient-to-br from-blue-50/90 to-blue-100/90 dark:from-blue-950/40 dark:to-blue-900/40 border-blue-200/70 dark:border-blue-800/50;
   }
   
   .info-card-success {
-    @apply bg-gradient-to-br from-green-50/80 to-green-100/80 dark:from-green-950/30 dark:to-green-900/30 border-green-200 dark:border-green-800/30;
+    @apply bg-gradient-to-br from-green-50/90 to-green-100/90 dark:from-green-950/40 dark:to-green-900/40 border-green-200/70 dark:border-green-800/50;
   }
   
   .info-card-warning {
-    @apply bg-gradient-to-br from-amber-50/80 to-amber-100/80 dark:from-amber-950/30 dark:to-amber-900/30 border-amber-200 dark:border-amber-800/30;
+    @apply bg-gradient-to-br from-amber-50/90 to-amber-100/90 dark:from-amber-950/40 dark:to-amber-900/40 border-amber-200/70 dark:border-amber-800/50;
   }
 
   /* Botões de período modernos */
@@ -173,23 +173,23 @@
   }
   
   .period-button-active {
-    @apply bg-gradient-trafego text-white border-transparent shadow-glow-blue;
+    @apply bg-gradient-trafego text-white border-transparent shadow-glow-blue font-semibold;
   }
 
-  /* Badges profissionais */
+  /* Badges com melhor contraste */
   .professional-badge {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium 
+    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold
            border border-border/50 bg-gradient-card backdrop-blur-sm;
   }
   
   .trust-badge {
-    @apply bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 
-           text-green-700 dark:text-green-300 border-green-200 dark:border-green-800/30;
+    @apply bg-gradient-to-r from-green-100/90 to-emerald-100/90 dark:from-green-950/50 dark:to-emerald-950/50 
+           text-green-800 dark:text-green-200 border-green-300/70 dark:border-green-700/50 font-medium;
   }
   
   .monitoring-badge {
-    @apply bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30 
-           text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800/30;
+    @apply bg-gradient-to-r from-blue-100/90 to-cyan-100/90 dark:from-blue-950/50 dark:to-cyan-950/50 
+           text-blue-800 dark:text-blue-200 border-blue-300/70 dark:border-blue-700/50 font-medium;
   }
 
   /* Shimmer effect para loading */
@@ -202,17 +202,17 @@
     @apply absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer;
   }
 
-  /* Headers profissionais */
+  /* Headers com melhor contraste */
   .page-title {
-    @apply text-2xl md:text-3xl font-bold font-display tracking-tight text-foreground;
+    @apply text-2xl md:text-3xl font-bold font-display tracking-tight;
   }
   
   .page-subtitle {
-    @apply text-base text-muted-foreground font-medium;
+    @apply text-base font-medium;
   }
   
   .section-title {
-    @apply text-lg font-semibold font-display text-foreground;
+    @apply text-lg font-semibold font-display;
   }
 
   /* Layout responsivo melhorado */
@@ -358,7 +358,7 @@
   }
 }
 
-/* Keyframes adicionais para animações profissionais */
+/* Keyframes adicionais para animações */
 @keyframes gradient-shift {
   0%, 100% {
     background-position: 0% 50%;

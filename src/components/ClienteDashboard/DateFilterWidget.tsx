@@ -59,8 +59,8 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                 <Filter className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="section-title">Período dos Dados</h3>
-                <p className="text-sm text-muted-foreground">Selecione o período para análise</p>
+                <h3 className="section-title text-gray-900 dark:text-gray-100">Período dos Dados</h3>
+                <p className="text-sm text-gray-600 dark:text-gray-400">Selecione o período para análise</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -68,7 +68,7 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                 <Sparkles className="h-3 w-3 mr-1" />
                 Tempo Real
               </Badge>
-              <div className="text-sm font-medium text-foreground bg-gradient-card px-3 py-1.5 rounded-lg border border-border/50">
+              <div className="text-sm font-medium text-gray-900 dark:text-gray-100 bg-gradient-card px-3 py-1.5 rounded-lg border border-border/50">
                 {getCurrentPeriodLabel()}
               </div>
             </div>
@@ -85,8 +85,8 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                 disabled={loading}
                 className={`period-button group relative ${
                   currentPeriod === option.value 
-                    ? 'period-button-active' 
-                    : 'hover:shadow-card-hover'
+                    ? 'period-button-active text-white font-semibold' 
+                    : 'hover:shadow-card-hover text-gray-700 dark:text-gray-300 border-gray-300 dark:border-gray-600'
                 }`}
                 title={option.description}
               >
@@ -109,14 +109,14 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                   <Calendar className="h-4 w-4" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground">Período Personalizado</h4>
-                  <p className="text-sm text-muted-foreground">Defina suas datas específicas</p>
+                  <h4 className="font-semibold text-gray-900 dark:text-gray-100">Período Personalizado</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">Defina suas datas específicas</p>
                 </div>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-blue-500" />
                     Data início:
                   </label>
@@ -128,7 +128,7 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-foreground flex items-center gap-2">
+                  <label className="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-blue-500" />
                     Data fim:
                   </label>
@@ -160,14 +160,14 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                 <Shield className="h-4 w-4" />
               </div>
               <div className="flex-1 space-y-2">
-                <h4 className="font-semibold text-green-800 dark:text-green-200 flex items-center gap-2">
+                <h4 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-2">
                   <Sparkles className="h-4 w-4" />
-                  Monitoramento Profissional 24/7
+                  Monitoramento Ativo 24/7
                 </h4>
-                <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
-                  Nossa equipe de especialistas monitora estes dados continuamente e faz ajustes automáticos 
-                  para otimizar seus resultados. Você pode acompanhar nosso trabalho em tempo real através 
-                  destes relatórios profissionais.
+                <p className="text-sm text-green-800 dark:text-green-200 leading-relaxed">
+                  Nossa equipe monitora estes dados continuamente e faz ajustes automáticos 
+                  para otimizar seus resultados. Você pode acompanhar nosso trabalho em tempo real 
+                  através destes relatórios.
                 </p>
                 <div className="flex items-center gap-4 pt-2">
                   <Badge variant="secondary" className="trust-badge text-xs">

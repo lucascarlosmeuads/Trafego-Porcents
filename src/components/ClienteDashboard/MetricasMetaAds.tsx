@@ -21,8 +21,8 @@ export function MetricasMetaAds() {
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <span className="page-title">Relatório dos Anúncios</span>
-              <p className="page-subtitle mt-1">Dados profissionais em tempo real</p>
+              <span className="page-title text-gray-900 dark:text-gray-100">Dados dos Anúncios</span>
+              <p className="page-subtitle mt-1 text-gray-600 dark:text-gray-400">Carregando suas informações...</p>
             </div>
           </CardTitle>
         </CardHeader>
@@ -32,7 +32,7 @@ export function MetricasMetaAds() {
               <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/20 text-orange-600">
                 <AlertCircle className="h-4 w-4" />
               </div>
-              <AlertDescription className="text-orange-800 dark:text-orange-200">
+              <AlertDescription className="text-orange-900 dark:text-orange-100">
                 <div className="space-y-2">
                   <p className="font-semibold">Carregando suas informações...</p>
                   <p className="text-sm">Aguarde enquanto preparamos seus dados personalizados</p>
@@ -58,10 +58,10 @@ export function MetricasMetaAds() {
           </div>
           <div className="text-left">
             <h1 className="text-3xl md:text-4xl font-bold font-display bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              📊 Relatório Profissional dos Anúncios
+              📊 Resultados dos seus Anúncios
             </h1>
-            <p className="page-subtitle text-lg">
-              Acompanhe em tempo real como seus anúncios estão gerando resultados excepcionais
+            <p className="page-subtitle text-lg text-gray-700 dark:text-gray-300">
+              Acompanhe em tempo real como seus anúncios estão gerando resultados
             </p>
           </div>
         </div>
@@ -77,7 +77,7 @@ export function MetricasMetaAds() {
           </Badge>
           <Badge className="professional-badge">
             <Sparkles className="w-3 h-3 mr-1" />
-            Relatório Profissional
+            Em Tempo Real
           </Badge>
         </div>
       </div>
@@ -99,21 +99,21 @@ export function MetricasMetaAds() {
             </div>
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="font-semibold text-foreground text-lg">
+                <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-lg">
                   Status Atual: 
                 </h3>
-                <Badge className={`text-sm ${
+                <Badge className={`text-sm font-medium ${
                   campanhaAtiva 
-                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-700 dark:text-green-300 border-green-300 dark:border-green-700' 
-                    : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-700 dark:text-blue-300 border-blue-300 dark:border-blue-700'
+                    ? 'bg-gradient-to-r from-green-100 to-emerald-100 dark:from-green-900/30 dark:to-emerald-900/30 text-green-800 dark:text-green-200 border-green-300 dark:border-green-700' 
+                    : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
                 }`}>
                   <Sparkles className="w-3 h-3 mr-1" />
                   {cliente.status_campanha || 'Em preparação'}
                 </Badge>
               </div>
               {!campanhaAtiva && (
-                <p className="text-muted-foreground leading-relaxed">
-                  Seus dados profissionais ficam disponíveis assim que os anúncios começarem a rodar. 
+                <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+                  Seus dados ficam disponíveis assim que os anúncios começarem a rodar. 
                   Nossa equipe está preparando tudo nos bastidores! 🚀
                 </p>
               )}
@@ -140,11 +140,11 @@ export function MetricasMetaAds() {
               <div>
                 <h3 className="text-2xl font-bold font-display text-blue-900 dark:text-blue-100 mb-3 flex items-center justify-center gap-2">
                   <Sparkles className="h-6 w-6" />
-                  🚀 Seus Anúncios em Preparação Profissional!
+                  🚀 Seus Anúncios em Preparação!
                 </h3>
-                <p className="text-blue-700 dark:text-blue-300 text-lg mb-6 max-w-2xl mx-auto leading-relaxed">
-                  Nossa equipe especializada está configurando sua campanha com as melhores práticas do mercado. 
-                  Em breve você terá acesso a dados profissionais em tempo real!
+                <p className="text-blue-800 dark:text-blue-200 text-lg mb-6 max-w-2xl mx-auto leading-relaxed">
+                  Nossa equipe está configurando sua campanha com as melhores práticas do mercado. 
+                  Em breve você terá acesso a dados em tempo real!
                 </p>
               </div>
               
@@ -155,11 +155,11 @@ export function MetricasMetaAds() {
                       <Target className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">📈 Dashboard Profissional</h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">📈 Dashboard Completo</h4>
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
                         Assim que seus anúncios estiverem no ar, você verá aqui:
                       </p>
-                      <ul className="mt-2 space-y-1 text-sm text-blue-600 dark:text-blue-400">
+                      <ul className="mt-2 space-y-1 text-sm text-blue-700 dark:text-blue-300">
                         <li className="flex items-center gap-2">
                           <span className="w-1 h-1 bg-blue-500 rounded-full"></span>
                           Pessoas alcançadas em tempo real
@@ -187,18 +187,18 @@ export function MetricasMetaAds() {
                       <Heart className="h-4 w-4" />
                     </div>
                     <div>
-                      <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">💙 Fique Tranquilo!</h4>
-                      <p className="text-sm text-blue-700 dark:text-blue-300 leading-relaxed">
-                        Nossa equipe de especialistas cuida de tudo nos bastidores com tecnologia avançada. 
-                        Estes relatórios profissionais são para você se sentir seguro e acompanhar 
-                        o progresso do nosso trabalho especializado em tempo real.
+                      <h4 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">💙 Fique Tranquilo!</h4>
+                      <p className="text-sm text-blue-800 dark:text-blue-200 leading-relaxed">
+                        Nossa equipe cuida de tudo nos bastidores com tecnologia avançada. 
+                        Estes relatórios são para você se sentir seguro e acompanhar 
+                        o progresso do nosso trabalho em tempo real.
                       </p>
                       <div className="flex items-center gap-2 mt-3">
                         <Badge className="trust-badge text-xs">
                           ✅ Equipe Especializada
                         </Badge>
                         <Badge className="monitoring-badge text-xs">
-                          🛡️ Monitoramento Pro
+                          🛡️ Monitoramento Ativo
                         </Badge>
                       </div>
                     </div>
@@ -221,10 +221,10 @@ export function MetricasMetaAds() {
                 </div>
                 <h3 className="text-2xl font-bold font-display text-green-900 dark:text-green-100 mb-3 flex items-center justify-center gap-2">
                   <Award className="h-6 w-6" />
-                  🛡️ Sua Campanha Está Sendo Monitorada Profissionalmente
+                  🛡️ Sua Campanha Está Sendo Monitorada
                 </h3>
-                <p className="text-green-700 dark:text-green-300 text-lg max-w-3xl mx-auto leading-relaxed">
-                  Nossa equipe de especialistas trabalha 24/7 com tecnologia avançada para maximizar seus resultados
+                <p className="text-green-800 dark:text-green-200 text-lg max-w-3xl mx-auto leading-relaxed">
+                  Nossa equipe trabalha 24/7 com tecnologia avançada para maximizar seus resultados
                 </p>
               </div>
               
@@ -232,19 +232,19 @@ export function MetricasMetaAds() {
                 <div className="info-card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 rounded-xl border border-green-200 dark:border-green-800/30">
                   <div className="flex items-center gap-3 mb-2">
                     <CheckCircle className="h-5 w-5 text-green-600" />
-                    <h4 className="font-semibold text-green-800 dark:text-green-200">Equipe Especializada</h4>
+                    <h4 className="font-semibold text-green-900 dark:text-green-100">Equipe Dedicada</h4>
                   </div>
-                  <p className="text-sm text-green-700 dark:text-green-300">
-                    Analistas especializados monitorando seus resultados diariamente
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    Analistas monitorando seus resultados diariamente
                   </p>
                 </div>
                 
                 <div className="info-card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 rounded-xl border border-green-200 dark:border-green-800/30">
                   <div className="flex items-center gap-3 mb-2">
                     <Activity className="h-5 w-5 text-green-600" />
-                    <h4 className="font-semibold text-green-800 dark:text-green-200">Otimização Automática</h4>
+                    <h4 className="font-semibold text-green-900 dark:text-green-100">Otimização Automática</h4>
                   </div>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     Ajustes inteligentes baseados em dados em tempo real
                   </p>
                 </div>
@@ -252,9 +252,9 @@ export function MetricasMetaAds() {
                 <div className="info-card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 rounded-xl border border-green-200 dark:border-green-800/30">
                   <div className="flex items-center gap-3 mb-2">
                     <TrendingUp className="h-5 w-5 text-green-600" />
-                    <h4 className="font-semibold text-green-800 dark:text-green-200">Resultados Inteligentes</h4>
+                    <h4 className="font-semibold text-green-900 dark:text-green-100">Resultados Inteligentes</h4>
                   </div>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     Estratégias avançadas para maximizar performance
                   </p>
                 </div>
@@ -262,9 +262,9 @@ export function MetricasMetaAds() {
                 <div className="info-card bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-4 rounded-xl border border-green-200 dark:border-green-800/30">
                   <div className="flex items-center gap-3 mb-2">
                     <Heart className="h-5 w-5 text-green-600" />
-                    <h4 className="font-semibold text-green-800 dark:text-green-200">Suporte Dedicado</h4>
+                    <h4 className="font-semibold text-green-900 dark:text-green-100">Suporte Dedicado</h4>
                   </div>
-                  <p className="text-sm text-green-700 dark:text-green-300">
+                  <p className="text-sm text-green-800 dark:text-green-200">
                     Atendimento especializado sempre disponível
                   </p>
                 </div>
@@ -276,13 +276,13 @@ export function MetricasMetaAds() {
                     <Sparkles className="h-5 w-5" />
                   </div>
                   <div>
-                    <h4 className="font-bold text-green-800 dark:text-green-200 text-lg mb-2 flex items-center gap-2">
+                    <h4 className="font-bold text-green-900 dark:text-green-100 text-lg mb-2 flex items-center gap-2">
                       <Award className="h-5 w-5" />
-                      🌟 Lembre-se: Você Está em Excelentes Mãos!
+                      🌟 Você Está em Excelentes Mãos!
                     </h4>
-                    <p className="text-green-700 dark:text-green-300 leading-relaxed mb-3">
-                      Estes dados profissionais são fornecidos para sua <strong>total transparência e confiança</strong>. 
-                      Nossa equipe especializada já está trabalhando com base neles para maximizar seus resultados com 
+                    <p className="text-green-800 dark:text-green-200 leading-relaxed mb-3">
+                      Estes dados são fornecidos para sua <strong>total transparência e tranquilidade</strong>. 
+                      Nossa equipe já está trabalhando com base neles para maximizar seus resultados com 
                       tecnologia de ponta e estratégias comprovadas!
                     </p>
                     <div className="flex items-center gap-3">
@@ -290,7 +290,7 @@ export function MetricasMetaAds() {
                         🏆 Equipe Certificada
                       </Badge>
                       <Badge className="monitoring-badge text-xs">
-                        📊 Dados Profissionais
+                        📊 Dados em Tempo Real
                       </Badge>
                       <Badge className="professional-badge text-xs">
                         ⚡ Otimização Avançada

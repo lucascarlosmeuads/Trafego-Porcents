@@ -174,7 +174,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <BarChart3 className="w-5 h-5" />
             </div>
             <div>
-              <span className="page-title text-xl">Dados dos Anúncios</span>
+              <span className="page-title text-xl text-gray-900 dark:text-gray-100">Dados dos Anúncios</span>
               {connectionStatus === 'offline' && <WifiOff className="w-4 h-4 text-red-600 ml-2" />}
             </div>
           </CardTitle>
@@ -184,8 +184,8 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gradient-trafego flex items-center justify-center animate-pulse">
               <RefreshCw className="w-8 h-8 text-white animate-spin" />
             </div>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Verificando configuração...</h3>
-            <p className="text-sm text-muted-foreground">Aguarde enquanto preparamos seus dados</p>
+            <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">Verificando configuração...</h3>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Aguarde enquanto preparamos seus dados</p>
           </div>
         </CardContent>
       </Card>
@@ -203,7 +203,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
-                <span className="page-title text-xl">Relatório de Anúncios</span>
+                <span className="page-title text-xl text-gray-900 dark:text-gray-100">Relatório de Anúncios</span>
                 {connectionStatus === 'offline' && <WifiOff className="w-4 w-4 text-red-600 ml-2" />}
               </div>
             </div>
@@ -212,7 +212,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
         <CardContent>
           <Alert className="info-card-warning border-0">
             <MessageSquare className="h-5 w-5 text-amber-600" />
-            <AlertDescription className="text-amber-800 dark:text-amber-200">
+            <AlertDescription className="text-amber-900 dark:text-amber-100">
               <div className="space-y-4">
                 <div>
                   <h4 className="font-semibold text-lg mb-2 flex items-center gap-2">
@@ -284,7 +284,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 <BarChart3 className="w-5 h-5" />
               </div>
               <div>
-                <span className="page-title text-xl">Dados dos Anúncios</span>
+                <span className="page-title text-xl text-gray-900 dark:text-gray-100">Dados dos Anúncios</span>
                 <div className="flex items-center gap-2 mt-1">
                   <Badge className="trust-badge text-xs">
                     <CheckCircle className="w-3 h-3 mr-1" />
@@ -317,7 +317,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             </div>
           </CardTitle>
           {lastFetchInfo && (
-            <p className="text-xs text-muted-foreground flex items-center gap-2 mt-2">
+            <p className="text-xs text-gray-600 dark:text-gray-400 flex items-center gap-2 mt-2">
               <Activity className="w-3 h-3" />
               {lastFetchInfo}
             </p>
@@ -328,7 +328,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           {connectionStatus === 'offline' && (
             <Alert className="mb-4 border-red-200 bg-red-50">
               <WifiOff className="h-4 w-4 text-red-600" />
-              <AlertDescription className="text-red-800">
+              <AlertDescription className="text-red-900 dark:text-red-100">
                 Sem conexão com a internet. Mostrando dados salvos localmente.
               </AlertDescription>
             </Alert>
@@ -338,7 +338,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           {fallbackMessage && (
             <Alert className="mb-4 border-blue-200 bg-blue-50">
               <Info className="h-4 w-4 text-blue-600" />
-              <AlertDescription className="text-blue-800">
+              <AlertDescription className="text-blue-900 dark:text-blue-100">
                 {fallbackMessage}
               </AlertDescription>
             </Alert>
@@ -348,7 +348,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
           {lastError && !loadingData && displayData.length === 0 && (
             <Alert className="mb-4 border-orange-200 bg-orange-50">
               <AlertCircle className="h-4 w-4 text-orange-600" />
-              <AlertDescription className="text-orange-800">
+              <AlertDescription className="text-orange-900 dark:text-orange-100">
                 <div className="space-y-3">
                   <p>{lastError}</p>
                   <div className="flex gap-2 flex-wrap">
@@ -373,7 +373,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               {/* Indicador de dados do cache */}
               {cachedMetrics && insights.length === 0 && (
                 <div className="info-card p-3 text-center">
-                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <div className="flex items-center justify-center gap-2 text-sm text-gray-600 dark:text-gray-400">
                     <Clock className="w-4 h-4" />
                     📦 Dados salvos localmente • {new Date(cachedMetrics.timestamp).toLocaleString('pt-BR')}
                   </div>
@@ -385,20 +385,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Pessoas Alcançadas */}
                 <div className="metric-card metric-card-reach p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <Users className="w-6 h-6 text-blue-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <Users className="w-6 h-6 text-blue-700" />
                     </div>
-                    <Badge className="professional-badge bg-blue-50 text-blue-700 border-blue-200">
+                    <Badge className="professional-badge bg-blue-100/90 text-blue-800 border-blue-300 font-medium">
                       <Eye className="w-3 h-3 mr-1" />
                       Alcance
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-blue-600">
+                    <div className="metric-number text-blue-700 font-bold">
                       {totalMetrics.pessoasAlcancadas.toLocaleString()}
                     </div>
-                    <div className="metric-label">Pessoas Alcançadas</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Pessoas Alcançadas</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Número de pessoas únicas que visualizaram seus anúncios
                     </div>
                   </div>
@@ -407,20 +407,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Visitantes do Anúncio */}
                 <div className="metric-card metric-card-clicks p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <MousePointer className="w-6 h-6 text-green-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <MousePointer className="w-6 h-6 text-green-700" />
                     </div>
-                    <Badge className="professional-badge bg-green-50 text-green-700 border-green-200">
+                    <Badge className="professional-badge bg-green-100/90 text-green-800 border-green-300 font-medium">
                       <Zap className="w-3 h-3 mr-1" />
                       Cliques
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-green-600">
+                    <div className="metric-number text-green-700 font-bold">
                       {totalMetrics.visitantesAnuncio.toLocaleString()}
                     </div>
-                    <div className="metric-label">Visitantes Interessados</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Visitantes Interessados</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Pessoas que clicaram porque se interessaram pelo seu produto
                     </div>
                   </div>
@@ -429,20 +429,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Valor Investido */}
                 <div className="metric-card metric-card-spend p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <DollarSign className="w-6 h-6 text-purple-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <DollarSign className="w-6 h-6 text-purple-700" />
                     </div>
-                    <Badge className="professional-badge bg-purple-50 text-purple-700 border-purple-200">
+                    <Badge className="professional-badge bg-purple-100/90 text-purple-800 border-purple-300 font-medium">
                       <TrendingUp className="w-3 h-3 mr-1" />
                       Investimento
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-purple-600">
+                    <div className="metric-number text-purple-700 font-bold">
                       {formatCurrency(totalMetrics.investimento)}
                     </div>
-                    <div className="metric-label">Valor Investido</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Valor Investido</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Total investido trabalhando para gerar resultados
                     </div>
                   </div>
@@ -451,20 +451,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Taxa de Interesse */}
                 <div className="metric-card metric-card-ctr p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <Target className="w-6 h-6 text-orange-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <Target className="w-6 h-6 text-orange-700" />
                     </div>
-                    <Badge className="professional-badge bg-orange-50 text-orange-700 border-orange-200">
+                    <Badge className="professional-badge bg-orange-100/90 text-orange-800 border-orange-300 font-medium">
                       <Award className="w-3 h-3 mr-1" />
                       Performance
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-orange-600">
+                    <div className="metric-number text-orange-700 font-bold">
                       {taxaInteresseMedia.toFixed(1)}%
                     </div>
-                    <div className="metric-label">Taxa de Interesse</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Taxa de Interesse</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Percentual de pessoas que demonstraram interesse
                     </div>
                   </div>
@@ -473,20 +473,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Custo por Conversa */}
                 <div className="metric-card metric-card-cost p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <MessageSquare className="w-6 h-6 text-cyan-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <MessageSquare className="w-6 h-6 text-cyan-700" />
                     </div>
-                    <Badge className="professional-badge bg-cyan-50 text-cyan-700 border-cyan-200">
+                    <Badge className="professional-badge bg-cyan-100/90 text-cyan-800 border-cyan-300 font-medium">
                       <MessageSquare className="w-3 h-3 mr-1" />
                       Estimativa
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-cyan-600">
+                    <div className="metric-number text-cyan-700 font-bold">
                       {formatCurrency(estimativaCustoPorConversa)}
                     </div>
-                    <div className="metric-label">Custo por Conversa</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Custo por Conversa</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Estimativa para gerar cada contato qualificado
                     </div>
                   </div>
@@ -495,20 +495,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                 {/* Custo por Venda */}
                 <div className="metric-card metric-card-conversion p-6 group hover-lift">
                   <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/20 backdrop-blur-sm">
-                      <ShoppingCart className="w-6 h-6 text-emerald-600" />
+                    <div className="flex items-center justify-center w-12 h-12 rounded-xl bg-white/90 backdrop-blur-sm shadow-sm">
+                      <ShoppingCart className="w-6 h-6 text-emerald-700" />
                     </div>
-                    <Badge className="professional-badge bg-emerald-50 text-emerald-700 border-emerald-200">
+                    <Badge className="professional-badge bg-emerald-100/90 text-emerald-800 border-emerald-300 font-medium">
                       <ShoppingCart className="w-3 h-3 mr-1" />
                       Projeção
                     </Badge>
                   </div>
                   <div className="space-y-2">
-                    <div className="metric-number text-emerald-600">
+                    <div className="metric-number text-emerald-700 font-bold">
                       {formatCurrency(estimativaCustoPorVenda)}
                     </div>
-                    <div className="metric-label">Custo por Venda</div>
-                    <div className="metric-description">
+                    <div className="metric-label text-gray-800 dark:text-gray-200 font-semibold">Custo por Venda</div>
+                    <div className="metric-description text-gray-700 dark:text-gray-300">
                       Projeção baseada em dados do mercado
                     </div>
                   </div>
@@ -523,12 +523,12 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                   </div>
                   <div className="flex-1 space-y-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-green-900 dark:text-green-100 flex items-center gap-2 mb-2">
                         <Heart className="h-5 w-5" />
-                        Como Interpretar Seus Resultados com Tranquilidade
+                        Como Interpretar Seus Resultados
                       </h3>
-                      <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed mb-4">
-                        Estes números representam o trabalho constante da nossa equipe especializada. 
+                      <p className="text-sm text-green-800 dark:text-green-200 leading-relaxed mb-4">
+                        Estes números representam o trabalho constante da nossa equipe. 
                         Cada métrica é monitorada e otimizada diariamente para maximizar seus resultados.
                       </p>
                     </div>
@@ -536,20 +536,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
-                          <Users className="h-5 w-5 text-blue-500 mt-0.5 flex-shrink-0" />
+                          <Users className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium text-green-800 dark:text-green-200">Pessoas Alcançadas</p>
-                            <p className="text-sm text-green-700 dark:text-green-300">
+                            <p className="font-medium text-green-900 dark:text-green-100">Pessoas Alcançadas</p>
+                            <p className="text-sm text-green-800 dark:text-green-200">
                               Sua marca ganha visibilidade! Milhares visualizam seus anúncios diariamente.
                             </p>
                           </div>
                         </div>
                         
                         <div className="flex items-start gap-3">
-                          <MousePointer className="h-5 w-5 text-green-500 mt-0.5 flex-shrink-0" />
+                          <MousePointer className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium text-green-800 dark:text-green-200">Visitantes Interessados</p>
-                            <p className="text-sm text-green-700 dark:text-green-300">
+                            <p className="font-medium text-green-900 dark:text-green-100">Visitantes Interessados</p>
+                            <p className="text-sm text-green-800 dark:text-green-200">
                               Cliques reais de pessoas interessadas no que você oferece!
                             </p>
                           </div>
@@ -558,20 +558,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                       
                       <div className="space-y-3">
                         <div className="flex items-start gap-3">
-                          <Target className="h-5 w-5 text-orange-500 mt-0.5 flex-shrink-0" />
+                          <Target className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium text-green-800 dark:text-green-200">Taxa de Interesse</p>
-                            <p className="text-sm text-green-700 dark:text-green-300">
+                            <p className="font-medium text-green-900 dark:text-green-100">Taxa de Interesse</p>
+                            <p className="text-sm text-green-800 dark:text-green-200">
                               Otimizamos continuamente para atrair o público ideal para você!
                             </p>
                           </div>
                         </div>
                         
                         <div className="flex items-start gap-3">
-                          <DollarSign className="h-5 w-5 text-purple-500 mt-0.5 flex-shrink-0" />
+                          <DollarSign className="h-5 w-5 text-purple-600 mt-0.5 flex-shrink-0" />
                           <div>
-                            <p className="font-medium text-green-800 dark:text-green-200">Investimento Inteligente</p>
-                            <p className="text-sm text-green-700 dark:text-green-300">
+                            <p className="font-medium text-green-900 dark:text-green-100">Investimento Inteligente</p>
+                            <p className="text-sm text-green-800 dark:text-green-200">
                               Cada real trabalha estrategicamente para gerar oportunidades reais!
                             </p>
                           </div>
@@ -583,11 +583,11 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
                       <div className="flex items-start gap-3">
                         <Sparkles className="h-5 w-5 text-green-600 mt-0.5 flex-shrink-0" />
                         <div>
-                          <p className="font-semibold text-green-800 dark:text-green-200 mb-2">
+                          <p className="font-semibold text-green-900 dark:text-green-100 mb-2">
                             🛡️ Você Está em Boas Mãos!
                           </p>
-                          <p className="text-sm text-green-700 dark:text-green-300 leading-relaxed">
-                            Nossa equipe de especialistas analisa estes dados 24/7 e faz ajustes automáticos. 
+                          <p className="text-sm text-green-800 dark:text-green-200 leading-relaxed">
+                            Nossa equipe analisa estes dados 24/7 e faz ajustes automáticos. 
                             Estes relatórios são para sua <strong>transparência e confiança</strong> no nosso trabalho. 
                             Relaxe e deixe nossa expertise maximizar seus resultados!
                           </p>
@@ -615,19 +615,19 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-trafego flex items-center justify-center">
                 <BarChart3 className="w-10 h-10 text-white" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Pronto para Mostrar Seus Resultados! 📊
               </h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto leading-relaxed">
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto leading-relaxed">
                 Selecione um período acima para visualizar como seus anúncios estão performando 
                 e gerando resultados reais para seu negócio.
               </p>
               <div className="info-card-primary p-6 rounded-xl max-w-lg mx-auto">
                 <div className="flex items-center gap-3 mb-3">
                   <Sparkles className="h-5 w-5 text-blue-600" />
-                  <p className="font-semibold text-blue-800 dark:text-blue-200">💡 Dica Profissional</p>
+                  <p className="font-semibold text-blue-900 dark:text-blue-100">💡 Dica</p>
                 </div>
-                <p className="text-sm text-blue-700 dark:text-blue-300">
+                <p className="text-sm text-blue-800 dark:text-blue-200">
                   Comece com <strong>"Ontem"</strong> ou <strong>"Últimos 7 dias"</strong> para ver dados mais consistentes e confiáveis!
                 </p>
               </div>
@@ -640,10 +640,10 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
               <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-trafego flex items-center justify-center animate-pulse">
                 <RefreshCw className="w-10 h-10 text-white animate-spin" />
               </div>
-              <h3 className="text-xl font-semibold text-foreground mb-3">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-3">
                 Buscando Seus Dados...
               </h3>
-              <p className="text-muted-foreground mb-4">
+              <p className="text-gray-600 dark:text-gray-400 mb-4">
                 Nossa equipe mantém estas informações sempre atualizadas para você! ⚡
               </p>
               <div className="flex items-center justify-center gap-2">
