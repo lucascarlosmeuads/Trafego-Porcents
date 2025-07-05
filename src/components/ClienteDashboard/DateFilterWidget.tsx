@@ -32,7 +32,6 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
       setShowCustom(true)
     } else {
       setShowCustom(false)
-      // Chamar com o período pré-definido (sem datas específicas)
       onPeriodChange(period)
     }
   }
@@ -50,32 +49,32 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
   }
 
   return (
-    <Card className="mobile-info-card info-card-primary mobile-mb animate-fade-in-up">
-      <CardContent className="mobile-p">
-        <div className="mobile-content-spacing">
-          {/* Header otimizado para máximo aproveitamento horizontal */}
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-            <div className="flex items-start gap-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-trafego text-white flex-shrink-0">
+    <Card className="mobile-optimized-card info-card-primary animate-fade-in-up">
+      <CardContent className="mobile-optimized-p">
+        <div className="mobile-optimized-spacing">
+          {/* Header otimizado com espaçamento padronizado */}
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-trafego text-white flex-shrink-0">
                 <Filter className="mobile-icon-sm" />
               </div>
               <div className="min-w-0">
                 <h3 className="mobile-section-title text-gray-900 dark:text-gray-100">Período dos Dados</h3>
-                <p className="mobile-description text-gray-600 dark:text-gray-400">Selecione o período para análise</p>
+                <p className="mobile-description text-gray-600 dark:text-gray-400 mt-1">Selecione o período para análise</p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
               <Badge className="monitoring-badge text-xs">
                 <Sparkles className="mobile-icon-sm mr-1" />
                 Tempo Real
               </Badge>
-              <div className="mobile-description font-medium text-gray-900 dark:text-gray-100 bg-gradient-card px-2 py-1 rounded-lg border border-border/50 text-xs">
+              <div className="mobile-description font-medium text-gray-900 dark:text-gray-100 bg-gradient-card px-3 py-1.5 rounded-lg border border-border/50 text-xs">
                 {getCurrentPeriodLabel()}
               </div>
             </div>
           </div>
 
-          {/* Botões de período com máximo aproveitamento das laterais */}
+          {/* Botões de período com grid otimizado */}
           <div className="mobile-date-grid">
             {periodOptions.map((option) => (
               <Button
@@ -102,12 +101,12 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
             ))}
           </div>
 
-          {/* Filtro personalizado com máximo aproveitamento horizontal */}
+          {/* Filtro personalizado com espaçamento padronizado */}
           {showCustom && (
-            <div className="info-card bg-gradient-card mobile-p space-y-3 animate-slide-up">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-gradient-trafego text-white flex-shrink-0">
-                  <Calendar className="h-3 w-3" />
+            <div className="info-card bg-gradient-card mobile-optimized-p space-y-4 animate-slide-up">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-trafego text-white flex-shrink-0">
+                  <Calendar className="h-4 w-4" />
                 </div>
                 <div className="min-w-0">
                   <h4 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">Período Personalizado</h4>
@@ -116,7 +115,7 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
               </div>
               
               <div className="mobile-form-grid">
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <label className="mobile-description font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                     <Calendar className="h-3 w-3 text-blue-500 flex-shrink-0" />
                     Data início:
@@ -128,7 +127,7 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
                     className="border-border/50 focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 bg-background/50 backdrop-blur-sm mobile-touch-target text-xs"
                   />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-2">
                   <label className="mobile-description font-medium text-gray-900 dark:text-gray-100 flex items-center gap-1">
                     <Calendar className="h-3 w-3 text-blue-500 flex-shrink-0" />
                     Data fim:
@@ -154,21 +153,21 @@ export function DateFilterWidget({ currentPeriod, onPeriodChange, loading }: Dat
             </div>
           )}
 
-          {/* Mensagem de confiança com aproveitamento total das laterais */}
-          <div className="info-card-success mobile-p rounded-xl">
-            <div className="flex items-start gap-2">
-              <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-green-500/20 text-green-600 flex-shrink-0">
-                <Shield className="h-3 w-3" />
+          {/* Mensagem de confiança com espaçamento padronizado */}
+          <div className="info-card-success mobile-optimized-p rounded-xl">
+            <div className="flex items-start gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 text-green-600 flex-shrink-0">
+                <Shield className="h-4 w-4" />
               </div>
-              <div className="flex-1 space-y-1 min-w-0">
+              <div className="flex-1 space-y-2 min-w-0">
                 <h4 className="font-semibold text-green-900 dark:text-green-100 flex items-center gap-1 text-sm">
-                  <Sparkles className="h-3 w-3 flex-shrink-0" />
+                  <Sparkles className="h-4 w-4 flex-shrink-0" />
                   Monitoramento Ativo 24/7
                 </h4>
                 <p className="mobile-description text-green-800 dark:text-green-200 leading-relaxed">
                   Nossa equipe monitora estes dados continuamente e faz ajustes automáticos para otimizar seus resultados. Você pode acompanhar nosso trabalho em tempo real através destes relatórios.
                 </p>
-                <div className="flex flex-wrap items-center gap-1 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-2">
                   <Badge variant="secondary" className="trust-badge text-xs">
                     ✅ Dados Verificados
                   </Badge>

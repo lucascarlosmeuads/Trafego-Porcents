@@ -21,7 +21,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     loading: isLoading, 
     lastError: error,
     fetchDataWithDateRange,
-    fetchDataWithPeriod, // Nova função para períodos pré-definidos
+    fetchDataWithPeriod,
     autoLoadingData
   } = useClienteMetaAds(clienteId)
 
@@ -32,11 +32,9 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     
     console.log('📊 [ClienteMetaAdsWidget] Mudança de período:', { newPeriod, startDate, endDate })
     
-    // Se temos datas customizadas, buscar os dados com range
     if (startDate && endDate) {
       fetchDataWithDateRange(startDate, endDate)
     } else {
-      // Usar período pré-definido
       fetchDataWithPeriod(newPeriod)
     }
   }
@@ -56,7 +54,6 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     return `${value.toFixed(2)}%`
   }
 
-  // Calcular métricas agregadas dos insights
   const metricasAgregadas = React.useMemo(() => {
     if (!metricas || metricas.length === 0) return null
     
@@ -79,7 +76,6 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
     })
   }, [metricas])
 
-  // Loading state considera tanto loading inicial quanto auto loading
   const isLoadingData = isLoading || autoLoadingData
 
   if (error) {
@@ -100,25 +96,25 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
 
   return (
     <div className="mobile-optimized-spacing">
-      {/* Filtro de Data com máximo aproveitamento */}
+      {/* Filtro de Data com espaçamento padronizado */}
       <DateFilterWidget
         currentPeriod={period}
         onPeriodChange={handlePeriodChange}
         loading={isLoadingData}
       />
 
-      {/* Cards de Métricas otimizados para mobile */}
+      {/* Cards de Métricas com grid otimizado */}
       {isLoadingData ? (
         <div className="mobile-metrics-grid">
           {[1, 2, 3, 4, 5, 6].map((i) => (
             <Card key={i} className="mobile-optimized-card shimmer">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-2 mb-3">
                   <div className="w-6 h-6 bg-gray-300 dark:bg-gray-700 rounded-lg animate-pulse"></div>
                   <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded flex-1 animate-pulse"></div>
                 </div>
-                <div className="h-6 bg-gray-300 dark:bg-gray-700 rounded mb-1 animate-pulse"></div>
-                <div className="h-2 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
+                <div className="h-8 bg-gray-300 dark:bg-gray-700 rounded mb-2 animate-pulse"></div>
+                <div className="h-3 bg-gray-300 dark:bg-gray-700 rounded animate-pulse"></div>
               </CardContent>
             </Card>
           ))}
@@ -129,13 +125,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* Alcance */}
             <Card className="mobile-optimized-card metric-card-reach hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/20 text-blue-600">
-                    <Eye className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 text-blue-600">
+                    <Eye className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-blue-800 dark:text-blue-200 text-xs font-semibold">ALCANCE</span>
                 </div>
-                <div className="mobile-metric-number text-blue-900 dark:text-blue-100">
+                <div className="mobile-metric-number text-blue-900 dark:text-blue-100 mb-2">
                   {formatNumber(metricasAgregadas.reach || 0)}
                 </div>
                 <p className="metric-description text-blue-700 dark:text-blue-300">
@@ -147,13 +143,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* Impressões */}
             <Card className="mobile-optimized-card metric-card-reach hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-blue-500/20 text-blue-600">
-                    <Activity className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-blue-500/20 text-blue-600">
+                    <Activity className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-blue-800 dark:text-blue-200 text-xs font-semibold">IMPRESSÕES</span>
                 </div>
-                <div className="mobile-metric-number text-blue-900 dark:text-blue-100">
+                <div className="mobile-metric-number text-blue-900 dark:text-blue-100 mb-2">
                   {formatNumber(metricasAgregadas.impressions || 0)}
                 </div>
                 <p className="metric-description text-blue-700 dark:text-blue-300">
@@ -165,13 +161,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* Cliques */}
             <Card className="mobile-optimized-card metric-card-clicks hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-green-500/20 text-green-600">
-                    <MousePointer className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 text-green-600">
+                    <MousePointer className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-green-800 dark:text-green-200 text-xs font-semibold">CLIQUES</span>
                 </div>
-                <div className="mobile-metric-number text-green-900 dark:text-green-100">
+                <div className="mobile-metric-number text-green-900 dark:text-green-100 mb-2">
                   {formatNumber(metricasAgregadas.clicks || 0)}
                 </div>
                 <p className="metric-description text-green-700 dark:text-green-300">
@@ -183,13 +179,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* CTR */}
             <Card className="mobile-optimized-card metric-card-ctr hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-orange-500/20 text-orange-600">
-                    <Target className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/20 text-orange-600">
+                    <Target className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-orange-800 dark:text-orange-200 text-xs font-semibold">CTR</span>
                 </div>
-                <div className="mobile-metric-number text-orange-900 dark:text-orange-100">
+                <div className="mobile-metric-number text-orange-900 dark:text-orange-100 mb-2">
                   {formatPercentage(metricasAgregadas.ctr || 0)}
                 </div>
                 <p className="metric-description text-orange-700 dark:text-orange-300">
@@ -201,13 +197,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* Gasto */}
             <Card className="mobile-optimized-card metric-card-spend hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-purple-500/20 text-purple-600">
-                    <DollarSign className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-purple-500/20 text-purple-600">
+                    <DollarSign className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-purple-800 dark:text-purple-200 text-xs font-semibold">INVESTIDO</span>
                 </div>
-                <div className="mobile-metric-number text-purple-900 dark:text-purple-100">
+                <div className="mobile-metric-number text-purple-900 dark:text-purple-100 mb-2">
                   {formatCurrency(metricasAgregadas.spend || 0)}
                 </div>
                 <p className="metric-description text-purple-700 dark:text-purple-300">
@@ -219,13 +215,13 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             {/* CPM */}
             <Card className="mobile-optimized-card metric-card-cost hover-lift">
               <CardContent className="mobile-optimized-p">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-cyan-500/20 text-cyan-600">
-                    <TrendingUp className="h-3 w-3" />
+                <div className="flex items-center gap-2 mb-3">
+                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-cyan-500/20 text-cyan-600">
+                    <TrendingUp className="h-4 w-4" />
                   </div>
                   <span className="metric-label text-cyan-800 dark:text-cyan-200 text-xs font-semibold">CPM</span>
                 </div>
-                <div className="mobile-metric-number text-cyan-900 dark:text-cyan-100">
+                <div className="mobile-metric-number text-cyan-900 dark:text-cyan-100 mb-2">
                   {formatCurrency(metricasAgregadas.cpm || 0)}
                 </div>
                 <p className="metric-description text-cyan-700 dark:text-cyan-300">
@@ -235,20 +231,20 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
             </Card>
           </div>
 
-          {/* Card de interpretação com máximo aproveitamento */}
+          {/* Card de interpretação com espaçamento padronizado */}
           <Card className="mobile-optimized-card info-card-success hover-lift">
             <CardContent className="mobile-optimized-p">
-              <div className="flex items-start gap-2">
-                <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white flex-shrink-0">
-                  <Award className="h-4 w-4" />
+              <div className="flex items-start gap-3">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-r from-green-500 to-emerald-500 text-white flex-shrink-0">
+                  <Award className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
-                  <h4 className="font-bold text-green-900 dark:text-green-100 mb-2 flex items-center gap-1 text-sm">
-                    <Zap className="h-4 w-4" />
+                  <h4 className="font-bold text-green-900 dark:text-green-100 mb-3 flex items-center gap-2 text-base">
+                    <Zap className="h-5 w-5" />
                     🎯 Interpretação Inteligente dos Resultados
                   </h4>
-                  <div className="space-y-2">
-                    <div className="flex flex-wrap items-center gap-1">
+                  <div className="space-y-3">
+                    <div className="flex flex-wrap items-center gap-2">
                       <Badge className="trust-badge text-xs">
                         <Users className="h-3 w-3 mr-1" />
                         {formatNumber(metricasAgregadas.reach || 0)} Pessoas Alcançadas
@@ -270,7 +266,7 @@ export function ClienteMetaAdsWidget({ clienteId, nomeCliente }: ClienteMetaAdsW
       ) : (
         <Card className="mobile-optimized-card info-card-primary">
           <CardContent className="mobile-optimized-p text-center">
-            <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-xl bg-blue-500/20 text-blue-600 mb-3">
+            <div className="flex items-center justify-center w-12 h-12 mx-auto rounded-xl bg-blue-500/20 text-blue-600 mb-4">
               <BarChart3 className="mobile-icon-md" />
             </div>
             <h3 className="font-semibold text-blue-900 dark:text-blue-100 mb-2">🚀 Aguardando Dados</h3>
