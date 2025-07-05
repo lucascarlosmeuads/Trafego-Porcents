@@ -113,27 +113,27 @@
   }
   
   .metric-card-reach {
-    @apply bg-gradient-reach border-metrics-reach-500/20 shadow-[0_4px_20px_rgba(59,130,246,0.1)];
+    @apply bg-gradient-reach border-reach-500/20 shadow-[0_4px_20px_rgba(59,130,246,0.1)];
   }
   
   .metric-card-clicks {
-    @apply bg-gradient-clicks border-metrics-clicks-500/20 shadow-[0_4px_20px_rgba(34,197,94,0.1)];
+    @apply bg-gradient-clicks border-clicks-500/20 shadow-[0_4px_20px_rgba(34,197,94,0.1)];
   }
   
   .metric-card-spend {
-    @apply bg-gradient-spend border-metrics-spend-500/20 shadow-[0_4px_20px_rgba(168,85,247,0.1)];
+    @apply bg-gradient-spend border-spend-500/20 shadow-[0_4px_20px_rgba(168,85,247,0.1)];
   }
   
   .metric-card-ctr {
-    @apply bg-gradient-ctr border-metrics-ctr-500/20 shadow-[0_4px_20px_rgba(251,146,60,0.1)];
+    @apply bg-gradient-ctr border-ctr-500/20 shadow-[0_4px_20px_rgba(251,146,60,0.1)];
   }
   
   .metric-card-cost {
-    @apply bg-gradient-cost border-metrics-cost-500/20 shadow-[0_4px_20px_rgba(6,182,212,0.1)];
+    @apply bg-gradient-cost border-cost-500/20 shadow-[0_4px_20px_rgba(6,182,212,0.1)];
   }
   
   .metric-card-conversion {
-    @apply bg-gradient-conversion border-metrics-conversion-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.1)];
+    @apply bg-gradient-conversion border-conversion-500/20 shadow-[0_4px_20px_rgba(16,185,129,0.1)];
   }
 
   /* Números das métricas */
