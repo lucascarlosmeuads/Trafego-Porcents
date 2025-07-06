@@ -129,7 +129,7 @@ export function TermosContratoModal({
           bg-gray-900 border-gray-700 p-0 flex flex-col z-[9999]
           ${isMobile 
             ? '!fixed !inset-0 !w-screen !h-screen !max-w-none !max-h-none !m-0 !rounded-none !transform-none !translate-x-0 !translate-y-0 !left-0 !top-0' 
-            : 'max-w-4xl w-full max-h-[85vh]'
+            : 'max-w-4xl w-full max-h-[90vh]'
           }
         `}
       >
@@ -155,9 +155,9 @@ export function TermosContratoModal({
           </p>
         </DialogHeader>
         
-        {/* Conteúdo com scroll - altura ajustada para dar espaço aos botões */}
-        <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[420px]'} w-full overflow-auto`}>
+        {/* Conteúdo com scroll completo */}
+        <div className="flex-1 min-h-0">
+          <ScrollArea className={`${isMobile ? 'h-[calc(100vh-120px)]' : 'h-[calc(90vh-120px)]'} w-full`}>
             <div className="p-4 space-y-6 text-gray-300">
               
               {/* Aviso Importante */}
@@ -330,75 +330,69 @@ export function TermosContratoModal({
                   <p><strong>Site:</strong> trafegoporcents.com</p>
                 </div>
               </div>
-              
-              {/* Espaçamento extra para mobile */}
-              {isMobile && <div className="h-8" />}
+
+              {/* Botões de Ação - Agora dentro do conteúdo scrollável */}
+              <div className={`pt-6 ${isMobile ? 'pb-8' : 'pb-6'}`}>
+                {/* Se já aceitou os termos ou modo somente aceitar, mostrar apenas botão de aceitar/fechar */}
+                {termosAceitos || showOnlyAccept ? (
+                  <div className="flex flex-col gap-3">
+                    {showOnlyAccept && !termosAceitos && (
+                      <Button
+                        onClick={handleAceitarTermos}
+                        size="lg"
+                        className={`
+                          w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold transition-all
+                          ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
+                        `}
+                        disabled={aceitando}
+                      >
+                        {aceitando ? 'Aceitando...' : 'Aceitar Termos e Condições'}
+                      </Button>
+                    )}
+                    {termosAceitos && (
+                      <Button
+                        onClick={handleCloseModal}
+                        size="lg"
+                        className={`
+                          w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold
+                          ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
+                        `}
+                      >
+                        Fechar
+                      </Button>
+                    )}
+                  </div>
+                ) : (
+                  /* Se não aceitou ainda e não é modo somente aceitar, mostrar botões de aceitar/rejeitar */
+                  <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
+                    <Button
+                      onClick={handleRejeitarTermos}
+                      variant="outline"
+                      size="lg"
+                      className={`
+                        border-red-500 text-red-400 hover:bg-red-500/10 hover:border-red-400 font-semibold
+                        ${isMobile ? 'w-full h-14 text-base px-8 order-2' : 'flex-1 h-12 px-6'}
+                      `}
+                      disabled={aceitando || rejeitando}
+                    >
+                      {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
+                    </Button>
+                    <Button
+                      onClick={handleAceitarTermos}
+                      size="lg"
+                      className={`
+                        bg-teal-600 hover:bg-teal-700 text-white font-semibold shadow-lg
+                        ${isMobile ? 'w-full h-14 text-base px-8 order-1' : 'flex-1 h-12 px-6'}
+                      `}
+                      disabled={aceitando || rejeitando}
+                    >
+                      {aceitando ? 'Aceitando...' : 'Aceito os Termos'}
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </ScrollArea>
-        </div>
-
-        {/* Botões de Ação - Fixos na parte inferior com otimização mobile */}
-        <div className={`
-          flex-shrink-0 border-t border-gray-700 bg-gray-900
-          ${isMobile ? 'p-4 pb-8 px-6' : 'p-4 pt-2'}
-        `}>
-          {/* Se já aceitou os termos ou modo somente aceitar, mostrar apenas botão de aceitar/fechar */}
-          {termosAceitos || showOnlyAccept ? (
-            <div className="flex flex-col gap-3">
-              {showOnlyAccept && !termosAceitos && (
-                <Button
-                  onClick={handleAceitarTermos}
-                  size="lg"
-                  className={`
-                    w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold transition-all
-                    ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
-                  `}
-                  disabled={aceitando}
-                >
-                  {aceitando ? 'Aceitando...' : 'Aceitar Termos e Condições'}
-                </Button>
-              )}
-              {termosAceitos && (
-                <Button
-                  onClick={handleCloseModal}
-                  size="lg"
-                  className={`
-                    w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold
-                    ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
-                  `}
-                >
-                  Fechar
-                </Button>
-              )}
-            </div>
-          ) : (
-            /* Se não aceitou ainda e não é modo somente aceitar, mostrar botões de aceitar/rejeitar */
-            <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
-              <Button
-                onClick={handleRejeitarTermos}
-                variant="outline"
-                size="lg"
-                className={`
-                  border-red-500 text-red-400 hover:bg-red-500/10 hover:border-red-400 font-semibold
-                  ${isMobile ? 'w-full h-14 text-base px-8 order-2' : 'flex-1 h-12 px-6'}
-                `}
-                disabled={aceitando || rejeitando}
-              >
-                {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
-              </Button>
-              <Button
-                onClick={handleAceitarTermos}
-                size="lg"
-                className={`
-                  bg-teal-600 hover:bg-teal-700 text-white font-semibold shadow-lg
-                  ${isMobile ? 'w-full h-14 text-base px-8 order-1' : 'flex-1 h-12 px-6'}
-                `}
-                disabled={aceitando || rejeitando}
-              >
-                {aceitando ? 'Aceitando...' : 'Aceito os Termos'}
-              </Button>
-            </div>
-          )}
         </div>
       </DialogContent>
     </Dialog>
