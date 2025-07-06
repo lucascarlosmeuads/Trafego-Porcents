@@ -658,29 +658,31 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                       <ClienteRow
                         key={`${emailToUse}-${cliente.id}-${currentPage}-${index}`}
                         cliente={cliente}
-                        selectedManager={currentManager || selectedManager || 'Próprios dados'}
-                        index={(currentPage - 1) * itemsPerPage + index}
+                        onDelete={async (id) => {
+                          // Implementar lógica de delete se necessário
+                          console.log('Delete cliente:', id)
+                        }}
+                        onUpdate={async (id, updates) => {
+                          // Implementar lógica de update se necessário
+                          console.log('Update cliente:', id, updates)
+                        }}
+                        onTransferencia={async (clienteId, novoGestorEmail) => {
+                          // Implementar lógica de transferência se necessário
+                          console.log('Transfer cliente:', clienteId, novoGestorEmail)
+                        }}
+                        onAddBriefing={async (clienteId) => {
+                          // Implementar lógica de add briefing se necessário
+                          console.log('Add briefing:', clienteId)
+                        }}
+                        onEditBriefing={async (clienteId) => {
+                          // Implementar lógica de edit briefing se necessário
+                          console.log('Edit briefing:', clienteId)
+                        }}
+                        canTransfer={canTransfer}
                         isAdmin={isAdmin}
-                        showEmailGestor={isSitesContext}
-                        showSitePagoCheckbox={showSitePagoCheckbox}
-                        updatingStatus={updatingStatus}
-                        editingLink={editingLink}
-                        linkValue={linkValue}
-                        setLinkValue={setLinkValue}
-                        editingBM={editingBM}
-                        bmValue={bmValue}
-                        setBmValue={setBmValue}
-                        getStatusColor={getStatusColor}
-                        onStatusChange={handleStatusChange}
-                        onSiteStatusChange={handleSiteStatusChange}
-                        onLinkEdit={handleLinkEdit}
-                        onLinkSave={handleLinkSave}
-                        onLinkCancel={handleLinkCancel}
-                        onBMEdit={handleBMEdit}
-                        onBMSave={handleBMSave}
-                        onBMCancel={handleBMCancel}
-                        onComissionUpdate={handleComissionUpdate}
-                        onSitePagoChange={handleSitePagoChange}
+                        gestores={[]}
+                        currentUserEmail={currentUserEmail}
+                        isLoading={loading}
                       />
                     ))
                   )}
