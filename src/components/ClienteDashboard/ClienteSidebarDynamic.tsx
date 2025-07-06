@@ -58,13 +58,8 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       icon: DollarSign
     },
     {
-      id: 'steps',
-      label: '5. Libere sua BM',
-      icon: Users
-    },
-    {
       id: 'vendas',
-      label: '6. Métricas',
+      label: '5. Métricas',
       icon: TrendingUp
     },
     {

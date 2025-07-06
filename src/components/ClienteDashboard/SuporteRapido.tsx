@@ -1,13 +1,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target, AlertTriangle, Key } from 'lucide-react'
 
 interface SuporteRapidoProps {
   onBack: () => void
+  onTabChange?: (tab: string) => void
 }
 
-export function SuporteRapido({ onBack }: SuporteRapidoProps) {
+export function SuporteRapido({ onBack, onTabChange }: SuporteRapidoProps) {
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Preciso de ajuda com a configuração da minha campanha. Gostaria de conversar sobre:
 
@@ -19,6 +20,12 @@ export function SuporteRapido({ onBack }: SuporteRapidoProps) {
 Aguardo orientação para prosseguir.`)
     const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
     window.open(whatsappUrl, '_blank')
+  }
+
+  const handleLiberarBM = () => {
+    if (onTabChange) {
+      onTabChange('steps')
+    }
   }
 
   return (
@@ -116,8 +123,9 @@ Aguardo orientação para prosseguir.`)
             </div>
           </div>
 
-          {/* Botão Principal */}
+          {/* Botões de Ação */}
           <div className="space-y-3">
+            {/* Botão WhatsApp */}
             <Button
               onClick={handleWhatsAppContact}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 text-lg shadow-lg"
@@ -129,6 +137,21 @@ Aguardo orientação para prosseguir.`)
                 <div className="text-sm opacity-90">Suporte técnico direto - (48) 9 9113-1987</div>
               </div>
             </Button>
+
+            {/* Botão Libere sua BM */}
+            {onTabChange && (
+              <Button
+                onClick={handleLiberarBM}
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-8 py-4 text-lg shadow-lg"
+                size="lg"
+              >
+                <Key className="h-5 w-5 mr-3" />
+                <div className="text-left">
+                  <div className="font-semibold">Libere sua BM</div>
+                  <div className="text-sm opacity-90">Tutorial para configurar Business Manager</div>
+                </div>
+              </Button>
+            )}
           </div>
 
           {/* Informações Adicionais Atualizadas */}

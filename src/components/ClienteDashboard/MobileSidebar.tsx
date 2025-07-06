@@ -21,8 +21,7 @@ import {
   Menu,
   ChevronLeft,
   Sparkles,
-  Activity,
-  Users
+  Activity
 } from 'lucide-react'
 
 interface MobileSidebarProps {
@@ -68,18 +67,11 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
       step: 4
     },
     {
-      id: 'steps',
-      label: '5. Libere sua BM',
-      icon: Users,
-      badge: null,
-      step: 5
-    },
-    {
       id: 'vendas',
-      label: '6. Métricas',
+      label: '5. Métricas',
       icon: BarChart3,
       badge: null,
-      step: 6
+      step: 5
     },
     {
       id: 'site',
