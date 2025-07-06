@@ -1,3 +1,4 @@
+
 import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck, Activity, Sparkles, Loader2 } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -58,19 +59,19 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       icon: DollarSign
     },
     {
+      id: 'steps',
+      label: '5. Guia Completo',
+      icon: Users
+    },
+    {
       id: 'site',
-      label: '5. Site',
+      label: 'Site',
       icon: LayoutDashboard
     },
     {
       id: 'vendas',
       label: '6. Métricas',
       icon: TrendingUp
-    },
-    {
-      id: 'steps',
-      label: 'Guia Completo',
-      icon: Users
     }
   ]
 
