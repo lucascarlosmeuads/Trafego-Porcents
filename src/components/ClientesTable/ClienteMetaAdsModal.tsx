@@ -1,26 +1,25 @@
+
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { useClienteMetaAds } from '@/hooks/useClienteMetaAds'
-import { formatCurrency } from '@/lib/utils'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useClienteMetaAdsFixed } from '@/hooks/useClienteMetaAdsFixed'
+import { toast } from '@/hooks/use-toast'
 import { 
   Settings, 
   CheckCircle, 
   AlertCircle, 
-  BarChart3, 
-  Eye, 
-  MousePointer, 
-  DollarSign,
-  RefreshCw,
-  Save,
-  TestTube
+  Loader2,
+  Eye,
+  EyeOff,
+  Activity,
+  TrendingUp
 } from 'lucide-react'
+import { formatCurrency } from '@/lib/utils'
 
 interface ClienteMetaAdsModalProps {
   open: boolean
@@ -35,412 +34,398 @@ export function ClienteMetaAdsModal({
   clienteId, 
   nomeCliente 
 }: ClienteMetaAdsModalProps) {
-  const {
+  const { 
     config,
-    setConfig,
     loading,
     saving,
+    insights,
+    lastError,
+    connectionSteps,
+    isConfigured,
     saveConfig,
     testConnection,
-    fetchInsights,
-    insights,
-    isConfigured,
-    lastError,
-    lastErrorType,
-    connectionSteps,
-    refreshConfig,
-    autoLoadData
-  } = useClienteMetaAds(clienteId)
+    loadMetricsWithPeriod,
+    refreshConfig
+  } = useClienteMetaAdsFixed(clienteId)
 
-  const [localConfig, setLocalConfig] = useState(config)
-  const [testing, setTesting] = useState(false)
-  const [loadingData, setLoadingData] = useState(false)
-  const [activeTab, setActiveTab] = useState('config')
-
-  // Sincronizar config local quando o config do hook mudar
-  useEffect(() => {
-    setLocalConfig(config)
-  }, [config])
-
-  // Auto-mudar para aba de métricas quando configurado
-  useEffect(() => {
-    if (isConfigured && insights.length > 0) {
-      setActiveTab('metrics')
-    }
-  }, [isConfigured, insights.length])
-
-  const handleSave = async () => {
-    const result = await saveConfig(localConfig)
-    if (result.success) {
-      console.log('✅ [ClienteMetaAdsModal] Configuração salva com sucesso')
-      // Auto-carregar dados após salvar
-      setTimeout(async () => {
-        try {
-          await autoLoadData()
-          setActiveTab('metrics')
-        } catch (error) {
-          console.error('❌ [ClienteMetaAdsModal] Erro ao carregar dados:', error)
-        }
-      }, 1000)
-    }
-  }
-
-  const handleTest = async () => {
-    setTesting(true)
-    try {
-      const result = await testConnection()
-      console.log('🔧 [ClienteMetaAdsModal] Teste resultado:', result)
-    } catch (error) {
-      console.error('❌ [ClienteMetaAdsModal] Erro no teste:', error)
-    } finally {
-      setTesting(false)
-    }
-  }
-
-  const handleLoadData = async () => {
-    setLoadingData(true)
-    try {
-      await fetchInsights()
-      setActiveTab('metrics')
-    } catch (error) {
-      console.error('❌ [ClienteMetaAdsModal] Erro ao carregar dados:', error)
-    } finally {
-      setLoadingData(false)
-    }
-  }
-
-  // Calcular métricas agregadas
-  const metrics = insights.reduce((acc, insight) => ({
-    impressions: acc.impressions + parseInt(insight.impressions || '0'),
-    clicks: acc.clicks + parseInt(insight.clicks || '0'),
-    spend: acc.spend + parseFloat(insight.spend || '0'),
-    ctr: acc.ctr + parseFloat(insight.ctr || '0'),
-    cpc: acc.cpc + parseFloat(insight.cpc || '0')
-  }), {
-    impressions: 0,
-    clicks: 0,
-    spend: 0,
-    ctr: 0,
-    cpc: 0
+  const [activeTab, setActiveTab] = useState('configuracao')
+  const [showTokens, setShowTokens] = useState(false)
+  const [formData, setFormData] = useState({
+    appId: '',
+    appSecret: '',
+    accessToken: '',
+    adAccountId: ''
   })
 
-  const avgCTR = insights.length > 0 ? metrics.ctr / insights.length : 0
-  const avgCPC = insights.length > 0 ? metrics.cpc / insights.length : 0
+  // Atualizar form quando config carrega
+  useEffect(() => {
+    if (config) {
+      setFormData({
+        appId: config.appId || '',
+        appSecret: config.appSecret || '',
+        accessToken: config.accessToken || '',
+        adAccountId: config.adAccountId || ''
+      })
+    }
+  }, [config])
+
+  const handleSave = async () => {
+    console.log('💾 [ClienteMetaAdsModal] Salvando configuração...')
+    
+    const result = await saveConfig(formData)
+    
+    if (result.success) {
+      console.log('✅ [ClienteMetaAdsModal] Configuração salva, testando conexão...')
+      
+      // Após salvar com sucesso, testar conexão automaticamente
+      const testResult = await testConnection()
+      
+      if (testResult.success) {
+        console.log('✅ [ClienteMetaAdsModal] Teste de conexão OK, carregando métricas...')
+        
+        // Após testar com sucesso, carregar métricas e ir para aba métricas
+        const metricsResult = await loadMetricsWithPeriod('today')
+        
+        if (metricsResult.success || metricsResult.message.includes('Sem dados')) {
+          console.log('✅ [ClienteMetaAdsModal] Navegando para aba métricas')
+          setActiveTab('metricas')
+          
+          toast({
+            title: "Configuração completa!",
+            description: "Credenciais salvas e testadas com sucesso. Métricas carregadas.",
+          })
+        } else {
+          // Se falhar no carregamento de métricas, ainda vai para a aba métricas
+          setActiveTab('metricas')
+          
+          toast({
+            title: "Configuração salva",
+            description: "Credenciais salvas e testadas. Verifique as métricas na aba ao lado.",
+          })
+        }
+      }
+    }
+  }
+
+  const handleTestConnection = async () => {
+    console.log('🔗 [ClienteMetaAdsModal] Testando conexão...')
+    const result = await testConnection()
+    console.log('📊 [ClienteMetaAdsModal] Resultado do teste:', result)
+    
+    if (result.success) {
+      // Após teste bem-sucedido, carregar métricas e ir para aba métricas
+      const metricsResult = await loadMetricsWithPeriod('today')
+      
+      if (metricsResult.success || metricsResult.message.includes('Sem dados')) {
+        setActiveTab('metricas')
+        
+        toast({
+          title: "Teste bem-sucedido!",
+          description: "Conexão estabelecida e métricas carregadas.",
+        })
+      }
+    }
+  }
+
+  const handleLoadMetrics = async (period: string) => {
+    console.log('📊 [ClienteMetaAdsModal] Carregando métricas para período:', period)
+    await loadMetricsWithPeriod(period)
+  }
+
+  if (loading) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <div className="flex items-center justify-center p-6">
+            <Loader2 className="h-6 w-6 animate-spin mr-2" />
+            Carregando configuração Meta Ads...
+          </div>
+        </DialogContent>
+      </Dialog>
+    )
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Settings className="w-5 h-5" />
+            <Settings className="h-5 w-5" />
             Meta Ads - {nomeCliente}
+            {isConfigured && (
+              <Badge variant="secondary" className="bg-green-100 text-green-700">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Configurado
+              </Badge>
+            )}
           </DialogTitle>
         </DialogHeader>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="config" className="flex items-center gap-2">
-              <Settings className="w-4 h-4" />
-              Configuração
-            </TabsTrigger>
-            <TabsTrigger value="metrics" className="flex items-center gap-2" disabled={!isConfigured}>
-              <BarChart3 className="w-4 h-4" />
+            <TabsTrigger value="configuracao">Configuração</TabsTrigger>
+            <TabsTrigger value="metricas" disabled={!isConfigured}>
               Métricas
-              {isConfigured && <CheckCircle className="w-3 h-3 text-green-600" />}
+              {insights.length > 0 && (
+                <Badge variant="secondary" className="ml-2">
+                  {insights.length}
+                </Badge>
+              )}
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="config" className="space-y-6">
-            {loading ? (
-              <div className="flex items-center justify-center py-8">
-                <RefreshCw className="w-6 h-6 animate-spin mr-2" />
-                Carregando configuração...
-              </div>
-            ) : (
-              <>
-                {/* Status da Configuração */}
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm flex items-center gap-2">
-                      {isConfigured ? (
-                        <>
-                          <CheckCircle className="w-4 h-4 text-green-600" />
-                          Meta Ads Configurado
-                        </>
+          <TabsContent value="configuracao" className="space-y-4">
+            {/* Status de Conexão */}
+            {connectionSteps && (
+              <Alert className="border-green-200 bg-green-50">
+                <CheckCircle className="h-4 w-4 text-green-600" />
+                <AlertDescription className="text-green-800">
+                  <div className="font-medium mb-2">✅ Conexão Estabelecida com Sucesso!</div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm">
+                    <div className="flex items-center gap-1">
+                      {connectionSteps.validation === 'OK' ? (
+                        <CheckCircle className="h-3 w-3 text-green-600" />
                       ) : (
-                        <>
-                          <AlertCircle className="w-4 h-4 text-orange-600" />
-                          Configuração Necessária
-                        </>
+                        <AlertCircle className="h-3 w-3 text-red-600" />
                       )}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-sm text-muted-foreground">
-                      {isConfigured 
-                        ? 'Suas credenciais estão configuradas e prontas para uso.'
-                        : 'Configure suas credenciais do Meta Ads para começar a acompanhar métricas.'
-                      }
-                    </p>
-                  </CardContent>
-                </Card>
-
-                {/* Formulário de Configuração */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="appId">App ID</Label>
-                    <Input
-                      id="appId"
-                      type="text"
-                      placeholder="ID do aplicativo Meta"
-                      value={localConfig.appId}
-                      onChange={(e) => setLocalConfig(prev => ({ ...prev, appId: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="appSecret">App Secret</Label>
-                    <Input
-                      id="appSecret"
-                      type="password"
-                      placeholder="Chave secreta do aplicativo"
-                      value={localConfig.appSecret}
-                      onChange={(e) => setLocalConfig(prev => ({ ...prev, appSecret: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="accessToken">Access Token</Label>
-                    <Input
-                      id="accessToken"
-                      type="password"
-                      placeholder="Token de acesso"
-                      value={localConfig.accessToken}
-                      onChange={(e) => setLocalConfig(prev => ({ ...prev, accessToken: e.target.value }))}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="adAccountId">Ad Account ID</Label>
-                    <Input
-                      id="adAccountId"
-                      type="text"
-                      placeholder="ID da conta de anúncios"
-                      value={localConfig.adAccountId}
-                      onChange={(e) => setLocalConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
-                    />
-                  </div>
-                </div>
-
-                {/* Erros de Conexão */}
-                {lastError && (
-                  <Alert className="border-red-200 bg-red-50">
-                    <AlertCircle className="h-4 w-4 text-red-600" />
-                    <AlertDescription className="text-red-800">
-                      <div className="font-medium mb-1">Erro na configuração:</div>
-                      <div className="text-sm">{lastError}</div>
-                    </AlertDescription>
-                  </Alert>
-                )}
-
-                {/* Steps de Conexão */}
-                {connectionSteps && (
-                  <Card className="bg-green-50 border-green-200">
-                    <CardHeader>
-                      <CardTitle className="text-sm text-green-800 flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4" />
-                        Conexão Testada com Sucesso
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-2">
-                        {Object.entries(connectionSteps).map(([step, status]) => (
-                          <div key={step} className="flex items-center gap-2 text-sm">
-                            <CheckCircle className="w-3 h-3 text-green-600" />
-                            <span className="text-green-700">
-                              {step}: {String(status)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Botões de Ação */}
-                <div className="flex flex-wrap gap-2">
-                  <Button 
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center gap-2"
-                  >
-                    {saving ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <Save className="w-4 h-4" />
-                    )}
-                    Salvar Configuração
-                  </Button>
-
-                  <Button 
-                    variant="outline"
-                    onClick={handleTest}
-                    disabled={testing || !localConfig.appId || !localConfig.appSecret || !localConfig.accessToken}
-                    className="flex items-center gap-2"
-                  >
-                    {testing ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <TestTube className="w-4 h-4" />
-                    )}
-                    Testar Conexão
-                  </Button>
-
-                  {isConfigured && (
-                    <Button 
-                      variant="outline"
-                      onClick={handleLoadData}
-                      disabled={loadingData}
-                      className="flex items-center gap-2"
-                    >
-                      {loadingData ? (
-                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                      Validação
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {connectionSteps.basic_connection === 'OK' ? (
+                        <CheckCircle className="h-3 w-3 text-green-600" />
                       ) : (
-                        <BarChart3 className="w-4 h-4 mr-2" />
+                        <AlertCircle className="h-3 w-3 text-red-600" />
                       )}
-                      Carregar Métricas
-                    </Button>
-                  )}
-                </div>
-              </>
+                      Conexão API
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {connectionSteps.ad_account_access === 'OK' ? (
+                        <CheckCircle className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3 text-red-600" />
+                      )}
+                      Ad Account
+                    </div>
+                    <div className="flex items-center gap-1">
+                      {connectionSteps.campaigns_access === 'OK' ? (
+                        <CheckCircle className="h-3 w-3 text-green-600" />
+                      ) : (
+                        <AlertCircle className="h-3 w-3 text-red-600" />
+                      )}
+                      Campanhas
+                    </div>
+                  </div>
+                </AlertDescription>
+              </Alert>
             )}
-          </TabsContent>
 
-          <TabsContent value="metrics" className="space-y-6">
-            {!isConfigured ? (
-              <div className="text-center py-8">
-                <AlertCircle className="w-12 h-12 mx-auto text-orange-500 mb-4" />
-                <h3 className="font-medium text-gray-900">Configuração Necessária</h3>
-                <p className="text-sm text-gray-500 mt-2">
-                  Configure primeiro suas credenciais do Meta Ads na aba "Configuração"
-                </p>
-                <Button 
-                  variant="outline" 
-                  onClick={() => setActiveTab('config')}
-                  className="mt-4"
-                >
-                  Ir para Configuração
-                </Button>
-              </div>
-            ) : insights.length === 0 ? (
-              <div className="text-center py-8">
-                <BarChart3 className="w-12 h-12 mx-auto text-gray-400 mb-4" />
-                <h3 className="font-medium text-gray-900">Nenhum Dado Disponível</h3>
-                <p className="text-sm text-gray-500 mt-2">
-                  Clique em "Carregar Métricas" para buscar os dados do Meta Ads
-                </p>
-                <Button 
-                  onClick={handleLoadData}
-                  disabled={loadingData}
-                  className="mt-4"
-                >
-                  {loadingData ? (
-                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <BarChart3 className="w-4 h-4 mr-2" />
-                  )}
-                  Carregar Métricas
-                </Button>
-              </div>
-            ) : (
-              <>
-                {/* Métricas Principais */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <Eye className="w-4 h-4 text-blue-600" />
-                        Impressões
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-blue-600">
-                        {metrics.impressions.toLocaleString()}
-                      </div>
-                    </CardContent>
-                  </Card>
+            {/* Erro */}
+            {lastError && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-600" />
+                <AlertDescription className="text-red-800">
+                  <strong>Erro:</strong> {lastError}
+                </AlertDescription>
+              </Alert>
+            )}
 
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <MousePointer className="w-4 h-4 text-green-600" />
-                        Cliques
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-green-600">
-                        {metrics.clicks.toLocaleString()}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        CTR: {avgCTR.toFixed(2)}%
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-purple-600" />
-                        Investido
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-2xl font-bold text-purple-600">
-                        {formatCurrency(metrics.spend)}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        CPC: {formatCurrency(avgCPC)}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium flex items-center gap-2">
-                        <BarChart3 className="w-4 h-4 text-orange-600" />
-                        Campanhas
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {/*  */}
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Remover seção de campanhas - mostrar apenas insights */}
-                <div className="text-center">
-                  <p className="text-sm text-gray-500">
-                    Dados baseados em {insights.length} registros de insights
+            {/* Formulário */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="appId">App ID *</Label>
+                  <Input
+                    id="appId"
+                    value={formData.appId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, appId: e.target.value }))}
+                    placeholder="Seu App ID do Facebook"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encontre no Facebook Developers
                   </p>
                 </div>
 
-                {/* Botão de Atualização */}
-                <div className="flex justify-center">
-                  <Button 
-                    variant="outline"
-                    onClick={handleLoadData}
-                    disabled={loadingData}
-                    className="flex items-center gap-2"
+                <div>
+                  <Label htmlFor="adAccountId">Ad Account ID *</Label>
+                  <Input
+                    id="adAccountId"
+                    value={formData.adAccountId}
+                    onChange={(e) => setFormData(prev => ({ ...prev, adAccountId: e.target.value }))}
+                    placeholder="act_1234567890"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Encontre no Facebook Ads Manager
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <Label htmlFor="appSecret">App Secret *</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowTokens(!showTokens)}
                   >
-                    {loadingData ? (
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
-                    Atualizar Dados
+                    {showTokens ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showTokens ? 'Ocultar' : 'Mostrar'}
                   </Button>
                 </div>
-              </>
+                <Input
+                  id="appSecret"
+                  type={showTokens ? "text" : "password"}
+                  value={formData.appSecret}
+                  onChange={(e) => setFormData(prev => ({ ...prev, appSecret: e.target.value }))}
+                  placeholder="Seu App Secret"
+                  required
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="accessToken">Access Token *</Label>
+                <Input
+                  id="accessToken"
+                  type={showTokens ? "text" : "password"}
+                  value={formData.accessToken}
+                  onChange={(e) => setFormData(prev => ({ ...prev, accessToken: e.target.value }))}
+                  placeholder="Seu Access Token"
+                  required
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Token deve ter permissões: ads_read, ads_management
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2 pt-4">
+                <Button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="bg-blue-600 hover:bg-blue-700"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Salvando...
+                    </>
+                  ) : (
+                    <>
+                      <Settings className="h-4 w-4 mr-2" />
+                      Salvar e Testar
+                    </>
+                  )}
+                </Button>
+
+                {isConfigured && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleTestConnection}
+                  >
+                    <CheckCircle className="h-4 w-4 mr-2" />
+                    Testar Conexão
+                  </Button>
+                )}
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="metricas" className="space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Métricas Meta Ads
+              </h3>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={() => handleLoadMetrics('today')}>
+                  Hoje
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('yesterday')}>
+                  Ontem
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleLoadMetrics('last_7_days')}>
+                  7 dias
+                </Button>
+              </div>
+            </div>
+
+            {insights.length > 0 && (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-blue-600">Impressões</p>
+                      <p className="text-2xl font-bold text-blue-800">
+                        {parseInt(insights[0].impressions || '0').toLocaleString()}
+                      </p>
+                    </div>
+                    <Eye className="h-8 w-8 text-blue-500" />
+                  </div>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-green-600">Cliques</p>
+                      <p className="text-2xl font-bold text-green-800">
+                        {parseInt(insights[0].clicks || '0').toLocaleString()}
+                      </p>
+                      <p className="text-xs text-green-600">
+                        CTR: {parseFloat(insights[0].ctr || '0').toFixed(2)}%
+                      </p>
+                    </div>
+                    <TrendingUp className="h-8 w-8 text-green-500" />
+                  </div>
+                </div>
+
+                <div className="bg-red-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-red-600">Investimento</p>
+                      <p className="text-2xl font-bold text-red-800">
+                        {formatCurrency(parseFloat(insights[0].spend || '0'))}
+                      </p>
+                      <p className="text-xs text-red-600">
+                        CPC: {formatCurrency(parseFloat(insights[0].cpc || '0'))}
+                      </p>
+                    </div>
+                    <Settings className="h-8 w-8 text-red-500" />
+                  </div>
+                </div>
+
+                <div className="bg-purple-50 p-4 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-purple-600">CPM</p>
+                      <p className="text-2xl font-bold text-purple-800">
+                        {formatCurrency(parseFloat(insights[0].cpm || '0'))}
+                      </p>
+                      <p className="text-xs text-purple-600">
+                        Custo por mil impressões
+                      </p>
+                    </div>
+                    <Activity className="h-8 w-8 text-purple-500" />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {lastError && insights.length === 0 && (
+              <Alert className="border-yellow-200 bg-yellow-50">
+                <AlertCircle className="h-4 w-4 text-yellow-600" />
+                <AlertDescription className="text-yellow-800">
+                  {lastError}
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {!lastError && insights.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <Activity className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma métrica disponível. Clique em um dos botões acima para carregar dados.</p>
+              </div>
             )}
           </TabsContent>
         </Tabs>
