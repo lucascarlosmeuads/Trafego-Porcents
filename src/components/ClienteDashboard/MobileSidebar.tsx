@@ -69,7 +69,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
     },
     {
       id: 'steps',
-      label: '5. Guia Completo',
+      label: '5. Libere sua BM',
       icon: Users,
       badge: null,
       step: 5

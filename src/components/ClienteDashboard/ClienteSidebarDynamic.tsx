@@ -59,7 +59,7 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
     },
     {
       id: 'steps',
-      label: '5. Guia Completo',
+      label: '5. Libere sua BM',
       icon: Users
     },
     {

@@ -15,7 +15,11 @@ import {
   Globe,
   BarChart3,
   CheckCircle,
-  ArrowRight
+  ArrowRight,
+  Users,
+  Key,
+  Mail,
+  AlertCircle
 } from 'lucide-react'
 
 interface GuiaCompletoSimplificadoProps {
@@ -89,7 +93,7 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
         {/* Header */}
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Configure Sua Campanha</CardTitle>
+            <CardTitle className="text-lg">Libere sua Business Manager</CardTitle>
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">{completedSteps}/{steps.length} Concluído</span>
               <Badge variant="outline" className="bg-blue-50 text-blue-700">
@@ -98,6 +102,57 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
             </div>
             <Progress value={progress} className="w-full h-2" />
           </CardHeader>
+        </Card>
+
+        {/* Aviso sobre opções de BM */}
+        <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border border-blue-200">
+          <CardContent className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="p-2 bg-blue-100 rounded-lg">
+                <Users className="h-5 w-5 text-blue-600" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                  <AlertCircle className="h-4 w-4" />
+                  💡 Importante: Para fazer anúncios no Facebook
+                </h3>
+                
+                <div className="space-y-3 text-sm text-blue-700">
+                  <p className="font-medium">
+                    Você tem <strong>2 opções</strong> para começar seus anúncios:
+                  </p>
+                  
+                  {/* Opção 1 */}
+                  <div className="bg-white/50 rounded-lg p-3 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-xs">1</div>
+                      <Key className="h-4 w-4 text-green-600" />
+                      <span className="font-semibold text-green-800">MAIS RÁPIDO: Login e Senha</span>
+                    </div>
+                    <p className="ml-7 text-gray-700 text-xs">
+                      Passe seu email e senha do Facebook para seu gestor no chat. É mais rápido!
+                    </p>
+                  </div>
+
+                  {/* Opção 2 */}
+                  <div className="bg-white/50 rounded-lg p-3 border border-blue-200">
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-5 h-5 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-xs">2</div>
+                      <Mail className="h-4 w-4 text-blue-600" />
+                      <span className="font-semibold text-blue-800">Business Manager (Tutorial)</span>
+                    </div>
+                    <p className="ml-7 text-gray-700 text-xs">
+                      Se preferir, siga o tutorial abaixo para liberar permissões via Business Manager.
+                    </p>
+                  </div>
+
+                  <p className="font-medium text-blue-800 text-xs">
+                    ⚠️ <strong>Escolha apenas UMA opção!</strong> Ambas funcionam perfeitamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardContent>
         </Card>
 
         {/* Steps Grid */}
@@ -187,7 +242,8 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
             <ul className="text-xs text-yellow-700 space-y-1">
               <li>• Complete o briefing primeiro</li>
               <li>• Envie bastante material visual</li>
-              <li>• Defina um valor justo para a comissão</li>
+              <li>• Para começar rápido: passe login/senha no chat</li>
+              <li>• Ou siga o tutorial da Business Manager</li>
               <li>• Métricas aparecem após ativação</li>
             </ul>
           </CardContent>
@@ -201,7 +257,7 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
     <Card className="w-full">
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Guia Completo - Configure Sua Campanha</span>
+          <span>Libere sua Business Manager - Configure Sua Campanha</span>
           <Badge variant="outline" className="bg-blue-50 text-blue-700">
             {completedSteps}/{steps.length} Concluído
           </Badge>
@@ -209,6 +265,56 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
         <Progress value={progress} className="w-full h-3" />
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Aviso sobre opções de BM */}
+        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6 mb-6 border border-blue-200">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-blue-100 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-blue-800 mb-4 flex items-center gap-2">
+                <AlertCircle className="h-5 w-5" />
+                💡 Importante: Para fazer anúncios no Facebook você tem 2 opções
+              </h3>
+              
+              <div className="grid md:grid-cols-2 gap-4 mb-4">
+                {/* Opção 1 */}
+                <div className="bg-white/70 rounded-lg p-4 border border-green-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 bg-green-500 text-white rounded-full flex items-center justify-center font-bold text-sm">1</div>
+                    <Key className="h-5 w-5 text-green-600" />
+                    <span className="font-semibold text-green-800">MAIS RÁPIDO: Login e Senha</span>
+                  </div>
+                  <p className="text-gray-700 text-sm">
+                    Passe seu <strong>email e senha do Facebook</strong> para seu gestor responsável no chat. 
+                    É o método mais rápido para começar!
+                  </p>
+                </div>
+
+                {/* Opção 2 */}
+                <div className="bg-white/70 rounded-lg p-4 border border-blue-200">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="w-8 h-8 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold text-sm">2</div>
+                    <Mail className="h-5 w-5 text-blue-600" />
+                    <span className="font-semibold text-blue-800">Business Manager (Tutorial)</span>
+                  </div>
+                  <p className="text-gray-700 text-sm">
+                    Se preferir não passar login/senha, siga o tutorial abaixo para liberar 
+                    permissões via Business Manager do Facebook.
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-orange-100 rounded-lg p-3 border border-orange-200">
+                <p className="font-medium text-orange-800 text-sm flex items-center gap-2">
+                  ⚠️ <strong>Escolha apenas UMA das opções acima!</strong> Ambas funcionam perfeitamente. 
+                  A opção 1 é mais rápida, a opção 2 oferece mais controle.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Status Geral */}
         <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-6">
           <h3 className="font-semibold text-gray-800 mb-2">Status da Configuração</h3>
@@ -306,8 +412,9 @@ export function GuiaCompletoSimplificado({ onTabChange }: GuiaCompletoSimplifica
           <h4 className="font-medium text-yellow-800 mb-2">💡 Dicas Importantes:</h4>
           <ul className="text-sm text-yellow-700 space-y-1">
             <li>• Complete o formulário primeiro para liberar os outros passos</li>
+            <li>• Para começar rapidamente: passe login/senha do Facebook no chat</li>
+            <li>• Se preferir mais controle: siga o tutorial da Business Manager</li>
             <li>• Quanto mais materiais enviar, melhores serão seus anúncios</li>
-            <li>• Defina um valor justo para a comissão mensal</li>
             <li>• As métricas só aparecerão após sua campanha estar ativa</li>
             <li>• O site é opcional, mas recomendado para melhores conversões</li>
           </ul>
