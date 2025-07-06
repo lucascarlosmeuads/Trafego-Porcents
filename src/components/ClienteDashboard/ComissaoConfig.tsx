@@ -36,23 +36,37 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
   }, [valorComissaoAnterior, porcentagemComissao])
 
   const handleConfirmarComissao = async () => {
+    console.log('🔄 [ComissaoConfig] Iniciando confirmação de comissão')
+    
     const porcentagem = parseFloat(porcentagemComissao)
     
     if (!porcentagem || porcentagem <= 0 || porcentagem > 50) {
+      console.error('❌ [ComissaoConfig] Porcentagem inválida:', porcentagem)
       setErro('Por favor, insira uma porcentagem válida entre 1% e 50%')
       return
     }
     
+    console.log('✅ [ComissaoConfig] Porcentagem válida:', porcentagem)
     setConfirmando(true)
     setErro('')
+    setSucesso(false)
     
     try {
+      console.log('📤 [ComissaoConfig] Chamando onConfirmarComissao...')
       await onConfirmarComissao(porcentagem)
+      
+      console.log('✅ [ComissaoConfig] Comissão confirmada com sucesso!')
       setSucesso(true)
-      setTimeout(() => setSucesso(false), 3000)
+      
+      // Limpar sucesso após 3 segundos
+      setTimeout(() => {
+        console.log('🔄 [ComissaoConfig] Limpando estado de sucesso')
+        setSucesso(false)
+      }, 3000)
+      
     } catch (error) {
-      console.error('Erro ao confirmar comissão:', error)
-      setErro('Erro ao confirmar comissão. Tente novamente.')
+      console.error('💥 [ComissaoConfig] Erro ao confirmar comissão:', error)
+      setErro(`Erro ao confirmar comissão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
     } finally {
       setConfirmando(false)
     }
@@ -99,6 +113,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
               onChange={(e) => setPorcentagemComissao(e.target.value)}
               placeholder="Ex: 10 (para 10%)"
               className="border-blue-200 focus:border-blue-400"
+              disabled={confirmando}
             />
             <p className="text-xs text-gray-500">
               Porcentagem que você pagará sobre cada venda
@@ -119,6 +134,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
               onChange={(e) => setValorReferencia(e.target.value)}
               placeholder="Ex: 50.00"
               className="border-gray-200"
+              disabled={confirmando}
             />
             <p className="text-xs text-gray-500">
               Apenas para referência - quanto você acha que {porcentagemComissao}% vale
@@ -169,7 +185,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
           {confirmando ? (
             <>
               <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-              Salvando...
+              Salvando Comissão...
             </>
           ) : (
             <>

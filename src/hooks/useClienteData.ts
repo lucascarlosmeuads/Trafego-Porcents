@@ -101,6 +101,7 @@ export function useClienteData(emailCliente: string) {
 
   const fetchClienteData = async () => {
     if (!emailCliente) {
+      console.warn('⚠️ [useClienteData] Email cliente não fornecido')
       setLoading(false)
       return
     }
@@ -109,9 +110,11 @@ export function useClienteData(emailCliente: string) {
       setLoading(true)
       setError(null)
 
-      console.log('🔍 [useClienteData] Buscando dados para:', emailCliente)
+      console.log('🔍 [useClienteData] === INICIANDO BUSCA DE DADOS ===')
+      console.log('📧 [useClienteData] Email:', emailCliente)
 
-      // Buscar dados do cliente
+      // Buscar dados do cliente com mais detalhes de log
+      console.log('👤 [useClienteData] Buscando dados do cliente...')
       const { data: clientesData, error: clientesError } = await supabase
         .from('todos_clientes')
         .select('*')
@@ -124,10 +127,21 @@ export function useClienteData(emailCliente: string) {
         return
       }
 
-      console.log('👤 [useClienteData] Cliente encontrado:', clientesData)
+      if (clientesData) {
+        console.log('✅ [useClienteData] Cliente encontrado:', {
+          id: clientesData.id,
+          nome: clientesData.nome_cliente,
+          comissao_confirmada: clientesData.comissao_confirmada,
+          valor_comissao: clientesData.valor_comissao
+        })
+      } else {
+        console.warn('⚠️ [useClienteData] Nenhum cliente encontrado')
+      }
+
       setCliente(clientesData)
 
       // Buscar briefing
+      console.log('📋 [useClienteData] Buscando briefing...')
       const { data: briefingData, error: briefingError } = await supabase
         .from('briefings_cliente')
         .select('*')
@@ -137,11 +151,12 @@ export function useClienteData(emailCliente: string) {
       if (briefingError) {
         console.error('❌ [useClienteData] Erro ao buscar briefing:', briefingError)
       } else {
-        console.log('📋 [useClienteData] Briefing encontrado:', briefingData)
+        console.log('📋 [useClienteData] Briefing encontrado:', briefingData ? 'SIM' : 'NÃO')
         setBriefing(briefingData)
       }
 
       // Buscar vendas
+      console.log('💰 [useClienteData] Buscando vendas...')
       const { data: vendasData, error: vendasError } = await supabase
         .from('vendas_cliente')
         .select('*')
@@ -156,6 +171,7 @@ export function useClienteData(emailCliente: string) {
       }
 
       // Buscar arquivos
+      console.log('📁 [useClienteData] Buscando arquivos...')
       const { data: arquivosData, error: arquivosError } = await supabase
         .from('arquivos_cliente')
         .select('*')
@@ -169,6 +185,8 @@ export function useClienteData(emailCliente: string) {
         setArquivos(arquivosData || [])
       }
 
+      console.log('✅ [useClienteData] === BUSCA CONCLUÍDA ===')
+
     } catch (error: any) {
       console.error('💥 [useClienteData] Erro crítico:', error)
       setError(error.message)
@@ -178,11 +196,14 @@ export function useClienteData(emailCliente: string) {
   }
 
   useEffect(() => {
+    console.log('🔄 [useClienteData] useEffect disparado, email:', emailCliente)
     fetchClienteData()
   }, [emailCliente])
 
-  const refreshData = () => {
-    fetchClienteData()
+  const refreshData = async () => {
+    console.log('🔄 [useClienteData] === REFRESH INICIADO ===')
+    await fetchClienteData()
+    console.log('✅ [useClienteData] === REFRESH CONCLUÍDO ===')
   }
 
   // Alias para compatibilidade

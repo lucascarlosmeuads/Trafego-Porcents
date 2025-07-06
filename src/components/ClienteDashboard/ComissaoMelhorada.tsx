@@ -26,6 +26,14 @@ export function ComissaoMelhorada() {
   // Verificar se comissão foi confirmada (usando estado local como fallback)
   const comissaoConfirmada = cliente?.comissao_confirmada || comissaoLocalConfirmada
 
+  console.log('🔍 [ComissaoMelhorada] Estado atual:', {
+    userEmail: user?.email,
+    clienteComissaoConfirmada: cliente?.comissao_confirmada,
+    comissaoLocalConfirmada,
+    comissaoConfirmada,
+    valorComissao: cliente?.valor_comissao
+  })
+
   useEffect(() => {
     carregarVendas()
   }, [comissaoConfirmada])
@@ -33,24 +41,35 @@ export function ComissaoMelhorada() {
   // Atualizar estado local quando dados do cliente mudarem
   useEffect(() => {
     if (cliente?.comissao_confirmada) {
+      console.log('✅ [ComissaoMelhorada] Cliente confirmou comissão no banco, atualizando estado local')
       setComissaoLocalConfirmada(true)
     }
   }, [cliente?.comissao_confirmada])
 
   const carregarVendas = async () => {
-    if (!user?.email) return
+    if (!user?.email) {
+      console.warn('⚠️ [ComissaoMelhorada] Email do usuário não encontrado')
+      return
+    }
     
     try {
+      console.log('🔍 [ComissaoMelhorada] Carregando vendas para:', user.email)
+      
       const { data, error } = await supabase
         .from('vendas_cliente')
         .select('*')
         .eq('email_cliente', user.email)
         .order('data_venda', { ascending: false })
 
-      if (error) throw error
+      if (error) {
+        console.error('❌ [ComissaoMelhorada] Erro ao carregar vendas:', error)
+        throw error
+      }
+      
+      console.log('✅ [ComissaoMelhorada] Vendas carregadas:', data?.length || 0)
       setVendas(data || [])
     } catch (error) {
-      console.error('Erro ao carregar vendas:', error)
+      console.error('💥 [ComissaoMelhorada] Erro crítico ao carregar vendas:', error)
     }
   }
 
@@ -64,28 +83,112 @@ export function ComissaoMelhorada() {
     return (totalVendas * porcentagem) / 100
   }
 
-  const handleConfirmarComissao = async (porcentagem: number) => {
-    if (!user?.email) return
+  const verificarComissaoPersistida = async (porcentagem: number) => {
+    if (!user?.email) {
+      throw new Error('Email do usuário não encontrado')
+    }
+
+    console.log('🔍 [ComissaoMelhorada] Verificando se comissão foi persistida...')
     
-    const { error } = await supabase
+    // Aguardar um pouco para garantir que a transação foi commitada
+    await new Promise(resolve => setTimeout(resolve, 1000))
+    
+    const { data, error } = await supabase
       .from('todos_clientes')
-      .update({ 
-        comissao_confirmada: true,
-        valor_comissao: porcentagem // Salvamos apenas a porcentagem configurada
-      })
+      .select('comissao_confirmada, valor_comissao')
       .eq('email_cliente', user.email)
+      .single()
 
-    if (error) throw error
+    if (error) {
+      console.error('❌ [ComissaoMelhorada] Erro ao verificar persistência:', error)
+      throw error
+    }
 
-    // CORREÇÃO MELHORADA: Forçar atualização local E recarregar dados
-    setComissaoLocalConfirmada(true)
-    await refreshData()
+    console.log('📊 [ComissaoMelhorada] Dados verificados:', data)
+
+    if (!data.comissao_confirmada) {
+      throw new Error('Comissão não foi salva no banco de dados')
+    }
+
+    if (data.valor_comissao !== porcentagem) {
+      throw new Error(`Porcentagem salva (${data.valor_comissao}%) não confere com a enviada (${porcentagem}%)`)
+    }
+
+    console.log('✅ [ComissaoMelhorada] Comissão verificada e persistida com sucesso!')
+    return true
   }
+
+  const handleConfirmarComissao = async (porcentagem: number) => {
+    if (!user?.email) {
+      console.error('❌ [ComissaoMelhorada] Email do usuário não encontrado')
+      throw new Error('Usuário não autenticado')
+    }
+    
+    console.log('🚀 [ComissaoMelhorada] Iniciando confirmação de comissão:', {
+      email: user.email,
+      porcentagem
+    })
+
+    try {
+      // 1. Tentar salvar no banco
+      console.log('📤 [ComissaoMelhorada] Salvando no banco de dados...')
+      const { error, data } = await supabase
+        .from('todos_clientes')
+        .update({ 
+          comissao_confirmada: true,
+          valor_comissao: porcentagem
+        })
+        .eq('email_cliente', user.email)
+        .select()
+
+      if (error) {
+        console.error('❌ [ComissaoMelhorada] Erro na operação de update:', error)
+        throw new Error(`Erro ao salvar: ${error.message}`)
+      }
+
+      console.log('✅ [ComissaoMelhorada] Update executado, dados retornados:', data)
+
+      if (!data || data.length === 0) {
+        console.error('❌ [ComissaoMelhorada] Nenhum registro foi atualizado')
+        throw new Error('Nenhum cliente foi encontrado para atualizar')
+      }
+
+      // 2. Verificar se realmente foi salvo
+      await verificarComissaoPersistida(porcentagem)
+
+      // 3. Atualizar estados locais
+      console.log('🔄 [ComissaoMelhorada] Atualizando estados locais...')
+      setComissaoLocalConfirmada(true)
+      
+      // 4. Recarregar dados do cliente
+      console.log('🔄 [ComissaoMelhorada] Recarregando dados do cliente...')
+      await refreshData()
+
+      console.log('🎉 [ComissaoMelhorada] Comissão confirmada com sucesso!')
+
+    } catch (error) {
+      console.error('💥 [ComissaoMelhorada] Erro ao confirmar comissão:', error)
+      // Resetar estado local em caso de erro
+      setComissaoLocalConfirmada(false)
+      throw error
+    }
+  }
+
+  // Log para debug
+  useEffect(() => {
+    console.log('🔄 [ComissaoMelhorada] useEffect - comissaoConfirmada mudou:', comissaoConfirmada)
+  }, [comissaoConfirmada])
 
   if (comissaoConfirmada) {
     const porcentagemAtual = cliente?.valor_comissao || 0
     const totalVendas = calcularTotalVendas()
     const comissaoDevida = calcularComissaoDevida()
+
+    console.log('✅ [ComissaoMelhorada] Renderizando painel de vendas:', {
+      porcentagemAtual,
+      totalVendas,
+      comissaoDevida
+    })
 
     return (
       <div className="space-y-6">
@@ -99,6 +202,8 @@ export function ComissaoMelhorada() {
       </div>
     )
   }
+
+  console.log('⚙️ [ComissaoMelhorada] Renderizando painel de configuração')
 
   return (
     <div className="space-y-6">
