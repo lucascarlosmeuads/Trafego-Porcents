@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -22,7 +21,8 @@ import {
   Menu,
   ChevronLeft,
   Sparkles,
-  Activity
+  Activity,
+  Users
 } from 'lucide-react'
 
 interface MobileSidebarProps {
@@ -68,10 +68,10 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
       step: 4
     },
     {
-      id: 'site',
-      label: '5. Site (Opcional)',
-      icon: Globe,
-      badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional',
+      id: 'steps',
+      label: '5. Guia Completo',
+      icon: Users,
+      badge: null,
       step: 5
     },
     {
@@ -82,10 +82,10 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
       step: 6
     },
     {
-      id: 'steps',
-      label: 'Guia Completo',
-      icon: CheckSquare,
-      badge: null
+      id: 'site',
+      label: 'Site',
+      icon: Globe,
+      badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional'
     }
   ]
 
