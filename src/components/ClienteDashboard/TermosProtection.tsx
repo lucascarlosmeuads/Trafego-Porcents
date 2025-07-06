@@ -1,8 +1,8 @@
 
+import React, { useState } from 'react'
 import { usePermissaoSistema } from '@/hooks/usePermissaoSistema'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 import { TermosContratoModal } from './TermosContratoModal'
-import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Heart, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
