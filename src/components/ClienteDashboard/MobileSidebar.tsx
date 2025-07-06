@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -86,6 +87,12 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
       label: 'Site',
       icon: Globe,
       badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional'
+    },
+    {
+      id: 'sac',
+      label: 'SAC',
+      icon: Headphones,
+      badge: null
     }
   ]
 
@@ -135,7 +142,11 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
   }
 
   const handleMenuItemClick = (tab: string) => {
-    onTabChange(tab)
+    if (tab === 'sac') {
+      window.open('https://trafegoporcents.com/sac', '_blank')
+    } else {
+      onTabChange(tab)
+    }
     setOpen(false)
   }
 

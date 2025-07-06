@@ -1,19 +1,22 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ExternalLink, Headphones, Clock, MessageCircle } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target } from 'lucide-react'
 
 interface SuporteRapidoProps {
   onBack: () => void
 }
 
 export function SuporteRapido({ onBack }: SuporteRapidoProps) {
-  const handleOpenSAC = () => {
-    window.open('https://trafegoporcents.com/sac', '_blank')
-  }
-
   const handleWhatsAppContact = () => {
-    const message = encodeURIComponent(`Olá! Preciso de suporte através do sistema. Aguardo orientação sobre como proceder.`)
+    const message = encodeURIComponent(`Olá! Preciso de ajuda com a configuração da minha campanha. Gostaria de conversar sobre:
+
+• Configuração do Business Manager
+• Criação de criativos
+• Setup da campanha
+• Outros aspectos técnicos
+
+Aguardo orientação para prosseguir.`)
     const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
@@ -33,95 +36,89 @@ export function SuporteRapido({ onBack }: SuporteRapidoProps) {
         </Button>
         <div>
           <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Headphones className="h-6 w-6" />
-            Suporte Rápido
+            <MessageCircle className="h-6 w-6" />
+            Suporte Técnico
           </h1>
-          <p className="text-gray-400">Central de atendimento ao cliente</p>
+          <p className="text-gray-400">WhatsApp direto para configuração da sua campanha</p>
         </div>
       </div>
 
       {/* Card Principal */}
       <Card className="bg-gray-900 border-gray-800 max-w-4xl mx-auto">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center mx-auto mb-4">
-            <MessageCircle className="h-8 w-8 text-white" />
+          <div className="w-16 h-16 rounded-full bg-gradient-to-r from-green-500 to-blue-600 flex items-center justify-center mx-auto mb-4">
+            <Settings className="h-8 w-8 text-white" />
           </div>
           <CardTitle className="text-white text-xl">
-            Nova Modalidade de Atendimento
+            Suporte para Configuração de Campanha
           </CardTitle>
           <CardDescription className="text-gray-400">
-            Mudanças importantes no nosso suporte
+            WhatsApp direto para questões técnicas da sua campanha
           </CardDescription>
         </CardHeader>
         
         <CardContent className="space-y-6">
-          {/* Explicação da Mudança */}
+          {/* Explicação do Serviço */}
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-6">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
-              <Clock className="h-5 w-5 text-blue-400" />
-              Importante: Mudança no Atendimento
+              <Target className="h-5 w-5 text-green-400" />
+              O que podemos ajudar via WhatsApp:
             </h3>
             <div className="text-gray-300 space-y-3 leading-relaxed">
-              <p>
-                Optamos por <strong>não atender mais pelo chat via sistema</strong>. Agora o atendimento 
-                voltou a ser pelos <strong>grupos do WhatsApp</strong>.
-              </p>
-              <p>
-                Tanto os gestores preferiram isso quanto os clientes também, pois demonstraram 
-                dificuldade em falar pelo chat no sistema.
-              </p>
-              <p>
-                Agora o atendimento é pelo <strong>grupo do WhatsApp</strong>. Se você estiver sem grupo 
-                ou sem atendimento no WhatsApp, clique no botão abaixo.
-              </p>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p><strong>Configuração do Business Manager:</strong> Setup completo da sua conta BM, permissões e acessos</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-blue-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p><strong>Criação de Criativos:</strong> Orientação sobre materiais, formatos e melhores práticas</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-purple-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p><strong>Setup da Campanha:</strong> Configurações técnicas, públicos e estratégias</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 flex-shrink-0"></div>
+                <p><strong>Dúvidas Técnicas:</strong> Resolução de problemas e otimizações</p>
+              </div>
             </div>
           </div>
 
-          {/* Instruções */}
-          <div className="bg-gradient-to-r from-blue-900/20 to-purple-900/20 border border-blue-700/30 rounded-lg p-6">
-            <h3 className="text-white font-semibold mb-3">Como Solicitar Suporte</h3>
+          {/* Como Funciona */}
+          <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-6">
+            <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
+              <Clock className="h-5 w-5 text-green-400" />
+              Como Funciona
+            </h3>
             <div className="text-gray-300 space-y-2">
-              <p>• Clique no botão abaixo para acessar nosso SAC</p>
-              <p>• Explique detalhadamente o que você precisa</p>
-              <p>• Respondemos em até <strong className="text-blue-400">4 horas ÚTEIS</strong></p>
-              <p>• Você será contatado pelo WhatsApp ou email</p>
+              <p>• <strong>Atendimento Direto:</strong> Converse direto com nosso time técnico</p>
+              <p>• <strong>Resposta Rápida:</strong> Geralmente respondemos em poucos minutos</p>
+              <p>• <strong>Suporte Personalizado:</strong> Ajuda específica para o seu negócio</p>
+              <p>• <strong>Acompanhamento:</strong> Te guiamos do início ao fim da configuração</p>
             </div>
           </div>
 
-          {/* Botões de Contato */}
+          {/* Botão Principal */}
           <div className="space-y-3">
             <Button
               onClick={handleWhatsAppContact}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-3 text-lg shadow-lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-8 py-4 text-lg shadow-lg"
               size="lg"
             >
               <MessageCircle className="h-5 w-5 mr-3" />
               <div className="text-left">
-                <div className="font-semibold">WhatsApp Direto</div>
-                <div className="text-sm opacity-90">(48) 9 9113-1987</div>
+                <div className="font-semibold">Falar no WhatsApp</div>
+                <div className="text-sm opacity-90">Suporte técnico direto - (48) 9 9113-1987</div>
               </div>
             </Button>
-
-            <Button
-              onClick={handleOpenSAC}
-              className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold px-8 py-3 text-lg shadow-lg"
-              size="lg"
-            >
-              <ExternalLink className="h-5 w-5 mr-2" />
-              Abrir Central SAC
-            </Button>
           </div>
-
-          <p className="text-gray-400 text-sm text-center">
-            SAC será aberto em uma nova aba
-          </p>
 
           {/* Informações Adicionais */}
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-4">
             <p className="text-gray-400 text-sm text-center">
               <strong>Horário de Atendimento:</strong> Segunda a Sexta, das 8h às 18h<br/>
-              <strong>Tempo de Resposta:</strong> Até 4 horas úteis<br/>
-              <strong>Canais:</strong> WhatsApp e Email
+              <strong>Especialização:</strong> Business Manager, Criativos e Configuração de Campanhas<br/>
+              <strong>Tempo de Resposta:</strong> Geralmente em poucos minutos
             </p>
           </div>
         </CardContent>

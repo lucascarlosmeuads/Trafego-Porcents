@@ -1,5 +1,5 @@
 
-import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck, Activity, Sparkles, Loader2 } from 'lucide-react'
+import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck, Activity, Sparkles, Loader2, Headphones } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { 
@@ -72,6 +72,11 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       id: 'site',
       label: 'Site',
       icon: LayoutDashboard
+    },
+    {
+      id: 'sac',
+      label: 'SAC',
+      icon: Headphones
     }
   ]
 
@@ -85,6 +90,10 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       console.error('Erro no logout:', error)
       window.location.href = '/'
     }
+  }
+
+  const handleSacClick = () => {
+    window.open('https://trafegoporcents.com/sac', '_blank')
   }
 
   return (
@@ -156,7 +165,13 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
             return (
               <SidebarMenuItem key={item.id}>
                 <SidebarMenuButton
-                  onClick={() => onTabChange(item.id)}
+                  onClick={() => {
+                    if (item.id === 'sac') {
+                      handleSacClick()
+                    } else {
+                      onTabChange(item.id)
+                    }
+                  }}
                   isActive={isActive}
                   className={cn(
                     "w-full rounded-lg transition-all duration-300 hover-lift mobile-touch-target",
@@ -211,30 +226,6 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
               </Badge>
             </div>
           )}
-        </Button>
-
-        {/* WhatsApp Suporte */}
-        <Button
-          asChild
-          className={cn(
-            "w-full rounded-lg mobile-optimized-card hover:bg-accent hover:text-accent-foreground mobile-touch-target hover-lift transition-all duration-300",
-            isCollapsed ? 'px-3 py-3 justify-center' : 'px-4 py-3 justify-start'
-          )}
-          variant="outline"
-        >
-          <a 
-            href="https://wa.me/5511940747924" 
-            target="_blank" 
-            rel="noopener noreferrer"
-            title={isCollapsed ? 'Precisa de ajuda?' : undefined}
-          >
-            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-green-500/20 text-green-600">
-              <MessageCircle className="h-4 w-4" />
-            </div>
-            {!isCollapsed && (
-              <span className="text-sm font-medium ml-3">Precisa de ajuda?</span>
-            )}
-          </a>
         </Button>
 
         {/* Sair do Sistema */}
