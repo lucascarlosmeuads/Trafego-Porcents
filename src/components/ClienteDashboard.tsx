@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
@@ -71,6 +70,7 @@ function ClienteDashboardContent() {
         return (
           <SuporteRapido 
             onBack={() => setActiveTab('briefing')}
+            onTabChange={setActiveTab}
           />
         )
       case 'comissao':
@@ -80,7 +80,7 @@ function ClienteDashboardContent() {
       case 'vendas':
         return <MetricasMetaAds />
       case 'steps':
-        return <TutorialVideos onBack={() => setActiveTab('briefing')} />
+        return <TutorialVideos onBack={() => setActiveTab('suporte')} />
       default:
         return (
           <ClienteHomeDashboard 
