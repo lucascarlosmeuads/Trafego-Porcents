@@ -95,80 +95,91 @@ export function ComissaoMelhorada() {
     })
 
     try {
-      // 1. Primeiro, verificar se o cliente existe
-      console.log('🔍 [ComissaoMelhorada] Verificando se cliente existe...')
-      const { data: clienteExistente, error: erroVerificacao } = await supabase
+      // 1. Buscar o cliente para obter o ID
+      console.log('🔍 [ComissaoMelhorada] Buscando cliente por email...')
+      const { data: clienteData, error: erroConsulta } = await supabase
         .from('todos_clientes')
-        .select('id, email_cliente, comissao_confirmada, valor_comissao')
+        .select('id, email_cliente, nome_cliente, comissao_confirmada, valor_comissao')
         .eq('email_cliente', user.email)
         .single()
 
-      if (erroVerificacao) {
-        console.error('❌ [ComissaoMelhorada] Erro ao verificar cliente:', erroVerificacao)
-        throw new Error(`Cliente não encontrado: ${erroVerificacao.message}`)
+      if (erroConsulta || !clienteData) {
+        console.error('❌ [ComissaoMelhorada] Cliente não encontrado:', erroConsulta)
+        throw new Error(`Cliente não encontrado. Erro: ${erroConsulta?.message || 'Dados não localizados'}`)
       }
 
-      if (!clienteExistente) {
-        console.error('❌ [ComissaoMelhorada] Cliente não existe na base de dados')
-        throw new Error('Seu registro não foi encontrado na base de dados. Entre em contato com o suporte.')
-      }
+      console.log('✅ [ComissaoMelhorada] Cliente encontrado:', {
+        id: clienteData.id,
+        nome: clienteData.nome_cliente,
+        email: clienteData.email_cliente,
+        comissaoAtual: clienteData.comissao_confirmada,
+        valorAtual: clienteData.valor_comissao
+      })
 
-      console.log('✅ [ComissaoMelhorada] Cliente encontrado:', clienteExistente)
-
-      // 2. Agora fazer o update
-      console.log('📤 [ComissaoMelhorada] Atualizando comissão no banco...')
+      // 2. Fazer o update usando o ID do cliente
+      console.log('📤 [ComissaoMelhorada] Executando update da comissão...')
       const { data: dadosAtualizados, error: erroUpdate } = await supabase
         .from('todos_clientes')
         .update({ 
           comissao_confirmada: true,
           valor_comissao: porcentagem
         })
-        .eq('email_cliente', user.email)
-        .select('id, email_cliente, comissao_confirmada, valor_comissao')
+        .eq('id', clienteData.id)
+        .select('id, email_cliente, nome_cliente, comissao_confirmada, valor_comissao')
 
       if (erroUpdate) {
         console.error('❌ [ComissaoMelhorada] Erro no update:', erroUpdate)
-        throw new Error(`Erro ao salvar comissão: ${erroUpdate.message}`)
+        throw new Error(`Erro ao atualizar comissão: ${erroUpdate.message}`)
       }
 
-      console.log('✅ [ComissaoMelhorada] Update executado, dados atualizados:', dadosAtualizados)
+      console.log('📊 [ComissaoMelhorada] Resultado do update:', dadosAtualizados)
 
       if (!dadosAtualizados || dadosAtualizados.length === 0) {
-        console.error('❌ [ComissaoMelhorada] Nenhum registro foi atualizado')
-        throw new Error('Não foi possível atualizar sua comissão. Tente novamente.')
+        console.error('❌ [ComissaoMelhorada] Update não retornou dados')
+        throw new Error('A atualização foi executada mas não retornou confirmação.')
       }
 
-      // 3. Verificar se realmente foi salvo
-      console.log('🔍 [ComissaoMelhorada] Verificando se foi persistido...')
-      await new Promise(resolve => setTimeout(resolve, 1000)) // Aguardar um segundo
+      const clienteAtualizado = dadosAtualizados[0]
+
+      // 3. Verificar se a atualização foi realmente aplicada
+      if (!clienteAtualizado.comissao_confirmada || clienteAtualizado.valor_comissao !== porcentagem) {
+        console.error('❌ [ComissaoMelhorada] Valores não foram atualizados corretamente:', {
+          comissaoConfirmada: clienteAtualizado.comissao_confirmada,
+          valorComissao: clienteAtualizado.valor_comissao,
+          valorEsperado: porcentagem
+        })
+        throw new Error('Os dados não foram salvos corretamente no banco de dados.')
+      }
+
+      // 4. Aguardar um pouco e fazer verificação final
+      console.log('⏳ [ComissaoMelhorada] Aguardando para verificação final...')
+      await new Promise(resolve => setTimeout(resolve, 500))
       
-      const { data: verificacao, error: erroVerificacaoFinal } = await supabase
+      const { data: verificacaoFinal, error: erroVerificacao } = await supabase
         .from('todos_clientes')
         .select('comissao_confirmada, valor_comissao')
-        .eq('email_cliente', user.email)
+        .eq('id', clienteData.id)
         .single()
 
-      if (erroVerificacaoFinal) {
-        console.error('❌ [ComissaoMelhorada] Erro na verificação final:', erroVerificacaoFinal)
-        throw new Error('Erro ao verificar se a comissão foi salva.')
+      if (erroVerificacao || !verificacaoFinal) {
+        console.error('❌ [ComissaoMelhorada] Erro na verificação final:', erroVerificacao)
+        throw new Error('Erro ao verificar se os dados foram salvos.')
       }
 
-      console.log('📊 [ComissaoMelhorada] Verificação final:', verificacao)
-
-      if (!verificacao?.comissao_confirmada || verificacao.valor_comissao !== porcentagem) {
-        console.error('❌ [ComissaoMelhorada] Comissão não foi persistida corretamente:', verificacao)
-        throw new Error('A comissão não foi salva corretamente. Tente novamente.')
+      if (!verificacaoFinal.comissao_confirmada || verificacaoFinal.valor_comissao !== porcentagem) {
+        console.error('❌ [ComissaoMelhorada] Verificação final falhou:', verificacaoFinal)
+        throw new Error('Os dados não foram persistidos corretamente. Tente novamente.')
       }
 
-      // 4. Atualizar estados locais
-      console.log('🔄 [ComissaoMelhorada] Atualizando estados locais...')
+      // 5. Sucesso! Atualizar estados locais
+      console.log('🎉 [ComissaoMelhorada] Comissão confirmada com sucesso!')
       setComissaoLocalConfirmada(true)
       
-      // 5. Recarregar dados do cliente
+      // 6. Recarregar dados do cliente
       console.log('🔄 [ComissaoMelhorada] Recarregando dados do cliente...')
       await refreshData()
 
-      console.log('🎉 [ComissaoMelhorada] Comissão confirmada com sucesso!')
+      console.log('✅ [ComissaoMelhorada] Processo completo finalizado com sucesso!')
 
     } catch (error) {
       console.error('💥 [ComissaoMelhorada] Erro ao confirmar comissão:', error)

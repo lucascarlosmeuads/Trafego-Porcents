@@ -38,9 +38,9 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
     
     const porcentagem = parseFloat(porcentagemComissao)
     
-    if (!porcentagem || porcentagem <= 0 || porcentagem > 50) {
+    if (!porcentagem || porcentagem <= 0 || porcentagem > 100) {
       console.error('❌ [ComissaoConfig] Porcentagem inválida:', porcentagem)
-      setErro('Por favor, insira uma porcentagem válida entre 1% e 50%')
+      setErro('Por favor, insira uma porcentagem válida entre 1% e 100%')
       return
     }
     
@@ -107,7 +107,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
               type="number"
               step="0.1"
               min="1"
-              max="50"
+              max="100"
               value={porcentagemComissao}
               onChange={(e) => setPorcentagemComissao(e.target.value)}
               placeholder="Ex: 10 (para 10%)"
