@@ -83,7 +83,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
     },
     {
       id: 'site',
-      label: 'Site',
+      label: 'Site - Não Obrigatório',
       icon: Globe,
       badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional'
     },

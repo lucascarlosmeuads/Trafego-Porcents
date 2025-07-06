@@ -69,7 +69,7 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
     },
     {
       id: 'site',
-      label: 'Site',
+      label: 'Site - Não Obrigatório',
       icon: LayoutDashboard
     },
     {
