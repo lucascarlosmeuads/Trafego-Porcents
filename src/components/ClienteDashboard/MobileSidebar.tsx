@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -162,48 +163,47 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
           className="w-80 p-0 bg-gradient-card border-r border-border/50 backdrop-blur-sm shadow-professional [&>button]:hidden"
         >
           <div className="flex flex-col h-full">
-            {/* Header Profissional com Logo no Topo */}
-            <div className="mobile-optimized-card info-card-primary border-b border-border/50">
-              <div className="mobile-optimized-p">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-trafego text-white">
-                      <Activity className="h-4 w-4" />
-                    </div>
-                    <span className="font-semibold text-foreground text-sm">Dashboard Cliente</span>
+            {/* Header Compacto */}
+            <div className="mobile-optimized-card info-card-primary border-b border-border/50 p-3">
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-gradient-trafego text-white">
+                    <Activity className="h-3 w-3" />
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={closeMenu}
-                    className="text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200 hover-lift"
-                  >
-                    <ChevronLeft className="h-5 w-5" />
-                  </Button>
+                  <span className="font-semibold text-foreground text-sm">Dashboard</span>
                 </div>
-                
-                {/* Logo Centralizada e Profissional */}
-                <div className="flex justify-center w-full mb-4">
-                  <img 
-                    src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
-                    alt="Tráfego Por Cents" 
-                    className="h-16 w-auto object-contain hover-lift transition-transform duration-300"
-                  />
-                </div>
-                
-                {/* Email Badge Profissional */}
-                <div className="flex justify-center">
-                  <Badge className="professional-badge text-xs">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    {user?.email?.split('@')[0]}
-                  </Badge>
-                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={closeMenu}
+                  className="text-muted-foreground hover:text-foreground hover:bg-accent rounded-lg transition-all duration-200 hover-lift h-7 w-7"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+              </div>
+              
+              {/* Logo Compacta */}
+              <div className="flex justify-center mb-3">
+                <img 
+                  src="/lovable-uploads/e1c8c342-51ea-4eb6-a6bb-b33eefaa2b53.png" 
+                  alt="Tráfego Por Cents" 
+                  className="h-12 w-auto object-contain"
+                />
+              </div>
+              
+              {/* Email Badge Compacto */}
+              <div className="flex justify-center">
+                <Badge className="professional-badge text-xs px-2 py-1">
+                  <Sparkles className="h-2 w-2 mr-1" />
+                  {user?.email?.split('@')[0]}
+                </Badge>
               </div>
             </div>
 
-            {/* Menu Items com Design das Métricas */}
-            <div className="flex-1 overflow-y-auto mobile-optimized-p mobile-optimized-spacing">
-              <div className="space-y-2">
+            {/* Área de Scroll Única - Inclui Menu + Rodapé */}
+            <div className="flex-1 overflow-y-auto">
+              {/* Menu Items Principais */}
+              <div className="p-3 space-y-2">
                 {menuItems.map((item) => {
                   const Icon = item.icon
                   const isActive = activeTab === item.id
@@ -213,7 +213,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                       key={item.id}
                       variant="ghost"
                       className={cn(
-                        "w-full justify-start text-left mobile-touch-target mobile-optimized-card hover-lift transition-all duration-300",
+                        "w-full justify-start text-left mobile-touch-target mobile-optimized-card hover-lift transition-all duration-300 py-2.5",
                         isActive 
                           ? "bg-gradient-trafego text-white hover:bg-gradient-trafego-hover shadow-glow-blue font-semibold transform scale-[1.02]" 
                           : "hover:bg-accent hover:text-accent-foreground bg-gradient-card border border-border/50"
@@ -223,14 +223,14 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                       <div className="flex items-center justify-between w-full">
                         <div className="flex items-center gap-3">
                           <div className={cn(
-                            "flex items-center justify-center w-8 h-8 rounded-lg transition-colors duration-200",
+                            "flex items-center justify-center w-7 h-7 rounded-lg transition-colors duration-200",
                             isActive 
                               ? "bg-white/20 text-white" 
                               : "bg-primary/10 text-primary"
                           )}>
-                            <Icon className="mobile-icon-sm" />
+                            <Icon className="h-3.5 w-3.5" />
                           </div>
-                          <span className="mobile-description font-medium">{item.label}</span>
+                          <span className="text-sm font-medium">{item.label}</span>
                         </div>
                         {item.badge && (
                           <div className="flex-shrink-0">
@@ -242,68 +242,61 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
                   )
                 })}
               </div>
-            </div>
 
-            {/* Footer Profissional */}
-            <div className="mobile-optimized-p border-t border-border/50 space-y-3 bg-gradient-card">
-              {/* Termos de Uso Modernizado */}
-              <Button
-                variant="ghost"
-                className="w-full justify-start mobile-touch-target info-card-warning hover-lift transition-all duration-300"
-                onClick={handleTermosClick}
-              >
-                <div className="flex items-center justify-between w-full">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-red-500/20 text-red-600">
-                      <AlertTriangle className="h-4 w-4" />
+              {/* Rodapé Scrollável - Agora dentro da área de scroll */}
+              <div className="p-3 space-y-2 border-t border-border/30 mt-4">
+                {/* Termos de Uso Compacto */}
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start mobile-touch-target hover-lift transition-all duration-300 py-2 bg-red-50 hover:bg-red-100 border border-red-200"
+                  onClick={handleTermosClick}
+                >
+                  <div className="flex items-center justify-between w-full">
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-red-500/20 text-red-600">
+                        <AlertTriangle className="h-3 w-3" />
+                      </div>
+                      <span className="text-sm font-medium text-red-700">Termos</span>
                     </div>
-                    <span className="mobile-description font-medium text-red-700 dark:text-red-300">
-                      Termos de Uso
-                    </span>
+                    <Badge variant="destructive" className="text-xs px-1.5 py-0 h-4">
+                      !
+                    </Badge>
                   </div>
-                  <Badge variant="destructive" className="text-xs px-2 py-0 animate-pulse">
-                    IMPORTANTE
-                  </Badge>
-                </div>
-              </Button>
+                </Button>
 
-              {/* Status da Campanha */}
-              <div className="mobile-optimized-card info-card-success">
-                <div className="mobile-optimized-p">
-                  <div className="mobile-description font-medium text-green-900 dark:text-green-100 mb-1">
-                    Status da Campanha:
-                  </div>
-                  <div className="font-semibold text-green-700 dark:text-green-300 text-sm">
-                    {clienteInfo?.status_campanha || 'Em Configuração'}
+                {/* Status da Campanha Compacto */}
+                <div className="bg-green-50 border border-green-200 rounded-lg p-2">
+                  <div className="text-xs font-medium text-green-800 mb-0.5">
+                    Status: <span className="font-semibold">{clienteInfo?.status_campanha || 'Em Config'}</span>
                   </div>
                   {!clienteInfo?.status_campanha?.includes('Ativa') && (
-                    <div className="mobile-description text-green-600 dark:text-green-400 mt-1">
-                      Complete os passos para ativar
+                    <div className="text-xs text-green-600">
+                      Complete os passos
                     </div>
                   )}
                 </div>
-              </div>
 
-              {/* Botão Sair Modernizado */}
-              <Button
-                onClick={handleSignOut}
-                disabled={isLoggingOut}
-                variant="outline"
-                className="w-full justify-start mobile-touch-target hover:bg-destructive/10 hover:text-destructive border-destructive/30 hover:border-destructive transition-all duration-300 hover-lift"
-              >
-                <div className="flex items-center gap-3 w-full">
-                  <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-destructive/10 text-destructive">
-                    {isLoggingOut ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <LogOut className="h-4 w-4" />
-                    )}
+                {/* Botão Sair Compacto */}
+                <Button
+                  onClick={handleSignOut}
+                  disabled={isLoggingOut}
+                  variant="outline"
+                  className="w-full justify-start mobile-touch-target hover:bg-destructive/10 hover:text-destructive border-destructive/20 hover:border-destructive transition-all duration-300 hover-lift py-2"
+                >
+                  <div className="flex items-center gap-2 w-full">
+                    <div className="flex items-center justify-center w-6 h-6 rounded-lg bg-destructive/10 text-destructive">
+                      {isLoggingOut ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <LogOut className="h-3 w-3" />
+                      )}
+                    </div>
+                    <span className="text-sm font-medium text-destructive">
+                      {isLoggingOut ? 'Saindo...' : 'Sair'}
+                    </span>
                   </div>
-                  <span className="mobile-description font-medium text-destructive">
-                    {isLoggingOut ? 'Saindo...' : 'Sair do Sistema'}
-                  </span>
-                </div>
-              </Button>
+                </Button>
+              </div>
             </div>
           </div>
         </SheetContent>
