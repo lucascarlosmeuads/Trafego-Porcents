@@ -41,14 +41,36 @@ serve(async (req) => {
 
     const authHeader = req.headers.get('Authorization')
     if (!authHeader) {
-      throw new Error('No authorization header')
+      console.error('❌ [meta-ads-api] No authorization header')
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Authorization header é obrigatório',
+          errorType: 'AUTH_REQUIRED'
+        }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     // Verify the user
     const token = authHeader.replace('Bearer ', '')
     const { data: { user }, error: authError } = await supabase.auth.getUser(token)
     if (authError || !user) {
-      throw new Error('Unauthorized')
+      console.error('❌ [meta-ads-api] User verification failed:', authError?.message)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: 'Usuário não autorizado',
+          errorType: 'UNAUTHORIZED'
+        }),
+        { 
+          status: 401,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
 
     const { action, config, startDate, endDate, date_preset } = await req.json()
@@ -246,7 +268,7 @@ serve(async (req) => {
             user: data,
             adAccount: adAccountData,
             correctedAdAccountId: adAccountId !== config.adAccountId ? adAccountId : null,
-            connection_steps: {
+            connectionSteps: {
               validation: 'OK',
               basic_connection: 'OK',
               ad_account_access: 'OK',
