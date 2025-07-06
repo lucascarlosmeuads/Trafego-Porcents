@@ -1,4 +1,3 @@
-
 import { Home, FileText, Upload, MessageCircle, TrendingUp, Settings, Users, DollarSign, LayoutDashboard, LogOut, FileCheck, Activity, Sparkles, Loader2, Headphones } from 'lucide-react'
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
@@ -75,7 +74,7 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
     },
     {
       id: 'sac',
-      label: 'SAC',
+      label: 'SAC - Atendimento Urgente',
       icon: Headphones
     }
   ]

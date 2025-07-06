@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -90,7 +89,7 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
     },
     {
       id: 'sac',
-      label: 'SAC',
+      label: 'SAC - Atendimento Urgente',
       icon: Headphones,
       badge: null
     }
