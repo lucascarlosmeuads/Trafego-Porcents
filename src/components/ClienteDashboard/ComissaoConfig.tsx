@@ -29,9 +29,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
 
   React.useEffect(() => {
     if (valorComissaoAnterior && !porcentagemComissao) {
-      // Se houver um valor anterior, tentar deduzir a porcentagem (assumindo valor médio de venda de R$ 500)
-      const porcentagemEstimada = (valorComissaoAnterior / 500) * 100
-      setPorcentagemComissao(porcentagemEstimada.toString())
+      setPorcentagemComissao(valorComissaoAnterior.toString())
     }
   }, [valorComissaoAnterior, porcentagemComissao])
 
@@ -66,7 +64,8 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
       
     } catch (error) {
       console.error('💥 [ComissaoConfig] Erro ao confirmar comissão:', error)
-      setErro(`Erro ao confirmar comissão: ${error instanceof Error ? error.message : 'Erro desconhecido'}`)
+      const mensagemErro = error instanceof Error ? error.message : 'Erro desconhecido'
+      setErro(`Erro ao confirmar comissão: ${mensagemErro}`)
     } finally {
       setConfirmando(false)
     }
@@ -171,7 +170,7 @@ export function ComissaoConfig({ onConfirmarComissao, valorComissaoAnterior }: C
           <Alert className="border-green-200 bg-green-50">
             <CheckCircle className="h-4 w-4 text-green-600" />
             <AlertDescription className="text-green-800">
-              ✅ Comissão configurada com sucesso!
+              ✅ Comissão configurada com sucesso! Agora você pode registrar suas vendas.
             </AlertDescription>
           </Alert>
         )}
