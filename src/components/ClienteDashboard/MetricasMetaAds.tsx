@@ -7,14 +7,14 @@ import { useAuth } from '@/hooks/useAuth'
 import { BarChart3, AlertCircle, CheckCircle, Clock, TrendingUp, Target, Shield, Heart, Sparkles, Award, Activity } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { useClienteMetaAdsSimplified } from '@/hooks/useClienteMetaAdsSimplified'
+import { useClienteMetaAds } from '@/hooks/useClienteMetaAds'
 
 export function MetricasMetaAds() {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
   
-  // Hook para verificar se Meta Ads está configurado
-  const { isConfigured, insights } = useClienteMetaAdsSimplified(cliente?.id?.toString() || '')
+  // Usar APENAS o hook useClienteMetaAds como fonte única de verdade
+  const { isConfigured, insights } = useClienteMetaAds(cliente?.id?.toString() || '')
 
   if (!cliente) {
     return (
@@ -49,12 +49,11 @@ export function MetricasMetaAds() {
     )
   }
 
-  // Lógica simplificada e correta para determinar se tem dados ativos
-  // Se está configurado E tem dados, então está ativa com dados
-  const temDadosAtivos = isConfigured && insights.length > 0
+  // ÚNICA fonte de verdade: se há insights, tem dados ativos
+  const temDadosAtivos = insights.length > 0
   
-  // Debug logs para entender o problema
-  console.log('🔍 [META ADS DEBUG] Estado atual:', {
+  // Debug log para verificar
+  console.log('🔍 [META ADS DEBUG] Estado final:', {
     isConfigured,
     insightsLength: insights.length,
     temDadosAtivos,
@@ -121,7 +120,7 @@ export function MetricasMetaAds() {
                     : 'bg-gradient-to-r from-blue-100 to-cyan-100 dark:from-blue-900/30 dark:to-cyan-900/30 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700'
                 }`}>
                   <Sparkles className="mobile-icon-sm mr-1" />
-                  {temDadosAtivos ? '✅ Dados Ativos' : (cliente.status_campanha || 'Em preparação')}
+                  {temDadosAtivos ? '✅ Campanha Ativa com Dados' : (cliente.status_campanha || 'Em preparação')}
                 </Badge>
               </div>
               {!temDadosAtivos && (
