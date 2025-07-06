@@ -31,7 +31,7 @@ interface Venda {
 
 export function ComissaoMelhorada() {
   const { user } = useAuth()
-  const { cliente } = useClienteData(user?.email || '')
+  const { cliente, refreshData } = useClienteData(user?.email || '')
   const [porcentagemComissao, setPorcentagemComissao] = useState('')
   const [valorReferencia, setValorReferencia] = useState('')
   const [confirmando, setConfirmando] = useState(false)
@@ -109,6 +109,9 @@ export function ComissaoMelhorada() {
 
       setSucesso(true)
       setTimeout(() => setSucesso(false), 3000)
+      
+      // CORREÇÃO: Recarregar dados após salvar para mostrar seção de vendas
+      await refreshData()
       
     } catch (error) {
       console.error('Erro ao confirmar comissão:', error)
