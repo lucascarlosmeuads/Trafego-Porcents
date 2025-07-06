@@ -128,14 +128,16 @@ Aguardo orientação para prosseguir.`)
             {/* Botão WhatsApp */}
             <Button
               onClick={handleWhatsAppContact}
-              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-4 text-sm md:text-lg shadow-lg rounded-lg"
+              className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold px-3 py-6 shadow-lg rounded-lg min-h-[80px]"
               size="lg"
             >
-              <div className="flex items-center justify-center w-full gap-3">
+              <div className="flex items-center w-full gap-3 max-w-full">
                 <MessageCircle className="h-5 w-5 flex-shrink-0" />
-                <div className="text-center flex-1 min-w-0">
-                  <div className="font-semibold text-sm md:text-base leading-tight">Falar no WhatsApp</div>
-                  <div className="text-xs md:text-sm opacity-90 leading-tight break-words">
+                <div className="flex-1 text-left min-w-0 overflow-hidden">
+                  <div className="font-semibold text-sm md:text-base leading-tight mb-1">
+                    Falar no WhatsApp
+                  </div>
+                  <div className="text-xs md:text-sm opacity-90 leading-tight break-words hyphens-auto">
                     Suporte técnico direto - (48) 9 9113-1987
                   </div>
                 </div>
@@ -146,14 +148,16 @@ Aguardo orientação para prosseguir.`)
             {onTabChange && (
               <Button
                 onClick={handleLiberarBM}
-                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-4 text-sm md:text-lg shadow-lg rounded-lg"
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold px-3 py-6 shadow-lg rounded-lg min-h-[80px]"
                 size="lg"
               >
-                <div className="flex items-center justify-center w-full gap-3">
+                <div className="flex items-center w-full gap-3 max-w-full">
                   <Key className="h-5 w-5 flex-shrink-0" />
-                  <div className="text-center flex-1 min-w-0">
-                    <div className="font-semibold text-sm md:text-base leading-tight">Libere sua BM</div>
-                    <div className="text-xs md:text-sm opacity-90 leading-tight break-words">
+                  <div className="flex-1 text-left min-w-0 overflow-hidden">
+                    <div className="font-semibold text-sm md:text-base leading-tight mb-1">
+                      Libere sua BM
+                    </div>
+                    <div className="text-xs md:text-sm opacity-90 leading-tight break-words hyphens-auto">
                       Tutorial para configurar Business Manager
                     </div>
                   </div>
