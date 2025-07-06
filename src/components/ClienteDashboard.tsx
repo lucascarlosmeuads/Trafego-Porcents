@@ -15,6 +15,7 @@ import { LoadingFallback } from './LoadingFallback'
 import { SidebarProvider, useSidebar } from '@/components/ui/sidebar'
 import { ClienteHomeDashboard } from './ClienteDashboard/ClienteHomeDashboard'
 import { TermosProtection } from './ClienteDashboard/TermosProtection'
+import { ComissaoMelhorada } from './ClienteDashboard/ComissaoMelhorada'
 
 function ClienteDashboardContent() {
   const { user } = useAuth()
@@ -74,7 +75,7 @@ function ClienteDashboardContent() {
           />
         )
       case 'comissao':
-        return <ComissaoInputManual />
+        return <ComissaoMelhorada />
       case 'site':
         return <ClienteSiteDescricao />
       case 'vendas':
