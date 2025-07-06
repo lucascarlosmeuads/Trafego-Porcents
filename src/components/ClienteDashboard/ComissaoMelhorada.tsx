@@ -44,8 +44,12 @@ export function ComissaoMelhorada() {
     observacoes: ''
   })
   const [adicionandoVenda, setAdicionandoVenda] = useState(false)
+  
+  // Estado local para forçar re-render após salvar
+  const [comissaoLocalConfirmada, setComissaoLocalConfirmada] = useState(false)
 
-  const comissaoConfirmada = cliente?.comissao_confirmada || false
+  // Verificar se comissão foi confirmada (usando estado local como fallback)
+  const comissaoConfirmada = cliente?.comissao_confirmada || comissaoLocalConfirmada
 
   useEffect(() => {
     if (cliente?.valor_comissao && !comissaoConfirmada) {
@@ -55,6 +59,13 @@ export function ComissaoMelhorada() {
     }
     carregarVendas()
   }, [cliente, comissaoConfirmada])
+
+  // Atualizar estado local quando dados do cliente mudarem
+  useEffect(() => {
+    if (cliente?.comissao_confirmada) {
+      setComissaoLocalConfirmada(true)
+    }
+  }, [cliente?.comissao_confirmada])
 
   const carregarVendas = async () => {
     if (!user?.email) return
@@ -110,7 +121,8 @@ export function ComissaoMelhorada() {
       setSucesso(true)
       setTimeout(() => setSucesso(false), 3000)
       
-      // CORREÇÃO: Recarregar dados após salvar para mostrar seção de vendas
+      // CORREÇÃO MELHORADA: Forçar atualização local E recarregar dados
+      setComissaoLocalConfirmada(true)
       await refreshData()
       
     } catch (error) {
