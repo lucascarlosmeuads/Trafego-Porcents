@@ -28,20 +28,20 @@ interface ClienteMetaAdsModalFixedProps {
 
 export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMetaAdsModalFixedProps) {
   const [config, setConfig] = useState({
-    api_id: '',
-    app_secret: '',
-    access_token: '',
-    ad_account_id: ''
+    appId: '',
+    appSecret: '',
+    accessToken: '',
+    adAccountId: ''
   })
 
   const {
     saveConfig,
     testConnection,
     loading,
-    testing,
-    error,
-    success,
-    connectionStatus
+    saving,
+    lastError,
+    connectionSteps,
+    isConfigured
   } = useClienteMetaAdsFixed(cliente.id)
 
   const handleSave = async () => {
@@ -57,7 +57,7 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
     await testConnection(config)
   }
 
-  const isFormValid = config.api_id && config.app_secret && config.access_token && config.ad_account_id
+  const isFormValid = config.appId && config.appSecret && config.accessToken && config.adAccountId
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -70,25 +70,18 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
         </DialogHeader>
 
         <div className="space-y-6">
-          {error && (
+          {lastError && (
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription>{lastError}</AlertDescription>
             </Alert>
           )}
 
-          {success && (
+          {connectionSteps && (
             <Alert className="border-green-500 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
-              <AlertDescription className="text-green-800">{success}</AlertDescription>
-            </Alert>
-          )}
-
-          {connectionStatus && (
-            <Alert className={connectionStatus.includes('sucesso') ? 'border-green-500 bg-green-50' : 'border-amber-500 bg-amber-50'}>
-              <AlertCircle className={`h-4 w-4 ${connectionStatus.includes('sucesso') ? 'text-green-600' : 'text-amber-600'}`} />
-              <AlertDescription className={connectionStatus.includes('sucesso') ? 'text-green-800' : 'text-amber-800'}>
-                {connectionStatus}
+              <AlertDescription className="text-green-800">
+                Conexão testada com sucesso!
               </AlertDescription>
             </Alert>
           )}
@@ -98,8 +91,8 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
               <Label htmlFor="api_id">App ID *</Label>
               <Input
                 id="api_id"
-                value={config.api_id}
-                onChange={(e) => setConfig(prev => ({ ...prev, api_id: e.target.value }))}
+                value={config.appId}
+                onChange={(e) => setConfig(prev => ({ ...prev, appId: e.target.value }))}
                 placeholder="Ex: 123456789012345"
               />
             </div>
@@ -109,8 +102,8 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
               <Input
                 id="app_secret"
                 type="password"
-                value={config.app_secret}
-                onChange={(e) => setConfig(prev => ({ ...prev, app_secret: e.target.value }))}
+                value={config.appSecret}
+                onChange={(e) => setConfig(prev => ({ ...prev, appSecret: e.target.value }))}
                 placeholder="Digite o App Secret"
               />
             </div>
@@ -120,8 +113,8 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
               <Input
                 id="access_token"
                 type="password"
-                value={config.access_token}
-                onChange={(e) => setConfig(prev => ({ ...prev, access_token: e.target.value }))}
+                value={config.accessToken}
+                onChange={(e) => setConfig(prev => ({ ...prev, accessToken: e.target.value }))}
                 placeholder="Digite o Access Token"
               />
             </div>
@@ -130,8 +123,8 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
               <Label htmlFor="ad_account_id">Ad Account ID *</Label>
               <Input
                 id="ad_account_id"
-                value={config.ad_account_id}
-                onChange={(e) => setConfig(prev => ({ ...prev, ad_account_id: e.target.value }))}
+                value={config.adAccountId}
+                onChange={(e) => setConfig(prev => ({ ...prev, adAccountId: e.target.value }))}
                 placeholder="Ex: act_123456789"
               />
             </div>
@@ -143,9 +136,9 @@ export function ClienteMetaAdsModalFixed({ isOpen, onClose, cliente }: ClienteMe
             <Button
               variant="outline"
               onClick={handleTest}
-              disabled={!isFormValid || testing}
+              disabled={!isFormValid || saving}
             >
-              {testing ? (
+              {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   Testando...
