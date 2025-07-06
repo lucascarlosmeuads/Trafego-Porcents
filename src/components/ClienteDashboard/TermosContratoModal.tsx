@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
@@ -137,7 +138,7 @@ export function TermosContratoModal({
           <div className="flex items-center justify-between">
             <DialogTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
               <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-teal-400" />
-              Termos de Uso e Condições Gerais
+              Termos de Uso e Condições
             </DialogTitle>
             {isMobile && (
               <button
@@ -154,9 +155,9 @@ export function TermosContratoModal({
           </p>
         </DialogHeader>
         
-        {/* Conteúdo com scroll - altura específica para cada plataforma */}
+        {/* Conteúdo com scroll - altura ajustada para dar espaço aos botões */}
         <div className="flex-1 min-h-0 overflow-hidden">
-          <ScrollArea className={`${isMobile ? 'h-full px-1' : 'h-[500px]'} w-full overflow-auto`}>
+          <ScrollArea className={`${isMobile ? 'h-[calc(100vh-200px)]' : 'h-[420px]'} w-full overflow-auto`}>
             <div className="p-4 space-y-6 text-gray-300">
               
               {/* Aviso Importante */}
@@ -331,21 +332,27 @@ export function TermosContratoModal({
               </div>
               
               {/* Espaçamento extra para mobile */}
-              {isMobile && <div className="h-24" />}
+              {isMobile && <div className="h-8" />}
             </div>
           </ScrollArea>
         </div>
 
-        {/* Botões de Ação - Fixos na parte inferior */}
-        <div className="flex-shrink-0 p-4 pt-2 border-t border-gray-700 bg-gray-900">
+        {/* Botões de Ação - Fixos na parte inferior com otimização mobile */}
+        <div className={`
+          flex-shrink-0 border-t border-gray-700 bg-gray-900
+          ${isMobile ? 'p-4 pb-8 px-6' : 'p-4 pt-2'}
+        `}>
           {/* Se já aceitou os termos ou modo somente aceitar, mostrar apenas botão de aceitar/fechar */}
           {termosAceitos || showOnlyAccept ? (
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col gap-3">
               {showOnlyAccept && !termosAceitos && (
                 <Button
                   onClick={handleAceitarTermos}
                   size="lg"
-                  className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
+                  className={`
+                    w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold transition-all
+                    ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
+                  `}
                   disabled={aceitando}
                 >
                   {aceitando ? 'Aceitando...' : 'Aceitar Termos e Condições'}
@@ -355,7 +362,10 @@ export function TermosContratoModal({
                 <Button
                   onClick={handleCloseModal}
                   size="lg"
-                  className="w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
+                  className={`
+                    w-full bg-teal-600 hover:bg-teal-700 text-white font-semibold
+                    ${isMobile ? 'h-14 text-base px-8' : 'h-12 px-6'}
+                  `}
                 >
                   Fechar
                 </Button>
@@ -363,12 +373,15 @@ export function TermosContratoModal({
             </div>
           ) : (
             /* Se não aceitou ainda e não é modo somente aceitar, mostrar botões de aceitar/rejeitar */
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className={`flex gap-3 ${isMobile ? 'flex-col' : 'flex-row'}`}>
               <Button
                 onClick={handleRejeitarTermos}
                 variant="outline"
                 size="lg"
-                className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10 min-h-[48px]"
+                className={`
+                  border-red-500 text-red-400 hover:bg-red-500/10 hover:border-red-400 font-semibold
+                  ${isMobile ? 'w-full h-14 text-base px-8 order-2' : 'flex-1 h-12 px-6'}
+                `}
                 disabled={aceitando || rejeitando}
               >
                 {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
@@ -376,10 +389,13 @@ export function TermosContratoModal({
               <Button
                 onClick={handleAceitarTermos}
                 size="lg"
-                className="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-semibold min-h-[48px]"
+                className={`
+                  bg-teal-600 hover:bg-teal-700 text-white font-semibold shadow-lg
+                  ${isMobile ? 'w-full h-14 text-base px-8 order-1' : 'flex-1 h-12 px-6'}
+                `}
                 disabled={aceitando || rejeitando}
               >
-                {aceitando ? 'Aceitando...' : 'Aceito os Termos e Condições'}
+                {aceitando ? 'Aceitando...' : 'Aceito os Termos'}
               </Button>
             </div>
           )}
