@@ -810,11 +810,13 @@ export type Database = {
           dados_preenchidos: boolean | null
           email_cliente: string
           email_gestor: string | null
+          formulario_acessado_em: string | null
           id: string
           nome_cliente: string
           observacoes: string | null
           status: string
           telefone: string | null
+          token_acesso: string | null
           updated_at: string
         }
         Insert: {
@@ -822,11 +824,13 @@ export type Database = {
           dados_preenchidos?: boolean | null
           email_cliente: string
           email_gestor?: string | null
+          formulario_acessado_em?: string | null
           id?: string
           nome_cliente: string
           observacoes?: string | null
           status?: string
           telefone?: string | null
+          token_acesso?: string | null
           updated_at?: string
         }
         Update: {
@@ -834,11 +838,13 @@ export type Database = {
           dados_preenchidos?: boolean | null
           email_cliente?: string
           email_gestor?: string | null
+          formulario_acessado_em?: string | null
           id?: string
           nome_cliente?: string
           observacoes?: string | null
           status?: string
           telefone?: string | null
+          token_acesso?: string | null
           updated_at?: string
         }
         Relationships: []
