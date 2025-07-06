@@ -17,9 +17,9 @@ import {
   Percent,
   Calculator,
   Plus,
-  Trash2
+  Trash2,
+  TrendingUp
 } from 'lucide-react'
-import { CommissionCalculator } from '@/components/CommissionCalculator'
 
 interface Venda {
   id: string
@@ -33,7 +33,7 @@ export function ComissaoMelhorada() {
   const { user } = useAuth()
   const { cliente } = useClienteData(user?.email || '')
   const [porcentagemComissao, setPorcentagemComissao] = useState('')
-  const [valorFixoComissao, setValorFixoComissao] = useState('')
+  const [valorReferencia, setValorReferencia] = useState('')
   const [confirmando, setConfirmando] = useState(false)
   const [erro, setErro] = useState('')
   const [sucesso, setSucesso] = useState(false)
@@ -49,7 +49,9 @@ export function ComissaoMelhorada() {
 
   useEffect(() => {
     if (cliente?.valor_comissao && !comissaoConfirmada) {
-      setValorFixoComissao(cliente.valor_comissao.toString())
+      // Se houver um valor anterior, tentar deduzir a porcentagem (assumindo valor médio de venda de R$ 500)
+      const porcentagemEstimada = (cliente.valor_comissao / 500) * 100
+      setPorcentagemComissao(porcentagemEstimada.toString())
     }
     carregarVendas()
   }, [cliente, comissaoConfirmada])
@@ -71,31 +73,23 @@ export function ComissaoMelhorada() {
     }
   }
 
-  const calcularComissaoEmDinheiro = () => {
-    const porcentagem = parseFloat(porcentagemComissao)
-    const vendaMedia = vendas.length > 0 
-      ? vendas.reduce((acc, venda) => acc + venda.valor_venda, 0) / vendas.length 
-      : 500 // valor padrão para exemplo
+  const calcularTotalVendas = () => {
+    return vendas.reduce((total, venda) => total + venda.valor_venda, 0)
+  }
 
-    if (porcentagem && vendaMedia) {
-      return (vendaMedia * porcentagem) / 100
-    }
-    return 0
+  const calcularComissaoDevida = () => {
+    const totalVendas = calcularTotalVendas()
+    const porcentagem = parseFloat(porcentagemComissao) || 0
+    return (totalVendas * porcentagem) / 100
   }
 
   const handleConfirmarComissao = async () => {
     if (!user?.email) return
     
     const porcentagem = parseFloat(porcentagemComissao)
-    const valorFixo = parseFloat(valorFixoComissao)
     
     if (!porcentagem || porcentagem <= 0 || porcentagem > 50) {
       setErro('Por favor, insira uma porcentagem válida entre 1% e 50%')
-      return
-    }
-    
-    if (!valorFixo || valorFixo <= 0) {
-      setErro('Por favor, insira um valor fixo válido para a comissão')
       return
     }
     
@@ -107,7 +101,7 @@ export function ComissaoMelhorada() {
         .from('todos_clientes')
         .update({ 
           comissao_confirmada: true,
-          valor_comissao: valorFixo
+          valor_comissao: porcentagem // Salvamos apenas a porcentagem configurada
         })
         .eq('email_cliente', user.email)
 
@@ -174,26 +168,63 @@ export function ComissaoMelhorada() {
   }
 
   if (comissaoConfirmada) {
+    const porcentagemAtual = cliente?.valor_comissao || 0
+    const totalVendas = calcularTotalVendas()
+    const comissaoDevida = (totalVendas * porcentagemAtual) / 100
+
     return (
       <div className="space-y-6">
         <Card className="w-full">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-green-700">
               <CheckCircle className="w-5 h-5" />
-              Comissão Confirmada
+              Comissão Configurada
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="bg-green-50 border border-green-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
-                <DollarSign className="w-5 h-5 text-green-600" />
+                <Percent className="w-5 h-5 text-green-600" />
                 <span className="font-medium text-green-800">
-                  Valor Confirmado: {formatCurrency(cliente?.valor_comissao || 0)}
+                  Porcentagem Confirmada: {porcentagemAtual}%
                 </span>
               </div>
               <p className="text-sm text-green-700">
-                ✅ Você confirmou o valor da sua comissão. Este valor será cobrado mensalmente.
+                ✅ Você confirmou {porcentagemAtual}% de comissão sobre cada venda.
               </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Resumo da Comissão */}
+        <Card className="w-full">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-700">
+              <TrendingUp className="w-5 h-5" />
+              Resumo da Comissão Este Mês
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-blue-700">{formatCurrency(totalVendas)}</div>
+                <div className="text-sm text-blue-600">Total de Vendas</div>
+              </div>
+              <div className="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-green-700">{porcentagemAtual}%</div>
+                <div className="text-sm text-green-600">Porcentagem</div>
+              </div>
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-center">
+                <div className="text-2xl font-bold text-orange-700">{formatCurrency(comissaoDevida)}</div>
+                <div className="text-sm text-orange-600">Comissão Devida</div>
+              </div>
+            </div>
+            
+            <div className="bg-gray-50 border border-gray-200 rounded-lg p-3">
+              <div className="text-sm text-gray-600 text-center">
+                <Calculator className="w-4 h-4 inline mr-1" />
+                Cálculo: {formatCurrency(totalVendas)} × {porcentagemAtual}% = {formatCurrency(comissaoDevida)}
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -314,7 +345,7 @@ export function ComissaoMelhorada() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Percent className="w-5 h-5 text-blue-600" />
-            Defina Sua Comissão
+            Configure Sua Comissão
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -323,10 +354,10 @@ export function ComissaoMelhorada() {
             <Info className="h-4 w-4" />
             <AlertDescription>
               <div className="space-y-2">
-                <p className="font-medium">Você precisa definir:</p>
+                <p className="font-medium">Defina a porcentagem que você pagará sobre cada venda:</p>
                 <ul className="text-sm space-y-1 ml-4">
                   <li>• <strong>Porcentagem (%)</strong> que você quer pagar sobre cada venda</li>
-                  <li>• <strong>Valor fixo (R$)</strong> que isso representa em dinheiro</li>
+                  <li>• <strong>Valor de referência (opcional)</strong> - quanto você acha que isso vale em dinheiro</li>
                   <li>• Depois clique em <strong>"Salvar"</strong> para confirmar</li>
                 </ul>
               </div>
@@ -338,7 +369,7 @@ export function ComissaoMelhorada() {
             <div className="space-y-2">
               <Label htmlFor="porcentagem" className="flex items-center gap-2">
                 <Percent className="w-4 h-4" />
-                Porcentagem da Comissão (%)
+                Porcentagem da Comissão (%) *
               </Label>
               <Input
                 id="porcentagem"
@@ -349,6 +380,7 @@ export function ComissaoMelhorada() {
                 value={porcentagemComissao}
                 onChange={(e) => setPorcentagemComissao(e.target.value)}
                 placeholder="Ex: 10 (para 10%)"
+                className="border-blue-200 focus:border-blue-400"
               />
               <p className="text-xs text-gray-500">
                 Porcentagem que você pagará sobre cada venda
@@ -356,26 +388,27 @@ export function ComissaoMelhorada() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="valorFixo" className="flex items-center gap-2">
+              <Label htmlFor="valorReferencia" className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
-                Valor Fixo Mensal (R$)
+                Valor de Referência (R$) - Opcional
               </Label>
               <Input
-                id="valorFixo"
+                id="valorReferencia"
                 type="number"
                 step="0.01"
-                min="10"
-                value={valorFixoComissao}
-                onChange={(e) => setValorFixoComissao(e.target.value)}
-                placeholder="Ex: 150.00"
+                min="0"
+                value={valorReferencia}
+                onChange={(e) => setValorReferencia(e.target.value)}
+                placeholder="Ex: 50.00"
+                className="border-gray-200"
               />
               <p className="text-xs text-gray-500">
-                Valor fixo que você pagará mensalmente
+                Apenas para referência - quanto você acha que {porcentagemComissao}% vale
               </p>
             </div>
           </div>
 
-          {/* Calculadora Visual */}
+          {/* Exemplo de Cálculo */}
           {porcentagemComissao && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex items-center gap-2 mb-2">
@@ -383,9 +416,9 @@ export function ComissaoMelhorada() {
                 <span className="font-medium text-blue-800">Exemplo de Cálculo:</span>
               </div>
               <div className="text-sm text-blue-700">
-                <p>Se você vender R$ 500,00 com {porcentagemComissao}% de comissão:</p>
+                <p>Se você vender R$ 1.000,00 com {porcentagemComissao}% de comissão:</p>
                 <p className="font-semibold">
-                  R$ 500,00 × {porcentagemComissao}% = {formatCurrency(500 * (parseFloat(porcentagemComissao) || 0) / 100)}
+                  R$ 1.000,00 × {porcentagemComissao}% = {formatCurrency(1000 * (parseFloat(porcentagemComissao) || 0) / 100)}
                 </p>
               </div>
             </div>
@@ -404,14 +437,14 @@ export function ComissaoMelhorada() {
             <Alert className="border-green-200 bg-green-50">
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertDescription className="text-green-800">
-                ✅ Comissão confirmada com sucesso!
+                ✅ Comissão configurada com sucesso!
               </AlertDescription>
             </Alert>
           )}
 
           <Button
             onClick={handleConfirmarComissao}
-            disabled={confirmando || !porcentagemComissao || !valorFixoComissao}
+            disabled={confirmando || !porcentagemComissao}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3"
             size="lg"
           >
@@ -423,13 +456,13 @@ export function ComissaoMelhorada() {
             ) : (
               <>
                 <CheckCircle className="w-4 w-4 mr-2" />
-                Salvar Comissão ({porcentagemComissao}% = {formatCurrency(parseFloat(valorFixoComissao) || 0)})
+                Salvar Comissão ({porcentagemComissao}%)
               </>
             )}
           </Button>
 
           <p className="text-xs text-gray-500 text-center">
-            Ao salvar, você confirma que pagará {porcentagemComissao}% sobre cada venda ou {formatCurrency(parseFloat(valorFixoComissao) || 0)} mensalmente.
+            Ao salvar, você confirma que pagará {porcentagemComissao}% sobre cada venda registrada.
           </p>
         </CardContent>
       </Card>
