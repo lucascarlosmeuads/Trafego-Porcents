@@ -1,7 +1,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target } from 'lucide-react'
+import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target, AlertTriangle } from 'lucide-react'
 
 interface SuporteRapidoProps {
   onBack: () => void
@@ -42,6 +42,24 @@ Aguardo orientação para prosseguir.`)
           <p className="text-gray-400">WhatsApp direto para configuração da sua campanha</p>
         </div>
       </div>
+
+      {/* Aviso de Horário de Atendimento */}
+      <Card className="bg-yellow-900/20 border-yellow-700/30 max-w-4xl mx-auto">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-yellow-500/20 flex items-center justify-center">
+              <Clock className="h-5 w-5 text-yellow-400" />
+            </div>
+            <div>
+              <h3 className="text-yellow-100 font-semibold">Horário de Atendimento</h3>
+              <p className="text-yellow-200/90 text-sm">
+                <strong>Segunda a Sexta-feira:</strong> 08h às 18h<br/>
+                <strong>Fins de semana e feriados:</strong> Sem atendimento
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Card Principal */}
       <Card className="bg-gray-900 border-gray-800 max-w-4xl mx-auto">
@@ -92,7 +110,7 @@ Aguardo orientação para prosseguir.`)
             </h3>
             <div className="text-gray-300 space-y-2">
               <p>• <strong>Atendimento Direto:</strong> Converse direto com nosso time técnico</p>
-              <p>• <strong>Resposta Rápida:</strong> Geralmente respondemos em poucos minutos</p>
+              <p>• <strong>Resposta Rápida:</strong> Geralmente respondemos em poucos minutos (horário comercial)</p>
               <p>• <strong>Suporte Personalizado:</strong> Ajuda específica para o seu negócio</p>
               <p>• <strong>Acompanhamento:</strong> Te guiamos do início ao fim da configuração</p>
             </div>
@@ -113,13 +131,25 @@ Aguardo orientação para prosseguir.`)
             </Button>
           </div>
 
-          {/* Informações Adicionais */}
+          {/* Informações Adicionais Atualizadas */}
           <div className="bg-gray-800/30 border border-gray-700/50 rounded-lg p-4">
-            <p className="text-gray-400 text-sm text-center">
-              <strong>Horário de Atendimento:</strong> Segunda a Sexta, das 8h às 18h<br/>
-              <strong>Especialização:</strong> Business Manager, Criativos e Configuração de Campanhas<br/>
-              <strong>Tempo de Resposta:</strong> Geralmente em poucos minutos
-            </p>
+            <div className="flex items-start gap-3 mb-3">
+              <AlertTriangle className="h-5 w-5 text-yellow-400 mt-0.5 flex-shrink-0" />
+              <div>
+                <p className="text-yellow-100 font-semibold text-sm mb-2">Importante - Horário de Atendimento:</p>
+                <div className="text-gray-300 text-sm space-y-1">
+                  <p><strong>Segunda a Sexta-feira:</strong> 08h às 18h</p>
+                  <p><strong>Fins de semana e feriados:</strong> Sem atendimento</p>
+                  <p><strong>Especialização:</strong> Business Manager, Criativos e Configuração de Campanhas</p>
+                  <p><strong>Tempo de Resposta:</strong> Poucos minutos durante horário comercial</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-yellow-900/20 border border-yellow-700/30 rounded-lg p-3 mt-3">
+              <p className="text-yellow-200 text-xs text-center">
+                📅 Mensagens enviadas fora do horário comercial serão respondidas no próximo dia útil
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>
