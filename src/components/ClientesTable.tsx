@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react'
 import { useManagerData } from '@/hooks/useManagerData'
 import { useAuth } from '@/hooks/useAuth'
@@ -615,6 +614,10 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       data: finalClientesList,
       initialItemsPerPage: 50 
     })
+
+    // Definir variáveis que estavam faltando
+    const canTransfer = isAdmin
+    const currentUserEmail = emailToUse
 
     return (
       <div className="space-y-4">

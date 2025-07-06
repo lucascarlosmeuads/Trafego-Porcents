@@ -17,7 +17,7 @@ import { ClienteMetaAdsModalFixed } from './ClienteMetaAdsModalFixed'
 
 // Usar tipo básico do cliente ao invés de importar
 interface Cliente {
-  id: number
+  id: string // Mudança: de number para string
   nome_cliente: string
   email_cliente: string
   telefone_cliente?: string
@@ -28,11 +28,11 @@ interface Cliente {
 
 interface ClienteRowProps {
   cliente: Cliente
-  onDelete: (id: number) => Promise<void>
-  onUpdate: (id: number, updates: Partial<Cliente>) => Promise<void>
-  onTransferencia: (clienteId: number, novoGestorEmail: string) => Promise<void>
-  onAddBriefing: (clienteId: number) => Promise<void>
-  onEditBriefing: (clienteId: number) => Promise<void>
+  onDelete: (id: string) => Promise<void> // Mudança: de number para string
+  onUpdate: (id: string, updates: Partial<Cliente>) => Promise<void> // Mudança: de number para string
+  onTransferencia: (clienteId: string, novoGestorEmail: string) => Promise<void> // Mudança: de number para string
+  onAddBriefing: (clienteId: string) => Promise<void> // Mudança: de number para string
+  onEditBriefing: (clienteId: string) => Promise<void> // Mudança: de number para string
   canTransfer: boolean
   isAdmin: boolean
   gestores: { email: string; nome: string }[]
