@@ -1,196 +1,227 @@
-
-import { TableRow, TableCell } from '@/components/ui/table'
-import { TooltipProvider } from '@/components/ui/tooltip'
-import { Cliente, type StatusCampanha } from '@/lib/supabase'
-import { ClienteOrigemIndicator } from './ClienteOrigemIndicator'
-import { ClienteRowName } from './ClienteRowName'
-import { ClienteRowPhone } from './ClienteRowPhone'
-import { ClienteRowDataLimite } from './ClienteRowDataLimite'
-import { ClienteRowBM } from './ClienteRowBM'
-import { ClienteRowSite } from './ClienteRowSite'
-import { ComissaoButton } from './ComissaoButton'
-import { ClienteRowDateCell } from './ClienteRowDateCell'
-import { ClienteRowEmailCell } from './ClienteRowEmailCell'
-import { ClienteRowGestorCell } from './ClienteRowGestorCell'
-import { ClienteRowStatusCells } from './ClienteRowStatusCells'
-import { ClienteRowBriefingCell } from './ClienteRowBriefingCell'
-import { useClienteOrigem } from '@/hooks/useClienteOrigem'
-import type { ClienteBasicInfo } from '@/types/shared'
+import React, { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import { todos_clientes } from '@/lib/supabase/supabaseTypes'
+import { toast } from '@/hooks/use-toast'
+import { useBriefing } from '@/hooks/useBriefing'
+import { useToast as useToastHook } from '@/hooks/use-toast'
+import { MoreVertical, Copy, Edit, Trash, UserPlus, FileText, BarChart3 } from 'lucide-react'
+import { BriefingModal } from '../Briefing/BriefingModal'
+import { BriefingEditModal } from '../Briefing/BriefingEditModal'
+import { TransferirClienteModal } from './TransferirClienteModal'
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { ClienteMetaAdsModalFixed } from './ClienteMetaAdsModalFixed'
 
 interface ClienteRowProps {
-  cliente: Cliente
-  selectedManager: string
-  index: number
-  isAdmin?: boolean
-  showEmailGestor?: boolean
-  showSitePagoCheckbox?: boolean
-  updatingStatus: string | null
-  editingLink: { clienteId: string, field: string } | null
-  linkValue: string
-  setLinkValue: (value: string) => void
-  editingBM: string | null
-  bmValue: string
-  setBmValue: (value: string) => void
-  getStatusColor: (status: string) => string
-  onStatusChange: (clienteId: string, newStatus: StatusCampanha) => void
-  onSiteStatusChange: (clienteId: string, newStatus: string) => void
-  onLinkEdit: (clienteId: string, field: string, currentValue: string) => void
-  onLinkSave: (clienteId: string) => Promise<boolean>
-  onLinkCancel: () => void
-  onBMEdit: (clienteId: string, currentValue: string) => void
-  onBMSave: (clienteId: string) => void
-  onBMCancel: () => void
-  onComissionUpdate: () => void
-  onSitePagoChange?: (clienteId: string, newValue: boolean) => void
+  cliente: todos_clientes
+  onDelete: (id: number) => Promise<void>
+  onUpdate: (id: number, updates: Partial<todos_clientes>) => Promise<void>
+  onTransferencia: (clienteId: number, novoGestorEmail: string) => Promise<void>
+  onAddBriefing: (clienteId: number) => Promise<void>
+  onEditBriefing: (clienteId: number) => Promise<void>
+  canTransfer: boolean
+  isAdmin: boolean
+  gestores: { email: string; nome: string }[]
+  currentUserEmail: string
+  isLoading: boolean
 }
 
-export function ClienteRow({
-  cliente,
-  selectedManager,
-  index,
-  isAdmin = false,
-  showEmailGestor = false,
-  showSitePagoCheckbox = false,
-  updatingStatus,
-  editingLink,
-  linkValue,
-  setLinkValue,
-  editingBM,
-  bmValue,
-  setBmValue,
-  getStatusColor,
-  onStatusChange,
-  onSiteStatusChange,
-  onLinkEdit,
-  onLinkSave,
-  onLinkCancel,
-  onBMEdit,
-  onBMSave,
-  onBMCancel,
-  onComissionUpdate,
-  onSitePagoChange
+export function ClienteRow({ 
+  cliente, 
+  onDelete, 
+  onUpdate, 
+  onTransferencia, 
+  onAddBriefing, 
+  onEditBriefing, 
+  canTransfer,
+  isAdmin,
+  gestores,
+  currentUserEmail,
+  isLoading
 }: ClienteRowProps) {
-  const { getClienteOrigem } = useClienteOrigem()
-  
-  const clienteOrigem = getClienteOrigem(cliente.id!.toString())
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [briefingModalOpen, setBriefingModalOpen] = useState(false)
+  const [briefingEditModalOpen, setBriefingEditModalOpen] = useState(false)
+  const [transferirModalOpen, setTransferirModalOpen] = useState(false)
+  const [metaAdsModalOpen, setMetaAdsModalOpen] = useState(false)
+  const { hasBriefing } = useBriefing(cliente.id)
+  const { toast } = useToastHook()
 
-  // Dados básicos do cliente para componentes
-  const clienteInfo: ClienteBasicInfo = {
-    clienteId: cliente.id!.toString(),
-    nomeCliente: cliente.nome_cliente || '',
-    emailCliente: cliente.email_cliente || '',
-    telefone: cliente.telefone || '',
-    emailGestor: cliente.email_gestor || ''
+  const handleCopyToClipboard = () => {
+    navigator.clipboard.writeText(cliente.email_cliente)
+    toast({
+      title: "Copiado!",
+      description: "Email do cliente copiado para a área de transferência.",
+    })
+  }
+
+  const handleDelete = async () => {
+    setDeleteLoading(true)
+    try {
+      if (cliente.id) {
+        await onDelete(cliente.id)
+        toast({
+          title: "Sucesso!",
+          description: "Cliente deletado com sucesso.",
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "ID do cliente inválido.",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error("Erro ao deletar cliente:", error)
+      toast({
+        title: "Erro",
+        description: "Erro ao deletar cliente. Tente novamente.",
+        variant: "destructive",
+      })
+    } finally {
+      setDeleteLoading(false)
+    }
   }
 
   return (
-    <TooltipProvider>
-      <TableRow 
-        className="border-border hover:bg-muted/20" 
-        style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
-      >
-        <ClienteRowDateCell
-          dataVenda={cliente.data_venda || ''}
-          createdAt={cliente.created_at}
-          index={index}
-        />
+    <>
+      <tr className={`border-b ${isLoading ? 'opacity-50' : ''} hover:bg-gray-50`}>
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{cliente.id}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.nome_cliente}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.email_cliente}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.telefone_cliente}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.nome_gestor}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.data_venda}</td>
+        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{cliente.status_cliente}</td>
+        
+        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCopyToClipboard}
+                  className="text-blue-600 hover:text-blue-700 border-blue-200 hover:border-blue-300"
+                >
+                  <Copy className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copiar email</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-        <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
-          <ClienteRowName 
-            clienteId={clienteInfo.clienteId}
-            nomeCliente={clienteInfo.nomeCliente}
-          />
-        </TableCell>
+          {isAdmin && (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                      <DropdownMenuItem onClick={() => onUpdate(cliente.id, { status_cliente: 'ativo' })}>
+                        Ativar
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => onUpdate(cliente.id, { status_cliente: 'inativo' })}>
+                        Inativar
+                      </DropdownMenuItem>
+                      {canTransfer && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setTransferirModalOpen(true)}>
+                            <UserPlus className="h-4 w-4 mr-2" />
+                            Transferir
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={() => setBriefingModalOpen(true)} disabled={hasBriefing}>
+                        <FileText className="h-4 w-4 mr-2" />
+                        {hasBriefing ? 'Briefing Adicionado' : 'Adicionar Briefing'}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => setBriefingEditModalOpen(true)} disabled={!hasBriefing}>
+                        <Edit className="h-4 w-4 mr-2" />
+                        Editar Briefing
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={handleDelete} disabled={deleteLoading}>
+                        <Trash className="h-4 w-4 mr-2" />
+                        {deleteLoading ? 'Deletando...' : 'Deletar'}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TooltipTrigger>
+              </Tooltip>
+            </TooltipProvider>
+          )}
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setMetaAdsModalOpen(true)}
+                  className="text-purple-600 hover:text-purple-700 border-purple-200 hover:border-purple-300"
+                >
+                  <BarChart3 className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Configurar Meta Ads</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
 
-        <TableCell className="text-white text-xs p-1">
-          <ClienteOrigemIndicator
-            origem={clienteOrigem.origem}
-            createdAt={clienteOrigem.created_at}
-            pedidoId={clienteOrigem.pedido_id}
-            compact={true}
-          />
-        </TableCell>
+          
+        </td>
+      </tr>
 
-        <TableCell className="text-white text-xs p-1">
-          <ClienteRowPhone 
-            telefone={clienteInfo.telefone}
-            nomeCliente={clienteInfo.nomeCliente}
-          />
-        </TableCell>
+      
+      <BriefingModal
+        isOpen={briefingModalOpen}
+        onClose={() => setBriefingModalOpen(false)}
+        clienteId={cliente.id}
+        onAddBriefing={onAddBriefing}
+      />
 
-        <ClienteRowEmailCell emailCliente={clienteInfo.emailCliente} />
+      
+      <BriefingEditModal
+        isOpen={briefingEditModalOpen}
+        onClose={() => setBriefingEditModalOpen(false)}
+        clienteId={cliente.id}
+        onEditBriefing={onEditBriefing}
+      />
 
-        <ClienteRowGestorCell 
-          emailGestor={clienteInfo.emailGestor}
-          isAdmin={isAdmin}
-          showEmailGestor={showEmailGestor}
-        />
+      
+      <TransferirClienteModal
+        isOpen={transferirModalOpen}
+        onClose={() => setTransferirModalOpen(false)}
+        clienteId={cliente.id}
+        onTransferencia={onTransferencia}
+        gestores={gestores}
+        currentUserEmail={currentUserEmail}
+      />
 
-        <ClienteRowStatusCells
-          statusCampanha={cliente.status_campanha || 'Cliente Novo'}
-          siteStatus={cliente.site_status || 'pendente'}
-          clienteId={clienteInfo.clienteId}
-          updatingStatus={updatingStatus}
-          getStatusColor={getStatusColor}
-          onStatusChange={onStatusChange}
-          onSiteStatusChange={onSiteStatusChange}
-        />
-
-        <ClienteRowDataLimite
-          dataVenda={cliente.data_venda || ''}
-          createdAt={cliente.created_at}
-          statusCampanha={cliente.status_campanha || 'Cliente Novo'}
-          nomeCliente={clienteInfo.nomeCliente}
-          compact={true}
-        />
-
-        <ClienteRowBriefingCell 
-          emailCliente={clienteInfo.emailCliente}
-          nomeCliente={clienteInfo.nomeCliente}
-        />
-
-        <TableCell className="p-1">
-          <ClienteRowSite
-            clienteId={clienteInfo.clienteId}
-            linkSite={cliente.link_site || ''}
-            sitePago={cliente.site_pago || false}
-            showSitePagoCheckbox={showSitePagoCheckbox}
-            editingLink={editingLink}
-            linkValue={linkValue}
-            setLinkValue={setLinkValue}
-            onLinkEdit={onLinkEdit}
-            onLinkSave={onLinkSave}
-            onLinkCancel={onLinkCancel}
-            onSitePagoChange={onSitePagoChange}
-            compact={true}
-          />
-        </TableCell>
-
-        <TableCell className="p-1">
-          <ClienteRowBM
-            clienteId={clienteInfo.clienteId}
-            numeroBM={cliente.numero_bm || ''}
-            nomeCliente={clienteInfo.nomeCliente}
-            editingBM={editingBM}
-            bmValue={bmValue}
-            setBmValue={setBmValue}
-            onBMEdit={onBMEdit}
-            onBMSave={onBMSave}
-            onBMCancel={onBMCancel}
-            compact={true}
-          />
-        </TableCell>
-
-        <TableCell className="p-1">
-          <ComissaoButton
-            cliente={cliente}
-            isGestorDashboard={!isAdmin && selectedManager?.includes('@') && selectedManager !== 'Todos os Clientes'}
-            isAdmin={isAdmin}
-            onComissionUpdate={onComissionUpdate}
-            compact={true}
-          />
-        </TableCell>
-      </TableRow>
-    </TooltipProvider>
+      <ClienteMetaAdsModalFixed
+        isOpen={metaAdsModalOpen}
+        onClose={() => setMetaAdsModalOpen(false)}
+        cliente={cliente}
+      />
+    </>
   )
 }
