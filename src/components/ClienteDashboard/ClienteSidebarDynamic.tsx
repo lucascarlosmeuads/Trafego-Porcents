@@ -64,14 +64,14 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       icon: Users
     },
     {
-      id: 'site',
-      label: 'Site',
-      icon: LayoutDashboard
-    },
-    {
       id: 'vendas',
       label: '6. Métricas',
       icon: TrendingUp
+    },
+    {
+      id: 'site',
+      label: 'Site',
+      icon: LayoutDashboard
     }
   ]
 
