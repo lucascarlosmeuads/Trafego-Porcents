@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useAuth } from '@/hooks/useAuth'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
 import { supabase } from '@/integrations/supabase/client'
 import { ComissaoResumo } from './ComissaoResumo'
 import { ComissaoConfig } from './ComissaoConfig'
@@ -18,6 +19,7 @@ interface Venda {
 export function ComissaoMelhorada() {
   const { user } = useAuth()
   const { cliente, refreshData } = useClienteData(user?.email || '')
+  const { marcarPasso } = useClienteProgresso(user?.email || '')
   const [vendas, setVendas] = useState<Venda[]>([])
   
   // Estado local para forçar re-render após salvar
@@ -151,7 +153,11 @@ export function ComissaoMelhorada() {
         throw new Error('Os dados não foram salvos corretamente no banco de dados.')
       }
 
-      // 4. Aguardar um pouco e fazer verificação final
+      // 4. Marcar passo 4 (Comissão Confirmada) no progresso
+      console.log('✅ [ComissaoMelhorada] Marcando passo 4 no progresso...')
+      await marcarPasso(4)
+
+      // 5. Aguardar um pouco e fazer verificação final
       console.log('⏳ [ComissaoMelhorada] Aguardando para verificação final...')
       await new Promise(resolve => setTimeout(resolve, 500))
       
@@ -171,11 +177,11 @@ export function ComissaoMelhorada() {
         throw new Error('Os dados não foram persistidos corretamente. Tente novamente.')
       }
 
-      // 5. Sucesso! Atualizar estados locais
+      // 6. Sucesso! Atualizar estados locais
       console.log('🎉 [ComissaoMelhorada] Comissão confirmada com sucesso!')
       setComissaoLocalConfirmada(true)
       
-      // 6. Recarregar dados do cliente
+      // 7. Recarregar dados do cliente
       console.log('🔄 [ComissaoMelhorada] Recarregando dados do cliente...')
       await refreshData()
 

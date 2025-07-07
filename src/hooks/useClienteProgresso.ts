@@ -17,7 +17,7 @@ export function useClienteProgresso(emailCliente: string) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
-  // Buscar progresso existente
+  // Função de carregamento de progresso
   const fetchProgresso = async () => {
     if (!emailCliente) return
 
@@ -47,7 +47,48 @@ export function useClienteProgresso(emailCliente: string) {
     }
   }
 
-  // Alternar status de um passo
+  // Função para marcar um passo como completo (sem toggle)
+  const marcarPasso = async (passoId: number) => {
+    if (!emailCliente || saving) return
+
+    try {
+      setSaving(true)
+      console.log(`✅ [useClienteProgresso] Marcando passo ${passoId} como completo`)
+
+      // Sempre marcar como completado
+      const { error } = await supabase
+        .from('cliente_progresso')
+        .upsert({
+          email_cliente: emailCliente,
+          passo_id: passoId,
+          completado: true,
+          data_completado: new Date().toISOString()
+        }, {
+          onConflict: 'email_cliente,passo_id'
+        })
+
+      if (error) {
+        console.error('❌ [useClienteProgresso] Erro ao marcar passo:', error)
+        return false
+      }
+
+      // Atualizar estado local
+      const newProgresso = new Set(progresso)
+      newProgresso.add(passoId)
+      setProgresso(newProgresso)
+
+      console.log('✅ [useClienteProgresso] Passo marcado com sucesso')
+      return true
+
+    } catch (error) {
+      console.error('💥 [useClienteProgresso] Erro crítico ao marcar passo:', error)
+      return false
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  // Função de alternância de status de um passo (manter para compatibilidade)
   const togglePasso = async (passoId: number) => {
     if (!emailCliente || saving) return
 
@@ -105,6 +146,7 @@ export function useClienteProgresso(emailCliente: string) {
     loading,
     saving,
     togglePasso,
+    marcarPasso, // Nova função para marcar apenas
     refetch: fetchProgresso
   }
 }

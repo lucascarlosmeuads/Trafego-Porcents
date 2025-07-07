@@ -1,7 +1,7 @@
-
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useAuth } from '@/hooks/useAuth'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
 import { toast } from '@/hooks/use-toast'
 
 interface ClienteMetaAdsConfig {
@@ -31,6 +31,7 @@ interface ConnectionSteps {
 
 export function useClienteMetaAdsFixed(clienteId: string) {
   const { user } = useAuth()
+  const { marcarPasso } = useClienteProgresso(user?.email || '')
   
   const [config, setConfig] = useState<ClienteMetaAdsConfig>({
     appId: '',
@@ -265,6 +266,10 @@ export function useClienteMetaAdsFixed(clienteId: string) {
       setIsConfigured(true)
       setLastError('')
       
+      // MARCAR PASSO 6 (Métricas/Credenciais Meta Ads) quando salvamento é bem-sucedido
+      console.log('✅ [useClienteMetaAdsFixed] Configuração salva - marcando passo 6')
+      await marcarPasso(6)
+      
       console.log('✅ [useClienteMetaAdsFixed] Configuração salva com sucesso')
       toast({
         title: "Configuração salva",
@@ -363,6 +368,11 @@ export function useClienteMetaAdsFixed(clienteId: string) {
         }
       } else {
         setConnectionSteps(data.connectionSteps)
+        
+        // MARCAR PASSO 6 quando teste de conexão é bem-sucedido
+        console.log('✅ [useClienteMetaAdsFixed] Teste de conexão OK - marcando passo 6')
+        await marcarPasso(6)
+        
         toast({
           title: "Conexão bem-sucedida!",
           description: data.message,

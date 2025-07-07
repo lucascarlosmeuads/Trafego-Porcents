@@ -14,8 +14,26 @@ interface ClienteHomeDashboardProps {
 
 export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps) {
   const { user } = useAuth()
-  const { cliente, briefing, arquivos, loading } = useClienteData(user?.email || '')
-  const { progresso } = useClienteProgresso(user?.email || '')
+  const { cliente, briefing, arquivos, loading, refreshData } = useClienteData(user?.email || '')
+  const { progresso, loading: progressoLoading, refetch: refetchProgresso } = useClienteProgresso(user?.email || '')
+
+  console.log('🏠 [ClienteHomeDashboard] Estado atual:', {
+    clienteEmail: user?.email,
+    progressoSteps: Array.from(progresso),
+    briefingCompleto: briefing?.formulario_completo,
+    arquivosCount: arquivos?.length || 0,
+    comissaoConfirmada: cliente?.comissao_confirmada,
+    statusCampanha: cliente?.status_campanha
+  })
+
+  // Função para recarregar tudo
+  const handleRefreshAll = async () => {
+    console.log('🔄 [ClienteHomeDashboard] Recarregando dados completos...')
+    await Promise.all([
+      refreshData(),
+      refetchProgresso()
+    ])
+  }
 
   // Calcular progresso das 6 etapas
   const calculateProgress = () => {
@@ -48,7 +66,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     })
     if (materiaisEnviados) completedSteps++
 
-    // Etapa 3: Configuração BM (50%)
+    // Etapa 3: Configuração BM (50%) - AGORA CONECTADO AO PROGRESSO
     const bmConfigurado = progresso.has(3) || cliente?.numero_bm
     steps.push({
       id: 3,
@@ -61,7 +79,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     })
     if (bmConfigurado) completedSteps++
 
-    // Etapa 4: Comissão Definida (66.7%)
+    // Etapa 4: Comissão Definida (66.7%) - AGORA CONECTADO AO PROGRESSO
     const comissaoDefinida = cliente?.comissao_confirmada || progresso.has(4)
     steps.push({
       id: 4,
@@ -77,7 +95,8 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     // Etapa 5: Campanha Ativa (83.3%)
     const campanhaAtiva = cliente?.status_campanha?.includes('Otimização') || 
                          cliente?.status_campanha?.includes('Saque Pendente') ||
-                         cliente?.link_campanha
+                         cliente?.link_campanha ||
+                         progresso.has(5)
     steps.push({
       id: 5,
       title: 'Campanha no Ar',
@@ -89,8 +108,8 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     })
     if (campanhaAtiva) completedSteps++
 
-    // Etapa 6: Métricas Disponíveis (100%)
-    const metricasDisponiveis = campanhaAtiva && progresso.has(6)
+    // Etapa 6: Métricas Disponíveis (100%) - AGORA CONECTADO AO PROGRESSO
+    const metricasDisponiveis = progresso.has(6) && campanhaAtiva
     steps.push({
       id: 6,
       title: 'Métricas Disponíveis',
@@ -102,6 +121,13 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     })
     if (metricasDisponiveis) completedSteps++
 
+    console.log('📊 [ClienteHomeDashboard] Progresso calculado:', {
+      completedSteps,
+      totalSteps: 6,
+      percentage: Math.round((completedSteps / 6) * 100),
+      steps: steps.map(s => ({ id: s.id, completed: s.completed }))
+    })
+
     return {
       steps,
       completedSteps,
@@ -110,7 +136,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     }
   }
 
-  if (loading) {
+  if (loading || progressoLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

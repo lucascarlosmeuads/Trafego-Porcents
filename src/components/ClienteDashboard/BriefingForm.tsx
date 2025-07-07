@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
 import { TrafficManagementForm } from './TrafficManagementForm'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -15,10 +16,38 @@ interface BriefingFormProps {
 export function BriefingForm({ onBriefingUpdated, onBack }: BriefingFormProps) {
   const { user } = useAuth()
   const { briefing, loading } = useClienteData(user?.email || '')
+  const { marcarPasso, refetch: refetchProgresso } = useClienteProgresso(user?.email || '')
 
   console.log('🔍 [BriefingForm] === DEBUGGING BRIEFING FORM ===')
   console.log('📧 [BriefingForm] Email do cliente:', user?.email)
   console.log('📋 [BriefingForm] Briefing recebido:', briefing)
+
+  // Função melhorada para quando briefing é atualizado
+  const handleBriefingUpdated = async () => {
+    console.log('📝 [BriefingForm] Briefing foi atualizado - verificando se deve marcar passo 1')
+    
+    // Recarregar dados primeiro
+    onBriefingUpdated()
+    
+    // Aguardar um pouco para dados carregarem e então verificar se formulário está completo
+    setTimeout(async () => {
+      await refetchProgresso()
+      
+      // Se o briefing estiver marcado como completo, marcar passo 1
+      const { data: briefingAtualizado } = await import('@/lib/supabase').then(async ({ supabase }) => {
+        return await supabase
+          .from('briefings_cliente')
+          .select('formulario_completo')
+          .eq('email_cliente', user?.email || '')
+          .maybeSingle()
+      })
+      
+      if (briefingAtualizado?.formulario_completo) {
+        console.log('✅ [BriefingForm] Formulário completo - marcando passo 1')
+        await marcarPasso(1)
+      }
+    }, 1000)
+  }
 
   if (loading) {
     return (
@@ -35,7 +64,7 @@ export function BriefingForm({ onBriefingUpdated, onBack }: BriefingFormProps) {
     <TrafficManagementForm
       briefing={briefing}
       emailCliente={user?.email || ''}
-      onBriefingUpdated={onBriefingUpdated}
+      onBriefingUpdated={handleBriefingUpdated}
       onBack={onBack}
     />
   )

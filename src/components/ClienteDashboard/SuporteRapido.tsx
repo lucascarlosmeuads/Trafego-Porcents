@@ -2,6 +2,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, MessageCircle, Clock, Settings, Users, Target, AlertTriangle, Key } from 'lucide-react'
+import { useClienteProgresso } from '@/hooks/useClienteProgresso'
+import { useAuth } from '@/hooks/useAuth'
 
 interface SuporteRapidoProps {
   onBack: () => void
@@ -9,7 +11,15 @@ interface SuporteRapidoProps {
 }
 
 export function SuporteRapido({ onBack, onTabChange }: SuporteRapidoProps) {
-  const handleWhatsAppContact = () => {
+  const { user } = useAuth()
+  const { marcarPasso } = useClienteProgresso(user?.email || '')
+
+  const handleWhatsAppContact = async () => {
+    console.log('📞 [SuporteRapido] Cliente clicou no WhatsApp - marcando passo 3')
+    
+    // Marcar passo 3 (BM Configurado) quando cliente acessa suporte
+    await marcarPasso(3)
+    
     const message = encodeURIComponent(`Olá! Preciso de ajuda com a configuração da minha campanha. Gostaria de conversar sobre:
 
 • Configuração do Business Manager
@@ -22,7 +32,12 @@ Aguardo orientação para prosseguir.`)
     window.open(whatsappUrl, '_blank')
   }
 
-  const handleLiberarBM = () => {
+  const handleLiberarBM = async () => {
+    console.log('🔑 [SuporteRapido] Cliente clicou em Liberar BM - marcando passo 3')
+    
+    // Marcar passo 3 (BM Configurado) quando cliente acessa tutorial BM
+    await marcarPasso(3)
+    
     if (onTabChange) {
       onTabChange('steps')
     }
@@ -109,7 +124,6 @@ Aguardo orientação para prosseguir.`)
             </div>
           </div>
 
-          {/* Como Funciona */}
           <div className="bg-gradient-to-r from-green-900/20 to-blue-900/20 border border-green-700/30 rounded-lg p-6">
             <h3 className="text-white font-semibold mb-3 flex items-center gap-2">
               <Clock className="h-5 w-5 text-green-400" />
