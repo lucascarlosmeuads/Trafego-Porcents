@@ -156,7 +156,7 @@ export function useClienteMetaAdsFixed(clienteId: string) {
     loadConfig()
   }, [loadConfig])
 
-  // Função para salvar configuração
+  // Função para salvar configuração - CORRIGIDA
   const saveConfig = async (newConfig: ClienteMetaAdsConfig): Promise<{ success: boolean; error?: string }> => {
     if (!user?.email || !clienteId) {
       return { success: false, error: 'Usuário não autenticado ou cliente não identificado' }
@@ -168,27 +168,97 @@ export function useClienteMetaAdsFixed(clienteId: string) {
     try {
       const clienteIdNumber = parseInt(clienteId)
       
-      const { error } = await supabase
+      // PRIMEIRO: Verificar se já existe configuração para este cliente
+      const { data: existingConfig, error: checkError } = await supabase
         .from('meta_ads_configs')
-        .upsert({
-          cliente_id: clienteIdNumber,
-          email_usuario: user.email,
-          api_id: newConfig.appId,
-          app_secret: newConfig.appSecret,
-          access_token: newConfig.accessToken,
-          ad_account_id: newConfig.adAccountId,
-          updated_at: new Date().toISOString()
-        })
+        .select('id')
+        .eq('cliente_id', clienteIdNumber)
+        .eq('email_usuario', user.email)
+        .maybeSingle()
 
-      if (error) {
-        console.error('❌ [useClienteMetaAdsFixed] Erro ao salvar:', error)
-        setLastError(error.message)
-        toast({
-          title: "Erro ao salvar",
-          description: error.message,
-          variant: "destructive",
-        })
-        return { success: false, error: error.message }
+      console.log('🔍 [useClienteMetaAdsFixed] Verificando config existente:', { existingConfig, checkError })
+
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ [useClienteMetaAdsFixed] Erro ao verificar config existente:', checkError)
+        throw checkError
+      }
+
+      let result
+
+      if (existingConfig) {
+        // ATUALIZAR configuração existente
+        console.log('🔄 [useClienteMetaAdsFixed] Atualizando configuração existente ID:', existingConfig.id)
+        
+        result = await supabase
+          .from('meta_ads_configs')
+          .update({
+            api_id: newConfig.appId,
+            app_secret: newConfig.appSecret,
+            access_token: newConfig.accessToken,
+            ad_account_id: newConfig.adAccountId,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', existingConfig.id)
+
+      } else {
+        // INSERIR nova configuração
+        console.log('➕ [useClienteMetaAdsFixed] Inserindo nova configuração')
+        
+        result = await supabase
+          .from('meta_ads_configs')
+          .insert({
+            cliente_id: clienteIdNumber,
+            email_usuario: user.email,
+            api_id: newConfig.appId,
+            app_secret: newConfig.appSecret,
+            access_token: newConfig.accessToken,
+            ad_account_id: newConfig.adAccountId,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString()
+          })
+      }
+
+      if (result.error) {
+        console.error('❌ [useClienteMetaAdsFixed] Erro ao salvar:', result.error)
+        
+        // Tratamento específico para erro de duplicate key
+        if (result.error.message.includes('duplicate key value violates unique constraint')) {
+          setLastError('Configuração já existe para este cliente. Tentando atualizar...')
+          
+          // Fallback: Tentar atualizar diretamente usando a constraint
+          const { error: updateError } = await supabase
+            .from('meta_ads_configs')
+            .update({
+              api_id: newConfig.appId,
+              app_secret: newConfig.appSecret,
+              access_token: newConfig.accessToken,
+              ad_account_id: newConfig.adAccountId,
+              updated_at: new Date().toISOString()
+            })
+            .eq('cliente_id', clienteIdNumber)
+            .eq('email_usuario', user.email)
+
+          if (updateError) {
+            console.error('❌ [useClienteMetaAdsFixed] Erro no fallback update:', updateError)
+            setLastError(updateError.message)
+            toast({
+              title: "Erro ao atualizar",
+              description: updateError.message,
+              variant: "destructive",
+            })
+            return { success: false, error: updateError.message }
+          } else {
+            console.log('✅ [useClienteMetaAdsFixed] Fallback update bem-sucedido')
+          }
+        } else {
+          setLastError(result.error.message)
+          toast({
+            title: "Erro ao salvar",
+            description: result.error.message,
+            variant: "destructive",
+          })
+          return { success: false, error: result.error.message }
+        }
       }
 
       setConfig(newConfig)
