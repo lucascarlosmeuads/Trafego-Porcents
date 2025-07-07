@@ -287,22 +287,55 @@ export function useClienteMetaAdsFixed(clienteId: string) {
     }
   }
 
-  // Função para testar conexão
+  // Função para testar conexão - CORRIGIDA PARA AUTORIZAÇÃO
   const testConnection = async (): Promise<{ success: boolean; message: string; connectionSteps?: ConnectionSteps }> => {
     console.log('🔗 [useClienteMetaAdsFixed] === INICIANDO TESTE DE CONEXÃO ===')
     setLastError('')
     setConnectionSteps(null)
     
     try {
+      // CORREÇÃO CRÍTICA: Obter sessão atual para autorização
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session) {
+        console.error('❌ [useClienteMetaAdsFixed] Erro de sessão:', sessionError)
+        const errorMsg = 'Usuário não autenticado. Faça login novamente.'
+        setLastError(errorMsg)
+        toast({
+          title: "Erro de autenticação",
+          description: errorMsg,
+          variant: "destructive",
+        })
+        return { success: false, message: errorMsg }
+      }
+
+      console.log('🔑 [useClienteMetaAdsFixed] Sessão válida, fazendo chamada autorizada...')
+
       const { data, error } = await supabase.functions.invoke('meta-ads-api', {
         body: {
           action: 'test_connection',
           config: config
+        },
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
         }
       })
 
       if (error) {
         console.error('❌ [useClienteMetaAdsFixed] Erro na edge function:', error)
+        
+        // Tratamento específico para erros de autorização
+        if (error.message?.includes('401') || error.message?.includes('authorization')) {
+          const errorMsg = 'Erro de autorização. Faça login novamente.'
+          setLastError(errorMsg)
+          toast({
+            title: "Erro de autorização",
+            description: errorMsg,
+            variant: "destructive",
+          })
+          return { success: false, message: errorMsg }
+        }
+        
         const errorMsg = 'Erro na conexão com o servidor'
         setLastError(errorMsg)
         toast({
@@ -355,7 +388,7 @@ export function useClienteMetaAdsFixed(clienteId: string) {
     }
   }
 
-  // Função de carregamento de métricas
+  // Função de carregamento de métricas - CORRIGIDA PARA AUTORIZAÇÃO
   const loadMetricsWithPeriod = async (period: string, startDate?: string, endDate?: string) => {
     console.log('📊 [META ADS METRICS] === INÍCIO CARREGAMENTO MÉTRICAS ===')
     console.log('📊 [META ADS METRICS] Parâmetros:', { period, startDate, endDate, isConfigured })
@@ -366,6 +399,15 @@ export function useClienteMetaAdsFixed(clienteId: string) {
     }
 
     try {
+      // CORREÇÃO CRÍTICA: Obter sessão atual para autorização
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+      
+      if (sessionError || !session) {
+        console.error('❌ [META ADS METRICS] Erro de sessão:', sessionError)
+        setLastError('Usuário não autenticado. Faça login novamente.')
+        return { success: false, message: 'Usuário não autenticado' }
+      }
+
       const payload = {
         action: 'get_insights',
         config: config,
@@ -380,7 +422,10 @@ export function useClienteMetaAdsFixed(clienteId: string) {
       })
 
       const { data: insightResult, error } = await supabase.functions.invoke('meta-ads-api', {
-        body: payload
+        body: payload,
+        headers: {
+          Authorization: `Bearer ${session.access_token}`
+        }
       })
 
       console.log('📥 [META ADS METRICS] Resposta da Edge Function:', { 
@@ -392,6 +437,13 @@ export function useClienteMetaAdsFixed(clienteId: string) {
 
       if (error) {
         console.error('❌ [META ADS METRICS] Erro na edge function:', error)
+        
+        // Tratamento específico para erros de autorização
+        if (error.message?.includes('401') || error.message?.includes('authorization')) {
+          setLastError('Erro de autorização. Faça login novamente.')
+          return { success: false, message: 'Erro de autorização' }
+        }
+        
         setLastError('Erro na conexão com o servidor Meta Ads')
         return { success: false, message: 'Erro na conexão com o servidor' }
       }
