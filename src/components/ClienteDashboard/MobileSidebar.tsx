@@ -75,12 +75,6 @@ export function MobileSidebar({ activeTab, onTabChange, clienteInfo }: MobileSid
       step: 5
     },
     {
-      id: 'site',
-      label: 'Site - Não Obrigatório',
-      icon: Globe,
-      badge: clienteInfo?.site_descricao_personalizada ? 'described' : 'optional'
-    },
-    {
       id: 'sac',
       label: 'SAC - Atendimento Urgente',
       icon: Headphones,

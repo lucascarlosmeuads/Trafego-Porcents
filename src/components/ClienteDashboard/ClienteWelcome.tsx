@@ -10,7 +10,7 @@ import { MensagemInstitucional } from './MensagemInstitucional'
 import { ClienteWelcomeHeader } from './ClienteWelcomeHeader'
 import { ClienteProfileSection } from './ClienteProfileSection'
 import { ClienteQuickActions } from './ClienteQuickActions'
-import { SiteRequestPrompt } from './SiteRequestPrompt'
+
 import { ClienteMetaAdsWidget } from './ClienteMetaAdsWidget'
 
 interface ClienteWelcomeProps {
@@ -49,9 +49,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         </div>
         
         <MobileOnboardingSteps onTabChange={onTabChange} />
-        
-        {/* Prompt de Site no final */}
-        <SiteRequestPrompt />
       </div>
     )
   }
@@ -90,8 +87,6 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
       {/* Grid de Ações Rápidas */}
       <ClienteQuickActions onTabChange={onTabChange} />
 
-      {/* Prompt de Site no final */}
-      <SiteRequestPrompt />
     </div>
   )
 }

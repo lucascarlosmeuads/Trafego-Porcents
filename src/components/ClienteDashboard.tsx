@@ -76,8 +76,6 @@ function ClienteDashboardContent() {
         )
       case 'comissao':
         return <ComissaoMelhorada />
-      case 'site':
-        return <ClienteSiteDescricao />
       case 'vendas':
         return <MetricasMetaAds />
       case 'steps':

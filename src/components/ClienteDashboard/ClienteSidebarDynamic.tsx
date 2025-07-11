@@ -63,11 +63,6 @@ export function ClienteSidebarDynamic({ activeTab, onTabChange, clienteInfo }: C
       icon: TrendingUp
     },
     {
-      id: 'site',
-      label: 'Site - Não Obrigatório',
-      icon: LayoutDashboard
-    },
-    {
       id: 'sac',
       label: 'SAC - Atendimento Urgente',
       icon: Headphones
