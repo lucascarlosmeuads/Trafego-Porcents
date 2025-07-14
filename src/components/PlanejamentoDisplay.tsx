@@ -20,8 +20,29 @@ export const PlanejamentoDisplay = ({
   isRegenerating = false
 }: PlanejamentoDisplayProps) => {
 
+  const cleanHtmlForPdf = (html: string): string => {
+    return html
+      // Remover todas as classes Tailwind CSS problemáticas
+      .replace(/class="[^"]*"/g, '')
+      // Forçar cor preta para todos os elementos de texto
+      .replace(/<h[1-6]([^>]*)>/g, '<h$1 style="color: #000000 !important; font-weight: bold; margin: 10px 0;">$1>')
+      .replace(/<p([^>]*)>/g, '<p$1 style="color: #000000 !important; margin: 8px 0; line-height: 1.5;">$1>')
+      .replace(/<li([^>]*)>/g, '<li$1 style="color: #000000 !important; margin: 4px 0;">$1>')
+      .replace(/<strong([^>]*)>/g, '<strong$1 style="color: #000000 !important; font-weight: bold;">$1>')
+      .replace(/<span([^>]*)>/g, '<span$1 style="color: #000000 !important;">$1>')
+      .replace(/<div([^>]*)>/g, '<div$1 style="color: #000000 !important;">$1>')
+      // Remover estilos inline problemáticos
+      .replace(/color:\s*hsl\([^)]*\)/g, 'color: #000000')
+      .replace(/color:\s*white/g, 'color: #000000')
+      .replace(/color:\s*var\([^)]*\)/g, 'color: #000000')
+      // Garantir que backgrounds sejam brancos
+      .replace(/background-color:\s*[^;]+;?/g, 'background-color: #ffffff;');
+  };
+
   const handleDownload = async () => {
     try {
+      console.log('Iniciando geração do PDF...');
+      
       // Encontrar o elemento com o conteúdo do planejamento
       const element = document.querySelector('.prose') as HTMLElement;
       if (!element) {
@@ -29,80 +50,157 @@ export const PlanejamentoDisplay = ({
         return;
       }
 
-      // Criar uma cópia temporária para o PDF
+      console.log('Elemento encontrado, preparando HTML para PDF...');
+
+      // Criar uma cópia temporária otimizada para o PDF
       const tempDiv = document.createElement('div');
-      tempDiv.style.position = 'absolute';
-      tempDiv.style.top = '-9999px';
-      tempDiv.style.left = '-9999px';
-      tempDiv.style.width = '800px';
-      tempDiv.style.padding = '40px';
-      tempDiv.style.backgroundColor = 'white';
-      tempDiv.style.color = 'black';
-      tempDiv.style.fontFamily = 'Arial, sans-serif';
-      tempDiv.style.fontSize = '14px';
-      tempDiv.style.lineHeight = '1.6';
+      tempDiv.style.cssText = `
+        position: absolute;
+        top: -9999px;
+        left: -9999px;
+        width: 800px;
+        padding: 40px;
+        background-color: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'Arial', 'Helvetica', sans-serif;
+        font-size: 14px;
+        line-height: 1.6;
+        overflow: visible;
+      `;
       
-      // Adicionar logo e cabeçalho da Tráfego Porcents
+      // Limpar e preparar o HTML
+      const cleanedHtml = cleanHtmlForPdf(element.innerHTML);
+      
+      // Estrutura completa do PDF com estilos inline forçados
       tempDiv.innerHTML = `
-        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066cc; padding-bottom: 20px;">
-          <h1 style="color: #0066cc; font-size: 24px; margin: 0;">TRÁFEGO PORCENTS</h1>
-          <p style="color: #666; margin: 5px 0;">Planejamento Estratégico</p>
-        </div>
-        <div style="color: black;">
-          ${element.innerHTML.replace(/color:\s*hsl\([^)]*\)/g, 'color: black').replace(/color:\s*white/g, 'color: black').replace(/text-white/g, 'text-black')}
-        </div>
-        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; color: #666; font-size: 12px;">
-          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
-          <p>Tráfego Porcents - Estratégias de Performance</p>
+        <div style="background-color: #ffffff; color: #000000; padding: 20px;">
+          <!-- Cabeçalho -->
+          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066cc; padding-bottom: 20px;">
+            <h1 style="color: #0066cc !important; font-size: 28px; margin: 0; font-weight: bold;">TRÁFEGO PORCENTS</h1>
+            <p style="color: #333333 !important; margin: 8px 0; font-size: 16px;">Planejamento Estratégico</p>
+          </div>
+          
+          <!-- Conteúdo Principal -->
+          <div style="color: #000000 !important; background-color: #ffffff;">
+            ${cleanedHtml}
+          </div>
+          
+          <!-- Rodapé -->
+          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #cccccc;">
+            <p style="color: #666666 !important; font-size: 12px; margin: 5px 0;">
+              Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+            </p>
+            <p style="color: #666666 !important; font-size: 12px; margin: 5px 0;">
+              Tráfego Porcents - Estratégias de Performance Digital
+            </p>
+          </div>
         </div>
       `;
 
+      console.log('HTML preparado:', tempDiv.innerHTML.substring(0, 500) + '...');
       document.body.appendChild(tempDiv);
 
-      // Converter para canvas e depois para PDF
+      // Aguardar um pouco para garantir que o DOM seja renderizado
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      console.log('Convertendo para canvas...');
+      
+      // Configurações otimizadas para o html2canvas
       const canvas = await html2canvas(tempDiv, {
         scale: 2,
         useCORS: true,
-        backgroundColor: '#ffffff'
+        allowTaint: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+        width: tempDiv.scrollWidth,
+        height: tempDiv.scrollHeight,
+        onclone: (clonedDoc) => {
+          // Aplicar estilos adicionais no documento clonado
+          const clonedElement = clonedDoc.querySelector('div') as HTMLElement;
+          if (clonedElement) {
+            clonedElement.style.color = '#000000';
+            clonedElement.style.backgroundColor = '#ffffff';
+            
+            // Forçar cor preta em todos os elementos de texto
+            const allElements = clonedElement.querySelectorAll('*');
+            allElements.forEach((el: any) => {
+              if (el.tagName && ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'SPAN', 'STRONG', 'DIV'].includes(el.tagName)) {
+                el.style.color = '#000000';
+                el.style.backgroundColor = 'transparent';
+              }
+            });
+          }
+        }
       });
 
       // Remover elemento temporário
       document.body.removeChild(tempDiv);
+      console.log('Canvas criado com sucesso');
 
-      // Criar PDF
+      // Configurar e criar o PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
-      const imgWidth = 210;
-      const pageHeight = 295;
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const margin = 10;
+      const imgWidth = pageWidth - (margin * 2);
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
       let heightLeft = imgHeight;
+      let position = margin;
 
-      let position = 0;
+      console.log('Gerando PDF...');
 
       // Adicionar primeira página
-      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
+      pdf.addImage(
+        canvas.toDataURL('image/png', 1.0), 
+        'PNG', 
+        margin, 
+        position, 
+        imgWidth, 
+        Math.min(imgHeight, pageHeight - margin)
+      );
+      
+      heightLeft -= (pageHeight - margin);
 
       // Adicionar páginas extras se necessário
-      while (heightLeft >= 0) {
-        position = heightLeft - imgHeight;
+      while (heightLeft > 0) {
         pdf.addPage();
-        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
+        position = -(imgHeight - heightLeft) + margin;
+        pdf.addImage(
+          canvas.toDataURL('image/png', 1.0), 
+          'PNG', 
+          margin, 
+          position, 
+          imgWidth, 
+          Math.min(heightLeft + margin, pageHeight - margin)
+        );
+        heightLeft -= (pageHeight - margin);
       }
 
       // Download do PDF
-      pdf.save('planejamento-estrategico-trafego-porcents.pdf');
+      const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+      console.log('PDF gerado e baixado com sucesso!');
       
     } catch (error) {
-      console.error('Erro ao gerar PDF:', error);
-      // Fallback para download em markdown
-      const element = document.createElement("a");
-      const file = new Blob([planejamento], { type: 'text/markdown' });
-      element.href = URL.createObjectURL(file);
-      element.download = "planejamento-estrategico.md";
-      document.body.appendChild(element);
-      element.click();
-      document.body.removeChild(element);
+      console.error('Erro detalhado ao gerar PDF:', error);
+      
+      // Fallback melhorado para download em markdown
+      try {
+        const element = document.createElement("a");
+        const timestamp = new Date().toISOString().split('T')[0];
+        const content = `# TRÁFEGO PORCENTS - Planejamento Estratégico\n\nGerado em: ${new Date().toLocaleDateString('pt-BR')}\n\n---\n\n${planejamento}`;
+        const file = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+        element.href = URL.createObjectURL(file);
+        element.download = `planejamento-estrategico-${timestamp}.md`;
+        document.body.appendChild(element);
+        element.click();
+        document.body.removeChild(element);
+        console.log('Fallback: arquivo baixado como Markdown');
+      } catch (fallbackError) {
+        console.error('Erro no fallback:', fallbackError);
+        alert('Erro ao gerar o documento. Por favor, tente novamente.');
+      }
     }
   };
 
