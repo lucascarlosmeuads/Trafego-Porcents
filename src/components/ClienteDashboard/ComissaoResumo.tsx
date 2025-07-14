@@ -118,11 +118,11 @@ export function ComissaoResumo({ porcentagemAtual, totalVendas, comissaoDevida, 
                       value={novoValor}
                       onChange={(e) => setNovoValor(e.target.value)}
                       onKeyDown={handleKeyPress}
-                      className="w-20 h-8 text-sm"
+                      className="w-24 h-8 text-sm border-green-300 focus:border-green-500"
                       autoFocus
                       disabled={salvando}
                     />
-                    <span className="text-green-800">%</span>
+                    <span className="text-green-800 font-medium">%</span>
                   </div>
                 ) : (
                   <span className="font-medium text-green-800">
@@ -131,49 +131,52 @@ export function ComissaoResumo({ porcentagemAtual, totalVendas, comissaoDevida, 
                 )}
               </div>
               
-              <div className="flex items-center gap-1">
-                {editando ? (
-                  <>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleSalvar}
-                      disabled={salvando}
-                      className="h-8 w-8 p-0"
-                    >
-                      {salvando ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Check className="h-4 w-4 text-green-600" />
-                      )}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={handleCancelar}
-                      disabled={salvando}
-                      className="h-8 w-8 p-0"
-                    >
-                      <X className="h-4 w-4 text-red-600" />
-                    </Button>
-                  </>
-                ) : (
+              {editando ? (
+                <div className="flex items-center gap-1">
                   <Button
                     size="sm"
-                    variant="ghost"
-                    onClick={handleIniciarEdicao}
-                    className="h-8 w-8 p-0 opacity-70 hover:opacity-100"
+                    variant="outline"
+                    onClick={handleSalvar}
+                    disabled={salvando}
+                    className="h-8 px-3 bg-green-100 border-green-300 hover:bg-green-200 text-green-700"
                   >
-                    <Edit3 className="h-4 w-4 text-green-600" />
+                    {salvando ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Check className="h-4 w-4 mr-1" />
+                        Salvar
+                      </>
+                    )}
                   </Button>
-                )}
-              </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleCancelar}
+                    disabled={salvando}
+                    className="h-8 px-3 bg-red-100 border-red-300 hover:bg-red-200 text-red-700"
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Cancelar
+                  </Button>
+                </div>
+              ) : (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleIniciarEdicao}
+                  className="h-8 px-3 bg-blue-100 border-blue-300 hover:bg-blue-200 text-blue-700 font-medium"
+                >
+                  <Edit3 className="h-4 w-4 mr-1" />
+                  Editar %
+                </Button>
+              )}
             </div>
             <p className="text-sm text-green-700">
               ✅ Você confirmou {porcentagemAtual}% de comissão sobre cada venda.
               {!editando && (
                 <span className="text-xs text-green-600 block mt-1">
-                  Clique no ícone de edição para alterar a porcentagem
+                  Use o botão "Editar %" para alterar sua porcentagem de comissão
                 </span>
               )}
             </p>
