@@ -49,7 +49,7 @@ export const PlanejamentoDisplay = ({
           <p style="color: #666; margin: 5px 0;">Planejamento Estratégico</p>
         </div>
         <div style="color: black;">
-          ${element.innerHTML}
+          ${element.innerHTML.replace(/color:\s*hsl\([^)]*\)/g, 'color: black').replace(/color:\s*white/g, 'color: black').replace(/text-white/g, 'text-black')}
         </div>
         <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; color: #666; font-size: 12px;">
           <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
