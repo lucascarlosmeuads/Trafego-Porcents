@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, TrendingUp, CircleDollarSign, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
+import { MetricsDateFilter } from '@/components/GestorDashboard/MetricsDateFilter'
+import { useMetricsDateFilter } from '@/hooks/useMetricsDateFilter'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
@@ -16,19 +18,24 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
   selectedManager
 }: AdminDashboardMetricsProps) {
   
+  const { currentDateRange, handleDateRangeChange, getMetricsData } = useMetricsDateFilter()
+  
   // Memoize expensive metric calculations
   const metrics = useMemo(() => {
     console.log('📊 [OptimizedAdminDashboardMetrics] Calculando métricas para', clientes.length, 'clientes')
     
-    const totalClientes = clientes.length
+    // Filtrar clientes baseado no período selecionado
+    const { clientesFiltrados } = getMetricsData(clientes)
+    
+    const totalClientes = clientesFiltrados.length
 
     // Campanhas no ar (status "Campanha no Ar" ou "Otimização")
-    const clientesNoAr = clientes.filter(cliente => 
+    const clientesNoAr = clientesFiltrados.filter(cliente => 
       cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
     )
 
     // Total pendente - APENAS clientes com status "Pendente" (vermelhinhos)
-    const clientesPendentes = clientes.filter(cliente => 
+    const clientesPendentes = clientesFiltrados.filter(cliente => 
       cliente.comissao === 'Pendente'
     )
     const totalPendente = clientesPendentes.reduce((total, cliente) => 
@@ -36,7 +43,7 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
     )
 
     // Total já recebido - clientes com comissão paga
-    const clientesPagos = clientes.filter(cliente => 
+    const clientesPagos = clientesFiltrados.filter(cliente => 
       cliente.comissao === 'Pago'
     )
     const totalRecebido = clientesPagos.reduce((total, cliente) => 
@@ -44,12 +51,12 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
     )
 
     // Clientes com problemas
-    const clientesProblemas = clientes.filter(cliente => 
+    const clientesProblemas = clientesFiltrados.filter(cliente => 
       cliente.status_campanha === 'Problema'
     )
 
     // Sites pendentes
-    const sitesPendentes = clientes.filter(cliente => 
+    const sitesPendentes = clientesFiltrados.filter(cliente => 
       cliente.site_status === 'pendente' || cliente.site_status === 'aguardando_link'
     )
 
@@ -74,7 +81,7 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
       clientesProblemas,
       sitesPendentes
     }
-  }, [clientes])
+  }, [clientes, currentDateRange, getMetricsData])
 
   // Memoize the header text to prevent unnecessary recalculations
   const headerText = useMemo(() => {
@@ -92,6 +99,12 @@ export const OptimizedAdminDashboardMetrics = memo(function OptimizedAdminDashbo
           Dados atuais do sistema
         </span>
       </div>
+      
+      {/* Filtro de Data para Métricas */}
+      <MetricsDateFilter 
+        onDateRangeChange={handleDateRangeChange}
+        currentRange={currentDateRange}
+      />
       
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
         <Card className="bg-card border-border">

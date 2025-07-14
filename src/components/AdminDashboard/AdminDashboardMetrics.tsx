@@ -7,6 +7,9 @@ import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase'
+import { MetricsDateFilter } from '@/components/GestorDashboard/MetricsDateFilter'
+import { useMetricsDateFilter } from '@/hooks/useMetricsDateFilter'
+import type { DateRange } from '@/components/GestorDashboard/MetricsDateFilter'
 
 interface AdminDashboardMetricsProps {
   clientes: Cliente[]
@@ -17,6 +20,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   const [refreshing, setRefreshing] = useState(false)
   const [totalInDatabase, setTotalInDatabase] = useState<number | null>(null)
   const { toast } = useToast()
+  const { currentDateRange, handleDateRangeChange, getMetricsData } = useMetricsDateFilter()
 
   // Verificar total real no banco de dados
   const checkDatabaseTotal = async () => {
@@ -64,29 +68,28 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
   }
 
   const metrics = useMemo(() => {
-    const totalClientes = clientes.length
-    const clientesComVenda = clientes.filter(c => c.data_venda).length
-    const clientesAtivos = clientes.filter(c => 
+    // Filtrar clientes baseado no período selecionado
+    const { clientesFiltrados } = getMetricsData(clientes)
+    
+    const totalClientes = clientesFiltrados.length
+    const clientesComVenda = clientesFiltrados.filter(c => c.data_venda).length
+    const clientesAtivos = clientesFiltrados.filter(c => 
       c.status_campanha && !['Concluído', 'Cancelado'].includes(c.status_campanha)
     ).length
     
-    const totalComissoes = clientes.reduce((sum, cliente) => {
+    const totalComissoes = clientesFiltrados.reduce((sum, cliente) => {
       return sum + (Number(cliente.valor_comissao) || 60)
     }, 0)
 
-    const comissoesPagas = clientes
+    const comissoesPagas = clientesFiltrados
       .filter(c => c.comissao_paga || c.comissao === 'Pago')
       .reduce((sum, cliente) => sum + (Number(cliente.valor_comissao) || 60), 0)
 
-    const clientesHoje = clientes.filter(c => {
-      if (!c.created_at) return false
-      const hoje = new Date().toDateString()
-      const clienteData = new Date(c.created_at).toDateString()
-      return hoje === clienteData
-    }).length
+    // Clientes no período (pode ser hoje, ontem, etc, baseado no filtro)
+    const clientesNoPeriodo = clientesFiltrados.length
 
-    // Estatísticas por gestor
-    const gestorStats = clientes.reduce((acc, cliente) => {
+    // Estatísticas por gestor (usando clientes filtrados)
+    const gestorStats = clientesFiltrados.reduce((acc, cliente) => {
       const gestor = cliente.email_gestor || 'Sem Gestor'
       if (!acc[gestor]) {
         acc[gestor] = { total: 0, ativos: 0, comissoes: 0 }
@@ -105,10 +108,10 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
       clientesAtivos,
       totalComissoes,
       comissoesPagas,
-      clientesHoje,
+      clientesNoPeriodo,
       gestorStats
     }
-  }, [clientes])
+  }, [clientes, currentDateRange, getMetricsData])
 
   const isDiscrepancy = totalInDatabase && totalInDatabase !== clientes.length
   const isFullyLoaded = totalInDatabase && totalInDatabase === clientes.length
@@ -135,6 +138,12 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
           Verificar Total
         </Button>
       </div>
+
+      {/* Filtro de Data para Métricas */}
+      <MetricsDateFilter 
+        onDateRangeChange={handleDateRangeChange}
+        currentRange={currentDateRange}
+      />
 
       {/* Status de carregamento */}
       <Card className={`${isFullyLoaded ? 'border-green-200 bg-green-50' : isDiscrepancy ? 'border-orange-200 bg-orange-50' : 'bg-blue-50 border-blue-200'}`}>
@@ -202,7 +211,7 @@ export function AdminDashboardMetrics({ clientes, selectedManager }: AdminDashbo
           <CardContent>
             <div className="text-2xl font-bold">{metrics.totalClientes}</div>
             <p className="text-xs text-muted-foreground">
-              {metrics.clientesHoje} novos hoje
+              {metrics.clientesNoPeriodo} no período selecionado
             </p>
           </CardContent>
         </Card>
