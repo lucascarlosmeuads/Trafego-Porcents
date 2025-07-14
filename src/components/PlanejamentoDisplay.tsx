@@ -3,6 +3,8 @@ import ReactMarkdown from "react-markdown";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, RefreshCw, Loader2 } from "lucide-react";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 
 interface PlanejamentoDisplayProps {
   planejamento: string;
@@ -18,14 +20,90 @@ export const PlanejamentoDisplay = ({
   isRegenerating = false
 }: PlanejamentoDisplayProps) => {
 
-  const handleDownload = () => {
-    const element = document.createElement("a");
-    const file = new Blob([planejamento], { type: 'text/markdown' });
-    element.href = URL.createObjectURL(file);
-    element.download = "planejamento-estrategico.md";
-    document.body.appendChild(element);
-    element.click();
-    document.body.removeChild(element);
+  const handleDownload = async () => {
+    try {
+      // Encontrar o elemento com o conteúdo do planejamento
+      const element = document.querySelector('.prose') as HTMLElement;
+      if (!element) {
+        console.error('Elemento do planejamento não encontrado');
+        return;
+      }
+
+      // Criar uma cópia temporária para o PDF
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.top = '-9999px';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.width = '800px';
+      tempDiv.style.padding = '40px';
+      tempDiv.style.backgroundColor = 'white';
+      tempDiv.style.color = 'black';
+      tempDiv.style.fontFamily = 'Arial, sans-serif';
+      tempDiv.style.fontSize = '14px';
+      tempDiv.style.lineHeight = '1.6';
+      
+      // Adicionar logo e cabeçalho da Tráfego Porcents
+      tempDiv.innerHTML = `
+        <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066cc; padding-bottom: 20px;">
+          <h1 style="color: #0066cc; font-size: 24px; margin: 0;">TRÁFEGO PORCENTS</h1>
+          <p style="color: #666; margin: 5px 0;">Planejamento Estratégico</p>
+        </div>
+        <div style="color: black;">
+          ${element.innerHTML}
+        </div>
+        <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ccc; color: #666; font-size: 12px;">
+          <p>Gerado em: ${new Date().toLocaleDateString('pt-BR')}</p>
+          <p>Tráfego Porcents - Estratégias de Performance</p>
+        </div>
+      `;
+
+      document.body.appendChild(tempDiv);
+
+      // Converter para canvas e depois para PDF
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff'
+      });
+
+      // Remover elemento temporário
+      document.body.removeChild(tempDiv);
+
+      // Criar PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const imgWidth = 210;
+      const pageHeight = 295;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      let heightLeft = imgHeight;
+
+      let position = 0;
+
+      // Adicionar primeira página
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Adicionar páginas extras se necessário
+      while (heightLeft >= 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Download do PDF
+      pdf.save('planejamento-estrategico-trafego-porcents.pdf');
+      
+    } catch (error) {
+      console.error('Erro ao gerar PDF:', error);
+      // Fallback para download em markdown
+      const element = document.createElement("a");
+      const file = new Blob([planejamento], { type: 'text/markdown' });
+      element.href = URL.createObjectURL(file);
+      element.download = "planejamento-estrategico.md";
+      document.body.appendChild(element);
+      element.click();
+      document.body.removeChild(element);
+    }
   };
 
   return (
