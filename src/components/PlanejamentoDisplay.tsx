@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useState, useRef } from "react";
 import ReactMarkdown from "react-markdown";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { FileText, Download, RefreshCw, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
+import { toast } from "sonner";
 
 interface PlanejamentoDisplayProps {
   planejamento: string;
@@ -19,6 +20,8 @@ export const PlanejamentoDisplay = ({
   showActions = true,
   isRegenerating = false
 }: PlanejamentoDisplayProps) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+  const contentRef = useRef<HTMLDivElement>(null);
 
   const cleanHtmlForPdf = (html: string): string => {
     return html
@@ -40,13 +43,23 @@ export const PlanejamentoDisplay = ({
   };
 
   const handleDownload = async () => {
+    if (isDownloading) return;
+    
+    setIsDownloading(true);
+    toast("Iniciando geração do PDF...", { 
+      description: "Preparando documento para download" 
+    });
+
     try {
       console.log('Iniciando geração do PDF...');
       
-      // Encontrar o elemento com o conteúdo do planejamento
-      const element = document.querySelector('.prose') as HTMLElement;
+      // Usar ref se disponível, senão fallback para query selector
+      const element = contentRef.current || document.querySelector('.prose') as HTMLElement;
       if (!element) {
         console.error('Elemento do planejamento não encontrado');
+        toast.error("Erro ao localizar conteúdo", { 
+          description: "Elemento do planejamento não encontrado" 
+        });
         return;
       }
 
@@ -180,10 +193,18 @@ export const PlanejamentoDisplay = ({
       // Download do PDF
       const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
+      
+      toast.success("PDF gerado com sucesso!", { 
+        description: `Arquivo ${fileName} foi baixado` 
+      });
       console.log('PDF gerado e baixado com sucesso!');
       
     } catch (error) {
       console.error('Erro detalhado ao gerar PDF:', error);
+      
+      toast.error("Erro ao gerar PDF", { 
+        description: "Tentando download alternativo em Markdown..." 
+      });
       
       // Fallback melhorado para download em markdown
       try {
@@ -196,11 +217,19 @@ export const PlanejamentoDisplay = ({
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
+        
+        toast.success("Arquivo Markdown baixado", { 
+          description: "PDF não pôde ser gerado, mas o conteúdo foi salvo em formato Markdown" 
+        });
         console.log('Fallback: arquivo baixado como Markdown');
       } catch (fallbackError) {
         console.error('Erro no fallback:', fallbackError);
-        alert('Erro ao gerar o documento. Por favor, tente novamente.');
+        toast.error("Erro crítico", { 
+          description: "Não foi possível gerar nenhum formato de arquivo. Tente novamente." 
+        });
       }
+    } finally {
+      setIsDownloading(false);
     }
   };
 
@@ -222,7 +251,7 @@ export const PlanejamentoDisplay = ({
       
       <CardContent className="space-y-6">
         {/* Conteúdo do Planejamento */}
-        <div className="prose prose-lg max-w-none dark:prose-invert">
+        <div ref={contentRef} className="prose prose-lg max-w-none dark:prose-invert">
           <ReactMarkdown
             components={{
               h1: ({ children }) => (
@@ -286,10 +315,19 @@ export const PlanejamentoDisplay = ({
               onClick={handleDownload} 
               variant="outline" 
               className="flex-1"
-              disabled={isRegenerating}
+              disabled={isRegenerating || isDownloading}
             >
-              <Download className="w-4 h-4 mr-2" />
-              Baixar Planejamento
+              {isDownloading ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Gerando PDF...
+                </>
+              ) : (
+                <>
+                  <Download className="w-4 h-4 mr-2" />
+                  Baixar Planejamento
+                </>
+              )}
             </Button>
             {onRegenerate && (
               <Button 
