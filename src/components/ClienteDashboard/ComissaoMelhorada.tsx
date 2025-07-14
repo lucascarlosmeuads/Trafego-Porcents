@@ -217,6 +217,7 @@ export function ComissaoMelhorada() {
           porcentagemAtual={porcentagemAtual}
           totalVendas={totalVendas}
           comissaoDevida={comissaoDevida}
+          onComissaoAtualizada={refreshData}
         />
         
         <VendasManager porcentagemAtual={porcentagemAtual} />

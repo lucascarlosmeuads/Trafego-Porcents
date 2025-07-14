@@ -490,6 +490,39 @@ export type Database = {
           },
         ]
       }
+      formularios_parceria: {
+        Row: {
+          completo: boolean
+          created_at: string
+          email_usuario: string | null
+          id: string
+          planejamento_estrategico: string | null
+          respostas: Json
+          tipo_negocio: string
+          updated_at: string
+        }
+        Insert: {
+          completo?: boolean
+          created_at?: string
+          email_usuario?: string | null
+          id?: string
+          planejamento_estrategico?: string | null
+          respostas?: Json
+          tipo_negocio: string
+          updated_at?: string
+        }
+        Update: {
+          completo?: boolean
+          created_at?: string
+          email_usuario?: string | null
+          id?: string
+          planejamento_estrategico?: string | null
+          respostas?: Json
+          tipo_negocio?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       gestores: {
         Row: {
           ativo: boolean | null
