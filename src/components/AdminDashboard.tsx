@@ -27,6 +27,8 @@ interface AdminDashboardProps {
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
+  
+  // TODOS os hooks devem ser chamados sempre, sem condições
   const { useOptimized } = useOptimizedComponents()
   
   // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
@@ -37,6 +39,12 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
     selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
   )
 
+  useEffect(() => {
+    if (user && isAdmin) {
+      setLoading(false)
+    }
+  }, [user, isAdmin])
+
   console.log('🔍 [AdminDashboard] === DEBUG ADMIN DASHBOARD ===')
   console.log('👤 [AdminDashboard] Admin user email:', user?.email)
   console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
@@ -44,12 +52,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
   console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
 
-  useEffect(() => {
-    if (user && isAdmin) {
-      setLoading(false)
-    }
-  }, [user, isAdmin])
-
+  // Renderizar loading APÓS todos os hooks serem chamados
   if (loading) {
     return <LoadingFallback />
   }
