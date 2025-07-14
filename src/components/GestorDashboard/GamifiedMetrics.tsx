@@ -4,6 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { Target, TrendingUp, Clock, CheckCircle, DollarSign, Zap, Calendar } from 'lucide-react'
 import type { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
+import { MetricsDateFilter, type DateRange } from './MetricsDateFilter'
+import { useMetricsDateFilter } from '@/hooks/useMetricsDateFilter'
 
 interface GamifiedMetricsProps {
   clientes: Cliente[]
@@ -26,26 +28,18 @@ const SimpleProgress = ({ value, className }: { value: number; className?: strin
 export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   const TICKET_MEDIO = 60
   
-  // Calcular dados dos últimos 30 dias
-  const hoje = new Date()
-  const dataLimite = new Date(hoje.getTime() - (30 * 24 * 60 * 60 * 1000))
+  // Hook para gerenciar filtro de data
+  const { currentDateRange, handleDateRangeChange, getMetricsData, isCurrentMonthPeriod } = useMetricsDateFilter()
   
-  // Calcular dias restantes no mês
-  const ultimoDiaDoMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0).getDate()
-  const diaAtual = hoje.getDate()
-  const diasRestantesNoMes = ultimoDiaDoMes - diaAtual + 1 // +1 para incluir o dia atual
+  // Obter dados filtrados pelo período selecionado
+  const { clientesFiltrados, diasNoPeriodo, diasParaCalculoVendas } = getMetricsData(clientes)
   
-  // CORREÇÃO: Clientes REALMENTE pagos (comissao = "Pago")
-  const clientesPagos = clientes.filter(cliente => 
+  // CORREÇÃO: Clientes REALMENTE pagos no período filtrado
+  const clientesPagos = clientesFiltrados.filter(cliente => 
     cliente.comissao === 'Pago'
   )
   
-  const clientesPagosRecentes = clientesPagos.filter(cliente => {
-    const dataCliente = new Date(cliente.created_at)
-    return dataCliente >= dataLimite
-  })
-  
-  const totalJaRecebido = clientesPagosRecentes.reduce((total, cliente) => 
+  const totalJaRecebido = clientesPagos.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60), 0
   )
   
@@ -54,15 +48,15 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   const META_AVANCADA = 50000
   const META_MENSAL = totalJaRecebido >= META_INICIAL ? META_AVANCADA : META_INICIAL
   
-  // CORREÇÃO: TODOS os clientes que NÃO estão pagos são considerados pendentes
-  const clientesPendentes = clientes.filter(cliente => 
+  // CORREÇÃO: TODOS os clientes que NÃO estão pagos são considerados pendentes (baseado no período filtrado)
+  const clientesPendentes = clientesFiltrados.filter(cliente => 
     cliente.comissao !== 'Pago'
   )
   const totalPendentePagamento = clientesPendentes.reduce((total, cliente) => 
     total + (cliente.valor_comissao || 60), 0
   )
   
-  // Campanhas realmente ativas (separado dos pendentes)
+  // Campanhas realmente ativas (separado dos pendentes) - usar dados totais para não filtrar campanhas ativas
   const campanhasAtivas = clientes.filter(cliente => 
     cliente.status_campanha === 'Campanha no Ar' || cliente.status_campanha === 'Otimização'
   ).length
@@ -71,9 +65,9 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
   const progressoMeta = Math.min(100, (totalJaRecebido / META_MENSAL) * 100)
   const faltaParaMeta = Math.max(0, META_MENSAL - totalJaRecebido)
   
-  // NOVO: Calcular vendas diárias necessárias
-  const vendasDiariasNecessarias = diasRestantesNoMes > 0 
-    ? Math.ceil(faltaParaMeta / TICKET_MEDIO / diasRestantesNoMes)
+  // NOVO: Calcular vendas diárias necessárias baseado no período
+  const vendasDiariasNecessarias = diasParaCalculoVendas > 0 
+    ? Math.ceil(faltaParaMeta / TICKET_MEDIO / diasParaCalculoVendas)
     : 0
   
   // Sistema de níveis baseado no progresso REAL
@@ -114,21 +108,30 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
 
   console.log('📊 [GamifiedMetrics] Debug dos cálculos:', {
     totalClientes: clientes.length,
+    clientesFiltrados: clientesFiltrados.length,
     clientesPagos: clientesPagos.length,
     clientesPendentes: clientesPendentes.length,
     totalJaRecebido,
     totalPendentePagamento,
     campanhasAtivas,
     progressoMeta: progressoMeta.toFixed(1),
-    diasRestantesNoMes,
+    diasNoPeriodo,
+    diasParaCalculoVendas,
     vendasDiariasNecessarias,
     META_MENSAL,
-    isMetaAvancada: META_MENSAL === META_AVANCADA
+    isMetaAvancada: META_MENSAL === META_AVANCADA,
+    currentDateRange
   })
 
   return (
     <div className="space-y-6 p-6 bg-gray-950 min-h-screen">
       <div className="max-w-5xl mx-auto">
+        
+        {/* FILTRO DE DATA */}
+        <MetricsDateFilter 
+          onDateRangeChange={handleDateRangeChange}
+          currentRange={currentDateRange}
+        />
         
         {/* SEÇÃO HERO - PROGRESSO DA META */}
         <Card className="border-gray-800 shadow-2xl bg-gray-900 mb-8">
@@ -169,9 +172,9 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
               
               <div className={`text-center p-4 ${META_MENSAL === META_AVANCADA ? 'bg-orange-900/20 border-orange-500/20' : 'bg-gray-800'} rounded-lg border ${META_MENSAL === META_AVANCADA ? '' : 'border-gray-700'}`}>
                 <p className="text-xl text-gray-200 font-medium">{getMensagemMotivacional()}</p>
-                {!isFirstTime && diasRestantesNoMes > 0 && (
+                {!isFirstTime && isCurrentMonthPeriod && diasParaCalculoVendas > 0 && (
                   <p className="text-sm text-gray-400 mt-2">
-                    {progressoMeta >= 100 ? (META_MENSAL === META_AVANCADA ? 'Meta Elite atingida!' : 'Meta atingida! Nova meta desbloqueada!') : `${diasRestantesNoMes} dias restantes no mês`}
+                    {progressoMeta >= 100 ? (META_MENSAL === META_AVANCADA ? 'Meta Elite atingida!' : 'Meta atingida! Nova meta desbloqueada!') : `${diasParaCalculoVendas} dias restantes para a meta`}
                   </p>
                 )}
               </div>
@@ -193,7 +196,7 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
             <CardContent>
               <div className="text-3xl font-bold text-green-400 mb-2">{formatCurrency(totalJaRecebido)}</div>
               <p className="text-gray-400">
-                {clientesPagos.length} comissões pagas nos últimos 30 dias
+                {clientesPagos.length} comissões pagas em {currentDateRange.label.toLowerCase()}
               </p>
               {isFirstTime && (
                 <p className="text-xs text-gray-500 mt-2">
@@ -266,14 +269,14 @@ export function GamifiedMetrics({ clientes }: GamifiedMetricsProps) {
               <p className="text-gray-400">
                 {progressoMeta >= 100 ? 'Meta já atingida!' : `vendas por dia para bater ${formatCurrency(META_MENSAL)}`}
               </p>
-              {diasRestantesNoMes <= 0 && progressoMeta < 100 && (
+              {isCurrentMonthPeriod && diasParaCalculoVendas <= 1 && progressoMeta < 100 && (
                 <p className="text-xs text-red-400 mt-2">
-                  ⚠️ Último dia do mês! Acelere as vendas!
+                  ⚠️ Última oportunidade! Acelere as vendas!
                 </p>
               )}
-              {diasRestantesNoMes > 0 && progressoMeta < 100 && (
+              {isCurrentMonthPeriod && diasParaCalculoVendas > 1 && progressoMeta < 100 && (
                 <p className="text-xs text-gray-400 mt-2">
-                  {diasRestantesNoMes} dias restantes no mês
+                  {diasParaCalculoVendas} dias restantes para a meta no período {currentDateRange.label.toLowerCase()}
                 </p>
               )}
             </CardContent>
