@@ -28,301 +28,120 @@ export const PlanejamentoDisplay = ({
     if (isDownloading) return;
     
     setIsDownloading(true);
-    toast("Iniciando geração do PDF...", { 
-      description: "Preparando documento para download" 
-    });
-
+    
     try {
-      console.log('🚀 Iniciando geração do PDF...');
+      const { jsPDF } = await import('jspdf');
       
-      // Verificar compatibilidade do navegador
-      if (!window.URL || !window.URL.createObjectURL) {
-        throw new Error('Navegador não suporta download de arquivos');
-      }
-      
-      // Usar ref se disponível, senão fallback para query selector
-      const element = contentRef.current || document.querySelector('.prose') as HTMLElement;
-      if (!element) {
-        console.error('❌ Elemento do planejamento não encontrado');
-        toast.error("Erro ao localizar conteúdo", { 
-          description: "Elemento do planejamento não encontrado" 
-        });
-        return;
-      }
-
-      console.log('✅ Elemento encontrado:', element);
-      
-      // Atualizar toast para mostrar progresso
-      toast("Preparando conteúdo...", { 
-        description: "Processando elementos da página" 
-      });
-      
-      // Aguardar renderização completa
-      await new Promise(resolve => setTimeout(resolve, 800));
-
-      // Criar uma cópia temporária otimizada para o PDF
-      const tempDiv = document.createElement('div');
-      tempDiv.style.cssText = `
-        position: absolute;
-        top: -9999px;
-        left: -9999px;
-        width: 800px;
-        padding: 40px;
-        background-color: #ffffff !important;
-        color: #000000 !important;
-        font-family: 'Arial', 'Helvetica', sans-serif;
-        font-size: 14px;
-        line-height: 1.6;
-        overflow: visible;
-      `;
-      
-      // Estrutura completa do PDF com estilos inline forçados
-      tempDiv.innerHTML = `
-        <div style="background-color: #ffffff; color: #000000; padding: 20px;">
-          <!-- Cabeçalho -->
-          <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #0066cc; padding-bottom: 20px;">
-            <h1 style="color: #0066cc !important; font-size: 28px; margin: 0; font-weight: bold;">TRÁFEGO PORCENTS</h1>
-            <p style="color: #333333 !important; margin: 8px 0; font-size: 16px;">Planejamento Estratégico</p>
-          </div>
+      // Processar markdown para texto limpo
+      const processMarkdown = (text: string): Array<{type: string, content: string, level?: number}> => {
+        const lines = text.split('\n');
+        const processed: Array<{type: string, content: string, level?: number}> = [];
+        
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
           
-          <!-- Conteúdo Principal -->
-          <div style="color: #000000 !important; background-color: #ffffff;">
-            ${element.innerHTML}
-          </div>
-          
-          <!-- Rodapé -->
-          <div style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px solid #cccccc;">
-            <p style="color: #666666 !important; font-size: 12px; margin: 5px 0;">
-              Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
-            </p>
-            <p style="color: #666666 !important; font-size: 12px; margin: 5px 0;">
-              Tráfego Porcents - Estratégias de Performance Digital
-            </p>
-          </div>
-        </div>
-      `;
-
-      console.log('📝 HTML preparado, adicionando ao DOM...');
-      document.body.appendChild(tempDiv);
-
-      // Aguardar renderização
-      await new Promise(resolve => setTimeout(resolve, 300));
-
-      console.log('📸 Convertendo para canvas...');
-      toast("Convertendo para imagem...", { 
-        description: "Capturando conteúdo visual" 
-      });
-      
-      // Configurações otimizadas para o html2canvas
-      const canvas = await html2canvas(tempDiv, {
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        backgroundColor: '#ffffff',
-        logging: false,
-        width: tempDiv.scrollWidth,
-        height: tempDiv.scrollHeight,
-        onclone: (clonedDoc) => {
-          // Aplicar estilos CSS diretos no documento clonado
-          const style = clonedDoc.createElement('style');
-          style.textContent = `
-            * {
-              color: #000000 !important;
-              background-color: transparent !important;
-            }
-            body, html {
-              background-color: #ffffff !important;
-            }
-            h1, h2, h3, h4, h5, h6 {
-              color: #000000 !important;
-              font-weight: bold !important;
-            }
-            p, li, span, div, strong {
-              color: #000000 !important;
-            }
-            .text-primary, .text-foreground, .text-muted-foreground {
-              color: #000000 !important;
-            }
-          `;
-          clonedDoc.head.appendChild(style);
-        }
-      });
-
-      // Remover elemento temporário
-      document.body.removeChild(tempDiv);
-      console.log('✅ Canvas gerado:', canvas.width, 'x', canvas.height);
-
-      toast("Gerando PDF...", { 
-        description: "Criando documento final" 
-      });
-
-      // Configurar e criar o PDF
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pageWidth = 210;
-      const pageHeight = 297;
-      const margin = 10;
-      const imgWidth = pageWidth - (margin * 2);
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      let heightLeft = imgHeight;
-      let position = margin;
-
-      console.log('📄 Criando PDF com dimensões:', imgWidth, 'x', imgHeight);
-
-      // Adicionar primeira página
-      pdf.addImage(
-        canvas.toDataURL('image/png', 1.0), 
-        'PNG', 
-        margin, 
-        position, 
-        imgWidth, 
-        Math.min(imgHeight, pageHeight - margin)
-      );
-      
-      heightLeft -= (pageHeight - margin);
-
-      // Adicionar páginas extras se necessário
-      while (heightLeft > 0) {
-        pdf.addPage();
-        position = -(imgHeight - heightLeft) + margin;
-        pdf.addImage(
-          canvas.toDataURL('image/png', 1.0), 
-          'PNG', 
-          margin, 
-          position, 
-          imgWidth, 
-          Math.min(heightLeft + margin, pageHeight - margin)
-        );
-        heightLeft -= (pageHeight - margin);
-      }
-
-      // Método robusto de download usando blob
-      const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
-      
-      toast("Iniciando download...", { 
-        description: "Preparando arquivo para download" 
-      });
-
-      try {
-        // Método 1: Blob + createElement (mais robusto)
-        const pdfBlob = pdf.output('blob');
-        console.log('📦 Blob criado, tamanho:', pdfBlob.size, 'bytes');
-        
-        if (pdfBlob.size === 0) {
-          throw new Error('PDF blob vazio');
-        }
-        
-        const url = URL.createObjectURL(pdfBlob);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = url;
-        downloadLink.download = fileName;
-        downloadLink.style.display = 'none';
-        
-        // Adicionar ao DOM e clicar
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        
-        // Cleanup após delay
-        setTimeout(() => {
-          if (document.body.contains(downloadLink)) {
-            document.body.removeChild(downloadLink);
+          // Títulos
+          if (trimmed.startsWith('#')) {
+            const level = trimmed.match(/^#+/)?.[0].length || 1;
+            const content = trimmed.replace(/^#+\s*/, '');
+            processed.push({ type: 'heading', content, level });
           }
-          URL.revokeObjectURL(url);
-        }, 1000);
+          // Listas
+          else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
+            const content = trimmed.replace(/^[-*]\s*/, '');
+            processed.push({ type: 'list', content });
+          }
+          // Parágrafos
+          else {
+            processed.push({ type: 'paragraph', content: trimmed });
+          }
+        }
         
-        console.log('✅ Download realizado via blob method');
+        return processed;
+      };
+      
+      // Criar PDF
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      // Configurações de layout
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 20;
+      const maxWidth = pageWidth - (margin * 2);
+      let currentY = margin;
+      
+      // Cabeçalho
+      pdf.setFontSize(20);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("Planejamento Estratégico", pageWidth / 2, currentY, { align: 'center' });
+      currentY += 10;
+      
+      pdf.setFontSize(10);
+      pdf.setFont("helvetica", "normal");
+      pdf.text(`Tráfego Por Cents - ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 20;
+      
+      // Processar conteúdo
+      const elements = processMarkdown(planejamento);
+      
+      for (const element of elements) {
+        // Verificar se precisa de nova página
+        if (currentY > pageHeight - 30) {
+          pdf.addPage();
+          currentY = margin;
+        }
         
-      } catch (blobError) {
-        console.warn('⚠️ Método blob falhou, tentando método direto:', blobError);
-        
-        // Método 2: jsPDF save direto (fallback)
-        pdf.save(fileName);
-        console.log('✅ Download realizado via jsPDF.save()');
+        switch (element.type) {
+          case 'heading':
+            const fontSize = element.level === 1 ? 16 : element.level === 2 ? 14 : 12;
+            pdf.setFontSize(fontSize);
+            pdf.setFont("helvetica", "bold");
+            const headingLines = pdf.splitTextToSize(element.content, maxWidth);
+            pdf.text(headingLines, margin, currentY);
+            currentY += (fontSize * 0.35) * headingLines.length + 8;
+            break;
+            
+          case 'paragraph':
+            pdf.setFontSize(11);
+            pdf.setFont("helvetica", "normal");
+            const paragraphLines = pdf.splitTextToSize(element.content, maxWidth);
+            pdf.text(paragraphLines, margin, currentY);
+            currentY += (11 * 0.35) * paragraphLines.length + 6;
+            break;
+            
+          case 'list':
+            pdf.setFontSize(11);
+            pdf.setFont("helvetica", "normal");
+            const listLines = pdf.splitTextToSize(`• ${element.content}`, maxWidth - 5);
+            pdf.text(listLines, margin + 5, currentY);
+            currentY += (11 * 0.35) * listLines.length + 4;
+            break;
+        }
       }
+      
+      // Rodapé na última página
+      pdf.setFontSize(8);
+      pdf.setFont("helvetica", "italic");
+      pdf.text("Documento gerado automaticamente - Tráfego Por Cents", pageWidth / 2, pageHeight - 10, { align: 'center' });
+      
+      // Download
+      const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
       
       toast.success("PDF baixado com sucesso!", { 
-        description: `Arquivo ${fileName} foi baixado para sua pasta de Downloads` 
+        description: `Arquivo ${fileName} foi baixado` 
       });
-      console.log('🎉 PDF gerado e baixado com sucesso!');
       
     } catch (error) {
-      console.error('❌ Erro detalhado ao gerar PDF:', error);
-      
+      console.error('Erro ao gerar PDF:', error);
       toast.error("Erro ao gerar PDF", { 
-        description: "Tentando download alternativo..." 
+        description: "Tente novamente ou contate o suporte" 
       });
-      
-      // Fallback para Markdown com método robusto
-      try {
-        console.log('🔄 Iniciando fallback para Markdown...');
-        
-        const markdownContent = `# TRÁFEGO PORCENTS - Planejamento Estratégico
-Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
-
----
-
-${planejamento}
-
----
-
-*Documento gerado pelo sistema Tráfego Porcents*`;
-        
-        const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const downloadLink = document.createElement('a');
-        const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.md`;
-        
-        downloadLink.href = url;
-        downloadLink.download = fileName;
-        downloadLink.style.display = 'none';
-        
-        document.body.appendChild(downloadLink);
-        downloadLink.click();
-        
-        setTimeout(() => {
-          if (document.body.contains(downloadLink)) {
-            document.body.removeChild(downloadLink);
-          }
-          URL.revokeObjectURL(url);
-        }, 1000);
-        
-        toast.success("Arquivo Markdown baixado!", { 
-          description: "PDF não pôde ser gerado, mas o conteúdo foi salvo em formato Markdown" 
-        });
-        console.log('✅ Fallback: arquivo baixado como Markdown');
-        
-      } catch (fallbackError) {
-        console.error('❌ Erro no fallback:', fallbackError);
-        
-        // Último recurso: abrir em nova aba
-        try {
-          const newWindow = window.open();
-          if (newWindow) {
-            newWindow.document.write(`
-              <html>
-                <head><title>Planejamento Estratégico - Tráfego Porcents</title></head>
-                <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
-                  <h1>TRÁFEGO PORCENTS - Planejamento Estratégico</h1>
-                  <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
-                  <hr>
-                  <pre style="white-space: pre-wrap; font-family: inherit;">${planejamento}</pre>
-                </body>
-              </html>
-            `);
-            newWindow.document.close();
-            
-            toast.success("Conteúdo aberto em nova aba", { 
-              description: "Use Ctrl+P para imprimir ou salvar como PDF" 
-            });
-          } else {
-            throw new Error('Pop-up bloqueado');
-          }
-        } catch (lastResortError) {
-          toast.error("Erro crítico", { 
-            description: "Não foi possível gerar nenhum formato. Verifique permissões do navegador." 
-          });
-        }
-      }
     } finally {
       setIsDownloading(false);
     }
