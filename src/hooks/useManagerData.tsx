@@ -42,16 +42,17 @@ export function useManagerData(
   const actualIsAdmin = isAdminUser !== undefined ? isAdminUser : isAdmin
   const currentManager = selectedManager || null
 
-  // Get client operations
+  // Define refetch function first
+  const refetch = async () => {
+    setForceUpdate(prev => prev + 1)
+  }
+
+  // Get client operations - moved after refetch definition
   const { updateCliente, addCliente } = useClienteOperations(actualUserEmail, actualIsAdmin, refetch)
 
   useEffect(() => {
     fetchClientes()
   }, [actualUserEmail, forceUpdate, selectedManager, filterType])
-
-  async function refetch() {
-    setForceUpdate(prev => prev + 1)
-  }
 
   const fetchClientes = async () => {
     if (!actualUserEmail) {
