@@ -6,10 +6,12 @@ import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare, CheckCircle, XCircle, Palette, Type, Monitor, Smartphone } from 'lucide-react'
+import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare, CheckCircle, XCircle, Palette, Type, Monitor, Smartphone, Brain } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/hooks/useAuth'
+import { usePlanejamentoEstrategico } from '@/hooks/usePlanejamentoEstrategico'
+import { PlanejamentoDisplay } from '@/components/PlanejamentoDisplay'
 
 interface BriefingData {
   nome_produto: string
@@ -44,6 +46,7 @@ interface BriefingData {
   tipos_imagens_preferidas: string[]
   etapa_atual: number
   formulario_completo: boolean
+  planejamento_estrategico: string
 }
 
 interface ArquivoCliente {
@@ -78,6 +81,7 @@ export function BriefingMaterialsModal({
   const [uploading, setUploading] = useState(false)
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
+  const { generatePlanejamento, isGenerating } = usePlanejamentoEstrategico()
 
   const fetchBriefing = async () => {
     if (!emailCliente) {
@@ -438,6 +442,23 @@ export function BriefingMaterialsModal({
         description: "Não foi possível abrir o arquivo",
         variant: "destructive"
       })
+    }
+  }
+
+  const handleGeneratePlanejamento = async () => {
+    if (!emailCliente) {
+      toast({
+        title: "Erro",
+        description: "Email do cliente não encontrado",
+        variant: "destructive"
+      })
+      return
+    }
+
+    const result = await generatePlanejamento(emailCliente)
+    if (result.success) {
+      // Recarregar o briefing para mostrar o planejamento atualizado
+      await fetchBriefing()
     }
   }
 
@@ -828,6 +849,59 @@ export function BriefingMaterialsModal({
                       <FileText className="w-12 h-12 mx-auto text-gray-400 mb-3" />
                       <p className="text-gray-600 font-medium">Formulário ainda não preenchido</p>
                       <p className="text-sm text-gray-500">O cliente ainda não preencheu o formulário de gestão de tráfego.</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* SEÇÃO DE PLANEJAMENTO ESTRATÉGICO */}
+            {filterType !== 'creative' && briefing && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Brain className="w-5 h-5 text-indigo-600" />
+                    🧠 Planejamento Estratégico
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {briefing.planejamento_estrategico ? (
+                    <PlanejamentoDisplay 
+                      planejamento={briefing.planejamento_estrategico}
+                      onRegenerate={handleGeneratePlanejamento}
+                      isRegenerating={isGenerating}
+                    />
+                  ) : (
+                    <div className="text-center py-8">
+                      <Brain className="w-16 h-16 mx-auto text-indigo-400 mb-4" />
+                      <h3 className="text-lg font-semibold mb-2 text-indigo-700">
+                        Planejamento Estratégico
+                      </h3>
+                      <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                        Gere um planejamento estratégico personalizado baseado nas informações do briefing do cliente.
+                      </p>
+                      <Button 
+                        onClick={handleGeneratePlanejamento}
+                        disabled={isGenerating || !briefing.formulario_completo}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white"
+                      >
+                        {isGenerating ? (
+                          <>
+                            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                            Gerando planejamento...
+                          </>
+                        ) : (
+                          <>
+                            <Brain className="w-4 h-4 mr-2" />
+                            Gerar Planejamento Estratégico
+                          </>
+                        )}
+                      </Button>
+                      {!briefing.formulario_completo && (
+                        <p className="text-sm text-amber-600 mt-2">
+                          ⚠️ O cliente precisa completar o briefing antes de gerar o planejamento
+                        </p>
+                      )}
                     </div>
                   )}
                 </CardContent>

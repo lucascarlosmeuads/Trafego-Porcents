@@ -98,6 +98,7 @@ export type Database = {
           nome_marca: string | null
           nome_produto: string
           observacoes_finais: string | null
+          planejamento_estrategico: string | null
           possui_facebook: boolean | null
           possui_instagram: boolean | null
           publico_alvo: string | null
@@ -133,6 +134,7 @@ export type Database = {
           nome_marca?: string | null
           nome_produto: string
           observacoes_finais?: string | null
+          planejamento_estrategico?: string | null
           possui_facebook?: boolean | null
           possui_instagram?: boolean | null
           publico_alvo?: string | null
@@ -168,6 +170,7 @@ export type Database = {
           nome_marca?: string | null
           nome_produto?: string
           observacoes_finais?: string | null
+          planejamento_estrategico?: string | null
           possui_facebook?: boolean | null
           possui_instagram?: boolean | null
           publico_alvo?: string | null
