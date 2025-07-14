@@ -51,19 +51,32 @@ export const PlanejamentoDisplay = ({
     });
 
     try {
-      console.log('Iniciando geração do PDF...');
+      console.log('🚀 Iniciando geração do PDF...');
+      
+      // Verificar compatibilidade do navegador
+      if (!window.URL || !window.URL.createObjectURL) {
+        throw new Error('Navegador não suporta download de arquivos');
+      }
       
       // Usar ref se disponível, senão fallback para query selector
       const element = contentRef.current || document.querySelector('.prose') as HTMLElement;
       if (!element) {
-        console.error('Elemento do planejamento não encontrado');
+        console.error('❌ Elemento do planejamento não encontrado');
         toast.error("Erro ao localizar conteúdo", { 
           description: "Elemento do planejamento não encontrado" 
         });
         return;
       }
 
-      console.log('Elemento encontrado, preparando HTML para PDF...');
+      console.log('✅ Elemento encontrado:', element);
+      
+      // Atualizar toast para mostrar progresso
+      toast("Preparando conteúdo...", { 
+        description: "Processando elementos da página" 
+      });
+      
+      // Aguardar renderização completa
+      await new Promise(resolve => setTimeout(resolve, 800));
 
       // Criar uma cópia temporária otimizada para o PDF
       const tempDiv = document.createElement('div');
@@ -110,13 +123,16 @@ export const PlanejamentoDisplay = ({
         </div>
       `;
 
-      console.log('HTML preparado:', tempDiv.innerHTML.substring(0, 500) + '...');
+      console.log('📝 HTML preparado, adicionando ao DOM...');
       document.body.appendChild(tempDiv);
 
-      // Aguardar um pouco para garantir que o DOM seja renderizado
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Aguardar renderização
+      await new Promise(resolve => setTimeout(resolve, 300));
 
-      console.log('Convertendo para canvas...');
+      console.log('📸 Convertendo para canvas...');
+      toast("Convertendo para imagem...", { 
+        description: "Capturando conteúdo visual" 
+      });
       
       // Configurações otimizadas para o html2canvas
       const canvas = await html2canvas(tempDiv, {
@@ -148,7 +164,11 @@ export const PlanejamentoDisplay = ({
 
       // Remover elemento temporário
       document.body.removeChild(tempDiv);
-      console.log('Canvas criado com sucesso');
+      console.log('✅ Canvas gerado:', canvas.width, 'x', canvas.height);
+
+      toast("Gerando PDF...", { 
+        description: "Criando documento final" 
+      });
 
       // Configurar e criar o PDF
       const pdf = new jsPDF('p', 'mm', 'a4');
@@ -161,7 +181,7 @@ export const PlanejamentoDisplay = ({
       let heightLeft = imgHeight;
       let position = margin;
 
-      console.log('Gerando PDF...');
+      console.log('📄 Criando PDF com dimensões:', imgWidth, 'x', imgHeight);
 
       // Adicionar primeira página
       pdf.addImage(
@@ -190,43 +210,132 @@ export const PlanejamentoDisplay = ({
         heightLeft -= (pageHeight - margin);
       }
 
-      // Download do PDF
+      // Método robusto de download usando blob
       const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
-      pdf.save(fileName);
       
-      toast.success("PDF gerado com sucesso!", { 
-        description: `Arquivo ${fileName} foi baixado` 
+      toast("Iniciando download...", { 
+        description: "Preparando arquivo para download" 
       });
-      console.log('PDF gerado e baixado com sucesso!');
+
+      try {
+        // Método 1: Blob + createElement (mais robusto)
+        const pdfBlob = pdf.output('blob');
+        console.log('📦 Blob criado, tamanho:', pdfBlob.size, 'bytes');
+        
+        if (pdfBlob.size === 0) {
+          throw new Error('PDF blob vazio');
+        }
+        
+        const url = URL.createObjectURL(pdfBlob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        
+        // Adicionar ao DOM e clicar
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        // Cleanup após delay
+        setTimeout(() => {
+          if (document.body.contains(downloadLink)) {
+            document.body.removeChild(downloadLink);
+          }
+          URL.revokeObjectURL(url);
+        }, 1000);
+        
+        console.log('✅ Download realizado via blob method');
+        
+      } catch (blobError) {
+        console.warn('⚠️ Método blob falhou, tentando método direto:', blobError);
+        
+        // Método 2: jsPDF save direto (fallback)
+        pdf.save(fileName);
+        console.log('✅ Download realizado via jsPDF.save()');
+      }
+      
+      toast.success("PDF baixado com sucesso!", { 
+        description: `Arquivo ${fileName} foi baixado para sua pasta de Downloads` 
+      });
+      console.log('🎉 PDF gerado e baixado com sucesso!');
       
     } catch (error) {
-      console.error('Erro detalhado ao gerar PDF:', error);
+      console.error('❌ Erro detalhado ao gerar PDF:', error);
       
       toast.error("Erro ao gerar PDF", { 
-        description: "Tentando download alternativo em Markdown..." 
+        description: "Tentando download alternativo..." 
       });
       
-      // Fallback melhorado para download em markdown
+      // Fallback para Markdown com método robusto
       try {
-        const element = document.createElement("a");
-        const timestamp = new Date().toISOString().split('T')[0];
-        const content = `# TRÁFEGO PORCENTS - Planejamento Estratégico\n\nGerado em: ${new Date().toLocaleDateString('pt-BR')}\n\n---\n\n${planejamento}`;
-        const file = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-        element.href = URL.createObjectURL(file);
-        element.download = `planejamento-estrategico-${timestamp}.md`;
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
+        console.log('🔄 Iniciando fallback para Markdown...');
         
-        toast.success("Arquivo Markdown baixado", { 
+        const markdownContent = `# TRÁFEGO PORCENTS - Planejamento Estratégico
+Gerado em: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}
+
+---
+
+${planejamento}
+
+---
+
+*Documento gerado pelo sistema Tráfego Porcents*`;
+        
+        const blob = new Blob([markdownContent], { type: 'text/markdown;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const downloadLink = document.createElement('a');
+        const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.md`;
+        
+        downloadLink.href = url;
+        downloadLink.download = fileName;
+        downloadLink.style.display = 'none';
+        
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        
+        setTimeout(() => {
+          if (document.body.contains(downloadLink)) {
+            document.body.removeChild(downloadLink);
+          }
+          URL.revokeObjectURL(url);
+        }, 1000);
+        
+        toast.success("Arquivo Markdown baixado!", { 
           description: "PDF não pôde ser gerado, mas o conteúdo foi salvo em formato Markdown" 
         });
-        console.log('Fallback: arquivo baixado como Markdown');
+        console.log('✅ Fallback: arquivo baixado como Markdown');
+        
       } catch (fallbackError) {
-        console.error('Erro no fallback:', fallbackError);
-        toast.error("Erro crítico", { 
-          description: "Não foi possível gerar nenhum formato de arquivo. Tente novamente." 
-        });
+        console.error('❌ Erro no fallback:', fallbackError);
+        
+        // Último recurso: abrir em nova aba
+        try {
+          const newWindow = window.open();
+          if (newWindow) {
+            newWindow.document.write(`
+              <html>
+                <head><title>Planejamento Estratégico - Tráfego Porcents</title></head>
+                <body style="font-family: Arial, sans-serif; padding: 20px; line-height: 1.6;">
+                  <h1>TRÁFEGO PORCENTS - Planejamento Estratégico</h1>
+                  <p><strong>Data:</strong> ${new Date().toLocaleDateString('pt-BR')}</p>
+                  <hr>
+                  <pre style="white-space: pre-wrap; font-family: inherit;">${planejamento}</pre>
+                </body>
+              </html>
+            `);
+            newWindow.document.close();
+            
+            toast.success("Conteúdo aberto em nova aba", { 
+              description: "Use Ctrl+P para imprimir ou salvar como PDF" 
+            });
+          } else {
+            throw new Error('Pop-up bloqueado');
+          }
+        } catch (lastResortError) {
+          toast.error("Erro crítico", { 
+            description: "Não foi possível gerar nenhum formato. Verifique permissões do navegador." 
+          });
+        }
       }
     } finally {
       setIsDownloading(false);
