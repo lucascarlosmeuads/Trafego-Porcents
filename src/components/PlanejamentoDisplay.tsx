@@ -23,24 +23,6 @@ export const PlanejamentoDisplay = ({
   const [isDownloading, setIsDownloading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const cleanHtmlForPdf = (html: string): string => {
-    return html
-      // Remover todas as classes Tailwind CSS problemáticas
-      .replace(/class="[^"]*"/g, '')
-      // Forçar cor preta para todos os elementos de texto
-      .replace(/<h[1-6]([^>]*)>/g, '<h$1 style="color: #000000 !important; font-weight: bold; margin: 10px 0;">$1>')
-      .replace(/<p([^>]*)>/g, '<p$1 style="color: #000000 !important; margin: 8px 0; line-height: 1.5;">$1>')
-      .replace(/<li([^>]*)>/g, '<li$1 style="color: #000000 !important; margin: 4px 0;">$1>')
-      .replace(/<strong([^>]*)>/g, '<strong$1 style="color: #000000 !important; font-weight: bold;">$1>')
-      .replace(/<span([^>]*)>/g, '<span$1 style="color: #000000 !important;">$1>')
-      .replace(/<div([^>]*)>/g, '<div$1 style="color: #000000 !important;">$1>')
-      // Remover estilos inline problemáticos
-      .replace(/color:\s*hsl\([^)]*\)/g, 'color: #000000')
-      .replace(/color:\s*white/g, 'color: #000000')
-      .replace(/color:\s*var\([^)]*\)/g, 'color: #000000')
-      // Garantir que backgrounds sejam brancos
-      .replace(/background-color:\s*[^;]+;?/g, 'background-color: #ffffff;');
-  };
 
   const handleDownload = async () => {
     if (isDownloading) return;
@@ -94,9 +76,6 @@ export const PlanejamentoDisplay = ({
         overflow: visible;
       `;
       
-      // Limpar e preparar o HTML
-      const cleanedHtml = cleanHtmlForPdf(element.innerHTML);
-      
       // Estrutura completa do PDF com estilos inline forçados
       tempDiv.innerHTML = `
         <div style="background-color: #ffffff; color: #000000; padding: 20px;">
@@ -108,7 +87,7 @@ export const PlanejamentoDisplay = ({
           
           <!-- Conteúdo Principal -->
           <div style="color: #000000 !important; background-color: #ffffff;">
-            ${cleanedHtml}
+            ${element.innerHTML}
           </div>
           
           <!-- Rodapé -->
@@ -144,21 +123,28 @@ export const PlanejamentoDisplay = ({
         width: tempDiv.scrollWidth,
         height: tempDiv.scrollHeight,
         onclone: (clonedDoc) => {
-          // Aplicar estilos adicionais no documento clonado
-          const clonedElement = clonedDoc.querySelector('div') as HTMLElement;
-          if (clonedElement) {
-            clonedElement.style.color = '#000000';
-            clonedElement.style.backgroundColor = '#ffffff';
-            
-            // Forçar cor preta em todos os elementos de texto
-            const allElements = clonedElement.querySelectorAll('*');
-            allElements.forEach((el: any) => {
-              if (el.tagName && ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'LI', 'SPAN', 'STRONG', 'DIV'].includes(el.tagName)) {
-                el.style.color = '#000000';
-                el.style.backgroundColor = 'transparent';
-              }
-            });
-          }
+          // Aplicar estilos CSS diretos no documento clonado
+          const style = clonedDoc.createElement('style');
+          style.textContent = `
+            * {
+              color: #000000 !important;
+              background-color: transparent !important;
+            }
+            body, html {
+              background-color: #ffffff !important;
+            }
+            h1, h2, h3, h4, h5, h6 {
+              color: #000000 !important;
+              font-weight: bold !important;
+            }
+            p, li, span, div, strong {
+              color: #000000 !important;
+            }
+            .text-primary, .text-foreground, .text-muted-foreground {
+              color: #000000 !important;
+            }
+          `;
+          clonedDoc.head.appendChild(style);
         }
       });
 
