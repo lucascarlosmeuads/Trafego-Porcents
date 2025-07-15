@@ -196,3 +196,5 @@ export function StatusFunnelDashboard() {
     </div>
   )
 }
+
+export default StatusFunnelDashboard

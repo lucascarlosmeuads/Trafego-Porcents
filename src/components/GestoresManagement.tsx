@@ -109,3 +109,5 @@ export function GestoresManagement() {
     </div>
   )
 }
+
+export default GestoresManagement

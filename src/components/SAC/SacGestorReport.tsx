@@ -248,3 +248,5 @@ export function SacGestorReport() {
     </div>
   )
 }
+
+export default SacGestorReport

@@ -1036,3 +1036,5 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     </div>
   )
 }
+
+export default ClientesTable

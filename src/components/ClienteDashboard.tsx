@@ -142,3 +142,5 @@ export function ClienteDashboard() {
     </TermosProtection>
   )
 }
+
+export default ClienteDashboard

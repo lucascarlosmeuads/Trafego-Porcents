@@ -653,3 +653,5 @@ export function DocumentationViewer() {
     </div>
   )
 }
+
+export default DocumentationViewer
