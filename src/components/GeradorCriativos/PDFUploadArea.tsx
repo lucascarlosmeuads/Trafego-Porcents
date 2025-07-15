@@ -25,8 +25,8 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Configurar worker do PDF.js
-        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+        // Configurar worker do PDF.js com versão correta (5.3.93)
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.93/pdf.worker.min.js`
         
         // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
         const arrayBuffer = await file.arrayBuffer()
@@ -51,7 +51,9 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
         console.log('📄 [PDFUpload] Páginas:', pdf.numPages)
         
         if (!extractedText || extractedText.trim().length < 50) {
-          throw new Error('PDF não contém texto suficiente para análise. Verifique se o arquivo não é apenas imagens.')
+          console.error('❌ [PDFUpload] PDF não contém texto suficiente:', extractedText.trim().length, 'caracteres')
+          alert('PDF não contém texto suficiente para análise. Verifique se o arquivo não é apenas imagens.')
+          return
         }
         
         // Enviar texto extraído e arquivo para análise
@@ -59,8 +61,11 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
         
       } catch (error: any) {
         console.error('❌ [PDFUpload] Erro ao extrair texto do PDF:', error)
-        throw new Error(`Erro ao processar PDF: ${error.message}`)
+        alert(`Erro ao processar PDF: ${error.message}`)
       }
+    } else {
+      console.error('❌ [PDFUpload] Arquivo não é PDF válido:', file?.type)
+      alert('Por favor, selecione apenas arquivos PDF válidos.')
     }
   }, [onPDFAnalysis])
 
