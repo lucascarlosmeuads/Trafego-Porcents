@@ -96,7 +96,12 @@ serve(async (req) => {
     });
 
     const gptData = await gptResponse.json();
-    const dadosExtraidos = JSON.parse(gptData.choices[0].message.content);
+    let responseContent = gptData.choices[0].message.content;
+    
+    // Remover markdown code blocks se existirem
+    responseContent = responseContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    const dadosExtraidos = JSON.parse(responseContent);
 
     console.log('🧠 [pdf-analyzer] Dados estruturados pelo GPT-4:', dadosExtraidos);
 
