@@ -25,16 +25,14 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Configurar worker do PDF.js com versão compatível (5.3.93)
+        // Configurar worker local do PDF.js (compatível com Vite)
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          const workerVersions = [
-            '//cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.93/pdf.worker.min.js',
-            '//unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
-            '//cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js'
-          ]
-          
-          pdfjsLib.GlobalWorkerOptions.workerSrc = workerVersions[0]
-          console.log('🔧 [PDFUpload] Worker v5.3.93 configurado:', workerVersions[0])
+          // Usar worker local que vem com o pacote pdfjs-dist
+          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+            'pdfjs-dist/build/pdf.worker.min.js',
+            import.meta.url
+          ).toString()
+          console.log('🔧 [PDFUpload] Worker local configurado')
         }
         
         // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
