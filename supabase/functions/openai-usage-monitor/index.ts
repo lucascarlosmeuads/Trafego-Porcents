@@ -15,11 +15,28 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🔍 Iniciando monitoramento OpenAI - verificação de chave API...')
+    
     if (!openAIApiKey) {
-      throw new Error('OPENAI_API_KEY não configurada')
+      console.log('❌ OPENAI_API_KEY não encontrada')
+      const fallbackResponse = {
+        custo_mes: 0,
+        custo_total: 0,
+        limite_maximo: 100,
+        disponivel: 100,
+        tem_metodo_pagamento: false,
+        usando_fallback: true,
+        ultima_atualizacao: new Date().toISOString().split('T')[0],
+        status_api: 'erro',
+        erro: 'OPENAI_API_KEY não configurada'
+      }
+      
+      return new Response(JSON.stringify(fallbackResponse), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      })
     }
 
-    console.log('🔍 Buscando dados simplificados de uso da OpenAI...')
+    console.log('✅ OPENAI_API_KEY encontrada, buscando dados...')
 
     // Calcular datas
     const now = new Date()
@@ -27,11 +44,14 @@ serve(async (req) => {
     const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1)
     const inicioMesStr = inicioMes.toISOString().split('T')[0]
 
+    console.log(`📅 Período de busca: ${inicioMesStr} até ${hoje}`)
+
     // Tentar buscar informações de subscription (limites)
-    let limiteMaximo = 0
+    let limiteMaximo = 100 // fallback padrão
     let metodoPagamento = false
     
     try {
+      console.log('🔄 Tentando buscar dados de billing...')
       const billingResponse = await fetch('https://api.openai.com/v1/organization/billing/subscription', {
         headers: {
           'Authorization': `Bearer ${openAIApiKey}`,
@@ -39,14 +59,18 @@ serve(async (req) => {
         },
       })
       
+      console.log(`📊 Status billing response: ${billingResponse.status}`)
+      
       if (billingResponse.ok) {
         const billingData = await billingResponse.json()
-        limiteMaximo = billingData.hard_limit_usd || 0
+        limiteMaximo = billingData.hard_limit_usd || 100
         metodoPagamento = billingData.has_payment_method || false
         console.log('✅ Dados de billing obtidos:', { limiteMaximo, metodoPagamento })
+      } else {
+        console.log('⚠️ Billing response não OK, usando valores padrão')
       }
     } catch (e) {
-      console.log('⚠️ Não foi possível buscar dados de billing, usando fallback')
+      console.log('⚠️ Erro ao buscar billing:', e.message)
     }
 
     // Tentar buscar uso atual do mês
@@ -54,6 +78,7 @@ serve(async (req) => {
     let custoTotal = 0
     
     try {
+      console.log('🔄 Tentando buscar dados de uso...')
       const usageResponse = await fetch(
         `https://api.openai.com/v1/organization/billing/usage?start_date=${inicioMesStr}&end_date=${hoje}`,
         {
@@ -64,39 +89,51 @@ serve(async (req) => {
         }
       )
       
+      console.log(`📊 Status usage response: ${usageResponse.status}`)
+      
       if (usageResponse.ok) {
         const usageData = await usageResponse.json()
         custoMes = (usageData.total_usage || 0) / 100 // Converter de centavos
         custoTotal = custoMes
-        console.log('✅ Dados de uso obtidos:', { custoMes })
+        console.log('✅ Dados de uso obtidos:', { 
+          total_usage: usageData.total_usage, 
+          custoMes,
+          raw_data: usageData 
+        })
+      } else {
+        console.log('⚠️ Usage response não OK, usando valores padrão')
+        const errorText = await usageResponse.text()
+        console.log('📝 Error response text:', errorText)
       }
     } catch (e) {
-      console.log('⚠️ Não foi possível buscar dados de uso, usando fallback')
+      console.log('⚠️ Erro ao buscar usage:', e.message)
     }
 
-    // Se não conseguiu dados reais, usar estimativas baseadas nos formulários
-    const fallbackResponse = {
-      // Dados simplificados
+    // Determinar se está usando fallback (se não conseguiu dados reais)
+    const usandoFallback = custoMes === 0 && limiteMaximo <= 100
+    const statusApi = custoMes > 0 || limiteMaximo > 100 ? 'conectada' : 
+                     openAIApiKey.startsWith('sk-') ? 'limitada' : 'erro'
+
+    // Montar resposta final
+    const response = {
       custo_mes: custoMes,
       custo_total: custoTotal,
-      limite_maximo: limiteMaximo || 100, // Limite padrão se não conseguir buscar
-      disponivel: (limiteMaximo || 100) - custoMes,
+      limite_maximo: limiteMaximo,
+      disponivel: Math.max(limiteMaximo - custoMes, 0),
       tem_metodo_pagamento: metodoPagamento,
-      
-      // Metadados
-      usando_fallback: custoMes === 0 && limiteMaximo === 0,
+      usando_fallback: usandoFallback,
       ultima_atualizacao: hoje,
-      status_api: custoMes > 0 || limiteMaximo > 0 ? 'conectada' : 'limitada'
+      status_api: statusApi
     }
 
-    console.log('✅ Resposta simplificada montada:', fallbackResponse)
+    console.log('✅ Resposta final montada:', response)
 
-    return new Response(JSON.stringify(fallbackResponse), {
+    return new Response(JSON.stringify(response), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
-    console.error('❌ Erro na function openai-usage-monitor:', error)
+    console.error('❌ Erro crítico na function openai-usage-monitor:', error)
     
     // Retornar resposta de fallback em caso de erro total
     const errorResponse = {

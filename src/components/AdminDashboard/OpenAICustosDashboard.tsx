@@ -29,35 +29,22 @@ interface FormularioCount {
 
 export function OpenAICustosDashboard() {
   const [usage, setUsage] = useState<OpenAIUsage | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [formularios, setFormularios] = useState<FormularioCount | null>(null)
   const { toast } = useToast()
 
   const fetchOpenAIUsage = async () => {
-    setLoading(true)
     try {
       const { data, error } = await supabase.functions.invoke('openai-usage-monitor')
       
       if (error) {
         console.error('Erro ao buscar usage da OpenAI:', error)
-        toast({
-          title: "Erro",
-          description: "Não foi possível buscar os dados de uso da OpenAI",
-          variant: "destructive"
-        })
         return
       }
 
       setUsage(data)
     } catch (error) {
       console.error('Erro na requisição:', error)
-      toast({
-        title: "Erro",
-        description: "Erro de conexão ao buscar dados da OpenAI",
-        variant: "destructive"
-      })
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -102,8 +89,22 @@ export function OpenAICustosDashboard() {
     }
   }
 
+  // Carregamento automático ao montar o componente
   useEffect(() => {
-    fetchFormulariosCount()
+    const loadData = async () => {
+      setLoading(true)
+      await Promise.all([
+        fetchOpenAIUsage(),
+        fetchFormulariosCount()
+      ])
+      setLoading(false)
+    }
+    
+    loadData()
+    
+    // Atualizar automaticamente a cada 2 minutos
+    const interval = setInterval(loadData, 120000)
+    return () => clearInterval(interval)
   }, [])
 
   const formatCurrency = (value: number) => {
