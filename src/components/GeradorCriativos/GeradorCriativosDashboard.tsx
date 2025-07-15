@@ -58,36 +58,20 @@ export function GeradorCriativosDashboard() {
   const { user } = useAuth()
   const userEmail = user?.email || 'admin@trafegoporcents.com'
 
-  const handleFileUpload = async (file: File) => {
+  const handlePDFAnalysis = async (extractedText: string, fileName: string) => {
     try {
-      setUploadedFile(file)
+      setUploadedFile({ name: fileName } as File)
       setIsAnalyzing(true)
 
-      console.log('📤 [Dashboard] Iniciando upload do PDF:', file.name)
+      console.log('🧠 [Dashboard] Iniciando análise direta do texto extraído:', fileName)
+      console.log('📝 [Dashboard] Texto extraído:', extractedText.substring(0, 200) + '...')
 
-      // Upload do arquivo para Supabase Storage
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `pdfs/${fileName}`
-
-      const { error: uploadError } = await supabase.storage
-        .from('cliente-arquivos')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        })
-
-      if (uploadError) {
-        throw new Error(`Erro no upload: ${uploadError.message}`)
-      }
-
-      console.log('✅ [Dashboard] Upload concluído, analisando com IA...')
-
-      // Chamar edge function para análise
+      // Chamar edge function para análise do texto
       const { data: analysisResponse, error: analysisError } = await supabase.functions
         .invoke('pdf-analyzer', {
           body: {
-            filePath: filePath,
+            extractedText: extractedText,
+            fileName: fileName,
             emailGestor: userEmail
           }
         })
@@ -111,7 +95,7 @@ export function GeradorCriativosDashboard() {
       })
 
     } catch (error: any) {
-      console.error('❌ [Dashboard] Erro no upload/análise:', error)
+      console.error('❌ [Dashboard] Erro na análise:', error)
       toast({
         title: "Erro na análise",
         description: error.message,
@@ -207,7 +191,7 @@ export function GeradorCriativosDashboard() {
         </CardHeader>
         <CardContent>
           <PDFUploadArea 
-            onFileUpload={handleFileUpload}
+            onPDFAnalysis={handlePDFAnalysis}
             isAnalyzing={isAnalyzing}
             uploadedFile={uploadedFile}
           />
