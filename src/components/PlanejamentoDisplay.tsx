@@ -32,7 +32,28 @@ export const PlanejamentoDisplay = ({
     try {
       const { jsPDF } = await import('jspdf');
       
-      // Processar markdown para texto limpo
+      // Função para limpar e normalizar texto
+      const cleanText = (text: string): string => {
+        return text
+          // Remover caracteres especiais problemáticos
+          .replace(/[^\w\s\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\.,!?:;()'"%-]/g, '')
+          // Normalizar quebras de linha
+          .replace(/\r\n/g, '\n')
+          // Remover múltiplos espaços
+          .replace(/\s+/g, ' ')
+          // Remover formatação markdown problemática
+          .replace(/\*\*(.*?)\*\*/g, '$1') // negrito
+          .replace(/\*(.*?)\*/g, '$1') // itálico
+          .replace(/__(.*?)__/g, '$1') // sublinhado
+          .replace(/~~(.*?)~~/g, '$1') // riscado
+          // Remover links markdown
+          .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+          // Limpar blockquotes
+          .replace(/^>\s*/gm, '')
+          .trim();
+      };
+
+      // Processar markdown para texto limpo e bem formatado
       const processMarkdown = (text: string): Array<{type: string, content: string, level?: number}> => {
         const lines = text.split('\n');
         const processed: Array<{type: string, content: string, level?: number}> = [];
@@ -44,17 +65,38 @@ export const PlanejamentoDisplay = ({
           // Títulos
           if (trimmed.startsWith('#')) {
             const level = trimmed.match(/^#+/)?.[0].length || 1;
-            const content = trimmed.replace(/^#+\s*/, '');
-            processed.push({ type: 'heading', content, level });
+            const content = cleanText(trimmed.replace(/^#+\s*/, ''));
+            if (content) {
+              processed.push({ type: 'heading', content, level });
+            }
           }
-          // Listas
+          // Listas numeradas
+          else if (trimmed.match(/^\d+\.\s/)) {
+            const content = cleanText(trimmed.replace(/^\d+\.\s*/, ''));
+            if (content) {
+              processed.push({ type: 'numbered-list', content });
+            }
+          }
+          // Listas com bullets
           else if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-            const content = trimmed.replace(/^[-*]\s*/, '');
-            processed.push({ type: 'list', content });
+            const content = cleanText(trimmed.replace(/^[-*]\s*/, ''));
+            if (content) {
+              processed.push({ type: 'list', content });
+            }
+          }
+          // Blockquotes
+          else if (trimmed.startsWith('>')) {
+            const content = cleanText(trimmed.replace(/^>\s*/, ''));
+            if (content) {
+              processed.push({ type: 'quote', content });
+            }
           }
           // Parágrafos
           else {
-            processed.push({ type: 'paragraph', content: trimmed });
+            const content = cleanText(trimmed);
+            if (content && content.length > 2) {
+              processed.push({ type: 'paragraph', content });
+            }
           }
         }
         
@@ -120,6 +162,22 @@ export const PlanejamentoDisplay = ({
             const listLines = pdf.splitTextToSize(`• ${element.content}`, maxWidth - 5);
             pdf.text(listLines, margin + 5, currentY);
             currentY += (11 * 0.35) * listLines.length + 4;
+            break;
+            
+          case 'numbered-list':
+            pdf.setFontSize(11);
+            pdf.setFont("helvetica", "normal");
+            const numberedLines = pdf.splitTextToSize(`${element.content}`, maxWidth - 10);
+            pdf.text(numberedLines, margin + 10, currentY);
+            currentY += (11 * 0.35) * numberedLines.length + 4;
+            break;
+            
+          case 'quote':
+            pdf.setFontSize(10);
+            pdf.setFont("helvetica", "italic");
+            const quoteLines = pdf.splitTextToSize(`"${element.content}"`, maxWidth - 10);
+            pdf.text(quoteLines, margin + 10, currentY);
+            currentY += (10 * 0.35) * quoteLines.length + 6;
             break;
         }
       }
