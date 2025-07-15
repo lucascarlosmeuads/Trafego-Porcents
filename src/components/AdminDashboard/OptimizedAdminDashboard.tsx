@@ -44,6 +44,7 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
   console.log('🎯 [OptimizedAdminDashboard] Selected manager:', selectedManager)
   console.log('📊 [OptimizedAdminDashboard] Clientes encontrados:', gestorClientes.length)
   console.log('⏳ [OptimizedAdminDashboard] Loading clientes:', clientesLoading)
+  console.log('🚨 [OptimizedAdminDashboard] ACTIVE TAB:', activeTab)
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -91,6 +92,9 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
       case 'criativos-automaticos':
         return <CriativosAutomaticosDashboard />
 
+      case 'openai-custos':
+        return <div className="p-6 text-center">Dashboard de Custos OpenAI em desenvolvimento</div>
+
       case 'documentacao':
         return (
           <Suspense fallback={<LoadingFallback />}>
@@ -99,6 +103,26 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
         )
       
       case 'clientes':
+        return (
+          <div className="space-y-4 w-full">
+            {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
+            {selectedManager !== '__GESTORES__' && (
+              <div className="bg-card border rounded-lg p-4">
+                <ManagerSelector 
+                  selectedManager={selectedManager}
+                  onManagerSelect={handleManagerSelect}
+                  isAdminContext={true}
+                />
+              </div>
+            )}
+            
+            {/* Admin panel: Pass selectedManager directly for proper filtering */}
+            <div className="w-full">
+              <ClientesTable selectedManager={selectedManager} />
+            </div>
+          </div>
+        )
+
       default:
         return (
           <div className="space-y-4 w-full">
