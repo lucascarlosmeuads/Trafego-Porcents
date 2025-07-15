@@ -23,7 +23,7 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY não configurada');
     }
 
-    const { analysisId, emailGestor } = await req.json();
+    const { analysisId, emailGestor, selectedCopy } = await req.json();
     
     console.log('🎨 [creative-generator] Iniciando geração de criativos para análise:', analysisId);
 

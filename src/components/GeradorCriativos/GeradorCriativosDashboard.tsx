@@ -15,11 +15,13 @@ import {
   CheckCircle,
   Image,
   Video,
-  Loader2
+  Loader2,
+  Copy
 } from 'lucide-react'
 import { PDFUploadArea } from './PDFUploadArea'
 import { DataPreviewCards } from './DataPreviewCards'
-import { CreativeGallery } from './CreativeGallery'
+import { CopyGenerationArea } from './CopyGenerationArea'
+import { ImageGenerationArea } from './ImageGenerationArea'
 
 interface PDFData {
   nomeOferta: string
@@ -32,35 +34,31 @@ interface PDFData {
   tipoMidia: string[]
 }
 
-interface Creative {
+interface GeneratedCopy {
   id: string
-  type: 'image' | 'video' | 'anuncio_completo'
-  thumbnail: string
-  title: string
+  headline: string
+  subheadline: string
+  copy: string
+  cta: string
   style: string
-  status: 'generating' | 'ready' | 'error'
-  url?: string
-  headline?: string
-  subheadline?: string
-  copy?: string
-  cta?: string
+  createdAt: Date
 }
 
 export function GeradorCriativosDashboard() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [pdfData, setPdfData] = useState<PDFData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [creatives, setCreatives] = useState<Creative[]>([])
   const [analysisId, setAnalysisId] = useState<string | null>(null)
+  const [selectedCopy, setSelectedCopy] = useState<GeneratedCopy | null>(null)
+  const [currentStep, setCurrentStep] = useState<'upload' | 'copy' | 'image'>('upload')
   
   const { toast } = useToast()
   const { user } = useAuth()
   const userEmail = user?.email || 'admin@trafegoporcents.com'
 
-  const handlePDFAnalysis = async (extractedText: string, fileName: string) => {
+  const handlePDFAnalysis = async (extractedText: string, fileName: string, file: File) => {
     try {
-      setUploadedFile({ name: fileName } as File)
+      setUploadedFile(file)
       setIsAnalyzing(true)
 
       console.log('🧠 [Dashboard] Iniciando análise direta do texto extraído:', fileName)
@@ -88,10 +86,11 @@ export function GeradorCriativosDashboard() {
 
       setPdfData(analysisResponse.dadosExtraidos)
       setAnalysisId(analysisResponse.analysisId)
+      setCurrentStep('copy')
       
       toast({
         title: "PDF analisado com sucesso!",
-        description: "Dados extraídos e prontos para gerar criativos.",
+        description: "Agora você pode gerar copies baseadas no seu PDF.",
       })
 
     } catch (error: any) {
@@ -106,66 +105,13 @@ export function GeradorCriativosDashboard() {
     }
   }
 
-  const handleGenerateCreatives = async () => {
-    if (!analysisId || !pdfData) return
-    
-    try {
-      setIsGenerating(true)
-
-      console.log('🎨 [Dashboard] Iniciando geração de criativo completo para análise:', analysisId)
-
-      // Chamar edge function para geração de criativo
-      const { data: generationResponse, error: generationError } = await supabase.functions
-        .invoke('creative-generator', {
-          body: {
-            analysisId: analysisId,
-            emailGestor: userEmail
-          }
-        })
-
-      if (generationError) {
-        throw new Error(`Erro na geração: ${generationError.message}`)
-      }
-
-      if (!generationResponse.success) {
-        throw new Error(generationResponse.error || 'Erro na geração de criativos')
-      }
-
-      console.log('🎉 [Dashboard] Criativo completo gerado:', generationResponse.criativo)
-
-      // Converter para o formato do componente
-      const novoCreative: Creative = {
-        id: `creative-${Date.now()}`,
-        type: 'anuncio_completo' as any,
-        thumbnail: generationResponse.criativo.imageUrl,
-        title: generationResponse.criativo.titulo,
-        style: 'Incongruência Criativa',
-        status: 'ready' as const,
-        url: generationResponse.criativo.imageUrl,
-        headline: generationResponse.criativo.headline,
-        subheadline: generationResponse.criativo.subheadline,
-        copy: generationResponse.criativo.copy,
-        cta: generationResponse.criativo.cta
-      } as any
-
-      // Adicionar ao array existente
-      setCreatives(prev => [...prev, novoCreative])
-
-      toast({
-        title: "Criativo gerado com sucesso!",
-        description: `Anúncio completo criado com incongruência criativa. Custo: R$ ${generationResponse.custo.toFixed(2)}`,
-      })
-
-    } catch (error: any) {
-      console.error('❌ [Dashboard] Erro na geração:', error)
-      toast({
-        title: "Erro na geração",
-        description: error.message,
-        variant: "destructive",
-      })
-    } finally {
-      setIsGenerating(false)
-    }
+  const handleCopySelected = (copy: GeneratedCopy) => {
+    setSelectedCopy(copy)
+    setCurrentStep('image')
+    toast({
+      title: "Copy selecionada!",
+      description: "Agora você pode gerar a imagem para esta copy.",
+    })
   }
 
   return (
@@ -177,99 +123,113 @@ export function GeradorCriativosDashboard() {
           <h1 className="text-3xl font-bold text-foreground">Gerador de Criativos</h1>
         </div>
         <p className="text-muted-foreground text-lg">
-          Upload do PDF de planejamento da campanha e gere criativos automáticos com IA
+          Upload do PDF → Gere copies → Crie imagens com incongruência criativa
         </p>
       </div>
 
-      {/* Upload Area */}
+      {/* Progress Steps */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Upload className="h-5 w-5" />
-            Upload do PDF de Planejamento
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PDFUploadArea 
-            onPDFAnalysis={handlePDFAnalysis}
-            isAnalyzing={isAnalyzing}
-            uploadedFile={uploadedFile}
-          />
+        <CardContent className="py-4">
+          <div className="flex items-center justify-center gap-8">
+            <div className={`flex items-center gap-2 ${currentStep === 'upload' ? 'text-primary' : currentStep === 'copy' || currentStep === 'image' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 'upload' ? 'bg-primary text-primary-foreground' : currentStep === 'copy' || currentStep === 'image' ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                {currentStep === 'copy' || currentStep === 'image' ? <CheckCircle className="h-4 w-4" /> : '1'}
+              </div>
+              <span className="font-medium">Upload PDF</span>
+            </div>
+            
+            <div className="w-8 h-0.5 bg-muted"></div>
+            
+            <div className={`flex items-center gap-2 ${currentStep === 'copy' ? 'text-primary' : currentStep === 'image' ? 'text-green-600' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 'copy' ? 'bg-primary text-primary-foreground' : currentStep === 'image' ? 'bg-green-600 text-white' : 'bg-muted text-muted-foreground'}`}>
+                {currentStep === 'image' ? <CheckCircle className="h-4 w-4" /> : '2'}
+              </div>
+              <span className="font-medium">Gerar Copy</span>
+            </div>
+            
+            <div className="w-8 h-0.5 bg-muted"></div>
+            
+            <div className={`flex items-center gap-2 ${currentStep === 'image' ? 'text-primary' : 'text-muted-foreground'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-semibold ${currentStep === 'image' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
+                3
+              </div>
+              <span className="font-medium">Gerar Imagem</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
 
-      {/* Data Preview */}
-      {pdfData && (
+      {/* Step 1: Upload Area */}
+      {currentStep === 'upload' && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <FileText className="h-5 w-5" />
-              Dados Extraídos do PDF
+              <Upload className="h-5 w-5" />
+              Upload do PDF de Planejamento
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <DataPreviewCards data={pdfData} />
-            
-            {!isGenerating && (
-              <div className="mt-6 text-center space-y-3">
-                <Button 
-                  onClick={handleGenerateCreatives}
-                  size="lg"
-                  className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
-                >
-                  <Wand2 className="h-5 w-5 mr-2" />
-                  {creatives.length === 0 ? 'Gerar Primeiro Criativo' : 'Gerar Mais Um Criativo'}
+            <PDFUploadArea 
+              onPDFAnalysis={handlePDFAnalysis}
+              isAnalyzing={isAnalyzing}
+              uploadedFile={uploadedFile}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 2: Copy Generation */}
+      {currentStep === 'copy' && pdfData && (
+        <>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Dados Extraídos do PDF
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <DataPreviewCards data={pdfData} />
+            </CardContent>
+          </Card>
+
+          <CopyGenerationArea 
+            pdfData={pdfData}
+            onCopySelected={handleCopySelected}
+          />
+        </>
+      )}
+
+      {/* Step 3: Image Generation */}
+      {currentStep === 'image' && (
+        <ImageGenerationArea 
+          selectedCopy={selectedCopy}
+          analysisId={analysisId}
+          userEmail={userEmail}
+        />
+      )}
+
+      {/* Navigation */}
+      {currentStep !== 'upload' && (
+        <Card>
+          <CardContent className="py-4">
+            <div className="flex justify-between">
+              <Button 
+                variant="outline"
+                onClick={() => {
+                  if (currentStep === 'image') setCurrentStep('copy')
+                  else if (currentStep === 'copy') setCurrentStep('upload')
+                }}
+              >
+                ← Voltar
+              </Button>
+              
+              {currentStep === 'copy' && selectedCopy && (
+                <Button onClick={() => setCurrentStep('image')}>
+                  Continuar para Imagem →
                 </Button>
-                {creatives.length > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    Cada criativo custa aproximadamente R$ 0,15 e demora ~15 segundos
-                  </p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Generation Progress */}
-      {isGenerating && (
-        <Card>
-          <CardContent className="py-8">
-            <div className="text-center space-y-4">
-              <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <h3 className="text-xl font-semibold">Gerando Criativo com IA</h3>
-              <p className="text-muted-foreground">
-                Criando anúncio completo: Headline + Imagem + Copy agressiva...
-              </p>
-              <div className="flex justify-center gap-2">
-                <Badge variant="outline" className="animate-pulse">
-                  <Wand2 className="h-3 w-3 mr-1" />
-                  Incongruência Criativa
-                </Badge>
-                <Badge variant="outline" className="animate-pulse">
-                  <Image className="h-3 w-3 mr-1" />
-                  DALL-E 3
-                </Badge>
-              </div>
-              <p className="text-xs text-muted-foreground">
-                Tempo estimado: ~15 segundos | Custo: ~R$ 0,15
-              </p>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Creative Gallery */}
-      {creatives.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              Criativos Gerados ({creatives.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <CreativeGallery creatives={creatives} />
           </CardContent>
         </Card>
       )}

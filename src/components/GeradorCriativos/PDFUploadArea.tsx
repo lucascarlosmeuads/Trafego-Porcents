@@ -7,11 +7,13 @@ import {
   FileText, 
   Loader2, 
   CheckCircle,
-  AlertCircle 
+  AlertCircle,
+  Download
 } from 'lucide-react'
+import pdfs from 'pdf-parse'
 
 interface PDFUploadAreaProps {
-  onPDFAnalysis: (text: string, fileName: string) => void
+  onPDFAnalysis: (text: string, fileName: string, file: File) => void
   isAnalyzing: boolean
   uploadedFile: File | null
 }
@@ -21,58 +23,30 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
     const file = acceptedFiles[0]
     if (file && file.type === 'application/pdf') {
       try {
-        console.log('📄 [PDFUpload] Iniciando análise direta do PDF:', file.name)
+        console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Converter arquivo para text usando FileReader
-        const reader = new FileReader()
+        // Ler o arquivo como ArrayBuffer para usar com pdf-parse
+        const arrayBuffer = await file.arrayBuffer()
         
-        const extractText = () => new Promise<string>((resolve, reject) => {
-          reader.onload = () => {
-            try {
-              // Para simplicidade, extrair o nome do arquivo e gerar texto de exemplo
-              // Em produção, seria necessária uma biblioteca mais robusta
-              const mockText = `
-PLANEJAMENTO DE CAMPANHA - ${file.name}
-
-Nome da Oferta: ${file.name.replace('.pdf', '')} - Solução Premium
-
-Público-Alvo: Profissionais e empresários interessados em crescimento
-
-Proposta Central: Transforme seus resultados com nossa metodologia comprovada
-
-Benefícios:
-- Resultados em até 30 dias
-- Suporte especializado
-- Garantia de satisfação
-- Acesso vitalício
-
-Headline Principal: "Revolucione Seus Resultados Hoje Mesmo"
-
-Call-to-Action: "QUERO COMEÇAR AGORA"
-
-Tom de Voz: Confiante e motivacional
-
-Tipo de Mídia: Imagem, Vídeo
-              `
-              resolve(mockText)
-            } catch (error) {
-              reject(error)
-            }
-          }
-          reader.onerror = reject
-          reader.readAsText(file)
-        })
+        console.log('🔍 [PDFUpload] Extraindo texto com pdf-parse...')
         
-        const extractedText = await extractText()
+        // Usar pdf-parse para extrair texto real do PDF
+        const data = await pdfs(new Uint8Array(arrayBuffer))
+        const extractedText = data.text
         
-        console.log('✅ [PDFUpload] Texto extraído:', extractedText.length, 'caracteres')
+        console.log('✅ [PDFUpload] Texto real extraído:', extractedText.length, 'caracteres')
+        console.log('📄 [PDFUpload] Páginas:', data.numpages)
         
-        // Enviar texto extraído para análise
-        onPDFAnalysis(extractedText, file.name)
+        if (!extractedText || extractedText.trim().length < 50) {
+          throw new Error('PDF não contém texto suficiente para análise. Verifique se o arquivo não é apenas imagens.')
+        }
         
-      } catch (error) {
+        // Enviar texto extraído e arquivo para análise
+        onPDFAnalysis(extractedText, file.name, file)
+        
+      } catch (error: any) {
         console.error('❌ [PDFUpload] Erro ao extrair texto do PDF:', error)
-        throw error
+        throw new Error(`Erro ao processar PDF: ${error.message}`)
       }
     }
   }, [onPDFAnalysis])
@@ -113,6 +87,25 @@ Tipo de Mídia: Imagem, Vídeo
           <p className="text-sm text-green-600 mt-1">
             Dados extraídos e prontos para gerar criativos
           </p>
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => {
+                const url = URL.createObjectURL(uploadedFile)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = uploadedFile.name
+                document.body.appendChild(a)
+                a.click()
+                URL.revokeObjectURL(url)
+                document.body.removeChild(a)
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" />
+              Baixar PDF Original
+            </Button>
+          </div>
         </CardContent>
       </Card>
     )
