@@ -6,7 +6,8 @@ import {
   Users, 
   Headphones, 
   BarChart3,
-  DollarSign
+  DollarSign,
+  Zap
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -40,6 +41,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'Custos OpenAI',
       icon: DollarSign,
       description: 'Monitorar saldo e gastos'
+    },
+    {
+      id: 'criativos-automaticos',
+      label: 'Criativos IA',
+      icon: Zap,
+      description: 'Gerar criativos com IA'
     }
   ]
 

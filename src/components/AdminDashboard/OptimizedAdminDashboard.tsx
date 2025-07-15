@@ -9,6 +9,7 @@ import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from '../SAC/SacDashboard'
+import { CriativosAutomaticosDashboard } from './CriativosAutomaticosDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -86,6 +87,9 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
 
       case 'sac':
         return <SacDashboard />
+
+      case 'criativos-automaticos':
+        return <CriativosAutomaticosDashboard />
 
       case 'documentacao':
         return (
