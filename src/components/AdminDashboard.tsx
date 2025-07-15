@@ -17,6 +17,7 @@ import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
 import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
+import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -127,6 +128,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             <AdminSugestoes />
           </div>
         )
+      
+      case 'openai-custos':
+        return <OpenAICustosDashboard />
       
       case 'clientes':
       default:

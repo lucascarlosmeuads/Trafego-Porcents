@@ -5,7 +5,8 @@ import {
   LayoutDashboard, 
   Users, 
   Headphones, 
-  BarChart3
+  BarChart3,
+  DollarSign
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -33,6 +34,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'SAC',
       icon: Headphones,
       description: 'Central de atendimento'
+    },
+    {
+      id: 'openai-custos',
+      label: 'Custos OpenAI',
+      icon: DollarSign,
+      description: 'Monitorar saldo e gastos'
     }
   ]
 
