@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from '../ClientesTable'
 import { GestoresManagement } from '../GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from '../LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyGeradorCriativos } from '../LazyComponents'
 import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -82,6 +82,13 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
               selectedManager={selectedManager}
             />
           </div>
+        )
+
+      case 'gerador-criativos':
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <LazyGeradorCriativos />
+          </Suspense>
         )
 
       case 'sac':
