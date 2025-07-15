@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from '../ClientesTable'
 import { GestoresManagement } from '../GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyGeradorCriativos } from '../LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from '../LazyComponents'
 import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -43,8 +43,6 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
   console.log('🎯 [OptimizedAdminDashboard] Selected manager:', selectedManager)
   console.log('📊 [OptimizedAdminDashboard] Clientes encontrados:', gestorClientes.length)
   console.log('⏳ [OptimizedAdminDashboard] Loading clientes:', clientesLoading)
-  console.log('🎯 [OptimizedAdminDashboard] ACTIVE TAB RECEBIDO:', `"${activeTab}"`)
-  console.log('🔍 [OptimizedAdminDashboard] Verificando qual case será executado...')
 
   useEffect(() => {
     if (user && isAdmin) {
@@ -65,10 +63,8 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
     }
     
     // Navegação por abas
-    console.log('🔄 [OptimizedAdminDashboard] Entrando no switch com activeTab:', `"${activeTab}"`)
     switch (activeTab) {
       case 'dashboard':
-        console.log('✅ [OptimizedAdminDashboard] CASE: dashboard')
         return (
           <div className="space-y-6">
             {/* Seletor de gestores */}
@@ -88,20 +84,10 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
           </div>
         )
 
-      case 'gerador-criativos':
-        console.log('✅ [OptimizedAdminDashboard] CASE: gerador-criativos - RENDERIZANDO GERADOR!')
-        return (
-          <Suspense fallback={<LoadingFallback />}>
-            <LazyGeradorCriativos />
-          </Suspense>
-        )
-
       case 'sac':
-        console.log('✅ [OptimizedAdminDashboard] CASE: sac')
         return <SacDashboard />
 
       case 'documentacao':
-        console.log('✅ [OptimizedAdminDashboard] CASE: documentacao')
         return (
           <Suspense fallback={<LoadingFallback />}>
             <LazyDocumentationViewer />
@@ -110,7 +96,6 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
       
       case 'clientes':
       default:
-        console.log('❌ [OptimizedAdminDashboard] CASE: default/clientes - activeTab era:', `"${activeTab}"`)
         return (
           <div className="space-y-4 w-full">
             {/* Seletor de gestores apenas quando não estiver gerenciando gestores */}
