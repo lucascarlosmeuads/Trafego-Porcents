@@ -4,8 +4,12 @@ import { useClienteAdd } from '@/hooks/useClienteAdd'
 import { clienteLogger } from '@/utils/logger'
 
 export function useClienteOperations(userEmail: string, isAdmin: boolean, refetchData: () => Promise<void>) {
-  const { updateCliente: baseUpdateCliente } = useClienteUpdate(userEmail, isAdmin, refetchData)
-  const { addCliente: baseAddCliente } = useClienteAdd(userEmail, isAdmin, refetchData)
+  // Garantir que os parâmetros são válidos antes de chamar hooks filhos
+  const safeUserEmail = userEmail || 'fallback@example.com'
+  const safeIsAdmin = Boolean(isAdmin)
+  
+  const { updateCliente: baseUpdateCliente } = useClienteUpdate(safeUserEmail, safeIsAdmin, refetchData)
+  const { addCliente: baseAddCliente } = useClienteAdd(safeUserEmail, safeIsAdmin, refetchData)
 
   // Log das operações para debugging
   const wrappedUpdateCliente = async (...args: Parameters<typeof baseUpdateCliente>) => {

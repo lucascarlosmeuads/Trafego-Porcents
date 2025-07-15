@@ -30,25 +30,32 @@ export function useManagerData(
   selectedManager?: string,
   filterType?: 'sites-pendentes' | 'sites-finalizados'
 ): UseManagerDataReturn {
+  // TODOS os hooks devem ser chamados primeiro, sem condições
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<any>(null)
   const [totalClientes, setTotalClientes] = useState(0)
-  const { user, isAdmin } = useAuth()
   const [forceUpdate, setForceUpdate] = useState(0)
+  
+  // Hook de autenticação sempre chamado
+  const { user, isAdmin } = useAuth()
 
   // Determine the actual user email and admin status
   const actualUserEmail = userEmail || user?.email || ''
   const actualIsAdmin = isAdminUser !== undefined ? isAdminUser : isAdmin
   const currentManager = selectedManager || null
 
-  // Define refetch function first
+  // Define refetch function
   const refetch = async () => {
     setForceUpdate(prev => prev + 1)
   }
 
-  // Get client operations - moved after refetch definition
-  const { updateCliente, addCliente } = useClienteOperations(actualUserEmail, actualIsAdmin, refetch)
+  // Get client operations - agora com parâmetros válidos sempre
+  const { updateCliente, addCliente } = useClienteOperations(
+    actualUserEmail || 'fallback@example.com', 
+    actualIsAdmin || false, 
+    refetch
+  )
 
   useEffect(() => {
     fetchClientes()

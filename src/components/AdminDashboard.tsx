@@ -19,6 +19,7 @@ import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
+import { ErrorBoundary } from './ErrorBoundary'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -27,18 +28,16 @@ interface AdminDashboardProps {
 }
 
 export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
+  // CORREÇÃO: Todos os hooks devem ser chamados PRIMEIRO, sem condições
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
-  
-  // TODOS os hooks devem ser chamados sempre, sem condições
   const { useOptimized } = useOptimizedComponents()
   
-  // CORREÇÃO: Buscar dados dos clientes baseado no gestor selecionado
-  // Para admin, passar o email do usuário, isAdminUser=true, e selectedManager
+  // Buscar dados dos clientes - sempre chamar o hook
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
-    user?.email || '', // userEmail: email do admin atual
-    true, // isAdminUser: true para admin
-    selectedManager === '__GESTORES__' ? '' : selectedManager, // selectedManager: email do gestor ou null/vazio para todos
+    user?.email || 'fallback@example.com', 
+    true, 
+    selectedManager === '__GESTORES__' ? '' : selectedManager
   )
 
   useEffect(() => {
@@ -54,8 +53,8 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
   console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
 
-  // Renderizar loading APÓS todos os hooks serem chamados
-  if (loading) {
+  // Renderizar loading apenas se user/isAdmin ainda não estiverem carregados
+  if (loading || !user || !isAdmin) {
     return <LoadingFallback />
   }
 
@@ -161,9 +160,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
   }
 
   return (
-    <div className="w-full">
-      {renderContent()}
-    </div>
+    <ErrorBoundary>
+      <div className="w-full">
+        {renderContent()}
+      </div>
+    </ErrorBoundary>
   )
 }
 
