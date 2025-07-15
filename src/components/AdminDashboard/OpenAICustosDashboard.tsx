@@ -11,9 +11,27 @@ import { useToast } from '@/hooks/use-toast'
 interface OpenAIUsage {
   total_usage: number
   hard_limit_usd: number
+  soft_limit_usd: number
   has_payment_method: boolean
-  current_usage_usd: number
-  daily_cost_since_start: { [key: string]: number }
+  custo_hoje: number
+  custo_semana: number
+  custo_mes: number
+  total_tokens: number
+  daily_costs: Array<{
+    timestamp: string
+    line_items: Array<{
+      cost: number
+      n_usage: number
+      name: string
+    }>
+  }>
+  plan: any
+  access_until: string
+  periodo_consultado: {
+    inicio_mes: string
+    inicio_semana: string
+    hoje: string
+  }
 }
 
 interface FormularioCount {
@@ -111,13 +129,18 @@ export function OpenAICustosDashboard() {
 
   const getStatusColor = () => {
     if (!usage) return 'default'
-    const percentUsed = (usage.current_usage_usd / usage.hard_limit_usd) * 100
+    const percentUsed = (usage.custo_mes / usage.hard_limit_usd) * 100
     if (percentUsed > 80) return 'destructive'
     if (percentUsed > 60) return 'secondary'
     return 'default'
   }
 
-  const estimatedCostPerPlan = 0.025 // Aproximadamente $0.025 por planejamento
+  const getUsagePercentage = () => {
+    if (!usage) return 0
+    return Math.min((usage.custo_mes / usage.hard_limit_usd) * 100, 100)
+  }
+
+  const estimatedCostPerPlan = usage ? (usage.custo_mes / Math.max(formularios?.este_mes || 1, 1)) : 0.025
 
   return (
     <div className="space-y-6">
@@ -134,8 +157,67 @@ export function OpenAICustosDashboard() {
         </Button>
       </div>
 
+      {/* Cards principais de custos OpenAI */}
+      {usage && (
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <DollarSign className="h-4 w-4" />
+                Custo Total (Mês)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-600">{formatCurrency(usage.custo_mes)}</div>
+              <p className="text-xs text-muted-foreground">
+                {formularios?.este_mes || 0} planejamentos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Hoje
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{formatCurrency(usage.custo_hoje)}</div>
+              <p className="text-xs text-muted-foreground">
+                {formularios?.hoje || 0} planejamentos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Esta Semana</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{formatCurrency(usage.custo_semana)}</div>
+              <p className="text-xs text-muted-foreground">
+                {formularios?.esta_semana || 0} planejamentos
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium">Custo Médio</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">{formatCurrency(estimatedCostPerPlan)}</div>
+              <p className="text-xs text-muted-foreground">
+                Por planejamento
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Cards de estatísticas de formulários */}
-      {formularios && (
+      {formularios && !usage && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
@@ -144,7 +226,7 @@ export function OpenAICustosDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formularios.total}</div>
               <p className="text-xs text-muted-foreground">
-                Custo estimado: {formatCurrency(formularios.total * estimatedCostPerPlan)}
+                Custo estimado: {formatCurrency(formularios.total * 0.025)}
               </p>
             </CardContent>
           </Card>
@@ -156,7 +238,7 @@ export function OpenAICustosDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formularios.hoje}</div>
               <p className="text-xs text-muted-foreground">
-                Custo estimado: {formatCurrency(formularios.hoje * estimatedCostPerPlan)}
+                Custo estimado: {formatCurrency(formularios.hoje * 0.025)}
               </p>
             </CardContent>
           </Card>
@@ -168,7 +250,7 @@ export function OpenAICustosDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formularios.esta_semana}</div>
               <p className="text-xs text-muted-foreground">
-                Custo estimado: {formatCurrency(formularios.esta_semana * estimatedCostPerPlan)}
+                Custo estimado: {formatCurrency(formularios.esta_semana * 0.025)}
               </p>
             </CardContent>
           </Card>
@@ -180,36 +262,36 @@ export function OpenAICustosDashboard() {
             <CardContent>
               <div className="text-2xl font-bold">{formularios.este_mes}</div>
               <p className="text-xs text-muted-foreground">
-                Custo estimado: {formatCurrency(formularios.este_mes * estimatedCostPerPlan)}
+                Custo estimado: {formatCurrency(formularios.este_mes * 0.025)}
               </p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* Dados da OpenAI */}
+      {/* Dados detalhados da OpenAI */}
       {usage ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <DollarSign className="h-5 w-5" />
-                Saldo Atual
+                Saldo e Limites
               </CardTitle>
               <CardDescription>
-                Uso atual vs limite definido
+                Uso atual vs limites definidos
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Usado:</span>
+                  <span className="text-sm font-medium">Usado (mês):</span>
                   <span className="text-lg font-bold">
-                    {formatCurrency(usage.current_usage_usd)}
+                    {formatCurrency(usage.custo_mes)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-sm font-medium">Limite:</span>
+                  <span className="text-sm font-medium">Limite máximo:</span>
                   <span className="text-lg">
                     {formatCurrency(usage.hard_limit_usd)}
                   </span>
@@ -217,9 +299,17 @@ export function OpenAICustosDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Disponível:</span>
                   <span className="text-lg font-bold text-green-600">
-                    {formatCurrency(usage.hard_limit_usd - usage.current_usage_usd)}
+                    {formatCurrency(usage.hard_limit_usd - usage.custo_mes)}
                   </span>
                 </div>
+                {usage.soft_limit_usd > 0 && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium">Limite suave:</span>
+                    <span className="text-lg text-orange-600">
+                      {formatCurrency(usage.soft_limit_usd)}
+                    </span>
+                  </div>
+                )}
               </div>
 
               <Separator />
@@ -228,17 +318,17 @@ export function OpenAICustosDashboard() {
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">% Usado:</span>
                   <Badge variant={getStatusColor()}>
-                    {((usage.current_usage_usd / usage.hard_limit_usd) * 100).toFixed(1)}%
+                    {getUsagePercentage().toFixed(1)}%
                   </Badge>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
+                <div className="w-full bg-gray-200 rounded-full h-3">
                   <div 
-                    className={`h-2 rounded-full ${
+                    className={`h-3 rounded-full transition-all duration-300 ${
                       getStatusColor() === 'destructive' ? 'bg-red-500' :
                       getStatusColor() === 'secondary' ? 'bg-yellow-500' : 'bg-green-500'
                     }`}
                     style={{ 
-                      width: `${Math.min((usage.current_usage_usd / usage.hard_limit_usd) * 100, 100)}%` 
+                      width: `${getUsagePercentage()}%` 
                     }}
                   />
                 </div>
@@ -250,13 +340,20 @@ export function OpenAICustosDashboard() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5" />
-                Informações da Conta
+                Estatísticas de Uso
               </CardTitle>
               <CardDescription>
-                Status e configurações
+                Tokens e configurações da conta
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Total de tokens:</span>
+                <span className="font-medium">
+                  {new Intl.NumberFormat('pt-BR').format(usage.total_tokens)}
+                </span>
+              </div>
+
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Método de pagamento:</span>
                 <Badge variant={usage.has_payment_method ? "default" : "destructive"}>
@@ -279,6 +376,15 @@ export function OpenAICustosDashboard() {
                   {formatCurrency(usage.total_usage)}
                 </span>
               </div>
+
+              {usage.access_until && (
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Acesso até:</span>
+                  <span className="font-medium text-sm">
+                    {new Date(usage.access_until).toLocaleDateString('pt-BR')}
+                  </span>
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>
