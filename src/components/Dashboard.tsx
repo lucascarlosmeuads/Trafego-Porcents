@@ -33,6 +33,13 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
+  // Debug wrapper para setActiveTab
+  const handleTabChange = (newTab: string) => {
+    console.log('🔄 [Dashboard] setActiveTab chamado. Mudando de:', `"${activeTab}"`, 'para:', `"${newTab}"`)
+    setActiveTab(newTab)
+    console.log('✅ [Dashboard] Estado activeTab atualizado para:', `"${newTab}"`)
+  }
+
   console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
   console.log('🔍 [Dashboard] Estado de autenticação:', {
     userEmail: user?.email,
@@ -135,7 +142,7 @@ export function Dashboard() {
           selectedManager={selectedManager}
           onManagerSelect={setSelectedManager}
           activeTab={activeTab}
-          onTabChange={setActiveTab}
+          onTabChange={handleTabChange}
         />
         
         <div className="flex-1 overflow-auto min-h-screen">
