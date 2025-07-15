@@ -493,71 +493,6 @@ export type Database = {
           },
         ]
       }
-      criativos_gerados: {
-        Row: {
-          aprovado_em: string | null
-          aprovado_por: string | null
-          caminho_pdf: string
-          cliente_id: number | null
-          created_at: string
-          criativos: Json
-          custo_processamento: number | null
-          dados_extraidos: Json
-          email_cliente: string
-          email_gestor: string
-          id: string
-          nome_arquivo_pdf: string
-          observacoes: string | null
-          processado_em: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          aprovado_em?: string | null
-          aprovado_por?: string | null
-          caminho_pdf: string
-          cliente_id?: number | null
-          created_at?: string
-          criativos?: Json
-          custo_processamento?: number | null
-          dados_extraidos?: Json
-          email_cliente: string
-          email_gestor: string
-          id?: string
-          nome_arquivo_pdf: string
-          observacoes?: string | null
-          processado_em?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          aprovado_em?: string | null
-          aprovado_por?: string | null
-          caminho_pdf?: string
-          cliente_id?: number | null
-          created_at?: string
-          criativos?: Json
-          custo_processamento?: number | null
-          dados_extraidos?: Json
-          email_cliente?: string
-          email_gestor?: string
-          id?: string
-          nome_arquivo_pdf?: string
-          observacoes?: string | null
-          processado_em?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "criativos_gerados_cliente_id_fkey"
-            columns: ["cliente_id"]
-            isOneToOne: false
-            referencedRelation: "todos_clientes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       formularios_parceria: {
         Row: {
           completo: boolean
@@ -1003,48 +938,6 @@ export type Database = {
           status?: string
           titulo?: string
           updated_at?: string
-        }
-        Relationships: []
-      }
-      templates_criativos: {
-        Row: {
-          ativo: boolean
-          categoria: string
-          created_at: string
-          elementos_visuais: Json
-          id: string
-          layout_config: Json
-          nome: string
-          performance_score: number | null
-          prompts_geracao: Json
-          updated_at: string
-          uso_contador: number | null
-        }
-        Insert: {
-          ativo?: boolean
-          categoria: string
-          created_at?: string
-          elementos_visuais?: Json
-          id?: string
-          layout_config?: Json
-          nome: string
-          performance_score?: number | null
-          prompts_geracao?: Json
-          updated_at?: string
-          uso_contador?: number | null
-        }
-        Update: {
-          ativo?: boolean
-          categoria?: string
-          created_at?: string
-          elementos_visuais?: Json
-          id?: string
-          layout_config?: Json
-          nome?: string
-          performance_score?: number | null
-          prompts_geracao?: Json
-          updated_at?: string
-          uso_contador?: number | null
         }
         Relationships: []
       }
