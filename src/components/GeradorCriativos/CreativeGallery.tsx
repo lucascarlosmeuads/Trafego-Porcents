@@ -10,15 +10,20 @@ import {
   Video,
   ExternalLink
 } from 'lucide-react'
+import { AnuncioCompleto } from './AnuncioCompleto'
 
 interface Creative {
   id: string
-  type: 'image' | 'video'
+  type: 'image' | 'video' | 'anuncio_completo'
   thumbnail: string
   title: string
   style: string
   status: 'generating' | 'ready' | 'error'
   url?: string
+  headline?: string
+  subheadline?: string
+  copy?: string
+  cta?: string
 }
 
 interface CreativeGalleryProps {
@@ -28,6 +33,7 @@ interface CreativeGalleryProps {
 export function CreativeGallery({ creatives }: CreativeGalleryProps) {
   const images = creatives.filter(c => c.type === 'image')
   const videos = creatives.filter(c => c.type === 'video')
+  const anunciosCompletos = creatives.filter(c => c.type === 'anuncio_completo')
 
   const handleDownload = (creative: Creative) => {
     if (creative.url) {
@@ -145,13 +151,34 @@ export function CreativeGallery({ creatives }: CreativeGalleryProps) {
 
   return (
     <div className="space-y-8">
+      {/* Anúncios Completos Section */}
+      {anunciosCompletos.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-4">
+            <CheckCircle className="h-5 w-5 text-green-600" />
+            <h3 className="text-lg font-semibold">Anúncios Completos</h3>
+            <Badge variant="secondary">{anunciosCompletos.length}</Badge>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
+            {anunciosCompletos.map((creative) => (
+              <AnuncioCompleto 
+                key={creative.id} 
+                creative={creative}
+                onRegenerate={(id) => handleRegenerate(creative)}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+      
       {/* Images Section */}
       {images.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-4">
             <Image className="h-5 w-5 text-blue-600" />
             <h3 className="text-lg font-semibold">Criativos de Imagem</h3>
-            <Badge variant="secondary">{images.length}/3</Badge>
+            <Badge variant="secondary">{images.length}</Badge>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -168,7 +195,7 @@ export function CreativeGallery({ creatives }: CreativeGalleryProps) {
           <div className="flex items-center gap-2 mb-4">
             <Video className="h-5 w-5 text-purple-600" />
             <h3 className="text-lg font-semibold">Criativos de Vídeo</h3>
-            <Badge variant="secondary">{videos.length}/3</Badge>
+            <Badge variant="secondary">{videos.length}</Badge>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -180,24 +207,26 @@ export function CreativeGallery({ creatives }: CreativeGalleryProps) {
       )}
 
       {/* Action Bar */}
-      <div className="border-t pt-6">
-        <div className="flex flex-wrap gap-4 justify-center">
-          <Button variant="outline" size="lg">
-            <Download className="h-4 w-4 mr-2" />
-            Baixar Todos ({creatives.length})
-          </Button>
-          
-          <Button variant="outline" size="lg">
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Regenerar Todos
-          </Button>
-          
-          <Button size="lg" className="bg-green-600 hover:bg-green-700">
-            <CheckCircle className="h-4 w-4 mr-2" />
-            Aprovar Todos
-          </Button>
+      {creatives.length > 0 && (
+        <div className="border-t pt-6">
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Button variant="outline" size="lg">
+              <Download className="h-4 w-4 mr-2" />
+              Baixar Todos ({creatives.length})
+            </Button>
+            
+            <Button variant="outline" size="lg">
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Regenerar Todos
+            </Button>
+            
+            <Button size="lg" className="bg-green-600 hover:bg-green-700">
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Aprovar Todos
+            </Button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

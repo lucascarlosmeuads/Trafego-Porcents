@@ -34,12 +34,16 @@ interface PDFData {
 
 interface Creative {
   id: string
-  type: 'image' | 'video'
+  type: 'image' | 'video' | 'anuncio_completo'
   thumbnail: string
   title: string
   style: string
   status: 'generating' | 'ready' | 'error'
   url?: string
+  headline?: string
+  subheadline?: string
+  copy?: string
+  cta?: string
 }
 
 export function GeradorCriativosDashboard() {
@@ -124,9 +128,9 @@ export function GeradorCriativosDashboard() {
     try {
       setIsGenerating(true)
 
-      console.log('🎨 [Dashboard] Iniciando geração de criativos para análise:', analysisId)
+      console.log('🎨 [Dashboard] Iniciando geração de criativo completo para análise:', analysisId)
 
-      // Chamar edge function para geração de criativos
+      // Chamar edge function para geração de criativo
       const { data: generationResponse, error: generationError } = await supabase.functions
         .invoke('creative-generator', {
           body: {
@@ -143,24 +147,29 @@ export function GeradorCriativosDashboard() {
         throw new Error(generationResponse.error || 'Erro na geração de criativos')
       }
 
-      console.log('🎉 [Dashboard] Criativos gerados:', generationResponse.criativos)
+      console.log('🎉 [Dashboard] Criativo completo gerado:', generationResponse.criativo)
 
       // Converter para o formato do componente
-      const formattedCreatives: Creative[] = generationResponse.criativos.map((criativo: any, index: number) => ({
-        id: `${index + 1}`,
-        type: criativo.tipo,
-        thumbnail: criativo.url || '/placeholder.svg',
-        title: criativo.titulo,
-        style: criativo.variacao || criativo.conteudo?.substring(0, 50) + '...',
+      const novoCreative: Creative = {
+        id: `creative-${Date.now()}`,
+        type: 'anuncio_completo' as any,
+        thumbnail: generationResponse.criativo.imageUrl,
+        title: generationResponse.criativo.titulo,
+        style: 'Incongruência Criativa',
         status: 'ready' as const,
-        url: criativo.url || criativo.conteudo
-      }))
+        url: generationResponse.criativo.imageUrl,
+        headline: generationResponse.criativo.headline,
+        subheadline: generationResponse.criativo.subheadline,
+        copy: generationResponse.criativo.copy,
+        cta: generationResponse.criativo.cta
+      } as any
 
-      setCreatives(formattedCreatives)
+      // Adicionar ao array existente
+      setCreatives(prev => [...prev, novoCreative])
 
       toast({
-        title: "Criativos gerados com sucesso!",
-        description: `6 criativos criados com IA. Custo: R$ ${generationResponse.custo.toFixed(2)}`,
+        title: "Criativo gerado com sucesso!",
+        description: `Anúncio completo criado com incongruência criativa. Custo: R$ ${generationResponse.custo.toFixed(2)}`,
       })
 
     } catch (error: any) {
@@ -217,16 +226,21 @@ export function GeradorCriativosDashboard() {
           <CardContent>
             <DataPreviewCards data={pdfData} />
             
-            {!isGenerating && creatives.length === 0 && (
-              <div className="mt-6 text-center">
+            {!isGenerating && (
+              <div className="mt-6 text-center space-y-3">
                 <Button 
                   onClick={handleGenerateCreatives}
                   size="lg"
                   className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
                 >
                   <Wand2 className="h-5 w-5 mr-2" />
-                  Gerar Criativos Automaticamente
+                  {creatives.length === 0 ? 'Gerar Primeiro Criativo' : 'Gerar Mais Um Criativo'}
                 </Button>
+                {creatives.length > 0 && (
+                  <p className="text-sm text-muted-foreground">
+                    Cada criativo custa aproximadamente R$ 0,15 e demora ~15 segundos
+                  </p>
+                )}
               </div>
             )}
           </CardContent>
@@ -239,20 +253,23 @@ export function GeradorCriativosDashboard() {
           <CardContent className="py-8">
             <div className="text-center space-y-4">
               <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto" />
-              <h3 className="text-xl font-semibold">Gerando Criativos com IA</h3>
+              <h3 className="text-xl font-semibold">Gerando Criativo com IA</h3>
               <p className="text-muted-foreground">
-                Criando 3 imagens e 3 vídeos baseados no seu planejamento...
+                Criando anúncio completo: Headline + Imagem + Copy agressiva...
               </p>
               <div className="flex justify-center gap-2">
                 <Badge variant="outline" className="animate-pulse">
-                  <Image className="h-3 w-3 mr-1" />
-                  Imagens
+                  <Wand2 className="h-3 w-3 mr-1" />
+                  Incongruência Criativa
                 </Badge>
                 <Badge variant="outline" className="animate-pulse">
-                  <Video className="h-3 w-3 mr-1" />
-                  Vídeos
+                  <Image className="h-3 w-3 mr-1" />
+                  DALL-E 3
                 </Badge>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Tempo estimado: ~15 segundos | Custo: ~R$ 0,15
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -264,7 +281,7 @@ export function GeradorCriativosDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="h-5 w-5 text-green-500" />
-              Criativos Gerados ({creatives.length}/6)
+              Criativos Gerados ({creatives.length})
             </CardTitle>
           </CardHeader>
           <CardContent>

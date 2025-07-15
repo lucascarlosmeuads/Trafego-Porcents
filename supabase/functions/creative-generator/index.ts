@@ -45,12 +45,11 @@ serve(async (req) => {
       .insert({
         pdf_analysis_id: analysisId,
         email_gestor: emailGestor,
-        total_criativos: 6,
+        total_criativos: 1,
         status: 'gerando',
         configuracao: {
-          imagens: 3,
-          videos: 3,
-          estilo: 'moderno'
+          tipo: 'anuncio_completo',
+          estilo: 'incongruencia_criativa'
         }
       })
       .select()
@@ -60,101 +59,141 @@ serve(async (req) => {
       throw new Error(`Erro ao criar sessão: ${sessionError.message}`);
     }
 
-    console.log('🚀 [creative-generator] Sessão criada, gerando criativos...');
+    console.log('🚀 [creative-generator] Sessão criada, gerando 1 criativo completo...');
 
-    const criativos = [];
+    // Gerar 1 criativo completo (anúncio com headline + imagem + copy)
+    console.log('🎨 [creative-generator] Gerando criativo completo...');
+    
+    // 1. Primeiro gerar a imagem com incongruência criativa
+    const promptImagem = `Crie uma imagem publicitária criativa e impactante para "${analise.nome_oferta}".
+    
+ESTILO REQUERIDO: Incongruência criativa - combine elementos inesperados que chamem atenção.
 
-    // Gerar 3 criativos de imagem com DALL-E
-    for (let i = 1; i <= 3; i++) {
-      console.log(`🖼️ [creative-generator] Gerando imagem ${i}/3...`);
-      
-      const promptImagem = `Crie uma imagem promocional moderna e impactante para "${analise.nome_oferta}". 
-      Público-alvo: ${analise.publico_alvo}. 
-      Proposta: ${analise.proposta_central}. 
-      Tom: ${analise.tom_voz}. 
-      Estilo: design moderno, cores vibrantes, alta qualidade, formato quadrado para redes sociais.
-      Variação ${i}: ${i === 1 ? 'foco no produto' : i === 2 ? 'foco nos benefícios' : 'foco na transformação'}`;
+DETALHES DO PRODUTO:
+- Oferta: ${analise.nome_oferta}
+- Público-alvo: ${analise.publico_alvo}
+- Proposta: ${analise.proposta_central}
+- Tom: ${analise.tom_voz}
 
-      const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'dall-e-3',
-          prompt: promptImagem,
-          n: 1,
-          size: '1024x1024',
-          quality: 'hd',
-          style: 'vivid'
-        }),
-      });
+DIRETRIZES VISUAIS:
+- Use elementos visuais surpreendentes e contrastantes
+- Combine o produto/serviço com situações inesperadas
+- Cores vibrantes e composição que para o scroll
+- Foque na emoção e curiosidade, não apenas no produto
+- Formato quadrado otimizado para feed de redes sociais
 
-      const dalleData = await dalleResponse.json();
-      const imageUrl = dalleData.data[0].url;
+EXEMPLO DE INCONGRUÊNCIA: 
+Se é um curso de vendas, mostre uma pessoa vendendo para aliens.
+Se é um produto de beleza, mostre em cenário totalmente inesperado.
+Seja criativo e surpreendente!`;
 
-      console.log(`✅ [creative-generator] Imagem ${i} gerada:`, imageUrl);
-
-      criativos.push({
-        tipo: 'imagem',
-        titulo: `Criativo Imagem ${i}`,
-        url: imageUrl,
+    const dalleResponse = await fetch('https://api.openai.com/v1/images/generations', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'dall-e-3',
         prompt: promptImagem,
-        variacao: i === 1 ? 'produto' : i === 2 ? 'beneficios' : 'transformacao'
-      });
+        n: 1,
+        size: '1024x1024',
+        quality: 'hd',
+        style: 'vivid'
+      }),
+    });
+
+    const dalleData = await dalleResponse.json();
+    
+    if (!dalleData.data || !dalleData.data[0]) {
+      throw new Error('Erro na geração da imagem pelo DALL-E');
+    }
+    
+    const imageUrl = dalleData.data[0].url;
+    console.log('✅ [creative-generator] Imagem com incongruência criativa gerada');
+
+    // 2. Gerar o copy completo do anúncio
+    const copyResponse = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: `Você é um copywriter especialista em anúncios que convertem. 
+            Crie copys agressivos, persuasivos e que param o scroll das pessoas.`
+          },
+          {
+            role: 'user',
+            content: `Crie um anúncio completo para "${analise.nome_oferta}".
+
+DADOS DO PRODUTO:
+- Oferta: ${analise.nome_oferta}
+- Público: ${analise.publico_alvo}
+- Proposta: ${analise.proposta_central}
+- Benefícios: ${analise.beneficios?.join(', ') || 'N/A'}
+- CTA: ${analise.cta}
+- Tom: ${analise.tom_voz}
+
+FORMATO EXIGIDO (responda EXATAMENTE neste formato JSON):
+{
+  "headline": "Headline principal super impactante (máx 80 caracteres)",
+  "subheadline": "Subheadline explicativa que gera curiosidade (máx 120 caracteres)", 
+  "copy": "Copy agressiva e persuasiva com 3-4 parágrafos curtos que convencem e geram urgência",
+  "cta_final": "Call-to-action final irresistível"
+}
+
+REGRAS:
+- Headline deve parar o scroll instantaneamente
+- Copy deve ser agressiva, usar gatilhos mentais e gerar urgência
+- Subheadline explica o benefício principal
+- Use linguagem direta e persuasiva
+- Foque na transformação e resultado
+- RESPONDA APENAS O JSON, sem explicações`
+          }
+        ],
+        temperature: 0.8,
+      }),
+    });
+
+    const copyData = await copyResponse.json();
+    let copyContent = copyData.choices[0].message.content;
+    
+    // Limpar markdown se houver
+    copyContent = copyContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+    
+    let anuncioCompleto;
+    try {
+      anuncioCompleto = JSON.parse(copyContent);
+    } catch (error) {
+      // Fallback se o JSON não vier formatado corretamente
+      anuncioCompleto = {
+        headline: analise.headline_principal || `Transforme Sua Vida Com ${analise.nome_oferta}`,
+        subheadline: `Para ${analise.publico_alvo} que querem ${analise.proposta_central}`,
+        copy: `${analise.proposta_central}\n\nBenefícios garantidos:\n${analise.beneficios?.join('\n') || ''}\n\nNão perca essa oportunidade!`,
+        cta_final: analise.cta || 'QUERO COMEÇAR AGORA'
+      };
     }
 
-    // Gerar 3 criativos de vídeo (scripts)
-    for (let i = 1; i <= 3; i++) {
-      console.log(`🎬 [creative-generator] Gerando script de vídeo ${i}/3...`);
-      
-      const scriptResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${openaiApiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o',
-          messages: [
-            {
-              role: 'system',
-              content: `Você é um roteirista especializado em vídeos promocionais para redes sociais. 
-              Crie scripts de 30-60 segundos que convertem vendas.`
-            },
-            {
-              role: 'user',
-              content: `Crie um script de vídeo promocional para "${analise.nome_oferta}".
-              Público: ${analise.publico_alvo}
-              Proposta: ${analise.proposta_central}
-              CTA: ${analise.cta}
-              Tom: ${analise.tom_voz}
-              
-              Variação ${i}: ${i === 1 ? 'hook emocional' : i === 2 ? 'demonstração de benefícios' : 'storytelling com transformação'}
-              
-              Formato: Título do vídeo + Script detalhado com indicações visuais`
-            }
-          ],
-          temperature: 0.7,
-        }),
-      });
+    console.log('✅ [creative-generator] Copy agressiva gerada');
 
-      const scriptData = await scriptResponse.json();
-      const script = scriptData.choices[0].message.content;
+    const criativoCompleto = {
+      tipo: 'anuncio_completo',
+      titulo: 'Anúncio Completo Gerado',
+      imageUrl: imageUrl,
+      headline: anuncioCompleto.headline,
+      subheadline: anuncioCompleto.subheadline,
+      copy: anuncioCompleto.copy,
+      cta: anuncioCompleto.cta_final,
+      prompt_imagem: promptImagem,
+      estilo: 'incongruencia_criativa'
+    };
 
-      console.log(`✅ [creative-generator] Script ${i} gerado`);
-
-      criativos.push({
-        tipo: 'video',
-        titulo: `Script Vídeo ${i}`,
-        conteudo: script,
-        duracao: 45,
-        variacao: i === 1 ? 'emocional' : i === 2 ? 'beneficios' : 'storytelling'
-      });
-    }
-
-    // Salvar criativos no banco
+    // Salvar criativo no banco
     const { data: criativosGerados, error: saveError } = await supabase
       .from('criativos_gerados')
       .insert({
@@ -163,17 +202,17 @@ serve(async (req) => {
         email_gestor: emailGestor,
         email_cliente: 'mock@cliente.com', // Em produção seria do cliente real
         generation_id: sessao.id,
-        criativos: criativos,
+        criativos: [criativoCompleto],
         dados_extraidos: analise.dados_extraidos,
         status: 'concluido',
-        custo_processamento: 2.50,
-        api_utilizada: 'DALL-E 3 + GPT-4'
+        custo_processamento: 0.15, // Custo reduzido para 1 criativo
+        api_utilizada: 'DALL-E 3 + GPT-4o'
       })
       .select()
       .single();
 
     if (saveError) {
-      throw new Error(`Erro ao salvar criativos: ${saveError.message}`);
+      throw new Error(`Erro ao salvar criativo: ${saveError.message}`);
     }
 
     // Atualizar sessão como concluída
@@ -181,21 +220,21 @@ serve(async (req) => {
       .from('creative_generations')
       .update({
         status: 'concluido',
-        criativos_concluidos: 6,
-        custo_total: 2.50,
-        tempo_total: 45000 // 45 segundos
+        criativos_concluidos: 1,
+        custo_total: 0.15,
+        tempo_total: 15000 // 15 segundos
       })
       .eq('id', sessao.id);
 
-    console.log('🎉 [creative-generator] Geração concluída com sucesso!');
+    console.log('🎉 [creative-generator] Criativo completo gerado com sucesso!');
 
     return new Response(JSON.stringify({
       success: true,
       generationId: sessao.id,
-      criativos: criativos,
+      criativo: criativoCompleto,
       criativosId: criativosGerados.id,
-      custo: 2.50,
-      message: '6 criativos gerados com sucesso'
+      custo: 0.15,
+      message: '1 criativo completo gerado com sucesso'
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
