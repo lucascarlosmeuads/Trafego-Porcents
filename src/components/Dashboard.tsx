@@ -33,6 +33,8 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState('dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
+  console.log('🔥 [Dashboard] ESTADO DO ACTIVE TAB:', activeTab)
+
   console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
   console.log('🔍 [Dashboard] Estado de autenticação:', {
     userEmail: user?.email,

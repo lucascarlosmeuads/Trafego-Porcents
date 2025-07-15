@@ -17,6 +17,13 @@ interface AdminMainMenuProps {
 }
 
 export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: AdminMainMenuProps) {
+  console.log('🔥 [AdminMainMenu] RECEBIDO activeTab:', activeTab)
+  
+  const handleTabClick = (tabId: string) => {
+    console.log('🔥 [AdminMainMenu] CLICOU NO TAB:', tabId)
+    console.log('🔥 [AdminMainMenu] onTabSelect callback existe?', typeof onTabSelect === 'function')
+    onTabSelect(tabId)
+  }
   const menuItems = [
     {
       id: 'dashboard',
@@ -63,7 +70,7 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
                 : 'bg-blue-500/10 hover:bg-blue-500/20 border-blue-500/20 hover:transform hover:scale-105 hover:shadow-md'
               }
             `}
-            onClick={() => onTabSelect(item.id)}
+            onClick={() => handleTabClick(item.id)}
             title={item.label}
           >
             <item.icon className={`h-4 w-4 ${
@@ -94,7 +101,7 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
               : 'text-gray-300 hover:text-white hover:bg-gray-800'
             }
           `}
-          onClick={() => onTabSelect(item.id)}
+          onClick={() => handleTabClick(item.id)}
         >
           <div className="flex items-center space-x-3 w-full">
             <item.icon className="h-5 w-5 flex-shrink-0" />

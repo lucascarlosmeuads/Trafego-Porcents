@@ -22,6 +22,8 @@ export function ManagerSidebar({
   activeTab, 
   onTabChange 
 }: ManagerSidebarProps) {
+  console.log('🔥 [ManagerSidebar] RECEBIDO activeTab:', activeTab)
+  console.log('🔥 [ManagerSidebar] onTabChange callback existe?', typeof onTabChange === 'function')
   const { isAdmin, signOut, currentManagerName } = useAuth()
   const { profileData, updateProfileData } = useProfileData('gestor')
   const [problemasPendentes, setProblemasPendentes] = useState(0)
