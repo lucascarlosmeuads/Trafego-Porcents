@@ -9,6 +9,7 @@ import { LoadingFallback } from '../LoadingFallback'
 import { ManagerSelector } from '../ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from '../SAC/SacDashboard'
+import { GeradorCriativosDashboard } from '../GeradorCriativos/GeradorCriativosDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -93,6 +94,9 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
             <LazyDocumentationViewer />
           </Suspense>
         )
+
+      case 'gerador-criativos':
+        return <GeradorCriativosDashboard />
       
       case 'clientes':
       default:

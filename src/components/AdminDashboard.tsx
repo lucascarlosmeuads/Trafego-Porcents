@@ -18,6 +18,7 @@ import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboar
 import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
+import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -131,6 +132,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       
       case 'openai-custos':
         return <OpenAICustosDashboard />
+      
+      case 'gerador-criativos':
+        return <GeradorCriativosDashboard />
       
       case 'clientes':
       default:

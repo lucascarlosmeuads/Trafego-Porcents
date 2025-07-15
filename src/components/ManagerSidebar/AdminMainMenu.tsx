@@ -6,7 +6,8 @@ import {
   Users, 
   Headphones, 
   BarChart3,
-  DollarSign
+  DollarSign,
+  Wand2
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -34,6 +35,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'SAC',
       icon: Headphones,
       description: 'Central de atendimento'
+    },
+    {
+      id: 'gerador-criativos',
+      label: 'Gerador de Criativos',
+      icon: Wand2,
+      description: 'Upload PDF + IA para criativos'
     },
     {
       id: 'openai-custos',
