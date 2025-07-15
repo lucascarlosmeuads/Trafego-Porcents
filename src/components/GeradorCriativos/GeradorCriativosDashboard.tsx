@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useToast } from '@/components/ui/use-toast'
+import { useAuth } from '@/hooks/useAuth'
+import { supabase } from '@/integrations/supabase/client'
 import { 
   Upload, 
   FileText, 
@@ -45,94 +48,131 @@ export function GeradorCriativosDashboard() {
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [creatives, setCreatives] = useState<Creative[]>([])
+  const [analysisId, setAnalysisId] = useState<string | null>(null)
+  
+  const { toast } = useToast()
+  const { user } = useAuth()
+  const userEmail = user?.email || 'admin@trafegoporcents.com'
 
   const handleFileUpload = async (file: File) => {
-    setUploadedFile(file)
-    setIsAnalyzing(true)
-    
-    // Simular análise do PDF (aqui conectaria com edge function)
-    setTimeout(() => {
-      setPdfData({
-        nomeOferta: "Curso de Marketing Digital",
-        propostaCentral: "Aprenda marketing digital do zero em 30 dias",
-        publicoAlvo: "Empreendedores e pequenos empresários de 25-45 anos",
-        headlinePrincipal: "Transforme Seu Negócio em 30 Dias",
-        cta: "Quero Começar Agora",
-        tomVoz: "Motivacional e direto",
-        beneficios: ["Aumento de vendas", "Presença digital forte", "Estratégias comprovadas"],
-        tipoMidia: ["Imagem", "Vídeo"]
+    try {
+      setUploadedFile(file)
+      setIsAnalyzing(true)
+
+      console.log('📤 [Dashboard] Iniciando upload do PDF:', file.name)
+
+      // Upload do arquivo para Supabase Storage
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`
+      const filePath = `pdfs/${fileName}`
+
+      const { error: uploadError } = await supabase.storage
+        .from('cliente-arquivos')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        })
+
+      if (uploadError) {
+        throw new Error(`Erro no upload: ${uploadError.message}`)
+      }
+
+      console.log('✅ [Dashboard] Upload concluído, analisando com IA...')
+
+      // Chamar edge function para análise
+      const { data: analysisResponse, error: analysisError } = await supabase.functions
+        .invoke('pdf-analyzer', {
+          body: {
+            filePath: filePath,
+            emailGestor: userEmail
+          }
+        })
+
+      if (analysisError) {
+        throw new Error(`Erro na análise: ${analysisError.message}`)
+      }
+
+      if (!analysisResponse.success) {
+        throw new Error(analysisResponse.error || 'Erro na análise do PDF')
+      }
+
+      console.log('🎯 [Dashboard] Análise concluída:', analysisResponse.dadosExtraidos)
+
+      setPdfData(analysisResponse.dadosExtraidos)
+      setAnalysisId(analysisResponse.analysisId)
+      
+      toast({
+        title: "PDF analisado com sucesso!",
+        description: "Dados extraídos e prontos para gerar criativos.",
       })
+
+    } catch (error: any) {
+      console.error('❌ [Dashboard] Erro no upload/análise:', error)
+      toast({
+        title: "Erro na análise",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
       setIsAnalyzing(false)
-    }, 2000)
+    }
   }
 
   const handleGenerateCreatives = async () => {
-    if (!pdfData) return
+    if (!analysisId || !pdfData) return
     
-    setIsGenerating(true)
-    
-    // Simular geração de criativos
-    setTimeout(() => {
-      const mockCreatives: Creative[] = [
-        {
-          id: '1',
-          type: 'image',
-          thumbnail: '/placeholder.svg',
-          title: 'Criativo Principal',
-          style: 'Minimalista com CTA destacado',
-          status: 'ready',
-          url: '/placeholder.svg'
-        },
-        {
-          id: '2',
-          type: 'image',
-          thumbnail: '/placeholder.svg',
-          title: 'Variação Colorida',
-          style: 'Cores vibrantes com elementos gráficos',
-          status: 'ready',
-          url: '/placeholder.svg'
-        },
-        {
-          id: '3',
-          type: 'image',
-          thumbnail: '/placeholder.svg',
-          title: 'Foco no Benefício',
-          style: 'Destaque para resultados',
-          status: 'ready',
-          url: '/placeholder.svg'
-        },
-        {
-          id: '4',
-          type: 'video',
-          thumbnail: '/placeholder.svg',
-          title: 'Vídeo Apresentação',
-          style: 'Animação com texto dinâmico',
-          status: 'ready',
-          url: '/placeholder.svg'
-        },
-        {
-          id: '5',
-          type: 'video',
-          thumbnail: '/placeholder.svg',
-          title: 'Vídeo Depoimento',
-          style: 'Estilo testimonial',
-          status: 'ready',
-          url: '/placeholder.svg'
-        },
-        {
-          id: '6',
-          type: 'video',
-          thumbnail: '/placeholder.svg',
-          title: 'Vídeo Explicativo',
-          style: 'Motion graphics educativo',
-          status: 'ready',
-          url: '/placeholder.svg'
-        }
-      ]
-      
-      setCreatives(mockCreatives)
+    try {
+      setIsGenerating(true)
+
+      console.log('🎨 [Dashboard] Iniciando geração de criativos para análise:', analysisId)
+
+      // Chamar edge function para geração de criativos
+      const { data: generationResponse, error: generationError } = await supabase.functions
+        .invoke('creative-generator', {
+          body: {
+            analysisId: analysisId,
+            emailGestor: userEmail
+          }
+        })
+
+      if (generationError) {
+        throw new Error(`Erro na geração: ${generationError.message}`)
+      }
+
+      if (!generationResponse.success) {
+        throw new Error(generationResponse.error || 'Erro na geração de criativos')
+      }
+
+      console.log('🎉 [Dashboard] Criativos gerados:', generationResponse.criativos)
+
+      // Converter para o formato do componente
+      const formattedCreatives: Creative[] = generationResponse.criativos.map((criativo: any, index: number) => ({
+        id: `${index + 1}`,
+        type: criativo.tipo,
+        thumbnail: criativo.url || '/placeholder.svg',
+        title: criativo.titulo,
+        style: criativo.variacao || criativo.conteudo?.substring(0, 50) + '...',
+        status: 'ready' as const,
+        url: criativo.url || criativo.conteudo
+      }))
+
+      setCreatives(formattedCreatives)
+
+      toast({
+        title: "Criativos gerados com sucesso!",
+        description: `6 criativos criados com IA. Custo: R$ ${generationResponse.custo.toFixed(2)}`,
+      })
+
+    } catch (error: any) {
+      console.error('❌ [Dashboard] Erro na geração:', error)
+      toast({
+        title: "Erro na geração",
+        description: error.message,
+        variant: "destructive",
+      })
+    } finally {
       setIsGenerating(false)
-    }, 3000)
+    }
   }
 
   return (
