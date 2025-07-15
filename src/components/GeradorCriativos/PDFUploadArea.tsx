@@ -10,7 +10,7 @@ import {
   AlertCircle,
   Download
 } from 'lucide-react'
-import pdfs from 'pdf-parse'
+import * as pdfjsLib from 'pdfjs-dist'
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void
@@ -25,17 +25,30 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Ler o arquivo como ArrayBuffer para usar com pdf-parse
+        // Configurar worker do PDF.js
+        pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js`
+        
+        // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
         const arrayBuffer = await file.arrayBuffer()
         
-        console.log('🔍 [PDFUpload] Extraindo texto com pdf-parse...')
+        console.log('🔍 [PDFUpload] Extraindo texto com pdfjs-dist...')
         
-        // Usar pdf-parse para extrair texto real do PDF
-        const data = await pdfs(new Uint8Array(arrayBuffer))
-        const extractedText = data.text
+        // Usar pdfjs-dist para extrair texto real do PDF
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
+        let extractedText = ''
+        
+        // Extrair texto de todas as páginas
+        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+          const page = await pdf.getPage(pageNum)
+          const textContent = await page.getTextContent()
+          const pageText = textContent.items
+            .map((item: any) => item.str)
+            .join(' ')
+          extractedText += pageText + ' '
+        }
         
         console.log('✅ [PDFUpload] Texto real extraído:', extractedText.length, 'caracteres')
-        console.log('📄 [PDFUpload] Páginas:', data.numpages)
+        console.log('📄 [PDFUpload] Páginas:', pdf.numPages)
         
         if (!extractedText || extractedText.trim().length < 50) {
           throw new Error('PDF não contém texto suficiente para análise. Verifique se o arquivo não é apenas imagens.')
