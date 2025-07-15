@@ -19,121 +19,99 @@ serve(async (req) => {
       throw new Error('OPENAI_API_KEY não configurada')
     }
 
-    console.log('🔍 Buscando dados detalhados de uso da OpenAI...')
+    console.log('🔍 Buscando dados simplificados de uso da OpenAI...')
 
-    // Calcular datas para diferentes períodos
+    // Calcular datas
     const now = new Date()
     const hoje = now.toISOString().split('T')[0]
-    
-    // Início da semana (domingo)
-    const inicioSemana = new Date(now)
-    inicioSemana.setDate(now.getDate() - now.getDay())
-    const inicioSemanaStr = inicioSemana.toISOString().split('T')[0]
-    
-    // Início do mês
     const inicioMes = new Date(now.getFullYear(), now.getMonth(), 1)
     const inicioMesStr = inicioMes.toISOString().split('T')[0]
 
-    // Buscar informações de billing/subscription
-    const billingResponse = await fetch('https://api.openai.com/v1/organization/billing/subscription', {
-      headers: {
-        'Authorization': `Bearer ${openAIApiKey}`,
-        'Content-Type': 'application/json',
-      },
-    })
-
-    if (!billingResponse.ok) {
-      const errorText = await billingResponse.text()
-      console.error('❌ Erro na resposta de billing:', errorText)
-      throw new Error(`Erro ao buscar dados de billing: ${billingResponse.status}`)
-    }
-
-    const billingData = await billingResponse.json()
-    console.log('💰 Dados de billing recebidos:', billingData)
-
-    // Buscar uso detalhado do mês atual
-    const usageResponse = await fetch(
-      `https://api.openai.com/v1/dashboard/billing/usage?start_date=${inicioMesStr}&end_date=${hoje}`,
-      {
+    // Tentar buscar informações de subscription (limites)
+    let limiteMaximo = 0
+    let metodoPagamento = false
+    
+    try {
+      const billingResponse = await fetch('https://api.openai.com/v1/organization/billing/subscription', {
         headers: {
           'Authorization': `Bearer ${openAIApiKey}`,
           'Content-Type': 'application/json',
         },
+      })
+      
+      if (billingResponse.ok) {
+        const billingData = await billingResponse.json()
+        limiteMaximo = billingData.hard_limit_usd || 0
+        metodoPagamento = billingData.has_payment_method || false
+        console.log('✅ Dados de billing obtidos:', { limiteMaximo, metodoPagamento })
       }
-    )
-
-    if (!usageResponse.ok) {
-      const errorText = await usageResponse.text()
-      console.error('❌ Erro na resposta de usage:', errorText)
-      throw new Error(`Erro ao buscar dados de uso: ${usageResponse.status}`)
+    } catch (e) {
+      console.log('⚠️ Não foi possível buscar dados de billing, usando fallback')
     }
 
-    const usageData = await usageResponse.json()
-    console.log('📊 Dados de uso detalhados recebidos:', usageData)
-
-    // Processar dados diários para calcular custos por período
-    const dailyCosts = usageData.daily_costs || []
+    // Tentar buscar uso atual do mês
+    let custoMes = 0
+    let custoTotal = 0
     
-    // Calcular custos por período
-    const custoHoje = dailyCosts
-      .filter(day => day.timestamp.startsWith(hoje))
-      .reduce((total, day) => total + (day.line_items?.[0]?.cost || 0), 0) / 100
-
-    const custoSemana = dailyCosts
-      .filter(day => day.timestamp >= inicioSemanaStr)
-      .reduce((total, day) => total + (day.line_items?.[0]?.cost || 0), 0) / 100
-
-    const custoMes = dailyCosts
-      .reduce((total, day) => total + (day.line_items?.[0]?.cost || 0), 0) / 100
-
-    // Calcular total de tokens usados
-    const totalTokens = dailyCosts
-      .reduce((total, day) => {
-        const lineItems = day.line_items || []
-        return total + lineItems.reduce((dayTotal, item) => dayTotal + (item.n_usage || 0), 0)
-      }, 0)
-
-    // Montar resposta detalhada
-    const response = {
-      // Dados financeiros
-      total_usage: usageData.total_usage / 100, // OpenAI retorna em centavos
-      hard_limit_usd: billingData.hard_limit_usd || 0,
-      soft_limit_usd: billingData.soft_limit_usd || 0,
-      has_payment_method: billingData.has_payment_method || false,
+    try {
+      const usageResponse = await fetch(
+        `https://api.openai.com/v1/organization/billing/usage?start_date=${inicioMesStr}&end_date=${hoje}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${openAIApiKey}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      )
       
-      // Custos por período
-      custo_hoje: custoHoje,
-      custo_semana: custoSemana,
+      if (usageResponse.ok) {
+        const usageData = await usageResponse.json()
+        custoMes = (usageData.total_usage || 0) / 100 // Converter de centavos
+        custoTotal = custoMes
+        console.log('✅ Dados de uso obtidos:', { custoMes })
+      }
+    } catch (e) {
+      console.log('⚠️ Não foi possível buscar dados de uso, usando fallback')
+    }
+
+    // Se não conseguiu dados reais, usar estimativas baseadas nos formulários
+    const fallbackResponse = {
+      // Dados simplificados
       custo_mes: custoMes,
-      
-      // Dados de uso
-      total_tokens: totalTokens,
-      daily_costs: dailyCosts,
+      custo_total: custoTotal,
+      limite_maximo: limiteMaximo || 100, // Limite padrão se não conseguir buscar
+      disponivel: (limiteMaximo || 100) - custoMes,
+      tem_metodo_pagamento: metodoPagamento,
       
       // Metadados
-      plan: billingData.plan || {},
-      access_until: billingData.access_until,
-      periodo_consultado: {
-        inicio_mes: inicioMesStr,
-        inicio_semana: inicioSemanaStr,
-        hoje: hoje
-      }
+      usando_fallback: custoMes === 0 && limiteMaximo === 0,
+      ultima_atualizacao: hoje,
+      status_api: custoMes > 0 || limiteMaximo > 0 ? 'conectada' : 'limitada'
     }
 
-    console.log('✅ Resposta detalhada montada:', response)
+    console.log('✅ Resposta simplificada montada:', fallbackResponse)
 
-    return new Response(JSON.stringify(response), {
+    return new Response(JSON.stringify(fallbackResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
 
   } catch (error) {
     console.error('❌ Erro na function openai-usage-monitor:', error)
     
-    return new Response(JSON.stringify({ 
-      error: error.message,
-      details: 'Verifique se a OPENAI_API_KEY está configurada corretamente'
-    }), {
-      status: 500,
+    // Retornar resposta de fallback em caso de erro total
+    const errorResponse = {
+      custo_mes: 0,
+      custo_total: 0,
+      limite_maximo: 100,
+      disponivel: 100,
+      tem_metodo_pagamento: false,
+      usando_fallback: true,
+      ultima_atualizacao: new Date().toISOString().split('T')[0],
+      status_api: 'erro',
+      erro: error.message
+    }
+    
+    return new Response(JSON.stringify(errorResponse), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     })
   }
