@@ -185,7 +185,7 @@ export const PlanejamentoDisplay = ({
       // Rodapé na última página
       pdf.setFontSize(8);
       pdf.setFont("helvetica", "italic");
-      pdf.text("Documento gerado automaticamente - Tráfego Por Cents", pageWidth / 2, pageHeight - 10, { align: 'center' });
+      pdf.text("Documento gerado pela equipe Tráfego Porcents", pageWidth / 2, pageHeight - 10, { align: 'center' });
       
       // Download
       const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
