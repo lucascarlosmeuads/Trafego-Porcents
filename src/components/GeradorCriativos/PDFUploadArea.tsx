@@ -25,14 +25,32 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Configurar worker local do PDF.js (compatível com Vite)
+        // Configurar worker do PDF.js com CDNs estáveis e fallbacks
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          // Usar worker local que vem com o pacote pdfjs-dist
-          pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
-            'pdfjs-dist/build/pdf.worker.min.js',
-            import.meta.url
-          ).toString()
-          console.log('🔧 [PDFUpload] Worker local configurado')
+          const workerCDNs = [
+            'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
+            'https://unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
+            'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.93/pdf.worker.min.js'
+          ]
+          
+          let workerConfigured = false
+          
+          for (let i = 0; i < workerCDNs.length; i++) {
+            try {
+              pdfjsLib.GlobalWorkerOptions.workerSrc = workerCDNs[i]
+              console.log(`🔧 [PDFUpload] Tentando CDN ${i + 1}:`, workerCDNs[i])
+              workerConfigured = true
+              break
+            } catch (error) {
+              console.warn(`⚠️ [PDFUpload] CDN ${i + 1} falhou:`, error)
+              if (i === workerCDNs.length - 1) {
+                console.error('❌ [PDFUpload] Todos os CDNs falharam, usando configuração padrão')
+                pdfjsLib.GlobalWorkerOptions.workerSrc = workerCDNs[0] // Usar primeiro como fallback final
+              }
+            }
+          }
+          
+          console.log('✅ [PDFUpload] Worker configurado com sucesso')
         }
         
         // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
