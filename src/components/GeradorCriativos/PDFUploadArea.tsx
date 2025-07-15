@@ -25,17 +25,16 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
         
-        // Configurar worker do PDF.js com fallback para versões disponíveis
+        // Configurar worker do PDF.js com versão compatível (5.3.93)
         if (!pdfjsLib.GlobalWorkerOptions.workerSrc) {
-          // Tentar versões conhecidas e disponíveis
           const workerVersions = [
-            '//cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
-            '//cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js',
-            '//unpkg.com/pdfjs-dist@3.11.174/build/pdf.worker.min.js'
+            '//cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.93/pdf.worker.min.js',
+            '//unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
+            '//cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js'
           ]
           
           pdfjsLib.GlobalWorkerOptions.workerSrc = workerVersions[0]
-          console.log('🔧 [PDFUpload] Worker configurado:', workerVersions[0])
+          console.log('🔧 [PDFUpload] Worker v5.3.93 configurado:', workerVersions[0])
         }
         
         // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
