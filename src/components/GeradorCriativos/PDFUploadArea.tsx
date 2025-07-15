@@ -11,6 +11,10 @@ import {
   Download
 } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
+import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url'
+
+// Configurar worker de forma síncrona no topo do componente
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void
@@ -19,75 +23,13 @@ interface PDFUploadAreaProps {
 }
 
 export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFUploadAreaProps) {
-  // Função para testar se um CDN está disponível
-  const testWorkerURL = async (url: string): Promise<boolean> => {
-    try {
-      const response = await fetch(url, { method: 'HEAD', mode: 'no-cors' })
-      return true // Se não der erro, o CDN está acessível
-    } catch (error) {
-      console.warn(`⚠️ [PDFUpload] CDN inacessível:`, url)
-      return false
-    }
-  }
-
-  // Função para configurar worker com validação assíncrona
-  const configureWorkerWithFallback = async (): Promise<boolean> => {
-    if (pdfjsLib.GlobalWorkerOptions.workerSrc) {
-      console.log('✅ [PDFUpload] Worker já configurado')
-      return true
-    }
-
-    // Verificar cache do localStorage
-    const cachedWorkerUrl = localStorage.getItem('pdfjs-worker-url')
-    if (cachedWorkerUrl) {
-      console.log('🔄 [PDFUpload] Testando worker em cache:', cachedWorkerUrl)
-      const isAvailable = await testWorkerURL(cachedWorkerUrl)
-      if (isAvailable) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = cachedWorkerUrl
-        console.log('✅ [PDFUpload] Worker configurado com URL em cache')
-        return true
-      } else {
-        localStorage.removeItem('pdfjs-worker-url')
-      }
-    }
-
-    const workerCDNs = [
-      'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
-      'https://unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.js',
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/5.3.93/pdf.worker.min.js'
-    ]
-
-    // Testar cada CDN sequencialmente
-    for (let i = 0; i < workerCDNs.length; i++) {
-      const url = workerCDNs[i]
-      console.log(`🔧 [PDFUpload] Testando CDN ${i + 1}:`, url)
-      
-      const isAvailable = await testWorkerURL(url)
-      if (isAvailable) {
-        pdfjsLib.GlobalWorkerOptions.workerSrc = url
-        localStorage.setItem('pdfjs-worker-url', url) // Cache do CDN funcional
-        console.log(`✅ [PDFUpload] Worker configurado com CDN ${i + 1}`)
-        return true
-      }
-    }
-
-    // Fallback final: usar worker inline
-    console.warn('⚠️ [PDFUpload] Todos os CDNs falharam, usando worker inline')
-    pdfjsLib.GlobalWorkerOptions.workerSrc = false as any // Força uso do worker interno
-    return true
-  }
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file && file.type === 'application/pdf') {
       try {
         console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
-        
-        // Configurar worker com validação assíncrona
-        const workerConfigured = await configureWorkerWithFallback()
-        if (!workerConfigured) {
-          throw new Error('Não foi possível configurar o worker PDF.js')
-        }
+        console.log('✅ [PDFUpload] Worker configurado com worker local')
         
         // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
         const arrayBuffer = await file.arrayBuffer()
