@@ -72,6 +72,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [siteStatusFilter, setSiteStatusFilter] = useState('all')
   const [creativoFilter, setCreativoFilter] = useState('all')
   const [bmFilter, setBmFilter] = useState('all')
+  const [colorFilter, setColorFilter] = useState('all')
   const [clientesComCriativos, setClientesComCriativos] = useState<Set<string>>(new Set())
   const [updatingStatus, setUpdatingStatus] = useState<string | null>(null)
   const [editingLink, setEditingLink] = useState<{ clienteId: string, field: string } | null>(null)
@@ -93,6 +94,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     siteStatusFilter,
     creativoFilter,
     bmFilter,
+    colorFilter,
     clientesComCriativos
   })
 
@@ -1063,6 +1065,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
         setCreativoFilter={setCreativoFilter}
         bmFilter={bmFilter}
         setBmFilter={setBmFilter}
+        colorFilter={colorFilter}
+        setColorFilter={setColorFilter}
         getStatusColor={getStatusColor}
         isSearching={isSearching}
       />

@@ -12,6 +12,7 @@ export interface OrganizedClientes {
 
 export function useClientFilters(clientes: Cliente[]) {
   const [dateFilter, setDateFilter] = useState<string>('all')
+  const [colorFilter, setColorFilter] = useState<string>('all')
 
   const organizedClientes = useMemo(() => {
     // Função para converter UTC para UTC-3 (Brasil)
@@ -94,6 +95,16 @@ export function useClientFilters(clientes: Cliente[]) {
         filteredClientes = clientes
     }
 
+    // Aplicar filtro de cor
+    if (colorFilter !== 'all') {
+      filteredClientes = filteredClientes.filter(c => {
+        if (colorFilter === 'sem-cor') {
+          return !c.cor_marcacao || c.cor_marcacao === null
+        }
+        return c.cor_marcacao === colorFilter
+      })
+    }
+
     return {
       hoje: clientesHoje,
       ontem: clientesOntem,
@@ -106,6 +117,8 @@ export function useClientFilters(clientes: Cliente[]) {
   return {
     dateFilter,
     setDateFilter,
+    colorFilter,
+    setColorFilter,
     organizedClientes
   }
 }

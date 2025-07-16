@@ -30,6 +30,7 @@ export type Cliente = {
   saque_solicitado: boolean
   comissao: string
   site_pago: boolean
+  cor_marcacao: string | null
   // Novas colunas para sistema avançado de comissões
   ultimo_pagamento_em: string | null
   ultimo_valor_pago: number | null

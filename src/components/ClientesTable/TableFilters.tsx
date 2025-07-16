@@ -1,4 +1,4 @@
-import { Search, Filter, Globe, Image, Settings, Users, UserCheck, UserX } from 'lucide-react'
+import { Search, Filter, Globe, Image, Settings, Users, UserCheck, UserX, Palette } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import {
   Select,
@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { STATUS_CAMPANHA } from '@/lib/supabase'
+import type { ColorMarcacao } from './ColorSelect'
 
 interface TableFiltersProps {
   searchTerm: string
@@ -21,6 +22,8 @@ interface TableFiltersProps {
   setCreativoFilter?: (value: string) => void
   bmFilter?: string
   setBmFilter?: (value: string) => void
+  colorFilter?: string
+  setColorFilter?: (value: string) => void
   getStatusColor: (status: string) => string
   isSearching?: boolean // ETAPA 3: Indicador de busca ativa
 }
@@ -51,6 +54,16 @@ const ORIGEM_OPTIONS = [
   { value: 'manual', label: '👤 Manual' }
 ]
 
+const COLOR_FILTER_OPTIONS = [
+  { value: 'all', label: 'Todas as Cores', color: null },
+  { value: 'laranja', label: 'Laranja', color: 'bg-orange-500' },
+  { value: 'azul', label: 'Azul', color: 'bg-blue-500' },
+  { value: 'roxo', label: 'Roxo', color: 'bg-purple-500' },
+  { value: 'verde', label: 'Verde', color: 'bg-green-500' },
+  { value: 'rosa', label: 'Rosa', color: 'bg-pink-500' },
+  { value: 'sem-cor', label: 'Sem Cor', color: null }
+]
+
 export function TableFilters({
   searchTerm,
   setSearchTerm,
@@ -63,11 +76,15 @@ export function TableFilters({
   setCreativoFilter,
   bmFilter = 'all',
   setBmFilter,
+  colorFilter = 'all',
+  setColorFilter,
   origemFilter = 'all',
   setOrigemFilter,
   getStatusColor,
   isSearching = false
 }: TableFiltersProps & {
+  colorFilter?: string
+  setColorFilter?: (value: string) => void
   origemFilter?: string
   setOrigemFilter?: (value: string) => void
 }) {
@@ -102,6 +119,13 @@ export function TableFilters({
     console.log('🤖 [TableFilters] Alterando filtro de origem para:', value)
     if (setOrigemFilter) {
       setOrigemFilter(value)
+    }
+  }
+
+  const handleColorChange = (value: string) => {
+    console.log('🎨 [TableFilters] Alterando filtro de cor para:', value)
+    if (setColorFilter) {
+      setColorFilter(value)
     }
   }
 
@@ -145,7 +169,38 @@ export function TableFilters({
           </Select>
         </div>
       )}
-      
+
+      {/* Filtro de Cores com gradiente multicolorido */}
+      {setColorFilter && (
+        <div className="relative">
+          <div className="absolute inset-0 bg-gradient-to-r from-red-500/10 via-blue-500/10 via-green-500/10 to-purple-500/10 rounded-xl border border-gray-400/30 shadow-xl shadow-gray-500/15 backdrop-blur-sm"></div>
+          <Select value={colorFilter} onValueChange={handleColorChange}>
+            <SelectTrigger className="relative w-full sm:w-56 h-12 bg-background/90 backdrop-blur-sm border-gray-400/40 text-white hover:border-gray-300/60 focus:border-gray-300 focus:ring-2 focus:ring-gray-400/30 transition-all duration-300 rounded-xl">
+              <div className="flex items-center gap-2">
+                <Palette className="w-4 h-4 text-gray-300" />
+                <SelectValue placeholder="Filtrar por cor" className="font-medium" />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="bg-card/95 backdrop-blur-lg border-border/50 shadow-2xl rounded-xl">
+              {COLOR_FILTER_OPTIONS.map(option => (
+                <SelectItem key={option.value} value={option.value} className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+                  <div className="flex items-center gap-2">
+                    {option.color ? (
+                      <div className={`w-4 h-4 rounded-full ${option.color}`} />
+                    ) : option.value === 'sem-cor' ? (
+                      <div className="w-4 h-4 rounded-full border-2 border-dashed border-muted-foreground" />
+                    ) : (
+                      <Palette className="w-4 h-4 text-muted-foreground" />
+                    )}
+                    <span className="font-medium">{option.label}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       {/* Status da Campanha - keep existing code the same */}
       <div className="relative">
         <div className="absolute inset-0 bg-gradient-to-r from-green-500/15 to-emerald-500/15 rounded-xl border border-green-400/30 shadow-xl shadow-green-500/15 backdrop-blur-sm"></div>

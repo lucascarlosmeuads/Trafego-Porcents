@@ -57,6 +57,7 @@ export function formatCliente(item: any): Cliente | null {
       saque_solicitado: Boolean(item.saque_solicitado || false),
       comissao: item.comissao || 'Pendente',
       site_pago: Boolean(item.site_pago || false),
+      cor_marcacao: item.cor_marcacao || null,
       // Novas propriedades do sistema avançado de comissões
       ultimo_pagamento_em: item.ultimo_pagamento_em || null,
       ultimo_valor_pago: item.ultimo_valor_pago || null,

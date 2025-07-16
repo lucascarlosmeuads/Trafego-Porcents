@@ -42,6 +42,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     saque_solicitado: false,
     comissao: 'Pendente',
     site_pago: false,
+    cor_marcacao: null,
     // Novas propriedades do sistema avançado de comissões
     ultimo_pagamento_em: null,
     ultimo_valor_pago: null,

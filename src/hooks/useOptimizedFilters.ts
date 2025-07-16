@@ -10,6 +10,7 @@ interface UseOptimizedFiltersProps {
   siteStatusFilter: string
   creativoFilter: string
   bmFilter: string
+  colorFilter?: string
   clientesComCriativos: Set<string>
 }
 
@@ -24,6 +25,7 @@ export function useOptimizedFilters({
   siteStatusFilter,
   creativoFilter,
   bmFilter,
+  colorFilter = 'all',
   clientesComCriativos
 }: UseOptimizedFiltersProps) {
   
@@ -72,8 +74,18 @@ export function useOptimizedFilters({
       } else if (bmFilter === 'sem_bm') {
         matchesBm = !(cliente.numero_bm && cliente.numero_bm.trim() !== '')
       }
+
+      // Filtro por cor de marcação
+      let matchesColor = true
+      if (colorFilter !== 'all') {
+        if (colorFilter === 'sem-cor') {
+          matchesColor = !cliente.cor_marcacao || cliente.cor_marcacao === null
+        } else {
+          matchesColor = cliente.cor_marcacao === colorFilter
+        }
+      }
       
-      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm
+      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm && matchesColor
     })
   }, [
     clientes,
@@ -82,6 +94,7 @@ export function useOptimizedFilters({
     siteStatusFilter,
     creativoFilter,
     bmFilter,
+    colorFilter,
     clientesComCriativos
   ])
 
