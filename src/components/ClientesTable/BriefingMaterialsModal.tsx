@@ -870,6 +870,8 @@ export function BriefingMaterialsModal({
                       planejamento={briefing.planejamento_estrategico}
                       onRegenerate={handleGeneratePlanejamento}
                       isRegenerating={isGenerating}
+                      showCriativosGenerator={true}
+                      emailGestor={user?.email}
                     />
                   ) : (
                     <div className="text-center py-8">

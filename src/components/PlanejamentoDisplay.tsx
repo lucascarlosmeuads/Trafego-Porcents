@@ -6,19 +6,24 @@ import { FileText, Download, RefreshCw, Loader2 } from "lucide-react";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { toast } from "sonner";
+import { CriativosFromPlanejamento } from "@/components/GeradorCriativos/CriativosFromPlanejamento";
 
 interface PlanejamentoDisplayProps {
   planejamento: string;
   onRegenerate?: () => void;
   showActions?: boolean;
   isRegenerating?: boolean;
+  showCriativosGenerator?: boolean;
+  emailGestor?: string;
 }
 
 export const PlanejamentoDisplay = ({ 
   planejamento, 
   onRegenerate, 
   showActions = true,
-  isRegenerating = false
+  isRegenerating = false,
+  showCriativosGenerator = false,
+  emailGestor
 }: PlanejamentoDisplayProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -279,6 +284,16 @@ export const PlanejamentoDisplay = ({
             {planejamento}
           </ReactMarkdown>
         </div>
+
+        {/* Gerador de Criativos */}
+        {showCriativosGenerator && emailGestor && (
+          <div className="pt-6 border-t">
+            <CriativosFromPlanejamento 
+              planejamento={planejamento}
+              emailGestor={emailGestor}
+            />
+          </div>
+        )}
 
         {/* Botões de Ação */}
         {showActions && (
