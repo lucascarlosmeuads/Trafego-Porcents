@@ -26,17 +26,33 @@ serve(async (req) => {
 
     const { selectedCopy, analysisId, emailGestor } = await req.json()
 
-    console.log('🎨 [dall-e-generator] Iniciando geração para copy:', selectedCopy.id)
+    console.log('🎨 [dall-e-generator] Iniciando geração para copy:', selectedCopy.id || selectedCopy.headline)
 
-    // Buscar dados da análise para contexto adicional
-    const { data: analysisData, error: analysisError } = await supabase
-      .from('pdf_analysis')
-      .select('*')
-      .eq('id', analysisId)
-      .single()
+    // Buscar dados da análise para contexto adicional (se disponível)
+    let analysisData = null
+    if (analysisId && analysisId !== 'undefined') {
+      const { data, error: analysisError } = await supabase
+        .from('pdf_analysis')
+        .select('*')
+        .eq('id', analysisId)
+        .single()
 
-    if (analysisError) {
-      throw new Error(`Erro ao buscar análise: ${analysisError.message}`)
+      if (analysisError) {
+        console.warn('⚠️ [dall-e-generator] Aviso ao buscar análise:', analysisError.message)
+      } else {
+        analysisData = data
+      }
+    }
+
+    // Usar dados padrão se não houver análise disponível
+    const contextData = analysisData || {
+      nome_oferta: 'Professional Service',
+      proposta_central: 'Premium solution',
+      publico_alvo: 'Business professionals',
+      tom_voz: 'Professional and confident',
+      nome_arquivo: 'planejamento-estrategico.txt',
+      caminho_arquivo: '/planejamento',
+      dados_extraidos: { fonte: 'planejamento' }
     }
 
     // Criar prompt para anúncio estruturado completo
@@ -50,10 +66,10 @@ MANDATORY LAYOUT (top to bottom):
 4. CTA at bottom: "${selectedCopy.cta}"
 
 COMMERCIAL CONTEXT:
-- Product/Service: ${analysisData.nome_oferta || 'Professional Service'}
-- Value Proposition: ${analysisData.proposta_central || 'Premium solution'}
-- Target Audience: ${analysisData.publico_alvo || 'Business professionals'}
-- Tone: ${analysisData.tom_voz || 'Professional and confident'}
+- Product/Service: ${contextData.nome_oferta}
+- Value Proposition: ${contextData.proposta_central}
+- Target Audience: ${contextData.publico_alvo}
+- Tone: ${contextData.tom_voz}
 
 VISUAL SPECIFICATIONS:
 - Format: Instagram/Facebook post (square 1:1)
@@ -125,9 +141,9 @@ Result: A complete, professional advertising post ready for social media campaig
       .insert({
         email_gestor: emailGestor,
         email_cliente: '', // Pode ser adicionado depois
-        nome_arquivo_pdf: analysisData.nome_arquivo,
-        caminho_pdf: analysisData.caminho_arquivo,
-        dados_extraidos: analysisData.dados_extraidos,
+        nome_arquivo_pdf: contextData.nome_arquivo,
+        caminho_pdf: contextData.caminho_arquivo,
+        dados_extraidos: contextData.dados_extraidos,
         criativos: criativoCompleto,
         status: 'concluido',
         arquivo_url: imageUrl,
