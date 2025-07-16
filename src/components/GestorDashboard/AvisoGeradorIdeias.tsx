@@ -14,17 +14,18 @@ export function AvisoGeradorIdeias() {
         <div className="flex items-start gap-2">
           <Lightbulb className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
           <p className="text-gray-300 text-sm">
-            Agora você pode gerar ideias criativas automaticamente a partir dos planejamentos estratégicos dos seus clientes.
+            Agora você pode gerar <strong>imagens reais de criativos</strong> usando técnica de <strong>incongruência criativa</strong> baseado nos planejamentos estratégicos dos seus clientes.
           </p>
         </div>
         
         <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-3">
           <p className="text-amber-300 text-xs font-medium mb-1">⚠️ IMPORTANTE - VERSÃO BETA:</p>
           <ul className="text-amber-200 text-xs space-y-1">
-            <li>• Esta funcionalidade serve apenas para <strong>gerar ideias criativas</strong></li>
-            <li>• <strong>Não envie essas ideias diretamente aos clientes</strong></li>
-            <li>• Use como inspiração para criar materiais profissionais refinados</li>
-            <li>• Acesse através dos "Materiais" de cada cliente</li>
+            <li>• Gera <strong>imagens reais de criativos</strong> usando incongruência criativa</li>
+            <li>• Use essas <strong>imagens como base</strong> para criar os criativos finais dos clientes</li>
+            <li>• Demonstre seu <strong>trabalho criativo profissional</strong> com essas ideias visuais</li>
+            <li>• <strong>Criativos visuais reais</strong> para inspirar e refinar seu trabalho</li>
+            <li>• Acesse através dos "Materiais" de cada cliente → Aba "Criativos"</li>
           </ul>
         </div>
 

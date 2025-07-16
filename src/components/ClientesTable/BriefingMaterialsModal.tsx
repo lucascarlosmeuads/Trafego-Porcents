@@ -593,11 +593,11 @@ export function BriefingMaterialsModal({
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-amber-800 mb-2">🧪 Funcionalidade BETA - Gerador de Ideias de Criativos</h3>
-                    <div className="space-y-2 text-sm text-amber-700">
-                      <p><strong>Esta ferramenta serve apenas para gerar ideias criativas.</strong></p>
-                      <div className="bg-amber-100/50 rounded p-2 border border-amber-200">
-                        <p className="font-medium mb-1">⚠️ IMPORTANTE:</p>
-                        <ul className="space-y-1 text-xs">
+                     <div className="space-y-2 text-sm text-amber-700">
+                       <p><strong>Esta ferramenta gera imagens reais de criativos usando técnica de incongruência criativa.</strong></p>
+                       <div className="bg-amber-100/50 rounded p-2 border border-amber-200">
+                         <p className="font-medium mb-1">⚠️ IMPORTANTE:</p>
+                         <ul className="space-y-1 text-xs">
                           <li>• Use essas ideias como <strong>inspiração</strong> para criar materiais profissionais</li>
                           <li>• <strong>NÃO envie essas ideias diretamente aos clientes</strong></li>
                           <li>• Refine e profissionalize antes de apresentar ao cliente</li>

@@ -489,14 +489,14 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
           <div className="flex-1">
             <h3 className="font-semibold text-purple-800 mb-2">🧪 Gerador de Ideias de Criativos (VERSÃO BETA)</h3>
             <div className="space-y-2 text-sm text-purple-700">
-              <p><strong>Esta ferramenta gera ideias criativas automaticamente a partir do planejamento estratégico.</strong></p>
+              <p><strong>Esta ferramenta gera imagens reais de criativos usando técnica de incongruência criativa.</strong></p>
               <div className="bg-purple-100/50 rounded p-2 border border-purple-200">
-                <p className="font-medium mb-1">⚠️ IMPORTANTE - USE APENAS COMO INSPIRAÇÃO:</p>
+                <p className="font-medium mb-1">⚠️ IMPORTANTE - CRIATIVOS VISUAIS REAIS:</p>
                 <ul className="space-y-1 text-xs">
-                  <li>• Estas são <strong>ideias iniciais</strong> que precisam ser refinadas</li>
-                  <li>• <strong>Crie materiais profissionais</strong> baseados nessas inspirações</li>
-                  <li>• <strong>Não use diretamente com clientes</strong> - profissionalize primeiro</li>
-                  <li>• Versão beta para auxílio criativo da equipe interna</li>
+                  <li>• Gera <strong>imagens reais de criativos</strong> usando incongruência criativa</li>
+                  <li>• Use essas <strong>imagens como base</strong> para criar os criativos finais dos clientes</li>
+                  <li>• Demonstre seu <strong>trabalho criativo profissional</strong> com essas ideias visuais</li>
+                  <li>• <strong>Não envie diretamente aos clientes</strong> - use como inspiração e base</li>
                 </ul>
               </div>
             </div>
