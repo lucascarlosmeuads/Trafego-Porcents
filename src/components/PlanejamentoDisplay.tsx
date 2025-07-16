@@ -41,10 +41,104 @@ export const PlanejamentoDisplay = ({
     try {
       const { jsPDF } = await import('jspdf');
       
-      // Função para limpar e normalizar texto preservando emoticons
+      // Função para limpar e normalizar texto convertendo emoticons para texto
       const cleanText = (text: string): string => {
-        // Não remover emoticons - apenas normalizar espaços e quebras de linha
+        // Mapeamento de emoticons para texto equivalente
+        const emojiMap: { [key: string]: string } = {
+          '🎯': '(alvo)',
+          '📈': '(crescimento)',
+          '💡': '(ideia)',
+          '🚀': '(foguete)',
+          '📊': '(gráfico)',
+          '💰': '(dinheiro)',
+          '⭐': '(estrela)',
+          '🔥': '(fogo)',
+          '📱': '(celular)',
+          '💻': '(computador)',
+          '🌟': '(estrela)',
+          '🎉': '(festa)',
+          '🏆': '(troféu)',
+          '📝': '(nota)',
+          '✅': '(check)',
+          '❌': '(x)',
+          '⚡': '(raio)',
+          '🔍': '(lupa)',
+          '📢': '(alto-falante)',
+          '🎪': '(circo)',
+          '🎨': '(arte)',
+          '🌐': '(global)',
+          '📲': '(notificação)',
+          '💎': '(diamante)',
+          '🎭': '(teatro)',
+          '🔧': '(ferramenta)',
+          '⚙️': '(engrenagem)',
+          '📅': '(calendário)',
+          '⏰': '(relógio)',
+          '📍': '(localização)',
+          '🏃': '(corrida)',
+          '🏋️': '(exercício)',
+          '💪': '(força)',
+          '🧠': '(cérebro)',
+          '👥': '(grupo)',
+          '👤': '(pessoa)',
+          '🤝': '(aperto de mão)',
+          '💼': '(maleta)',
+          '🏢': '(prédio)',
+          '🏠': '(casa)',
+          '🛒': '(carrinho)',
+          '🛍️': '(compras)',
+          '📦': '(pacote)',
+          '🚚': '(entrega)',
+          '✨': '(brilho)',
+          '🌈': '(arco-íris)',
+          '☀️': '(sol)',
+          '🌙': '(lua)',
+          '🔔': '(sino)',
+          '📣': '(megafone)',
+          '🎵': '(música)',
+          '🎶': '(notas musicais)',
+          '🎤': '(microfone)',
+          '📷': '(câmera)',
+          '🎬': '(filme)',
+          '📺': '(tv)',
+          '📻': '(rádio)',
+          '🎮': '(game)',
+          '🕹️': '(controle)',
+          '🎲': '(dado)',
+          '🃏': '(carta)',
+          '🏅': '(medalha)',
+          '🥇': '(primeiro lugar)',
+          '🥈': '(segundo lugar)',
+          '🥉': '(terceiro lugar)',
+          '👍': '(like)',
+          '👎': '(dislike)',
+          '👌': '(ok)',
+          '✌️': '(vitória)',
+          '🤞': '(dedos cruzados)',
+          '🙏': '(obrigado)',
+          '❤️': '(coração)',
+          '💖': '(coração brilhante)',
+          '💙': '(coração azul)',
+          '💚': '(coração verde)',
+          '💛': '(coração amarelo)',
+          '🧡': '(coração laranja)',
+          '💜': '(coração roxo)',
+          '🖤': '(coração preto)',
+          '🤍': '(coração branco)',
+          '💔': '(coração partido)',
+          '💕': '(dois corações)',
+          '💞': '(corações girando)',
+          '💓': '(coração batendo)',
+          '💗': '(coração crescendo)',
+          '💘': '(coração com flecha)',
+          '💝': '(coração presente)'
+        };
+
         return text
+          // Converter emoticons para texto equivalente
+          .replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, (emoji) => {
+            return emojiMap[emoji] || `(${emoji})`;
+          })
           // Normalizar quebras de linha
           .replace(/\r\n/g, '\n')
           // Remover múltiplos espaços
