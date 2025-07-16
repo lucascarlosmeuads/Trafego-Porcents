@@ -9,10 +9,10 @@ import { useToast } from '@/hooks/use-toast';
 interface GeneratedCopy {
   id: string;
   headline: string;
-  subheadline: string;
-  copy: string;
+  visualConcept: string;
+  description: string;
   cta: string;
-  style: string;
+  copyType: string;
   createdAt: Date;
 }
 
@@ -31,68 +31,92 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
       const copiesExtraidas: GeneratedCopy[] = [];
       
       try {
-        // Procurar por "Linha 1" e "Linha 2" do planejamento
-        const linhaRegex = /Linha\s+(\d+)\s+.*?\n([\s\S]*?)(?=Linha\s+\d+|---|$)/gi;
-        const matches = [...planejamento.matchAll(linhaRegex)];
+        console.log('🔍 Iniciando extração de copies do planejamento...');
         
-        matches.forEach((match, index) => {
-          const linha = match[1];
-          const conteudo = match[2];
+        // Procurar por padrões das novas copies estruturadas (COPY 1, COPY 2, COPY 3)
+        const copyRegex = /## [🚀🎯💡] COPY (\d+) - (.+?)\n\n\*\*HEADLINE:\*\* (.+?)\n\n\*\*CONCEITO VISUAL CONTRAINTUITIVO:\*\*\n(.+?)\n\n\*\*DESCRIÇÃO PERSUASIVA:\*\*\n(.+?)\n\n\*\*CTA:\*\* (.+?)\n/gs;
+        
+        const matches = [...planejamento.matchAll(copyRegex)];
+        
+        if (matches.length > 0) {
+          console.log(`📋 Encontrados ${matches.length} copies estruturadas`);
           
-          // Extrair títulos (até 40 caracteres)
-          const tituloRegex = /Títulos.*?\n((?:.*\n)*?)(?=Descri[çc][õo]|$)/gi;
-          const tituloMatch = tituloRegex.exec(conteudo);
-          const titulos = tituloMatch?.[1]
-            ?.split('\n')
-            ?.filter(t => t.trim() && !t.includes('Descrição'))
-            ?.map(t => t.replace(/^[•\-\*]\s*/, '').trim()) || [];
+          matches.forEach((match, index) => {
+            const copyNumber = match[1];
+            const copyType = match[2].trim();
+            const headline = match[3].trim().replace(/\[|\]/g, '');
+            const visualConcept = match[4].trim().replace(/\[|\]/g, '');
+            const description = match[5].trim().replace(/\[|\]/g, '');
+            const cta = match[6].trim().replace(/\[|\]/g, '');
 
-          // Extrair descrições (até 125 caracteres)
-          const descricaoRegex = /Descri[çc][õo].*?\n((?:.*\n)*?)(?=---|Linha|$)/gi;
-          const descricaoMatch = descricaoRegex.exec(conteudo);
-          const descricoes = descricaoMatch?.[1]
-            ?.split('\n')
-            ?.filter(d => d.trim())
-            ?.map(d => d.replace(/^[•\-\*]\s*/, '').trim()) || [];
-
-          // Criar copies combinando títulos e descrições
-          const maxCombinations = Math.min(titulos.length, descricoes.length);
-          for (let i = 0; i < maxCombinations; i++) {
-            if (titulos[i] && descricoes[i]) {
-              copiesExtraidas.push({
-                id: `linha-${linha}-copy-${i + 1}`,
-                headline: titulos[i],
-                subheadline: `Linha ${linha} Criativo`,
-                copy: descricoes[i],
-                cta: 'SAIBA MAIS',
-                style: `Linha ${linha}`,
-                createdAt: new Date()
-              });
+            copiesExtraidas.push({
+              id: `copy-${copyNumber}`,
+              headline: headline,
+              visualConcept: visualConcept,
+              description: description,
+              cta: cta,
+              copyType: copyType,
+              createdAt: new Date()
+            });
+          });
+        } else {
+          // Fallback: tentar extrair do formato antigo
+          console.log('⚠️ Formato novo não encontrado, tentando extração do formato antigo...');
+          
+          const linhaRegex = /### • Linha\s+(\d+)\s+–\s+(.+?)\n\n\*\*📢 Títulos.*?\n((?:.*\n)*?)\*\*📝 Descrições.*?\n((?:.*\n)*?)(?=###|---|$)/gs;
+          const linhaMatches = [...planejamento.matchAll(linhaRegex)];
+          
+          linhaMatches.forEach((match) => {
+            const linha = match[1];
+            const tipo = match[2];
+            const titulosText = match[3];
+            const descricoesText = match[4];
+            
+            const titulos = titulosText.split('\n')
+              .filter(t => t.trim() && t.match(/^\d+\./))
+              .map(t => t.replace(/^\d+\.\s*/, '').trim());
+            
+            const descricoes = descricoesText.split('\n')
+              .filter(d => d.trim() && d.match(/^\d+\./))
+              .map(d => d.replace(/^\d+\.\s*/, '').trim());
+            
+            const maxCombinations = Math.min(titulos.length, descricoes.length);
+            for (let i = 0; i < maxCombinations; i++) {
+              if (titulos[i] && descricoes[i]) {
+                copiesExtraidas.push({
+                  id: `linha-${linha}-${i + 1}`,
+                  headline: titulos[i],
+                  visualConcept: `Imagem profissional relacionada a: ${tipo}`,
+                  description: descricoes[i],
+                  cta: 'SAIBA MAIS',
+                  copyType: tipo,
+                  createdAt: new Date()
+                });
+              }
             }
-          }
-        });
-
-        // Se não encontrou copies específicas, tentar extração genérica
-        if (copiesExtraidas.length === 0) {
-          const linhas = planejamento.split('\n').filter(l => l.trim() && l.length > 10);
-          if (linhas.length > 0) {
+          });
+          
+          // Se ainda não encontrou nada, criar copy genérica
+          if (copiesExtraidas.length === 0) {
+            console.log('⚠️ Nenhum formato reconhecido, criando copy genérica...');
+            
             copiesExtraidas.push({
               id: 'generic-copy',
-              headline: 'Transforme Seu Negócio',
-              subheadline: 'Baseado no seu planejamento estratégico',
-              copy: 'Estratégia personalizada criada especialmente para o seu negócio',
+              headline: 'Transforme Seu Negócio Hoje',
+              visualConcept: 'Uma pessoa relaxada trabalhando em casa com resultados positivos na tela',
+              description: 'Estratégia personalizada que gera resultados reais para seu negócio',
               cta: 'COMEÇAR AGORA',
-              style: 'Planejamento Estratégico',
+              copyType: 'Genérica',
               createdAt: new Date()
             });
           }
         }
 
-        console.log(`📋 Extraídas ${copiesExtraidas.length} copies do planejamento`);
+        console.log(`✅ Total de ${copiesExtraidas.length} copies extraídas`);
         setCopies(copiesExtraidas);
         
       } catch (error) {
-        console.error('Erro ao extrair copies:', error);
+        console.error('❌ Erro ao extrair copies:', error);
         setCopies([]);
       }
     };
@@ -112,9 +136,10 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
         body: {
           selectedCopy: {
             headline: copy.headline,
-            copy: copy.copy,
+            copy: copy.description,
             cta: copy.cta,
-            style: copy.style
+            style: copy.copyType,
+            visualConcept: copy.visualConcept
           },
           emailGestor: emailGestor
         }
@@ -170,7 +195,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
                 <div className="flex-1">
                   <CardTitle className="text-lg mb-1">{copy.headline}</CardTitle>
                   <Badge variant="outline" className="text-xs">
-                    {copy.style}
+                    {copy.copyType}
                   </Badge>
                 </div>
               </div>
@@ -179,8 +204,15 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
             <CardContent>
               <div className="space-y-3">
                 <div>
+                  <p className="text-sm text-muted-foreground mb-1">Conceito Visual:</p>
+                  <p className="text-sm bg-secondary/20 p-2 rounded-md italic text-secondary-foreground">
+                    {copy.visualConcept}
+                  </p>
+                </div>
+                
+                <div>
                   <p className="text-sm text-muted-foreground mb-1">Descrição:</p>
-                  <p className="text-sm">{copy.copy}</p>
+                  <p className="text-sm">{copy.description}</p>
                 </div>
                 
                 <div>

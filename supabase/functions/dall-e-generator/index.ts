@@ -55,39 +55,53 @@ serve(async (req) => {
       dados_extraidos: { fonte: 'planejamento' }
     }
 
-    // Criar prompt para anúncio estruturado completo
+    // Usar conceito visual se disponível
+    const visualConcept = selectedCopy.visualConcept || 'Professional advertising visual related to the offer';
+    const copyText = selectedCopy.copy || selectedCopy.description || 'Premium solution for your needs';
+    
+    // Criar prompt otimizado com conceito contraintuitivo
     const imagePrompt = `
-Create a complete, professional social media advertisement with this EXACT STRUCTURE:
+Create a high-converting social media advertisement using this COUNTER-INTUITIVE VISUAL CONCEPT:
 
-MANDATORY LAYOUT (top to bottom):
-1. HEADLINE at top: "${selectedCopy.headline}"
-2. CENTRAL IMAGE: Eye-catching visual related to the offer
-3. DESCRIPTION below: "${selectedCopy.copy.substring(0, 120)}..."
-4. CTA at bottom: "${selectedCopy.cta}"
+PRIMARY VISUAL CONCEPT:
+"${visualConcept}"
+
+TEXT OVERLAY REQUIREMENTS:
+1. Bold headline at top: "${selectedCopy.headline}"
+2. Persuasive description: "${copyText}"
+3. Strong CTA button: "${selectedCopy.cta}"
 
 COMMERCIAL CONTEXT:
 - Product/Service: ${contextData.nome_oferta}
 - Value Proposition: ${contextData.proposta_central}
 - Target Audience: ${contextData.publico_alvo}
-- Tone: ${contextData.tom_voz}
+- Advertising Style: ${selectedCopy.style || contextData.tom_voz}
 
-VISUAL SPECIFICATIONS:
-- Format: Instagram/Facebook post (square 1:1)
-- Design: Professional "sponsored post" layout
-- Typography: Headline prominently displayed, readable text
-- Colors: Professional color palette that builds trust
-- Elements: Icons or illustrations that reinforce the message
-- Clear visual hierarchy: HEADLINE → IMAGE → TEXT → CTA
+DESIGN SPECIFICATIONS:
+- Format: Square 1:1 (Instagram/Facebook optimal)
+- Style: Modern, professional, attention-grabbing
+- Colors: Vibrant but professional palette that builds trust
+- Typography: Bold, highly readable fonts with strong contrast
+- Layout: Clean with clear visual hierarchy
+- Mobile-optimized text sizes
+
+COUNTER-INTUITIVE APPROACH:
+- Use the specified visual concept that breaks expectations
+- Surprise the viewer with unconventional imagery
+- Create immediate curiosity through visual contrast
+- Avoid obvious or cliché representations
+- Make people stop scrolling with unexpected visuals
 
 CRITICAL REQUIREMENTS:
-- ALL copy text must be VISIBLE in the image
-- Create a complete advertisement, not just abstract art
-- Include the actual copy text within the image design
-- Professional "paid ad" appearance
-- Layout that works for paid social media campaigns
-- High resolution, ready-to-use advertising creative
+- The visual concept MUST be the primary focus of the image
+- Include ALL text elements as readable overlays
+- Ensure perfect readability on mobile devices
+- Create immediate emotional impact and curiosity
+- Design for maximum engagement and conversion
+- Professional advertising quality with commercial appeal
+- Text must be large enough to read on small screens
 
-Result: A complete, professional advertising post ready for social media campaigns.
+Result: A scroll-stopping advertisement that uses unexpected visuals while maintaining commercial effectiveness and perfect readability.
     `.trim()
 
     console.log('🖼️ [dall-e-generator] Prompt criado para DALL-E 3')
@@ -127,9 +141,10 @@ Result: A complete, professional advertising post ready for social media campaig
       id: `creative-${Date.now()}`,
       imageUrl: imageUrl,
       headline: selectedCopy.headline,
-      subheadline: selectedCopy.subheadline,
-      copy: selectedCopy.copy,
+      visualConcept: visualConcept,
+      description: copyText,
       cta: selectedCopy.cta,
+      copyType: selectedCopy.style || 'Contraintuitivo',
       style: 'Incongruência Criativa - DALL-E 3',
       geradoEm: new Date().toISOString(),
       promptUsado: imagePrompt
