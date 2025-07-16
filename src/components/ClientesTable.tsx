@@ -939,6 +939,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setCreativoFilter={setCreativoFilter}
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
+              colorFilter={colorFilter}
+              setColorFilter={setColorFilter}
               getStatusColor={getStatusColor}
               isSearching={isSearching}
             />
@@ -967,6 +969,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
               setCreativoFilter={setCreativoFilter}
               bmFilter={bmFilter}
               setBmFilter={setBmFilter}
+              colorFilter={colorFilter}
+              setColorFilter={setColorFilter}
               getStatusColor={getStatusColor}
               isSearching={isSearching}
             />
