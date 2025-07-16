@@ -14,6 +14,7 @@ import { ClienteRowEmailCell } from './ClienteRowEmailCell'
 import { ClienteRowGestorCell } from './ClienteRowGestorCell'
 import { ClienteRowStatusCells } from './ClienteRowStatusCells'
 import { ClienteRowBriefingCell } from './ClienteRowBriefingCell'
+import { ColorSelect, type ColorMarcacao } from './ColorSelect'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
 import type { ClienteBasicInfo } from '@/types/shared'
 
@@ -42,6 +43,8 @@ interface ClienteRowProps {
   onBMCancel: () => void
   onComissionUpdate: () => void
   onSitePagoChange?: (clienteId: string, newValue: boolean) => void
+  onColorChange?: (clienteId: string, newColor: ColorMarcacao) => void
+  updatingColor?: string | null
 }
 
 export function ClienteRow({
@@ -68,7 +71,9 @@ export function ClienteRow({
   onBMSave,
   onBMCancel,
   onComissionUpdate,
-  onSitePagoChange
+  onSitePagoChange,
+  onColorChange,
+  updatingColor
 }: ClienteRowProps) {
   const { getClienteOrigem } = useClienteOrigem()
   
@@ -95,7 +100,21 @@ export function ClienteRow({
           index={index}
         />
 
-        <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-16 bg-card z-10 border-r border-border">
+        <TableCell 
+          className="text-white text-xs p-1 w-8 sticky left-16 bg-card z-10 border-r border-border"
+          style={{ backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.02)' : 'rgba(255, 255, 255, 0.05)' }}
+        >
+          {onColorChange && (
+            <ColorSelect
+              value={(cliente as any).cor_marcacao as ColorMarcacao}
+              onValueChange={(newColor) => onColorChange(cliente.id!.toString(), newColor)}
+              disabled={false}
+              isUpdating={updatingColor === cliente.id!.toString()}
+            />
+          )}
+        </TableCell>
+
+        <TableCell className="text-white text-xs p-1 max-w-[80px] sticky left-24 bg-card z-10 border-r border-border">
           <ClienteRowName 
             clienteId={clienteInfo.clienteId}
             nomeCliente={clienteInfo.nomeCliente}

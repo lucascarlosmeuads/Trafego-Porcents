@@ -22,6 +22,7 @@ interface UseManagerDataReturn {
   addCliente: (clienteData: any) => Promise<AddClienteResult>
   currentManager: string | null
   setClientes: React.Dispatch<React.SetStateAction<Cliente[]>>
+  updateColor: (clienteId: string, color: string | null) => Promise<boolean>
 }
 
 export function useManagerData(
@@ -151,6 +152,33 @@ export function useManagerData(
     return allData
   }
 
+  const updateColor = async (clienteId: string, color: string | null): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ cor_marcacao: color })
+        .eq('id', clienteId)
+
+      if (error) {
+        console.error('❌ Erro ao atualizar cor:', error)
+        return false
+      }
+
+      // Atualizar estado local
+      setClientes(prev => prev.map(cliente => 
+        cliente.id?.toString() === clienteId 
+          ? { ...cliente, cor_marcacao: color } as any
+          : cliente
+      ))
+
+      console.log('✅ Cor atualizada com sucesso')
+      return true
+    } catch (error) {
+      console.error('❌ Erro ao atualizar cor:', error)
+      return false
+    }
+  }
+
   return {
     clientes,
     loading,
@@ -161,5 +189,6 @@ export function useManagerData(
     addCliente,
     currentManager,
     setClientes,
+    updateColor,
   }
 }

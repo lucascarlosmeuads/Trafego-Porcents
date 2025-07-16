@@ -24,6 +24,7 @@ import { ClienteRow } from './ClientesTable/ClienteRow'
 import { AddClientModal } from './ClientesTable/AddClientModal'
 import { TablePagination } from './ClientesTable/TablePagination'
 import { useOptimizedFilters } from '@/hooks/useOptimizedFilters'
+import type { ColorMarcacao } from '@/components/ClientesTable/ColorSelect'
 
 interface ClientesTableProps {
   selectedManager?: string
@@ -56,7 +57,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   
   const managerForQuery = isSitesContext ? undefined : selectedManager
   
-  const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager, setClientes } = useManagerData(
+  const { clientes, loading, error, updateCliente, addCliente, refetch, currentManager, setClientes, updateColor } = useManagerData(
     emailToUse, 
     isAdmin, 
     managerForQuery,
@@ -82,6 +83,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
   const [podeAdicionarCliente, setPodeAdicionarCliente] = useState(false)
   const [loadingPermissoes, setLoadingPermissoes] = useState(true)
   const [addingClient, setAddingClient] = useState(false)
+  const [updatingColor, setUpdatingColor] = useState<string | null>(null)
 
   // ETAPA 3: Usar filtros otimizados com debounce
   const { filteredClientes: optimizedFilteredClientes, isSearching } = useOptimizedFilters({
@@ -600,6 +602,37 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
     refetch()
   }
 
+  // Função para atualizar cor de marcação
+  const handleColorChange = async (clienteId: string, newColor: ColorMarcacao) => {
+    setUpdatingColor(clienteId)
+    
+    try {
+      const success = await updateColor(clienteId, newColor)
+      
+      if (success) {
+        toast({
+          title: "Sucesso",
+          description: "Cor atualizada com sucesso"
+        })
+      } else {
+        toast({
+          title: "Erro",
+          description: "Falha ao atualizar cor",
+          variant: "destructive"
+        })
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar cor:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar cor",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingColor(null)
+    }
+  }
+
   const renderClientesTable = (clientesList: typeof clientes, isInactive = false) => {
     // ETAPA 3: Usar filtros otimizados quando possível
     const finalClientesList = clientesList === clientes ? optimizedFilteredClientes : getFilteredClientes(clientesList)
@@ -681,6 +714,8 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
                         onBMCancel={handleBMCancel}
                         onComissionUpdate={handleComissionUpdate}
                         onSitePagoChange={handleSitePagoChange}
+                        onColorChange={handleColorChange}
+                        updatingColor={updatingColor}
                       />
                     ))
                   )}

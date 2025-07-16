@@ -7,6 +7,7 @@ import { Cliente, STATUS_CAMPANHA } from '@/lib/supabase'
 import { getDataLimiteDisplayForGestor } from '@/utils/dateUtils'
 import { TransferirModal } from './TransferirModal'
 import { ComissaoSimples } from '@/components/ClientesTable/ComissaoSimples'
+import { ColorSelect, type ColorMarcacao } from '@/components/ClientesTable/ColorSelect'
 
 interface AdminTableDesktopProps {
   clientes: Cliente[]
@@ -17,6 +18,8 @@ interface AdminTableDesktopProps {
   onComissionUpdate: () => void
   formatDate: (dateString: string | null) => string
   getStatusColor: (status: string) => string
+  onColorChange?: (clienteId: string, newColor: ColorMarcacao) => void
+  updatingColor?: string | null
 }
 
 export function AdminTableDesktop({ 
@@ -27,7 +30,9 @@ export function AdminTableDesktop({
   onStatusChange, 
   onComissionUpdate,
   formatDate, 
-  getStatusColor 
+  getStatusColor,
+  onColorChange,
+  updatingColor
 }: AdminTableDesktopProps) {
   return (
     <div className="overflow-x-auto">
@@ -36,6 +41,7 @@ export function AdminTableDesktop({
           <TableRow className="border-border hover:bg-muted/20">
             <TableHead className="w-16 text-muted-foreground">ID</TableHead>
             <TableHead className="min-w-[100px] text-muted-foreground">Data Venda</TableHead>
+            <TableHead className="w-16 text-muted-foreground">Cor</TableHead>
             <TableHead className="min-w-[200px] text-muted-foreground">Nome Cliente</TableHead>
             <TableHead className="min-w-[120px] text-muted-foreground">Telefone</TableHead>
             <TableHead className="min-w-[180px] text-muted-foreground">Email Gestor</TableHead>
@@ -66,6 +72,16 @@ export function AdminTableDesktop({
                     <Calendar className="w-3 h-3 text-muted-foreground" />
                     <span className="text-xs text-foreground">{formatDate(cliente.data_venda)}</span>
                   </div>
+                </TableCell>
+                <TableCell>
+                  {onColorChange && (
+                    <ColorSelect
+                      value={(cliente as any).cor_marcacao as ColorMarcacao}
+                      onValueChange={(newColor) => onColorChange(cliente.id!.toString(), newColor)}
+                      disabled={false}
+                      isUpdating={updatingColor === cliente.id!.toString()}
+                    />
+                  )}
                 </TableCell>
                 <TableCell className="font-medium">
                   <div className="max-w-[200px] truncate text-foreground">

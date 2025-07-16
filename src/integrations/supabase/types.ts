@@ -1206,6 +1206,7 @@ export type Database = {
           comissao: string | null
           comissao_confirmada: boolean | null
           comissao_paga: boolean | null
+          cor_marcacao: string | null
           created_at: string
           created_at_br: string | null
           data_agendamento: string | null
@@ -1244,6 +1245,7 @@ export type Database = {
           comissao?: string | null
           comissao_confirmada?: boolean | null
           comissao_paga?: boolean | null
+          cor_marcacao?: string | null
           created_at?: string
           created_at_br?: string | null
           data_agendamento?: string | null
@@ -1282,6 +1284,7 @@ export type Database = {
           comissao?: string | null
           comissao_confirmada?: boolean | null
           comissao_paga?: boolean | null
+          cor_marcacao?: string | null
           created_at?: string
           created_at_br?: string | null
           data_agendamento?: string | null

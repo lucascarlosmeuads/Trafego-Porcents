@@ -2,12 +2,14 @@
 import { useState, useEffect } from 'react'
 import { supabase, type Cliente } from '@/lib/supabase'
 import { useToast } from '@/hooks/use-toast'
+import type { ColorMarcacao } from '@/components/ClientesTable/ColorSelect'
 
 export function useAdminTableLogic() {
   const [clientes, setClientes] = useState<Cliente[]>([])
   const [loading, setLoading] = useState(true)
   const [gestores, setGestores] = useState<Array<{ email: string, nome: string }>>([])
   const [transferindoCliente, setTransferindoCliente] = useState<string | null>(null)
+  const [updatingColor, setUpdatingColor] = useState<string | null>(null)
   const { toast } = useToast()
 
   useEffect(() => {
@@ -240,6 +242,45 @@ export function useAdminTableLogic() {
     fetchAllClientes()
   }
 
+  const handleColorChange = async (clienteId: string, newColor: ColorMarcacao) => {
+    setUpdatingColor(clienteId)
+    
+    try {
+      const { error } = await supabase
+        .from('todos_clientes')
+        .update({ cor_marcacao: newColor })
+        .eq('id', clienteId)
+
+      if (error) {
+        console.error('❌ Erro ao atualizar cor:', error)
+        toast({
+          title: "Erro",
+          description: `Erro ao atualizar cor: ${error.message}`,
+          variant: "destructive"
+        })
+      } else {
+        setClientes(prev => prev.map(cliente => 
+          cliente.id?.toString() === clienteId 
+            ? { ...cliente, cor_marcacao: newColor } as any
+            : cliente
+        ))
+        toast({
+          title: "Sucesso",
+          description: "Cor atualizada com sucesso"
+        })
+      }
+    } catch (error) {
+      console.error('❌ Erro:', error)
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao atualizar cor",
+        variant: "destructive"
+      })
+    } finally {
+      setUpdatingColor(null)
+    }
+  }
+
   return {
     clientes,
     loading,
@@ -247,6 +288,8 @@ export function useAdminTableLogic() {
     transferindoCliente,
     handleTransferirCliente,
     handleStatusChange,
-    handleComissionUpdate
+    handleComissionUpdate,
+    handleColorChange,
+    updatingColor
   }
 }

@@ -18,7 +18,9 @@ export function AdminTable() {
     transferindoCliente,
     handleTransferirCliente,
     handleStatusChange,
-    handleComissionUpdate
+    handleComissionUpdate,
+    handleColorChange,
+    updatingColor
   } = useAdminTableLogic()
 
   if (loading) {
@@ -89,6 +91,8 @@ export function AdminTable() {
             onComissionUpdate={handleComissionUpdate}
             formatDate={formatDate}
             getStatusColor={getStatusColor}
+            onColorChange={handleColorChange}
+            updatingColor={updatingColor}
           />
         </div>
         
