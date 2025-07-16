@@ -61,47 +61,51 @@ serve(async (req) => {
     
     // Criar prompt otimizado com conceito contraintuitivo
     const imagePrompt = `
-Create a high-converting social media advertisement using this COUNTER-INTUITIVE VISUAL CONCEPT:
+Create a professional social media advertisement in Portuguese with this COUNTER-INTUITIVE VISUAL CONCEPT:
 
-PRIMARY VISUAL CONCEPT:
+🎯 PRIMARY VISUAL CONCEPT (MUST BE EXACT):
 "${visualConcept}"
 
-TEXT OVERLAY REQUIREMENTS:
-1. Bold headline at top: "${selectedCopy.headline}"
-2. Persuasive description: "${copyText}"
-3. Strong CTA button: "${selectedCopy.cta}"
+📝 TEXT CONTENT TO INCLUDE:
+- HEADLINE (top, large): "${selectedCopy.headline}"
+- DESCRIPTION (middle): "${copyText}"  
+- CTA BUTTON (bottom): "${selectedCopy.cta}"
 
-COMMERCIAL CONTEXT:
-- Product/Service: ${contextData.nome_oferta}
-- Value Proposition: ${contextData.proposta_central}
-- Target Audience: ${contextData.publico_alvo}
-- Advertising Style: ${selectedCopy.style || contextData.tom_voz}
+🎨 VISUAL REQUIREMENTS:
+- Format: Perfect square 1024x1024 (Instagram/Facebook)
+- Background: Clean, professional, high contrast
+- Typography: Bold, sans-serif, extremely readable on mobile
+- Colors: Professional palette that builds trust and authority
+- Layout: Clear visual hierarchy with plenty of white space
 
-DESIGN SPECIFICATIONS:
-- Format: Square 1:1 (Instagram/Facebook optimal)
-- Style: Modern, professional, attention-grabbing
-- Colors: Vibrant but professional palette that builds trust
-- Typography: Bold, highly readable fonts with strong contrast
-- Layout: Clean with clear visual hierarchy
-- Mobile-optimized text sizes
+🧠 COUNTER-INTUITIVE EXECUTION:
+- Execute the visual concept EXACTLY as described
+- Show the OPPOSITE of what people expect
+- Create immediate visual surprise and curiosity
+- Break conventional advertising patterns
+- Use unexpected imagery that contradicts the obvious
 
-COUNTER-INTUITIVE APPROACH:
-- Use the specified visual concept that breaks expectations
-- Surprise the viewer with unconventional imagery
-- Create immediate curiosity through visual contrast
-- Avoid obvious or cliché representations
-- Make people stop scrolling with unexpected visuals
+🎯 ADVERTISING PSYCHOLOGY:
+- Visual stops the scroll immediately
+- Creates cognitive dissonance (unexpected = attention)
+- Text overlay must be crystal clear and readable
+- Professional quality that builds instant credibility
+- Optimized for mobile viewing and instant comprehension
 
-CRITICAL REQUIREMENTS:
-- The visual concept MUST be the primary focus of the image
-- Include ALL text elements as readable overlays
-- Ensure perfect readability on mobile devices
-- Create immediate emotional impact and curiosity
-- Design for maximum engagement and conversion
-- Professional advertising quality with commercial appeal
-- Text must be large enough to read on small screens
+📱 MOBILE-FIRST DESIGN:
+- Text size: Large enough to read on phone screens
+- High contrast text against background
+- Simple, uncluttered composition
+- Key message visible within 2 seconds
 
-Result: A scroll-stopping advertisement that uses unexpected visuals while maintaining commercial effectiveness and perfect readability.
+🚀 COMMERCIAL EFFECTIVENESS:
+- Professional advertising quality
+- Builds trust and authority
+- Clear value proposition
+- Strong call-to-action visibility
+- Designed for maximum conversion
+
+Result: A scroll-stopping advertisement with unexpected visuals that maintains professional credibility and perfect mobile readability.
     `.trim()
 
     console.log('🖼️ [dall-e-generator] Prompt criado para DALL-E 3')

@@ -72,75 +72,72 @@ serve(async (req) => {
 
 FORMATO OBRIGATÓRIO - SIGA EXATAMENTE:
 
-📍 PLANEJAMENTO ESTRATÉGICO CRIATIVO – [NOME DO CLIENTE] – TRÁFEGO %
+📍 PLANEJAMENTO ESTRATÉGICO CRIATIVO – ${briefing.nome_marca || briefing.nome_produto || 'CLIENTE'} – TRÁFEGO %
 
 **Introdução personalizada:**
-Olá [nome],
-Baseado no seu briefing, criamos 3 copies estratégicas prontas para transformar em criativos visuais de alta conversão.
+Olá ${briefing.nome_marca || briefing.nome_produto || 'cliente'},
+Baseado no seu briefing, criamos 3 copies estratégicas prontas para transformar em criativos visuais de alta conversão para ${briefing.publico_alvo || 'seu público'}.
 
 ---
 
 ## 🚀 COPY 1 - QUEBRA DE OBJEÇÃO
 
-**HEADLINE:** [Título impactante que quebra objeção principal - máx 50 caracteres]
+**HEADLINE:** [Título impactante de 30-40 caracteres que quebra a principal objeção do ${briefing.publico_alvo || 'público'}]
 
 **CONCEITO VISUAL CONTRAINTUITIVO:**
-[Descrição específica da imagem que será gerada: uma imagem que vai CONTRA o óbvio, que surpreende e chama atenção. Ex: "Uma pessoa relaxada em casa enquanto dinheiro aparece na tela do notebook" ao invés de "pessoa estressada trabalhando"]
+[Imagem específica CONTRA o óbvio sobre ${briefing.nome_produto}: Ex: se for curso de vendas, mostre pessoa descansando enquanto vendas acontecem automaticamente, NÃO pessoa trabalhando duro. Máx 80 caracteres]
 
 **DESCRIÇÃO PERSUASIVA:**
-[3-4 frases que conectam a dor com a solução, usando gatilhos mentais e criando urgência - máx 200 caracteres]
+[Conecte a dor específica do ${briefing.publico_alvo || 'público'} com a solução ${briefing.nome_produto}, use gatilho de escassez/urgência. Máx 150 caracteres]
 
-**CTA:** [Call to action específico e atrativo]
+**CTA:** [Action específico para ${briefing.nome_produto}]
 
 ---
 
 ## 🎯 COPY 2 - PROVA SOCIAL
 
-**HEADLINE:** [Título com prova social ou resultado - máx 50 caracteres]
+**HEADLINE:** [Resultado específico em números ou depoimento. 30-40 caracteres]
 
 **CONCEITO VISUAL CONTRAINTUITIVO:**
-[Descrição específica da imagem contraintuitiva que representa sucesso/resultado de forma inesperada]
+[Imagem que mostra sucesso/resultado de forma inesperada para ${briefing.tipo_prestacao_servico || 'o serviço'}. Máx 80 caracteres]
 
 **DESCRIÇÃO PERSUASIVA:**
-[3-4 frases com storytelling e prova social que gera confiança - máx 200 caracteres]
+[Mini-story com prova social específica do nicho ${briefing.direcionamento_campanha || 'negócio'}, gere confiança. Máx 150 caracteres]
 
-**CTA:** [Call to action específico e atrativo]
+**CTA:** [Action específico para ${briefing.nome_produto}]
 
 ---
 
 ## 💡 COPY 3 - EDUCACIONAL + CURIOSIDADE
 
-**HEADLINE:** [Título educacional que desperta curiosidade - máx 50 caracteres]
+**HEADLINE:** [Pergunta ou fato curioso sobre ${briefing.diferencial || 'o nicho'}. 30-40 caracteres]
 
 **CONCEITO VISUAL CONTRAINTUITIVO:**
-[Descrição específica da imagem que ensina algo de forma visual e inesperada]
+[Imagem educativa que ensina algo de forma visual surpreendente sobre ${briefing.nome_produto}. Máx 80 caracteres]
 
 **DESCRIÇÃO PERSUASIVA:**
-[3-4 frases que educam e criam curiosidade para saber mais - máx 200 caracteres]
+[Eduque sobre problema do ${briefing.publico_alvo || 'público'} + desperte curiosidade para solução. Máx 150 caracteres]
 
-**CTA:** [Call to action específico e atrativo]
-
----
-
-## 🎨 Diretrizes Visuais Gerais
-- Cores: [cores baseadas no briefing]
-- Estilo: [estilo baseado no briefing]
-- Tom: [tom baseado no público-alvo]
+**CTA:** [Action específico para ${briefing.nome_produto}]
 
 ---
 
-## 🧩 Fechamento
+## 🎨 Diretrizes Visuais
+- Cores: ${briefing.cores_desejadas || 'Cores profissionais que transmitem confiança'}
+- Estilo: ${briefing.estilo_visual || 'Moderno e profissional'}
+- Tom: ${briefing.publico_alvo ? `Adequado para ${briefing.publico_alvo}` : 'Profissional e confiável'}
+
+---
 
 > "Copies estratégicas para máxima conversão,  
 > Equipe Tráfego Porcents."
 
 REGRAS CRÍTICAS:
-- SEMPRE crie EXATAMENTE 3 copies com essa estrutura
-- HEADLINES devem ter máximo 50 caracteres
-- CONCEITOS VISUAIS devem ser CONTRAINTUITIVOS (contra o óbvio)
-- DESCRIÇÕES devem ter máximo 200 caracteres
-- Seja específico sobre o negócio do cliente
-- Use gatilhos mentais (escassez, autoridade, prova social, etc.)`
+- HEADLINES: 30-40 caracteres (legíveis no mobile)
+- CONCEITOS VISUAIS: 80 caracteres, SEMPRE contraintuitivos  
+- DESCRIÇÕES: 150 caracteres, com gatilhos mentais
+- Seja ESPECÍFICO sobre ${briefing.nome_produto} e ${briefing.publico_alvo}
+- Use dados reais do briefing fornecido`
         },
         {
           role: 'user',
