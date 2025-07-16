@@ -35,6 +35,16 @@ interface PDFData {
   tomVoz: string
   beneficios: string[]
   tipoMidia: string[]
+  copiesProntas?: {
+    linha1: {
+      titulos: string[]
+      descricoes: string[]
+    }
+    linha2: {
+      titulos: string[]
+      descricoes: string[]
+    }
+  }
 }
 
 interface GeneratedCopy {

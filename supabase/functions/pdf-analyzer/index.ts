@@ -77,6 +77,16 @@ serve(async (req) => {
       propostaCentral: "Solução completa para maximizar resultados do seu negócio",
       publicoAlvo: "Empreendedores e empresários focados em crescimento",
       beneficios: ["Resultados comprovados", "Implementação rápida", "Suporte especializado"],
+      copiesProntas: {
+        linha1: {
+          titulos: ["Transforme Seu Negócio Hoje", "Método Revolucionário", "Resultados Garantidos"],
+          descricoes: ["Descubra como transformar resultados.", "Sistema completo para crescer.", "Metodologia comprovada por especialistas."]
+        },
+        linha2: {
+          titulos: ["Como Funciona o Sistema", "Benefícios Comprovados", "Passo a Passo Simples"],
+          descricoes: ["Entenda o processo completo.", "Veja os resultados reais obtidos.", "Aprenda de forma fácil e prática."]
+        }
+      },
       headlinePrincipal: "Transforme Seu Negócio com Nossa Solução Revolucionária",
       cta: "QUERO SABER MAIS AGORA",
       tomVoz: "Profissional, confiante e focado em resultados",
@@ -99,46 +109,56 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `Você é um especialista em análise de materiais comerciais. Extraia EXATAMENTE as informações comerciais do documento fornecido.
+              content: `Você é um especialista em extração de COPIES PRONTAS de planejamentos estratégicos de marketing.
 
-IMPORTANTE: 
-- Analise o conteúdo real do documento
-- Identifique especificamente o que está sendo vendido
-- Extraia preços, ofertas, prazos se houver
-- Identifique o público-alvo mencionado
-- Use os benefícios reais descritos no material
+FOCO: Extrair APENAS as copies prontas já criadas no documento (títulos e descrições de anúncios).
 
-RESPONDA APENAS COM JSON VÁLIDO, SEM TEXTO ADICIONAL OU EXPLICAÇÕES.
+PROCURE POR SEÇÕES COMO:
+- "Linha 1 Criativo de Atração"
+- "Linha 2 Criativo Educacional" 
+- "Títulos para Anúncio"
+- "Descrições para Anúncio"
+- "Estratégia Criativa"
+- "Criativos Sugeridos"
 
-Formato obrigatório:
+RESPONDA APENAS COM JSON VÁLIDO:
 {
-  "nomeOferta": "Nome real do produto/serviço sendo vendido",
-  "propostaCentral": "Proposta de valor principal extraída do documento", 
-  "publicoAlvo": "Público-alvo específico mencionado no material",
-  "beneficios": ["Benefício 1 real", "Benefício 2 real", "Benefício 3 real"],
-  "headlinePrincipal": "Headline baseada na oferta principal do documento",
-  "cta": "Call-to-action relacionado à venda específica",
-  "tomVoz": "Tom de voz identificado no material",
+  "nomeOferta": "Nome do cliente/empresa do planejamento",
+  "propostaCentral": "Proposta extraída do documento", 
+  "publicoAlvo": "Público-alvo mencionado",
+  "beneficios": ["Benefícios listados"],
+  "copiesProntas": {
+    "linha1": {
+      "titulos": ["Título 1", "Título 2", "Título 3"],
+      "descricoes": ["Descrição 1", "Descrição 2", "Descrição 3"]
+    },
+    "linha2": {
+      "titulos": ["Título 1", "Título 2", "Título 3"], 
+      "descricoes": ["Descrição 1", "Descrição 2", "Descrição 3"]
+    }
+  },
+  "headlinePrincipal": "Headline principal encontrada",
+  "cta": "CTA principal encontrado",
+  "tomVoz": "Tom de voz identificado",
   "tipoMidia": ["Feed", "Stories", "Carrossel"]
 }
 
-CRÍTICO: Use APENAS informações extraídas do documento real, não invente.`
+CRÍTICO: Extraia EXATAMENTE as copies prontas do documento, não invente.`
             },
             {
               role: 'user',
-              content: `EXTRAIA AS INFORMAÇÕES COMERCIAIS ESPECÍFICAS deste documento:
+              content: `EXTRAIA AS COPIES PRONTAS deste planejamento estratégico:
 
-${pdfText.substring(0, 4000)}
+${pdfText.substring(0, 6000)}
 
-Identifique:
-1. O que exatamente está sendo vendido
-2. Qual o preço ou investimento mencionado
-3. Quem é o público-alvo específico
-4. Quais benefícios são prometidos
-5. Qual a urgência ou prazo mencionado
-6. Qual a proposta única de valor
+PROCURE ESPECIFICAMENTE POR:
+1. Seções de "Linha 1" e "Linha 2" de criativos
+2. Listas de "Títulos para Anúncio" 
+3. Listas de "Descrições para Anúncio"
+4. Qualquer copy pronta mencionada
+5. Headlines e CTAs específicos
 
-Use essas informações para preencher o JSON.`
+Extraia EXATAMENTE como aparecem no documento.`
             }
           ],
         }),
@@ -189,6 +209,14 @@ Use essas informações para preencher o JSON.`
       }
       if (!Array.isArray(dadosExtraidos.tipoMidia)) {
         dadosExtraidos.tipoMidia = [dadosExtraidos.tipoMidia];
+      }
+
+      // Garantir estrutura de copiesProntas
+      if (!dadosExtraidos.copiesProntas) {
+        dadosExtraidos.copiesProntas = {
+          linha1: { titulos: [], descricoes: [] },
+          linha2: { titulos: [], descricoes: [] }
+        };
       }
 
       console.log('🧠 [pdf-analyzer] Dados estruturados pelo GPT-4:', dadosExtraidos);

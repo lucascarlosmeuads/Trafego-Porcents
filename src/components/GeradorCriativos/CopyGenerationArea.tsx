@@ -12,6 +12,7 @@ import {
   Loader2
 } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
+import { CopyExtractionDisplay } from './CopyExtractionDisplay'
 
 interface GeneratedCopy {
   id: string
@@ -154,8 +155,23 @@ Você está preparado?`
     return ctas[Math.floor(Math.random() * ctas.length)]
   }
 
+  // Verificar se há copies prontas do planejamento no pdfData
+  const temCopiesProntas = pdfData?.copiesProntas && 
+    (pdfData.copiesProntas.linha1?.titulos?.length > 0 || 
+     pdfData.copiesProntas.linha2?.titulos?.length > 0)
+
   return (
     <div className="space-y-6">
+      {/* Copies Extraídas do Planejamento */}
+      {temCopiesProntas && (
+        <CopyExtractionDisplay
+          copiesProntas={pdfData.copiesProntas}
+          nomeOferta={pdfData.nomeOferta || 'Oferta'}
+          onCopySelected={onCopySelected}
+          selectedCopyId={selectedCopyId}
+        />
+      )}
+
       {/* Generation Button */}
       <Card>
         <CardHeader>
@@ -167,9 +183,11 @@ Você está preparado?`
         <CardContent>
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              {copiesExistentes && copiesExistentes.length > 0 
-                ? "Copies do planejamento carregadas. Gere novas se necessário." 
-                : "Gere copies agressivas baseadas no seu PDF de planejamento"}
+              {temCopiesProntas 
+                ? "Copies do planejamento extraídas! Use as copies acima ou gere novas variações." 
+                : copiesExistentes && copiesExistentes.length > 0 
+                  ? "Copies do planejamento carregadas. Gere novas se necessário." 
+                  : "Gere copies agressivas baseadas no seu PDF de planejamento"}
             </p>
             
             <Button 
@@ -183,9 +201,11 @@ Você está preparado?`
               ) : (
                 <Wand2 className="h-5 w-5 mr-2" />
               )}
-              {copiesExistentes && copiesExistentes.length > 0 
-                ? 'Gerar Copy Adicional' 
-                : generatedCopies.length === 0 ? 'Gerar Primeira Copy' : 'Gerar Nova Copy'}
+              {temCopiesProntas 
+                ? 'Gerar Variação Adicional'
+                : copiesExistentes && copiesExistentes.length > 0 
+                  ? 'Gerar Copy Adicional' 
+                  : generatedCopies.length === 0 ? 'Gerar Primeira Copy' : 'Gerar Nova Copy'}
             </Button>
 
             {isGenerating && (

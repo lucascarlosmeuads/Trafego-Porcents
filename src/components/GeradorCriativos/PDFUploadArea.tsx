@@ -190,23 +190,22 @@ export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFU
               <h3 className="text-lg font-semibold text-foreground mb-2">
                 {isDragActive 
                   ? 'Solte o arquivo PDF aqui...' 
-                  : 'Faça upload do PDF de planejamento'
+                  : 'Upload do Planejamento Estratégico'
                 }
               </h3>
               
               <p className="text-muted-foreground mb-4">
-                Arraste e solte o arquivo PDF ou clique para selecionar
+                Envie o PDF com as copies prontas dos criativos
               </p>
               
               <div className="text-sm text-muted-foreground mb-4">
-                <p>O PDF deve conter informações sobre:</p>
-                <div className="grid grid-cols-2 gap-2 mt-2 text-left max-w-md mx-auto">
-                  <span>• Nome da oferta</span>
-                  <span>• Público-alvo</span>
-                  <span>• Proposta central</span>
-                  <span>• Headline principal</span>
-                  <span>• CTA desejado</span>
-                  <span>• Tom de voz</span>
+                <p className="font-medium mb-2">O sistema vai extrair automaticamente:</p>
+                <div className="grid grid-cols-1 gap-1 mt-2 text-left max-w-md mx-auto">
+                  <span>📝 Títulos para anúncios (Linha 1 e Linha 2)</span>
+                  <span>📋 Descrições dos criativos</span>
+                  <span>🎯 Copies prontas para cada linha</span>
+                  <span>✨ Headlines e CTAs dos criativos</span>
+                  <span>🎨 Informações para geração de imagem</span>
                 </div>
               </div>
             </>
