@@ -300,8 +300,18 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       } else if (bmFilter === 'sem_bm') {
         matchesBm = !(cliente.numero_bm && cliente.numero_bm.trim() !== '')
       }
+
+      // Filtro por cor de marcação
+      let matchesColor = true
+      if (colorFilter !== 'all') {
+        if (colorFilter === 'sem-cor') {
+          matchesColor = !cliente.cor_marcacao || cliente.cor_marcacao === null
+        } else {
+          matchesColor = cliente.cor_marcacao === colorFilter
+        }
+      }
       
-      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm
+      return matchesSearch && matchesStatus && matchesSiteStatus && matchesCreativo && matchesBm && matchesColor
     })
   }
 
@@ -859,6 +869,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       siteStatusFilter,
       creativoFilter,
       bmFilter,
+      colorFilter,
       clientesComCriativos
     })
 
@@ -869,6 +880,7 @@ export function ClientesTable({ selectedManager, userEmail, filterType }: Client
       siteStatusFilter,
       creativoFilter,
       bmFilter,
+      colorFilter,
       clientesComCriativos
     })
 
