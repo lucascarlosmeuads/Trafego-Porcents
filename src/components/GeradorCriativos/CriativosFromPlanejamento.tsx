@@ -32,6 +32,7 @@ interface CriativosFromPlanejamentoProps {
 export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailCliente }: CriativosFromPlanejamentoProps) => {
   const [copies, setCopies] = useState<GeneratedCopy[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
   const [loadingImages, setLoadingImages] = useState(false);
   const { toast } = useToast();
@@ -367,6 +368,75 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
     }
   };
 
+  const handleRegenerateImage = async (copy: GeneratedCopy) => {
+    setRegenerating(copy.id);
+    
+    try {
+      console.log('🔄 Regenerando imagem para copy:', copy.headline);
+      
+      toast({
+        title: "Regenerando imagem...",
+        description: `Criando nova versão para: ${copy.headline}`,
+      });
+
+      const response = await supabase.functions.invoke('dall-e-generator', {
+        body: {
+          selectedCopy: {
+            copyUniqueId: copy.id, // ID único baseado no conteúdo
+            headline: copy.headline,
+            copy: copy.description,
+            description: copy.description,
+            cta: copy.cta,
+            style: copy.copyType,
+            copyType: copy.copyType,
+            visualConcept: copy.visualConcept
+          },
+          emailGestor: emailGestor,
+          emailCliente: emailCliente
+        }
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Erro ao regenerar imagem');
+      }
+
+      if (response.data?.success) {
+        console.log('✅ [CriativosFromPlanejamento] Imagem regenerada com sucesso!', response.data);
+        
+        toast({
+          title: "Nova imagem gerada com sucesso!",
+          description: `Nova versão criada para: ${copy.headline}`,
+        });
+        
+        // Refresh automático das imagens após 1 segundo
+        setTimeout(() => {
+          console.log('🔄 [CriativosFromPlanejamento] Fazendo refresh das imagens...');
+          refreshImages();
+        }, 1000);
+        
+        // Segundo refresh após 5 segundos para garantir
+        setTimeout(() => {
+          console.log('🔄 [CriativosFromPlanejamento] Segundo refresh das imagens...');
+          refreshImages();
+        }, 5000);
+      } else {
+        console.error('❌ [CriativosFromPlanejamento] Resposta inválida:', response.data);
+        throw new Error('Resposta inválida do servidor');
+      }
+
+    } catch (error: any) {
+      console.error('❌ [CriativosFromPlanejamento] Erro ao regenerar imagem:', error);
+      
+      toast({
+        title: "Erro ao regenerar imagem",
+        description: error.message || "Tente novamente",
+        variant: "destructive"
+      });
+    } finally {
+      setRegenerating(null);
+    }
+  };
+
   if (copies.length === 0) {
     return (
       <div className="text-center p-6 text-muted-foreground">
@@ -504,68 +574,100 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
                   </div>
 
                    {/* Seção de Imagens Geradas */}
-                  {copyImages.length > 0 ? (
-                    <div className="border-t pt-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Image className="w-4 h-4 text-green-600" />
-                        <p className="text-sm font-medium text-green-600">
-                          ✅ Imagens Geradas ({copyImages.length})
-                        </p>
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        {copyImages.map((image) => (
-                          <div key={image.id} className="relative">
-                            <div className="aspect-square rounded-md overflow-hidden bg-muted">
-                              <img
-                                src={image.imageUrl}
-                                alt={copy.headline}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbSBuw6NvIGVuY29udHJhZGE8L3RleHQ+PC9zdmc+';
-                                }}
-                              />
-                            </div>
-                            
-                            <div className="absolute top-2 right-2">
-                              <Button
-                                onClick={() => downloadImage(image.imageUrl, `creative-${copy.headline.replace(/[^a-zA-Z0-9]/g, '-')}-${image.id}.png`)}
-                                size="sm"
-                                variant="secondary"
-                                className="h-8 w-8 p-0"
-                              >
-                                <Download className="w-4 h-4" />
-                              </Button>
-                            </div>
-                            
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Gerada em: {new Date(image.geradoEm).toLocaleDateString('pt-BR', {
-                                day: '2-digit',
-                                month: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ) : generating === copy.id ? (
-                    <div className="border-t pt-4">
-                      <div className="flex items-center gap-2 mb-3">
-                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
-                        <p className="text-sm font-medium text-blue-600">
-                          🎨 Gerando imagem... Aguarde alguns segundos
-                        </p>
-                      </div>
-                      <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-md">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          A imagem está sendo criada com base no conceito visual contraintuitivo. 
-                          Isso pode levar de 10 a 30 segundos.
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
+                   {copyImages.length > 0 ? (
+                     <div className="border-t pt-4">
+                       <div className="flex items-center justify-between mb-3">
+                         <div className="flex items-center gap-2">
+                           <Image className="w-4 h-4 text-green-600" />
+                           <p className="text-sm font-medium text-green-600">
+                             ✅ Imagens Geradas ({copyImages.length})
+                           </p>
+                         </div>
+                         
+                         <Button
+                           onClick={() => handleRegenerateImage(copy)}
+                           disabled={regenerating === copy.id || generating === copy.id}
+                           size="sm"
+                           variant="outline"
+                           className="h-8 gap-1"
+                         >
+                           {regenerating === copy.id ? (
+                             <Loader2 className="w-3 h-3 animate-spin" />
+                           ) : (
+                             <RefreshCw className="w-3 h-3" />
+                           )}
+                           {regenerating === copy.id ? 'Regenerando...' : 'Regenerar'}
+                         </Button>
+                       </div>
+                       
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                         {copyImages.map((image) => (
+                           <div key={image.id} className="relative">
+                             <div className="aspect-square rounded-md overflow-hidden bg-muted">
+                               <img
+                                 src={image.imageUrl}
+                                 alt={copy.headline}
+                                 className="w-full h-full object-cover"
+                                 onError={(e) => {
+                                   (e.target as HTMLImageElement).src = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZjNmNGY2Ii8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5YTNhZiIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbSBuw6NvIGVuY29udHJhZGE8L3RleHQ+PC9zdmc+';
+                                 }}
+                               />
+                             </div>
+                             
+                             <div className="absolute top-2 right-2">
+                               <Button
+                                 onClick={() => downloadImage(image.imageUrl, `creative-${copy.headline.replace(/[^a-zA-Z0-9]/g, '-')}-${image.id}.png`)}
+                                 size="sm"
+                                 variant="secondary"
+                                 className="h-8 w-8 p-0"
+                               >
+                                 <Download className="w-4 h-4" />
+                               </Button>
+                             </div>
+                             
+                             <p className="text-xs text-muted-foreground mt-1">
+                               Gerada em: {new Date(image.geradoEm).toLocaleDateString('pt-BR', {
+                                 day: '2-digit',
+                                 month: '2-digit',
+                                 hour: '2-digit',
+                                 minute: '2-digit'
+                               })}
+                             </p>
+                           </div>
+                         ))}
+                       </div>
+                     </div>
+                   ) : generating === copy.id ? (
+                     <div className="border-t pt-4">
+                       <div className="flex items-center gap-2 mb-3">
+                         <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                         <p className="text-sm font-medium text-blue-600">
+                           🎨 Gerando imagem... Aguarde alguns segundos
+                         </p>
+                       </div>
+                       <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-md">
+                         <p className="text-sm text-blue-700 dark:text-blue-300">
+                           A imagem está sendo criada com base no conceito visual contraintuitivo. 
+                           Isso pode levar de 10 a 30 segundos.
+                         </p>
+                       </div>
+                     </div>
+                   ) : regenerating === copy.id ? (
+                     <div className="border-t pt-4">
+                       <div className="flex items-center gap-2 mb-3">
+                         <Loader2 className="w-4 h-4 animate-spin text-orange-600" />
+                         <p className="text-sm font-medium text-orange-600">
+                           🔄 Regenerando imagem... Criando nova versão
+                         </p>
+                       </div>
+                       <div className="bg-orange-50 dark:bg-orange-950/20 p-4 rounded-md">
+                         <p className="text-sm text-orange-700 dark:text-orange-300">
+                           Uma nova imagem está sendo gerada para esta copy. 
+                           A nova versão aparecerá junto com as anteriores.
+                         </p>
+                       </div>
+                     </div>
+                   ) : null}
                 </div>
               </CardContent>
             </Card>
