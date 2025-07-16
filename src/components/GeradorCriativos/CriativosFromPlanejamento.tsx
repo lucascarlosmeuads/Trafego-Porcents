@@ -29,7 +29,7 @@ interface CriativosFromPlanejamentoProps {
   emailCliente: string;
 }
 
-export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: CriativosFromPlanejamentoProps) => {
+export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailCliente }: CriativosFromPlanejamentoProps) => {
   const [copies, setCopies] = useState<GeneratedCopy[]>([]);
   const [generating, setGenerating] = useState<string | null>(null);
   const [generatedImages, setGeneratedImages] = useState<GeneratedImage[]>([]);
@@ -147,6 +147,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
           .from('criativos_gerados')
           .select('id, arquivo_url, criativos, created_at')
           .eq('email_gestor', emailGestor)
+          .eq('email_cliente', emailCliente)
           .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Últimas 24h
           .order('created_at', { ascending: false });
 
@@ -182,6 +183,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
         .from('criativos_gerados')
         .select('id, arquivo_url, criativos, created_at')
         .eq('email_gestor', emailGestor)
+        .eq('email_cliente', emailCliente)
         .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false });
 
@@ -227,7 +229,8 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
             copyType: copy.copyType,
             visualConcept: copy.visualConcept
           },
-          emailGestor: emailGestor
+          emailGestor: emailGestor,
+          emailCliente: emailCliente
         }
       });
 

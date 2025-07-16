@@ -24,9 +24,14 @@ serve(async (req) => {
       throw new Error('OpenAI API key não configurado')
     }
 
-    const { selectedCopy, analysisId, emailGestor } = await req.json()
+    const { selectedCopy, analysisId, emailGestor, emailCliente } = await req.json()
+
+    if (!emailCliente || !emailGestor) {
+      throw new Error('emailCliente e emailGestor são obrigatórios')
+    }
 
     console.log('🎨 [dall-e-generator] Iniciando geração para copy:', selectedCopy.id || selectedCopy.headline)
+    console.log('📧 [dall-e-generator] Cliente:', emailCliente, 'Gestor:', emailGestor)
 
     // Buscar dados da análise para contexto adicional (se disponível)
     let analysisData = null
@@ -168,7 +173,7 @@ Result: A scroll-stopping advertisement with unexpected visuals that maintains p
       .from('criativos_gerados')
       .insert({
         email_gestor: emailGestor,
-        email_cliente: '', // Pode ser adicionado depois
+        email_cliente: emailCliente,
         nome_arquivo_pdf: contextData.nome_arquivo,
         caminho_pdf: contextData.caminho_arquivo,
         dados_extraidos: contextData.dados_extraidos,

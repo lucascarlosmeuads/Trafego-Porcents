@@ -15,6 +15,7 @@ interface PlanejamentoDisplayProps {
   isRegenerating?: boolean;
   showCriativosGenerator?: boolean;
   emailGestor?: string;
+  emailCliente?: string;
 }
 
 export const PlanejamentoDisplay = ({ 
@@ -23,7 +24,8 @@ export const PlanejamentoDisplay = ({
   showActions = true,
   isRegenerating = false,
   showCriativosGenerator = false,
-  emailGestor
+  emailGestor = "",
+  emailCliente = "",
 }: PlanejamentoDisplayProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -291,6 +293,7 @@ export const PlanejamentoDisplay = ({
             <CriativosFromPlanejamento 
               planejamento={planejamento}
               emailGestor={emailGestor}
+              emailCliente={emailCliente}
             />
           </div>
         )}
