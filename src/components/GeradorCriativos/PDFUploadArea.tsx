@@ -12,8 +12,13 @@ import {
 } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Configurar worker usando arquivo local na pasta public
-pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.js'
+// Configuração robusta do worker que evita dynamic imports
+const workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.min.js',
+  import.meta.url
+).toString()
+
+pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void

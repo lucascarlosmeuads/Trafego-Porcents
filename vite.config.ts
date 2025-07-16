@@ -29,4 +29,7 @@ export default defineConfig(({ mode }) => ({
     include: ['pdfjs-dist'],
   },
   assetsInclude: ['**/*.worker.js'],
+  worker: {
+    format: 'es'
+  },
 }));
