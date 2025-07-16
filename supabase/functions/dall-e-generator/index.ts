@@ -77,53 +77,59 @@ serve(async (req) => {
       cta
     });
     
-    // Criar prompt FOCADO no conceito visual contraintuitivo
+    // Criar prompt em português brasileiro para gerar criativos brasileiros
     const imagePrompt = `
-Create a professional social media advertisement that implements this EXACT COUNTER-INTUITIVE VISUAL CONCEPT:
+Crie um anúncio profissional para redes sociais que execute EXATAMENTE este CONCEITO VISUAL CONTRAINTUITIVO:
 
-🎯 VISUAL CONCEPT TO EXECUTE (MOST IMPORTANT):
+🎯 CONCEITO VISUAL PARA EXECUTAR (MAIS IMPORTANTE):
 "${visualConcept}"
 
-📝 TEXT CONTENT TO INCLUDE:
-- HEADLINE: "${headline}"
-- DESCRIPTION: "${description}"  
-- CTA: "${cta}"
+📝 TEXTO ESSENCIAL PARA INCLUIR (APENAS O MÍNIMO):
+- HEADLINE PRINCIPAL: "${headline}"
+- CHAMADA PARA AÇÃO: "${cta}"
 
-🎨 VISUAL REQUIREMENTS:
-- Format: Perfect square 1024x1024 (Instagram/Facebook)
-- Background: Clean, professional, high contrast
-- Typography: Bold, sans-serif, extremely readable on mobile
-- Colors: Professional palette that builds trust and authority
-- Layout: Clear visual hierarchy with plenty of white space
+⚠️ INSTRUÇÕES CRÍTICAS PARA TEXTO MÍNIMO:
+- APENAS mostrar o HEADLINE PRINCIPAL e CTA
+- NÃO incluir a descrição longa na imagem
+- Máximo 10 palavras visíveis na imagem total
+- Texto deve ser GRANDE, LEGÍVEL e em PORTUGUÊS
+- Zero erros de português - revisar ortografia cuidadosamente
 
-🧠 COUNTER-INTUITIVE EXECUTION (CRITICAL):
-- Execute the visual concept EXACTLY as written - no interpretation needed
-- The visual concept already contains the counter-intuitive element
-- Focus on making the unexpected visual concept highly realistic and professional
-- Create cognitive dissonance through the specified visual contradiction
-- Make the counter-intuitive element the MAIN focal point of the image
+🎨 PADRÃO VISUAL BRASILEIRO:
+- Formato: Quadrado perfeito 1024x1024 (Instagram/Facebook)
+- Fundo: Limpo, profissional, alto contraste
+- Tipografia: Negrito, sem serifa, extremamente legível no celular
+- Cores: Paleta profissional que transmite confiança
+- Layout: Hierarquia visual clara com muito espaço em branco
 
-🎯 ADVERTISING PSYCHOLOGY:
-- Visual stops the scroll immediately
-- Creates cognitive dissonance (unexpected = attention)
-- Text overlay must be crystal clear and readable
-- Professional quality that builds instant credibility
-- Optimized for mobile viewing and instant comprehension
+🧠 EXECUÇÃO CONTRAINTUITIVA (CRÍTICO):
+- Execute o conceito visual EXATAMENTE como escrito
+- O conceito visual já contém o elemento contraintuitivo
+- Foque em tornar o conceito inesperado altamente realista e profissional
+- Crie dissonância cognitiva através da contradição visual específica
+- Torne o elemento contraintuitivo o PONTO FOCAL principal da imagem
 
-📱 MOBILE-FIRST DESIGN:
-- Text size: Large enough to read on phone screens
-- High contrast text against background
-- Simple, uncluttered composition
-- Key message visible within 2 seconds
+🇧🇷 PADRÃO PUBLICITÁRIO BRASILEIRO:
+- Visual que para o scroll imediatamente
+- Cria dissonância cognitiva (inesperado = atenção)
+- Texto em português brasileiro perfeito
+- Qualidade profissional que constrói credibilidade instantânea
+- Otimizado para visualização mobile
 
-🚀 COMMERCIAL EFFECTIVENESS:
-- Professional advertising quality
-- Builds trust and authority
-- Clear value proposition
-- Strong call-to-action visibility
-- Designed for maximum conversion
+📱 DESIGN MOBILE-FIRST:
+- Tamanho do texto: Grande o suficiente para ler em telas de celular
+- Alto contraste entre texto e fundo
+- Composição simples e descomplicada
+- Mensagem principal visível em 2 segundos
 
-Result: A scroll-stopping advertisement with unexpected visuals that maintains professional credibility and perfect mobile readability.
+🚀 EFETIVIDADE COMERCIAL:
+- Qualidade publicitária profissional brasileira
+- Constrói confiança e autoridade
+- Proposta de valor clara
+- Call-to-action bem visível
+- Projetado para máxima conversão
+
+Resultado: Um anúncio que para o scroll com visuais inesperados, mantém credibilidade profissional e perfeita legibilidade mobile, com TEXTO MÍNIMO em português brasileiro perfeito.
     `.trim()
 
     console.log('🖼️ [dall-e-generator] Prompt criado para DALL-E 3')
