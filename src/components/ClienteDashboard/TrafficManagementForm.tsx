@@ -3,7 +3,8 @@ import { useForm, Controller } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import * as z from 'zod'
 import { supabase } from '@/lib/supabase'
-import { useToast } from '@/components/ui/use-toast'
+import { useToast } from '@/hooks/use-toast'
+import { usePlanejamentoEstrategico } from '@/hooks/usePlanejamentoEstrategico'
 import {
   Form,
   FormControl,
@@ -88,6 +89,7 @@ interface TrafficManagementFormProps {
 
 export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdated, onBack }: TrafficManagementFormProps) {
   const { toast } = useToast()
+  const { generatePlanejamento } = usePlanejamentoEstrategico()
   const [currentStep, setCurrentStep] = useState(1)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
@@ -227,11 +229,17 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
 
       toast({
         title: "Sucesso!",
-        description: "Formulário de gestão de tráfego enviado com sucesso!",
+        description: "Formulário salvo! Gerando planejamento estratégico...",
       })
       
       setSuccess(true)
       onBriefingUpdated()
+
+      // Gerar planejamento estratégico automaticamente em background
+      generatePlanejamento(emailCliente).catch(error => {
+        console.error('Erro ao gerar planejamento automático:', error)
+        // Não exibir erro para o usuário pois o formulário já foi salvo com sucesso
+      })
 
     } catch (error) {
       console.error("Erro inesperado:", error)
