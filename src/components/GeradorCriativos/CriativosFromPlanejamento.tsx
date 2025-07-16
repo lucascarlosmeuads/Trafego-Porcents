@@ -26,6 +26,7 @@ interface GeneratedImage {
 interface CriativosFromPlanejamentoProps {
   planejamento: string;
   emailGestor: string;
+  emailCliente: string;
 }
 
 export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: CriativosFromPlanejamentoProps) => {
