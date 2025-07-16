@@ -157,9 +157,11 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
         const images: GeneratedImage[] = data?.map(item => ({
           id: item.id,
           imageUrl: item.arquivo_url || '',
-          copyId: item.criativos?.headline || 'unknown',
+          copyId: item.criativos?.headline || item.criativos?.id || 'unknown',
           geradoEm: item.created_at
         })) || [];
+
+        console.log('🖼️ [CriativosFromPlanejamento] Imagens carregadas:', images.length, 'Total');
 
         setGeneratedImages(images);
       } catch (error) {
@@ -204,13 +206,24 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
     try {
       console.log('🎨 Gerando imagem para copy:', copy.headline);
       
+      console.log('🚀 [CriativosFromPlanejamento] Enviando dados para geração:', {
+        headline: copy.headline,
+        visualConcept: copy.visualConcept.substring(0, 50) + '...',
+        description: copy.description.substring(0, 50) + '...',
+        cta: copy.cta,
+        emailGestor
+      });
+
       const response = await supabase.functions.invoke('dall-e-generator', {
         body: {
           selectedCopy: {
+            id: copy.id,
             headline: copy.headline,
             copy: copy.description,
+            description: copy.description,
             cta: copy.cta,
             style: copy.copyType,
+            copyType: copy.copyType,
             visualConcept: copy.visualConcept
           },
           emailGestor: emailGestor
@@ -222,21 +235,37 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
       }
 
       if (response.data?.success) {
+        console.log('✅ [CriativosFromPlanejamento] Imagem gerada com sucesso!', response.data);
+        
         toast({
           title: "Imagem gerada com sucesso!",
           description: `Criativo baseado em: ${copy.headline}`,
         });
         
-        // Refresh automático das imagens após 2 segundos
+        // Refresh automático das imagens após 1 segundo
         setTimeout(() => {
+          console.log('🔄 [CriativosFromPlanejamento] Fazendo refresh das imagens...');
           refreshImages();
-        }, 2000);
+        }, 1000);
+        
+        // Segundo refresh após 5 segundos para garantir
+        setTimeout(() => {
+          console.log('🔄 [CriativosFromPlanejamento] Segundo refresh das imagens...');
+          refreshImages();
+        }, 5000);
       } else {
+        console.error('❌ [CriativosFromPlanejamento] Resposta inválida:', response.data);
         throw new Error('Resposta inválida do servidor');
       }
 
     } catch (error: any) {
-      console.error('Erro ao gerar imagem:', error);
+      console.error('❌ [CriativosFromPlanejamento] Erro ao gerar imagem:', error);
+      console.error('❌ [CriativosFromPlanejamento] Detalhes do erro:', {
+        message: error.message,
+        response: error.response,
+        stack: error.stack
+      });
+      
       toast({
         title: "Erro ao gerar imagem",
         description: error.message || "Tente novamente",
@@ -257,10 +286,16 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
   }
 
   const getImagesForCopy = (copyHeadline: string) => {
-    return generatedImages.filter(img => 
-      img.copyId === copyHeadline || 
-      img.copyId.includes(copyHeadline.substring(0, 10))
-    );
+    return generatedImages.filter(img => {
+      // Tentar várias estratégias de matching
+      const normalizedCopyHeadline = copyHeadline.toLowerCase().trim();
+      const normalizedImgId = img.copyId.toLowerCase().trim();
+      
+      return normalizedImgId === normalizedCopyHeadline ||
+             normalizedImgId.includes(normalizedCopyHeadline.substring(0, 10)) ||
+             normalizedCopyHeadline.includes(normalizedImgId.substring(0, 10)) ||
+             img.geradoEm && new Date(img.geradoEm) > new Date(Date.now() - 10 * 60 * 1000); // Últimos 10 minutos
+    });
   };
 
   const downloadImage = async (imageUrl: string, filename: string) => {
@@ -332,27 +367,36 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
               
               <CardContent>
                 <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Conceito Visual Contraintuitivo:</p>
-                      <p className="text-sm bg-amber-50 dark:bg-amber-950/20 p-2 rounded-md italic text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900">
-                        {copy.visualConcept}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Descrição Persuasiva:</p>
-                      <p className="text-sm bg-secondary/20 p-2 rounded-md">{copy.description}</p>
-                    </div>
+                  {/* HEADLINE */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">📢 HEADLINE:</p>
+                    <p className="text-base font-bold bg-blue-50 dark:bg-blue-950/20 p-3 rounded-md text-blue-900 dark:text-blue-100 border border-blue-200 dark:border-blue-900">
+                      {copy.headline}
+                    </p>
+                  </div>
+
+                  {/* CONCEITO VISUAL CONTRAINTUITIVO */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">🎨 CONCEITO VISUAL CONTRAINTUITIVO:</p>
+                    <p className="text-sm bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md italic text-amber-800 dark:text-amber-200 border border-amber-200 dark:border-amber-900">
+                      {copy.visualConcept}
+                    </p>
                   </div>
                   
-                  <div className="flex items-center gap-4">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">CTA:</p>
-                      <Badge variant="secondary" className="text-xs font-medium">
-                        {copy.cta}
-                      </Badge>
-                    </div>
+                  {/* DESCRIÇÃO PERSUASIVA */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">📝 DESCRIÇÃO PERSUASIVA:</p>
+                    <p className="text-sm bg-green-50 dark:bg-green-950/20 p-3 rounded-md text-green-800 dark:text-green-200 border border-green-200 dark:border-green-900">
+                      {copy.description}
+                    </p>
+                  </div>
+                  
+                  {/* CTA */}
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground mb-1">🎯 CTA:</p>
+                    <Badge variant="secondary" className="text-sm font-bold px-3 py-1 bg-purple-100 dark:bg-purple-900/20 text-purple-800 dark:text-purple-200">
+                      {copy.cta}
+                    </Badge>
                   </div>
 
                   <div className="flex gap-2">
@@ -376,13 +420,13 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
                     </Button>
                   </div>
 
-                  {/* Seção de Imagens Geradas */}
-                  {copyImages.length > 0 && (
+                   {/* Seção de Imagens Geradas */}
+                  {copyImages.length > 0 ? (
                     <div className="border-t pt-4">
                       <div className="flex items-center gap-2 mb-3">
                         <Image className="w-4 h-4 text-green-600" />
                         <p className="text-sm font-medium text-green-600">
-                          Imagens Geradas ({copyImages.length})
+                          ✅ Imagens Geradas ({copyImages.length})
                         </p>
                       </div>
                       
@@ -423,7 +467,22 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor }: Criativ
                         ))}
                       </div>
                     </div>
-                  )}
+                  ) : generating === copy.id ? (
+                    <div className="border-t pt-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                        <p className="text-sm font-medium text-blue-600">
+                          🎨 Gerando imagem... Aguarde alguns segundos
+                        </p>
+                      </div>
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-md">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          A imagem está sendo criada com base no conceito visual contraintuitivo. 
+                          Isso pode levar de 10 a 30 segundos.
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>

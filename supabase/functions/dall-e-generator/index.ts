@@ -55,21 +55,30 @@ serve(async (req) => {
       dados_extraidos: { fonte: 'planejamento' }
     }
 
-    // Usar conceito visual se disponível
-    const visualConcept = selectedCopy.visualConcept || 'Professional advertising visual related to the offer';
-    const copyText = selectedCopy.copy || selectedCopy.description || 'Premium solution for your needs';
+    // Extrair os 3 elementos principais da copy
+    const headline = selectedCopy.headline || 'Título Principal';
+    const visualConcept = selectedCopy.visualConcept || 'Conceito visual profissional relacionado à oferta';
+    const description = selectedCopy.copy || selectedCopy.description || 'Descrição persuasiva do produto';
+    const cta = selectedCopy.cta || 'SAIBA MAIS';
     
-    // Criar prompt otimizado com conceito contraintuitivo
+    console.log('📋 [dall-e-generator] Elementos extraídos:', {
+      headline: headline.substring(0, 50) + '...',
+      visualConcept: visualConcept.substring(0, 50) + '...',
+      description: description.substring(0, 50) + '...',
+      cta
+    });
+    
+    // Criar prompt FOCADO no conceito visual contraintuitivo
     const imagePrompt = `
-Create a professional social media advertisement in Portuguese with this COUNTER-INTUITIVE VISUAL CONCEPT:
+Create a professional social media advertisement that implements this EXACT COUNTER-INTUITIVE VISUAL CONCEPT:
 
-🎯 PRIMARY VISUAL CONCEPT (MUST BE EXACT):
+🎯 VISUAL CONCEPT TO EXECUTE (MOST IMPORTANT):
 "${visualConcept}"
 
 📝 TEXT CONTENT TO INCLUDE:
-- HEADLINE (top, large): "${selectedCopy.headline}"
-- DESCRIPTION (middle): "${copyText}"  
-- CTA BUTTON (bottom): "${selectedCopy.cta}"
+- HEADLINE: "${headline}"
+- DESCRIPTION: "${description}"  
+- CTA: "${cta}"
 
 🎨 VISUAL REQUIREMENTS:
 - Format: Perfect square 1024x1024 (Instagram/Facebook)
@@ -78,12 +87,12 @@ Create a professional social media advertisement in Portuguese with this COUNTER
 - Colors: Professional palette that builds trust and authority
 - Layout: Clear visual hierarchy with plenty of white space
 
-🧠 COUNTER-INTUITIVE EXECUTION:
-- Execute the visual concept EXACTLY as described
-- Show the OPPOSITE of what people expect
-- Create immediate visual surprise and curiosity
-- Break conventional advertising patterns
-- Use unexpected imagery that contradicts the obvious
+🧠 COUNTER-INTUITIVE EXECUTION (CRITICAL):
+- Execute the visual concept EXACTLY as written - no interpretation needed
+- The visual concept already contains the counter-intuitive element
+- Focus on making the unexpected visual concept highly realistic and professional
+- Create cognitive dissonance through the specified visual contradiction
+- Make the counter-intuitive element the MAIN focal point of the image
 
 🎯 ADVERTISING PSYCHOLOGY:
 - Visual stops the scroll immediately
@@ -144,11 +153,11 @@ Result: A scroll-stopping advertisement with unexpected visuals that maintains p
     const criativoCompleto = {
       id: `creative-${Date.now()}`,
       imageUrl: imageUrl,
-      headline: selectedCopy.headline,
+      headline: headline,
       visualConcept: visualConcept,
-      description: copyText,
-      cta: selectedCopy.cta,
-      copyType: selectedCopy.style || 'Contraintuitivo',
+      description: description,
+      cta: cta,
+      copyType: selectedCopy.style || selectedCopy.copyType || 'Contraintuitivo',
       style: 'Incongruência Criativa - DALL-E 3',
       geradoEm: new Date().toISOString(),
       promptUsado: imagePrompt
