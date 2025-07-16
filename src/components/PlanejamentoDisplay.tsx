@@ -132,7 +132,7 @@ export const PlanejamentoDisplay = ({
       
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
-      pdf.text(`Tráfego Por Cents - ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
+      pdf.text(`Tráfego Porcents - ${new Date().toLocaleDateString('pt-BR')}`, pageWidth / 2, currentY, { align: 'center' });
       currentY += 20;
       
       // Processar conteúdo
