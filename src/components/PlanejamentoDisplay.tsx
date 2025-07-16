@@ -16,6 +16,7 @@ interface PlanejamentoDisplayProps {
   showCriativosGenerator?: boolean;
   emailGestor?: string;
   emailCliente?: string;
+  nomeCliente?: string;
 }
 
 export const PlanejamentoDisplay = ({ 
@@ -26,6 +27,7 @@ export const PlanejamentoDisplay = ({
   showCriativosGenerator = false,
   emailGestor = "",
   emailCliente = "",
+  nomeCliente = "",
 }: PlanejamentoDisplayProps) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -41,9 +43,8 @@ export const PlanejamentoDisplay = ({
       
       // Função para limpar e normalizar texto preservando emoticons
       const cleanText = (text: string): string => {
+        // Não remover emoticons - apenas normalizar espaços e quebras de linha
         return text
-          // Remover caracteres especiais problemáticos, mas preservar emoticons
-          .replace(/[^\w\s\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F700-\u1F77F\u1F900-\u1F9FF\u2600-\u26FF\u2700-\u27BF\.,!?:;()'"%-]/g, '')
           // Normalizar quebras de linha
           .replace(/\r\n/g, '\n')
           // Remover múltiplos espaços
@@ -194,8 +195,9 @@ export const PlanejamentoDisplay = ({
       pdf.setFont("helvetica", "italic");
       pdf.text("Documento gerado pela equipe Tráfego Porcents", pageWidth / 2, pageHeight - 10, { align: 'center' });
       
-      // Download
-      const fileName = `planejamento-estrategico-${new Date().toISOString().split('T')[0]}.pdf`;
+      // Download com nome personalizado
+      const clienteName = nomeCliente ? nomeCliente.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-') : 'cliente';
+      const fileName = `planejamento-estrategico-${clienteName}-${new Date().toISOString().split('T')[0]}.pdf`;
       pdf.save(fileName);
       
       toast.success("PDF baixado com sucesso!", { 

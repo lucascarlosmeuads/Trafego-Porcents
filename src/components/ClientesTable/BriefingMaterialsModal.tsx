@@ -898,6 +898,7 @@ export function BriefingMaterialsModal({
                       showCriativosGenerator={true}
                       emailGestor={user?.email}
                       emailCliente={emailCliente}
+                      nomeCliente={nomeCliente}
                     />
                   ) : (
                     <div className="text-center py-8">
