@@ -12,6 +12,7 @@ import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
 import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
 import { AvisoGeradorIdeias } from './GestorDashboard/AvisoGeradorIdeias'
+import { BatchPlanejamentoGenerator } from './GestorDashboard/BatchPlanejamentoGenerator'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User } from 'lucide-react'
@@ -60,6 +61,9 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             <AvisoSistemasSAC />
             <AvisoMudancaStatus />
             <AvisoGeradorIdeias />
+            
+            {/* Gerador de Planejamentos em Lote */}
+            <BatchPlanejamentoGenerator />
             
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">
@@ -129,6 +133,9 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             <AvisoSistemasSAC />
             <AvisoMudancaStatus />
             <AvisoGeradorIdeias />
+            
+            {/* Gerador de Planejamentos em Lote */}
+            <BatchPlanejamentoGenerator />
             
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">
