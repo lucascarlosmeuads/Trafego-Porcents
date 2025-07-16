@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1';
+import * as pdfjsLib from 'https://esm.sh/pdfjs-dist@4.0.269/build/pdf.min.mjs';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -29,30 +30,43 @@ serve(async (req) => {
 
     let pdfText = extractedText;
 
-    // SOLUÇÃO ROBUSTA: Se não temos texto extraído, gerar análise baseada no nome do arquivo
+    // Se não temos texto extraído, extrair real do PDF
     if (!pdfText && filePath) {
-      console.log('📂 [pdf-analyzer] SOLUÇÃO ROBUSTA: gerando análise inteligente...');
+      console.log('📂 [pdf-analyzer] Extraindo texto real do PDF...');
       
-      // Para esta implementação, vamos usar GPT-4 para gerar dados baseados no contexto
-      // Em produção real, aqui seria feita extração real do PDF
-      pdfText = `
-      PLANEJAMENTO DE CAMPANHA ANALISADO AUTOMATICAMENTE
-      
-      Baseado no arquivo: ${fileName}
-      
-      Este documento contém um planejamento estratégico completo para campanha de marketing digital,
-      incluindo segmentação de público, proposta de valor, estratégias criativas e métricas de performance.
-      
-      O material foi estruturado para maximizar conversões através de copy persuasivo,
-      design visual impactante e ofertas irresistíveis para o público-alvo específico.
-      
-      Elementos principais identificados:
-      - Estratégia de posicionamento
-      - Análise de concorrência  
-      - Funil de vendas otimizado
-      - Criativos de alta conversão
-      - Métricas e KPIs definidos
-      `;
+      try {
+        // Baixar o arquivo PDF do Supabase Storage
+        const { data: fileData, error: downloadError } = await supabase.storage
+          .from('cliente-arquivos')
+          .download(filePath);
+
+        if (downloadError) {
+          throw new Error(`Erro ao baixar PDF: ${downloadError.message}`);
+        }
+
+        // Converter para ArrayBuffer
+        const arrayBuffer = await fileData.arrayBuffer();
+        
+        // Extrair texto usando PDF.js
+        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        console.log('📖 [pdf-analyzer] PDF carregado, páginas:', pdf.numPages);
+        
+        let fullText = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const textContent = await page.getTextContent();
+          const pageText = textContent.items.map((item: any) => item.str).join(' ');
+          fullText += pageText + '\n';
+        }
+        
+        pdfText = fullText.trim();
+        console.log('✅ [pdf-analyzer] Texto extraído do PDF (', pdfText.length, 'caracteres)');
+        
+      } catch (extractError) {
+        console.error('❌ [pdf-analyzer] Erro na extração:', extractError.message);
+        // Fallback para análise baseada no nome do arquivo
+        pdfText = `Análise baseada no arquivo: ${fileName}. Documento relacionado a estratégias de marketing e campanhas publicitárias.`;
+      }
     }
 
     console.log('📄 [pdf-analyzer] Texto para análise (', pdfText?.length || 0, 'chars), enviando para GPT-4...');
@@ -85,27 +99,46 @@ serve(async (req) => {
           messages: [
             {
               role: 'system',
-              content: `Você é um especialista em marketing digital. Analise o material e extraia informações para criativos.
+              content: `Você é um especialista em análise de materiais comerciais. Extraia EXATAMENTE as informações comerciais do documento fornecido.
+
+IMPORTANTE: 
+- Analise o conteúdo real do documento
+- Identifique especificamente o que está sendo vendido
+- Extraia preços, ofertas, prazos se houver
+- Identifique o público-alvo mencionado
+- Use os benefícios reais descritos no material
 
 RESPONDA APENAS COM JSON VÁLIDO, SEM TEXTO ADICIONAL OU EXPLICAÇÕES.
 
 Formato obrigatório:
 {
-  "nomeOferta": "string",
-  "propostaCentral": "string", 
-  "publicoAlvo": "string",
-  "beneficios": ["string1", "string2", "string3"],
-  "headlinePrincipal": "string",
-  "cta": "string",
-  "tomVoz": "string",
-  "tipoMidia": ["string1", "string2"]
+  "nomeOferta": "Nome real do produto/serviço sendo vendido",
+  "propostaCentral": "Proposta de valor principal extraída do documento", 
+  "publicoAlvo": "Público-alvo específico mencionado no material",
+  "beneficios": ["Benefício 1 real", "Benefício 2 real", "Benefício 3 real"],
+  "headlinePrincipal": "Headline baseada na oferta principal do documento",
+  "cta": "Call-to-action relacionado à venda específica",
+  "tomVoz": "Tom de voz identificado no material",
+  "tipoMidia": ["Feed", "Stories", "Carrossel"]
 }
 
-IMPORTANTE: Responda SOMENTE o JSON, sem markdown, sem explicações.`
+CRÍTICO: Use APENAS informações extraídas do documento real, não invente.`
             },
             {
               role: 'user',
-              content: `Analise este material de campanha: ${pdfText.substring(0, 3000)}`
+              content: `EXTRAIA AS INFORMAÇÕES COMERCIAIS ESPECÍFICAS deste documento:
+
+${pdfText.substring(0, 4000)}
+
+Identifique:
+1. O que exatamente está sendo vendido
+2. Qual o preço ou investimento mencionado
+3. Quem é o público-alvo específico
+4. Quais benefícios são prometidos
+5. Qual a urgência ou prazo mencionado
+6. Qual a proposta única de valor
+
+Use essas informações para preencher o JSON.`
             }
           ],
         }),

@@ -100,16 +100,34 @@ export function CopyGenerationArea({ pdfData, onCopySelected }: CopyGenerationAr
   }
 
   const generateAgressiveCopy = (data: any) => {
-    return `Cansado de ${data.publicoAlvo?.toLowerCase() || 'tentar sem sucesso'}?
+    const beneficios = data.beneficios || ['Transformação Real', 'Resultados Comprovados', 'Suporte Especializado'];
+    const publico = data.publicoAlvo || 'empreendedores que querem crescer';
+    const oferta = data.nomeOferta || 'solução premium';
+    const proposta = data.propostaCentral || 'transformar seu negócio';
+    
+    // Usar informações REAIS extraídas do PDF
+    return `${publico}! 
 
-${data.propostaCentral || 'Nossa solução revolucionária'} já transformou a vida de milhares de pessoas.
+Você conhece ${oferta}?
 
-🔥 BENEFÍCIOS EXCLUSIVOS:
-${data.beneficios?.map((b: string) => `✅ ${b}`).join('\n') || '✅ Resultados comprovados\n✅ Suporte especializado\n✅ Garantia total'}
+É exatamente isso que vai ${proposta.toLowerCase()}.
 
-⚠️ ATENÇÃO: Vagas limitadas!
+🔥 BENEFÍCIOS REAIS:
+${beneficios.map((b: string) => `✅ ${b}`).join('\n')}
 
-Não perca mais tempo. Sua transformação começa AGORA!`
+📈 RESULTADOS COMPROVADOS:
+• Baseado no planejamento estratégico documentado
+• Metodologia testada e aprovada
+• Processo estruturado passo a passo
+
+⚡ POR QUE AGORA?
+${proposta}
+
+💰 Oportunidade limitada para quem quer sair da zona de conforto.
+
+Não é para qualquer um. É para quem está REALMENTE decidido a mudar de patamar.
+
+Você está preparado?`
   }
 
   const getRandomCTA = () => {

@@ -39,28 +39,39 @@ serve(async (req) => {
       throw new Error(`Erro ao buscar análise: ${analysisError.message}`)
     }
 
-    // Criar prompt otimizado para incongruência criativa
+    // Criar prompt para anúncio estruturado completo
     const imagePrompt = `
-Create a high-quality, professional advertising image with creative incongruity that challenges expectations.
+Create a complete, professional social media advertisement with this EXACT STRUCTURE:
 
-Campaign Context:
-- Offer: ${analysisData.nome_oferta || 'Premium Solution'}
-- Target Audience: ${analysisData.publico_alvo || 'Professionals'}
-- Tone: ${analysisData.tom_voz || 'Confident and motivational'}
+MANDATORY LAYOUT (top to bottom):
+1. HEADLINE at top: "${selectedCopy.headline}"
+2. CENTRAL IMAGE: Eye-catching visual related to the offer
+3. DESCRIPTION below: "${selectedCopy.copy.substring(0, 120)}..."
+4. CTA at bottom: "${selectedCopy.cta}"
 
-Visual Requirements:
-- Style: Modern, premium, eye-catching
-- Creative Incongruity: Use unexpected visual elements that create cognitive surprise
-- Composition: Clean, professional layout suitable for social media ads
-- Colors: Bold, contrasting colors that grab attention
-- Quality: Ultra high-resolution, crisp details
-- Format: Square aspect ratio (1:1) optimized for social media
+COMMERCIAL CONTEXT:
+- Product/Service: ${analysisData.nome_oferta || 'Professional Service'}
+- Value Proposition: ${analysisData.proposta_central || 'Premium solution'}
+- Target Audience: ${analysisData.publico_alvo || 'Business professionals'}
+- Tone: ${analysisData.tom_voz || 'Professional and confident'}
 
-Creative Direction:
-Use visual metaphors and unexpected combinations that make viewers stop and think. The image should be professionally designed but with an element of surprise that breaks conventional advertising patterns.
+VISUAL SPECIFICATIONS:
+- Format: Instagram/Facebook post (square 1:1)
+- Design: Professional "sponsored post" layout
+- Typography: Headline prominently displayed, readable text
+- Colors: Professional color palette that builds trust
+- Elements: Icons or illustrations that reinforce the message
+- Clear visual hierarchy: HEADLINE → IMAGE → TEXT → CTA
 
-No text overlays needed - image only.
-Ultra high resolution.
+CRITICAL REQUIREMENTS:
+- ALL copy text must be VISIBLE in the image
+- Create a complete advertisement, not just abstract art
+- Include the actual copy text within the image design
+- Professional "paid ad" appearance
+- Layout that works for paid social media campaigns
+- High resolution, ready-to-use advertising creative
+
+Result: A complete, professional advertising post ready for social media campaigns.
     `.trim()
 
     console.log('🖼️ [dall-e-generator] Prompt criado para DALL-E 3')
