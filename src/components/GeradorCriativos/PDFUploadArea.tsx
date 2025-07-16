@@ -12,13 +12,8 @@ import {
 } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
 
-// Configuração robusta do worker que evita dynamic imports
-const workerSrc = new URL(
-  'pdfjs-dist/build/pdf.worker.min.js',
-  import.meta.url
-).toString()
-
-pdfjsLib.GlobalWorkerOptions.workerSrc = workerSrc
+// Configuração robusta usando CDN confiável que não causa problemas de CORS
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js'
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void
