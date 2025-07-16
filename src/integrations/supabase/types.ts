@@ -554,6 +554,7 @@ export type Database = {
           arquivo_url: string | null
           caminho_pdf: string
           cliente_id: number | null
+          copy_id: string | null
           created_at: string
           criativos: Json
           custo_processamento: number | null
@@ -582,6 +583,7 @@ export type Database = {
           arquivo_url?: string | null
           caminho_pdf: string
           cliente_id?: number | null
+          copy_id?: string | null
           created_at?: string
           criativos?: Json
           custo_processamento?: number | null
@@ -610,6 +612,7 @@ export type Database = {
           arquivo_url?: string | null
           caminho_pdf?: string
           cliente_id?: number | null
+          copy_id?: string | null
           created_at?: string
           criativos?: Json
           custo_processamento?: number | null

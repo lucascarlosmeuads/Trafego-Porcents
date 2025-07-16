@@ -240,10 +240,9 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
       try {
         const { data, error } = await supabase
           .from('criativos_gerados')
-          .select('id, arquivo_url, criativos, created_at')
+          .select('id, arquivo_url, copy_id, created_at')
           .eq('email_gestor', emailGestor)
           .eq('email_cliente', emailCliente)
-          .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString()) // Últimas 24h
           .order('created_at', { ascending: false });
 
         if (error) {
@@ -254,7 +253,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
         const images: GeneratedImage[] = data?.map(item => ({
           id: item.id,
           imageUrl: item.arquivo_url || '',
-          copyId: item.criativos?.headline || item.criativos?.id || 'unknown',
+          copyId: item.copy_id || 'unknown',
           geradoEm: item.created_at
         })) || [];
 
@@ -276,17 +275,16 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
     try {
       const { data, error } = await supabase
         .from('criativos_gerados')
-        .select('id, arquivo_url, criativos, created_at')
+        .select('id, arquivo_url, copy_id, created_at')
         .eq('email_gestor', emailGestor)
         .eq('email_cliente', emailCliente)
-        .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order('created_at', { ascending: false });
 
       if (!error && data) {
         const images: GeneratedImage[] = data.map(item => ({
           id: item.id,
           imageUrl: item.arquivo_url || '',
-          copyId: item.criativos?.headline || 'unknown',
+          copyId: item.copy_id || 'unknown',
           geradoEm: item.created_at
         }));
         setGeneratedImages(images);
@@ -384,17 +382,9 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
     );
   }
 
-  const getImagesForCopy = (copyHeadline: string) => {
-    return generatedImages.filter(img => {
-      // Tentar várias estratégias de matching
-      const normalizedCopyHeadline = copyHeadline.toLowerCase().trim();
-      const normalizedImgId = img.copyId.toLowerCase().trim();
-      
-      return normalizedImgId === normalizedCopyHeadline ||
-             normalizedImgId.includes(normalizedCopyHeadline.substring(0, 10)) ||
-             normalizedCopyHeadline.includes(normalizedImgId.substring(0, 10)) ||
-             img.geradoEm && new Date(img.geradoEm) > new Date(Date.now() - 10 * 60 * 1000); // Últimos 10 minutos
-    });
+  const getImagesForCopy = (copyId: string) => {
+    // Matching preciso usando copy_id específico
+    return generatedImages.filter(img => img.copyId === copyId);
   };
 
   const downloadImage = async (imageUrl: string, filename: string) => {
@@ -449,7 +439,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
 
       <div className="grid gap-6">
         {copies.map((copy) => {
-          const copyImages = getImagesForCopy(copy.headline);
+          const copyImages = getImagesForCopy(copy.id);
           
           return (
             <Card key={copy.id} className="relative">

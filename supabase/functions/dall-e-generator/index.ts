@@ -30,7 +30,10 @@ serve(async (req) => {
       throw new Error('emailCliente e emailGestor são obrigatórios')
     }
 
-    console.log('🎨 [dall-e-generator] Iniciando geração para copy:', selectedCopy.id || selectedCopy.headline)
+    // Criar ID único para esta copy específica
+    const copyUniqueId = selectedCopy.id || `copy-${selectedCopy.headline?.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`
+
+    console.log('🎨 [dall-e-generator] Iniciando geração para copy:', copyUniqueId)
     console.log('📧 [dall-e-generator] Cliente:', emailCliente, 'Gestor:', emailGestor)
 
     // Buscar dados da análise para contexto adicional (se disponível)
@@ -174,6 +177,7 @@ Result: A scroll-stopping advertisement with unexpected visuals that maintains p
       .insert({
         email_gestor: emailGestor,
         email_cliente: emailCliente,
+        copy_id: copyUniqueId,
         nome_arquivo_pdf: contextData.nome_arquivo,
         caminho_pdf: contextData.caminho_arquivo,
         dados_extraidos: contextData.dados_extraidos,
