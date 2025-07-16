@@ -10,10 +10,8 @@ import {
   AlertCircle,
   Download
 } from 'lucide-react'
-import * as pdfjsLib from 'pdfjs-dist'
-
-// Configuração robusta usando CDN confiável que não causa problemas de CORS
-pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@5.3.93/build/pdf.worker.min.js'
+import { supabase } from '@/integrations/supabase/client'
+import { useAuth } from '@/hooks/useAuth'
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void
@@ -22,54 +20,78 @@ interface PDFUploadAreaProps {
 }
 
 export function PDFUploadArea({ onPDFAnalysis, isAnalyzing, uploadedFile }: PDFUploadAreaProps) {
+  const { user } = useAuth()
 
   const onDrop = useCallback(async (acceptedFiles: File[]) => {
     const file = acceptedFiles[0]
     if (file && file.type === 'application/pdf') {
       try {
-        console.log('📄 [PDFUpload] Iniciando análise real do PDF:', file.name)
-        console.log('✅ [PDFUpload] Worker configurado com worker local')
+        console.log('📄 [PDFUpload] SOLUÇÃO DEFINITIVA: Upload direto para Supabase + Edge Function')
+        console.log('🚀 [PDFUpload] Iniciando upload:', file.name)
         
-        // Ler o arquivo como ArrayBuffer para usar com pdfjs-dist
-        const arrayBuffer = await file.arrayBuffer()
+        // 1. Upload para Supabase Storage
+        const timestamp = Date.now()
+        const fileName = `${timestamp}-${file.name}`
+        const filePath = `pdfs-analise/${fileName}`
         
-        console.log('🔍 [PDFUpload] Extraindo texto com pdfjs-dist...')
-        
-        // Usar pdfjs-dist para extrair texto real do PDF
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise
-        let extractedText = ''
-        
-        // Extrair texto de todas as páginas
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          const page = await pdf.getPage(pageNum)
-          const textContent = await page.getTextContent()
-          const pageText = textContent.items
-            .map((item: any) => item.str)
-            .join(' ')
-          extractedText += pageText + ' '
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('cliente-arquivos')
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        if (uploadError) {
+          throw new Error(`Erro no upload: ${uploadError.message}`)
         }
+
+        console.log('✅ [PDFUpload] Upload concluído:', uploadData.path)
         
-        console.log('✅ [PDFUpload] Texto real extraído:', extractedText.length, 'caracteres')
-        console.log('📄 [PDFUpload] Páginas:', pdf.numPages)
+        // 2. Chamar Edge Function para análise
+        console.log('🔍 [PDFUpload] Chamando edge function pdf-analyzer...')
         
-        if (!extractedText || extractedText.trim().length < 50) {
-          console.error('❌ [PDFUpload] PDF não contém texto suficiente:', extractedText.trim().length, 'caracteres')
-          alert('PDF não contém texto suficiente para análise. Verifique se o arquivo não é apenas imagens.')
-          return
+        const { data: analysisData, error: analysisError } = await supabase.functions.invoke('pdf-analyzer', {
+          body: {
+            fileName: file.name,
+            filePath: uploadData.path,
+            emailGestor: user?.email,
+            extractedText: null // Será processado pela edge function
+          }
+        })
+
+        if (analysisError) {
+          throw new Error(`Erro na análise: ${analysisError.message}`)
         }
+
+        if (!analysisData.success) {
+          throw new Error(analysisData.error || 'Erro desconhecido na análise')
+        }
+
+        console.log('✅ [PDFUpload] Análise concluída pela edge function:', analysisData.dadosExtraidos)
         
-        // Enviar texto extraído e arquivo para análise
-        onPDFAnalysis(extractedText, file.name, file)
+        // 3. Simular texto extraído para manter compatibilidade
+        const simulatedText = `
+        Nome da Oferta: ${analysisData.dadosExtraidos.nomeOferta}
+        Proposta Central: ${analysisData.dadosExtraidos.propostaCentral}
+        Público-Alvo: ${analysisData.dadosExtraidos.publicoAlvo}
+        Benefícios: ${analysisData.dadosExtraidos.beneficios?.join(', ')}
+        Headline: ${analysisData.dadosExtraidos.headlinePrincipal}
+        CTA: ${analysisData.dadosExtraidos.cta}
+        Tom de Voz: ${analysisData.dadosExtraidos.tomVoz}
+        `
+        
+        // 4. Chamar callback com texto simulado
+        onPDFAnalysis(simulatedText, file.name, file)
         
       } catch (error: any) {
-        console.error('❌ [PDFUpload] Erro ao extrair texto do PDF:', error)
+        console.error('❌ [PDFUpload] Erro na solução definitiva:', error)
         alert(`Erro ao processar PDF: ${error.message}`)
       }
     } else {
       console.error('❌ [PDFUpload] Arquivo não é PDF válido:', file?.type)
       alert('Por favor, selecione apenas arquivos PDF válidos.')
     }
-  }, [onPDFAnalysis])
+  }, [onPDFAnalysis, user?.email])
 
   const { getRootProps, getInputProps, isDragActive, fileRejections } = useDropzone({
     onDrop,
