@@ -39,16 +39,16 @@ export const PlanejamentoDisplay = ({
     try {
       const { jsPDF } = await import('jspdf');
       
-      // Função para limpar e normalizar texto
+      // Função para limpar e normalizar texto preservando emoticons
       const cleanText = (text: string): string => {
         return text
-          // Remover caracteres especiais problemáticos
-          .replace(/[^\w\s\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\.,!?:;()'"%-]/g, '')
+          // Remover caracteres especiais problemáticos, mas preservar emoticons
+          .replace(/[^\w\s\u00C0-\u00FF\u0100-\u017F\u0180-\u024F\u1F600-\u1F64F\u1F300-\u1F5FF\u1F680-\u1F6FF\u1F700-\u1F77F\u1F900-\u1F9FF\u2600-\u26FF\u2700-\u27BF\.,!?:;()'"%-]/g, '')
           // Normalizar quebras de linha
           .replace(/\r\n/g, '\n')
           // Remover múltiplos espaços
           .replace(/\s+/g, ' ')
-          // Remover formatação markdown problemática
+          // Preservar formatação negrito mas remover markdown
           .replace(/\*\*(.*?)\*\*/g, '$1') // negrito
           .replace(/\*(.*?)\*/g, '$1') // itálico
           .replace(/__(.*?)__/g, '$1') // sublinhado
