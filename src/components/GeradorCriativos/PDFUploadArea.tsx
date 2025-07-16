@@ -11,10 +11,9 @@ import {
   Download
 } from 'lucide-react'
 import * as pdfjsLib from 'pdfjs-dist'
-import pdfjsWorker from 'pdfjs-dist/build/pdf.worker.min.js?url'
 
-// Configurar worker de forma síncrona no topo do componente
-pdfjsLib.GlobalWorkerOptions.workerSrc = pdfjsWorker
+// Configurar worker usando CDN confiável
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://unpkg.com/pdfjs-dist@5.3.93/build/pdf.worker.min.js'
 
 interface PDFUploadAreaProps {
   onPDFAnalysis: (text: string, fileName: string, file: File) => void
