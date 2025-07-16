@@ -29,6 +29,16 @@ export function AvisoGeradorIdeias() {
           </ul>
         </div>
 
+        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-3">
+          <p className="text-red-300 text-xs font-medium mb-1">🎯 LEMBRETE IMPORTANTE:</p>
+          <div className="text-red-200 text-xs space-y-1">
+            <p><strong>Uma das maiores reclamações dos clientes é a falta de empenho no projeto</strong> como foi prometido para fechar.</p>
+            <p>Os criativos trabalhados com <strong>incongruência criativa</strong> mostram que <strong>pensamos nos criativos</strong> e somos diferentes - isso é o que acreditamos que dá resultado.</p>
+            <p><strong>Demonstrar esforço no criativo é o segredo</strong> para mostrar que o serviço foi feito. <strong>TESTAR CRIATIVO é o maior diferencial deste negócio.</strong></p>
+            <p>🛠️ <em>Esta ferramenta foi criada para facilitar sua vida e mostrar nosso trabalho criativo profissional.</em></p>
+          </div>
+        </div>
+
         <p className="text-gray-400 text-xs">
           📍 <strong>Como acessar:</strong> Vá em "Clientes" → Clique nos 3 pontos do cliente → "Materiais" → Aba "Criativos"
         </p>
