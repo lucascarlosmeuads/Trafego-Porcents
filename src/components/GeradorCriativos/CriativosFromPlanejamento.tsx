@@ -41,37 +41,114 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
       const copiesExtraidas: GeneratedCopy[] = [];
       
       try {
-        console.log('🔍 Iniciando extração de copies do planejamento...');
+        console.log('🔍 [CriativosFromPlanejamento] Iniciando extração de copies do planejamento...');
+        console.log('📄 [CriativosFromPlanejamento] Primeiros 1000 chars do planejamento:', planejamento.substring(0, 1000));
         
-        // Procurar por padrões das novas copies estruturadas (COPY 1, COPY 2, COPY 3)
-        const copyRegex = /## [🚀🎯💡] COPY (\d+) - (.+?)\n\n\*\*HEADLINE:\*\* (.+?)\n\n\*\*CONCEITO VISUAL CONTRAINTUITIVO:\*\*\n(.+?)\n\n\*\*DESCRIÇÃO PERSUASIVA:\*\*\n(.+?)\n\n\*\*CTA:\*\* (.+?)(?=\n\n|$)/gs;
+        // REGEX MELHORADO - Buscar por números seguidos de HEADLINE
+        const copyRegex = /(\d+)\.\s*\*\*HEADLINE:\*\*\s*(.*?)\s*\*\*CONCEITO VISUAL CONTRAINTUITIVO:\*\*\s*(.*?)\s*\*\*DESCRIÇÃO PERSUASIVA:\*\*\s*(.*?)(?=(?:\d+\.\s*\*\*HEADLINE:|\*\*CTA PRINCIPAL:|\*\*EXTRAS:|\n\n\*\*|$))/gis;
         
-        const matches = [...planejamento.matchAll(copyRegex)];
+        let match;
+        copyRegex.lastIndex = 0; // Reset regex
         
-        if (matches.length > 0) {
-          console.log(`📋 Encontrados ${matches.length} copies estruturadas`);
+        console.log('🔍 [CriativosFromPlanejamento] Aplicando regex principal...');
+        
+        while ((match = copyRegex.exec(planejamento)) !== null && copiesExtraidas.length < 3) {
+          const [fullMatch, number, headline, visualConcept, description] = match;
           
-          matches.forEach((match, index) => {
-            const copyNumber = match[1];
-            const copyType = match[2].trim();
-            const headline = match[3].trim().replace(/\[|\]/g, '');
-            const visualConcept = match[4].trim().replace(/\[|\]/g, '');
-            const description = match[5].trim().replace(/\[|\]/g, '');
-            const cta = match[6].trim().replace(/\[|\]/g, '');
-
-            copiesExtraidas.push({
-              id: `copy-${copyNumber}`,
-              headline: headline,
-              visualConcept: visualConcept,
-              description: description,
-              cta: cta,
-              copyType: copyType,
-              createdAt: new Date()
-            });
+          console.log(`✅ [CriativosFromPlanejamento] Copy ${number} encontrada:`, {
+            number: number?.trim(),
+            headline: headline?.trim().substring(0, 50) + '...',
+            visualConcept: visualConcept?.trim().substring(0, 50) + '...',
+            description: description?.trim().substring(0, 50) + '...',
+            fullMatchLength: fullMatch.length
           });
-        } else {
-          // Fallback: tentar extrair do formato antigo
-          console.log('⚠️ Formato novo não encontrado, tentando extração do formato antigo...');
+
+          copiesExtraidas.push({
+            id: `copy-${number}`,
+            headline: headline?.trim() || `Headline ${number}`,
+            visualConcept: visualConcept?.trim() || 'Conceito visual atrativo',
+            description: description?.trim() || 'Descrição persuasiva',
+            cta: 'Clique Aqui',
+            copyType: `Copy ${number}`,
+            createdAt: new Date()
+          });
+        }
+
+        // FALLBACK 1: Procurar por padrões das novas copies estruturadas (COPY 1, COPY 2, COPY 3)
+        if (copiesExtraidas.length === 0) {
+          console.log('🔍 [CriativosFromPlanejamento] Tentando padrão de COPY estruturado...');
+          
+          const structuredCopyRegex = /## [🚀🎯💡] COPY (\d+) - (.+?)\n\n\*\*HEADLINE:\*\* (.+?)\n\n\*\*CONCEITO VISUAL CONTRAINTUITIVO:\*\*\n(.+?)\n\n\*\*DESCRIÇÃO PERSUASIVA:\*\*\n(.+?)\n\n\*\*CTA:\*\* (.+?)(?=\n\n|$)/gs;
+          
+          const matches = [...planejamento.matchAll(structuredCopyRegex)];
+          
+          if (matches.length > 0) {
+            console.log(`📋 [CriativosFromPlanejamento] Encontrados ${matches.length} copies estruturadas`);
+            
+            matches.forEach((match, index) => {
+              const copyNumber = match[1];
+              const copyType = match[2].trim();
+              const headline = match[3].trim().replace(/\[|\]/g, '');
+              const visualConcept = match[4].trim().replace(/\[|\]/g, '');
+              const description = match[5].trim().replace(/\[|\]/g, '');
+              const cta = match[6].trim().replace(/\[|\]/g, '');
+
+              copiesExtraidas.push({
+                id: `copy-${copyNumber}`,
+                headline: headline,
+                visualConcept: visualConcept,
+                description: description,
+                cta: cta,
+                copyType: copyType,
+                createdAt: new Date()
+              });
+            });
+          }
+        }
+
+        // FALLBACK 2: Procurar por busca alternativa manual
+        if (copiesExtraidas.length === 0) {
+          console.log('🔍 [CriativosFromPlanejamento] Tentando busca alternativa manual...');
+          
+          // Dividir o texto em seções por números
+          const sections = planejamento.split(/\d+\.\s*/);
+          console.log(`🔍 [CriativosFromPlanejamento] Encontradas ${sections.length - 1} seções numeradas`);
+          
+          for (let i = 1; i < sections.length && copiesExtraidas.length < 3; i++) {
+            const section = sections[i];
+            
+            // Procurar por HEADLINE na seção
+            const headlineMatch = section.match(/\*\*HEADLINE:\*\*\s*([^*\n]+)/i);
+            const visualMatch = section.match(/\*\*CONCEITO VISUAL CONTRAINTUITIVO:\*\*\s*([^*]+)/i);
+            const descMatch = section.match(/\*\*DESCRIÇÃO PERSUASIVA:\*\*\s*([^*\n]+)/i);
+            
+            if (headlineMatch) {
+              const headline = headlineMatch[1]?.trim() || `Headline ${i}`;
+              const visualConcept = visualMatch?.[1]?.trim() || 'Conceito visual baseado no planejamento';
+              const description = descMatch?.[1]?.trim() || 'Descrição baseada no planejamento';
+              
+              console.log(`✅ [CriativosFromPlanejamento] Copy ${i} extraída (busca manual):`, {
+                headline: headline.substring(0, 50) + '...',
+                visualConcept: visualConcept.substring(0, 50) + '...',
+                description: description.substring(0, 50) + '...'
+              });
+
+              copiesExtraidas.push({
+                id: `copy-${i}`,
+                headline,
+                visualConcept,
+                description,
+                cta: 'Clique Aqui',
+                copyType: `Copy ${i}`,
+                createdAt: new Date()
+              });
+            }
+          }
+        }
+
+        // FALLBACK 3: Formato antigo de linha
+        if (copiesExtraidas.length === 0) {
+          console.log('🔍 [CriativosFromPlanejamento] Tentando formato antigo de linha...');
           
           const linhaRegex = /### • Linha\s+(\d+)\s+–\s+(.+?)\n\n\*\*📢 Títulos.*?\n((?:.*\n)*?)\*\*📝 Descrições.*?\n((?:.*\n)*?)(?=###|---|$)/gs;
           const linhaMatches = [...planejamento.matchAll(linhaRegex)];
@@ -91,7 +168,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
               .map(d => d.replace(/^\d+\.\s*/, '').trim());
             
             const maxCombinations = Math.min(titulos.length, descricoes.length);
-            for (let i = 0; i < maxCombinations; i++) {
+            for (let i = 0; i < maxCombinations && copiesExtraidas.length < 3; i++) {
               if (titulos[i] && descricoes[i]) {
                 copiesExtraidas.push({
                   id: `linha-${linha}-${i + 1}`,
@@ -105,28 +182,46 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
               }
             }
           });
+        }
+        
+        // FALLBACK FINAL: Copy genérica baseada no planejamento
+        if (copiesExtraidas.length === 0) {
+          console.log('⚠️ [CriativosFromPlanejamento] Nenhum formato reconhecido, criando copies baseadas no conteúdo...');
           
-          // Se ainda não encontrou nada, criar copy genérica
-          if (copiesExtraidas.length === 0) {
-            console.log('⚠️ Nenhum formato reconhecido, criando copy genérica...');
-            
+          // Extrair linhas relevantes do planejamento
+          const lines = planejamento.split('\n')
+            .filter(line => line.trim() && line.length > 20)
+            .filter(line => !line.includes('**') && !line.includes('##'))
+            .slice(0, 6); // Primeiras 6 linhas relevantes
+
+          for (let i = 0; i < 3; i++) {
             copiesExtraidas.push({
-              id: 'generic-copy',
-              headline: 'Transforme Seu Negócio Hoje',
-              visualConcept: 'Uma pessoa relaxada trabalhando em casa com resultados positivos na tela',
-              description: 'Estratégia personalizada que gera resultados reais para seu negócio',
+              id: `extracted-copy-${i + 1}`,
+              headline: lines[i * 2] || `Transforme Seu Negócio - Copy ${i + 1}`,
+              visualConcept: lines[i * 2 + 1] || 'Imagem inspiradora e profissional baseada no planejamento estratégico',
+              description: lines.slice(i * 2, i * 2 + 2).join(' ') || 'Estratégia personalizada baseada no planejamento estratégico desenvolvido',
               cta: 'COMEÇAR AGORA',
-              copyType: 'Genérica',
+              copyType: `Extraída do Planejamento ${i + 1}`,
               createdAt: new Date()
             });
           }
         }
 
-        console.log(`✅ Total de ${copiesExtraidas.length} copies extraídas`);
+        console.log(`✅ [CriativosFromPlanejamento] RESULTADO FINAL: ${copiesExtraidas.length} copies extraídas`);
+        copiesExtraidas.forEach((copy, index) => {
+          console.log(`📋 [CriativosFromPlanejamento] Copy ${index + 1}:`, {
+            id: copy.id,
+            headline: copy.headline.substring(0, 50) + '...',
+            visualConcept: copy.visualConcept.substring(0, 50) + '...',
+            description: copy.description.substring(0, 50) + '...',
+            copyType: copy.copyType
+          });
+        });
+        
         setCopies(copiesExtraidas);
         
       } catch (error) {
-        console.error('❌ Erro ao extrair copies:', error);
+        console.error('❌ [CriativosFromPlanejamento] Erro ao extrair copies:', error);
         setCopies([]);
       }
     };
