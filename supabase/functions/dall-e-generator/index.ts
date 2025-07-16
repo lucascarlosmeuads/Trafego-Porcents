@@ -30,11 +30,12 @@ serve(async (req) => {
       throw new Error('emailCliente e emailGestor são obrigatórios')
     }
 
-    // Criar ID único para esta copy específica
-    const copyUniqueId = selectedCopy.id || `copy-${selectedCopy.headline?.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`
+    // Usar o ID único baseado no conteúdo da copy (passado pelo frontend)
+    const copyUniqueId = selectedCopy.copyUniqueId || selectedCopy.id || `copy-${selectedCopy.headline?.substring(0, 20).replace(/[^a-zA-Z0-9]/g, '')}-${Date.now()}`
 
     console.log('🎨 [dall-e-generator] Iniciando geração para copy:', copyUniqueId)
     console.log('📧 [dall-e-generator] Cliente:', emailCliente, 'Gestor:', emailGestor)
+    console.log('🆔 [dall-e-generator] Copy ID único (baseado no conteúdo):', copyUniqueId)
 
     // Buscar dados da análise para contexto adicional (se disponível)
     let analysisData = null
