@@ -41,8 +41,8 @@ export function ColorSelect({
       <Tooltip>
         <TooltipTrigger asChild>
           <Select 
-            value={value || ''} 
-            onValueChange={(newValue) => onValueChange(newValue === '' ? null : newValue as ColorMarcacao)} 
+            value={value || 'none'} 
+            onValueChange={(newValue) => onValueChange(newValue === 'none' ? null : newValue as ColorMarcacao)}
             disabled={disabled || isUpdating}
           >
             <SelectTrigger className="h-6 w-8 min-w-[32px] bg-background/50 backdrop-blur-sm border-border/50 hover:border-border transition-all duration-200 p-1">
@@ -62,7 +62,7 @@ export function ColorSelect({
               </SelectValue>
             </SelectTrigger>
             <SelectContent className="bg-card/95 backdrop-blur-sm border-border/50 shadow-xl w-36">
-              <SelectItem value="" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
+              <SelectItem value="none" className="text-card-foreground hover:bg-muted/50 transition-colors duration-200">
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 rounded-full border-2 border-dashed border-muted-foreground" />
                   <span className="text-xs">Sem cor</span>
