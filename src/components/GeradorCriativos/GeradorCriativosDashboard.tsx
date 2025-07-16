@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/components/ui/use-toast'
 import { useAuth } from '@/hooks/useAuth'
 import { supabase } from '@/integrations/supabase/client'
+import { usePlanejamentoEstrategicoBusca } from '@/hooks/usePlanejamentoEstrategicoBusca'
 import { 
   Upload, 
   FileText, 
@@ -16,7 +17,9 @@ import {
   Image,
   Video,
   Loader2,
-  Copy
+  Copy,
+  BookOpen,
+  Zap
 } from 'lucide-react'
 import { PDFUploadArea } from './PDFUploadArea'
 import { DataPreviewCards } from './DataPreviewCards'
@@ -51,10 +54,39 @@ export function GeradorCriativosDashboard() {
   const [analysisId, setAnalysisId] = useState<string | null>(null)
   const [selectedCopy, setSelectedCopy] = useState<GeneratedCopy | null>(null)
   const [currentStep, setCurrentStep] = useState<'upload' | 'copy' | 'image'>('upload')
+  const [showPdfUpload, setShowPdfUpload] = useState(false)
   
   const { toast } = useToast()
   const { user } = useAuth()
   const userEmail = user?.email || 'admin@trafegoporcents.com'
+  
+  // Hook para buscar planejamento estratégico existente
+  const { 
+    planejamento, 
+    copiesExtraidas, 
+    hasExistingPlan, 
+    isLoading: isLoadingPlan,
+    buscarPlanejamento 
+  } = usePlanejamentoEstrategicoBusca()
+
+  // Verificar se existe planejamento ao carregar
+  useEffect(() => {
+    if (userEmail) {
+      console.log('🔍 Verificando planejamento para:', userEmail)
+      buscarPlanejamento(userEmail)
+    }
+  }, [userEmail])
+
+  // Se encontrou planejamento, ir direto para copy
+  useEffect(() => {
+    if (hasExistingPlan && copiesExtraidas.length > 0 && !showPdfUpload) {
+      setCurrentStep('copy')
+      toast({
+        title: "Planejamento encontrado!",
+        description: `${copiesExtraidas.length} copies prontas extraídas do seu planejamento estratégico.`,
+      })
+    }
+  }, [hasExistingPlan, copiesExtraidas, showPdfUpload])
 
   const handlePDFAnalysis = async (extractedText: string, fileName: string, file: File) => {
     try {
@@ -159,14 +191,84 @@ export function GeradorCriativosDashboard() {
         </CardContent>
       </Card>
 
+      {/* Planejamento Estratégico Encontrado */}
+      {currentStep === 'upload' && isLoadingPlan && (
+        <Card>
+          <CardContent className="py-8">
+            <div className="text-center space-y-4">
+              <Loader2 className="h-8 w-8 animate-spin mx-auto text-primary" />
+              <p className="text-muted-foreground">Verificando planejamento estratégico existente...</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Planejamento Encontrado */}
+      {currentStep === 'upload' && hasExistingPlan && !isLoadingPlan && (
+        <Card className="border-green-200 bg-green-50/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-green-700">
+              <BookOpen className="h-5 w-5" />
+              Planejamento Estratégico Encontrado!
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="bg-white p-4 rounded-lg border">
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+                  <Zap className="h-3 w-3 mr-1" />
+                  {copiesExtraidas.length} Copies Prontas
+                </Badge>
+                <span className="text-sm text-muted-foreground">
+                  Extraídas do seu planejamento
+                </span>
+              </div>
+              
+              <p className="text-sm text-muted-foreground mb-4">
+                Encontramos um planejamento estratégico salvo com copies prontas para você. 
+                Clique em "Usar Copies do Planejamento" ou faça upload de um novo PDF.
+              </p>
+
+              <div className="flex gap-3">
+                <Button 
+                  onClick={() => setCurrentStep('copy')}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Usar Copies do Planejamento
+                </Button>
+                
+                <Button 
+                  variant="outline"
+                  onClick={() => setShowPdfUpload(true)}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Novo PDF
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Step 1: Upload Area */}
-      {currentStep === 'upload' && (
+      {currentStep === 'upload' && (!hasExistingPlan || showPdfUpload) && !isLoadingPlan && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Upload className="h-5 w-5" />
               Upload do PDF de Planejamento
             </CardTitle>
+            {showPdfUpload && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => setShowPdfUpload(false)}
+                className="w-fit"
+              >
+                ← Voltar para Planejamento
+              </Button>
+            )}
           </CardHeader>
           <CardContent>
             <PDFUploadArea 
@@ -179,23 +281,51 @@ export function GeradorCriativosDashboard() {
       )}
 
       {/* Step 2: Copy Generation */}
-      {currentStep === 'copy' && pdfData && (
+      {currentStep === 'copy' && (
         <>
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <FileText className="h-5 w-5" />
-                Dados Extraídos do PDF
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <DataPreviewCards data={pdfData} />
-            </CardContent>
-          </Card>
+          {/* Mostrar dados do PDF se houver */}
+          {pdfData && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <FileText className="h-5 w-5" />
+                  Dados Extraídos do PDF
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DataPreviewCards data={pdfData} />
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Mostrar planejamento estratégico se houver */}
+          {hasExistingPlan && !pdfData && (
+            <Card className="border-green-200 bg-green-50/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-green-700">
+                  <BookOpen className="h-5 w-5" />
+                  Copies do Planejamento Estratégico
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-white p-4 rounded-lg border">
+                  <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300 mb-3">
+                    <Zap className="h-3 w-3 mr-1" />
+                    Extraídas automaticamente do seu planejamento
+                  </Badge>
+                  <p className="text-sm text-muted-foreground">
+                    As copies abaixo foram extraídas do seu planejamento estratégico salvo. 
+                    Selecione uma para gerar a imagem correspondente.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           <CopyGenerationArea 
             pdfData={pdfData}
             onCopySelected={handleCopySelected}
+            copiesExistentes={hasExistingPlan && !pdfData ? copiesExtraidas : undefined}
           />
         </>
       )}

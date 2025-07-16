@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,27 +26,40 @@ interface GeneratedCopy {
 interface CopyGenerationAreaProps {
   pdfData: any
   onCopySelected: (copy: GeneratedCopy) => void
+  copiesExistentes?: GeneratedCopy[]
 }
 
-export function CopyGenerationArea({ pdfData, onCopySelected }: CopyGenerationAreaProps) {
-  const [generatedCopies, setGeneratedCopies] = useState<GeneratedCopy[]>([])
+export function CopyGenerationArea({ pdfData, onCopySelected, copiesExistentes }: CopyGenerationAreaProps) {
+  const [generatedCopies, setGeneratedCopies] = useState<GeneratedCopy[]>(copiesExistentes || [])
   const [isGenerating, setIsGenerating] = useState(false)
   const [selectedCopyId, setSelectedCopyId] = useState<string | null>(null)
   const { toast } = useToast()
 
+  // Atualizar copies quando copiesExistentes mudar
+  React.useEffect(() => {
+    if (copiesExistentes && copiesExistentes.length > 0) {
+      setGeneratedCopies(copiesExistentes)
+    }
+  }, [copiesExistentes])
+
   const generateNewCopy = async () => {
     setIsGenerating(true)
     try {
-      // Simular geração de copy baseada no PDF
+      // Simular geração de copy baseada no PDF ou planejamento
       await new Promise(resolve => setTimeout(resolve, 2000))
+      
+      const dataSource = pdfData || { 
+        nomeOferta: 'Solução Estratégica',
+        cta: 'COMEÇAR AGORA'
+      }
       
       const newCopy: GeneratedCopy = {
         id: `copy-${Date.now()}`,
-        headline: `${pdfData.nomeOferta}: ${getRandomHeadline()}`,
+        headline: `${dataSource.nomeOferta}: ${getRandomHeadline()}`,
         subheadline: getRandomSubheadline(),
-        copy: generateAgressiveCopy(pdfData),
-        cta: pdfData.cta || getRandomCTA(),
-        style: 'Agressiva e Persuasiva',
+        copy: generateAgressiveCopy(dataSource),
+        cta: dataSource.cta || getRandomCTA(),
+        style: pdfData ? 'Agressiva e Persuasiva' : 'Baseada no Planejamento',
         createdAt: new Date()
       }
 
@@ -54,7 +67,7 @@ export function CopyGenerationArea({ pdfData, onCopySelected }: CopyGenerationAr
       
       toast({
         title: "Nova copy gerada!",
-        description: "Copy agressiva criada com base no seu PDF.",
+        description: pdfData ? "Copy agressiva criada com base no seu PDF." : "Copy criada com base no planejamento estratégico.",
       })
 
     } catch (error) {
@@ -154,7 +167,9 @@ Você está preparado?`
         <CardContent>
           <div className="text-center space-y-4">
             <p className="text-muted-foreground">
-              Gere copies agressivas baseadas no seu PDF de planejamento
+              {copiesExistentes && copiesExistentes.length > 0 
+                ? "Copies do planejamento carregadas. Gere novas se necessário." 
+                : "Gere copies agressivas baseadas no seu PDF de planejamento"}
             </p>
             
             <Button 
@@ -168,7 +183,9 @@ Você está preparado?`
               ) : (
                 <Wand2 className="h-5 w-5 mr-2" />
               )}
-              {generatedCopies.length === 0 ? 'Gerar Primeira Copy' : 'Gerar Nova Copy'}
+              {copiesExistentes && copiesExistentes.length > 0 
+                ? 'Gerar Copy Adicional' 
+                : generatedCopies.length === 0 ? 'Gerar Primeira Copy' : 'Gerar Nova Copy'}
             </Button>
 
             {isGenerating && (
