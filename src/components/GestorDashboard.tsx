@@ -11,6 +11,7 @@ import { CadastroCampanhaDashboard } from './CadastroCampanha/CadastroCampanhaDa
 import { ProfileAvatarUpload } from './ProfileAvatarUpload'
 import { AvisoSistemasSAC } from './GestorDashboard/AvisoSistemasSAC'
 import { AvisoMudancaStatus } from './GestorDashboard/AvisoMudancaStatus'
+import { AvisoGeradorIdeias } from './GestorDashboard/AvisoGeradorIdeias'
 import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User } from 'lucide-react'
@@ -58,6 +59,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             {/* Avisos Importantes para Gestores */}
             <AvisoSistemasSAC />
             <AvisoMudancaStatus />
+            <AvisoGeradorIdeias />
             
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">
@@ -126,6 +128,7 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
             {/* Avisos Importantes para Gestores */}
             <AvisoSistemasSAC />
             <AvisoMudancaStatus />
+            <AvisoGeradorIdeias />
             
             {/* Seção de Perfil */}
             <Card className="bg-gray-900 border-gray-800">

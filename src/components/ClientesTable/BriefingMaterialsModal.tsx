@@ -467,7 +467,7 @@ export function BriefingMaterialsModal({
       case 'briefing':
         return `Briefing de ${nomeCliente}`
       case 'creative':
-        return `Materiais Criativos de ${nomeCliente}`
+        return `Gerador de Ideias de Criativos (BETA) - ${nomeCliente}`
       default:
         return `Materiais de ${nomeCliente}`
     }
@@ -584,6 +584,31 @@ export function BriefingMaterialsModal({
         
         <ScrollArea className="max-h-[70vh] pr-4">
           <div className="space-y-6">
+            {/* AVISO BETA - GERADOR DE IDEIAS */}
+            {filterType === 'creative' && (
+              <div className="bg-gradient-to-r from-amber-50 to-orange-50 border-2 border-amber-300 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <div className="bg-amber-100 rounded-full p-2">
+                    <Brain className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-amber-800 mb-2">🧪 Funcionalidade BETA - Gerador de Ideias de Criativos</h3>
+                    <div className="space-y-2 text-sm text-amber-700">
+                      <p><strong>Esta ferramenta serve apenas para gerar ideias criativas.</strong></p>
+                      <div className="bg-amber-100/50 rounded p-2 border border-amber-200">
+                        <p className="font-medium mb-1">⚠️ IMPORTANTE:</p>
+                        <ul className="space-y-1 text-xs">
+                          <li>• Use essas ideias como <strong>inspiração</strong> para criar materiais profissionais</li>
+                          <li>• <strong>NÃO envie essas ideias diretamente aos clientes</strong></li>
+                          <li>• Refine e profissionalize antes de apresentar ao cliente</li>
+                          <li>• Esta é uma versão beta para auxílio criativo da equipe</li>
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
             {/* SEÇÃO DO BRIEFING - SEMPRE RENDERIZADA quando não for filterType 'creative' */}
             {filterType !== 'creative' && (
               <Card className="border-2 border-green-200 bg-green-50">
@@ -917,7 +942,7 @@ export function BriefingMaterialsModal({
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Image className="w-5 h-5 text-purple-600" />
-                    🎨 Materiais Criativos
+                    🎨 {filterType === 'creative' ? 'Gerador de Ideias de Criativos (BETA)' : 'Materiais Criativos'}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-6">

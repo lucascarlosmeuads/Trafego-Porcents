@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Palette, Loader2, Image, Download, RefreshCw } from 'lucide-react';
+import { Palette, Loader2, Image, Download, RefreshCw, Brain } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
 import { useToast } from '@/hooks/use-toast';
 
@@ -479,13 +479,38 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
   };
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-2">
-          <Palette className="w-5 h-5 text-primary" />
-          <h3 className="font-semibold">Gerar Criativos das Copies</h3>
-          <Badge variant="secondary">{copies.length} copies encontradas</Badge>
+    <div className="space-y-6">
+      {/* AVISO BETA - TOPO DA FUNCIONALIDADE */}
+      <div className="bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-purple-300 rounded-lg p-4">
+        <div className="flex items-start gap-3">
+          <div className="bg-purple-100 rounded-full p-2">
+            <Brain className="h-5 w-5 text-purple-600" />
+          </div>
+          <div className="flex-1">
+            <h3 className="font-semibold text-purple-800 mb-2">🧪 Gerador de Ideias de Criativos (VERSÃO BETA)</h3>
+            <div className="space-y-2 text-sm text-purple-700">
+              <p><strong>Esta ferramenta gera ideias criativas automaticamente a partir do planejamento estratégico.</strong></p>
+              <div className="bg-purple-100/50 rounded p-2 border border-purple-200">
+                <p className="font-medium mb-1">⚠️ IMPORTANTE - USE APENAS COMO INSPIRAÇÃO:</p>
+                <ul className="space-y-1 text-xs">
+                  <li>• Estas são <strong>ideias iniciais</strong> que precisam ser refinadas</li>
+                  <li>• <strong>Crie materiais profissionais</strong> baseados nessas inspirações</li>
+                  <li>• <strong>Não use diretamente com clientes</strong> - profissionalize primeiro</li>
+                  <li>• Versão beta para auxílio criativo da equipe interna</li>
+                </ul>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <Palette className="w-5 h-5 text-primary" />
+            <h3 className="font-semibold">Gerador de Ideias de Criativos das Copies</h3>
+            <Badge variant="secondary">{copies.length} ideias encontradas</Badge>
+          </div>
         
         <Button
           onClick={refreshImages}
@@ -673,6 +698,7 @@ export const CriativosFromPlanejamento = ({ planejamento, emailGestor, emailClie
             </Card>
           );
         })}
+      </div>
       </div>
     </div>
   );
