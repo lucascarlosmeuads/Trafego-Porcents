@@ -1,2 +1,48 @@
 
 project_id = "rxpgqunqsegypssoqpyf"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[auth]
+enabled = true
+site_url = "http://localhost:3000"
+additional_redirect_urls = ["https://lovable.dev"]
+jwt_expiry = 3600
+enable_signup = true
+enable_anonymous_sign_ins = false
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 15
+
+[functions.max-webhook]
+verify_jwt = false
+
+[functions.create-client-users]
+verify_jwt = false
+
+[functions.creative-generator]
+verify_jwt = false
+
+[functions.dall-e-generator]
+verify_jwt = false
+
+[functions.pdf-analyzer]
+verify_jwt = false
+
+[functions.openai-usage-monitor]
+verify_jwt = false
+
+[functions.reformat-existing-plans]
+verify_jwt = false

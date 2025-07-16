@@ -15,7 +15,7 @@ serve(async (req) => {
   }
 
   try {
-    console.log('=== Iniciando geração em massa de planejamentos ===');
+    console.log('=== Iniciando reformatação de todos os planejamentos existentes ===');
     
     if (!openaiApiKey) {
       throw new Error('OPENAI_API_KEY não configurada');
@@ -26,19 +26,19 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Buscar todos os briefings sem planejamento
+    // Buscar todos os briefings que JÁ TÊM planejamento
     const { data: briefings, error: fetchError } = await supabaseClient
       .from('briefings_cliente')
-      .select('email_cliente, nome_produto')
+      .select('email_cliente, nome_produto, nome_marca, planejamento_estrategico')
       .eq('formulario_completo', true)
-      .is('planejamento_estrategico', null);
+      .not('planejamento_estrategico', 'is', null);
 
     if (fetchError) {
       console.error('Erro ao buscar briefings:', fetchError);
       throw fetchError;
     }
 
-    console.log(`📊 Encontrados ${briefings?.length || 0} briefings para processar`);
+    console.log(`📊 Encontrados ${briefings?.length || 0} planejamentos para reformatar`);
 
     let sucessos = 0;
     let erros = 0;
@@ -47,7 +47,7 @@ serve(async (req) => {
     // Processar cada briefing
     for (const briefing of briefings || []) {
       try {
-        console.log(`🔄 Processando: ${briefing.email_cliente} - ${briefing.nome_produto}`);
+        console.log(`🔄 Reformatando: ${briefing.email_cliente} - ${briefing.nome_produto || briefing.nome_marca}`);
         
         // Buscar dados completos do briefing
         const { data: briefingCompleto, error: briefingError } = await supabaseClient
@@ -63,10 +63,10 @@ serve(async (req) => {
           continue;
         }
 
-        // Gerar prompt
-        const prompt = buildPromptFromBriefing(briefingCompleto);
+        // Criar prompt para reformatar baseado no planejamento existente
+        const promptReformat = buildReformatPrompt(briefingCompleto);
         
-        // Chamar OpenAI
+        // Chamar OpenAI para reformatar
         const openaiResponse = await fetch('https://api.openai.com/v1/chat/completions', {
           method: 'POST',
           headers: {
@@ -78,17 +78,17 @@ serve(async (req) => {
             messages: [
               {
                 role: 'system',
-                content: `Você é um estrategista de marketing digital da Tráfego Porcents. Crie um planejamento estratégico COMPLETO E DETALHADO seguindo EXATAMENTE esta formatação markdown:
+                content: `Você é um especialista em formatação de documentos estratégicos. Sua tarefa é pegar um planejamento estratégico existente e reformatá-lo seguindo EXATAMENTE esta nova formatação markdown profissional:
 
 # 📍 CONSULTORIA ESTRATÉGICA – [NOME_CLIENTE] – TRÁFEGO %
 
 ## 👋 Introdução Personalizada
 
-[Faça uma introdução calorosa e personalizada para o cliente, mencionando o produto/marca específico e demonstrando compreensão do negócio]
+[Introdução calorosa e personalizada baseada no conteúdo existente]
 
 ## 🎯 Público-alvo que será atingido
 
-[Descreva detalhadamente o público-alvo baseado nas informações do briefing, incluindo dados demográficos, comportamentais e psicográficos]
+[Público-alvo detalhado baseado no conteúdo existente]
 
 **Subgrupos estratégicos:**
 - **Subgrupo 1:** [descrição específica]
@@ -248,23 +248,22 @@ serve(async (req) => {
 > **TRÁFEGO PORCENTS**  
 > **Sua Plataforma Estrategista de Tráfego."** 💯
 
-**INSTRUÇÕES CRÍTICAS:**
+INSTRUÇÕES CRÍTICAS:
+- Mantenha TODO o conteúdo estratégico do planejamento original
 - Use EXATAMENTE a formatação markdown mostrada acima
-- Substitua TODOS os placeholders [EXEMPLO] com informações ESPECÍFICAS
+- Distribua o conteúdo existente nas seções apropriadas
 - Mantenha todos os emojis nas posições corretas
 - Use títulos em negrito conforme mostrado
-- Personalize todo conteúdo baseado no briefing
-- HEADLINES: 30-40 caracteres
-- CONCEITOS VISUAIS: 80 caracteres máximo
-- DESCRIÇÕES: 150 caracteres máximo`
+- Preserve todas as informações valiosas do documento original
+- Se alguma seção não existir no original, crie baseado no contexto do briefing`
               },
               {
                 role: 'user',
-                content: prompt
+                content: promptReformat
               }
             ],
             max_tokens: 4000,
-            temperature: 0.7
+            temperature: 0.3
           }),
         });
 
@@ -273,35 +272,38 @@ serve(async (req) => {
         }
 
         const openaiData = await openaiResponse.json();
-        const planejamento = openaiData.choices[0].message.content;
+        const planejamentoReformatado = openaiData.choices[0].message.content;
 
-        // Salvar o planejamento
+        // Salvar o planejamento reformatado
         const { error: updateError } = await supabaseClient
           .from('briefings_cliente')
-          .update({ planejamento_estrategico: planejamento })
+          .update({ 
+            planejamento_estrategico: planejamentoReformatado,
+            updated_at: new Date().toISOString()
+          })
           .eq('email_cliente', briefing.email_cliente);
 
         if (updateError) {
-          console.error(`Erro ao salvar planejamento para ${briefing.email_cliente}:`, updateError);
+          console.error(`Erro ao salvar planejamento reformatado para ${briefing.email_cliente}:`, updateError);
           erros++;
           detalhes.push({ email: briefing.email_cliente, status: 'erro', erro: updateError.message });
         } else {
-          console.log(`✅ Planejamento gerado para: ${briefing.email_cliente}`);
+          console.log(`✅ Planejamento reformatado para: ${briefing.email_cliente}`);
           sucessos++;
           detalhes.push({ email: briefing.email_cliente, status: 'sucesso' });
         }
 
         // Pequena pausa para não sobrecarregar
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise(resolve => setTimeout(resolve, 800));
 
       } catch (error) {
-        console.error(`Erro ao processar ${briefing.email_cliente}:`, error);
+        console.error(`Erro ao reformatar ${briefing.email_cliente}:`, error);
         erros++;
         detalhes.push({ email: briefing.email_cliente, status: 'erro', erro: error.message });
       }
     }
 
-    console.log(`📊 Processamento concluído: ${sucessos} sucessos, ${erros} erros`);
+    console.log(`📊 Reformatação concluída: ${sucessos} sucessos, ${erros} erros`);
 
     return new Response(JSON.stringify({
       success: true,
@@ -314,7 +316,7 @@ serve(async (req) => {
     });
 
   } catch (error) {
-    console.error('Erro na geração em massa:', error);
+    console.error('Erro na reformatação em massa:', error);
     return new Response(JSON.stringify({
       success: false,
       error: error.message
@@ -325,61 +327,34 @@ serve(async (req) => {
   }
 });
 
-function buildPromptFromBriefing(briefing: any): string {
+function buildReformatPrompt(briefing: any): string {
+  const nomeCliente = briefing.nome_marca || briefing.nome_produto || 'Cliente';
+  
   return `
-Por favor, crie um PLANEJAMENTO ESTRATÉGICO COMPLETO E DETALHADO para a seguinte empresa/produto:
+REFORMATE este planejamento estratégico existente seguindo a nova formatação solicitada:
 
-=== INFORMAÇÕES DO CLIENTE ===
-Marca/Produto: ${briefing.nome_marca || briefing.nome_produto || 'Não informado'}
-Descrição: ${briefing.descricao_resumida || 'Não informado'}
-Diferencial: ${briefing.diferencial || 'Não informado'}
+=== DADOS DO CLIENTE ===
+Nome: ${nomeCliente}
+Email: ${briefing.email_cliente}
+Produto/Marca: ${briefing.nome_produto || briefing.nome_marca || 'Não informado'}
 Público-alvo: ${briefing.publico_alvo || 'Não informado'}
+Diferencial: ${briefing.diferencial || 'Não informado'}
 Investimento diário: R$ ${briefing.investimento_diario || 'Não informado'}
 
-=== INFORMAÇÕES TÉCNICAS ===
-Direcionamento da campanha: ${briefing.direcionamento_campanha || 'Não informado'}
-Localização para divulgação: ${briefing.localizacao_divulgacao || 'Não informado'}
-Abrangência do atendimento: ${briefing.abrangencia_atendimento || 'Não informado'}
-Tipo de prestação de serviço: ${briefing.tipo_prestacao_servico || 'Não informado'}
+=== PLANEJAMENTO ESTRATÉGICO ATUAL ===
+${briefing.planejamento_estrategico}
 
-=== CARACTERÍSTICAS CRIATIVAS ===
-Estilo visual: ${briefing.estilo_visual || 'Não informado'}
-Cores desejadas: ${briefing.cores_desejadas || 'Não informado'}
-Cores proibidas: ${briefing.cores_proibidas || 'Não informado'}
-Tipo de fonte: ${briefing.tipo_fonte || 'Não informado'}
-Fonte específica: ${briefing.fonte_especifica || 'Não informado'}
-Tipos de imagens preferidas: ${briefing.tipos_imagens_preferidas?.join(', ') || 'Não informado'}
+=== INSTRUÇÕES PARA REFORMATAÇÃO ===
+1. Mantenha TODO o conteúdo estratégico original
+2. Redistribua as informações nas novas seções com emojis
+3. Melhore a formatação usando markdown
+4. Adicione títulos em negrito maiores
+5. Use a estrutura hierárquica com ## e ###
+6. Preserve todas as informações valiosas
+7. Se necessário, complemente seções baseado nos dados do briefing
+8. Use o nome "${nomeCliente}" consistentemente
+9. Mantenha o tom profissional e estratégico
 
-=== RECURSOS DISPONÍVEIS ===
-Possui Facebook: ${briefing.possui_facebook ? 'Sim' : 'Não'}
-Possui Instagram: ${briefing.possui_instagram ? 'Sim' : 'Não'}
-Utiliza WhatsApp Business: ${briefing.utiliza_whatsapp_business ? 'Sim' : 'Não'}
-Criativos prontos: ${briefing.criativos_prontos ? 'Sim' : 'Não'}
-Vídeos prontos: ${briefing.videos_prontos ? 'Sim' : 'Não'}
-Quer site: ${briefing.quer_site ? 'Sim' : 'Não'}
-
-=== OUTRAS INFORMAÇÕES ===
-Forma de pagamento: ${briefing.forma_pagamento || 'Não informado'}
-Observações finais: ${briefing.observacoes_finais || 'Não informado'}
-Resumo conversa vendedor: ${briefing.resumo_conversa_vendedor || 'Não informado'}
-
-=== INSTRUÇÕES PARA O PLANEJAMENTO ===
-
-Crie um planejamento estratégico COMPLETO E DETALHADO que inclua:
-
-1. **ANÁLISE DE MERCADO E POSICIONAMENTO**
-2. **ESTRATÉGIA DE PÚBLICO-ALVO**
-3. **ESTRATÉGIA DE CANAIS E PLATAFORMAS**
-4. **ESTRATÉGIA DE CONTEÚDO**
-5. **ESTRATÉGIA DE CAMPANHAS PAGAS**
-6. **CRONOGRAMA DE IMPLEMENTAÇÃO**
-7. **MÉTRICAS E KPIs**
-8. **ORÇAMENTO E DISTRIBUIÇÃO**
-9. **ESTRATÉGIAS DE CONVERSÃO**
-10. **PLANO DE CONTINGÊNCIA**
-
-Para cada seção, forneça informações específicas, detalhadas e actionáveis baseadas nas informações fornecidas.
-
-O planejamento deve ser PRÁTICO, ESPECÍFICO e pronto para implementação.
-`;
+O objetivo é manter o mesmo conteúdo, mas com formatação muito mais profissional e visual.
+  `;
 }
