@@ -46,3 +46,6 @@ verify_jwt = false
 
 [functions.reformat-existing-plans]
 verify_jwt = false
+
+[functions.analyze-business-idea]
+verify_jwt = false
