@@ -74,3 +74,12 @@ export const LazyRelatorioSacGestores = () => (
     <SacGestorReport />
   </Suspense>
 )
+
+// Acervo de Ideias
+const AcervoIdeasDashboard = lazy(() => import('./AcervoIdeias/AcervoIdeasDashboard').then(module => ({ default: module.AcervoIdeasDashboard })));
+
+export const LazyAcervoIdeasDashboard = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <AcervoIdeasDashboard />
+  </Suspense>
+)

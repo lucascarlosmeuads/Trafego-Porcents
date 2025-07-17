@@ -6,7 +6,7 @@ import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
-import { LazyStatusFunnelDashboard, LazyDocumentationViewer } from './LazyComponents'
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAcervoIdeasDashboard } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
@@ -137,7 +137,21 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return <GeradorCriativosDashboard />
       
       case 'acervo-ideias':
-        return <IdeiasDashboard />
+        return (
+          <Suspense fallback={<LoadingFallback />}>
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h1 className="text-3xl font-bold tracking-tight">Acervo de Ideias</h1>
+                  <p className="text-muted-foreground">
+                    Análise inteligente de briefings convertidos em oportunidades de negócio
+                  </p>
+                </div>
+              </div>
+              <LazyAcervoIdeasDashboard />
+            </div>
+          </Suspense>
+        )
       
       case 'clientes':
       default:

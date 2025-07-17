@@ -49,7 +49,7 @@ export const useAcervoIdeias = () => {
     }
   };
 
-  const processarBriefingsPendentes = async () => {
+  const processarBriefingsPendentes = async (limiteBatch = 20) => {
     try {
       setProcessing(true);
       
@@ -60,7 +60,7 @@ export const useAcervoIdeias = () => {
       
       const briefingsJaAnalisados = ideiasExistentes?.map(i => i.briefing_id) || [];
       
-      console.log('Briefings já analisados:', briefingsJaAnalisados.length);
+      console.log('🔍 Briefings já analisados:', briefingsJaAnalisados.length);
       
       // Buscar briefings completos que não foram analisados
       let query = supabase
@@ -68,7 +68,7 @@ export const useAcervoIdeias = () => {
         .select('id, email_cliente, nome_produto, created_at')
         .eq('formulario_completo', true)
         .order('created_at', { ascending: false })
-        .limit(20);
+        .limit(limiteBatch);
       
       // Se há briefings já analisados, excluí-los
       if (briefingsJaAnalisados.length > 0) {
@@ -79,44 +79,150 @@ export const useAcervoIdeias = () => {
 
       if (briefingsError) throw briefingsError;
 
-      console.log('Briefings encontrados para processar:', briefings?.length || 0);
+      console.log('📋 Briefings encontrados para processar:', briefings?.length || 0);
 
       if (!briefings || briefings.length === 0) {
         toast({
           title: "Nenhum briefing novo",
           description: "Todos os briefings já foram processados",
         });
-        return;
+        return { processados: 0, total: 0 };
       }
 
       let processados = 0;
+      let tentativas = 0;
+      
       for (const briefing of briefings) {
+        tentativas++;
         try {
+          console.log(`🔄 Processando ${tentativas}/${briefings.length}: ${briefing.nome_produto}`);
+          
           const { data, error } = await supabase.functions.invoke('analyze-business-idea', {
             body: { briefing_id: briefing.id }
           });
 
-          if (error) throw error;
-          if (data?.success) processados++;
+          if (error) {
+            console.error(`❌ Erro na edge function para ${briefing.id}:`, error);
+            throw error;
+          }
+          
+          if (data?.success) {
+            processados++;
+            console.log(`✅ Briefing processado com sucesso: ${briefing.nome_produto}`);
+          } else {
+            console.warn(`⚠️ Processamento falhou para ${briefing.id}:`, data);
+          }
+          
+          // Pequena pausa entre requisições para evitar sobrecarga
+          await new Promise(resolve => setTimeout(resolve, 1000));
           
         } catch (error) {
-          console.error(`Erro ao processar briefing ${briefing.id}:`, error);
+          console.error(`❌ Erro ao processar briefing ${briefing.id}:`, error);
         }
       }
 
+      const message = processados > 0 
+        ? `${processados} novas ideias foram analisadas e adicionadas ao acervo`
+        : `Tentativa de processar ${tentativas} briefings, mas ${processados} foram bem-sucedidos`;
+
       toast({
         title: "Processamento concluído",
-        description: `${processados} novas ideias foram analisadas e adicionadas ao acervo`,
+        description: message,
+        variant: processados > 0 ? "default" : "destructive"
       });
 
       // Recarregar ideias após processamento
       await fetchIdeias();
       
+      return { processados, total: briefings.length };
+      
     } catch (error) {
-      console.error('Erro ao processar briefings:', error);
+      console.error('❌ Erro geral ao processar briefings:', error);
       toast({
         title: "Erro",
         description: "Erro ao processar briefings pendentes",
+        variant: "destructive",
+      });
+      return { processados: 0, total: 0 };
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  const processarTodosBriefings = async (onProgress?: (current: number, total: number) => void) => {
+    try {
+      setProcessing(true);
+      
+      // Contar todos os briefings pendentes
+      const { data: ideiasExistentes } = await supabase
+        .from('ideias_negocio')
+        .select('briefing_id');
+      
+      const briefingsJaAnalisados = ideiasExistentes?.map(i => i.briefing_id) || [];
+      
+      let query = supabase
+        .from('briefings_cliente')
+        .select('id')
+        .eq('formulario_completo', true);
+      
+      if (briefingsJaAnalisados.length > 0) {
+        query = query.not('id', 'in', `(${briefingsJaAnalisados.map(id => `'${id}'`).join(',')})`);
+      }
+      
+      const { data: todosBriefings, error } = await query;
+      
+      if (error) throw error;
+      
+      const totalPendentes = todosBriefings?.length || 0;
+      
+      if (totalPendentes === 0) {
+        toast({
+          title: "Processamento completo",
+          description: "Todos os briefings já foram processados",
+        });
+        return;
+      }
+
+      console.log(`🎯 Iniciando processamento de ${totalPendentes} briefings pendentes`);
+      
+      let totalProcessados = 0;
+      let loteAtual = 1;
+      const tamanhoBatch = 15; // Lotes menores para melhor controle
+      
+      // Processar em lotes
+      while (totalProcessados < totalPendentes) {
+        console.log(`📦 Processando lote ${loteAtual}...`);
+        
+        onProgress?.(totalProcessados, totalPendentes);
+        
+        const resultado = await processarBriefingsPendentes(tamanhoBatch);
+        
+        totalProcessados += resultado.processados;
+        
+        // Se não processou nenhum no lote, interromper
+        if (resultado.processados === 0) {
+          console.log('⚠️ Nenhum briefing processado no lote, interrompendo...');
+          break;
+        }
+        
+        loteAtual++;
+        
+        // Pausa maior entre lotes
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+      
+      onProgress?.(totalProcessados, totalPendentes);
+      
+      toast({
+        title: "Processamento completo!",
+        description: `${totalProcessados} ideias foram processadas de ${totalPendentes} briefings pendentes`,
+      });
+      
+    } catch (error) {
+      console.error('❌ Erro no processamento em lote:', error);
+      toast({
+        title: "Erro",
+        description: "Erro no processamento em lote",
         variant: "destructive",
       });
     } finally {
@@ -178,6 +284,7 @@ export const useAcervoIdeias = () => {
     stats,
     fetchIdeias,
     processarBriefingsPendentes,
+    processarTodosBriefings,
     atualizarStatusIdeia,
   };
 };

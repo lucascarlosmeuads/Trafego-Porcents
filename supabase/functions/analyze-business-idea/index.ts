@@ -39,7 +39,6 @@ interface IdeiaAnalise {
 }
 
 const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
-
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
@@ -48,15 +47,30 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+  let briefing_id = '';
+
   try {
+    console.log('🚀 [ANALYZE-BUSINESS-IDEA] Iniciando análise...');
+    
+    // Verificar chave OpenAI
+    if (!openAIApiKey) {
+      console.error('❌ [ERROR] OPENAI_API_KEY não configurada');
+      throw new Error('OPENAI_API_KEY não está configurada');
+    }
+    
+    console.log('✅ [CONFIG] OpenAI API Key encontrada');
+
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
-    const { briefing_id } = await req.json();
+    const requestBody = await req.json();
+    briefing_id = requestBody.briefing_id;
 
     if (!briefing_id) {
+      console.error('❌ [ERROR] briefing_id não fornecido');
       throw new Error('briefing_id é obrigatório');
     }
 
-    console.log('Analisando briefing:', briefing_id);
+    console.log(`🔍 [BRIEFING] Analisando briefing: ${briefing_id}`);
 
     // Buscar dados do briefing
     const { data: briefing, error: briefingError } = await supabase
@@ -65,11 +79,17 @@ serve(async (req) => {
       .eq('id', briefing_id)
       .single();
 
-    if (briefingError || !briefing) {
-      throw new Error(`Briefing não encontrado: ${briefingError?.message}`);
+    if (briefingError) {
+      console.error('❌ [ERROR] Erro ao buscar briefing:', briefingError);
+      throw new Error(`Briefing não encontrado: ${briefingError.message}`);
     }
 
-    console.log('Briefing encontrado:', briefing.nome_produto);
+    if (!briefing) {
+      console.error('❌ [ERROR] Briefing não existe');
+      throw new Error('Briefing não encontrado');
+    }
+
+    console.log(`📋 [BRIEFING] Encontrado: "${briefing.nome_produto}" - Cliente: ${briefing.email_cliente}`);
 
     // Verificar se já existe análise
     const { data: existingIdeia } = await supabase
@@ -79,16 +99,16 @@ serve(async (req) => {
       .maybeSingle();
 
     if (existingIdeia) {
-      console.log('Análise já existe para este briefing');
+      console.log('⚠️ [SKIP] Análise já existe para este briefing');
       return new Response(
         JSON.stringify({ success: true, message: 'Análise já existe', id: existingIdeia.id }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    // Montar prompt para análise da IA
+    // Montar prompt detalhado para análise da IA
     const prompt = `
-Analise este briefing de negócio e extraia informações estruturadas:
+Analise este briefing de negócio brasileiro e extraia informações estruturadas:
 
 **DADOS DO BRIEFING:**
 - Produto/Serviço: ${briefing.nome_produto || 'Não informado'}
@@ -103,28 +123,31 @@ Analise este briefing de negócio e extraia informações estruturadas:
 - Observações: ${briefing.observacoes_finais || 'Não informado'}
 
 **TAREFA:**
-Analise este negócio e retorne um JSON estruturado com:
+Analise este negócio brasileiro e retorne APENAS um JSON estruturado com:
 
-1. **titulo_ideia**: Um título atrativo e claro para esta ideia de negócio (máximo 80 caracteres)
-2. **descricao_projeto**: Descrição clara e completa do projeto em 2-3 parágrafos
-3. **dores_identificadas**: Array com 3-5 principais dores que este negócio resolve
-4. **categoria_negocio**: Uma categoria clara (ex: "E-commerce", "Serviços Digitais", "Alimentação", "Consultoria", etc.)
-5. **potencial_mercado**: Análise do potencial de mercado (Alto/Médio/Baixo) com justificativa
-6. **insights_ia**: Objeto com:
-   - resumo_executivo: Resumo executivo do negócio
-   - pontos_fortes: Array com 3-5 pontos fortes identificados
-   - desafios_potenciais: Array com 3-5 desafios que podem enfrentar
-   - sugestoes_melhorias: Array com 3-5 sugestões para melhorar a proposta
-   - score_viabilidade: Nota de 1-10 para viabilidade do negócio
+{
+  "titulo_ideia": "Título atrativo (máximo 80 caracteres)",
+  "descricao_projeto": "Descrição clara em 2-3 parágrafos do projeto",
+  "dores_identificadas": ["dor1", "dor2", "dor3", "dor4", "dor5"],
+  "categoria_negocio": "Categoria clara (ex: E-commerce, Serviços Digitais, Alimentação, Consultoria, Saúde, Educação, etc.)",
+  "potencial_mercado": "Alto/Médio/Baixo com justificativa",
+  "insights_ia": {
+    "resumo_executivo": "Resumo executivo do negócio",
+    "pontos_fortes": ["ponto1", "ponto2", "ponto3", "ponto4", "ponto5"],
+    "desafios_potenciais": ["desafio1", "desafio2", "desafio3", "desafio4"],
+    "sugestoes_melhorias": ["sugestao1", "sugestao2", "sugestao3", "sugestao4"],
+    "score_viabilidade": 8
+  }
+}
 
 **IMPORTANTE:**
-- Seja específico e prático nas análises
 - Considere o mercado brasileiro
-- Retorne APENAS o JSON, sem texto adicional
-- Use linguagem profissional mas acessível
+- Seja específico e prático
+- Retorne APENAS o JSON válido
+- Score de 1-10 baseado em viabilidade real
 `;
 
-    console.log('Enviando prompt para OpenAI...');
+    console.log('🤖 [OPENAI] Enviando prompt para OpenAI...');
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
@@ -137,7 +160,7 @@ Analise este negócio e retorne um JSON estruturado com:
         messages: [
           {
             role: 'system',
-            content: 'Você é um especialista em análise de negócios e empreendedorismo. Analise briefings e extraia insights valiosos para ajudar empreendedores.'
+            content: 'Você é um especialista em análise de negócios e empreendedorismo brasileiro. Analise briefings e extraia insights valiosos. Retorne APENAS JSON válido.'
           },
           {
             role: 'user',
@@ -145,29 +168,43 @@ Analise este negócio e retorne um JSON estruturado com:
           }
         ],
         temperature: 0.3,
-        max_tokens: 2000,
+        max_tokens: 2500,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
+      console.error('❌ [OPENAI] Erro na API:', response.status, errorText);
       throw new Error(`Erro na API OpenAI: ${response.status} - ${errorText}`);
     }
 
     const aiResponse = await response.json();
     const analiseText = aiResponse.choices[0].message.content;
 
-    console.log('Resposta da IA recebida');
+    console.log('✅ [OPENAI] Resposta recebida, parseando JSON...');
+    console.log('📄 [OPENAI] Resposta completa:', analiseText);
 
     let analise: IdeiaAnalise;
     try {
-      analise = JSON.parse(analiseText);
+      // Tentar extrair JSON da resposta (caso venha com texto extra)
+      const jsonMatch = analiseText.match(/\{[\s\S]*\}/);
+      const jsonString = jsonMatch ? jsonMatch[0] : analiseText;
+      analise = JSON.parse(jsonString);
     } catch (parseError) {
-      console.error('Erro ao parsear JSON da IA:', parseError);
+      console.error('❌ [JSON] Erro ao parsear JSON da IA:', parseError);
+      console.error('📄 [JSON] Resposta original:', analiseText);
       throw new Error('Resposta da IA não está em formato JSON válido');
     }
 
+    console.log('✅ [JSON] JSON parseado com sucesso');
+    console.log(`📊 [ANALYSIS] Título: "${analise.titulo_ideia}"`);
+    console.log(`📊 [ANALYSIS] Categoria: "${analise.categoria_negocio}"`);
+    console.log(`📊 [ANALYSIS] Potencial: "${analise.potencial_mercado}"`);
+    console.log(`📊 [ANALYSIS] Score: ${analise.insights_ia?.score_viabilidade || 'N/A'}`);
+
     // Salvar análise no banco
+    console.log('💾 [DATABASE] Salvando análise no banco...');
+    
     const { data: novaIdeia, error: insertError } = await supabase
       .from('ideias_negocio')
       .insert({
@@ -189,27 +226,39 @@ Analise este negócio e retorne um JSON estruturado com:
       .single();
 
     if (insertError) {
-      console.error('Erro ao salvar ideia:', insertError);
+      console.error('❌ [DATABASE] Erro ao salvar ideia:', insertError);
       throw new Error(`Erro ao salvar análise: ${insertError.message}`);
     }
 
-    console.log('Análise salva com sucesso:', novaIdeia.id);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
+    console.log(`✅ [SUCCESS] Análise salva com sucesso! ID: ${novaIdeia.id}`);
+    console.log(`⏱️ [TIMING] Processamento levou ${duration}ms`);
 
     return new Response(
       JSON.stringify({ 
         success: true, 
         message: 'Análise concluída com sucesso',
-        ideia: novaIdeia 
+        ideia: novaIdeia,
+        duration_ms: duration
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
 
   } catch (error) {
-    console.error('Erro na análise:', error);
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+    
+    console.error(`❌ [FATAL] Erro na análise do briefing ${briefing_id}:`, error);
+    console.error(`⏱️ [TIMING] Falha após ${duration}ms`);
+    
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: error.message,
+        briefing_id,
+        duration_ms: duration
       }),
       {
         status: 500,
