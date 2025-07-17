@@ -43,18 +43,6 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       icon: Headphones,
       description: 'Central de atendimento'
     },
-    {
-      id: 'gerador-criativos',
-      label: 'Gerador de Criativos',
-      icon: Wand2,
-      description: 'Upload PDF + IA para criativos'
-    },
-    {
-      id: 'openai-custos',
-      label: 'Custos OpenAI',
-      icon: DollarSign,
-      description: 'Monitorar saldo e gastos'
-    }
   ]
 
   if (isCollapsed) {
