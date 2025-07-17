@@ -8,7 +8,8 @@ import {
   BarChart3,
   DollarSign,
   Wand2,
-  Lightbulb
+  Lightbulb,
+  UserPlus
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -42,6 +43,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'SAC',
       icon: Headphones,
       description: 'Central de atendimento'
+    },
+    {
+      id: 'leads-parceria',
+      label: 'Leads Parceria',
+      icon: UserPlus,
+      description: 'Leads interessados em parceria'
     },
   ]
 

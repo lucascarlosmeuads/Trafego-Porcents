@@ -20,6 +20,7 @@ import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
+import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
 
 interface AdminDashboardProps {
@@ -152,6 +153,10 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
             </div>
           </Suspense>
         )
+
+      case 'leads-parceria':
+        return <LeadsParcerriaPanel />
+      
       
       case 'clientes':
       default:
