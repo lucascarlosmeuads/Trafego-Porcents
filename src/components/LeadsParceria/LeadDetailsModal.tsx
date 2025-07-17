@@ -21,39 +21,139 @@ interface LeadDetailsModalProps {
 export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProps) {
   if (!lead) return null;
 
-  const renderValue = (value: any): string => {
-    if (value === null || value === undefined) return 'Não informado';
-    if (typeof value === 'boolean') return value ? 'Sim' : 'Não';
-    if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : 'Nenhum';
-    if (typeof value === 'object') return JSON.stringify(value, null, 2);
-    return String(value);
+  const renderValue = (value: any, fieldName?: string): React.ReactNode => {
+    if (value === null || value === undefined) return <span className="text-muted-foreground italic">Não informado</span>;
+    
+    if (typeof value === 'boolean') {
+      return (
+        <Badge variant={value ? 'default' : 'secondary'} className="text-xs">
+          {value ? 'Sim' : 'Não'}
+        </Badge>
+      );
+    }
+    
+    if (Array.isArray(value)) {
+      if (value.length === 0) return <span className="text-muted-foreground italic">Nenhum selecionado</span>;
+      return (
+        <div className="flex flex-wrap gap-1">
+          {value.map((item, index) => (
+            <Badge key={index} variant="outline" className="text-xs">
+              {String(item)}
+            </Badge>
+          ))}
+        </div>
+      );
+    }
+    
+    if (typeof value === 'number') {
+      if (fieldName?.toLowerCase().includes('valor') || fieldName?.toLowerCase().includes('preco') || fieldName?.toLowerCase().includes('investimento')) {
+        return <span className="font-medium text-green-600">R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>;
+      }
+      return <span className="font-medium">{value.toLocaleString('pt-BR')}</span>;
+    }
+    
+    if (typeof value === 'string') {
+      // Detectar URLs
+      if (value.startsWith('http')) {
+        return (
+          <a href={value} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+            {value}
+          </a>
+        );
+      }
+      
+      // Detectar emails
+      if (value.includes('@') && value.includes('.')) {
+        return (
+          <a href={`mailto:${value}`} className="text-blue-600 hover:underline">
+            {value}
+          </a>
+        );
+      }
+      
+      // Detectar telefones/WhatsApp
+      if (fieldName?.toLowerCase().includes('whatsapp') || fieldName?.toLowerCase().includes('telefone')) {
+        const cleanNumber = value.replace(/\D/g, '');
+        return (
+          <div className="flex items-center gap-2">
+            <span>{value}</span>
+            {cleanNumber && (
+              <a 
+                href={`https://wa.me/55${cleanNumber}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-green-600 hover:text-green-700 text-xs"
+              >
+                (Abrir WhatsApp)
+              </a>
+            )}
+          </div>
+        );
+      }
+    }
+    
+    if (typeof value === 'object') {
+      return (
+        <pre className="bg-muted p-2 rounded text-xs overflow-auto max-h-32">
+          {JSON.stringify(value, null, 2)}
+        </pre>
+      );
+    }
+    
+    return <span>{String(value)}</span>;
+  };
+
+  const formatFieldName = (key: string): string => {
+    const fieldNames: { [key: string]: string } = {
+      nome: 'Nome Completo',
+      email: 'E-mail',
+      whatsapp: 'WhatsApp',
+      telefone: 'Telefone',
+      idade: 'Idade',
+      cidade: 'Cidade',
+      estado: 'Estado',
+      nivelEscolaridade: 'Nível de Escolaridade',
+      experienciaEmpreendedorismo: 'Experiência em Empreendedorismo',
+      tipoNegocio: 'Tipo de Negócio',
+      setorAtuacao: 'Setor de Atuação',
+      publicoAlvo: 'Público-Alvo',
+      principaisServicos: 'Principais Serviços',
+      diferencialCompetitivo: 'Diferencial Competitivo',
+      rendaMensal: 'Renda Mensal Atual',
+      valorInvestimento: 'Valor Disponível para Investimento',
+      tempoRetorno: 'Tempo Esperado de Retorno',
+      metaFaturamento: 'Meta de Faturamento',
+      principaisObjetivos: 'Principais Objetivos',
+      maioresDesafios: 'Maiores Desafios',
+      conhecimentoMarketing: 'Conhecimento em Marketing Digital',
+      experienciaTrafegoAgo: 'Experiência com Tráfego Pago',
+      ferramentsConhecidas: 'Ferramentas que Conhece'
+    };
+    
+    return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
   };
 
   const renderSection = (title: string, data: any, icon: React.ReactNode) => {
     if (!data || Object.keys(data).length === 0) return null;
 
     return (
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
+      <Card className="shadow-sm">
+        <CardHeader className="pb-3 bg-muted/30">
+          <CardTitle className="flex items-center gap-2 text-lg text-primary">
             {icon}
             {title}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-4 pt-4">
           {Object.entries(data).map(([key, value]) => (
-            <div key={key} className="grid grid-cols-1 md:grid-cols-3 gap-2">
-              <div className="font-medium text-sm text-muted-foreground capitalize">
-                {key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase())}:
-              </div>
-              <div className="md:col-span-2 text-sm">
-                {typeof value === 'object' && value !== null ? (
-                  <pre className="bg-muted p-2 rounded text-xs overflow-auto">
-                    {JSON.stringify(value, null, 2)}
-                  </pre>
-                ) : (
-                  renderValue(value)
-                )}
+            <div key={key} className="border-b border-muted pb-3 last:border-b-0 last:pb-0">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+                <div className="font-semibold text-sm text-foreground md:col-span-1">
+                  {formatFieldName(key)}:
+                </div>
+                <div className="md:col-span-3 text-sm">
+                  {renderValue(value, key)}
+                </div>
               </div>
             </div>
           ))}
