@@ -19,6 +19,7 @@ import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
+import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { ErrorBoundary } from './ErrorBoundary'
 
 interface AdminDashboardProps {
@@ -134,6 +135,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
       
       case 'gerador-criativos':
         return <GeradorCriativosDashboard />
+      
+      case 'acervo-ideias':
+        return <IdeiasDashboard />
       
       case 'clientes':
       default:

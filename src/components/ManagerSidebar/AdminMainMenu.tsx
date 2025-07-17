@@ -7,7 +7,8 @@ import {
   Headphones, 
   BarChart3,
   DollarSign,
-  Wand2
+  Wand2,
+  Lightbulb
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -29,6 +30,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'Clientes',
       icon: Users,
       description: 'Gerenciar clientes'
+    },
+    {
+      id: 'acervo-ideias',
+      label: 'Acervo de Ideias',
+      icon: Lightbulb,
+      description: 'Ideias extraídas dos briefings'
     },
     {
       id: 'sac',

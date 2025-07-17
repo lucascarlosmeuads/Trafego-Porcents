@@ -761,6 +761,71 @@ export type Database = {
           },
         ]
       }
+      ideias_negocio: {
+        Row: {
+          briefing_id: string | null
+          categoria_negocio: string | null
+          created_at: string
+          descricao_projeto: string | null
+          diferenciais: string | null
+          dores_identificadas: string[] | null
+          email_cliente: string
+          id: string
+          insights_ia: Json | null
+          investimento_sugerido: number | null
+          potencial_mercado: string | null
+          produto_servico: string
+          publico_alvo: string | null
+          status_analise: string
+          titulo_ideia: string | null
+          updated_at: string
+        }
+        Insert: {
+          briefing_id?: string | null
+          categoria_negocio?: string | null
+          created_at?: string
+          descricao_projeto?: string | null
+          diferenciais?: string | null
+          dores_identificadas?: string[] | null
+          email_cliente: string
+          id?: string
+          insights_ia?: Json | null
+          investimento_sugerido?: number | null
+          potencial_mercado?: string | null
+          produto_servico: string
+          publico_alvo?: string | null
+          status_analise?: string
+          titulo_ideia?: string | null
+          updated_at?: string
+        }
+        Update: {
+          briefing_id?: string | null
+          categoria_negocio?: string | null
+          created_at?: string
+          descricao_projeto?: string | null
+          diferenciais?: string | null
+          dores_identificadas?: string[] | null
+          email_cliente?: string
+          id?: string
+          insights_ia?: Json | null
+          investimento_sugerido?: number | null
+          potencial_mercado?: string | null
+          produto_servico?: string
+          publico_alvo?: string | null
+          status_analise?: string
+          titulo_ideia?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ideias_negocio_briefing_id_fkey"
+            columns: ["briefing_id"]
+            isOneToOne: false
+            referencedRelation: "briefings_cliente"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       max_integration_config: {
         Row: {
           created_at: string
