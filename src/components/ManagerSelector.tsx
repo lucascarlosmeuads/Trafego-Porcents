@@ -37,7 +37,10 @@ export function ManagerSelector({
     'lucas@trafegoporcents.com',
     'falcao@trafegoporcents.com',
     'emily@trafegoporcents.com',
-    'guilherme@trafegoporcents.com'
+    'guilherme@trafegoporcents.com',
+    'danielmoreira@trafegoporcents.com',
+    'danielribeiro@trafegoporcents.com',
+    'matheuspaviani@trafegoporcents.com'
   ]
 
   const ensureCarolInList = (managersList: Manager[]) => {
