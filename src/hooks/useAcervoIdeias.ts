@@ -53,18 +53,33 @@ export const useAcervoIdeias = () => {
     try {
       setProcessing(true);
       
-      // Buscar briefings que ainda não foram analisados
-      const briefingsJaAnalisados = ideias.map(i => i.briefing_id);
+      // Primeiro, buscar todos os briefings já analisados
+      const { data: ideiasExistentes } = await supabase
+        .from('ideias_negocio')
+        .select('briefing_id');
       
-      const { data: briefings, error: briefingsError } = await supabase
+      const briefingsJaAnalisados = ideiasExistentes?.map(i => i.briefing_id) || [];
+      
+      console.log('Briefings já analisados:', briefingsJaAnalisados.length);
+      
+      // Buscar briefings completos que não foram analisados
+      let query = supabase
         .from('briefings_cliente')
         .select('id, email_cliente, nome_produto, created_at')
         .eq('formulario_completo', true)
-        .not('id', 'in', `(${briefingsJaAnalisados.length > 0 ? briefingsJaAnalisados.map(id => `'${id}'`).join(',') : "'__NONE__'"})`)
         .order('created_at', { ascending: false })
-        .limit(10);
+        .limit(20);
+      
+      // Se há briefings já analisados, excluí-los
+      if (briefingsJaAnalisados.length > 0) {
+        query = query.not('id', 'in', `(${briefingsJaAnalisados.map(id => `'${id}'`).join(',')})`);
+      }
+      
+      const { data: briefings, error: briefingsError } = await query;
 
       if (briefingsError) throw briefingsError;
+
+      console.log('Briefings encontrados para processar:', briefings?.length || 0);
 
       if (!briefings || briefings.length === 0) {
         toast({
