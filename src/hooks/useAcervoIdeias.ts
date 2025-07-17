@@ -49,7 +49,7 @@ export const useAcervoIdeias = () => {
     }
   };
 
-  const processarBriefingsPendentes = async (limiteBatch = 20) => {
+  const processarBriefingsPendentes = async (limiteBatch = 15) => {
     try {
       setProcessing(true);
       
@@ -58,7 +58,7 @@ export const useAcervoIdeias = () => {
         .from('ideias_negocio')
         .select('briefing_id');
       
-      const briefingsJaAnalisados = ideiasExistentes?.map(i => i.briefing_id) || [];
+      const briefingsJaAnalisados = ideiasExistentes?.map(i => i.briefing_id).filter(Boolean) || [];
       
       console.log('🔍 Briefings já analisados:', briefingsJaAnalisados.length);
       
@@ -67,13 +67,15 @@ export const useAcervoIdeias = () => {
         .from('briefings_cliente')
         .select('id, email_cliente, nome_produto, created_at')
         .eq('formulario_completo', true)
-        .order('created_at', { ascending: false })
-        .limit(limiteBatch);
+        .order('created_at', { ascending: false });
       
-      // Se há briefings já analisados, excluí-los
+      // Se há briefings já analisados, excluí-los  
       if (briefingsJaAnalisados.length > 0) {
-        query = query.not('id', 'in', `(${briefingsJaAnalisados.map(id => `'${id}'`).join(',')})`);
+        query = query.not('id', 'in', `(${briefingsJaAnalisados.join(',')})`);
       }
+      
+      // Aplicar limite apenas no final
+      query = query.limit(limiteBatch);
       
       const { data: briefings, error: briefingsError } = await query;
 
