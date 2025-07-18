@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle2, FileText, AlertTriangle, X } from 'lucide-react'
+import { CheckCircle2, FileText, AlertTriangle, X, DollarSign, Zap, Shield, Users } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -96,9 +96,9 @@ export function TermosContratoModal({
       
       toast({
         title: "Termos Rejeitados",
-        description: "Você rejeitou os termos. Entre em contato conosco para mais informações.",
+        description: "Entre em contato conosco para solicitar reembolso (se elegível).",
         variant: "destructive",
-        duration: 3000
+        duration: 5000
       })
 
       // Chamar callback do parent
@@ -138,7 +138,7 @@ export function TermosContratoModal({
           <div className="flex items-center justify-between">
             <DialogTitle className="text-white flex items-center gap-2 text-lg sm:text-xl">
               <FileText className="h-5 w-5 sm:h-6 sm:w-6 text-teal-400" />
-              Termos de Uso e Condições
+              Termos de Uso - Painel do Cliente
             </DialogTitle>
             {isMobile && (
               <button
@@ -160,16 +160,16 @@ export function TermosContratoModal({
           <ScrollArea className={`${isMobile ? 'h-[calc(100vh-120px)]' : 'h-[calc(90vh-120px)]'} w-full`}>
             <div className="p-4 space-y-6 text-gray-300">
               
-              {/* Aviso Importante */}
+              {/* Modelo de Parceria */}
               <div className="bg-teal-900/20 border border-teal-500/30 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
+                  <Users className="h-5 w-5 text-teal-400 mt-0.5 flex-shrink-0" />
                   <div>
                     <h3 className="font-semibold text-teal-300 mb-2">Modelo de Parceria</h3>
                     <p className="text-sm">
                       Ao aceitar estes termos, você concorda com o modelo de parceria da Tráfego Porcents, 
-                      baseado em prestação de serviços de marketing digital com foco em performance, 
-                      utilizando comissão sobre os resultados gerados.
+                      baseado em prestação de serviços de marketing digital com foco em performance. 
+                      A remuneração ocorre através de comissão sobre os resultados gerados pelas campanhas.
                     </p>
                   </div>
                 </div>
@@ -177,11 +177,14 @@ export function TermosContratoModal({
 
               {/* Seção 1 - Objeto dos Serviços */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">1. OBJETO DOS SERVIÇOS</h3>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-yellow-400" />
+                  1. OBJETO DOS SERVIÇOS
+                </h3>
                 <p className="leading-relaxed">
-                  A <strong className="text-teal-400">Tráfego Porcents</strong> prestará serviços de marketing digital 
-                  e tráfego pago com o objetivo de gerar vendas para o seu produto ou serviço. A remuneração ocorre 
-                  por meio de comissão sobre os resultados, de forma transparente e justa para ambas as partes.
+                  Prestamos serviços estratégicos de <strong className="text-teal-400">tráfego pago</strong> para 
+                  validar e escalar ofertas digitais ou escaláveis, utilizando campanhas criadas por especialistas 
+                  com apoio de <strong className="text-purple-400">inteligência artificial</strong>.
                 </p>
               </div>
 
@@ -189,133 +192,162 @@ export function TermosContratoModal({
 
               {/* Seção 2 - Taxa de Ativação */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">2. TAXA DE ATIVAÇÃO E ESTRUTURA INICIAL</h3>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-green-400" />
+                  2. TAXA DE ATIVAÇÃO – <span className="text-green-400">R$500</span>
+                </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
-                    Você já realizou o pagamento da taxa única de <strong className="text-green-400">R$ 500,00</strong>, 
-                    que não será cobrada novamente. Essa taxa cobre a criação completa da estrutura inicial, incluindo:
+                    A ativação da parceria custa <strong className="text-green-400">R$500</strong> (pagamento único) e cobre:
                   </p>
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Análise estratégica do seu produto ou serviço</span>
+                      <span>Criativos iniciais em imagem e vídeo</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Criação de criativos com copy profissional</span>
+                      <span>Página de vendas (caso necessário)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Configuração de BM (Business Manager) e traqueamento</span>
+                      <span>Configuração técnica completa (BM, pixel, eventos, domínio etc.)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Construção de página de vendas</span>
+                      <span>Estratégia personalizada</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Integração com WhatsApp e CRM</span>
+                      <span>Preparação e ativação da campanha em até 15 dias úteis</span>
                     </li>
                   </ul>
-                  <p className="text-sm text-gray-400">
-                    <strong>Prazo de entrega:</strong> até 15 dias úteis após a confirmação do pagamento.
-                  </p>
-                </div>
-              </div>
-
-              <Separator className="bg-gray-700" />
-
-              {/* Seção 3 - Modelo por Porcentagem */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">3. MODELO POR PORCENTAGEM</h3>
-                <div className="space-y-3">
-                  <p className="leading-relaxed">
-                    Nosso modelo é baseado em <strong className="text-teal-400">performance</strong>: você só paga 
-                    comissão quando houver vendas reais geradas pelas campanhas que nós criamos e gerenciamos.
-                  </p>
-                  <p className="leading-relaxed">
-                    <strong className="text-green-400">Comissão:</strong> 5% sobre o lucro líquido das vendas feitas pelas campanhas.
-                  </p>
-                  <p className="leading-relaxed">
-                    Durante os primeiros <strong className="text-yellow-400">30 dias</strong>, dedicamos nossa equipe 
-                    para gerar os melhores resultados possíveis, testando e otimizando continuamente.
-                  </p>
-                </div>
-              </div>
-
-              <Separator className="bg-gray-700" />
-
-              {/* Seção 4 - Continuidade da Parceria */}
-              <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-orange-300 mb-3">4. CONTINUIDADE DA PARCERIA</h3>
-                <div className="space-y-3">
-                  <p className="leading-relaxed">
-                    Para que a parceria continue após os <strong className="text-white">30 dias iniciais</strong>, 
-                    é necessário que exista <strong className="text-green-400">comissionamento mensal mínimo</strong>, 
-                    ou seja, algum nível de retorno financeiro para justificar a continuidade do trabalho.
-                  </p>
-                  <p className="leading-relaxed">
-                    Se não houver comissionamento nesse período, a parceria poderá ser encerrada automaticamente, 
-                    sem obrigação futura de continuidade.
-                  </p>
-                  <p className="leading-relaxed">
-                    Caso deseje continuar mesmo sem comissionamento nesse prazo, podemos conversar e negociar 
-                    o valor mínimo necessário para manter a operação viável para ambos. Essa decisão será avaliada 
-                    de forma justa, com base no desempenho e nos esforços realizados.
-                  </p>
-                  <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-3 mt-3">
-                    <p className="text-yellow-300 text-sm">
-                      ⚠️ Isso não se trata de uma mensalidade fixa, e sim de uma condição básica para 
-                      manter a parceria ativa com envolvimento contínuo da nossa equipe.
-                    </p>
+                  
+                  <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-3 mt-4">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-orange-300 text-sm font-medium mb-2">Após a ativação, serviços adicionais são cobrados à parte:</p>
+                        <ul className="text-sm space-y-1">
+                          <li>• <strong className="text-orange-400">R$30</strong> por imagem extra</li>
+                          <li>• <strong className="text-orange-400">R$80</strong> por vídeo extra</li>
+                          <li>• <strong className="text-orange-400">R$20</strong> por alteração no site</li>
+                        </ul>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
 
               <Separator className="bg-gray-700" />
 
-              {/* Seção 5 - Responsabilidades */}
+              {/* Seção 3 - Uso da Plataforma */}
               <div>
-                <h3 className="text-lg font-semibold text-white mb-3">5. RESPONSABILIDADES</h3>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-blue-400" />
+                  3. USO DA PLATAFORMA – <span className="text-blue-400">R$149,90/mês</span>
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    Esse valor é referente ao uso da plataforma Tráfego Porcents, que intermedia sua 
+                    operação com os gestores e rastreia os resultados.
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>A cobrança só começa após sua campanha estar ativa</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Pode ser cancelado a qualquer momento, sem fidelidade</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Não é uma mensalidade de gestão de tráfego</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 4 - Comissão por Performance */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 text-purple-400" />
+                  4. COMISSÃO POR PERFORMANCE
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    Você só paga comissão se houver vendas rastreadas.
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span><strong className="text-purple-400">Comissão: 5%</strong> sobre o lucro líquido das vendas rastreadas</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>Sem comissão mínima obrigatória</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>Sem mensalidade de tráfego</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 5 - Política de Reembolso */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-red-400" />
+                  5. POLÍTICA DE REEMBOLSO
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    <strong className="text-green-400">Reembolso integral</strong> só será possível se nenhum serviço 
+                    tiver sido iniciado até <strong className="text-yellow-400">15 dias úteis</strong> após o pagamento.
+                  </p>
+                  <p className="leading-relaxed">
+                    Caso qualquer parte do trabalho (análise, criativos, configurações etc.) tenha sido iniciada, 
+                    <strong className="text-red-400"> não há reembolso</strong>, pois a equipe já foi mobilizada e remunerada.
+                  </p>
+                  <p className="leading-relaxed text-sm text-gray-400">
+                    Isso está de acordo com o Art. 49 do Código de Defesa do Consumidor (CDC), 
+                    por se tratar de serviço personalizado.
+                  </p>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 6 - Responsabilidades */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Users className="h-5 w-5 text-teal-400" />
+                  6. RESPONSABILIDADES
+                </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold text-teal-400 mb-2">Responsabilidades do Cliente:</h4>
+                    <h4 className="font-semibold text-teal-400 mb-2">Do Cliente:</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Fornecer informações corretas e atualizadas sobre o produto/serviço</li>
-                      <li>• Declarar com transparência as vendas realizadas</li>
-                      <li>• Cumprir com o pagamento das comissões geradas</li>
+                      <li>• Fornecer informações corretas</li>
+                      <li>• Declarar com transparência as vendas</li>
+                      <li>• Pagar as comissões e eventuais serviços extras</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-teal-400 mb-2">Responsabilidades da Tráfego Porcents:</h4>
+                    <h4 className="font-semibold text-teal-400 mb-2">Da Tráfego Porcents:</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Criar e gerenciar todas as campanhas de tráfego</li>
-                      <li>• Fornecer suporte e orientações estratégicas</li>
-                      <li>• Entregar toda a estrutura inicial conforme combinado</li>
-                      <li>• Manter comunicação clara, objetiva e profissional</li>
+                      <li>• Entregar a estrutura inicial conforme combinado</li>
+                      <li>• Gerenciar campanhas com foco em performance</li>
+                      <li>• Fornecer suporte técnico e estratégico</li>
+                      <li>• Manter comunicação profissional e objetiva</li>
                     </ul>
                   </div>
-                </div>
-              </div>
-
-              <Separator className="bg-gray-700" />
-
-              {/* Seção 6 - Política de Reembolso */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3">6. POLÍTICA DE REEMBOLSO</h3>
-                <div className="space-y-3">
-                  <p className="leading-relaxed">
-                    Após a entrega do serviço, <strong className="text-red-400">não há reembolso</strong>, 
-                    considerando o envolvimento de equipe, ferramentas e tempo dedicado.
-                  </p>
-                  <p className="leading-relaxed">
-                    No entanto, se nenhum serviço for entregue no prazo de até <strong className="text-yellow-400">15 dias úteis</strong> após o pagamento, 
-                    o cliente poderá solicitar reembolso total.
-                  </p>
-                  <p className="leading-relaxed text-green-400">
-                    Caso você não concorde com os termos apresentados, poderá clicar em "Não Aceito" 
-                    e solicitar reembolso total do valor pago.
-                  </p>
                 </div>
               </div>
 
@@ -326,8 +358,8 @@ export function TermosContratoModal({
                   <p><strong>Empresa:</strong> Tráfego Porcents Marketing Digital LTDA</p>
                   <p><strong>CNPJ:</strong> 60.697.779/0001-78</p>
                   <p><strong>E-mail:</strong> contrato@trafegoporcents.com</p>
-                  <p><strong>Telefone/WhatsApp:</strong> (11) 9 4306-4852</p>
-                  <p><strong>Site:</strong> trafegoporcents.com</p>
+                  <p><strong>WhatsApp:</strong> (11) 94306-4852</p>
+                  <p><strong>Site:</strong> www.trafegoporcents.com</p>
                 </div>
               </div>
 
@@ -346,7 +378,7 @@ export function TermosContratoModal({
                         `}
                         disabled={aceitando}
                       >
-                        {aceitando ? 'Aceitando...' : 'Aceitar Termos e Condições'}
+                        {aceitando ? 'Aceitando...' : 'Li e aceito os termos'}
                       </Button>
                     )}
                     {termosAceitos && (
@@ -375,7 +407,7 @@ export function TermosContratoModal({
                       `}
                       disabled={aceitando || rejeitando}
                     >
-                      {rejeitando ? 'Rejeitando...' : 'Não Aceito'}
+                      {rejeitando ? 'Rejeitando...' : 'Não aceito e desejo solicitar reembolso (se elegível)'}
                     </Button>
                     <Button
                       onClick={handleAceitarTermos}
@@ -386,7 +418,7 @@ export function TermosContratoModal({
                       `}
                       disabled={aceitando || rejeitando}
                     >
-                      {aceitando ? 'Aceitando...' : 'Aceito os Termos'}
+                      {aceitando ? 'Aceitando...' : 'Li e aceito os termos'}
                     </Button>
                   </div>
                 )}
