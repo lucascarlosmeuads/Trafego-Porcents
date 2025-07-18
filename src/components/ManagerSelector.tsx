@@ -38,8 +38,6 @@ export function ManagerSelector({
     'falcao@trafegoporcents.com',
     'emily@trafegoporcents.com',
     'guilherme@trafegoporcents.com',
-    'danielmoreira@trafegoporcents.com',
-    'danielribeiro@trafegoporcents.com',
     'matheuspaviani@trafegoporcents.com'
   ]
 
