@@ -2,6 +2,15 @@
 export const formatDate = (dateString: string | null) => {
   if (!dateString) return '-'
   try {
+    // Se a string está no formato YYYY-MM-DD, trata como data local (não UTC)
+    // para evitar problemas de timezone
+    if (dateString.match(/^\d{4}-\d{2}-\d{2}$/)) {
+      const [year, month, day] = dateString.split('-').map(Number)
+      const date = new Date(year, month - 1, day) // month é zero-indexed
+      return date.toLocaleDateString('pt-BR')
+    }
+    
+    // Para outros formatos, usa o parsing padrão
     const date = new Date(dateString)
     return date.toLocaleDateString('pt-BR')
   } catch {
