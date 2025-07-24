@@ -70,7 +70,7 @@ export function AdminCustoLucroReport({
   const custoAppMax = vendasDia > 0 ? vendasDia * 0.03 : 0 // 3% das vendas
   const custoGestores = totalGestorCommission > 0 ? totalGestorCommission : (vendasDia > 0 ? Math.floor(vendasDia / 350) * 100 : 0)
   const custoComissao = totalSellerCommission > 0 ? totalSellerCommission : (vendasDia > 0 ? Math.floor(vendasDia / 350) * 40 : 0)
-  const custoImposto = vendasDia > 0 ? vendasDia * 0.19 : 0 // 19% das vendas
+  const custoImposto = vendasDia > 0 ? vendasDia * 0.15 : 0 // 15% das vendas
   
   // Total de custos - sempre incluir investimento em tráfego
   const totalCustos = investimentoTrafego + custoAppMax + custoGestores + custoComissao + custoImposto
@@ -236,7 +236,7 @@ export function AdminCustoLucroReport({
           <Card className="border-l-4 border-l-yellow-500 bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950/20 dark:to-yellow-900/20">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
-                Imposto (19%)
+                Imposto (15%)
               </CardTitle>
               <Percent className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
             </CardHeader>
@@ -245,7 +245,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : formatCurrency(custoImposto)}
               </div>
               <p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-                {vendasDia > 0 ? `19% de ${formatCurrency(vendasDia)}` : 'Sem vendas no período'}
+                {vendasDia > 0 ? `15% de ${formatCurrency(vendasDia)}` : 'Sem vendas no período'}
               </p>
             </CardContent>
           </Card>
