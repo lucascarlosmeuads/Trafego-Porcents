@@ -11,6 +11,11 @@ export interface SellerMetrics {
   salesYesterday: number
   salesThisMonth: number
   salesAllTime: number
+  // Dados dos clientes para cálculo de comissões
+  clientesTodayData: Cliente[]
+  clientsThisWeekData: Cliente[]
+  clientsThisMonthData: Cliente[]
+  clientsThisYearData: Cliente[]
 }
 
 export function useSellerData(sellerEmail: string) {
@@ -23,7 +28,11 @@ export function useSellerData(sellerEmail: string) {
     salesToday: 0,
     salesYesterday: 0,
     salesThisMonth: 0,
-    salesAllTime: 0
+    salesAllTime: 0,
+    clientesTodayData: [],
+    clientsThisWeekData: [],
+    clientsThisMonthData: [],
+    clientsThisYearData: []
   })
   const [loading, setLoading] = useState(true)
 
@@ -90,7 +99,8 @@ export function useSellerData(sellerEmail: string) {
           ultimo_pagamento_em,
           ultimo_valor_pago,
           total_pago_comissao,
-          eh_ultimo_pago
+          eh_ultimo_pago,
+          valor_venda_inicial
         `)
         .eq('vendedor', sellerEmail)
         .order('created_at', { ascending: false, nullsFirst: false })
@@ -120,7 +130,8 @@ export function useSellerData(sellerEmail: string) {
             ultimo_pagamento_em,
             ultimo_valor_pago,
             total_pago_comissao,
-            eh_ultimo_pago
+            eh_ultimo_pago,
+            valor_venda_inicial
           `)
           .ilike('vendedor', `%${sellerName}%`)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -155,7 +166,8 @@ export function useSellerData(sellerEmail: string) {
             ultimo_pagamento_em,
             ultimo_valor_pago,
             total_pago_comissao,
-            eh_ultimo_pago
+            eh_ultimo_pago,
+            valor_venda_inicial
           `)
           .eq('vendedor', capitalizedName)
           .order('created_at', { ascending: false, nullsFirst: false })
@@ -213,7 +225,8 @@ export function useSellerData(sellerEmail: string) {
           ultimo_pagamento_em: item.ultimo_pagamento_em || null,
           ultimo_valor_pago: item.ultimo_valor_pago || null,
           total_pago_comissao: Number(item.total_pago_comissao || 0),
-          eh_ultimo_pago: Boolean(item.eh_ultimo_pago || false)
+          eh_ultimo_pago: Boolean(item.eh_ultimo_pago || false),
+          valor_venda_inicial: Number(item.valor_venda_inicial || 0)
         }))
 
         console.log('🔍 [useSellerData] Formatted clients with created_at:', formattedClientes.map(c => ({ 
@@ -257,7 +270,7 @@ export function useSellerData(sellerEmail: string) {
     })
 
     // Client registration metrics based on created_at
-    const clientsToday = clientesData.filter(c => {
+    const clientesTodayData = clientesData.filter(c => {
       if (!c.created_at) return false
       try {
         const clientDate = new Date(c.created_at)
@@ -266,9 +279,9 @@ export function useSellerData(sellerEmail: string) {
       } catch (error) {
         return false
       }
-    }).length
+    })
 
-    const clientsThisWeek = clientesData.filter(c => {
+    const clientsThisWeekData = clientesData.filter(c => {
       if (!c.created_at) return false
       try {
         const clientDate = new Date(c.created_at)
@@ -276,9 +289,9 @@ export function useSellerData(sellerEmail: string) {
       } catch (error) {
         return false
       }
-    }).length
+    })
 
-    const clientsThisMonth = clientesData.filter(c => {
+    const clientsThisMonthData = clientesData.filter(c => {
       if (!c.created_at) return false
       try {
         const clientDate = new Date(c.created_at)
@@ -286,9 +299,9 @@ export function useSellerData(sellerEmail: string) {
       } catch (error) {
         return false
       }
-    }).length
+    })
 
-    const clientsThisYear = clientesData.filter(c => {
+    const clientsThisYearData = clientesData.filter(c => {
       if (!c.created_at) return false
       try {
         const clientDate = new Date(c.created_at)
@@ -296,7 +309,12 @@ export function useSellerData(sellerEmail: string) {
       } catch (error) {
         return false
       }
-    }).length
+    })
+
+    const clientsToday = clientesTodayData.length
+    const clientsThisWeek = clientsThisWeekData.length
+    const clientsThisMonth = clientsThisMonthData.length
+    const clientsThisYear = clientsThisYearData.length
 
     // Sales metrics based on commission data and created_at
     const paidClients = clientesData.filter(c => c.comissao_paga)
@@ -354,7 +372,11 @@ export function useSellerData(sellerEmail: string) {
       salesToday,
       salesYesterday,
       salesThisMonth,
-      salesAllTime
+      salesAllTime,
+      clientesTodayData,
+      clientsThisWeekData,
+      clientsThisMonthData,
+      clientsThisYearData
     })
   }
 

@@ -27,8 +27,18 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
     )
   }
 
-  // Comissão fixa de R$ 60,00 por cliente cadastrado
-  const comissaoPorCliente = 60.00
+  // Calcular comissão baseada no tipo de cliente
+  const calcularComissaoVendedor = (clientes: any[]) => {
+    return clientes.reduce((total, cliente) => {
+      // Se é Cliente Novo, usar sistema de comissões duplas
+      if (cliente.status_campanha === 'Cliente Novo' && cliente.valor_venda_inicial) {
+        if (cliente.valor_venda_inicial === 500) return total + 40
+        if (cliente.valor_venda_inicial === 350) return total + 30
+      }
+      // Senão, usar comissão padrão de R$ 60
+      return total + 60
+    }, 0)
+  }
 
   return (
     <div className="space-y-6">
@@ -97,7 +107,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
       <div>
         <h3 className="text-lg font-semibold mb-4 flex items-center">
           <DollarSign className="h-5 w-5 mr-2" />
-          💰 Relatório de Comissões (R$ 60,00 por cliente)
+          💰 Relatório de Comissões (Cliente Novo: R$40/R$30 | Outros: R$60)
         </h3>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <Card>
@@ -106,7 +116,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsToday * comissaoPorCliente)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(calcularComissaoVendedor(metrics.clientesTodayData || []))}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsToday} cliente{metrics.clientsToday !== 1 ? 's' : ''} hoje
               </p>
@@ -119,7 +129,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisWeek * comissaoPorCliente)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(calcularComissaoVendedor(metrics.clientsThisWeekData || []))}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisWeek} cliente{metrics.clientsThisWeek !== 1 ? 's' : ''} esta semana
               </p>
@@ -132,7 +142,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisMonth * comissaoPorCliente)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(calcularComissaoVendedor(metrics.clientsThisMonthData || []))}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisMonth} cliente{metrics.clientsThisMonth !== 1 ? 's' : ''} este mês
               </p>
@@ -145,7 +155,7 @@ export function SellerMetrics({ metrics, loading }: SellerMetricsProps) {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(metrics.clientsThisYear * comissaoPorCliente)}</div>
+              <div className="text-2xl font-bold">{formatCurrency(calcularComissaoVendedor(metrics.clientsThisYearData || []))}</div>
               <p className="text-xs text-muted-foreground">
                 {metrics.clientsThisYear} cliente{metrics.clientsThisYear !== 1 ? 's' : ''} no total
               </p>

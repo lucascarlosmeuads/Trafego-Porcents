@@ -7,6 +7,7 @@ import { Cliente } from '@/lib/supabase'
 import { formatCurrency } from '@/lib/utils'
 import { useComissaoOperations } from '@/hooks/useComissaoOperations'
 import { useComissaoAvancada } from '@/hooks/useComissaoAvancada'
+import { getCommissionForDisplay } from '@/utils/dualCommissionCalculator'
 import { Edit3, Check, X, Loader2 } from 'lucide-react'
 
 interface ComissaoSimplesProps {
@@ -30,7 +31,8 @@ export function ComissaoSimples({
   const { atualizarValorComissao, loading: loadingValor } = useComissaoAvancada()
   
   const clienteId = cliente.id?.toString() || ''
-  const valorComissao = cliente.valor_comissao || 60
+  // Para admin/gestor, usar sistema de comissões duplas
+  const valorComissao = getCommissionForDisplay(cliente, 'manager')
   const isPago = cliente.comissao === 'Pago'
   const canEdit = isAdmin
   const loading = loadingStatus || loadingValor

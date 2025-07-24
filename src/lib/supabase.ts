@@ -36,6 +36,8 @@ export type Cliente = {
   ultimo_valor_pago: number | null
   total_pago_comissao: number
   eh_ultimo_pago: boolean
+  // Campo para sistema de comissões duplas
+  valor_venda_inicial?: number
 }
 
 export type HistoricoPagamentoComissao = {
