@@ -11,6 +11,7 @@ import { useClienteNovoSellerData } from '@/hooks/useClienteNovoSellerData'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
 import { ClienteNovoCommissionCalculator } from '../ClienteNovoCommissionCalculator'
+import { useVendedores } from '@/hooks/useVendedores'
 
 interface GestorOption {
   nome: string
@@ -23,6 +24,7 @@ interface ClienteNovoAddClientFormProps {
 
 export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClientFormProps) {
   const { user } = useAuth()
+  const { vendedores } = useVendedores()
   const { addCliente } = useClienteNovoSellerData(user?.email || '')
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
@@ -34,6 +36,7 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
     telefone: '',
     senha: 'clientenovo',
     email_gestor: '',
+    vendedor_responsavel: '',
     resumo_conversa_vendedor: '',
     valor_venda_inicial: null as number | null,
     valor_comissao: null as number | null
@@ -130,6 +133,15 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
       return
     }
 
+    if (!formData.vendedor_responsavel) {
+      toast({
+        title: "Erro",
+        description: "Selecione um vendedor responsável",
+        variant: "destructive"
+      })
+      return
+    }
+
     if (!formData.valor_venda_inicial) {
       toast({
         title: "Erro",
@@ -159,6 +171,7 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
         telefone: formData.telefone,
         email_cliente: formData.email_cliente,
         email_gestor: formData.email_gestor,
+        vendedor_responsavel: formData.vendedor_responsavel,
         resumo_conversa_vendedor: formData.resumo_conversa_vendedor,
         valor_venda_inicial: formData.valor_venda_inicial,
         senha_cliente: formData.senha
@@ -180,6 +193,7 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
           telefone: '',
           senha: 'clientenovo',
           email_gestor: '',
+          vendedor_responsavel: '',
           resumo_conversa_vendedor: '',
           valor_venda_inicial: null,
           valor_comissao: null
@@ -197,6 +211,7 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
           description: `Cliente: ${clienteData.nome_cliente}
 E-mail: ${clienteData.email_cliente}
 Senha: ${clienteData.senha_cliente}
+Vendedor: ${formData.vendedor_responsavel}
 Gestor: ${formData.email_gestor}
 Comissão: R$ ${result.valorComissao}
 
@@ -355,6 +370,22 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </Select>
           </div>
 
+          <div className="grid gap-2">
+            <Label htmlFor="vendedor_responsavel">Vendedor Responsável *</Label>
+            <Select value={formData.vendedor_responsavel} onValueChange={(value) => setFormData(prev => ({ ...prev, vendedor_responsavel: value }))}>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione um vendedor" />
+              </SelectTrigger>
+              <SelectContent>
+                {vendedores.map((vendedor) => (
+                  <SelectItem key={vendedor.nome} value={vendedor.nome}>
+                    {vendedor.nome}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Calculadora de Comissão Cliente Novo */}
           <ClienteNovoCommissionCalculator
             saleValue={formData.valor_venda_inicial}
@@ -391,18 +422,6 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             </p>
           </div>
 
-          <div className="grid gap-2">
-            <Label htmlFor="responsavel">Vendedor</Label>
-            <Input
-              id="responsavel"
-              value={user?.email || ''}
-              disabled
-              className="bg-gray-100"
-            />
-            <p className="text-sm text-muted-foreground">
-              Preenchido automaticamente com seu e-mail
-            </p>
-          </div>
 
           {/* Mensagem personalizada para o cliente */}
           {formData.nome_cliente && formData.email_cliente && (

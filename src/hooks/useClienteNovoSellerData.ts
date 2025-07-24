@@ -69,6 +69,7 @@ export function useClienteNovoSellerData(sellerEmail: string) {
     telefone: string
     email_cliente: string
     email_gestor: string
+    vendedor_responsavel?: string
     resumo_conversa_vendedor?: string
     valor_venda_inicial: number | null
     valor_comissao?: number | null
@@ -79,7 +80,7 @@ export function useClienteNovoSellerData(sellerEmail: string) {
 
     try {
       const emailNormalizado = clienteData.email_cliente.toLowerCase().trim()
-      const vendedorNome = sellerEmail
+      const vendedorNome = clienteData.vendedor_responsavel || sellerEmail
 
       // Verificar se valor de venda é válido para Cliente Novo
       if (!clienteData.valor_venda_inicial || !isValidClienteNovoSaleValue(clienteData.valor_venda_inicial)) {
