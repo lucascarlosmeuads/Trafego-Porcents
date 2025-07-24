@@ -1,46 +1,60 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Brain, Lightbulb } from 'lucide-react'
+import { Wand2, Mic, FileText, Sparkles } from 'lucide-react'
 
 export function AvisoGeradorIdeias() {
   return (
     <Card className="bg-gradient-to-r from-purple-900/20 to-blue-900/20 border-purple-600/30">
       <CardHeader>
         <CardTitle className="text-purple-400 flex items-center gap-2">
-          <Brain className="h-5 w-5" />
-          🧪 NOVA FUNCIONALIDADE: Gerador de Ideias de Criativos (BETA)
+          <Wand2 className="h-5 w-5" />
+          🚀 NOVO: Gerador de Anúncios 2.0 no Menu Lateral
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-start gap-2">
-          <Lightbulb className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
+          <Sparkles className="h-4 w-4 text-yellow-500 mt-0.5 flex-shrink-0" />
           <p className="text-gray-300 text-sm">
-            Agora você pode gerar <strong>imagens reais de criativos</strong> usando técnica de <strong>incongruência criativa</strong> baseado nos planejamentos estratégicos dos seus clientes.
+            O novo <strong>Gerador de Anúncios 2.0</strong> está funcionando muito melhor! Agora você pode criar anúncios completos de forma mais eficiente e profissional.
           </p>
         </div>
         
-        <div className="bg-amber-900/20 border border-amber-600/30 rounded-lg p-3">
-          <p className="text-amber-300 text-xs font-medium mb-1">⚠️ IMPORTANTE - VERSÃO BETA:</p>
-          <ul className="text-amber-200 text-xs space-y-1">
-            <li>• Gera <strong>imagens reais de criativos</strong> usando incongruência criativa</li>
-            <li>• Use essas <strong>imagens como base</strong> para criar os criativos finais dos clientes</li>
-            <li>• Demonstre seu <strong>trabalho criativo profissional</strong> com essas ideias visuais</li>
-            <li>• <strong>Criativos visuais reais</strong> para inspirar e refinar seu trabalho</li>
-            <li>• Acesse através dos "Materiais" de cada cliente → Aba "Criativos"</li>
+        <div className="bg-green-900/20 border border-green-600/30 rounded-lg p-3">
+          <p className="text-green-300 text-xs font-medium mb-2">✨ NOVAS FUNCIONALIDADES:</p>
+          <ul className="text-green-200 text-xs space-y-1">
+            <li className="flex items-center gap-2">
+              <Mic className="h-3 w-3" />
+              <strong>Gravação de Áudio:</strong> Explique o projeto falando - a IA entende seu áudio
+            </li>
+            <li className="flex items-center gap-2">
+              <FileText className="h-3 w-3" />
+              <strong>Upload de Documentos:</strong> Cole o planejamento do cliente em PDF
+            </li>
+            <li>• <strong>Análise Inteligente:</strong> IA analisa tudo e gera anúncios personalizados</li>
+            <li>• <strong>Copies + Imagens:</strong> Gera textos e imagens profissionais automaticamente</li>
+            <li>• <strong>Múltiplas Variações:</strong> Cria diferentes versões para testes A/B</li>
           </ul>
         </div>
 
-        <div className="bg-red-900/20 border border-red-600/30 rounded-lg p-3">
-          <p className="text-red-300 text-xs font-medium mb-1">🎯 LEMBRETE IMPORTANTE:</p>
-          <div className="text-red-200 text-xs space-y-1">
-            <p><strong>Uma das maiores reclamações dos clientes é a falta de empenho no projeto</strong> como foi prometido para fechar.</p>
-            <p>Os criativos trabalhados com <strong>incongruência criativa</strong> mostram que <strong>pensamos nos criativos</strong> e somos diferentes - isso é o que acreditamos que dá resultado.</p>
-            <p><strong>Demonstrar esforço no criativo é o segredo</strong> para mostrar que o serviço foi feito. <strong>TESTAR CRIATIVO é o maior diferencial deste negócio.</strong></p>
-            <p>🛠️ <em>Esta ferramenta foi criada para facilitar sua vida e mostrar nosso trabalho criativo profissional.</em></p>
+        <div className="bg-blue-900/20 border border-blue-600/30 rounded-lg p-3">
+          <p className="text-blue-300 text-xs font-medium mb-1">🎯 COMO USAR:</p>
+          <div className="text-blue-200 text-xs space-y-1">
+            <p>1. <strong>Acesse o menu lateral</strong> → "Gerador de Criativos"</p>
+            <p>2. <strong>Grave um áudio</strong> explicando o projeto OU <strong>faça upload do PDF</strong> do planejamento</p>
+            <p>3. <strong>A IA analisa</strong> e extrai as informações principais</p>
+            <p>4. <strong>Gera anúncios completos</strong> com copies e imagens profissionais</p>
+            <p>5. <strong>Baixe e use</strong> nos projetos dos seus clientes</p>
           </div>
         </div>
 
-        <p className="text-gray-400 text-xs">
-          📍 <strong>Como acessar:</strong> Vá em "Clientes" → Clique nos 3 pontos do cliente → "Materiais" → Aba "Criativos"
+        <div className="bg-purple-900/20 border border-purple-600/30 rounded-lg p-3">
+          <p className="text-purple-300 text-xs font-medium mb-1">💡 DICA PROFISSIONAL:</p>
+          <p className="text-purple-200 text-xs">
+            <strong>Demonstre valor real:</strong> Use esta ferramenta para criar anúncios únicos e personalizados que mostram seu trabalho criativo profissional. Seus clientes vão perceber a diferença na qualidade e dedicação!
+          </p>
+        </div>
+
+        <p className="text-gray-400 text-xs text-center">
+          📍 <strong>Acesse agora:</strong> Menu Lateral → "Gerador de Criativos" → Experimente as novas funcionalidades!
         </p>
       </CardContent>
     </Card>
