@@ -44,6 +44,14 @@ export class OpenAIService {
     this.apiKey = apiKey;
   }
 
+  private cleanMarkdownJson(text: string): string {
+    // Remove markdown code blocks if present
+    return text
+      .replace(/```json\s*/gi, '')
+      .replace(/```\s*$/gi, '')
+      .trim();
+  }
+
   async analyzeBusinessDocument(documentText: string): Promise<BusinessAnalysis> {
     const prompt = `
 Analise o seguinte documento de negócio e extraia informações estratégicas para criação de anúncios persuasivos:
@@ -93,9 +101,12 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
       console.log("✅ Dados recebidos da API:", data);
       
       const analysisText = data.choices[0].message.content;
-      console.log("📊 Texto da análise:", analysisText);
+      console.log("📊 Texto da análise (bruto):", analysisText);
       
-      const parsedAnalysis = JSON.parse(analysisText);
+      const cleanedText = this.cleanMarkdownJson(analysisText);
+      console.log("🧹 Texto limpo:", cleanedText);
+      
+      const parsedAnalysis = JSON.parse(cleanedText);
       console.log("🎯 Análise parseada:", parsedAnalysis);
       
       return parsedAnalysis;
@@ -186,7 +197,8 @@ REGRAS:
 
       const data = await response.json();
       const optionsText = data.choices[0].message.content;
-      return JSON.parse(optionsText);
+      const cleanedOptionsText = this.cleanMarkdownJson(optionsText);
+      return JSON.parse(cleanedOptionsText);
     } catch (error) {
       console.error("Erro ao gerar opções múltiplas:", error);
       throw new Error("Falha ao gerar opções. Verifique sua chave API e tente novamente.");
