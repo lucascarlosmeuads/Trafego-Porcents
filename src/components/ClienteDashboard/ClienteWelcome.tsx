@@ -5,6 +5,7 @@ import { useIsMobile } from '@/hooks/useIsMobile'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'
+import { AvisoTaxaPlataforma } from './AvisoTaxaPlataforma'
 import { CampanhaLinkCard } from './CampanhaLinkCard'
 import { MensagemInstitucional } from './MensagemInstitucional'
 import { ClienteWelcomeHeader } from './ClienteWelcomeHeader'
@@ -32,6 +33,14 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
         </div>
         
         <AvisoMudancaAtendimento />
+        
+        {/* Aviso Taxa Plataforma - Mobile */}
+        <div className="p-4">
+          <AvisoTaxaPlataforma 
+            dataVenda={cliente?.data_venda || null} 
+            nomeCliente={cliente?.nome_cliente || null} 
+          />
+        </div>
         
         {/* Card da campanha se existir */}
         <div className="p-4 space-y-4">
@@ -64,6 +73,12 @@ export function ClienteWelcome({ onTabChange }: ClienteWelcomeProps) {
 
       {/* Aviso de Mudança */}
       <AvisoMudancaAtendimento />
+
+      {/* Aviso Taxa Plataforma - Desktop */}
+      <AvisoTaxaPlataforma 
+        dataVenda={cliente?.data_venda || null} 
+        nomeCliente={cliente?.nome_cliente || null} 
+      />
 
       {/* Card da Campanha */}
       {!loading && cliente?.link_campanha && (
