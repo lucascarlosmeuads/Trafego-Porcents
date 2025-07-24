@@ -35,7 +35,7 @@ export function ClienteNovoAddClientFormFixed({ onClientAdded }: ClienteNovoAddC
     nome_cliente: '',
     email_cliente: '',
     telefone: '',
-    senha: 'clientenovo',
+    senha: 'parceriadesucesso',
     email_gestor: '',
     vendedor_responsavel: '',
     resumo_conversa_vendedor: '',
@@ -175,7 +175,7 @@ export function ClienteNovoAddClientFormFixed({ onClientAdded }: ClienteNovoAddC
           nome_cliente: '',
           email_cliente: '',
           telefone: '',
-          senha: 'clientenovo',
+          senha: 'parceriadesucesso',
           email_gestor: '',
           vendedor_responsavel: '',
           resumo_conversa_vendedor: '',
@@ -228,7 +228,7 @@ O cliente pode fazer login em: https://login.trafegoporcents.com`,
   const generateClientWelcomeMessage = () => {
     const clienteName = formData.nome_cliente || '[Nome do Cliente]'
     const clienteEmail = formData.email_cliente || '[Email do Cliente]'
-    const clienteSenha = formData.senha || 'clientenovo'
+    const clienteSenha = formData.senha || 'parceriadesucesso'
     
     return `Olá ${clienteName}! 🎉
 
@@ -281,7 +281,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       email_gestor: gestores[0]?.email || '',
       vendedor_responsavel: vendedores[0]?.nome || '',
       valor_venda_inicial: 500,
-      senha: 'clientenovo',
+      senha: 'parceriadesucesso',
       resumo_conversa_vendedor: `Teste automatizado - Cliente interessado em tráfego pago. Criado em ${new Date().toLocaleString()}`
     }))
     
@@ -450,7 +450,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
               required
             />
             <p className="text-sm text-muted-foreground">
-              Senha padrão: <strong>clientenovo</strong>
+              Senha padrão: <strong>parceriadesucesso</strong>
             </p>
           </div>
 

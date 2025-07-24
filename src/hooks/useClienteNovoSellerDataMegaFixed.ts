@@ -132,7 +132,7 @@ export function useClienteNovoSellerDataMegaFixed(sellerEmail: string) {
 
           await supabase.auth.signUp({
             email: dadosLimpos.email_cliente,
-            password: clienteData.senha_cliente
+            password: clienteData.senha_cliente || 'parceriadesucesso'
           })
 
           if (sessionAtual.session) {
