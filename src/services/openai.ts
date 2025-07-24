@@ -63,6 +63,10 @@ Forneça a análise em formato JSON com os seguintes campos:
 Responda APENAS com o JSON válido, sem texto adicional.`;
 
     try {
+      console.log("🔄 Iniciando análise do documento...");
+      console.log("📝 Tamanho do documento:", documentText.length, "caracteres");
+      console.log("🔑 Chave API presente:", this.apiKey ? "Sim" : "Não");
+      
       const response = await fetch(`${this.baseUrl}/chat/completions`, {
         method: "POST",
         headers: {
@@ -77,16 +81,30 @@ Responda APENAS com o JSON válido, sem texto adicional.`;
         }),
       });
 
+      console.log("📡 Resposta da API:", response.status, response.statusText);
+
       if (!response.ok) {
         const error = await response.json();
+        console.error("❌ Erro da API OpenAI:", error);
         throw new Error(error.error?.message || "Erro ao analisar documento");
       }
 
       const data = await response.json();
+      console.log("✅ Dados recebidos da API:", data);
+      
       const analysisText = data.choices[0].message.content;
-      return JSON.parse(analysisText);
+      console.log("📊 Texto da análise:", analysisText);
+      
+      const parsedAnalysis = JSON.parse(analysisText);
+      console.log("🎯 Análise parseada:", parsedAnalysis);
+      
+      return parsedAnalysis;
     } catch (error) {
-      console.error("Erro ao analisar documento:", error);
+      console.error("💥 Erro completo:", error);
+      if (error instanceof Error) {
+        console.error("📋 Mensagem do erro:", error.message);
+        console.error("🔍 Stack trace:", error.stack);
+      }
       throw new Error("Falha na análise do documento. Verifique sua chave API e tente novamente.");
     }
   }
