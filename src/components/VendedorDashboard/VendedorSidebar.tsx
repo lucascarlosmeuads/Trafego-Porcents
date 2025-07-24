@@ -33,16 +33,6 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
       title: "Dashboard",
       icon: BarChart3,
       id: "dashboard"
-    },
-    {
-      title: "Lista de Vendas",
-      icon: Users,
-      id: "lista-vendas"
-    },
-    {
-      title: "Adicionar Cliente",
-      icon: UserPlus,
-      id: "adicionar-cliente"
     }
   ]
 

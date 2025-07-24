@@ -13,6 +13,8 @@ interface ClienteSimples {
   email_gestor: string
   status_campanha: string
   created_at: string
+  valor_venda_inicial?: number | null
+  valor_comissao?: number | null
 }
 
 // Senha padrão para novos clientes
@@ -55,7 +57,9 @@ export function useSimpleSellerData(sellerEmail: string) {
           vendedor,
           email_gestor,
           status_campanha,
-          created_at
+          created_at,
+          valor_venda_inicial,
+          valor_comissao
         `)
         .ilike('vendedor', `%${sellerName}%`)
         .order('created_at', { ascending: false })
@@ -78,7 +82,9 @@ export function useSimpleSellerData(sellerEmail: string) {
         vendedor: item.vendedor || '',
         email_gestor: item.email_gestor || '',
         status_campanha: item.status_campanha || 'Brief',
-        created_at: item.created_at || ''
+        created_at: item.created_at || '',
+        valor_venda_inicial: item.valor_venda_inicial || null,
+        valor_comissao: item.valor_comissao || null
       }))
 
       setClientes(clientesFormatados)
