@@ -18,6 +18,7 @@ interface UseAuthState {
   isVendedor: boolean
   isSites: boolean
   isRelatorios: boolean
+  isClienteNovo: boolean
   currentManagerName: string
   setCurrentManagerName: React.Dispatch<React.SetStateAction<string>>
   updateUserType: (email: string) => Promise<void>
@@ -74,6 +75,7 @@ export function useAuthState(): UseAuthState {
   const isVendedor = userType === 'vendedor'
   const isSites = userType === 'sites'
   const isRelatorios = userType === 'relatorios'
+  const isClienteNovo = userType === 'clientenovo'
 
   return {
     user,
@@ -88,6 +90,7 @@ export function useAuthState(): UseAuthState {
     isVendedor,
     isSites,
     isRelatorios,
+    isClienteNovo,
     currentManagerName,
     setCurrentManagerName,
     updateUserType,

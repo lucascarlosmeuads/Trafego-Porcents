@@ -83,3 +83,12 @@ export const LazyAcervoIdeasDashboard = () => (
     <AcervoIdeasDashboard />
   </Suspense>
 )
+
+// Cliente Novo Dashboard
+const ClienteNovoDashboard = lazy(() => import('./ClienteNovoDashboard/ClienteNovoDashboard').then(module => ({ default: module.ClienteNovoDashboard })));
+
+export const LazyClienteNovoDashboard = () => (
+  <Suspense fallback={<LoadingFallback />}>
+    <ClienteNovoDashboard />
+  </Suspense>
+)

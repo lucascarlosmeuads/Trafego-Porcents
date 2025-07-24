@@ -5,7 +5,7 @@ export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()
 }
 
-export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'unauthorized' | 'error'> => {
+export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'clientenovo' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
   console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
   console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
@@ -24,6 +24,12 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     if (normalizedEmail.includes('@relatorios.com')) {
       console.log('📊 [authHelpers] Usuário é RELATÓRIOS (domínio @relatorios.com)')
       return 'relatorios'
+    }
+
+    // VERIFICAÇÃO PARA CLIENTE NOVO - NOVA
+    if (normalizedEmail === 'clientenovo@trafegoporcents.com') {
+      console.log('🆕 [authHelpers] Usuário é CLIENTE NOVO (email específico)')
+      return 'clientenovo'
     }
 
     // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - MOVIDA PARA CIMA
@@ -132,6 +138,11 @@ export const getManagerName = async (email: string): Promise<string> => {
   // Para usuários de relatórios, retornar nome específico
   if (normalizedEmail.includes('@relatorios.com')) {
     return 'Analista de Relatórios'
+  }
+  
+  // Para usuário Cliente Novo, retornar nome específico
+  if (normalizedEmail === 'clientenovo@trafegoporcents.com') {
+    return 'Cliente Novo'
   }
   
   // Para usuários de sites, retornar nome específico APENAS para emails autorizados

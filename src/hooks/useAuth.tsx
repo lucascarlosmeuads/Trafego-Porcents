@@ -223,7 +223,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isCliente,
       isVendedor,
       isSites,
-      isRelatorios, // NOVO
+      isRelatorios,
+      isClienteNovo,
       currentManagerName
     }}>
       {children}

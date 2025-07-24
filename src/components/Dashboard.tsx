@@ -4,7 +4,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { 
   LazyAdminDashboard, 
   LazyGestorDashboard, 
-  LazyClienteDashboard 
+  LazyClienteDashboard,
+  LazyClienteNovoDashboard 
 } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { VendedorDashboard } from './VendedorDashboard'
@@ -26,6 +27,7 @@ export function Dashboard() {
     isVendedor,
     isSites,
     isRelatorios,
+    isClienteNovo,
     signOut
   } = useAuth()
 
@@ -43,14 +45,15 @@ export function Dashboard() {
     isCliente,
     isVendedor,
     isSites,
-    isRelatorios
+    isRelatorios,
+    isClienteNovo
   })
 
   // Reset tab when user type changes
   useEffect(() => {
     setActiveTab('dashboard')
     setSelectedManager(null)
-  }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios])
+  }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios, isClienteNovo])
 
   const handleSignOut = async () => {
     console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
@@ -87,7 +90,8 @@ export function Dashboard() {
     isCliente: isCliente ? '✅' : '❌',
     isVendedor: isVendedor ? '✅' : '❌',
     isSites: isSites ? '✅' : '❌',
-    isRelatorios: isRelatorios ? '✅' : '❌'
+    isRelatorios: isRelatorios ? '✅' : '❌',
+    isClienteNovo: isClienteNovo ? '✅' : '❌'
   })
 
   // Cliente Dashboard
@@ -124,6 +128,16 @@ export function Dashboard() {
   if (isRelatorios) {
     console.log('✅ [Dashboard] Direcionando para MetaAdsDashboard')
     return <MetaAdsDashboard />
+  }
+
+  // Cliente Novo Dashboard (NOVO)
+  if (isClienteNovo) {
+    console.log('✅ [Dashboard] Direcionando para ClienteNovoDashboard')
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <LazyClienteNovoDashboard />
+      </Suspense>
+    )
   }
 
   // Admin/Gestor Dashboards
