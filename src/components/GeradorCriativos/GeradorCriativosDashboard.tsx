@@ -19,7 +19,8 @@ import {
   Loader2,
   Copy,
   BookOpen,
-  Zap
+  Zap,
+  ArrowLeft
 } from 'lucide-react'
 import { PDFUploadArea } from './PDFUploadArea'
 import { DataPreviewCards } from './DataPreviewCards'
@@ -57,7 +58,11 @@ interface GeneratedCopy {
   createdAt: Date
 }
 
-export function GeradorCriativosDashboard() {
+interface GeradorCriativosDashboardProps {
+  onBackToSystem?: () => void
+}
+
+export function GeradorCriativosDashboard({ onBackToSystem }: GeradorCriativosDashboardProps) {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [pdfData, setPdfData] = useState<PDFData | null>(null)
   const [isAnalyzing, setIsAnalyzing] = useState(false)
@@ -160,6 +165,20 @@ export function GeradorCriativosDashboard() {
     <div className="max-w-7xl mx-auto p-6 space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
+        {/* Botão Voltar ao Sistema */}
+        {onBackToSystem && (
+          <div className="flex justify-start mb-4">
+            <Button 
+              variant="outline" 
+              onClick={onBackToSystem}
+              className="flex items-center gap-2"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Voltar ao Sistema
+            </Button>
+          </div>
+        )}
+        
         <div className="flex items-center justify-center gap-2 mb-4">
           <Wand2 className="h-8 w-8 text-primary" />
           <h1 className="text-3xl font-bold text-foreground">Gerador de Criativos</h1>

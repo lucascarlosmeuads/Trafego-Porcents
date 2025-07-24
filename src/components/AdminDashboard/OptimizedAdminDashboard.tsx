@@ -15,13 +15,15 @@ interface AdminDashboardProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
   activeTab: string
+  onTabChange: (tab: string) => void
 }
 
 // Optimize AdminDashboard with React.memo
 export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({ 
   selectedManager, 
   onManagerSelect, 
-  activeTab 
+  activeTab,
+  onTabChange
 }: AdminDashboardProps) {
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -96,7 +98,7 @@ export const OptimizedAdminDashboard = memo(function OptimizedAdminDashboard({
         )
 
       case 'gerador-criativos':
-        return <GeradorCriativosDashboard />
+        return <GeradorCriativosDashboard onBackToSystem={() => onTabChange('clientes')} />
       
       case 'clientes':
       default:

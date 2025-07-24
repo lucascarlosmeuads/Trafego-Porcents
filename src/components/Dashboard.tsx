@@ -161,6 +161,7 @@ export function Dashboard() {
                   selectedManager={selectedManager}
                   onManagerSelect={setSelectedManager}
                   activeTab={activeTab}
+                  onTabChange={setActiveTab}
                 />
               )}
               

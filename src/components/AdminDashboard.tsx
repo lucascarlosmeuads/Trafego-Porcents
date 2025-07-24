@@ -27,9 +27,10 @@ interface AdminDashboardProps {
   selectedManager: string | null
   onManagerSelect: (manager: string | null) => void
   activeTab: string
+  onTabChange: (tab: string) => void
 }
 
-export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: AdminDashboardProps) {
+export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, onTabChange }: AdminDashboardProps) {
   // CORREÇÃO: Todos os hooks devem ser chamados PRIMEIRO, sem condições
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
@@ -135,7 +136,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab }: 
         return <OpenAICustosDashboard />
       
       case 'gerador-criativos':
-        return <GeradorCriativosDashboard />
+        return <GeradorCriativosDashboard onBackToSystem={() => onTabChange('clientes')} />
       
       case 'acervo-ideias':
         return (
