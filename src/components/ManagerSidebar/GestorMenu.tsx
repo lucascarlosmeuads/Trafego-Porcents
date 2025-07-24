@@ -1,5 +1,5 @@
 
-import { BarChart3, Users, Activity, Globe, MessageSquare, Lightbulb } from 'lucide-react'
+import { BarChart3, Users, Activity, Globe, MessageSquare, Lightbulb, Wand2 } from 'lucide-react'
 
 interface GestorMenuProps {
   activeTab: string
@@ -28,6 +28,13 @@ export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: Gest
       label: 'Meta Ads',
       icon: Activity,
       description: 'Relatórios Meta Ads',
+      color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
+    },
+    {
+      id: 'gerador-criativos',
+      label: 'Gerador de Criativos',
+      icon: Wand2,
+      description: 'Criar anúncios com IA',
       color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
     },
     {

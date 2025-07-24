@@ -18,6 +18,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { User } from 'lucide-react'
 import { GestorMetaAdsConfig } from './GestorDashboard/GestorMetaAdsConfig'
 import { GestorMetaAdsMetrics } from './GestorDashboard/GestorMetaAdsMetrics'
+import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
 
 interface GestorDashboardProps {
   activeTab: string
@@ -112,6 +113,12 @@ export function GestorDashboard({ activeTab }: GestorDashboardProps) {
               <GestorMetaAdsConfig />
               <GestorMetaAdsMetrics />
             </div>
+          </div>
+        )
+      case 'gerador-criativos':
+        return (
+          <div className="bg-gray-950 min-h-screen p-6">
+            <GeradorCriativosDashboard />
           </div>
         )
       case 'solicitacoes-site':
