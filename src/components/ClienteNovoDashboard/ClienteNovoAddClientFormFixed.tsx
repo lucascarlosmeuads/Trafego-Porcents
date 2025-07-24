@@ -7,7 +7,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
-import { useClienteNovoSellerDataFixed } from '@/hooks/useClienteNovoSellerDataFixed'
+import { useClienteNovoSellerDataMegaFixed } from '@/hooks/useClienteNovoSellerDataMegaFixed'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle, CheckCircle } from 'lucide-react'
 import { ClienteNovoCommissionCalculator } from '../ClienteNovoCommissionCalculator'
@@ -25,7 +25,7 @@ interface ClienteNovoAddClientFormFixedProps {
 export function ClienteNovoAddClientFormFixed({ onClientAdded }: ClienteNovoAddClientFormFixedProps) {
   const { user } = useAuth()
   const { vendedores } = useVendedores()
-  const { addCliente } = useClienteNovoSellerDataFixed(user?.email || '')
+  const { addCliente } = useClienteNovoSellerDataMegaFixed(user?.email || '')
   const [loading, setLoading] = useState(false)
   const [gestores, setGestores] = useState<GestorOption[]>([])
   const [copied, setCopied] = useState(false)
