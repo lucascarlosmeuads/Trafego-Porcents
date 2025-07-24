@@ -315,11 +315,39 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       <CardHeader>
         <CardTitle>Adicionar Novo Cliente - Comissões Fixas</CardTitle>
         <CardDescription>
-          Sistema Cliente Novo: Comissões automáticas de R$ 150 (venda R$ 500) ou R$ 80 (venda R$ 350)
+          Sistema Cliente Novo: Vendedor R$ 40 (venda R$ 500) ou R$ 30 (venda R$ 350) | Gestor R$ 150 (venda R$ 500) ou R$ 80 (venda R$ 350)
         </CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Botão de teste rápido */}
+          <div className="flex gap-2 mb-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                const timestamp = Date.now()
+                setFormData(prev => ({
+                  ...prev,
+                  nome_cliente: `Cliente Teste ${timestamp}`,
+                  email_cliente: `teste${timestamp}@clientenovo.com`,
+                  telefone: '(11) 99999-9999',
+                  email_gestor: gestores[0]?.email || '',
+                  vendedor_responsavel: vendedores[0]?.nome || '',
+                  valor_venda_inicial: 500,
+                  senha: 'clientenovo'
+                }))
+                toast({
+                  title: "Dados preenchidos!",
+                  description: "Formulário preenchido com dados de teste"
+                })
+              }}
+              className="text-xs"
+            >
+              🚀 Preencher Teste
+            </Button>
+          </div>
+
           <div className="grid gap-2">
             <Label htmlFor="nome_cliente">Nome do Cliente *</Label>
             <Input

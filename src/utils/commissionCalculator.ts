@@ -1,7 +1,7 @@
 
 // Regras de comissão baseadas no valor da venda
 const COMMISSION_RULES = [
-  { saleValue: 500, commission: 100 },
+  { saleValue: 500, commission: 150 },
   { saleValue: 350, commission: 80 },
   { saleValue: 250, commission: 60 }
 ] as const
