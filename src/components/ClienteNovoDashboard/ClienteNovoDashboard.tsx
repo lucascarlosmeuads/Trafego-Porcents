@@ -5,7 +5,7 @@ import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Users, UserPlus, TrendingUp, Star } from 'lucide-react'
 import { ClienteNovoSidebar } from './ClienteNovoSidebar'
-import { ClienteNovoAddClientForm } from './ClienteNovoAddClientForm'
+import { ClienteNovoAddClientFormFixed } from './ClienteNovoAddClientFormFixed'
 import { ClienteNovoClientsList } from './ClienteNovoClientsList'
 
 export function ClienteNovoDashboard() {
@@ -42,7 +42,7 @@ export function ClienteNovoDashboard() {
   const renderContent = () => {
     switch (activeTab) {
       case 'adicionar-cliente':
-        return <ClienteNovoAddClientForm onClientAdded={handleClientAdded} />
+        return <ClienteNovoAddClientFormFixed onClientAdded={handleClientAdded} />
       case 'clientes':
         return (
           <ClienteNovoClientsList 
