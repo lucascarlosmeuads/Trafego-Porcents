@@ -7,7 +7,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast'
 import { ForgotPasswordForm } from '@/components/ForgotPasswordForm'
 import { Eye, EyeOff, Loader2, Smartphone } from 'lucide-react'
-import { createSystemUser } from '@/utils/createSystemUser'
 
 export function LoginForm() {
   const [email, setEmail] = useState('')
@@ -40,28 +39,6 @@ export function LoginForm() {
       
       if (error) {
         console.error('❌ [LoginForm] Erro de login:', error)
-        
-        // Se for o usuário clientenovo e não conseguir logar, tentar criar
-        if (email === 'clientenovo@trafegoporcents.com' && error.message.includes('Invalid login credentials')) {
-          console.log('🔧 Tentando criar usuário clientenovo...')
-          const createResult = await createSystemUser()
-          
-          if (createResult.success) {
-            console.log('✅ Usuário criado, tentando login novamente...')
-            // Aguardar um pouco e tentar novamente
-            setTimeout(async () => {
-              const { error: retryError } = await signIn(email, password)
-              if (retryError) {
-                toast({
-                  title: "Erro de Login",
-                  description: "Usuário criado, mas erro no login. Tente novamente em alguns segundos.",
-                  variant: "destructive"
-                })
-              }
-            }, 2000)
-            return
-          }
-        }
         
         let errorMessage = "Email ou senha incorretos. Verifique suas credenciais."
         

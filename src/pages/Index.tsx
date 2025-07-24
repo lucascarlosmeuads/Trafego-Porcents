@@ -2,7 +2,6 @@
 import { useAuth, AuthProvider } from '@/hooks/useAuth'
 import { LoginForm } from '@/components/LoginForm'
 import { Dashboard } from '@/components/Dashboard'
-import { CreateClienteNovoButton } from '../CreateClienteNovoButton'
 
 function AppContent() {
   const { user, loading } = useAuth()
@@ -16,12 +15,7 @@ function AppContent() {
   }
 
   if (!user) {
-    return (
-      <div className="space-y-4 p-8">
-        <CreateClienteNovoButton />
-        <LoginForm />
-      </div>
-    )
+    return <LoginForm />
   }
 
   return <Dashboard />

@@ -32,12 +32,6 @@ verify_jwt = false
 [functions.create-client-users]
 verify_jwt = false
 
-[functions.create-system-users]
-verify_jwt = false
-
-[functions.create-clientenovo-user]
-verify_jwt = false
-
 [functions.creative-generator]
 verify_jwt = false
 
