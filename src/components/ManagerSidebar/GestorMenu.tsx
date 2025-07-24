@@ -24,13 +24,6 @@ export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: Gest
       color: 'bg-green-500/10 hover:bg-green-500/20 border-green-500/20'
     },
     {
-      id: 'meta-ads',
-      label: 'Meta Ads',
-      icon: Activity,
-      description: 'Relatórios Meta Ads',
-      color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
-    },
-    {
       id: 'gerador-criativos',
       label: 'Gerador de Criativos',
       icon: Wand2,
