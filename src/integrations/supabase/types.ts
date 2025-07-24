@@ -1435,6 +1435,10 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: boolean
       }
+      log_security_event: {
+        Args: { event_type: string; details?: Json }
+        Returns: undefined
+      }
       save_gestor_meta_ads_config: {
         Args: {
           p_email_usuario: string
