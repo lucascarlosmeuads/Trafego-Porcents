@@ -1,11 +1,11 @@
 // Calculador de comissões fixas para Cliente Novo
 // Valores fixos conforme especificado:
-// R$ 500 venda -> R$ 150 comissão
-// R$ 350 venda -> R$ 80 comissão
+// R$ 500 venda -> R$ 40 comissão
+// R$ 350 venda -> R$ 30 comissão
 
 const COMMISSION_RULES_CLIENTE_NOVO = [
-  { saleValue: 500, commission: 150 },
-  { saleValue: 350, commission: 80 }
+  { saleValue: 500, commission: 40 },
+  { saleValue: 350, commission: 30 }
 ] as const
 
 export const calculateClienteNovoCommission = (saleValue: number): number => {

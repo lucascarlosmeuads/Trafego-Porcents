@@ -106,8 +106,8 @@ export function ClienteNovoCommissionCalculator({
           <AlertDescription>
             <strong>Comissões Fixas Cliente Novo:</strong>
             <ul className="mt-1 space-y-1">
-              <li>• Venda de R$ 500 → Comissão de R$ 150</li>
-              <li>• Venda de R$ 350 → Comissão de R$ 80</li>
+              <li>• Venda de R$ 500 → Comissão de R$ 40</li>
+              <li>• Venda de R$ 350 → Comissão de R$ 30</li>
             </ul>
             Os valores são fixos e não podem ser alterados.
           </AlertDescription>

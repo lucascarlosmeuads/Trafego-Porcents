@@ -37,9 +37,10 @@ export function useSimpleSellerData(sellerEmail: string) {
       const emailPrefix = sellerEmail.split('@')[0]
       let sellerName = emailPrefix.replace('vendedor', '')
       
-      // Casos específicos
+      // Casos específicos para os três vendedores
       if (emailPrefix.includes('itamar')) sellerName = 'Itamar'
       if (emailPrefix.includes('edu')) sellerName = 'Edu'
+      if (emailPrefix.includes('joao')) sellerName = 'João'
       
       console.log('🔍 Buscando clientes para vendedor:', sellerName)
 
@@ -104,7 +105,6 @@ export function useSimpleSellerData(sellerEmail: string) {
     email_gestor: string
     status_campanha: string
     data_venda: string
-    produto_nicho?: string
     senha_cliente?: string
     valor_venda_inicial?: number | null
     valor_comissao?: number | null
@@ -127,6 +127,7 @@ export function useSimpleSellerData(sellerEmail: string) {
       
       if (emailPrefix.includes('itamar')) vendorName = 'Itamar'
       if (emailPrefix.includes('edu')) vendorName = 'Edu'
+      if (emailPrefix.includes('joao')) vendorName = 'João'
 
       // Usar senha customizada ou padrão
       const senhaParaUsar = clienteData.senha_cliente || SENHA_PADRAO_CLIENTE

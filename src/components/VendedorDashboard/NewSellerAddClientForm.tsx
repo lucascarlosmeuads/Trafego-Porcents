@@ -152,7 +152,6 @@ export function NewSellerAddClientForm({ onClientAdded }: NewSellerAddClientForm
         email_gestor: formData.email_gestor,
         status_campanha: 'Cliente Novo',
         data_venda: new Date().toISOString().split('T')[0],
-        produto_nicho: 'Tráfego Pago',
         senha_cliente: formData.senha,
         valor_venda_inicial: formData.valor_venda_inicial,
         valor_comissao: formData.valor_comissao

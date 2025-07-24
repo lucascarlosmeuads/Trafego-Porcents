@@ -126,7 +126,6 @@ export function useClienteNovoSellerData(sellerEmail: string) {
           email_gestor: clienteData.email_gestor,
           vendedor: vendedorNome,
           status_campanha: 'Cliente Novo',
-          produto_nicho: 'Tráfego Pago',
           data_venda: new Date().toISOString().split('T')[0],
           valor_venda_inicial: clienteData.valor_venda_inicial,
           valor_comissao: comissaoCalculada,
