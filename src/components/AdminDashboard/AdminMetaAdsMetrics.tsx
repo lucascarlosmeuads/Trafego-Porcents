@@ -38,6 +38,7 @@ export function AdminMetaAdsMetrics() {
   const [campaignsInfo, setCampaignsInfo] = useState<{count: number, details?: string}>({count: 0})
   const [vendasPeriodo, setVendasPeriodo] = useState<number>(0)
   const [loadingVendas, setLoadingVendas] = useState(false)
+  const [clientesData, setClientesData] = useState<any[]>([])
 
   console.log('📊 [AdminMetaAdsMetrics] Estado atual:', {
     insights,
@@ -135,6 +136,13 @@ export function AdminMetaAdsMetrics() {
       }
       
       setVendasPeriodo(totalVendas)
+      
+      // Combinar dados dos clientes para cálculo de comissões
+      const allClientesData = [
+        ...(vendasCliente || []),
+        ...(vendasTodosClientes || [])
+      ]
+      setClientesData(allClientesData)
 
     } catch (error) {
       console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)
@@ -303,6 +311,7 @@ export function AdminMetaAdsMetrics() {
           vendasDia={vendasPeriodo}
           investimentoTrafego={parseFloat(insights.spend || '0')}
           loadingVendas={loadingVendas}
+          clientesData={clientesData}
         />
       )}
 
