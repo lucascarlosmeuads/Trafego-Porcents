@@ -14,6 +14,72 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_configurations: {
+        Row: {
+          api_key: string
+          created_at: string
+          email_usuario: string
+          id: string
+          is_active: boolean
+          is_default: boolean
+          provider_name: string
+          provider_type: string
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          email_usuario: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          provider_name: string
+          provider_type: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          email_usuario?: string
+          id?: string
+          is_active?: boolean
+          is_default?: boolean
+          provider_name?: string
+          provider_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      api_providers_config: {
+        Row: {
+          created_at: string
+          email_usuario: string
+          id: string
+          image_provider: string
+          openai_api_key: string | null
+          runway_api_key: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          email_usuario: string
+          id?: string
+          image_provider?: string
+          openai_api_key?: string | null
+          runway_api_key?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          email_usuario?: string
+          id?: string
+          image_provider?: string
+          openai_api_key?: string | null
+          runway_api_key?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       arquivos_cliente: {
         Row: {
           author_type: string

@@ -1,5 +1,6 @@
 import { GeneratedImage, OpenAIService } from './openai';
 import { ApiConfigManager, ImageProvider } from './apiConfig';
+import { RunwayService, RunwayImageParams } from './runwayService';
 
 export interface UnifiedImageParams {
   prompt: string;
@@ -78,6 +79,29 @@ class HuggingFaceImageService implements ImageService {
   }
 }
 
+class RunwayImageService implements ImageService {
+  private runwayService: RunwayService;
+
+  constructor(apiKey: string) {
+    this.runwayService = new RunwayService(apiKey);
+  }
+
+  async generateImage(params: UnifiedImageParams): Promise<GeneratedImage> {
+    const runwayParams: RunwayImageParams = {
+      prompt: params.prompt,
+      width: params.width,
+      height: params.height,
+    };
+
+    const result = await this.runwayService.generateImage(runwayParams);
+
+    return {
+      url: result.imageURL,
+      revisedPrompt: result.prompt,
+    };
+  }
+}
+
 export class ImageProviderFactory {
   static createService(provider: ImageProvider, config: ApiConfigManager): ImageService {
     switch (provider) {
@@ -85,6 +109,8 @@ export class ImageProviderFactory {
         return new OpenAIImageService(config.getOpenAIKey());
       case 'huggingface':
         return new HuggingFaceImageService(config.getHuggingFaceKey());
+      case 'runway':
+        return new RunwayImageService(config.getRunwayKey());
       default:
         throw new Error(`Provedor de imagem não suportado: ${provider}`);
     }
