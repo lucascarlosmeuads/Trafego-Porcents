@@ -205,7 +205,72 @@ REGRAS:
     }
   }
 
+  async generateAdPrompt(analysis: BusinessAnalysis): Promise<AdPromptElements> {
+    const prompt = `
+Com base na análise do negócio, crie elementos para um anúncio altamente persuasivo e sensacionalista:
+
+ANÁLISE DO NEGÓCIO:
+- Tipo: ${analysis.businessType}
+- Público: ${analysis.targetAudience}
+- Dores: ${analysis.painPoints.join(', ')}
+- Valor Único: ${analysis.uniqueValue}
+- Oportunidades: ${analysis.persuasionOpportunities.join(', ')}
+
+Crie um anúncio com:
+
+1. FRASE DE TOPO: Uma frase extremamente agressiva, sensacionalista e geradora de cliques (máximo 8 palavras)
+2. DESCRIÇÃO DA IMAGEM: Conceito visual com incongruência criativa e impactante
+3. CALL-TO-ACTION: Frase curta e intrigante na parte inferior (máximo 6 palavras)
+
+Formate a resposta em JSON:
+{
+  "topPhrase": "Frase de topo sensacionalista",
+  "imageDescription": "Descrição detalhada da imagem com incongruência criativa",
+  "bottomCTA": "Call-to-action intrigante",
+  "completePrompt": "Prompt completo unificado para geração da imagem incluindo a frase de topo '...' no centro da imagem e o CTA '...' na parte inferior, com a descrição visual criativa"
+}
+
+IMPORTANTE:
+- Use português brasileiro perfeito
+- Seja sensacionalista mas não ofensivo
+- Crie incongruência visual interessante
+- Foque em gerar curiosidade extrema
+- No completePrompt, integre TUDO em um prompt único para DALL-E
+- Responda APENAS com JSON válido`;
+
+    try {
+      const response = await fetch(`${this.baseUrl}/chat/completions`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: "gpt-4o",
+          messages: [{ role: "user", content: prompt }],
+          max_tokens: 1500,
+          temperature: 0.9,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error?.message || "Erro ao gerar prompt do anúncio");
+      }
+
+      const data = await response.json();
+      const promptText = data.choices[0].message.content;
+      const cleanedPromptText = this.cleanMarkdownJson(promptText);
+      return JSON.parse(cleanedPromptText);
+    } catch (error) {
+      console.error("Erro ao gerar prompt do anúncio:", error);
+      throw new Error("Falha na geração do prompt. Tente novamente.");
+    }
+  }
+
   async generateImage(params: GenerateImageParams): Promise<GeneratedImage> {
+    const enhancedPrompt = this.buildPromptWithText(params);
+
     try {
       const response = await fetch(`${this.baseUrl}/images/generations`, {
         method: "POST",
@@ -215,7 +280,7 @@ REGRAS:
         },
         body: JSON.stringify({
           model: "dall-e-3",
-          prompt: params.prompt,
+          prompt: enhancedPrompt,
           size: params.size || "1024x1024",
           quality: params.quality || "hd",
           style: params.style || "vivid",
@@ -236,6 +301,42 @@ REGRAS:
     } catch (error) {
       console.error("Erro ao gerar imagem:", error);
       throw new Error("Falha ao gerar imagem. Verifique sua chave API e tente novamente.");
+    }
+  }
+
+  private buildPromptWithText(params: GenerateImageParams): string {
+    let prompt = params.prompt;
+
+    if (params.mainText || params.subText) {
+      const textInstruction = this.getTextPositionInstruction(params.textPosition || "center");
+
+      if (params.mainText && params.subText) {
+        prompt += `. Include text elements: "${params.mainText}" as the main heading in large, bold letters ${textInstruction}, and "${params.subText}" as smaller descriptive text below it. Make sure the text is clearly readable and professionally styled.`;
+      } else if (params.mainText) {
+        prompt += `. Include the text "${params.mainText}" prominently displayed ${textInstruction} in large, bold, readable letters that complement the overall design.`;
+      } else if (params.subText) {
+        prompt += `. Include the text "${params.subText}" ${textInstruction} in clear, readable letters.`;
+      }
+
+      prompt += ` The text should be perfectly integrated into the design, not overlaid. Use professional typography that matches the overall aesthetic. Text must be in Portuguese and clearly legible.`;
+    }
+
+    return prompt;
+  }
+
+  private getTextPositionInstruction(position: string): string {
+    switch (position) {
+      case "top":
+        return "at the top of the image";
+      case "bottom":
+        return "at the bottom of the image";
+      case "left":
+        return "on the left side of the image";
+      case "right":
+        return "on the right side of the image";
+      case "center":
+      default:
+        return "in the center of the image";
     }
   }
 }

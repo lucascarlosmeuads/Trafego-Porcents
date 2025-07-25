@@ -89,4 +89,11 @@ export class ImageProviderFactory {
         throw new Error(`Provedor de imagem não suportado: ${provider}`);
     }
   }
+
+  static async generateImage(params: UnifiedImageParams): Promise<GeneratedImage> {
+    const config = ApiConfigManager.getInstance();
+    const provider = config.getImageProvider();
+    const service = this.createService(provider, config);
+    return service.generateImage(params);
+  }
 }
