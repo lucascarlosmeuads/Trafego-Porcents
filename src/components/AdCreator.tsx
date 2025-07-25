@@ -11,8 +11,10 @@ import { OpenAIService, type BusinessAnalysis, type AdPromptElements, type Multi
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { ImageProviderFactory, type UnifiedImageParams } from "@/services/imageProviderFactory";
+import { TextProviderFactory } from "@/services/textProviderFactory";
 import { ApiConfigManager } from "@/services/apiConfig";
 import ApiConfigPanel from "./ApiConfigPanel";
+import MultiProviderConfigPanel from "./MultiProviderConfigPanel";
 import AudioRecorderPanel from "./AudioRecorderPanel";
 
 interface GeneratedImageData {
