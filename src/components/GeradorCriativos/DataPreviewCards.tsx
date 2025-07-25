@@ -115,7 +115,7 @@ export function DataPreviewCards({ data }: DataPreviewCardsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.beneficios.map((beneficio, index) => (
+              {(data.beneficios || []).map((beneficio, index) => (
                 <Badge 
                   key={index} 
                   variant="secondary" 
@@ -140,7 +140,7 @@ export function DataPreviewCards({ data }: DataPreviewCardsProps) {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {data.tipoMidia.map((tipo, index) => (
+              {(data.tipoMidia || []).map((tipo, index) => (
                 <Badge 
                   key={index} 
                   variant="secondary" 
