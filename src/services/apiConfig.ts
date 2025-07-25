@@ -65,10 +65,19 @@ export class ApiConfigManager {
         .single();
       
       if (!error && data) {
-        this.openaiKey = data.openai_api_key || this.openaiKey;
-        this.runwayKey = data.runway_api_key || this.runwayKey;
+        // Preserve original keys if they exist, only update if database has longer keys
+        if (data.openai_api_key && data.openai_api_key.length > this.openaiKey.length) {
+          this.openaiKey = data.openai_api_key;
+        }
+        if (data.runway_api_key && data.runway_api_key.length > this.runwayKey.length) {
+          this.runwayKey = data.runway_api_key;
+        }
         this.imageProvider = (data.image_provider as ImageProvider) || this.imageProvider;
-        console.log('Database config loaded');
+        console.log('Database config loaded:', {
+          openaiKeyLength: data.openai_api_key?.length || 0,
+          runwayKeyLength: data.runway_api_key?.length || 0,
+          imageProvider: data.image_provider
+        });
       }
     } catch (error) {
       console.log('Could not load database config:', error);
@@ -132,7 +141,14 @@ export class ApiConfigManager {
   async saveToDatabase(openaiKey: string, runwayKey: string, imageProvider: ImageProvider): Promise<void> {
     try {
       const { supabase } = await import('@/integrations/supabase/client');
-      const { error } = await supabase.functions.invoke('save-api-config', {
+      
+      console.log('Saving API config to database:', {
+        openaiKeyLength: openaiKey.length,
+        runwayKeyLength: runwayKey.length,
+        imageProvider
+      });
+      
+      const { data, error } = await supabase.functions.invoke('save-api-config', {
         body: {
           openaiApiKey: openaiKey,
           runwayApiKey: runwayKey,
@@ -141,14 +157,20 @@ export class ApiConfigManager {
       });
       
       if (error) {
+        console.error('Edge function error:', error);
         throw error;
       }
       
-      // Update local state
+      console.log('API config saved successfully:', data);
+      
+      // Update local state only after successful save
       this.openaiKey = openaiKey;
       this.runwayKey = runwayKey;
       this.imageProvider = imageProvider;
       this.saveToLocalStorage();
+      
+      // Reload from database to verify
+      await this.loadFromDatabase();
     } catch (error) {
       console.error('Error saving to database:', error);
       throw error;

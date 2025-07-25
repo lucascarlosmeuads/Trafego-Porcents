@@ -18,7 +18,7 @@ import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboar
 import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
 import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
-import { GeradorCriativosDashboard } from './GeradorCriativos/GeradorCriativosDashboard'
+import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDashboardNew'
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
@@ -136,7 +136,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
         return <OpenAICustosDashboard />
       
       case 'gerador-criativos':
-        return <GeradorCriativosDashboard onBackToSystem={() => onTabChange('clientes')} />
+        return <GeradorCriativosDashboardNew />
       
       case 'acervo-ideias':
         return (
