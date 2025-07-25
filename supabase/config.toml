@@ -55,9 +55,3 @@ verify_jwt = true
 
 [functions.get-central-api-config]
 verify_jwt = true
-
-[functions.manage-api-keys]
-verify_jwt = true
-
-[functions.test-api-connection]
-verify_jwt = true
