@@ -288,10 +288,10 @@ export function AdminMetaAdsMetrics() {
       )}
 
       {/* Relatório de Custos e Lucro - Componente principal */}
-      {insights && (
+      {(insights || vendasPeriodo > 0) && (
         <AdminCustoLucroReport 
           vendasDia={vendasPeriodo}
-          investimentoTrafego={parseFloat(insights.spend || '0')}
+          investimentoTrafego={insights ? parseFloat(insights.spend || '0') : 0}
           loadingVendas={loadingVendas}
           clientesData={clientesData}
         />
