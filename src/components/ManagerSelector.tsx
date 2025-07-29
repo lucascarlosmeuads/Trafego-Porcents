@@ -38,7 +38,11 @@ export function ManagerSelector({
     'falcao@trafegoporcents.com',
     'emily@trafegoporcents.com',
     'guilherme@trafegoporcents.com',
-    'matheuspaviani@trafegoporcents.com'
+    'matheuspaviani@trafegoporcents.com',
+    // TEMPORARIAMENTE OCULTOS - Daniel e Kimberly não são mais gestores ativos
+    'danielmoreira@trafegoporcents.com',
+    'danielribeiro@trafegoporcents.com', 
+    'kimberlly@trafegoporcents.com'
   ]
 
   const ensureCarolInList = (managersList: Manager[]) => {

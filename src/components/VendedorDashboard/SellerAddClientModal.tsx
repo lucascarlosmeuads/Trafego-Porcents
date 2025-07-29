@@ -41,9 +41,10 @@ export function SellerAddClientModal({ onClienteAdicionado }: SellerAddClientMod
     { name: 'Andreza', email: 'andreza@trafegoporcents.com' },
     { name: 'Carol', email: 'carol@trafegoporcents.com' },
     { name: 'Junior', email: 'junior@trafegoporcents.com' },
-    { name: 'Daniel Moreira', email: 'danielmoreira@trafegoporcents.com' },
-    { name: 'Daniel Ribeiro', email: 'danielribeiro@trafegoporcents.com' },
-    { name: 'Kimberlly', email: 'kimberlly@trafegoporcents.com' },
+    // TEMPORARIAMENTE OCULTOS - Daniel e Kimberly não são mais gestores ativos
+    // { name: 'Daniel Moreira', email: 'danielmoreira@trafegoporcents.com' },
+    // { name: 'Daniel Ribeiro', email: 'danielribeiro@trafegoporcents.com' },
+    // { name: 'Kimberlly', email: 'kimberlly@trafegoporcents.com' },
     { name: 'Jose', email: 'jose@trafegoporcents.com' },
     { name: 'Emily', email: 'emily@trafegoporcents.com' },
     { name: 'Falcao', email: 'falcao@trafegoporcents.com' },

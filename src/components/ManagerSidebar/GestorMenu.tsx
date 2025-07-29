@@ -23,13 +23,14 @@ export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: Gest
       description: 'Gerenciar clientes',
       color: 'bg-green-500/10 hover:bg-green-500/20 border-green-500/20'
     },
-    {
-      id: 'gerador-criativos',
-      label: 'Gerador de Criativos',
-      icon: Wand2,
-      description: 'Criar anúncios com IA',
-      color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
-    },
+    // TEMPORARIAMENTE OCULTO - Menu do gerador de criativos
+    // {
+    //   id: 'gerador-criativos',
+    //   label: 'Gerador de Criativos',
+    //   icon: Wand2,
+    //   description: 'Criar anúncios com IA',
+    //   color: 'bg-purple-500/10 hover:bg-purple-500/20 border-purple-500/20'
+    // },
     {
       id: 'solicitacoes-site',
       label: 'Sites',

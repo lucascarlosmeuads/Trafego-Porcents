@@ -64,9 +64,10 @@ export function AuditoriaClientes() {
       'andreza@trafegoporcents.com': 'Andreza',
       'carol@trafegoporcents.com': 'Carol', 
       'junior@trafegoporcents.com': 'Junior',
-      'danielmoreira@trafegoporcents.com': 'Daniel Moreira',
-      'danielribeiro@trafegoporcents.com': 'Daniel Ribeiro',
-      'kimberlly@trafegoporcents.com': 'Kimberlly',
+      // TEMPORARIAMENTE OCULTOS - Daniel e Kimberly não são mais gestores ativos
+      // 'danielmoreira@trafegoporcents.com': 'Daniel Moreira',
+      // 'danielribeiro@trafegoporcents.com': 'Daniel Ribeiro',
+      // 'kimberlly@trafegoporcents.com': 'Kimberlly',
       'jose@trafegoporcents.com': 'Jose',
       'emily@trafegoporcents.com': 'Emily',
       'falcao@trafegoporcents.com': 'Falcao',
