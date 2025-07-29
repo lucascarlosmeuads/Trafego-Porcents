@@ -162,12 +162,12 @@ export function AdminCustoLucroReport({
           <h4 className="text-lg font-semibold text-foreground">Relatório de Vendas</h4>
         </div>
         
-        {/* Total de Novos Cadastros */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20">
+        {/* Total de Clientes */}
+        <div className="flex justify-center">
+          <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20 w-full max-w-md">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
-                Total de Novos Cadastros
+                Total de Clientes Cadastrados
               </CardTitle>
               <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
             </CardHeader>
@@ -176,24 +176,7 @@ export function AdminCustoLucroReport({
                 {loadingVendas ? '...' : totalClientesCadastrados}
               </div>
               <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
-                Clientes cadastrados no período
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card className="border-l-4 border-l-blue-500 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950/20 dark:to-blue-900/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                Valor Total Arrecadado
-              </CardTitle>
-              <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-4xl font-bold text-blue-700 dark:text-blue-300">
-                {loadingVendas ? '...' : formatCurrency(vendasDia)}
-              </div>
-              <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                Receita bruta do período
+                Clientes no período
               </p>
             </CardContent>
           </Card>

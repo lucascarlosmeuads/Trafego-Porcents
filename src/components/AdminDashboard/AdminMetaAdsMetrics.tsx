@@ -72,11 +72,16 @@ export function AdminMetaAdsMetrics() {
       console.log('📅 Período solicitado:', { startDate, endDate })
       
       // Buscar TODAS as vendas do painel de cadastro (independente do status)
+      // Ajustar endDate para incluir todo o dia (próximo dia às 00:00:00)
+      const nextDay = new Date(endDate + 'T23:59:59.999Z')
+      nextDay.setDate(nextDay.getDate() + 1)
+      const nextDayStr = nextDay.toISOString().split('T')[0]
+      
       const { data: vendasPainel, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
         .select('*')
         .gte('created_at', startDate)
-        .lte('created_at', endDate)
+        .lt('created_at', nextDayStr)
         .not('valor_venda_inicial', 'is', null)
 
       if (errorTodosClientes) {
