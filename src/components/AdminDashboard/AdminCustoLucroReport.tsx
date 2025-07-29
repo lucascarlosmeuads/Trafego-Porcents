@@ -12,8 +12,13 @@ import {
   DollarSign,
   Target,
   PiggyBank,
-  CreditCard
+  CreditCard,
+  BarChart3,
+  Search,
+  AlertCircle,
+  CheckCircle2
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
 
 interface AdminCustoLucroReportProps {
   vendasDia: number
@@ -90,6 +95,42 @@ export function AdminCustoLucroReport({
     lucroLiquido
   })
 
+  // Calcular breakdown detalhado por status
+  const getVendasBreakdown = () => {
+    const breakdown = clientesData.reduce((acc, cliente) => {
+      const status = cliente.status_campanha || 'sem_status'
+      if (!acc[status]) {
+        acc[status] = { count: 0, valor: 0 }
+      }
+      acc[status].count++
+      acc[status].valor += cliente.valor_venda_inicial || 0
+      return acc
+    }, {} as Record<string, { count: number; valor: number }>)
+    
+    return breakdown
+  }
+
+  const vendasBreakdown = getVendasBreakdown()
+  const totalClientesCadastrados = clientesData.length
+
+  // Função para mostrar dados detalhados no console
+  const verificarDados = () => {
+    console.log('🔍 [VERIFICAÇÃO DETALHADA] === DADOS ENCONTRADOS ===')
+    console.log('📊 Total de clientes no array:', clientesData.length)
+    console.log('💰 Valor total das vendas:', vendasDia)
+    console.log('📋 Breakdown por status:', vendasBreakdown)
+    
+    console.log('📝 CLIENTES INDIVIDUAIS:')
+    clientesData.forEach((cliente, index) => {
+      console.log(`${index + 1}. ${cliente.nome_cliente}:`, {
+        status: cliente.status_campanha,
+        valor: cliente.valor_venda_inicial,
+        data_venda: cliente.data_venda,
+        created_at: cliente.created_at
+      })
+    })
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -101,6 +142,98 @@ export function AdminCustoLucroReport({
         <p className="text-muted-foreground">
           Análise financeira detalhada das operações do dia
         </p>
+        <div className="mt-4">
+          <Button 
+            onClick={verificarDados}
+            variant="outline"
+            size="sm"
+            className="gap-2"
+          >
+            <Search className="h-4 w-4" />
+            Verificar Dados no Console
+          </Button>
+        </div>
+      </div>
+
+      {/* SEÇÃO 0: RELATÓRIO DE VENDAS POR CATEGORIA */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 mb-4">
+          <BarChart3 className="h-5 w-5 text-emerald-500" />
+          <h4 className="text-lg font-semibold text-foreground">Relatório de Vendas por Categoria</h4>
+        </div>
+        
+        {/* Total de Cadastros */}
+        <Card className="border-l-4 border-l-emerald-500 bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/20 dark:to-emerald-900/20">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+              Total de Novos Cadastros
+            </CardTitle>
+            <Users className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">
+              {loadingVendas ? '...' : totalClientesCadastrados}
+            </div>
+            <p className="text-xs text-emerald-600 dark:text-emerald-400 mt-1">
+              Clientes cadastrados no painel
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Breakdown por Status */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {Object.entries(vendasBreakdown).map(([status, data]: [string, { count: number; valor: number }]) => {
+            const getStatusColor = (status: string) => {
+              switch (status) {
+                case 'Cliente Novo': return 'blue'
+                case 'Formulário': return 'purple'
+                case 'Criativo': return 'orange'
+                default: return 'gray'
+              }
+            }
+            
+            const color = getStatusColor(status)
+            
+            return (
+              <Card key={status} className={`border-l-4 border-l-${color}-500 bg-gradient-to-br from-${color}-50 to-${color}-100 dark:from-${color}-950/20 dark:to-${color}-900/20`}>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className={`text-sm font-medium text-${color}-800 dark:text-${color}-200`}>
+                    {status}
+                  </CardTitle>
+                  {status === 'Cliente Novo' ? (
+                    <CheckCircle2 className={`h-4 w-4 text-${color}-600 dark:text-${color}-400`} />
+                  ) : (
+                    <AlertCircle className={`h-4 w-4 text-${color}-600 dark:text-${color}-400`} />
+                  )}
+                </CardHeader>
+                <CardContent>
+                  <div className={`text-2xl font-bold text-${color}-700 dark:text-${color}-300`}>
+                    {data.count}
+                  </div>
+                  <p className={`text-xs text-${color}-600 dark:text-${color}-400 mt-1`}>
+                    Valor: {formatCurrency(data.valor)}
+                  </p>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
+
+        {/* Alerta se contagem não bate */}
+        {!loadingVendas && totalClientesCadastrados !== (Object.values(vendasBreakdown) as { count: number; valor: number }[]).reduce((sum, data) => sum + data.count, 0) && (
+          <div className="bg-yellow-50 dark:bg-yellow-950/20 border border-yellow-200 dark:border-yellow-800 rounded-lg p-4">
+            <div className="flex items-center gap-2">
+              <AlertCircle className="h-5 w-5 text-yellow-600" />
+              <h5 className="font-semibold text-yellow-800 dark:text-yellow-200">
+                Discrepância Detectada
+              </h5>
+            </div>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              A contagem total não corresponde ao somatório das categorias. 
+              Clique em "Verificar Dados" para mais detalhes.
+            </p>
+          </div>
+        )}
       </div>
 
       {/* SEÇÃO 1: RESUMO PRINCIPAL */}
