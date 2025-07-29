@@ -62,7 +62,7 @@ export function AdminMetaAdsMetrics() {
     }
   }, [isConfigured])
 
-  // Buscar vendas do período com timezone brasileiro E auditoria detalhada
+  // Buscar APENAS vendas de todos_clientes com status "Cliente Novo"
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
     logVendasQuery(startDate, endDate, 'AdminMetaAdsMetrics')
     setLoadingVendas(true)
@@ -71,78 +71,40 @@ export function AdminMetaAdsMetrics() {
       console.log('🔍 [AdminMetaAdsMetrics] === INICIANDO BUSCA DETALHADA ===')
       console.log('📅 Período solicitado:', { startDate, endDate })
       
-      // Buscar vendas de vendas_cliente no período
-      const { data: vendasCliente, error: errorVendasCliente } = await supabase
-        .from('vendas_cliente')
-        .select('*')
-        .gte('data_venda', startDate)
-        .lte('data_venda', endDate)
-
-      if (errorVendasCliente) {
-        console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas_cliente:', errorVendasCliente)
-      }
-
-      // Buscar vendas de todos_clientes no período (data_venda >= 01/07/2025)
-      const { data: vendasTodosClientes, error: errorTodosClientes } = await supabase
+      // Buscar APENAS vendas de todos_clientes com status_campanha = "Cliente Novo"
+      const { data: vendasClienteNovo, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
         .select('*')
         .gte('data_venda', startDate)
         .lte('data_venda', endDate)
-        .gte('data_venda', '2025-07-01')
+        .eq('status_campanha', 'Cliente Novo')
+        .not('valor_venda_inicial', 'is', null)
 
       if (errorTodosClientes) {
         console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
       }
 
-      // Auditoria detalhada com logs
-      const auditoria = logVendasAuditoria(
-        startDate, 
-        endDate, 
-        vendasCliente || [], 
-        vendasTodosClientes || [], 
-        'AdminMetaAdsMetrics'
-      )
+      console.log('🔍 [AdminMetaAdsMetrics] Vendas "Cliente Novo" encontradas:', vendasClienteNovo?.length || 0)
 
-      // Somar todas as vendas
+      // Somar vendas de "Cliente Novo"
       let totalVendas = 0
 
-      if (vendasCliente) {
-        const somaVendasCliente = vendasCliente.reduce((sum, venda) => sum + (venda.valor_venda || 0), 0)
-        totalVendas += somaVendasCliente
-        console.log('💰 [AdminMetaAdsMetrics] Vendas de vendas_cliente:', somaVendasCliente)
-      }
-
-      if (vendasTodosClientes) {
-        const somaVendasTodos = vendasTodosClientes.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
-        totalVendas += somaVendasTodos
-        console.log('💰 [AdminMetaAdsMetrics] Vendas de todos_clientes:', somaVendasTodos)
+      if (vendasClienteNovo) {
+        const somaVendasClienteNovo = vendasClienteNovo.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
+        totalVendas = somaVendasClienteNovo
+        console.log('💰 [AdminMetaAdsMetrics] Vendas "Cliente Novo":', somaVendasClienteNovo)
       }
 
       console.log('💰 [AdminMetaAdsMetrics] === RESUMO FINAL ===')
-      console.log('📊 Contagem de vendas:', {
-        vendasClienteCount: vendasCliente?.length || 0,
-        todosClientesCount: vendasTodosClientes?.length || 0,
-        totalCount: auditoria.totalCount,
+      console.log('📊 Contagem de vendas "Cliente Novo":', {
+        clienteNovoCount: vendasClienteNovo?.length || 0,
         totalValue: totalVendas
       })
       
-      // Verificar se há discrepância
-      const expectedCount = (vendasCliente?.length || 0) + (vendasTodosClientes?.length || 0)
-      if (auditoria.totalCount !== expectedCount) {
-        console.warn('⚠️ [AdminMetaAdsMetrics] DISCREPÂNCIA DE CONTAGEM!', {
-          esperado: expectedCount,
-          encontrado: auditoria.totalCount
-        })
-      }
-      
       setVendasPeriodo(totalVendas)
       
-      // Combinar dados dos clientes para cálculo de comissões
-      const allClientesData = [
-        ...(vendasCliente || []),
-        ...(vendasTodosClientes || [])
-      ]
-      setClientesData(allClientesData)
+      // Usar apenas dados de "Cliente Novo" para cálculo de comissões
+      setClientesData(vendasClienteNovo || [])
 
     } catch (error) {
       console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)

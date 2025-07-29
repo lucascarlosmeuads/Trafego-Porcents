@@ -3,7 +3,7 @@
 // Admin/Gestor: R$ 500 → R$ 150 | R$ 350 → R$ 80
 
 const COMMISSION_RULES_CLIENTE_NOVO = [
-  { saleValue: 500, sellerCommission: 40, managerCommission: 150 },
+  { saleValue: 500, sellerCommission: 40, managerCommission: 100 },
   { saleValue: 350, sellerCommission: 30, managerCommission: 80 }
 ] as const
 
