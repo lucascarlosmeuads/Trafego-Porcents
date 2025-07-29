@@ -62,7 +62,7 @@ export function AdminMetaAdsMetrics() {
     }
   }, [isConfigured])
 
-  // Buscar APENAS vendas de todos_clientes com status "Cliente Novo"
+  // Buscar TODAS as vendas do painel de cadastro (valor_venda_inicial preenchido)
   const fetchVendasPeriodo = async (startDate: string, endDate: string) => {
     logVendasQuery(startDate, endDate, 'AdminMetaAdsMetrics')
     setLoadingVendas(true)
@@ -71,40 +71,55 @@ export function AdminMetaAdsMetrics() {
       console.log('🔍 [AdminMetaAdsMetrics] === INICIANDO BUSCA DETALHADA ===')
       console.log('📅 Período solicitado:', { startDate, endDate })
       
-      // Buscar APENAS vendas de todos_clientes com status_campanha = "Cliente Novo"
-      const { data: vendasClienteNovo, error: errorTodosClientes } = await supabase
+      // Buscar TODAS as vendas do painel de cadastro (independente do status)
+      const { data: vendasPainel, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
         .select('*')
         .gte('data_venda', startDate)
         .lte('data_venda', endDate)
-        .eq('status_campanha', 'Cliente Novo')
         .not('valor_venda_inicial', 'is', null)
 
       if (errorTodosClientes) {
         console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar todos_clientes:', errorTodosClientes)
       }
 
-      console.log('🔍 [AdminMetaAdsMetrics] Vendas "Cliente Novo" encontradas:', vendasClienteNovo?.length || 0)
+      console.log('🔍 [AdminMetaAdsMetrics] === AUDITORIA DETALHADA ===')
+      console.log('📊 Total de vendas encontradas:', vendasPainel?.length || 0)
+      
+      // Log detalhado por status para auditoria
+      if (vendasPainel) {
+        const statusBreakdown = vendasPainel.reduce((acc, cliente) => {
+          const status = cliente.status_campanha || 'sem_status'
+          acc[status] = (acc[status] || 0) + 1
+          return acc
+        }, {} as Record<string, number>)
+        console.log('📋 Vendas por status:', statusBreakdown)
+        
+        // Log de datas para verificar discrepâncias
+        vendasPainel.forEach(cliente => {
+          console.log(`📅 Cliente ${cliente.nome_cliente}: created_at=${cliente.created_at}, data_venda=${cliente.data_venda}, status=${cliente.status_campanha}`)
+        })
+      }
 
-      // Somar vendas de "Cliente Novo"
+      // Somar TODAS as vendas do painel
       let totalVendas = 0
 
-      if (vendasClienteNovo) {
-        const somaVendasClienteNovo = vendasClienteNovo.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
-        totalVendas = somaVendasClienteNovo
-        console.log('💰 [AdminMetaAdsMetrics] Vendas "Cliente Novo":', somaVendasClienteNovo)
+      if (vendasPainel) {
+        const somaVendasPainel = vendasPainel.reduce((sum, cliente) => sum + (cliente.valor_venda_inicial || 0), 0)
+        totalVendas = somaVendasPainel
+        console.log('💰 [AdminMetaAdsMetrics] Total de vendas do painel:', somaVendasPainel)
       }
 
       console.log('💰 [AdminMetaAdsMetrics] === RESUMO FINAL ===')
-      console.log('📊 Contagem de vendas "Cliente Novo":', {
-        clienteNovoCount: vendasClienteNovo?.length || 0,
+      console.log('📊 Contagem total de vendas do painel:', {
+        totalCount: vendasPainel?.length || 0,
         totalValue: totalVendas
       })
       
       setVendasPeriodo(totalVendas)
       
-      // Usar apenas dados de "Cliente Novo" para cálculo de comissões
-      setClientesData(vendasClienteNovo || [])
+      // Usar todos os dados para cálculo de comissões (dupla só para "Cliente Novo")
+      setClientesData(vendasPainel || [])
 
     } catch (error) {
       console.error('❌ [AdminMetaAdsMetrics] Erro ao buscar vendas:', error)
