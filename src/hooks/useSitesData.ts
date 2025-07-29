@@ -31,7 +31,7 @@ export function useSitesData() {
       .from('todos_clientes')
       .select('*')
       .in('site_status', ['aguardando_link', 'finalizado'])
-      .order('data_venda', { ascending: false })
+      .order('created_at', { ascending: false })
 
     if (error) {
       console.error('❌ [useSitesData] Erro ao buscar clientes:', error)

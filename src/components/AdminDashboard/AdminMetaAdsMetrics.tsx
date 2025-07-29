@@ -75,8 +75,8 @@ export function AdminMetaAdsMetrics() {
       const { data: vendasPainel, error: errorTodosClientes } = await supabase
         .from('todos_clientes')
         .select('*')
-        .gte('data_venda', startDate)
-        .lte('data_venda', endDate)
+        .gte('created_at', startDate)
+        .lte('created_at', endDate)
         .not('valor_venda_inicial', 'is', null)
 
       if (errorTodosClientes) {
