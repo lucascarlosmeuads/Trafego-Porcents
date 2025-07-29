@@ -5,12 +5,37 @@ export const BRAZIL_TIMEZONE = 'America/Sao_Paulo'
 // Obter data atual no timezone brasileiro
 export const getBrazilDate = (): Date => {
   const now = new Date()
-  const brazilTime = new Date(now.toLocaleString("en-US", { timeZone: BRAZIL_TIMEZONE }))
-  console.log('🇧🇷 [TimezoneUtils] Data atual Brasil:', {
+  
+  // Usar Intl.DateTimeFormat para obter componentes da data no timezone brasileiro
+  const formatter = new Intl.DateTimeFormat('en-CA', { 
+    timeZone: BRAZIL_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false
+  })
+  
+  const parts = formatter.formatToParts(now)
+  const year = parseInt(parts.find(p => p.type === 'year')?.value || '0')
+  const month = parseInt(parts.find(p => p.type === 'month')?.value || '0') - 1 // Date constructor uses 0-based months
+  const day = parseInt(parts.find(p => p.type === 'day')?.value || '0')
+  const hour = parseInt(parts.find(p => p.type === 'hour')?.value || '0')
+  const minute = parseInt(parts.find(p => p.type === 'minute')?.value || '0')
+  const second = parseInt(parts.find(p => p.type === 'second')?.value || '0')
+  
+  const brazilTime = new Date(year, month, day, hour, minute, second)
+  
+  console.log('🇧🇷 [TimezoneUtils] Data atual Brasil (corrigida):', {
     utc: now.toISOString(),
     brazil: brazilTime.toISOString(),
-    localString: brazilTime.toLocaleDateString('pt-BR')
+    localString: brazilTime.toLocaleDateString('pt-BR'),
+    timezone: BRAZIL_TIMEZONE,
+    components: { year, month: month + 1, day, hour, minute, second }
   })
+  
   return brazilTime
 }
 
