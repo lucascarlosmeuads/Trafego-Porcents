@@ -28,7 +28,7 @@ export function SuporteRapido({ onBack, onTabChange }: SuporteRapidoProps) {
 • Outros aspectos técnicos
 
 Aguardo orientação para prosseguir.`)
-    const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
+    const whatsappUrl = `https://wa.me/5511996705530?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 
@@ -152,7 +152,7 @@ Aguardo orientação para prosseguir.`)
                     Falar no WhatsApp
                   </div>
                   <div className="text-xs md:text-sm opacity-90 leading-tight break-words hyphens-auto">
-                    Suporte técnico direto - (48) 9 9113-1987
+                    Suporte técnico direto - (11) 9 9670-5530
                   </div>
                 </div>
               </div>

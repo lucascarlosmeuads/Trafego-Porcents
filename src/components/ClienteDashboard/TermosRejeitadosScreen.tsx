@@ -16,7 +16,7 @@ export function TermosRejeitadosScreen() {
 
   const handleWhatsAppContact = () => {
     const message = encodeURIComponent(`Olá! Rejeitei os termos e condições na plataforma Tráfego Porcents e gostaria de conversar sobre o encerramento da parceria. Preciso de orientação sobre os próximos passos.`)
-    const whatsappUrl = `https://wa.me/5548911319877?text=${message}`
+    const whatsappUrl = `https://wa.me/5511996705530?text=${message}`
     window.open(whatsappUrl, '_blank')
   }
 

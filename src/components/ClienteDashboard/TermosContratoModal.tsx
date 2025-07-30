@@ -358,7 +358,7 @@ export function TermosContratoModal({
                   <p><strong>Empresa:</strong> Tráfego Porcents Marketing Digital LTDA</p>
                   <p><strong>CNPJ:</strong> 60.697.779/0001-78</p>
                   <p><strong>E-mail:</strong> contrato@trafegoporcents.com</p>
-                  <p><strong>WhatsApp:</strong> (11) 94306-4852</p>
+                  <p><strong>WhatsApp:</strong> (11) 9 9670-5530</p>
                   <p><strong>Site:</strong> www.trafegoporcents.com</p>
                 </div>
               </div>
