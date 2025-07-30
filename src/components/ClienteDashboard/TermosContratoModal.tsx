@@ -255,45 +255,11 @@ export function TermosContratoModal({
 
               <Separator className="bg-gray-700" />
 
-              {/* Seção 3 - Duração do Contrato e Resultado Mínimo */}
-              <div>
-                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <Clock className="h-5 w-5 text-blue-400" />
-                  3. DURAÇÃO DO CONTRATO E RESULTADO MÍNIMO
-                </h3>
-                <div className="space-y-3">
-                  <p className="leading-relaxed">
-                    Este contrato tem validade de <strong className="text-blue-400">30 dias</strong> para que possamos 
-                    avaliar a performance e viabilidade da parceria.
-                  </p>
-                  <ul className="space-y-2 ml-4">
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Para manutenção da parceria, o mínimo esperado é <strong className="text-blue-400">R$150 em comissões no período</strong></span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Caso este valor não seja atingido, a parceria poderá ser encerrada automaticamente</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Isso garante que há retorno suficiente para justificar a operação</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Nosso objetivo é sempre o sucesso mútuo e sustentável</span>
-                    </li>
-                  </ul>
-                </div>
-              </div>
-
-              <Separator className="bg-gray-700" />
-
-              {/* Seção 4 - Comissão por Performance */}
+              {/* Seção 3 - Comissão por Performance */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-purple-400" />
-                  4. COMISSÃO POR PERFORMANCE
+                  3. COMISSÃO POR PERFORMANCE
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
@@ -322,7 +288,7 @@ export function TermosContratoModal({
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Shield className="h-5 w-5 text-red-400" />
-                  5. POLÍTICA DE REEMBOLSO
+                  4. POLÍTICA DE REEMBOLSO
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
@@ -346,7 +312,7 @@ export function TermosContratoModal({
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Users className="h-5 w-5 text-teal-400" />
-                  6. RESPONSABILIDADES
+                  5. RESPONSABILIDADES
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
@@ -375,7 +341,7 @@ export function TermosContratoModal({
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <X className="h-5 w-5 text-red-400" />
-                  7. CANCELAMENTO
+                  6. CANCELAMENTO
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
@@ -396,7 +362,53 @@ export function TermosContratoModal({
 
               <Separator className="bg-gray-700" />
 
-              {/* Seção 8 - Proteção de Dados (LGPD) */}
+              {/* Seção 8 - Duração do Contrato e Resultado Mínimo */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Clock className="h-5 w-5 text-blue-400" />
+                  7. DURAÇÃO DO CONTRATO E RESULTADO MÍNIMO
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    Este contrato tem validade de <strong className="text-blue-400">30 dias</strong> para avaliarmos 
+                    a performance e viabilidade da parceria.
+                  </p>
+                  <div className="bg-blue-900/20 border border-blue-500/30 rounded-lg p-3">
+                    <div className="flex items-start gap-2">
+                      <AlertTriangle className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-blue-300 text-sm font-medium mb-2">⏰ Importante sobre o período de 30 dias:</p>
+                        <p className="text-sm">
+                          A contagem dos 30 dias <strong className="text-blue-400">só inicia após a campanha estar no ar</strong> 
+                          e funcionando adequadamente. Não é contado a partir do pagamento da taxa de ativação.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Para manutenção da parceria, o mínimo esperado é <strong className="text-blue-400">R$150 em comissões no período de 30 dias</strong></span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Caso este valor não seja atingido, a parceria poderá ser encerrada automaticamente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Isso garante que há retorno suficiente para justificar a operação</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Nosso objetivo é sempre o sucesso mútuo e sustentável</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 9 - Proteção de Dados (LGPD) */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Eye className="h-5 w-5 text-green-400" />
