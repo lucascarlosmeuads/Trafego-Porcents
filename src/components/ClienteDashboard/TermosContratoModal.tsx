@@ -241,29 +241,33 @@ export function TermosContratoModal({
 
               <Separator className="bg-gray-700" />
 
-              {/* Seção 3 - Uso da Plataforma */}
+              {/* Seção 3 - Viabilidade da Parceria */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <Shield className="h-5 w-5 text-blue-400" />
-                  3. USO DA PLATAFORMA – <span className="text-blue-400">R$149,90/mês</span>
+                  3. VIABILIDADE DA PARCERIA
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
-                    Esse valor é referente ao uso da plataforma Tráfego Porcents, que intermedia sua 
-                    operação com os gestores e rastreia os resultados.
+                    Para que a parceria seja sustentável e continue gerando resultados positivos para ambas as partes, 
+                    estabelecemos um critério de viabilidade baseado em performance.
                   </p>
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>A cobrança só começa após sua campanha estar ativa</span>
+                      <span>Precisamos gerar pelo menos <strong className="text-blue-400">R$150 em comissão em 30 dias</strong></span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Pode ser cancelado a qualquer momento, sem fidelidade</span>
+                      <span>Isso garante que os investimentos em tráfego estão trazendo retorno adequado</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Não é uma mensalidade de gestão de tráfego</span>
+                      <span>Caso não seja atingido, podemos reavaliar a estratégia ou encerrar a parceria amigavelmente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
+                      <span>Nosso objetivo é sempre o sucesso mútuo e sustentável</span>
                     </li>
                   </ul>
                 </div>
