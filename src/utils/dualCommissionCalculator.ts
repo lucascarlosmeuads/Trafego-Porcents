@@ -1,6 +1,6 @@
 // Sistema de Comissões Duplas para Cliente Novo
 // Vendedor: R$ 500 → R$ 40 | R$ 350 → R$ 30
-// Admin/Gestor: R$ 500 → R$ 150 | R$ 350 → R$ 80
+// Admin/Gestor: R$ 500 → R$ 100 | R$ 350 → R$ 80
 
 const COMMISSION_RULES_CLIENTE_NOVO = [
   { saleValue: 500, sellerCommission: 40, managerCommission: 100 },
@@ -43,6 +43,11 @@ export const getCommissionForDisplay = (
   // Se é Cliente Novo e tem valor_venda_inicial válido, usar sistema duplo
   if (isClienteNovoSale(cliente.status_campanha) && hasValidSaleValue(cliente.valor_venda_inicial)) {
     return calculateDualCommission(cliente.valor_venda_inicial, commissionType)
+  }
+  
+  // Se é Cliente Novo sem valor_venda_inicial, assumir R$ 500 (padrão mais comum)
+  if (isClienteNovoSale(cliente.status_campanha)) {
+    return calculateDualCommission(500, commissionType) // 100 para gestor/admin
   }
   
   // Senão, usar valor padrão do banco
