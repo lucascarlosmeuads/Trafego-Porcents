@@ -4,7 +4,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Separator } from '@/components/ui/separator'
-import { CheckCircle2, FileText, AlertTriangle, X, DollarSign, Zap, Shield, Users } from 'lucide-react'
+import { CheckCircle2, FileText, AlertTriangle, X, DollarSign, Zap, Shield, Users, Clock, Eye, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
 import { useIsMobile } from '@/hooks/useIsMobile'
@@ -194,20 +194,28 @@ export function TermosContratoModal({
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
                   <DollarSign className="h-5 w-5 text-green-400" />
-                  2. TAXA DE ATIVAÇÃO – <span className="text-green-400">R$500</span>
+                  2. TAXA DE ATIVAÇÃO E ESTRUTURA INICIAL
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
-                    A ativação da parceria custa <strong className="text-green-400">R$500</strong> (pagamento único) e cobre:
+                    Taxa única de <strong className="text-green-400">R$500</strong> que inclui toda a estrutura inicial:
                   </p>
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Criativos iniciais em imagem e vídeo</span>
+                      <span>Análise do produto ou serviço</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Página de vendas (caso necessário)</span>
+                      <span>Planejamento estratégico de tráfego</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                      <span>Construção da página de vendas (site)</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                      <span>Criação de criativos de imagem (ilimitados durante o mês)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
@@ -215,23 +223,29 @@ export function TermosContratoModal({
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Estratégia personalizada</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
-                      <span>Preparação e ativação da campanha em até 15 dias úteis</span>
+                      <span>Prazo de entrega: até 15 dias úteis</span>
                     </li>
                   </ul>
+                  
+                  <div className="bg-teal-900/20 border border-teal-500/30 rounded-lg p-3 mt-4">
+                    <div className="flex items-start gap-2">
+                      <DollarSign className="h-4 w-4 text-teal-400 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="text-teal-300 text-sm font-medium mb-2">Desconto Promocional Disponível:</p>
+                        <p className="text-sm">Se optar por utilizar apenas criativos de imagem, a taxa pode ser reduzida para <strong className="text-teal-400">R$350</strong>.</p>
+                      </div>
+                    </div>
+                  </div>
                   
                   <div className="bg-orange-900/20 border border-orange-500/30 rounded-lg p-3 mt-4">
                     <div className="flex items-start gap-2">
                       <AlertTriangle className="h-4 w-4 text-orange-400 mt-0.5 flex-shrink-0" />
                       <div>
-                        <p className="text-orange-300 text-sm font-medium mb-2">Após a ativação, serviços adicionais são cobrados à parte:</p>
+                        <p className="text-orange-300 text-sm font-medium mb-2">Serviços Adicionais:</p>
                         <ul className="text-sm space-y-1">
-                          <li>• <strong className="text-orange-400">R$30</strong> por imagem extra</li>
-                          <li>• <strong className="text-orange-400">R$80</strong> por vídeo extra</li>
-                          <li>• <strong className="text-orange-400">R$20</strong> por alteração no site</li>
+                          <li>• <strong className="text-orange-400">Criativos de imagem:</strong> Ilimitados (sem custo adicional)</li>
+                          <li>• <strong className="text-orange-400">Criativos de vídeo:</strong> R$50 a cada pacote de 3 vídeos</li>
+                          <li>• <strong className="text-orange-400">Alterações na página:</strong> R$20 por solicitação</li>
                         </ul>
                       </div>
                     </div>
@@ -241,29 +255,29 @@ export function TermosContratoModal({
 
               <Separator className="bg-gray-700" />
 
-              {/* Seção 3 - Viabilidade da Parceria */}
+              {/* Seção 3 - Duração do Contrato e Resultado Mínimo */}
               <div>
                 <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-blue-400" />
-                  3. VIABILIDADE DA PARCERIA
+                  <Clock className="h-5 w-5 text-blue-400" />
+                  3. DURAÇÃO DO CONTRATO E RESULTADO MÍNIMO
                 </h3>
                 <div className="space-y-3">
                   <p className="leading-relaxed">
-                    Para que a parceria seja sustentável e continue gerando resultados positivos para ambas as partes, 
-                    estabelecemos um critério de viabilidade baseado em performance.
+                    Este contrato tem validade de <strong className="text-blue-400">30 dias</strong> para que possamos 
+                    avaliar a performance e viabilidade da parceria.
                   </p>
                   <ul className="space-y-2 ml-4">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Precisamos gerar pelo menos <strong className="text-blue-400">R$150 em comissão em 30 dias</strong></span>
+                      <span>Para manutenção da parceria, o mínimo esperado é <strong className="text-blue-400">R$150 em comissões no período</strong></span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Isso garante que os investimentos em tráfego estão trazendo retorno adequado</span>
+                      <span>Caso este valor não seja atingido, a parceria poderá ser encerrada automaticamente</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
-                      <span>Caso não seja atingido, podemos reavaliar a estratégia ou encerrar a parceria amigavelmente</span>
+                      <span>Isso garante que há retorno suficiente para justificar a operação</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-blue-400 mt-0.5 flex-shrink-0" />
@@ -336,24 +350,113 @@ export function TermosContratoModal({
                 </h3>
                 <div className="grid md:grid-cols-2 gap-4">
                   <div>
-                    <h4 className="font-semibold text-teal-400 mb-2">Do Cliente:</h4>
+                    <h4 className="font-semibold text-teal-400 mb-2">Do Contratante:</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Fornecer informações corretas</li>
-                      <li>• Declarar com transparência as vendas</li>
-                      <li>• Pagar as comissões e eventuais serviços extras</li>
+                      <li>• Fornecer informações completas e verídicas</li>
+                      <li>• Declarar corretamente as vendas</li>
+                      <li>• Efetuar os pagamentos das comissões e custos extras na plataforma</li>
+                      <li>• Respeitar os prazos e processos acordados</li>
                     </ul>
                   </div>
                   <div>
-                    <h4 className="font-semibold text-teal-400 mb-2">Da Tráfego Porcents:</h4>
+                    <h4 className="font-semibold text-teal-400 mb-2">Do Contratado:</h4>
                     <ul className="space-y-1 text-sm">
-                      <li>• Entregar a estrutura inicial conforme combinado</li>
-                      <li>• Gerenciar campanhas com foco em performance</li>
-                      <li>• Fornecer suporte técnico e estratégico</li>
-                      <li>• Manter comunicação profissional e objetiva</li>
+                      <li>• Criar e gerenciar as campanhas conforme estratégia definida</li>
+                      <li>• Entregar a estrutura inicial no prazo acordado</li>
+                      <li>• Fornecer suporte estratégico e comunicação clara durante a parceria</li>
                     </ul>
                   </div>
                 </div>
               </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 7 - Cancelamento */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <X className="h-5 w-5 text-red-400" />
+                  7. CANCELAMENTO
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    O contrato pode ser rescindido por qualquer uma das partes com <strong className="text-red-400">aviso prévio de 5 dias úteis</strong>.
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                      <span>Em caso de falta de colaboração, omissão ou negligência do contratante, o contratado poderá pausar ou cancelar os serviços imediatamente</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-red-400 mt-0.5 flex-shrink-0" />
+                      <span>Também poderá ser encerrado automaticamente caso não haja retorno mínimo de R$150 em comissões no período de 30 dias</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 8 - Proteção de Dados (LGPD) */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Eye className="h-5 w-5 text-green-400" />
+                  8. PROTEÇÃO DE DADOS (LGPD)
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    Ambas as partes comprometem-se com a Lei Geral de Proteção de Dados (LGPD).
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                      <span>O contratado utilizará os dados do contratante exclusivamente para fins operacionais da parceria</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                      <span>Os dados não serão compartilhados com terceiros, exceto quando necessário à execução do serviço</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-400 mt-0.5 flex-shrink-0" />
+                      <span>O contratante pode solicitar, a qualquer momento, exclusão, edição ou anonimização de seus dados pessoais</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
+
+              {/* Seção 9 - Confidencialidade e Uso de Credenciais */}
+              <div>
+                <h3 className="text-lg font-semibold text-white mb-3 flex items-center gap-2">
+                  <Lock className="h-5 w-5 text-purple-400" />
+                  9. CONFIDENCIALIDADE E USO DE CREDENCIAIS
+                </h3>
+                <div className="space-y-3">
+                  <p className="leading-relaxed">
+                    O contratado se compromete a manter sigilo absoluto sobre dados, informações e credenciais fornecidas.
+                  </p>
+                  <ul className="space-y-2 ml-4">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>O uso das credenciais será restrito à execução dos serviços contratados</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>As credenciais não serão compartilhadas com terceiros sem autorização expressa</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>Em caso de encerramento da parceria, todas as credenciais e dados deverão ser excluídos ou devolvidos</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-purple-400 mt-0.5 flex-shrink-0" />
+                      <span>O fornecimento de acessos é necessário para a execução técnica das campanhas</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+
+              <Separator className="bg-gray-700" />
 
               {/* Contato */}
               <div className="bg-gray-800/50 rounded-lg p-4">
@@ -362,7 +465,7 @@ export function TermosContratoModal({
                   <p><strong>Empresa:</strong> Tráfego Porcents Marketing Digital LTDA</p>
                   <p><strong>CNPJ:</strong> 60.697.779/0001-78</p>
                   <p><strong>E-mail:</strong> contrato@trafegoporcents.com</p>
-                  <p><strong>WhatsApp:</strong> (11) 9 9670-5530</p>
+                  <p><strong>WhatsApp:</strong> (11) 9 4306-4852</p>
                   <p><strong>Site:</strong> www.trafegoporcents.com</p>
                 </div>
               </div>
