@@ -16,6 +16,7 @@ import { ClienteRowStatusCells } from './ClienteRowStatusCells'
 import { ClienteRowBriefingCell } from './ClienteRowBriefingCell'
 import { ColorSelect, type ColorMarcacao } from './ColorSelect'
 import { useClienteOrigem } from '@/hooks/useClienteOrigem'
+import { ClienteRowValorVenda } from './ClienteRowValorVenda'
 import type { ClienteBasicInfo } from '@/types/shared'
 
 interface ClienteRowProps {
@@ -143,6 +144,10 @@ export function ClienteRow({
           emailGestor={clienteInfo.emailGestor}
           isAdmin={isAdmin}
           showEmailGestor={showEmailGestor}
+        />
+
+        <ClienteRowValorVenda 
+          valorVendaInicial={cliente.valor_venda_inicial}
         />
 
         <ClienteRowStatusCells
