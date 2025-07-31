@@ -42,6 +42,8 @@ export function ClienteNovoDateFilters({
     { value: 'thisYear', label: 'Este ano', icon: Calendar },
     { value: 'custom', label: 'Período personalizado', icon: Filter },
   ]
+  
+  console.log('🎯 [DateFilters] Filtro atual:', dateFilter, 'Clientes encontrados:', clientsCount)
 
   const currentFilter = filterOptions.find(option => option.value === dateFilter)
 

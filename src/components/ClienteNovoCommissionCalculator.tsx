@@ -10,6 +10,10 @@ import {
   getClienteNovoCommissionDescription,
   getValidSaleValues
 } from '@/utils/clienteNovoCommissionCalculator'
+import { 
+  calculateDualCommission,
+  type CommissionType
+} from '@/utils/dualCommissionCalculator'
 
 interface ClienteNovoCommissionCalculatorProps {
   saleValue: number | null
@@ -17,6 +21,7 @@ interface ClienteNovoCommissionCalculatorProps {
   onSaleValueChange: (value: number | null) => void
   onCommissionChange: (value: number | null) => void
   disabled?: boolean
+  userType?: 'gestor' | 'vendedor' | 'admin' | 'other'
 }
 
 export function ClienteNovoCommissionCalculator({
@@ -24,7 +29,8 @@ export function ClienteNovoCommissionCalculator({
   commissionValue,
   onSaleValueChange,
   onCommissionChange,
-  disabled = false
+  disabled = false,
+  userType = 'other'
 }: ClienteNovoCommissionCalculatorProps) {
   const [calculatedCommission, setCalculatedCommission] = useState<number>(0)
   
@@ -32,14 +38,25 @@ export function ClienteNovoCommissionCalculator({
   
   useEffect(() => {
     if (saleValue && isValidClienteNovoSaleValue(saleValue)) {
-      const calculated = calculateClienteNovoCommission(saleValue)
+      let calculated = 0
+      
+      // Calcular comissão baseada no tipo de usuário
+      if (userType === 'gestor' || userType === 'admin') {
+        calculated = calculateDualCommission(saleValue, 'manager')
+      } else if (userType === 'vendedor') {
+        calculated = calculateDualCommission(saleValue, 'seller')
+      } else {
+        // Para outros usuários, mostrar comissão do vendedor por padrão
+        calculated = calculateDualCommission(saleValue, 'seller')
+      }
+      
       setCalculatedCommission(calculated)
       onCommissionChange(calculated)
     } else {
       setCalculatedCommission(0)
       onCommissionChange(null)
     }
-  }, [saleValue, onCommissionChange])
+  }, [saleValue, onCommissionChange, userType])
 
   const handleSaleValueChange = (value: string) => {
     const numValue = value ? parseInt(value) : null
@@ -86,7 +103,12 @@ export function ClienteNovoCommissionCalculator({
                 R$ {calculatedCommission},00
               </div>
               <div className="mt-1 text-sm text-green-600">
-                {getClienteNovoCommissionDescription(saleValue)}
+                {userType === 'gestor' || userType === 'admin' ? 
+                  `Comissão do Gestor: R$ ${calculatedCommission}` :
+                  userType === 'vendedor' ?
+                  `Comissão do Vendedor: R$ ${calculatedCommission}` :
+                  getClienteNovoCommissionDescription(saleValue)
+                }
               </div>
             </div>
           </div>
@@ -106,8 +128,22 @@ export function ClienteNovoCommissionCalculator({
           <AlertDescription>
             <strong>Comissões Fixas Cliente Novo:</strong>
             <ul className="mt-1 space-y-1">
-              <li>• Venda de R$ 500 → Comissão de R$ 40</li>
-              <li>• Venda de R$ 350 → Comissão de R$ 30</li>
+              {userType === 'gestor' || userType === 'admin' ? (
+                <>
+                  <li>• Venda de R$ 500 → Comissão Gestor: R$ 100</li>
+                  <li>• Venda de R$ 350 → Comissão Gestor: R$ 80</li>
+                </>
+              ) : userType === 'vendedor' ? (
+                <>
+                  <li>• Venda de R$ 500 → Comissão Vendedor: R$ 40</li>
+                  <li>• Venda de R$ 350 → Comissão Vendedor: R$ 30</li>
+                </>
+              ) : (
+                <>
+                  <li>• Venda de R$ 500 → Vendedor: R$ 40 | Gestor: R$ 100</li>
+                  <li>• Venda de R$ 350 → Vendedor: R$ 30 | Gestor: R$ 80</li>
+                </>
+              )}
             </ul>
             Os valores são fixos e não podem ser alterados.
           </AlertDescription>

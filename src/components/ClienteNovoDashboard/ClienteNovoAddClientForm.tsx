@@ -11,6 +11,7 @@ import { useClienteNovoSellerData } from '@/hooks/useClienteNovoSellerData'
 import { supabase } from '@/integrations/supabase/client'
 import { Copy, Check, AlertTriangle } from 'lucide-react'
 import { ClienteNovoCommissionCalculator } from '../ClienteNovoCommissionCalculator'
+import { checkUserType } from '@/utils/authHelpers'
 import { useVendedores } from '@/hooks/useVendedores'
 
 interface GestorOption {
@@ -30,6 +31,7 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
   const [gestores, setGestores] = useState<GestorOption[]>([])
   const [copied, setCopied] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userType, setUserType] = useState<'gestor' | 'vendedor' | 'admin' | 'other'>('other')
   const [formData, setFormData] = useState({
     nome_cliente: '',
     email_cliente: '',
@@ -57,6 +59,16 @@ export function ClienteNovoAddClientForm({ onClientAdded }: ClienteNovoAddClient
         if (session && session.user) {
           console.log('✅ [ClienteNovoAddClientForm] Usuário autenticado:', session.user.email)
           setIsAuthenticated(true)
+          
+          // Determinar tipo de usuário
+          const type = await checkUserType(session.user.email)
+          if (type === 'gestor' || type === 'admin') {
+            setUserType('gestor')
+          } else if (type === 'vendedor') {
+            setUserType('vendedor')
+          } else {
+            setUserType('other')
+          }
         } else {
           console.log('❌ [ClienteNovoAddClientForm] Usuário não autenticado')
           setIsAuthenticated(false)
@@ -315,7 +327,12 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
       <CardHeader>
         <CardTitle>Adicionar Novo Cliente - Comissões Fixas</CardTitle>
         <CardDescription>
-          Sistema Cliente Novo: Vendedor R$ 40 (venda R$ 500) ou R$ 30 (venda R$ 350) | Gestor R$ 150 (venda R$ 500) ou R$ 80 (venda R$ 350)
+          {userType === 'gestor' ? 
+            'Comissões Gestor: R$ 100 (venda R$ 500) • R$ 80 (venda R$ 350)' :
+            userType === 'vendedor' ?
+            'Comissões Vendedor: R$ 40 (venda R$ 500) • R$ 30 (venda R$ 350)' :
+            'Sistema Cliente Novo: Vendedor R$ 40 (venda R$ 500) ou R$ 30 (venda R$ 350) | Gestor R$ 100 (venda R$ 500) ou R$ 80 (venda R$ 350)'
+          }
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -420,6 +437,7 @@ Qualquer dúvida, estamos aqui para ajudar! 💪`
             commissionValue={formData.valor_comissao}
             onSaleValueChange={(value) => setFormData(prev => ({ ...prev, valor_venda_inicial: value }))}
             onCommissionChange={(value) => setFormData(prev => ({ ...prev, valor_comissao: value }))}
+            userType={userType}
           />
 
           <div className="grid gap-2">

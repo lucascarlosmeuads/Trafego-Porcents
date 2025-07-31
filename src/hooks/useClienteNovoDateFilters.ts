@@ -28,17 +28,29 @@ export function useClienteNovoDateFilters(clientes: ClienteSimples[]) {
 
   const organizedClientes = useMemo(() => {
     const hoje = new Date()
+    const ontem = new Date()
+    const seteDiasAtras = new Date()
+    const inicioMes = new Date()
+    const inicioAno = new Date()
+    
+    // Configurar as datas de referência
     hoje.setHours(0, 0, 0, 0)
     
-    const ontem = new Date(hoje)
-    ontem.setDate(ontem.getDate() - 1)
+    ontem.setDate(hoje.getDate() - 1)
+    ontem.setHours(0, 0, 0, 0)
     
-    const seteDiasAtras = new Date(hoje)
-    seteDiasAtras.setDate(seteDiasAtras.getDate() - 7)
+    seteDiasAtras.setDate(hoje.getDate() - 7)
+    seteDiasAtras.setHours(0, 0, 0, 0)
 
-    const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1)
+    inicioMes.setDate(1)
+    inicioMes.setHours(0, 0, 0, 0)
     
-    const inicioAno = new Date(hoje.getFullYear(), 0, 1)
+    inicioAno.setMonth(0, 1)
+    inicioAno.setHours(0, 0, 0, 0)
+    
+    console.log('🗓️ [DateFilters] Hoje:', hoje.toISOString())
+    console.log('🗓️ [DateFilters] Ontem:', ontem.toISOString())
+    console.log('🗓️ [DateFilters] Total clientes para filtrar:', clientes.length)
 
     // Helper function to check if date is between two dates
     const isDateBetween = (date: Date, start: Date, end: Date) => {
@@ -50,8 +62,13 @@ export function useClienteNovoDateFilters(clientes: ClienteSimples[]) {
       try {
         const dataCliente = new Date(cliente.created_at)
         dataCliente.setHours(0, 0, 0, 0)
-        return dataCliente.getTime() === hoje.getTime()
+        const isToday = dataCliente.getTime() === hoje.getTime()
+        if (isToday) {
+          console.log('✅ Cliente de hoje:', cliente.nome_cliente, dataCliente.toISOString())
+        }
+        return isToday
       } catch (error) {
+        console.error('❌ Erro ao processar data do cliente:', cliente.nome_cliente, error)
         return false
       }
     })
@@ -61,8 +78,13 @@ export function useClienteNovoDateFilters(clientes: ClienteSimples[]) {
       try {
         const dataCliente = new Date(cliente.created_at)
         dataCliente.setHours(0, 0, 0, 0)
-        return dataCliente.getTime() === ontem.getTime()
+        const isYesterday = dataCliente.getTime() === ontem.getTime()
+        if (isYesterday) {
+          console.log('✅ Cliente de ontem:', cliente.nome_cliente, dataCliente.toISOString())
+        }
+        return isYesterday
       } catch (error) {
+        console.error('❌ Erro ao processar data do cliente:', cliente.nome_cliente, error)
         return false
       }
     })
@@ -111,7 +133,7 @@ export function useClienteNovoDateFilters(clientes: ClienteSimples[]) {
       }
     })
 
-    return {
+    const result = {
       hoje: clientesHoje,
       ontem: clientesOntem,
       ultimos7Dias: clientesUltimos7Dias,
@@ -120,6 +142,16 @@ export function useClienteNovoDateFilters(clientes: ClienteSimples[]) {
       customRange: clientesCustomRange,
       total: clientes
     }
+    
+    console.log('📊 [DateFilters] Resumo dos filtros:')
+    console.log('  - Hoje:', result.hoje.length)
+    console.log('  - Ontem:', result.ontem.length)
+    console.log('  - Últimos 7 dias:', result.ultimos7Dias.length)
+    console.log('  - Este mês:', result.esteMes.length)
+    console.log('  - Este ano:', result.esteAno.length)
+    console.log('  - Total:', result.total.length)
+    
+    return result
   }, [clientes, customStartDate, customEndDate])
 
   const getFilteredClientes = () => {
