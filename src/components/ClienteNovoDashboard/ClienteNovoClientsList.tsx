@@ -2,6 +2,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge'
 import { Users, Calendar, Phone, Mail, UserCheck, DollarSign } from 'lucide-react'
 import { formatDate } from '@/utils/dateFormatters'
+import { useClienteNovoDateFilters } from '@/hooks/useClienteNovoDateFilters'
+import { ClienteNovoDateFilters } from './ClienteNovoDateFilters'
 
 interface Cliente {
   id: number
@@ -21,6 +23,17 @@ interface ClienteNovoClientsListProps {
 }
 
 export function ClienteNovoClientsList({ clientes, loading, totalClientes }: ClienteNovoClientsListProps) {
+  const {
+    dateFilter,
+    setDateFilter,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate,
+    filteredClientes,
+    clientsCount
+  } = useClienteNovoDateFilters(clientes)
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -45,23 +58,36 @@ export function ClienteNovoClientsList({ clientes, loading, totalClientes }: Cli
         </p>
       </div>
 
-      {clientes.length === 0 ? (
+      <ClienteNovoDateFilters
+        dateFilter={dateFilter}
+        setDateFilter={setDateFilter}
+        customStartDate={customStartDate}
+        setCustomStartDate={setCustomStartDate}
+        customEndDate={customEndDate}
+        setCustomEndDate={setCustomEndDate}
+        clientsCount={clientsCount}
+      />
+
+      {filteredClientes.length === 0 ? (
         <Card>
           <CardContent className="pt-6">
             <div className="text-center py-8">
               <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-gray-600 mb-2">
-                Nenhum cliente cadastrado
+                {clientes.length === 0 ? 'Nenhum cliente cadastrado' : 'Nenhum cliente encontrado para este filtro'}
               </h3>
               <p className="text-gray-500">
-                Comece criando seu primeiro cliente através da aba "Adicionar Cliente"
+                {clientes.length === 0 
+                  ? 'Comece criando seu primeiro cliente através da aba "Adicionar Cliente"'
+                  : 'Tente ajustar os filtros de data para encontrar os clientes desejados'
+                }
               </p>
             </div>
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4">
-          {clientes.map((cliente) => (
+          {filteredClientes.map((cliente) => (
             <Card key={cliente.id} className="hover:shadow-md transition-shadow">
               <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
