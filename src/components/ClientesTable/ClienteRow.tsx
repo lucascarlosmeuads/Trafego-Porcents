@@ -146,10 +146,6 @@ export function ClienteRow({
           showEmailGestor={showEmailGestor}
         />
 
-        <ClienteRowValorVenda 
-          valorVendaInicial={cliente.valor_venda_inicial}
-        />
-
         <ClienteRowStatusCells
           statusCampanha={cliente.status_campanha || 'Cliente Novo'}
           siteStatus={cliente.site_status || 'pendente'}
@@ -214,6 +210,10 @@ export function ClienteRow({
             compact={true}
           />
         </TableCell>
+
+        <ClienteRowValorVenda 
+          valorVendaInicial={cliente.valor_venda_inicial}
+        />
       </TableRow>
     </TooltipProvider>
   )

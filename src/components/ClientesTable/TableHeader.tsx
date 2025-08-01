@@ -183,6 +183,18 @@ export function TableHeader({ isAdmin = false, showEmailGestor = false }: TableH
               </TooltipContent>
             </Tooltip>
           </TableHead>
+          <TableHead className="text-white font-semibold w-20 text-xs">
+            <Tooltip>
+              <TooltipTrigger>
+                <div className="flex items-center justify-center">
+                  <DollarSign className="h-3 w-3" />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Valor Venda</p>
+              </TooltipContent>
+            </Tooltip>
+          </TableHead>
         </TableRow>
       </TableHeaderComponent>
     </TooltipProvider>

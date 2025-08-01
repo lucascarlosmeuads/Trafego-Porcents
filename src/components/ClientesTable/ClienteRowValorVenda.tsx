@@ -22,7 +22,7 @@ export function ClienteRowValorVenda({ valorVendaInicial }: ClienteRowValorVenda
   }
 
   return (
-    <TableCell className="w-16 text-center">
+    <TableCell className="w-20 text-center">
       {formatarValor(valorVendaInicial)}
     </TableCell>
   )
