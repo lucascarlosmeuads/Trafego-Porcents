@@ -45,9 +45,16 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
         'planning': 'Planejamento',
         'approval': 'Aprovação',
         'setup': 'Configuração',
-        'launch': 'Lançamento'
+        'launch': 'Lançamento',
+        'infrastructure-check': 'Verificação de Infraestrutura',
+        'whatsapp': 'Configuração WhatsApp',
+        'business-manager': 'Business Manager',
+        'checkout': 'Checkout',
+        'creatives': 'Criativos',
+        'targeting': 'Segmentação',
+        'campaign-setup': 'Configuração de Campanha'
       };
-      return <Badge className="text-xs">{etapaMap[value] || value}</Badge>;
+      return <Badge variant="outline" className="text-xs font-medium border-primary/20 bg-primary/10 text-primary">{etapaMap[value] || value}</Badge>;
     }
     
     if (fieldName === 'completedAt' && typeof value === 'string') {
@@ -69,15 +76,15 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
     if (Array.isArray(value)) {
       if (value.length === 0) return <span className="text-muted-foreground italic">Nenhum selecionado</span>;
       
-      // Verificar se é um array de caracteres (como strings separadas)
+      // Verificar se é um array de caracteres (como strings separadas) - FIX do bug de letras estranhas
       if (value.every(item => typeof item === 'string' && item.length === 1)) {
-        return <span>{value.join('')}</span>;
+        return <span className="text-foreground font-medium">{value.join('')}</span>;
       }
       
       return (
         <div className="flex flex-wrap gap-1">
           {value.map((item, index) => (
-            <Badge key={index} variant="outline" className="text-xs">
+            <Badge key={index} variant="outline" className="text-xs bg-background/80 text-foreground border-muted-foreground/30">
               {typeof item === 'object' ? JSON.stringify(item) : String(item)}
             </Badge>
           ))}
@@ -91,9 +98,9 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
           fieldName?.toLowerCase().includes('investimento') ||
           fieldName?.toLowerCase().includes('custo') ||
           fieldName?.toLowerCase().includes('total')) {
-        return <span className="font-medium text-green-600">R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>;
+        return <span className="font-semibold text-green-700 dark:text-green-400">R$ {value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>;
       }
-      return <span className="font-medium">{value.toLocaleString('pt-BR')}</span>;
+      return <span className="font-medium text-foreground">{value.toLocaleString('pt-BR')}</span>;
     }
     
     if (typeof value === 'string') {
@@ -120,13 +127,13 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
         const cleanNumber = value.replace(/\D/g, '');
         return (
           <div className="flex items-center gap-2">
-            <span>{value}</span>
+            <span className="text-foreground font-medium">{value}</span>
             {cleanNumber && (
               <a 
                 href={`https://wa.me/55${cleanNumber}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="text-green-600 hover:text-green-700 text-xs"
+                className="text-green-600 hover:text-green-700 dark:text-green-400 dark:hover:text-green-300 text-xs font-medium underline"
               >
                 (Abrir WhatsApp)
               </a>
@@ -166,11 +173,11 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
       }
       
       return (
-        <div className="bg-muted/30 p-2 rounded text-xs space-y-1">
+        <div className="bg-muted/50 border border-muted-foreground/20 p-3 rounded-lg text-sm space-y-2">
           {Object.entries(value).map(([key, val]) => (
-            <div key={key} className="grid grid-cols-3">
-              <span className="font-medium">{formatFieldName(key)}:</span>
-              <span className="col-span-2">{renderValue(val, key)}</span>
+            <div key={key} className="grid grid-cols-3 gap-2">
+              <span className="font-semibold text-foreground">{formatFieldName(key)}:</span>
+              <span className="col-span-2 text-foreground">{renderValue(val, key)}</span>
             </div>
           ))}
         </div>
@@ -257,9 +264,9 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
     // Manipulação especial para arrays que não são arrays de objetos
     if (Array.isArray(data) && !data.some(item => typeof item === 'object')) {
       return (
-        <Card className="shadow-sm">
-          <CardHeader className="pb-3 bg-muted/30">
-            <CardTitle className="flex items-center gap-2 text-lg text-primary">
+        <Card className="shadow-sm border-muted-foreground/20">
+          <CardHeader className="pb-3 bg-muted/50 border-b border-muted-foreground/20">
+            <CardTitle className="flex items-center gap-2 text-lg text-foreground">
               {icon}
               {title}
             </CardTitle>
@@ -272,9 +279,9 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
     }
 
     return (
-      <Card className="shadow-sm">
-        <CardHeader className="pb-3 bg-muted/30">
-          <CardTitle className="flex items-center gap-2 text-lg text-primary">
+      <Card className="shadow-sm border-muted-foreground/20">
+        <CardHeader className="pb-3 bg-muted/50 border-b border-muted-foreground/20">
+          <CardTitle className="flex items-center gap-2 text-lg text-foreground">
             {icon}
             {title}
           </CardTitle>
@@ -285,15 +292,15 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
             if (shouldRenderAsSection(key, value)) {
               const sectionTitle = formatFieldName(key);
               return (
-                <div key={key} className="border-b border-muted pb-3 last:border-b-0 last:pb-0">
-                  <h4 className="font-semibold mb-2 text-primary">{sectionTitle}</h4>
+                <div key={key} className="border-b border-muted-foreground/20 pb-3 last:border-b-0 last:pb-0">
+                  <h4 className="font-semibold mb-2 text-foreground">{sectionTitle}</h4>
                   <div className="pl-4">
                     {Object.entries(value).map(([subKey, subValue]) => (
-                      <div key={subKey} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2">
+                      <div key={subKey} className="grid grid-cols-1 md:grid-cols-4 gap-2 mb-2 bg-muted/30 p-2 rounded">
                         <div className="font-semibold text-sm text-foreground md:col-span-1">
                           {formatFieldName(subKey)}:
                         </div>
-                        <div className="md:col-span-3 text-sm">
+                        <div className="md:col-span-3 text-sm text-foreground">
                           {renderValue(subValue, subKey)}
                         </div>
                       </div>
@@ -305,12 +312,12 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
             
             // Renderização normal para valores simples
             return (
-              <div key={key} className="border-b border-muted pb-3 last:border-b-0 last:pb-0">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
+              <div key={key} className="border-b border-muted-foreground/20 pb-3 last:border-b-0 last:pb-0">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-2 bg-muted/20 p-3 rounded">
                   <div className="font-semibold text-sm text-foreground md:col-span-1">
                     {formatFieldName(key)}:
                   </div>
-                  <div className="md:col-span-3 text-sm">
+                  <div className="md:col-span-3 text-sm text-foreground">
                     {renderValue(value, key)}
                   </div>
                 </div>
@@ -326,58 +333,66 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
 
   // Organizar dados em seções estratégicas
   const organizarDadosEstrategicos = () => {
+    // Verificar se dados estão aninhados (buscar em respostas.dadosPersonais, etc)
+    const dadosPersonaisObj = respostas.dadosPersonais || respostas;
+    const financeieroObj = respostas.financeiro || respostas;
+    const infraestruturaObj = respostas.infraestrutura || respostas;
+    const negocioObj = respostas.negocio || respostas;
+    const experienciaObj = respostas.experiencia || respostas;
+    
     // Extrair dados pessoais
     const dadosPersonais = {
-      nome: respostas.nome,
-      email: respostas.email,
-      whatsapp: respostas.whatsapp,
-      telefone: respostas.telefone,
-      idade: respostas.idade,
-      cidade: respostas.cidade,
-      estado: respostas.estado
+      nome: dadosPersonaisObj.nome || respostas.nome,
+      email: dadosPersonaisObj.email || respostas.email,
+      whatsapp: dadosPersonaisObj.whatsapp || respostas.whatsapp,
+      telefone: dadosPersonaisObj.telefone || respostas.telefone,
+      idade: dadosPersonaisObj.idade || respostas.idade,
+      cidade: dadosPersonaisObj.cidade || respostas.cidade,
+      estado: dadosPersonaisObj.estado || respostas.estado
     };
 
     // Extrair informações financeiras
     const financeiro = {
-      rendaMensal: respostas.rendaMensal,
-      valorInvestimento: respostas.valorInvestimento,
-      investimentoDiario: respostas.investimentoDiario,
-      tempoRetorno: respostas.tempoRetorno,
-      metaFaturamento: respostas.metaFaturamento,
-      comissao: respostas.comissao,
-      totalCost: respostas.totalCost,
-      breakdown: respostas.breakdown
+      rendaMensal: financeieroObj.rendaMensal || respostas.rendaMensal,
+      valorInvestimento: financeieroObj.valorInvestimento || respostas.valorInvestimento,
+      investimentoDiario: financeieroObj.investimentoDiario || respostas.investimentoDiario,
+      tempoRetorno: financeieroObj.tempoRetorno || respostas.tempoRetorno,
+      metaFaturamento: financeieroObj.metaFaturamento || respostas.metaFaturamento,
+      comissao: financeieroObj.comissao || respostas.comissao,
+      totalCost: financeieroObj.totalCost || respostas.totalCost,
+      breakdown: financeieroObj.breakdown || respostas.breakdown
     };
 
     // Extrair infraestrutura atual
     const infraestrutura = {
-      hasBM: respostas.hasBM,
-      hasCheckout: respostas.hasCheckout,
-      hasWhatsApp: respostas.hasWhatsApp,
-      hasImageCreatives: respostas.hasImageCreatives,
-      hasVideoCreatives: respostas.hasVideoCreatives,
-      advertisingProducts: respostas.advertisingProducts
+      hasBM: infraestruturaObj.hasBM || respostas.hasBM,
+      hasCheckout: infraestruturaObj.hasCheckout || respostas.hasCheckout,
+      hasWhatsApp: infraestruturaObj.hasWhatsApp || respostas.hasWhatsApp,
+      hasImageCreatives: infraestruturaObj.hasImageCreatives || respostas.hasImageCreatives,
+      hasVideoCreatives: infraestruturaObj.hasVideoCreatives || respostas.hasVideoCreatives,
+      advertisingProducts: infraestruturaObj.advertisingProducts || respostas.advertisingProducts,
+      etapaAtual: infraestruturaObj.etapaAtual || respostas.etapaAtual
     };
 
     // Extrair informações do negócio
     const negocio = {
-      tipoNegocio: respostas.tipoNegocio,
-      setorAtuacao: respostas.setorAtuacao,
-      publicoAlvo: respostas.publicoAlvo,
-      principaisServicos: respostas.principaisServicos,
-      diferencialCompetitivo: respostas.diferencialCompetitivo,
-      storeType: respostas.storeType,
-      principaisObjetivos: respostas.principaisObjetivos,
-      maioresDesafios: respostas.maioresDesafios
+      tipoNegocio: negocioObj.tipoNegocio || respostas.tipoNegocio,
+      setorAtuacao: negocioObj.setorAtuacao || respostas.setorAtuacao,
+      publicoAlvo: negocioObj.publicoAlvo || respostas.publicoAlvo,
+      principaisServicos: negocioObj.principaisServicos || respostas.principaisServicos,
+      diferencialCompetitivo: negocioObj.diferencialCompetitivo || respostas.diferencialCompetitivo,
+      storeType: negocioObj.storeType || respostas.storeType,
+      principaisObjetivos: negocioObj.principaisObjetivos || respostas.principaisObjetivos,
+      maioresDesafios: negocioObj.maioresDesafios || respostas.maioresDesafios
     };
 
     // Extrair experiência e conhecimentos
     const experiencia = {
-      nivelEscolaridade: respostas.nivelEscolaridade,
-      experienciaEmpreendedorismo: respostas.experienciaEmpreendedorismo,
-      conhecimentoMarketing: respostas.conhecimentoMarketing,
-      experienciaTrafegoAgo: respostas.experienciaTrafegoAgo,
-      ferramentasConhecidas: respostas.ferramentasConhecidas
+      nivelEscolaridade: experienciaObj.nivelEscolaridade || respostas.nivelEscolaridade,
+      experienciaEmpreendedorismo: experienciaObj.experienciaEmpreendedorismo || respostas.experienciaEmpreendedorismo,
+      conhecimentoMarketing: experienciaObj.conhecimentoMarketing || respostas.conhecimentoMarketing,
+      experienciaTrafegoAgo: experienciaObj.experienciaTrafegoAgo || respostas.experienciaTrafegoAgo,
+      ferramentasConhecidas: experienciaObj.ferramentasConhecidas || respostas.ferramentasConhecidas
     };
 
     // Filtrar seções que possuem dados válidos
@@ -396,16 +411,18 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
       infraestrutura: filtrarSecao(infraestrutura),
       negocio: filtrarSecao(negocio),
       experiencia: filtrarSecao(experiencia),
+      // Filtrar outras informações não categorizadas
       outras: Object.fromEntries(
         Object.entries(respostas).filter(([key]) => 
           !['nome', 'email', 'whatsapp', 'telefone', 'idade', 'cidade', 'estado',
             'rendaMensal', 'valorInvestimento', 'investimentoDiario', 'tempoRetorno', 
             'metaFaturamento', 'comissao', 'totalCost', 'breakdown',
-            'hasBM', 'hasCheckout', 'hasWhatsApp', 'hasImageCreatives', 'hasVideoCreatives', 'advertisingProducts',
+            'hasBM', 'hasCheckout', 'hasWhatsApp', 'hasImageCreatives', 'hasVideoCreatives', 'advertisingProducts', 'etapaAtual',
             'tipoNegocio', 'setorAtuacao', 'publicoAlvo', 'principaisServicos', 'diferencialCompetitivo', 
             'storeType', 'principaisObjetivos', 'maioresDesafios',
             'nivelEscolaridade', 'experienciaEmpreendedorismo', 'conhecimentoMarketing', 
-            'experienciaTrafegoAgo', 'ferramentasConhecidas'
+            'experienciaTrafegoAgo', 'ferramentasConhecidas',
+            'dadosPersonais', 'financeiro', 'infraestrutura', 'negocio', 'experiencia' // Excluir seções aninhadas
           ].includes(key)
         )
       )
