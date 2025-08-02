@@ -10,7 +10,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar, User, Mail, Phone, Building, DollarSign, Target, Lightbulb } from 'lucide-react';
+import { 
+  Calendar, 
+  User, 
+  Mail, 
+  Phone, 
+  Building, 
+  DollarSign, 
+  Target, 
+  Lightbulb, 
+  FileText,
+  TrendingUp,
+  Settings,
+  CheckCircle,
+  AlertCircle
+} from 'lucide-react';
 
 interface LeadDetailsModalProps {
   lead: any;
@@ -310,43 +324,95 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
 
   const respostas = lead.respostas || {};
 
-  // Identifica e processa campos especiais como arrays ou objetos com formatos específicos
-  const processarRespostas = () => {
-    // Se respostas for um array ou string simples, envolver em um objeto
-    if (typeof respostas !== 'object' || Array.isArray(respostas)) {
-      return { respostasPrincipais: respostas };
-    }
-
-    // Mapear campos especiais que sabemos que precisam de tratamento especial
-    const camposEspeciais = {
-      etapaAtual: respostas.etapaAtual,
-      completedAt: respostas.completedAt,
-      totalCost: respostas.totalCost,
-      infraestrutura: {
-        hasBM: respostas.hasBM,
-        hasCheckout: respostas.hasCheckout,
-        hasWhatsApp: respostas.hasWhatsApp,
-        hasImageCreatives: respostas.hasImageCreatives,
-        hasVideoCreatives: respostas.hasVideoCreatives
-      }
+  // Organizar dados em seções estratégicas
+  const organizarDadosEstrategicos = () => {
+    // Extrair dados pessoais
+    const dadosPersonais = {
+      nome: respostas.nome,
+      email: respostas.email,
+      whatsapp: respostas.whatsapp,
+      telefone: respostas.telefone,
+      idade: respostas.idade,
+      cidade: respostas.cidade,
+      estado: respostas.estado
     };
-    
-    // Filtrar apenas os campos que têm valores
-    const camposEspeciaisComValores = Object.fromEntries(
-      Object.entries(camposEspeciais.infraestrutura)
-        .filter(([_, value]) => value !== undefined && value !== null)
-    );
-    
-    // Adicionar seção de infraestrutura apenas se houver dados
-    const resultado = { ...respostas };
-    if (Object.keys(camposEspeciaisComValores).length > 0) {
-      resultado.infraestrutura = camposEspeciaisComValores;
-    }
-    
-    return resultado;
+
+    // Extrair informações financeiras
+    const financeiro = {
+      rendaMensal: respostas.rendaMensal,
+      valorInvestimento: respostas.valorInvestimento,
+      investimentoDiario: respostas.investimentoDiario,
+      tempoRetorno: respostas.tempoRetorno,
+      metaFaturamento: respostas.metaFaturamento,
+      comissao: respostas.comissao,
+      totalCost: respostas.totalCost,
+      breakdown: respostas.breakdown
+    };
+
+    // Extrair infraestrutura atual
+    const infraestrutura = {
+      hasBM: respostas.hasBM,
+      hasCheckout: respostas.hasCheckout,
+      hasWhatsApp: respostas.hasWhatsApp,
+      hasImageCreatives: respostas.hasImageCreatives,
+      hasVideoCreatives: respostas.hasVideoCreatives,
+      advertisingProducts: respostas.advertisingProducts
+    };
+
+    // Extrair informações do negócio
+    const negocio = {
+      tipoNegocio: respostas.tipoNegocio,
+      setorAtuacao: respostas.setorAtuacao,
+      publicoAlvo: respostas.publicoAlvo,
+      principaisServicos: respostas.principaisServicos,
+      diferencialCompetitivo: respostas.diferencialCompetitivo,
+      storeType: respostas.storeType,
+      principaisObjetivos: respostas.principaisObjetivos,
+      maioresDesafios: respostas.maioresDesafios
+    };
+
+    // Extrair experiência e conhecimentos
+    const experiencia = {
+      nivelEscolaridade: respostas.nivelEscolaridade,
+      experienciaEmpreendedorismo: respostas.experienciaEmpreendedorismo,
+      conhecimentoMarketing: respostas.conhecimentoMarketing,
+      experienciaTrafegoAgo: respostas.experienciaTrafegoAgo,
+      ferramentasConhecidas: respostas.ferramentasConhecidas
+    };
+
+    // Filtrar seções que possuem dados válidos
+    const filtrarSecao = (secao: any) => {
+      return Object.fromEntries(
+        Object.entries(secao).filter(([_, value]) => 
+          value !== undefined && value !== null && value !== '' && 
+          !(Array.isArray(value) && value.length === 0)
+        )
+      );
+    };
+
+    return {
+      dadosPersonais: filtrarSecao(dadosPersonais),
+      financeiro: filtrarSecao(financeiro),
+      infraestrutura: filtrarSecao(infraestrutura),
+      negocio: filtrarSecao(negocio),
+      experiencia: filtrarSecao(experiencia),
+      outras: Object.fromEntries(
+        Object.entries(respostas).filter(([key]) => 
+          !['nome', 'email', 'whatsapp', 'telefone', 'idade', 'cidade', 'estado',
+            'rendaMensal', 'valorInvestimento', 'investimentoDiario', 'tempoRetorno', 
+            'metaFaturamento', 'comissao', 'totalCost', 'breakdown',
+            'hasBM', 'hasCheckout', 'hasWhatsApp', 'hasImageCreatives', 'hasVideoCreatives', 'advertisingProducts',
+            'tipoNegocio', 'setorAtuacao', 'publicoAlvo', 'principaisServicos', 'diferencialCompetitivo', 
+            'storeType', 'principaisObjetivos', 'maioresDesafios',
+            'nivelEscolaridade', 'experienciaEmpreendedorismo', 'conhecimentoMarketing', 
+            'experienciaTrafegoAgo', 'ferramentasConhecidas'
+          ].includes(key)
+        )
+      )
+    };
   };
 
-  const respostasProcessadas = processarRespostas();
+  const dadosOrganizados = organizarDadosEstrategicos();
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -359,121 +425,166 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* Informações Básicas */}
-          <Card>
+          {/* SEÇÃO 1: RESUMO ESTRATÉGICO */}
+          <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
             <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Informações Básicas
+              <CardTitle className="flex items-center gap-2 text-xl">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                Resumo Estratégico
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <span className="font-medium text-sm text-muted-foreground">Data do Cadastro:</span>
-                  <p className="text-sm">
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="bg-background/50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                    <Calendar className="h-4 w-4" />
+                    Status do Lead
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {lead.completo ? (
+                      <CheckCircle className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <AlertCircle className="h-5 w-5 text-yellow-500" />
+                    )}
+                    <Badge variant={lead.completo ? 'default' : 'secondary'} className="text-sm">
+                      {lead.completo ? 'Formulário Completo' : 'Formulário Incompleto'}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
                     {format(new Date(lead.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                   </p>
                 </div>
-                <div>
-                  <span className="font-medium text-sm text-muted-foreground">Tipo de Negócio:</span>
-                  <p className="text-sm">{lead.tipo_negocio}</p>
-                </div>
-                <div>
-                  <span className="font-medium text-sm text-muted-foreground">Status:</span>
-                  <Badge variant={lead.completo ? 'default' : 'secondary'}>
-                    {lead.completo ? 'Completo' : 'Incompleto'}
+                
+                <div className="bg-background/50 p-3 rounded-lg">
+                  <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                    <Building className="h-4 w-4" />
+                    Tipo de Negócio
+                  </div>
+                  <Badge variant="outline" className="text-sm font-medium">
+                    {lead.tipo_negocio}
                   </Badge>
                 </div>
+
                 {lead.email_usuario && (
-                  <div>
-                    <span className="font-medium text-sm text-muted-foreground">Email do Usuário:</span>
-                    <p className="text-sm">
-                      <a href={`mailto:${lead.email_usuario}`} className="text-primary hover:underline">
-                        {lead.email_usuario}
-                      </a>
-                    </p>
+                  <div className="bg-background/50 p-3 rounded-lg">
+                    <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-1">
+                      <Mail className="h-4 w-4" />
+                      Contato
+                    </div>
+                    <a href={`mailto:${lead.email_usuario}`} className="text-primary hover:underline text-sm font-medium">
+                      {lead.email_usuario}
+                    </a>
                   </div>
                 )}
               </div>
             </CardContent>
           </Card>
 
-          <Separator />
-
-          {/* Dados Pessoais */}
-          {respostasProcessadas.dadosPersonais && renderSection(
-            'Dados Pessoais',
-            respostasProcessadas.dadosPersonais,
-            <User className="h-5 w-5" />
-          )}
-
-          {/* Informações do Negócio */}
-          {respostasProcessadas.negocio && renderSection(
-            'Informações do Negócio',
-            respostasProcessadas.negocio,
-            <Building className="h-5 w-5" />
-          )}
-
-          {/* Infraestrutura */}
-          {respostasProcessadas.infraestrutura && renderSection(
-            'Infraestrutura',
-            respostasProcessadas.infraestrutura,
-            <Building className="h-5 w-5" />
-          )}
-
-          {/* Situação Financeira / Custos */}
-          {respostasProcessadas.totalCost && renderSection(
-            'Custos Totais',
-            respostasProcessadas.totalCost,
-            <DollarSign className="h-5 w-5" />
-          )}
-
-          {/* Etapa Atual */}
-          {respostasProcessadas.etapaAtual && (
-            <Card className="shadow-sm">
-              <CardHeader className="pb-3 bg-muted/30">
-                <CardTitle className="flex items-center gap-2 text-lg text-primary">
-                  <Target className="h-5 w-5" />
-                  Etapa Atual
+          {/* SEÇÃO 2: DESCRIÇÃO DO PRODUTO/SERVIÇO */}
+          {lead.planejamento_estrategico && (
+            <Card className="border-orange-200 bg-gradient-to-br from-orange-50 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-xl">
+                  <FileText className="h-6 w-6 text-orange-600" />
+                  Descrição do Produto/Serviço
+                  <Badge className="bg-orange-100 text-orange-800 text-xs">ESTRATÉGICO</Badge>
                 </CardTitle>
               </CardHeader>
-              <CardContent className="pt-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-2">
-                  <div className="font-semibold text-sm text-foreground md:col-span-1">
-                    Status:
-                  </div>
-                  <div className="md:col-span-3 text-sm">
-                    {renderValue(respostasProcessadas.etapaAtual, 'etapaAtual')}
+              <CardContent>
+                <div className="bg-white/70 p-4 rounded-lg border border-orange-100">
+                  <div className="prose prose-sm max-w-none">
+                    <p className="text-foreground whitespace-pre-wrap leading-relaxed">
+                      {lead.planejamento_estrategico}
+                    </p>
                   </div>
                 </div>
-                {respostasProcessadas.completedAt && (
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-2 mt-2">
-                    <div className="font-semibold text-sm text-foreground md:col-span-1">
-                      Concluído em:
-                    </div>
-                    <div className="md:col-span-3 text-sm">
-                      {renderValue(respostasProcessadas.completedAt, 'completedAt')}
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Outras Seções Dinâmicas */}
-          {Object.entries(respostasProcessadas).map(([key, value]) => {
-            // Ignorar seções já tratadas especificamente
-            if ([
-              'dadosPersonais', 
-              'negocio', 
-              'infraestrutura', 
-              'totalCost', 
-              'etapaAtual', 
-              'completedAt'
-            ].includes(key)) {
-              return null;
-            }
+          {/* SEÇÃO 3: DADOS PESSOAIS */}
+          {Object.keys(dadosOrganizados.dadosPersonais).length > 0 && renderSection(
+            'Dados Pessoais',
+            dadosOrganizados.dadosPersonais,
+            <User className="h-5 w-5" />
+          )}
+
+          {/* SEÇÃO 4: SITUAÇÃO FINANCEIRA */}
+          {Object.keys(dadosOrganizados.financeiro).length > 0 && (
+            <Card className="border-green-200 bg-gradient-to-br from-green-50 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <DollarSign className="h-5 w-5 text-green-600" />
+                  Situação Financeira
+                  <Badge className="bg-green-100 text-green-800 text-xs">IMPORTANTE</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {Object.entries(dadosOrganizados.financeiro).map(([key, value]) => (
+                  <div key={key} className="grid grid-cols-1 md:grid-cols-4 gap-2 bg-white/50 p-3 rounded border border-green-100">
+                    <div className="font-semibold text-sm text-foreground md:col-span-1">
+                      {formatFieldName(key)}:
+                    </div>
+                    <div className="md:col-span-3 text-sm">
+                      {renderValue(value, key)}
+                    </div>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SEÇÃO 5: INFRAESTRUTURA ATUAL */}
+          {Object.keys(dadosOrganizados.infraestrutura).length > 0 && (
+            <Card className="border-blue-200 bg-gradient-to-br from-blue-50 to-background">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Settings className="h-5 w-5 text-blue-600" />
+                  Infraestrutura Atual
+                  <Badge className="bg-blue-100 text-blue-800 text-xs">TÉCNICO</Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {Object.entries(dadosOrganizados.infraestrutura).map(([key, value]) => (
+                    <div key={key} className="flex items-center gap-3 bg-white/50 p-3 rounded border border-blue-100">
+                      <div className="flex-shrink-0">
+                        {value ? (
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                        ) : (
+                          <AlertCircle className="h-5 w-5 text-red-500" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="font-medium text-sm">{formatFieldName(key)}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {value ? 'Já possui' : 'Precisa configurar'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* SEÇÃO 6: INFORMAÇÕES DO NEGÓCIO */}
+          {Object.keys(dadosOrganizados.negocio).length > 0 && renderSection(
+            'Informações do Negócio',
+            dadosOrganizados.negocio,
+            <Building className="h-5 w-5" />
+          )}
+
+          {/* SEÇÃO 7: EXPERIÊNCIA E CONHECIMENTOS */}
+          {Object.keys(dadosOrganizados.experiencia).length > 0 && renderSection(
+            'Experiência e Conhecimentos',
+            dadosOrganizados.experiencia,
+            <Lightbulb className="h-5 w-5" />
+          )}
+
+          {/* SEÇÃO 8: OUTRAS INFORMAÇÕES */}
+          {Object.keys(dadosOrganizados.outras).length > 0 && Object.entries(dadosOrganizados.outras).map(([key, value]) => {
+            if (!value || (typeof value === 'object' && Object.keys(value).length === 0)) return null;
 
             return renderSection(
               formatFieldName(key),
