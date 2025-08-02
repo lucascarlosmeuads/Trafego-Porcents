@@ -15,13 +15,15 @@ interface ComissaoSimplesProps {
   isAdmin?: boolean
   onComissionUpdate?: () => void
   compact?: boolean
+  userType?: 'seller' | 'manager'
 }
 
 export function ComissaoSimples({
   cliente,
   isAdmin = false,
   onComissionUpdate,
-  compact = false
+  compact = false,
+  userType = 'manager'
 }: ComissaoSimplesProps) {
   const [editandoValor, setEditandoValor] = useState(false)
   const [novoValor, setNovoValor] = useState((cliente.valor_comissao || 60).toString())
@@ -31,8 +33,8 @@ export function ComissaoSimples({
   const { atualizarValorComissao, loading: loadingValor } = useComissaoAvancada()
   
   const clienteId = cliente.id?.toString() || ''
-  // Para admin/gestor, usar sistema de comissões duplas
-  const valorComissao = getCommissionForDisplay(cliente, 'manager')
+  // Usar sistema de comissões duplas baseado no tipo de usuário
+  const valorComissao = getCommissionForDisplay(cliente, userType)
   const isPago = cliente.comissao === 'Pago'
   const canEdit = isAdmin
   const loading = loadingStatus || loadingValor

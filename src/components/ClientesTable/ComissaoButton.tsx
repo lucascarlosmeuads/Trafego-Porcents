@@ -8,6 +8,7 @@ interface ComissaoButtonProps {
   isAdmin?: boolean
   onComissionUpdate?: () => void
   compact?: boolean
+  isVendedor?: boolean
 }
 
 export function ComissaoButton({
@@ -15,14 +16,19 @@ export function ComissaoButton({
   isGestorDashboard = false,
   isAdmin = false,
   onComissionUpdate,
-  compact = false
+  compact = false,
+  isVendedor = false
 }: ComissaoButtonProps) {
+  // Determinar o tipo de usuário para calcular a comissão correta
+  const userType = isVendedor ? 'seller' : 'manager'
+  
   return (
     <ComissaoSimples
       cliente={cliente}
       isAdmin={isAdmin}
       onComissionUpdate={onComissionUpdate}
       compact={compact}
+      userType={userType}
     />
   )
 }

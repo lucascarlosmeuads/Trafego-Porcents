@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Calendar, Mail, Phone, User, Clock, RefreshCw, DollarSign } from 'lucide-react'
 import { DateFilters } from './DateFilters'
 import { useClientFilters } from '@/hooks/useClientFilters'
+import { getCommissionForDisplay } from '@/utils/dualCommissionCalculator'
 
 interface ClienteSimples {
   id: string
@@ -153,8 +154,17 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
     }
   }
 
-  // Calcular comissões (R$ 60,00 por cliente)
-  const comissaoPorCliente = 60.00
+  // Calcular comissão baseada no sistema duplo (vendedor)
+  const calcularComissaoVendedor = (cliente: ClienteSimples) => {
+    const clienteFormatted = {
+      ...cliente,
+      valor_venda_inicial: 500, // Assumir padrão R$ 500 se não especificado
+      status_campanha: cliente.status_campanha || 'Cliente Novo'
+    }
+    return getCommissionForDisplay(clienteFormatted, 'seller')
+  }
+  
+  const comissaoMedia = 40 // R$ 40 para vendedores (padrão R$ 500)
 
   const renderClienteCard = (cliente: ClienteSimples, isToday = false) => (
     <div key={cliente.id} className={`border rounded-lg p-4 hover:bg-gray-50 transition-colors ${isToday ? 'border-2 border-green-200 bg-green-50' : ''}`}>
@@ -174,7 +184,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             )}
             <Badge className="bg-blue-100 text-blue-800 border-blue-200">
               <DollarSign className="h-3 w-3 mr-1" />
-              R$ 60,00
+              R$ {calcularComissaoVendedor(cliente).toFixed(2)}
             </Badge>
           </div>
           
@@ -216,7 +226,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
             💰 Resumo de Comissões
           </CardTitle>
           <CardDescription>
-            Cada cliente cadastrado gera R$ 60,00 de comissão
+            Comissão baseada no valor de venda do cliente (R$ 30-40)
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -225,7 +235,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-green-800">Hoje</p>
-                  <p className="text-2xl font-bold text-green-900">R$ {(organizedClientes.hoje.length * comissaoPorCliente).toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-green-900">R$ {(organizedClientes.hoje.length * comissaoMedia).toFixed(2)}</p>
                   <p className="text-xs text-green-600">{organizedClientes.hoje.length} cliente{organizedClientes.hoje.length !== 1 ? 's' : ''}</p>
                 </div>
                 <Clock className="h-8 w-8 text-green-600" />
@@ -236,7 +246,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-blue-800">Ontem</p>
-                  <p className="text-2xl font-bold text-blue-900">R$ {(organizedClientes.ontem.length * comissaoPorCliente).toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-blue-900">R$ {(organizedClientes.ontem.length * comissaoMedia).toFixed(2)}</p>
                   <p className="text-xs text-blue-600">{organizedClientes.ontem.length} cliente{organizedClientes.ontem.length !== 1 ? 's' : ''}</p>
                 </div>
                 <Calendar className="h-8 w-8 text-blue-600" />
@@ -247,7 +257,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-purple-800">Últimos 7 dias</p>
-                  <p className="text-2xl font-bold text-purple-900">R$ {(organizedClientes.ultimos7Dias.length * comissaoPorCliente).toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-purple-900">R$ {(organizedClientes.ultimos7Dias.length * comissaoMedia).toFixed(2)}</p>
                   <p className="text-xs text-purple-600">{organizedClientes.ultimos7Dias.length} cliente{organizedClientes.ultimos7Dias.length !== 1 ? 's' : ''}</p>
                 </div>
                 <User className="h-8 w-8 text-purple-600" />
@@ -258,7 +268,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-800">Total Filtrado</p>
-                  <p className="text-2xl font-bold text-gray-900">R$ {(organizedClientes.total.length * comissaoPorCliente).toFixed(2)}</p>
+                  <p className="text-2xl font-bold text-gray-900">R$ {(organizedClientes.total.length * comissaoMedia).toFixed(2)}</p>
                   <p className="text-xs text-gray-600">{organizedClientes.total.length} cliente{organizedClientes.total.length !== 1 ? 's' : ''}</p>
                 </div>
                 <DollarSign className="h-8 w-8 text-gray-600" />
@@ -309,7 +319,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   {organizedClientes.total.length} cliente{organizedClientes.total.length !== 1 ? 's' : ''} encontrado{organizedClientes.total.length !== 1 ? 's' : ''}
                 </span>
                 <Badge className="bg-green-100 text-green-800">
-                  R$ 60,00 por cliente
+                  R$ 30-40 por cliente
                 </Badge>
               </div>
             </CardDescription>
@@ -322,7 +332,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   <div className="flex items-center gap-2 mb-4">
                     <Clock className="h-4 w-4 text-green-600" />
                     <h3 className="font-semibold text-green-800">
-                      📅 Hoje ({organizedClientes.hoje.length}) - R$ {(organizedClientes.hoje.length * comissaoPorCliente).toFixed(2)}
+                      📅 Hoje ({organizedClientes.hoje.length}) - R$ {(organizedClientes.hoje.length * comissaoMedia).toFixed(2)}
                     </h3>
                   </div>
                   <div className="space-y-3">
@@ -337,7 +347,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar className="h-4 w-4 text-blue-600" />
                     <h3 className="font-semibold text-blue-800">
-                      📅 Ontem ({organizedClientes.ontem.length}) - R$ {(organizedClientes.ontem.length * comissaoPorCliente).toFixed(2)}
+                      📅 Ontem ({organizedClientes.ontem.length}) - R$ {(organizedClientes.ontem.length * comissaoMedia).toFixed(2)}
                     </h3>
                   </div>
                   <div className="space-y-3">
@@ -352,7 +362,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   <div className="flex items-center gap-2 mb-4">
                     <User className="h-4 w-4 text-purple-600" />
                     <h3 className="font-semibold text-purple-800">
-                      📅 Últimos 7 dias ({organizedClientes.ultimos7Dias.length}) - R$ {(organizedClientes.ultimos7Dias.length * comissaoPorCliente).toFixed(2)}
+                      📅 Últimos 7 dias ({organizedClientes.ultimos7Dias.length}) - R$ {(organizedClientes.ultimos7Dias.length * comissaoMedia).toFixed(2)}
                     </h3>
                   </div>
                   <div className="space-y-3">
@@ -367,7 +377,7 @@ export function SellerClientsList({ clientes, loading, onRefresh }: SellerClient
                   <div className="flex items-center gap-2 mb-4">
                     <Calendar className="h-4 w-4 text-gray-600" />
                     <h3 className="font-semibold text-gray-800">
-                      📅 Anteriores ({organizedClientes.anteriores.length}) - R$ {(organizedClientes.anteriores.length * comissaoPorCliente).toFixed(2)}
+                      📅 Anteriores ({organizedClientes.anteriores.length}) - R$ {(organizedClientes.anteriores.length * comissaoMedia).toFixed(2)}
                     </h3>
                   </div>
                   <div className="space-y-3">
