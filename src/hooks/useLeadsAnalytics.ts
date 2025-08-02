@@ -24,30 +24,36 @@ export function useLeadsAnalytics() {
   const [error, setError] = useState<string | null>(null);
 
   const getLeadsForDate = async (date: string): Promise<LeadsAnalytics> => {
-    const nextDay = formatDateBrazil(new Date(new Date(date).getTime() + 24 * 60 * 60 * 1000));
+    console.log('🔍 [LeadsAnalytics] Buscando leads para data:', date);
     
     const { data, error } = await supabase
       .from('formularios_parceria')
       .select('completo, created_at')
-      .gte('created_at', `${date}T00:00:00`)
-      .lt('created_at', `${nextDay}T00:00:00`);
+      .gte('created_at', `${date} 00:00:00+00`)
+      .lt('created_at', `${date} 23:59:59+00`);
 
     if (error) {
+      console.error('❌ [LeadsAnalytics] Erro na query:', error);
       throw error;
     }
+
+    console.log('📊 [LeadsAnalytics] Dados retornados:', { date, count: data?.length || 0, leads: data });
 
     const total = data?.length || 0;
     const completos = data?.filter(lead => lead.completo).length || 0;
     const incompletos = total - completos;
     const taxaConversao = total > 0 ? (completos / total) * 100 : 0;
 
-    return {
+    const result = {
       date,
       total,
       completos,
       incompletos,
       taxaConversao: Math.round(taxaConversao * 100) / 100
     };
+
+    console.log('✅ [LeadsAnalytics] Resultado calculado:', result);
+    return result;
   };
 
   const getLeadsForDateRange = async (dateRange: DateRange): Promise<LeadsAnalytics> => {
