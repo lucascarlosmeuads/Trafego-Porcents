@@ -3,8 +3,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MessageCircle, Eye, Calendar, User, Mail, Phone } from 'lucide-react';
+import { MessageCircle, Eye, Calendar, User, Mail, Phone, BarChart3 } from 'lucide-react';
 import { LeadDetailsModal } from './LeadDetailsModal';
+import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -13,6 +14,7 @@ export function LeadsParcerriaPanel() {
   const { leads, loading, totalLeads } = useLeadsParceria();
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showAnalytics, setShowAnalytics] = useState(true);
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -62,10 +64,23 @@ export function LeadsParcerriaPanel() {
               Gerencie todos os leads interessados em parceria
             </p>
           </div>
-          <Badge variant="secondary" className="text-lg px-4 py-2">
-            {totalLeads} {totalLeads === 1 ? 'Lead' : 'Leads'}
-          </Badge>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              onClick={() => setShowAnalytics(!showAnalytics)}
+              className="flex items-center gap-2"
+            >
+              <BarChart3 className="h-4 w-4" />
+              {showAnalytics ? 'Ocultar' : 'Mostrar'} Analytics
+            </Button>
+            <Badge variant="secondary" className="text-lg px-4 py-2">
+              {totalLeads} {totalLeads === 1 ? 'Lead' : 'Leads'}
+            </Badge>
+          </div>
         </div>
+
+        {/* Dashboard de Analytics */}
+        {showAnalytics && <LeadsParcerriaAnalytics />}
 
         <Card>
           <CardHeader>
