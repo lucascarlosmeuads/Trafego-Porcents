@@ -1,7 +1,6 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { useOptimizedComponents } from '@/hooks/useOptimizedComponents'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
@@ -34,7 +33,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   // CORREÇÃO: Todos os hooks devem ser chamados PRIMEIRO, sem condições
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
-  const { useOptimized } = useOptimizedComponents()
   
   // Buscar dados dos clientes - sempre chamar o hook
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
@@ -54,7 +52,6 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   console.log('🎯 [AdminDashboard] Selected manager:', selectedManager)
   console.log('📊 [AdminDashboard] Clientes encontrados:', gestorClientes.length)
   console.log('⏳ [AdminDashboard] Loading clientes:', clientesLoading)
-  console.log('⚡ [AdminDashboard] Usando componentes otimizados:', useOptimized)
 
   // Renderizar loading apenas se user/isAdmin ainda não estiverem carregados
   if (loading || !user || !isAdmin) {
@@ -87,18 +84,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
             {/* Métricas Meta Ads */}
             <AdminMetaAdsMetrics />
             
-            {/* Métricas do Admin - Usar versão otimizada quando disponível */}
-            {useOptimized ? (
-              <OptimizedAdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            ) : (
-              <AdminDashboardMetrics 
-                clientes={gestorClientes} 
-                selectedManager={selectedManager}
-              />
-            )}
+            {/* Métricas do Admin */}
+            <AdminDashboardMetrics 
+              clientes={gestorClientes} 
+              selectedManager={selectedManager}
+            />
           </div>
         )
 
