@@ -108,6 +108,11 @@ export function useLeadsParceria() {
       if (status === 'aceitou') {
         updates.cliente_pago = true;
       }
+      
+      // Se voltou para pendente, resetar o status de pago (exceto se foi marcado manualmente)
+      if (status === 'pendente') {
+        updates.cliente_pago = false;
+      }
 
       const { error } = await supabase
         .from('formularios_parceria')
