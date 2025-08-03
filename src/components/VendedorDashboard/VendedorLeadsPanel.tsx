@@ -41,9 +41,15 @@ export function VendedorLeadsPanel() {
   };
 
   const getRowClassName = (lead: any) => {
-    if (lead.cliente_pago) return 'bg-green-50/30 hover:bg-green-50/50 border-l-4 border-l-green-500';
-    if (lead.status_negociacao === 'aceitou') return 'bg-blue-50/30 hover:bg-blue-50/50 border-l-4 border-l-blue-500';
-    if (lead.status_negociacao === 'recusou') return 'bg-red-50/30 hover:bg-red-50/50 border-l-4 border-l-red-500';
+    if (lead.status_negociacao === 'aceitou') {
+      return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
+    }
+    if (lead.status_negociacao === 'pensando') {
+      return 'bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900';
+    }
+    if (lead.status_negociacao === 'recusou') {
+      return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
+    }
     return '';
   };
 
@@ -178,20 +184,12 @@ export function VendedorLeadsPanel() {
                             <SelectTrigger className="w-32">
                               <SelectValue />
                             </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pendente">
-                                <Badge variant="secondary">Pendente</Badge>
-                              </SelectItem>
-                              <SelectItem value="aceitou">
-                                <Badge variant="default" className="bg-green-500">Aceitou</Badge>
-                              </SelectItem>
-                              <SelectItem value="pensando">
-                                <Badge variant="outline">Pensando</Badge>
-                              </SelectItem>
-                              <SelectItem value="recusou">
-                                <Badge variant="destructive">Recusou</Badge>
-                              </SelectItem>
-                            </SelectContent>
+                             <SelectContent>
+                               <SelectItem value="pendente">não chamei</SelectItem>
+                               <SelectItem value="pensando">chamei</SelectItem>
+                               <SelectItem value="aceitou">comprou</SelectItem>
+                               <SelectItem value="recusou">não quer</SelectItem>
+                             </SelectContent>
                           </Select>
                         </TableCell>
                         <TableCell>
