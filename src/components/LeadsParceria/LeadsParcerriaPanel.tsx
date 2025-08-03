@@ -16,6 +16,7 @@ export function LeadsParcerriaPanel() {
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('todos');
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -57,6 +58,10 @@ export function LeadsParcerriaPanel() {
     }
     return '';
   };
+
+  const filteredLeads = statusFilter === 'todos' 
+    ? leads 
+    : leads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
 
   if (loading) {
     return (
@@ -101,9 +106,26 @@ export function LeadsParcerriaPanel() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Lista de Leads
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Lista de Leads
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Filtrar por status:</span>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos</SelectItem>
+                    <SelectItem value="pendente">não chamei</SelectItem>
+                    <SelectItem value="pensando">chamei</SelectItem>
+                    <SelectItem value="aceitou">comprou</SelectItem>
+                    <SelectItem value="recusou">não quer</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -121,7 +143,7 @@ export function LeadsParcerriaPanel() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {leads.map((lead) => {
+                  {filteredLeads.map((lead) => {
                     const leadData = getLeadData(lead);
                     
                     return (
