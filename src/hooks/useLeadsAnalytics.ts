@@ -18,11 +18,14 @@ interface DateRange {
   endDate: string;
 }
 
+type ConversionPeriod = 3 | 7 | 15 | 30 | 'custom';
+
 export function useLeadsAnalytics() {
   const [todayStats, setTodayStats] = useState<LeadsAnalytics | null>(null);
   const [yesterdayStats, setYesterdayStats] = useState<LeadsAnalytics | null>(null);
   const [dayBeforeStats, setDayBeforeStats] = useState<LeadsAnalytics | null>(null);
   const [customDateStats, setCustomDateStats] = useState<LeadsAnalytics | null>(null);
+  const [conversionPeriodStats, setConversionPeriodStats] = useState<LeadsAnalytics | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,6 +180,29 @@ export function useLeadsAnalytics() {
     }
   };
 
+  const fetchConversionPeriodAnalytics = async (period: ConversionPeriod, customDateRange?: DateRange) => {
+    try {
+      let dateRange: DateRange;
+      
+      if (period === 'custom' && customDateRange) {
+        dateRange = customDateRange;
+      } else {
+        const today = new Date();
+        const startDate = new Date(today.getTime() - (Number(period) - 1) * 24 * 60 * 60 * 1000);
+        dateRange = {
+          startDate: formatDateBrazil(startDate),
+          endDate: formatDateBrazil(today)
+        };
+      }
+
+      const periodData = await getLeadsForDateRange(dateRange);
+      setConversionPeriodStats(periodData);
+    } catch (err: any) {
+      console.error('Erro ao buscar analytics de período de conversão:', err);
+      setError(err.message || 'Erro ao carregar analytics de período');
+    }
+  };
+
   useEffect(() => {
     fetchAnalytics();
 
@@ -217,10 +243,12 @@ export function useLeadsAnalytics() {
     yesterdayStats,
     dayBeforeStats,
     customDateStats,
+    conversionPeriodStats,
     loading,
     error,
     refetch: fetchAnalytics,
     fetchCustomDateAnalytics,
+    fetchConversionPeriodAnalytics,
     getTrend,
     getTrendPercentage
   };

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { 
   Calendar, 
   TrendingUp, 
@@ -16,12 +17,15 @@ import {
   DollarSign,
   PieChart,
   Target,
-  Percent
+  Percent,
+  Clock
 } from 'lucide-react';
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics';
 import { LeadsMetaAdsReport } from './LeadsMetaAdsReport';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+
+type ConversionPeriod = 3 | 7 | 15 | 30 | 'custom';
 
 export function LeadsParcerriaAnalytics() {
   const {
@@ -29,15 +33,20 @@ export function LeadsParcerriaAnalytics() {
     yesterdayStats,
     dayBeforeStats,
     customDateStats,
+    conversionPeriodStats,
     loading,
     getTrend,
     getTrendPercentage,
-    fetchCustomDateAnalytics
+    fetchCustomDateAnalytics,
+    fetchConversionPeriodAnalytics
   } = useLeadsAnalytics();
 
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showCustomFilter, setShowCustomFilter] = useState(false);
+  const [selectedConversionPeriod, setSelectedConversionPeriod] = useState<ConversionPeriod>(3);
+  const [conversionCustomStartDate, setConversionCustomStartDate] = useState('');
+  const [conversionCustomEndDate, setConversionCustomEndDate] = useState('');
 
   const handleCustomDateSearch = () => {
     if (customStartDate && customEndDate) {
@@ -46,6 +55,34 @@ export function LeadsParcerriaAnalytics() {
         endDate: customEndDate
       });
     }
+  };
+
+  const handleConversionPeriodChange = (period: ConversionPeriod) => {
+    setSelectedConversionPeriod(period);
+    if (period === 'custom') {
+      // Não buscar dados ainda, esperar usuário definir as datas
+      return;
+    }
+    fetchConversionPeriodAnalytics(period);
+  };
+
+  const handleConversionCustomDateSearch = () => {
+    if (conversionCustomStartDate && conversionCustomEndDate) {
+      fetchConversionPeriodAnalytics('custom', {
+        startDate: conversionCustomStartDate,
+        endDate: conversionCustomEndDate
+      });
+    }
+  };
+
+  // Carregar dados do período inicial (3 dias) na inicialização
+  useEffect(() => {
+    fetchConversionPeriodAnalytics(3);
+  }, []);
+
+  const getPeriodLabel = (period: ConversionPeriod) => {
+    if (period === 'custom') return 'Personalizado';
+    return `${period} Dias`;
   };
 
   const renderTrendIcon = (trend: 'up' | 'down' | 'stable') => {
@@ -296,24 +333,74 @@ export function LeadsParcerriaAnalytics() {
           </CardContent>
         </Card>
 
-        {/* Leads Convertidos Últimos 3 Dias */}
+        {/* Leads Convertidos - Período Selecionável */}
         <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm font-medium">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Target className="h-4 w-4 text-amber-600" />
-                Convertidos 3 Dias
+                <Clock className="h-4 w-4 text-amber-600" />
+                Convertidos {getPeriodLabel(selectedConversionPeriod)}
               </span>
             </CardTitle>
+            <div className="flex flex-col gap-2">
+              <Select value={selectedConversionPeriod.toString()} onValueChange={(value) => handleConversionPeriodChange(value as ConversionPeriod)}>
+                <SelectTrigger className="w-full text-xs">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3 Dias</SelectItem>
+                  <SelectItem value="7">7 Dias</SelectItem>
+                  <SelectItem value="15">15 Dias</SelectItem>
+                  <SelectItem value="30">30 Dias</SelectItem>
+                  <SelectItem value="custom">Personalizado</SelectItem>
+                </SelectContent>
+              </Select>
+              
+              {/* Inputs para período personalizado */}
+              {selectedConversionPeriod === 'custom' && (
+                <div className="space-y-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      type="date"
+                      value={conversionCustomStartDate}
+                      onChange={(e) => setConversionCustomStartDate(e.target.value)}
+                      className="text-xs"
+                      placeholder="Início"
+                    />
+                    <Input
+                      type="date"
+                      value={conversionCustomEndDate}
+                      onChange={(e) => setConversionCustomEndDate(e.target.value)}
+                      className="text-xs"
+                      placeholder="Fim"
+                    />
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={handleConversionCustomDateSearch}
+                    disabled={!conversionCustomStartDate || !conversionCustomEndDate}
+                    className="w-full text-xs"
+                  >
+                    Aplicar
+                  </Button>
+                </div>
+              )}
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="text-2xl font-bold text-amber-600">
-                {(todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
+                {conversionPeriodStats?.converted || 0}
               </div>
               <div className="text-xs text-muted-foreground">
                 Total de leads que compraram
               </div>
+              {conversionPeriodStats && conversionPeriodStats.total > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Taxa: {conversionPeriodStats.conversionRate.toFixed(1)}% 
+                  ({conversionPeriodStats.converted} de {conversionPeriodStats.total})
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
