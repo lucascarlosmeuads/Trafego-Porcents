@@ -25,7 +25,7 @@ export function VendedorLeadsPanel() {
   const getLeadData = (lead: any) => {
     const respostas = lead.respostas || {};
     return {
-      nome: respostas.dadosPersonais?.nome || respostas.nomeCompleto || respostas.nome || 'Nome não informado',
+      nome: respostas.dadosPersonais?.nome || 'Nome não encontrado',
       email: lead.email_usuario || 'Email não informado',
       whatsapp: respostas.whatsapp || respostas.telefone || 'Não informado'
     };
