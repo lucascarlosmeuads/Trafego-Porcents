@@ -35,6 +35,13 @@ export function LeadsParcerriaPanel() {
     };
   };
 
+  const translateTipoNegocio = (tipo: string) => {
+    if (tipo === 'physical') return 'físico';
+    if (tipo === 'digital') return 'digital';
+    if (tipo === 'service') return 'serviço';
+    return tipo;
+  };
+
   const getRowClassName = (lead: any) => {
     if (lead.status_negociacao === 'aceitou') {
       return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
@@ -136,7 +143,7 @@ export function LeadsParcerriaPanel() {
                         <TableCell>
                           <div className="font-medium">{leadData.nome}</div>
                           <div className="text-sm text-muted-foreground">
-                            {lead.tipo_negocio}
+                            {translateTipoNegocio(lead.tipo_negocio)}
                           </div>
                         </TableCell>
                         <TableCell>
