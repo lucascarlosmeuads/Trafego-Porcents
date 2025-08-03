@@ -15,7 +15,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { BarChart3, Users, UserPlus, LogOut } from "lucide-react"
+import { BarChart3, Users, UserPlus, LogOut, MessageCircle } from "lucide-react"
 import { ProfileAvatarUpload } from '../ProfileAvatarUpload'
 
 interface VendedorSidebarProps {
@@ -33,6 +33,11 @@ export function VendedorSidebar({ activeTab, onTabChange }: VendedorSidebarProps
       title: "Dashboard",
       icon: BarChart3,
       id: "dashboard"
+    },
+    {
+      title: "Leads Parceria",
+      icon: MessageCircle,
+      id: "leads-parceria"
     }
   ]
 

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { enableRealtimeForTable } from '@/utils/realtimeUtils';
+import { useAuth } from '@/hooks/useAuth';
 
 interface LeadParceria {
   id: string;
@@ -23,24 +24,32 @@ interface LeadParceria {
   distribuido_em: string | null;
 }
 
-export function useLeadsParceria() {
+export function useVendedorLeads() {
   const [leads, setLeads] = useState<LeadParceria[]>([]);
   const [totalLeads, setTotalLeads] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { user } = useAuth();
 
   const fetchLeads = async () => {
     setLoading(true);
     setError(null);
 
     try {
+      if (!user?.email) {
+        setLeads([]);
+        setTotalLeads(0);
+        return;
+      }
+
       // Habilitar realtime para a tabela
       await enableRealtimeForTable('formularios_parceria');
 
-      // Buscar todos os leads
+      // Buscar apenas leads atribuídos ao vendedor logado
       const { data, error, count } = await supabase
         .from('formularios_parceria')
         .select('*', { count: 'exact' })
+        .eq('vendedor_responsavel', user.email)
         .order('created_at', { ascending: false });
 
       if (error) {
@@ -50,7 +59,7 @@ export function useLeadsParceria() {
       setLeads((data || []) as LeadParceria[]);
       setTotalLeads(count || 0);
     } catch (err: any) {
-      console.error('Erro ao buscar leads de parceria:', err);
+      console.error('Erro ao buscar leads do vendedor:', err);
       setError(err.message || 'Erro ao carregar os leads');
     } finally {
       setLoading(false);
@@ -62,7 +71,7 @@ export function useLeadsParceria() {
 
     // Configurar escuta de eventos em tempo real
     const channel = supabase
-      .channel('formularios_parceria_changes')
+      .channel('vendedor_leads_changes')
       .on(
         'postgres_changes',
         {
@@ -81,7 +90,7 @@ export function useLeadsParceria() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user?.email]);
 
   const updateLeadStatus = async (leadId: string, field: 'cliente_pago' | 'contatado_whatsapp', value: boolean) => {
     try {
@@ -133,30 +142,6 @@ export function useLeadsParceria() {
     }
   };
 
-  const reatribuirLead = async (leadId: string, novoVendedor: string | null) => {
-    try {
-      const updates: any = { 
-        vendedor_responsavel: novoVendedor,
-        distribuido_em: novoVendedor ? new Date().toISOString() : null 
-      };
-
-      const { error } = await supabase
-        .from('formularios_parceria')
-        .update(updates)
-        .eq('id', leadId);
-
-      if (error) throw error;
-      
-      // Atualizar estado local imediatamente
-      setLeads(prev => prev.map(lead => 
-        lead.id === leadId ? { ...lead, ...updates } : lead
-      ));
-    } catch (err: any) {
-      console.error('Erro ao reatribuir lead:', err);
-      setError(err.message);
-    }
-  };
-
   const refetch = () => {
     fetchLeads();
   };
@@ -169,6 +154,5 @@ export function useLeadsParceria() {
     refetch,
     updateLeadStatus,
     updateLeadNegociacao,
-    reatribuirLead,
   };
 }

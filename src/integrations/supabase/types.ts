@@ -724,6 +724,7 @@ export type Database = {
           completo: boolean
           contatado_whatsapp: boolean | null
           created_at: string
+          distribuido_em: string | null
           email_usuario: string | null
           id: string
           ja_teve_vendas: boolean | null
@@ -734,6 +735,7 @@ export type Database = {
           tipo_negocio: string
           updated_at: string
           valor_medio_produto: number | null
+          vendedor_responsavel: string | null
           visao_futuro_texto: string | null
         }
         Insert: {
@@ -742,6 +744,7 @@ export type Database = {
           completo?: boolean
           contatado_whatsapp?: boolean | null
           created_at?: string
+          distribuido_em?: string | null
           email_usuario?: string | null
           id?: string
           ja_teve_vendas?: boolean | null
@@ -752,6 +755,7 @@ export type Database = {
           tipo_negocio: string
           updated_at?: string
           valor_medio_produto?: number | null
+          vendedor_responsavel?: string | null
           visao_futuro_texto?: string | null
         }
         Update: {
@@ -760,6 +764,7 @@ export type Database = {
           completo?: boolean
           contatado_whatsapp?: boolean | null
           created_at?: string
+          distribuido_em?: string | null
           email_usuario?: string | null
           id?: string
           ja_teve_vendas?: boolean | null
@@ -770,6 +775,7 @@ export type Database = {
           tipo_negocio?: string
           updated_at?: string
           valor_medio_produto?: number | null
+          vendedor_responsavel?: string | null
           visao_futuro_texto?: string | null
         }
         Relationships: []
@@ -979,6 +985,30 @@ export type Database = {
           lead_id?: string | null
           status_processamento?: string
           webhook_data?: Json
+        }
+        Relationships: []
+      }
+      leads_distribuicao_controle: {
+        Row: {
+          contador_atual: number
+          created_at: string
+          id: string
+          ultima_distribuicao: string | null
+          updated_at: string
+        }
+        Insert: {
+          contador_atual?: number
+          created_at?: string
+          id?: string
+          ultima_distribuicao?: string | null
+          updated_at?: string
+        }
+        Update: {
+          contador_atual?: number
+          created_at?: string
+          id?: string
+          ultima_distribuicao?: string | null
+          updated_at?: string
         }
         Relationships: []
       }

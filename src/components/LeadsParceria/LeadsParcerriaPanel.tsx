@@ -12,7 +12,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function LeadsParcerriaPanel() {
-  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria();
+  const { leads, loading, totalLeads, updateLeadNegociacao, reatribuirLead } = useLeadsParceria();
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -124,6 +124,7 @@ export function LeadsParcerriaPanel() {
                       <Phone className="h-4 w-4" />
                       WhatsApp
                     </TableHead>
+                    <TableHead>Vendedor Responsável</TableHead>
                     <TableHead>Status Negociação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -165,6 +166,63 @@ export function LeadsParcerriaPanel() {
                               >
                                 <MessageCircle className="h-4 w-4 text-green-600" />
                               </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            {lead.vendedor_responsavel ? (
+                              <Select
+                                value={lead.vendedor_responsavel}
+                                onValueChange={(value) => reatribuirLead?.(lead.id, value === 'none' ? null : value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue>
+                                    {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' && (
+                                      <Badge variant="default" className="bg-green-500">Edu</Badge>
+                                    )}
+                                    {lead.vendedor_responsavel === 'vendedoritamar@trafegoporcents.com' && (
+                                      <Badge variant="default" className="bg-blue-500">Itamar</Badge>
+                                    )}
+                                    {lead.vendedor_responsavel === 'vendedorjoao@trafegoporcents.com' && (
+                                      <Badge variant="default" className="bg-orange-500">João</Badge>
+                                    )}
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Não Atribuído</SelectItem>
+                                  <SelectItem value="vendedoredu@trafegoporcents.com">
+                                    Edu
+                                  </SelectItem>
+                                  <SelectItem value="vendedoritamar@trafegoporcents.com">
+                                    Itamar
+                                  </SelectItem>
+                                  <SelectItem value="vendedorjoao@trafegoporcents.com">
+                                    João
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
+                            ) : (
+                              <Select
+                                value="none"
+                                onValueChange={(value) => reatribuirLead?.(lead.id, value)}
+                              >
+                                <SelectTrigger className="w-32">
+                                  <SelectValue placeholder="Atribuir" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Não Atribuído</SelectItem>
+                                  <SelectItem value="vendedoredu@trafegoporcents.com">
+                                    Edu
+                                  </SelectItem>
+                                  <SelectItem value="vendedoritamar@trafegoporcents.com">
+                                    Itamar
+                                  </SelectItem>
+                                  <SelectItem value="vendedorjoao@trafegoporcents.com">
+                                    João
+                                  </SelectItem>
+                                </SelectContent>
+                              </Select>
                             )}
                           </div>
                         </TableCell>

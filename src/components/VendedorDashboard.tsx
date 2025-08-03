@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { useSimpleSellerData } from '@/hooks/useSimpleSellerData'
 import { VendedorSidebar } from './VendedorDashboard/VendedorSidebar'
 import { SimplifiedSalesReport } from './VendedorDashboard/SimplifiedSalesReport'
+import { VendedorLeadsPanel } from './VendedorDashboard/VendedorLeadsPanel'
 import { SidebarProvider, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar'
 import { useIsMobile } from '@/hooks/use-mobile'
 
@@ -14,8 +15,12 @@ export function VendedorDashboard() {
   const isMobile = useIsMobile()
 
   const renderContent = () => {
-    // Sempre mostrar apenas o relatório de vendas simplificado
-    return <SimplifiedSalesReport clientes={clientes} loading={loading} />
+    switch (activeTab) {
+      case 'leads-parceria':
+        return <VendedorLeadsPanel />
+      default:
+        return <SimplifiedSalesReport clientes={clientes} loading={loading} />
+    }
   }
 
   return (
@@ -38,7 +43,7 @@ export function VendedorDashboard() {
                   <h1 className={`${
                     isMobile ? 'text-base' : 'text-lg sm:text-xl lg:text-2xl'
                   } font-bold text-foreground truncate`}>
-                    Relatório de Vendas
+                    {activeTab === 'leads-parceria' ? 'Leads de Parceria' : 'Relatório de Vendas'}
                   </h1>
                   <div className={`flex flex-col sm:flex-row sm:items-center sm:space-x-2 ${
                     isMobile ? 'text-xs' : 'text-xs sm:text-sm'
