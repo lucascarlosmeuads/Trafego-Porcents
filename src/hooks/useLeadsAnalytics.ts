@@ -5,9 +5,10 @@ import { getTodayBrazil, getYesterdayBrazil, formatDateBrazil, getBrazilDate } f
 interface LeadsAnalytics {
   date: string;
   total: number;
-  completos: number;
-  incompletos: number;
-  taxaConversao: number;
+  comAudio: number;
+  semAudio: number;
+  tiposNegocio: { [key: string]: number };
+  valorMedioTotal: number;
 }
 
 interface DateRange {
@@ -28,7 +29,7 @@ export function useLeadsAnalytics() {
     
     const { data, error } = await supabase
       .from('formularios_parceria')
-      .select('completo, created_at')
+      .select('*')
       .gte('created_at', `${date} 00:00:00+00`)
       .lt('created_at', `${date} 23:59:59+00`);
 
@@ -40,16 +41,30 @@ export function useLeadsAnalytics() {
     console.log('📊 [LeadsAnalytics] Dados retornados:', { date, count: data?.length || 0, leads: data });
 
     const total = data?.length || 0;
-    const completos = data?.filter(lead => lead.completo).length || 0;
-    const incompletos = total - completos;
-    const taxaConversao = total > 0 ? (completos / total) * 100 : 0;
+    const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
+    const semAudio = total - comAudio;
+    
+    // Contar tipos de negócio
+    const tiposNegocio: { [key: string]: number } = {};
+    data?.forEach((lead: any) => {
+      if (lead.tipo_negocio) {
+        tiposNegocio[lead.tipo_negocio] = (tiposNegocio[lead.tipo_negocio] || 0) + 1;
+      }
+    });
+
+    // Calcular valor médio total
+    const valoresValidos = data?.filter((lead: any) => lead.valor_medio_produto && lead.valor_medio_produto > 0) || [];
+    const valorMedioTotal = valoresValidos.length > 0 
+      ? valoresValidos.reduce((sum: number, lead: any) => sum + (lead.valor_medio_produto || 0), 0) / valoresValidos.length 
+      : 0;
 
     const result = {
       date,
       total,
-      completos,
-      incompletos,
-      taxaConversao: Math.round(taxaConversao * 100) / 100
+      comAudio,
+      semAudio,
+      tiposNegocio,
+      valorMedioTotal: Math.round(valorMedioTotal * 100) / 100
     };
 
     console.log('✅ [LeadsAnalytics] Resultado calculado:', result);
@@ -59,7 +74,7 @@ export function useLeadsAnalytics() {
   const getLeadsForDateRange = async (dateRange: DateRange): Promise<LeadsAnalytics> => {
     const { data, error } = await supabase
       .from('formularios_parceria')
-      .select('completo, created_at')
+      .select('*')
       .gte('created_at', `${dateRange.startDate}T00:00:00`)
       .lte('created_at', `${dateRange.endDate}T23:59:59`);
 
@@ -68,16 +83,30 @@ export function useLeadsAnalytics() {
     }
 
     const total = data?.length || 0;
-    const completos = data?.filter(lead => lead.completo).length || 0;
-    const incompletos = total - completos;
-    const taxaConversao = total > 0 ? (completos / total) * 100 : 0;
+    const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
+    const semAudio = total - comAudio;
+    
+    // Contar tipos de negócio
+    const tiposNegocio: { [key: string]: number } = {};
+    data?.forEach((lead: any) => {
+      if (lead.tipo_negocio) {
+        tiposNegocio[lead.tipo_negocio] = (tiposNegocio[lead.tipo_negocio] || 0) + 1;
+      }
+    });
+
+    // Calcular valor médio total
+    const valoresValidos = data?.filter((lead: any) => lead.valor_medio_produto && lead.valor_medio_produto > 0) || [];
+    const valorMedioTotal = valoresValidos.length > 0 
+      ? valoresValidos.reduce((sum: number, lead: any) => sum + (lead.valor_medio_produto || 0), 0) / valoresValidos.length 
+      : 0;
 
     return {
       date: `${dateRange.startDate} - ${dateRange.endDate}`,
       total,
-      completos,
-      incompletos,
-      taxaConversao: Math.round(taxaConversao * 100) / 100
+      comAudio,
+      semAudio,
+      tiposNegocio,
+      valorMedioTotal: Math.round(valorMedioTotal * 100) / 100
     };
   };
 

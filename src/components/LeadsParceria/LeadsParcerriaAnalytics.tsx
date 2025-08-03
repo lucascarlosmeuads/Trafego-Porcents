@@ -8,11 +8,13 @@ import {
   TrendingUp, 
   TrendingDown, 
   Users, 
-  CheckCircle, 
-  Clock,
+  Mic,
+  FileText,
   BarChart3,
   Minus,
-  Search
+  Search,
+  DollarSign,
+  PieChart
 } from 'lucide-react';
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics';
 import { format } from 'date-fns';
@@ -173,26 +175,28 @@ export function LeadsParcerriaAnalytics() {
               <div className="space-y-1 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Completos
+                    <Mic className="h-3 w-3 text-green-600" />
+                    Com Áudio
                   </span>
-                  <span className="font-medium">{todayStats?.completos || 0}</span>
+                  <span className="font-medium">{todayStats?.comAudio || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-yellow-600" />
-                    Incompletos
+                    <FileText className="h-3 w-3 text-blue-600" />
+                    Só Texto
                   </span>
-                  <span className="font-medium">{todayStats?.incompletos || 0}</span>
+                  <span className="font-medium">{todayStats?.semAudio || 0}</span>
                 </div>
-                <div className="pt-1 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taxa Conversão</span>
-                    <span className="font-medium text-green-600">
-                      {todayStats?.taxaConversao || 0}%
-                    </span>
+                {todayStats?.valorMedioTotal && todayStats.valorMedioTotal > 0 && (
+                  <div className="pt-1 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Valor Médio</span>
+                      <span className="font-medium text-green-600">
+                        R$ {todayStats.valorMedioTotal.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -217,26 +221,28 @@ export function LeadsParcerriaAnalytics() {
               <div className="space-y-1 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Completos
+                    <Mic className="h-3 w-3 text-green-600" />
+                    Com Áudio
                   </span>
-                  <span className="font-medium">{yesterdayStats?.completos || 0}</span>
+                  <span className="font-medium">{yesterdayStats?.comAudio || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-yellow-600" />
-                    Incompletos
+                    <FileText className="h-3 w-3 text-blue-600" />
+                    Só Texto
                   </span>
-                  <span className="font-medium">{yesterdayStats?.incompletos || 0}</span>
+                  <span className="font-medium">{yesterdayStats?.semAudio || 0}</span>
                 </div>
-                <div className="pt-1 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taxa Conversão</span>
-                    <span className="font-medium text-blue-600">
-                      {yesterdayStats?.taxaConversao || 0}%
-                    </span>
+                {yesterdayStats?.valorMedioTotal && yesterdayStats.valorMedioTotal > 0 && (
+                  <div className="pt-1 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Valor Médio</span>
+                      <span className="font-medium text-blue-600">
+                        R$ {yesterdayStats.valorMedioTotal.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -258,26 +264,28 @@ export function LeadsParcerriaAnalytics() {
               <div className="space-y-1 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Completos
+                    <Mic className="h-3 w-3 text-green-600" />
+                    Com Áudio
                   </span>
-                  <span className="font-medium">{dayBeforeStats?.completos || 0}</span>
+                  <span className="font-medium">{dayBeforeStats?.comAudio || 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-yellow-600" />
-                    Incompletos
+                    <FileText className="h-3 w-3 text-blue-600" />
+                    Só Texto
                   </span>
-                  <span className="font-medium">{dayBeforeStats?.incompletos || 0}</span>
+                  <span className="font-medium">{dayBeforeStats?.semAudio || 0}</span>
                 </div>
-                <div className="pt-1 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Taxa Conversão</span>
-                    <span className="font-medium text-purple-600">
-                      {dayBeforeStats?.taxaConversao || 0}%
-                    </span>
+                {dayBeforeStats?.valorMedioTotal && dayBeforeStats.valorMedioTotal > 0 && (
+                  <div className="pt-1 border-t">
+                    <div className="flex items-center justify-between">
+                      <span className="text-muted-foreground">Valor Médio</span>
+                      <span className="font-medium text-purple-600">
+                        R$ {dayBeforeStats.valorMedioTotal.toFixed(2)}
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </CardContent>
@@ -301,20 +309,20 @@ export function LeadsParcerriaAnalytics() {
               <div className="space-y-1 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <CheckCircle className="h-3 w-3 text-green-600" />
-                    Completos
+                    <Mic className="h-3 w-3 text-green-600" />
+                    Com Áudio
                   </span>
                   <span className="font-medium">
-                    {(todayStats?.completos || 0) + (yesterdayStats?.completos || 0) + (dayBeforeStats?.completos || 0)}
+                    {(todayStats?.comAudio || 0) + (yesterdayStats?.comAudio || 0) + (dayBeforeStats?.comAudio || 0)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="flex items-center gap-1">
-                    <Clock className="h-3 w-3 text-yellow-600" />
-                    Incompletos
+                    <FileText className="h-3 w-3 text-blue-600" />
+                    Só Texto
                   </span>
                   <span className="font-medium">
-                    {(todayStats?.incompletos || 0) + (yesterdayStats?.incompletos || 0) + (dayBeforeStats?.incompletos || 0)}
+                    {(todayStats?.semAudio || 0) + (yesterdayStats?.semAudio || 0) + (dayBeforeStats?.semAudio || 0)}
                   </span>
                 </div>
                 <div className="pt-1 border-t">
@@ -331,6 +339,83 @@ export function LeadsParcerriaAnalytics() {
         </Card>
       </div>
 
+      {/* Cards de métricas adicionais */}
+      {(todayStats || yesterdayStats || dayBeforeStats) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Tipos de Negócio */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <PieChart className="h-5 w-5" />
+                Tipos de Negócio (Últimos 3 Dias)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(() => {
+                  const todosTipos = { ...todayStats?.tiposNegocio, ...yesterdayStats?.tiposNegocio, ...dayBeforeStats?.tiposNegocio };
+                  const tiposConsolidados: { [key: string]: number } = {};
+                  
+                  // Consolidar contagens
+                  [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
+                    if (stats?.tiposNegocio) {
+                      Object.entries(stats.tiposNegocio).forEach(([tipo, count]) => {
+                        tiposConsolidados[tipo] = (tiposConsolidados[tipo] || 0) + count;
+                      });
+                    }
+                  });
+
+                  return Object.entries(tiposConsolidados).map(([tipo, count]) => (
+                    <div key={tipo} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                      <span className="capitalize">{tipo}</span>
+                      <Badge variant="outline">{count}</Badge>
+                    </div>
+                  ));
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Valores médios */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <DollarSign className="h-5 w-5" />
+                Valor Médio dos Produtos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span>Hoje</span>
+                  <span className="font-semibold text-green-600">
+                    {todayStats?.valorMedioTotal && todayStats.valorMedioTotal > 0 
+                      ? `R$ ${todayStats.valorMedioTotal.toFixed(2)}` 
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Ontem</span>
+                  <span className="font-semibold text-blue-600">
+                    {yesterdayStats?.valorMedioTotal && yesterdayStats.valorMedioTotal > 0 
+                      ? `R$ ${yesterdayStats.valorMedioTotal.toFixed(2)}` 
+                      : 'N/A'}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span>Anteontem</span>
+                  <span className="font-semibold text-purple-600">
+                    {dayBeforeStats?.valorMedioTotal && dayBeforeStats.valorMedioTotal > 0 
+                      ? `R$ ${dayBeforeStats.valorMedioTotal.toFixed(2)}` 
+                      : 'N/A'}
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
       {/* Card de período personalizado */}
       {customDateStats && (
         <Card className="border-l-4 border-l-indigo-500">
@@ -345,21 +430,38 @@ export function LeadsParcerriaAnalytics() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-indigo-600">{customDateStats.total}</div>
-                <div className="text-sm text-muted-foreground">Total</div>
+                <div className="text-sm text-muted-foreground">Total Leads</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{customDateStats.completos}</div>
-                <div className="text-sm text-muted-foreground">Completos</div>
+                <div className="text-2xl font-bold text-green-600">{customDateStats.comAudio}</div>
+                <div className="text-sm text-muted-foreground">Com Áudio</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">{customDateStats.incompletos}</div>
-                <div className="text-sm text-muted-foreground">Incompletos</div>
+                <div className="text-2xl font-bold text-blue-600">{customDateStats.semAudio}</div>
+                <div className="text-sm text-muted-foreground">Só Texto</div>
               </div>
               <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">{customDateStats.taxaConversao}%</div>
-                <div className="text-sm text-muted-foreground">Taxa Conversão</div>
+                <div className="text-2xl font-bold text-purple-600">
+                  {customDateStats.valorMedioTotal > 0 ? `R$ ${customDateStats.valorMedioTotal.toFixed(2)}` : 'N/A'}
+                </div>
+                <div className="text-sm text-muted-foreground">Valor Médio</div>
               </div>
             </div>
+            
+            {/* Tipos de negócio no período personalizado */}
+            {Object.keys(customDateStats.tiposNegocio).length > 0 && (
+              <div className="mt-4 pt-4 border-t">
+                <h4 className="font-medium mb-2">Tipos de Negócio</h4>
+                <div className="grid grid-cols-2 gap-2">
+                  {Object.entries(customDateStats.tiposNegocio).map(([tipo, count]) => (
+                    <div key={tipo} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                      <span className="capitalize text-sm">{tipo}</span>
+                      <Badge variant="outline" className="text-xs">{count}</Badge>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       )}
