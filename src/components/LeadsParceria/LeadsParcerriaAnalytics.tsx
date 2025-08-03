@@ -14,9 +14,12 @@ import {
   Minus,
   Search,
   DollarSign,
-  PieChart
+  PieChart,
+  Target,
+  Percent
 } from 'lucide-react';
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics';
+import { LeadsMetaAdsReport } from './LeadsMetaAdsReport';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -154,7 +157,7 @@ export function LeadsParcerriaAnalytics() {
         </Card>
       )}
 
-      {/* Cards de métricas principais */}
+      {/* Cards de métricas principais - Leads */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Hoje */}
         <Card className="border-l-4 border-l-green-500">
@@ -241,6 +244,121 @@ export function LeadsParcerriaAnalytics() {
         </Card>
       </div>
 
+      {/* Cards de conversão */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Taxa de Conversão Hoje */}
+        <Card className="border-l-4 border-l-emerald-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Percent className="h-4 w-4 text-emerald-600" />
+                Taxa Hoje
+              </span>
+              {yesterdayStats && todayStats && (
+                renderTrendBadge(todayStats.conversionRate, yesterdayStats.conversionRate, 'conversão hoje vs ontem')
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-emerald-600">
+                {todayStats?.conversionRate.toFixed(1) || '0.0'}%
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {todayStats?.converted || 0} de {todayStats?.total || 0} leads
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Taxa de Conversão Ontem */}
+        <Card className="border-l-4 border-l-cyan-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium flex items-center justify-between">
+              <span className="flex items-center gap-2">
+                <Percent className="h-4 w-4 text-cyan-600" />
+                Taxa Ontem
+              </span>
+              {dayBeforeStats && yesterdayStats && (
+                renderTrendBadge(yesterdayStats.conversionRate, dayBeforeStats.conversionRate, 'conversão ontem vs anteontem')
+              )}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-cyan-600">
+                {yesterdayStats?.conversionRate.toFixed(1) || '0.0'}%
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {yesterdayStats?.converted || 0} de {yesterdayStats?.total || 0} leads
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Leads Convertidos Últimos 3 Dias */}
+        <Card className="border-l-4 border-l-amber-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">
+              <span className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-amber-600" />
+                Convertidos 3 Dias
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-amber-600">
+                {(todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Total de leads que compraram
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Taxa Média 3 Dias */}
+        <Card className="border-l-4 border-l-violet-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">
+              <span className="flex items-center gap-2">
+                <BarChart3 className="h-4 w-4 text-violet-600" />
+                Taxa Média
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-violet-600">
+                {(() => {
+                  const totalLeads3Days = (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0);
+                  const totalConverted3Days = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
+                  const avgRate = totalLeads3Days > 0 ? (totalConverted3Days / totalLeads3Days) * 100 : 0;
+                  return avgRate.toFixed(1);
+                })()}%
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Últimos 3 dias
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Relatório Meta Ads */}
+      {(todayStats || yesterdayStats || dayBeforeStats) && (
+        <LeadsMetaAdsReport 
+          convertedLeads={(todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
+          totalLeads={(todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)}
+          conversionRate={(() => {
+            const totalLeads = (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0);
+            const totalConverted = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
+            return totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0;
+          })()}
+        />
+      )}
+
       {/* Cards de métricas adicionais */}
       {(todayStats || yesterdayStats || dayBeforeStats) && (
         <div className="grid grid-cols-1 gap-6">
@@ -278,6 +396,59 @@ export function LeadsParcerriaAnalytics() {
             </CardContent>
           </Card>
 
+          {/* Status de Negociação */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Target className="h-5 w-5" />
+                Status de Negociação (Últimos 3 Dias)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                {(() => {
+                  const statusConsolidados: { [key: string]: number } = {};
+                  
+                  // Consolidar contagens de status
+                  [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
+                    if (stats?.statusBreakdown) {
+                      Object.entries(stats.statusBreakdown).forEach(([status, count]) => {
+                        statusConsolidados[status] = (statusConsolidados[status] || 0) + count;
+                      });
+                    }
+                  });
+
+                  // Traduzir status
+                  const statusTraduzidos: { [key: string]: string } = {
+                    'pendente': 'Não chamei',
+                    'chamei': 'Chamei',
+                    'aceitou': 'Comprou',
+                    'comprou': 'Comprou',
+                    'recusou': 'Não quer',
+                    'pensando': 'Pensando'
+                  };
+
+                  return Object.entries(statusConsolidados).map(([status, count]) => {
+                    const statusDisplay = statusTraduzidos[status] || status;
+                    const isConverted = ['aceitou', 'comprou'].includes(status);
+                    
+                    return (
+                      <div key={status} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <span className="capitalize">{statusDisplay}</span>
+                        <Badge 
+                          variant={isConverted ? "default" : "outline"}
+                          className={isConverted ? "bg-green-100 text-green-800 border-green-300" : ""}
+                        >
+                          {count}
+                        </Badge>
+                      </div>
+                    );
+                  });
+                })()}
+              </div>
+            </CardContent>
+          </Card>
+
         </div>
       )}
 
@@ -292,10 +463,18 @@ export function LeadsParcerriaAnalytics() {
             <p className="text-sm text-muted-foreground">{customDateStats.date}</p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-indigo-600">{customDateStats.total}</div>
                 <div className="text-sm text-muted-foreground">Total Leads</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-green-600">{customDateStats.converted}</div>
+                <div className="text-sm text-muted-foreground">Convertidos</div>
+              </div>
+              <div className="text-center">
+                <div className="text-2xl font-bold text-blue-600">{customDateStats.conversionRate.toFixed(1)}%</div>
+                <div className="text-sm text-muted-foreground">Taxa Conversão</div>
               </div>
             </div>
             

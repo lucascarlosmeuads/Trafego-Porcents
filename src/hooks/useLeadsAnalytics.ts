@@ -8,6 +8,9 @@ interface LeadsAnalytics {
   comAudio: number;
   semAudio: number;
   tiposNegocio: { [key: string]: number };
+  converted: number;
+  conversionRate: number;
+  statusBreakdown: { [key: string]: number };
 }
 
 interface DateRange {
@@ -43,6 +46,17 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
+    // Contar leads convertidos (status = 'aceitou' ou 'comprou')
+    const converted = data?.filter((lead: any) => ['aceitou', 'comprou'].includes(lead.status_negociacao)).length || 0;
+    const conversionRate = total > 0 ? (converted / total) * 100 : 0;
+    
+    // Contar por status de negociação
+    const statusBreakdown: { [key: string]: number } = {};
+    data?.forEach((lead: any) => {
+      const status = lead.status_negociacao || 'pendente';
+      statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+    });
+    
     // Contar tipos de negócio com tradução
     const tiposNegocio: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
@@ -62,7 +76,10 @@ export function useLeadsAnalytics() {
       total,
       comAudio,
       semAudio,
-      tiposNegocio
+      tiposNegocio,
+      converted,
+      conversionRate,
+      statusBreakdown
     };
 
     console.log('✅ [LeadsAnalytics] Resultado calculado:', result);
@@ -84,6 +101,17 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
+    // Contar leads convertidos (status = 'aceitou' ou 'comprou')
+    const converted = data?.filter((lead: any) => ['aceitou', 'comprou'].includes(lead.status_negociacao)).length || 0;
+    const conversionRate = total > 0 ? (converted / total) * 100 : 0;
+    
+    // Contar por status de negociação
+    const statusBreakdown: { [key: string]: number } = {};
+    data?.forEach((lead: any) => {
+      const status = lead.status_negociacao || 'pendente';
+      statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
+    });
+    
     // Contar tipos de negócio com tradução
     const tiposNegocio: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
@@ -103,7 +131,10 @@ export function useLeadsAnalytics() {
       total,
       comAudio,
       semAudio,
-      tiposNegocio
+      tiposNegocio,
+      converted,
+      conversionRate,
+      statusBreakdown
     };
   };
 
