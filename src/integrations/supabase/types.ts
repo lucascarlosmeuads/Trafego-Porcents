@@ -719,34 +719,58 @@ export type Database = {
       }
       formularios_parceria: {
         Row: {
+          audio_visao_futuro: string | null
+          cliente_pago: boolean | null
           completo: boolean
+          contatado_whatsapp: boolean | null
           created_at: string
           email_usuario: string | null
           id: string
+          ja_teve_vendas: boolean | null
           planejamento_estrategico: string | null
+          produto_descricao: string | null
           respostas: Json
+          status_negociacao: string | null
           tipo_negocio: string
           updated_at: string
+          valor_medio_produto: number | null
+          visao_futuro_texto: string | null
         }
         Insert: {
+          audio_visao_futuro?: string | null
+          cliente_pago?: boolean | null
           completo?: boolean
+          contatado_whatsapp?: boolean | null
           created_at?: string
           email_usuario?: string | null
           id?: string
+          ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null
+          produto_descricao?: string | null
           respostas?: Json
+          status_negociacao?: string | null
           tipo_negocio: string
           updated_at?: string
+          valor_medio_produto?: number | null
+          visao_futuro_texto?: string | null
         }
         Update: {
+          audio_visao_futuro?: string | null
+          cliente_pago?: boolean | null
           completo?: boolean
+          contatado_whatsapp?: boolean | null
           created_at?: string
           email_usuario?: string | null
           id?: string
+          ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null
+          produto_descricao?: string | null
           respostas?: Json
+          status_negociacao?: string | null
           tipo_negocio?: string
           updated_at?: string
+          valor_medio_produto?: number | null
+          visao_futuro_texto?: string | null
         }
         Relationships: []
       }
@@ -1150,6 +1174,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          id: string
+          new_data: Json | null
+          old_data: Json | null
+          operation: string
+          table_name: string
+          timestamp: string | null
+          user_email: string | null
+          user_ip: unknown | null
+        }
+        Insert: {
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation: string
+          table_name: string
+          timestamp?: string | null
+          user_email?: string | null
+          user_ip?: unknown | null
+        }
+        Update: {
+          id?: string
+          new_data?: Json | null
+          old_data?: Json | null
+          operation?: string
+          table_name?: string
+          timestamp?: string | null
+          user_email?: string | null
+          user_ip?: unknown | null
+        }
+        Relationships: []
+      }
       solicitacoes_saque: {
         Row: {
           cliente_id: number
@@ -1490,9 +1547,87 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      vw_parceria_completa: {
+        Row: {
+          audio_url_backup: string | null
+          audio_visao_futuro: string | null
+          comissao_aceita: number | null
+          completo: boolean | null
+          created_at: string | null
+          custo_total_calculado: number | null
+          email_usuario: string | null
+          id: string | null
+          infraestrutura_atual: Json | null
+          investimento_diario: number | null
+          ja_teve_vendas: boolean | null
+          nome_usuario: string | null
+          planejamento_estrategico: string | null
+          produto_descricao: string | null
+          respostas: Json | null
+          tipo_negocio: string | null
+          updated_at: string | null
+          valor_medio_produto: number | null
+          visao_futuro_texto: string | null
+          whatsapp_usuario: string | null
+        }
+        Insert: {
+          audio_url_backup?: never
+          audio_visao_futuro?: string | null
+          comissao_aceita?: never
+          completo?: boolean | null
+          created_at?: string | null
+          custo_total_calculado?: never
+          email_usuario?: string | null
+          id?: string | null
+          infraestrutura_atual?: never
+          investimento_diario?: never
+          ja_teve_vendas?: boolean | null
+          nome_usuario?: never
+          planejamento_estrategico?: string | null
+          produto_descricao?: string | null
+          respostas?: Json | null
+          tipo_negocio?: string | null
+          updated_at?: string | null
+          valor_medio_produto?: number | null
+          visao_futuro_texto?: string | null
+          whatsapp_usuario?: never
+        }
+        Update: {
+          audio_url_backup?: never
+          audio_visao_futuro?: string | null
+          comissao_aceita?: never
+          completo?: boolean | null
+          created_at?: string | null
+          custo_total_calculado?: never
+          email_usuario?: string | null
+          id?: string | null
+          infraestrutura_atual?: never
+          investimento_diario?: never
+          ja_teve_vendas?: boolean | null
+          nome_usuario?: never
+          planejamento_estrategico?: string | null
+          produto_descricao?: string | null
+          respostas?: Json | null
+          tipo_negocio?: string | null
+          updated_at?: string | null
+          valor_medio_produto?: number | null
+          visao_futuro_texto?: string | null
+          whatsapp_usuario?: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      get_parceria_by_email: {
+        Args: { p_email: string }
+        Returns: {
+          parceria_id: string
+          dados_completos: Json
+          audio_visao_futuro: string
+          status_completo: boolean
+          data_criacao: string
+        }[]
+      }
       is_admin_user: {
         Args: Record<PropertyKey, never>
         Returns: boolean

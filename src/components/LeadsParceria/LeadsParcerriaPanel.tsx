@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle, Eye, Calendar, User, Mail, Phone, BarChart3 } from 'lucide-react';
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
@@ -11,7 +13,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function LeadsParcerriaPanel() {
-  const { leads, loading, totalLeads } = useLeadsParceria();
+  const { leads, loading, totalLeads, updateLeadStatus, updateLeadNegociacao } = useLeadsParceria();
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAnalytics, setShowAnalytics] = useState(true);
@@ -39,6 +41,22 @@ export function LeadsParcerriaPanel() {
       email: respostas.dadosPersonais?.email || respostas.email || 'Não informado',
       whatsapp: respostas.dadosPersonais?.whatsapp || respostas.whatsapp || respostas.telefone || 'Não informado'
     };
+  };
+
+  const getRowClassName = (lead: any) => {
+    if (lead.cliente_pago || lead.status_negociacao === 'aceitou') {
+      return 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500';
+    }
+    if (lead.status_negociacao === 'pensando') {
+      return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-l-yellow-500';
+    }
+    if (lead.status_negociacao === 'recusou') {
+      return 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500';
+    }
+    if (lead.contatado_whatsapp) {
+      return 'bg-blue-50 hover:bg-blue-100 border-l-4 border-l-blue-500';
+    }
+    return '';
   };
 
   if (loading) {
@@ -107,7 +125,9 @@ export function LeadsParcerriaPanel() {
                       <Phone className="h-4 w-4" />
                       WhatsApp
                     </TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>Contatado</TableHead>
+                    <TableHead>Status Negociação</TableHead>
+                    <TableHead>Pago</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -116,7 +136,7 @@ export function LeadsParcerriaPanel() {
                     const leadData = getLeadData(lead);
                     
                     return (
-                      <TableRow key={lead.id}>
+                      <TableRow key={lead.id} className={getRowClassName(lead)}>
                         <TableCell>
                           <div className="text-sm">
                             <div className="font-medium">
@@ -152,9 +172,35 @@ export function LeadsParcerriaPanel() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant={lead.completo ? 'default' : 'secondary'}>
-                            {lead.completo ? 'Completo' : 'Incompleto'}
-                          </Badge>
+                          <Switch
+                            checked={lead.contatado_whatsapp || false}
+                            onCheckedChange={(checked) => updateLeadStatus?.(lead.id, 'contatado_whatsapp', checked)}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Select
+                            value={lead.status_negociacao || 'pendente'}
+                            onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
+                              updateLeadNegociacao?.(lead.id, value)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pendente">Pendente</SelectItem>
+                              <SelectItem value="pensando">Pensando</SelectItem>
+                              <SelectItem value="aceitou">Aceitou</SelectItem>
+                              <SelectItem value="recusou">Recusou</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
+                          <Switch
+                            checked={lead.cliente_pago || false}
+                            onCheckedChange={(checked) => updateLeadStatus?.(lead.id, 'cliente_pago', checked)}
+                            disabled={lead.status_negociacao === 'aceitou'} // Auto marcado quando aceita
+                          />
                         </TableCell>
                         <TableCell>
                           <Button

@@ -16,6 +16,9 @@ interface LeadParceria {
   valor_medio_produto: number | null;
   ja_teve_vendas: boolean | null;
   visao_futuro_texto: string | null;
+  cliente_pago: boolean;
+  contatado_whatsapp: boolean;
+  status_negociacao: 'pendente' | 'aceitou' | 'recusou' | 'pensando';
 }
 
 export function useLeadsParceria() {
@@ -78,6 +81,51 @@ export function useLeadsParceria() {
     };
   }, []);
 
+  const updateLeadStatus = async (leadId: string, field: 'cliente_pago' | 'contatado_whatsapp', value: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('formularios_parceria')
+        .update({ [field]: value })
+        .eq('id', leadId);
+
+      if (error) throw error;
+      
+      // Atualizar estado local imediatamente
+      setLeads(prev => prev.map(lead => 
+        lead.id === leadId ? { ...lead, [field]: value } : lead
+      ));
+    } catch (err: any) {
+      console.error(`Erro ao atualizar ${field}:`, err);
+      setError(err.message);
+    }
+  };
+
+  const updateLeadNegociacao = async (leadId: string, status: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => {
+    try {
+      const updates: any = { status_negociacao: status };
+      
+      // Se aceitou, marcar como pago automaticamente
+      if (status === 'aceitou') {
+        updates.cliente_pago = true;
+      }
+
+      const { error } = await supabase
+        .from('formularios_parceria')
+        .update(updates)
+        .eq('id', leadId);
+
+      if (error) throw error;
+      
+      // Atualizar estado local imediatamente
+      setLeads(prev => prev.map(lead => 
+        lead.id === leadId ? { ...lead, ...updates } : lead
+      ));
+    } catch (err: any) {
+      console.error('Erro ao atualizar status de negociação:', err);
+      setError(err.message);
+    }
+  };
+
   const refetch = () => {
     fetchLeads();
   };
@@ -88,5 +136,7 @@ export function useLeadsParceria() {
     loading,
     error,
     refetch,
+    updateLeadStatus,
+    updateLeadNegociacao,
   };
 }
