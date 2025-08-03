@@ -9,7 +9,8 @@ import {
   DollarSign,
   Wand2,
   Lightbulb,
-  UserPlus
+  UserPlus,
+  RefreshCw
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -49,6 +50,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'Leads Parceria',
       icon: UserPlus,
       description: 'Leads interessados em parceria'
+    },
+    {
+      id: 'kiwify-retroativo',
+      label: 'Kiwify Retroativo',
+      icon: RefreshCw,
+      description: 'Processar vendas Kiwify retroativas'
     },
   ]
 
