@@ -11,6 +11,11 @@ interface LeadParceria {
   respostas: any;
   completo: boolean;
   updated_at: string;
+  audio_visao_futuro: string | null;
+  produto_descricao: string | null;
+  valor_medio_produto: number | null;
+  ja_teve_vendas: boolean | null;
+  visao_futuro_texto: string | null;
 }
 
 export function useLeadsParceria() {
@@ -37,7 +42,7 @@ export function useLeadsParceria() {
         throw error;
       }
 
-      setLeads(data || []);
+      setLeads((data || []) as LeadParceria[]);
       setTotalLeads(count || 0);
     } catch (err: any) {
       console.error('Erro ao buscar leads de parceria:', err);

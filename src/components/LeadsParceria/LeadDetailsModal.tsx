@@ -49,6 +49,38 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
   const renderValue = (value: any, fieldName?: string): React.ReactNode => {
     if (value === null || value === undefined) return <span className="text-muted-foreground italic">Não informado</span>;
     
+    // Tratamento especial para áudio
+    if (fieldName === 'audio_visao_futuro' && typeof value === 'string' && value) {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+          <span className="text-blue-700 dark:text-blue-300 font-medium">Áudio da visão de futuro disponível</span>
+          <audio controls className="ml-auto">
+            <source src={value} type="audio/mpeg" />
+            <source src={value} type="audio/webm" />
+            <source src={value} type="audio/wav" />
+            Seu navegador não suporta o elemento de áudio.
+          </audio>
+        </div>
+      );
+    }
+    
+    // Tratamento especial para audioUrl
+    if (fieldName === 'audioUrl' && typeof value === 'string' && value) {
+      return (
+        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+          <span className="text-blue-700 dark:text-blue-300 font-medium">Áudio da visão de futuro</span>
+          <audio controls className="ml-auto">
+            <source src={value} type="audio/mpeg" />
+            <source src={value} type="audio/webm" />
+            <source src={value} type="audio/wav" />
+            Seu navegador não suporta o elemento de áudio.
+          </audio>
+        </div>
+      );
+    }
+    
     // Tratamento especial para casos conhecidos
     if (fieldName === 'etapaAtual' && typeof value === 'string') {
       const etapaMap: Record<string, string> = {
@@ -198,7 +230,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
     return <span>{String(value)}</span>;
   };
 
-  // Mapeamento completo de todas as perguntas do formulário
+      // Mapeamento completo de todas as perguntas do formulário
   const FORMULARIO_PERGUNTAS = {
     dadosPersonais: {
       titulo: '📋 Dados Pessoais',
@@ -235,6 +267,18 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
         principaisObjetivos: 'Quais são os seus principais objetivos?',
         maioresDesafios: 'Quais são os seus maiores desafios?',
         advertisingProducts: 'Quais produtos você pretende anunciar?',
+        produto_descricao: 'Descreva seu produto/serviço em detalhes',
+        valor_medio_produto: 'Qual o valor médio do seu produto/serviço?',
+        ja_teve_vendas: 'Você já teve vendas anteriores?',
+      }
+    },
+    visaoFuturo: {
+      titulo: '🚀 Visão de Futuro',
+      perguntas: {
+        visao_futuro_texto: 'Descreva sua visão de futuro (texto)',
+        audio_visao_futuro: 'Gravação de áudio da visão de futuro',
+        audioUrl: 'URL do áudio da visão de futuro',
+        texto: 'Texto da visão de futuro',
       }
     },
     financeiro: {
@@ -266,6 +310,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
       perguntas: {
         completedAt: 'Quando foi concluído o preenchimento?',
         completo: 'O formulário foi totalmente preenchido?',
+        planejamento_estrategico: 'Planejamento estratégico gerado',
       }
     }
   };
@@ -424,7 +469,19 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
       diferencialCompetitivo: negocioObj.diferencialCompetitivo || respostas.diferencialCompetitivo,
       storeType: negocioObj.storeType || respostas.storeType,
       principaisObjetivos: negocioObj.principaisObjetivos || respostas.principaisObjetivos,
-      maioresDesafios: negocioObj.maioresDesafios || respostas.maioresDesafios
+      maioresDesafios: negocioObj.maioresDesafios || respostas.maioresDesafios,
+      produto_descricao: lead.produto_descricao || negocioObj.produto_descricao || respostas.produto_descricao,
+      valor_medio_produto: lead.valor_medio_produto || negocioObj.valor_medio_produto || respostas.valor_medio_produto,
+      ja_teve_vendas: lead.ja_teve_vendas || negocioObj.ja_teve_vendas || respostas.ja_teve_vendas
+    };
+
+    // Extrair visão de futuro (incluindo áudio e texto)
+    const visaoFuturoObj = respostas.visaoFuturo || respostas;
+    const visaoFuturo = {
+      visao_futuro_texto: lead.visao_futuro_texto || visaoFuturoObj.texto || respostas.visao_futuro_texto,
+      audio_visao_futuro: lead.audio_visao_futuro || visaoFuturoObj.audioUrl || respostas.audio_visao_futuro,
+      audioUrl: visaoFuturoObj.audioUrl,
+      texto: visaoFuturoObj.texto
     };
 
     // Extrair experiência e conhecimentos
@@ -496,7 +553,26 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
     
     // Coletar todas as perguntas desta seção que têm respostas
     const perguntasComResposta = Object.entries(section.perguntas).filter(([fieldKey]) => {
-      const valor = sectionObj[fieldKey] || respostas[fieldKey];
+      let valor = sectionObj[fieldKey] || respostas[fieldKey];
+      
+      // Para seção visaoFuturo, pegar dados diretamente do lead se disponível
+      if (sectionKey === 'visaoFuturo') {
+        if (fieldKey === 'visao_futuro_texto') valor = lead.visao_futuro_texto || valor;
+        if (fieldKey === 'audio_visao_futuro') valor = lead.audio_visao_futuro || valor;
+      }
+      
+      // Para seção negocio, pegar novos campos do lead
+      if (sectionKey === 'negocio') {
+        if (fieldKey === 'produto_descricao') valor = lead.produto_descricao || valor;
+        if (fieldKey === 'valor_medio_produto') valor = lead.valor_medio_produto || valor;
+        if (fieldKey === 'ja_teve_vendas') valor = lead.ja_teve_vendas || valor;
+      }
+      
+      // Para seção status, pegar planejamento estratégico do lead
+      if (sectionKey === 'status' && fieldKey === 'planejamento_estrategico') {
+        valor = lead.planejamento_estrategico || valor;
+      }
+      
       return valor !== undefined && valor !== null && valor !== '' && 
              !(Array.isArray(valor) && valor.length === 0);
     });
@@ -508,6 +584,7 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
       dadosPersonais: <User className="h-4 w-4" />,
       experiencia: <Award className="h-4 w-4" />,
       negocio: <Building className="h-4 w-4" />,
+      visaoFuturo: <TrendingUp className="h-4 w-4" />,
       financeiro: <DollarSign className="h-4 w-4" />,
       infraestrutura: <Settings className="h-4 w-4" />,
       status: <Clock className="h-4 w-4" />
@@ -527,7 +604,26 @@ export function LeadDetailsModal({ lead, isOpen, onClose }: LeadDetailsModalProp
         <AccordionContent className="pb-4">
           <div className="space-y-1">
             {perguntasComResposta.map(([fieldKey, pergunta]) => {
-              const valor = sectionObj[fieldKey] || respostas[fieldKey];
+              let valor = sectionObj[fieldKey] || respostas[fieldKey];
+              
+              // Para seção visaoFuturo, pegar dados diretamente do lead se disponível
+              if (sectionKey === 'visaoFuturo') {
+                if (fieldKey === 'visao_futuro_texto') valor = lead.visao_futuro_texto || valor;
+                if (fieldKey === 'audio_visao_futuro') valor = lead.audio_visao_futuro || valor;
+              }
+              
+              // Para seção negocio, pegar novos campos do lead
+              if (sectionKey === 'negocio') {
+                if (fieldKey === 'produto_descricao') valor = lead.produto_descricao || valor;
+                if (fieldKey === 'valor_medio_produto') valor = lead.valor_medio_produto || valor;
+                if (fieldKey === 'ja_teve_vendas') valor = lead.ja_teve_vendas || valor;
+              }
+              
+              // Para seção status, pegar planejamento estratégico do lead
+              if (sectionKey === 'status' && fieldKey === 'planejamento_estrategico') {
+                valor = lead.planejamento_estrategico || valor;
+              }
+              
               return renderQuestionAnswer(pergunta, valor, fieldKey);
             })}
           </div>
