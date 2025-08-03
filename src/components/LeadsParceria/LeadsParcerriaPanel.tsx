@@ -123,7 +123,9 @@ export function LeadsParcerriaPanel() {
                       WhatsApp
                     </TableHead>
                     <TableHead>Contatado</TableHead>
+                    <TableHead>Status Negociação</TableHead>
                     <TableHead>Pago</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -173,10 +175,40 @@ export function LeadsParcerriaPanel() {
                           />
                         </TableCell>
                         <TableCell>
+                          <Select
+                            value={lead.status_negociacao || 'pendente'}
+                            onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
+                              updateLeadNegociacao?.(lead.id, value)
+                            }
+                          >
+                            <SelectTrigger className="w-32">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pendente">não chamei</SelectItem>
+                              <SelectItem value="pensando">chamei</SelectItem>
+                              <SelectItem value="aceitou">comprou</SelectItem>
+                              <SelectItem value="recusou">não quer</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                        <TableCell>
                           <Switch
                             checked={lead.cliente_pago || false}
                             onCheckedChange={(checked) => updateLeadStatus?.(lead.id, 'cliente_pago', checked)}
+                            disabled={lead.status_negociacao === 'aceitou'} // Auto marcado quando aceita
                           />
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleViewDetails(lead)}
+                            className="flex items-center gap-2"
+                          >
+                            <Eye className="h-4 w-4" />
+                            Ver Detalhes
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
