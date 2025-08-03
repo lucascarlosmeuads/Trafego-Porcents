@@ -45,7 +45,7 @@ export function LeadsParcerriaPanel() {
 
   const getRowClassName = (lead: any) => {
     if (lead.cliente_pago || lead.status_negociacao === 'aceitou') {
-      return 'bg-green-50 hover:bg-green-100 border-l-4 border-l-green-500 text-green-900';
+      return 'bg-green-200 hover:bg-green-300 border-l-4 border-l-green-600 text-green-900';
     }
     if (lead.status_negociacao === 'pensando') {
       return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-l-yellow-500 text-yellow-900';
