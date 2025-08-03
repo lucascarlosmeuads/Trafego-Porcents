@@ -25,7 +25,7 @@ export function VendedorLeadsPanel() {
   const getLeadData = (lead: any) => {
     const respostas = lead.respostas || {};
     return {
-      nome: respostas.nomeCompleto || respostas.nome || 'Nome não informado',
+      nome: respostas.dadosPersonais?.nome || respostas.nomeCompleto || respostas.nome || 'Nome não informado',
       email: lead.email_usuario || 'Email não informado',
       whatsapp: respostas.whatsapp || respostas.telefone || 'Não informado'
     };
@@ -113,21 +113,29 @@ export function VendedorLeadsPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Data/Hora
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4" />
+                        Data/Hora
+                      </div>
                     </TableHead>
-                    <TableHead className="flex items-center gap-2">
-                      <User className="h-4 w-4" />
-                      Nome
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4" />
+                        Nome
+                      </div>
                     </TableHead>
-                    <TableHead className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <Mail className="h-4 w-4" />
+                        Email
+                      </div>
                     </TableHead>
-                    <TableHead className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      WhatsApp
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <Phone className="h-4 w-4" />
+                        WhatsApp
+                      </div>
                     </TableHead>
                     <TableHead>Status Negociação</TableHead>
                     <TableHead>Ações</TableHead>
