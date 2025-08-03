@@ -48,13 +48,13 @@ export function LeadsParcerriaPanel() {
       return 'bg-green-200 hover:bg-green-300 border-l-4 border-l-green-600 text-green-900';
     }
     if (lead.status_negociacao === 'pensando') {
-      return 'bg-yellow-50 hover:bg-yellow-100 border-l-4 border-l-yellow-500 text-yellow-900';
+      return 'bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900';
     }
     if (lead.status_negociacao === 'recusou') {
-      return 'bg-red-50 hover:bg-red-100 border-l-4 border-l-red-500 text-red-900';
+      return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
     }
-    if (lead.contatado_whatsapp) {
-      return 'bg-blue-50 hover:bg-blue-100 border-l-4 border-l-blue-500 text-blue-900';
+    if (lead.status_negociacao === 'pendente' && !lead.contatado_whatsapp) {
+      return 'bg-gray-100 hover:bg-gray-200 border-l-4 border-l-gray-500 text-gray-900';
     }
     return '';
   };
@@ -188,10 +188,10 @@ export function LeadsParcerriaPanel() {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="pendente">Pendente</SelectItem>
-                              <SelectItem value="pensando">Pensando</SelectItem>
-                              <SelectItem value="aceitou">Aceitou</SelectItem>
-                              <SelectItem value="recusou">Recusou</SelectItem>
+                              <SelectItem value="pendente">não chamei</SelectItem>
+                              <SelectItem value="pensando">chamei</SelectItem>
+                              <SelectItem value="aceitou">comprou</SelectItem>
+                              <SelectItem value="recusou">não quer</SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
