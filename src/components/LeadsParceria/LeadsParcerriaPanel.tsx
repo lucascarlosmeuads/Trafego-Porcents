@@ -53,9 +53,6 @@ export function LeadsParcerriaPanel() {
     if (lead.status_negociacao === 'recusou') {
       return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
     }
-    if (lead.status_negociacao === 'pendente' && !lead.contatado_whatsapp) {
-      return 'bg-gray-100 hover:bg-gray-200 border-l-4 border-l-gray-500 text-gray-900';
-    }
     return '';
   };
 
