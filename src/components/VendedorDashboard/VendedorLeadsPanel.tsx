@@ -41,9 +41,9 @@ export function VendedorLeadsPanel() {
   };
 
   const getRowClassName = (lead: any) => {
-    if (lead.cliente_pago) return 'bg-green-50 hover:bg-green-100 border-green-200';
-    if (lead.status_negociacao === 'aceitou') return 'bg-blue-50 hover:bg-blue-100 border-blue-200';
-    if (lead.status_negociacao === 'recusou') return 'bg-red-50 hover:bg-red-100 border-red-200';
+    if (lead.cliente_pago) return 'bg-green-50/30 hover:bg-green-50/50 border-l-4 border-l-green-500';
+    if (lead.status_negociacao === 'aceitou') return 'bg-blue-50/30 hover:bg-blue-50/50 border-l-4 border-l-blue-500';
+    if (lead.status_negociacao === 'recusou') return 'bg-red-50/30 hover:bg-red-50/50 border-l-4 border-l-red-500';
     return '';
   };
 
