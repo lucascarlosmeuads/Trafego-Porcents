@@ -187,16 +187,6 @@ export function LeadsParcerriaAnalytics() {
                   </span>
                   <span className="font-medium">{todayStats?.semAudio || 0}</span>
                 </div>
-                {todayStats?.valorMedioTotal && todayStats.valorMedioTotal > 0 && (
-                  <div className="pt-1 border-t">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Valor Médio</span>
-                      <span className="font-medium text-green-600">
-                        R$ {todayStats.valorMedioTotal.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -233,16 +223,6 @@ export function LeadsParcerriaAnalytics() {
                   </span>
                   <span className="font-medium">{yesterdayStats?.semAudio || 0}</span>
                 </div>
-                {yesterdayStats?.valorMedioTotal && yesterdayStats.valorMedioTotal > 0 && (
-                  <div className="pt-1 border-t">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Valor Médio</span>
-                      <span className="font-medium text-blue-600">
-                        R$ {yesterdayStats.valorMedioTotal.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -276,16 +256,6 @@ export function LeadsParcerriaAnalytics() {
                   </span>
                   <span className="font-medium">{dayBeforeStats?.semAudio || 0}</span>
                 </div>
-                {dayBeforeStats?.valorMedioTotal && dayBeforeStats.valorMedioTotal > 0 && (
-                  <div className="pt-1 border-t">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Valor Médio</span>
-                      <span className="font-medium text-purple-600">
-                        R$ {dayBeforeStats.valorMedioTotal.toFixed(2)}
-                      </span>
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
           </CardContent>
@@ -341,7 +311,7 @@ export function LeadsParcerriaAnalytics() {
 
       {/* Cards de métricas adicionais */}
       {(todayStats || yesterdayStats || dayBeforeStats) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Tipos de Negócio */}
           <Card>
             <CardHeader>
@@ -376,43 +346,6 @@ export function LeadsParcerriaAnalytics() {
             </CardContent>
           </Card>
 
-          {/* Valores médios */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                Valor Médio dos Produtos
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span>Hoje</span>
-                  <span className="font-semibold text-green-600">
-                    {todayStats?.valorMedioTotal && todayStats.valorMedioTotal > 0 
-                      ? `R$ ${todayStats.valorMedioTotal.toFixed(2)}` 
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Ontem</span>
-                  <span className="font-semibold text-blue-600">
-                    {yesterdayStats?.valorMedioTotal && yesterdayStats.valorMedioTotal > 0 
-                      ? `R$ ${yesterdayStats.valorMedioTotal.toFixed(2)}` 
-                      : 'N/A'}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span>Anteontem</span>
-                  <span className="font-semibold text-purple-600">
-                    {dayBeforeStats?.valorMedioTotal && dayBeforeStats.valorMedioTotal > 0 
-                      ? `R$ ${dayBeforeStats.valorMedioTotal.toFixed(2)}` 
-                      : 'N/A'}
-                  </span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       )}
 
@@ -427,7 +360,7 @@ export function LeadsParcerriaAnalytics() {
             <p className="text-sm text-muted-foreground">{customDateStats.date}</p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-indigo-600">{customDateStats.total}</div>
                 <div className="text-sm text-muted-foreground">Total Leads</div>
@@ -439,12 +372,6 @@ export function LeadsParcerriaAnalytics() {
               <div className="text-center">
                 <div className="text-2xl font-bold text-blue-600">{customDateStats.semAudio}</div>
                 <div className="text-sm text-muted-foreground">Só Texto</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-600">
-                  {customDateStats.valorMedioTotal > 0 ? `R$ ${customDateStats.valorMedioTotal.toFixed(2)}` : 'N/A'}
-                </div>
-                <div className="text-sm text-muted-foreground">Valor Médio</div>
               </div>
             </div>
             

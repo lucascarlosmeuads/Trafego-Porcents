@@ -8,7 +8,6 @@ interface LeadsAnalytics {
   comAudio: number;
   semAudio: number;
   tiposNegocio: { [key: string]: number };
-  valorMedioTotal: number;
 }
 
 interface DateRange {
@@ -44,27 +43,26 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
-    // Contar tipos de negócio
+    // Contar tipos de negócio com tradução
     const tiposNegocio: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
       if (lead.tipo_negocio) {
-        tiposNegocio[lead.tipo_negocio] = (tiposNegocio[lead.tipo_negocio] || 0) + 1;
+        let tipo = lead.tipo_negocio;
+        // Traduzir tipos de negócio
+        if (tipo === 'physical') tipo = 'físico';
+        if (tipo === 'digital') tipo = 'digital';
+        if (tipo === 'service') tipo = 'serviço';
+        
+        tiposNegocio[tipo] = (tiposNegocio[tipo] || 0) + 1;
       }
     });
-
-    // Calcular valor médio total
-    const valoresValidos = data?.filter((lead: any) => lead.valor_medio_produto && lead.valor_medio_produto > 0) || [];
-    const valorMedioTotal = valoresValidos.length > 0 
-      ? valoresValidos.reduce((sum: number, lead: any) => sum + (lead.valor_medio_produto || 0), 0) / valoresValidos.length 
-      : 0;
 
     const result = {
       date,
       total,
       comAudio,
       semAudio,
-      tiposNegocio,
-      valorMedioTotal: Math.round(valorMedioTotal * 100) / 100
+      tiposNegocio
     };
 
     console.log('✅ [LeadsAnalytics] Resultado calculado:', result);
@@ -86,27 +84,26 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
-    // Contar tipos de negócio
+    // Contar tipos de negócio com tradução
     const tiposNegocio: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
       if (lead.tipo_negocio) {
-        tiposNegocio[lead.tipo_negocio] = (tiposNegocio[lead.tipo_negocio] || 0) + 1;
+        let tipo = lead.tipo_negocio;
+        // Traduzir tipos de negócio
+        if (tipo === 'physical') tipo = 'físico';
+        if (tipo === 'digital') tipo = 'digital';
+        if (tipo === 'service') tipo = 'serviço';
+        
+        tiposNegocio[tipo] = (tiposNegocio[tipo] || 0) + 1;
       }
     });
-
-    // Calcular valor médio total
-    const valoresValidos = data?.filter((lead: any) => lead.valor_medio_produto && lead.valor_medio_produto > 0) || [];
-    const valorMedioTotal = valoresValidos.length > 0 
-      ? valoresValidos.reduce((sum: number, lead: any) => sum + (lead.valor_medio_produto || 0), 0) / valoresValidos.length 
-      : 0;
 
     return {
       date: `${dateRange.startDate} - ${dateRange.endDate}`,
       total,
       comAudio,
       semAudio,
-      tiposNegocio,
-      valorMedioTotal: Math.round(valorMedioTotal * 100) / 100
+      tiposNegocio
     };
   };
 
