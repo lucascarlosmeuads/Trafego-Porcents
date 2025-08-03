@@ -17,15 +17,14 @@ import {
   DollarSign,
   PieChart,
   Target,
-  Percent,
-  Clock
+  Percent
 } from 'lucide-react';
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics';
 import { LeadsMetaAdsReport } from './LeadsMetaAdsReport';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-type ConversionPeriod = 3 | 7 | 15 | 30 | 'custom';
+
 
 export function LeadsParcerriaAnalytics() {
   const {
@@ -33,20 +32,16 @@ export function LeadsParcerriaAnalytics() {
     yesterdayStats,
     dayBeforeStats,
     customDateStats,
-    conversionPeriodStats,
+    
     loading,
     getTrend,
     getTrendPercentage,
     fetchCustomDateAnalytics,
-    fetchConversionPeriodAnalytics
   } = useLeadsAnalytics();
 
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
   const [showCustomFilter, setShowCustomFilter] = useState(false);
-  const [selectedConversionPeriod, setSelectedConversionPeriod] = useState<ConversionPeriod>(3);
-  const [conversionCustomStartDate, setConversionCustomStartDate] = useState('');
-  const [conversionCustomEndDate, setConversionCustomEndDate] = useState('');
 
   const handleCustomDateSearch = () => {
     if (customStartDate && customEndDate) {
@@ -57,33 +52,6 @@ export function LeadsParcerriaAnalytics() {
     }
   };
 
-  const handleConversionPeriodChange = (period: ConversionPeriod) => {
-    setSelectedConversionPeriod(period);
-    if (period === 'custom') {
-      // Não buscar dados ainda, esperar usuário definir as datas
-      return;
-    }
-    fetchConversionPeriodAnalytics(period);
-  };
-
-  const handleConversionCustomDateSearch = () => {
-    if (conversionCustomStartDate && conversionCustomEndDate) {
-      fetchConversionPeriodAnalytics('custom', {
-        startDate: conversionCustomStartDate,
-        endDate: conversionCustomEndDate
-      });
-    }
-  };
-
-  // Carregar dados do período inicial (3 dias) na inicialização
-  useEffect(() => {
-    fetchConversionPeriodAnalytics(3);
-  }, []);
-
-  const getPeriodLabel = (period: ConversionPeriod) => {
-    if (period === 'custom') return 'Personalizado';
-    return `${period} Dias`;
-  };
 
   const renderTrendIcon = (trend: 'up' | 'down' | 'stable') => {
     switch (trend) {
@@ -281,152 +249,95 @@ export function LeadsParcerriaAnalytics() {
         </Card>
       </div>
 
-      {/* Cards de conversão */}
+      {/* Cards de vendas diárias */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Taxa de Conversão Hoje */}
-        <Card className="border-l-4 border-l-emerald-500">
+        {/* Vendas Hoje */}
+        <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-emerald-600" />
-                Taxa Hoje
+                <DollarSign className="h-4 w-4 text-green-600" />
+                Vendas Hoje
               </span>
               {yesterdayStats && todayStats && (
-                renderTrendBadge(todayStats.conversionRate, yesterdayStats.conversionRate, 'conversão hoje vs ontem')
+                renderTrendBadge(todayStats.converted, yesterdayStats.converted, 'vendas hoje vs ontem')
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="text-2xl font-bold text-emerald-600">
-                {todayStats?.conversionRate.toFixed(1) || '0.0'}%
-              </div>
+              <div className="text-2xl font-bold text-green-600">{todayStats?.converted || 0}</div>
               <div className="text-xs text-muted-foreground">
-                {todayStats?.converted || 0} de {todayStats?.total || 0} leads
+                Taxa: {todayStats?.conversionRate.toFixed(1) || '0.0'}%
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Taxa de Conversão Ontem */}
-        <Card className="border-l-4 border-l-cyan-500">
+        {/* Vendas Ontem */}
+        <Card className="border-l-4 border-l-blue-500">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium flex items-center justify-between">
               <span className="flex items-center gap-2">
-                <Percent className="h-4 w-4 text-cyan-600" />
-                Taxa Ontem
+                <DollarSign className="h-4 w-4 text-blue-600" />
+                Vendas Ontem
               </span>
               {dayBeforeStats && yesterdayStats && (
-                renderTrendBadge(yesterdayStats.conversionRate, dayBeforeStats.conversionRate, 'conversão ontem vs anteontem')
+                renderTrendBadge(yesterdayStats.converted, dayBeforeStats.converted, 'vendas ontem vs anteontem')
               )}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="text-2xl font-bold text-cyan-600">
-                {yesterdayStats?.conversionRate.toFixed(1) || '0.0'}%
-              </div>
+              <div className="text-2xl font-bold text-blue-600">{yesterdayStats?.converted || 0}</div>
               <div className="text-xs text-muted-foreground">
-                {yesterdayStats?.converted || 0} de {yesterdayStats?.total || 0} leads
+                Taxa: {yesterdayStats?.conversionRate.toFixed(1) || '0.0'}%
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Leads Convertidos - Período Selecionável */}
-        <Card className="border-l-4 border-l-amber-500">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <Clock className="h-4 w-4 text-amber-600" />
-                Convertidos {getPeriodLabel(selectedConversionPeriod)}
-              </span>
-            </CardTitle>
-            <div className="flex flex-col gap-2">
-              <Select value={selectedConversionPeriod.toString()} onValueChange={(value) => handleConversionPeriodChange(value as ConversionPeriod)}>
-                <SelectTrigger className="w-full text-xs">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3 Dias</SelectItem>
-                  <SelectItem value="7">7 Dias</SelectItem>
-                  <SelectItem value="15">15 Dias</SelectItem>
-                  <SelectItem value="30">30 Dias</SelectItem>
-                  <SelectItem value="custom">Personalizado</SelectItem>
-                </SelectContent>
-              </Select>
-              
-              {/* Inputs para período personalizado */}
-              {selectedConversionPeriod === 'custom' && (
-                <div className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2">
-                    <Input
-                      type="date"
-                      value={conversionCustomStartDate}
-                      onChange={(e) => setConversionCustomStartDate(e.target.value)}
-                      className="text-xs"
-                      placeholder="Início"
-                    />
-                    <Input
-                      type="date"
-                      value={conversionCustomEndDate}
-                      onChange={(e) => setConversionCustomEndDate(e.target.value)}
-                      className="text-xs"
-                      placeholder="Fim"
-                    />
-                  </div>
-                  <Button
-                    size="sm"
-                    onClick={handleConversionCustomDateSearch}
-                    disabled={!conversionCustomStartDate || !conversionCustomEndDate}
-                    className="w-full text-xs"
-                  >
-                    Aplicar
-                  </Button>
-                </div>
-              )}
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="text-2xl font-bold text-amber-600">
-                {conversionPeriodStats?.converted || 0}
-              </div>
-              <div className="text-xs text-muted-foreground">
-                Total de leads que compraram
-              </div>
-              {conversionPeriodStats && conversionPeriodStats.total > 0 && (
-                <div className="text-xs text-muted-foreground">
-                  Taxa: {conversionPeriodStats.conversionRate.toFixed(1)}% 
-                  ({conversionPeriodStats.converted} de {conversionPeriodStats.total})
-                </div>
-              )}
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Taxa Média 3 Dias */}
-        <Card className="border-l-4 border-l-violet-500">
+        {/* Vendas Anteontem */}
+        <Card className="border-l-4 border-l-purple-500">
           <CardHeader className="pb-3">
             <CardTitle className="text-sm font-medium">
               <span className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-violet-600" />
-                Taxa Média
+                <DollarSign className="h-4 w-4 text-purple-600" />
+                Vendas Anteontem
               </span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
-              <div className="text-2xl font-bold text-violet-600">
-                {(() => {
-                  const totalLeads3Days = (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0);
-                  const totalConverted3Days = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
-                  const avgRate = totalLeads3Days > 0 ? (totalConverted3Days / totalLeads3Days) * 100 : 0;
-                  return avgRate.toFixed(1);
-                })()}%
+              <div className="text-2xl font-bold text-purple-600">{dayBeforeStats?.converted || 0}</div>
+              <div className="text-xs text-muted-foreground">
+                Taxa: {dayBeforeStats?.conversionRate.toFixed(1) || '0.0'}%
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Total Vendas 3 Dias */}
+        <Card className="border-l-4 border-l-orange-500">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-sm font-medium">
+              <span className="flex items-center gap-2">
+                <Target className="h-4 w-4 text-orange-600" />
+                Total Vendas (3 dias)
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              <div className="text-2xl font-bold text-orange-600">
+                {(todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
               </div>
               <div className="text-xs text-muted-foreground">
-                Últimos 3 dias
+                Taxa média: {(() => {
+                  const totalLeads = (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0);
+                  const totalConverted = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
+                  return totalLeads > 0 ? ((totalConverted / totalLeads) * 100).toFixed(1) : '0.0';
+                })()}%
               </div>
             </div>
           </CardContent>
