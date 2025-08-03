@@ -161,27 +161,19 @@ export function LeadsParcerriaPanel() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {lead.vendedor_responsavel ? (
-                            <Badge 
-                              className={
-                                lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
-                                  ? 'bg-blue-900 text-white border-blue-950 font-semibold' 
+                          <div className="text-sm">
+                            {lead.vendedor_responsavel ? (
+                              <span>
+                                {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
+                                  ? 'Edu' 
                                   : lead.vendedor_responsavel === 'vendedoritamar@trafegoporcents.com'
-                                  ? 'bg-green-900 text-white border-green-950 font-semibold'
-                                  : 'bg-purple-900 text-white border-purple-950 font-semibold'
-                              }
-                            >
-                              {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
-                                ? 'Edu' 
-                                : lead.vendedor_responsavel === 'vendedoritamar@trafegoporcents.com'
-                                ? 'Itamar'
-                                : 'João'}
-                            </Badge>
-                          ) : (
-                            <Badge variant="secondary" className="bg-gray-800 text-white font-semibold">
-                              Não atribuído
-                            </Badge>
-                          )}
+                                  ? 'Itamar'
+                                  : 'João'}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground">Não atribuído</span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Select
