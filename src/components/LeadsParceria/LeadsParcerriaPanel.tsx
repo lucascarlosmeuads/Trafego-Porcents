@@ -163,13 +163,12 @@ export function LeadsParcerriaPanel() {
                         <TableCell>
                           {lead.vendedor_responsavel ? (
                             <Badge 
-                              variant="outline" 
                               className={
                                 lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
-                                  ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                                  ? 'bg-blue-600 text-white border-blue-700 font-medium' 
                                   : lead.vendedor_responsavel === 'vendedoritamar@trafegoporcents.com'
-                                  ? 'bg-green-50 text-green-700 border-green-200'
-                                  : 'bg-purple-50 text-purple-700 border-purple-200'
+                                  ? 'bg-green-600 text-white border-green-700 font-medium'
+                                  : 'bg-purple-600 text-white border-purple-700 font-medium'
                               }
                             >
                               {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
@@ -179,7 +178,7 @@ export function LeadsParcerriaPanel() {
                                 : 'João'}
                             </Badge>
                           ) : (
-                            <Badge variant="secondary" className="bg-gray-50 text-gray-500">
+                            <Badge variant="secondary" className="bg-gray-100 text-gray-700 font-medium">
                               Não atribuído
                             </Badge>
                           )}
