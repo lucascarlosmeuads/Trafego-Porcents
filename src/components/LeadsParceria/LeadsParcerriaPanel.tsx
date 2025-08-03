@@ -3,19 +3,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Eye, Calendar, User, Mail, Phone, BarChart3 } from 'lucide-react';
-import { LeadDetailsModal } from './LeadDetailsModal';
+import { MessageCircle, Calendar, User, Mail, Phone, BarChart3 } from 'lucide-react';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function LeadsParcerriaPanel() {
-  const { leads, loading, totalLeads, updateLeadStatus, updateLeadNegociacao } = useLeadsParceria();
-  const [selectedLead, setSelectedLead] = useState(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria();
   const [showAnalytics, setShowAnalytics] = useState(true);
 
   const handleWhatsAppClick = (whatsapp: string) => {
@@ -28,10 +24,6 @@ export function LeadsParcerriaPanel() {
     window.open(`https://wa.me/${formattedNumber}`, '_blank');
   };
 
-  const handleViewDetails = (lead: any) => {
-    setSelectedLead(lead);
-    setIsModalOpen(true);
-  };
 
   const getLeadData = (lead: any) => {
     const respostas = lead.respostas || {};
@@ -44,8 +36,8 @@ export function LeadsParcerriaPanel() {
   };
 
   const getRowClassName = (lead: any) => {
-    if (lead.cliente_pago || lead.status_negociacao === 'aceitou') {
-      return 'bg-green-200 hover:bg-green-300 border-l-4 border-l-green-600 text-green-900';
+    if (lead.status_negociacao === 'aceitou') {
+      return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
     }
     if (lead.status_negociacao === 'pensando') {
       return 'bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900';
@@ -122,10 +114,7 @@ export function LeadsParcerriaPanel() {
                       <Phone className="h-4 w-4" />
                       WhatsApp
                     </TableHead>
-                    <TableHead>Contatado</TableHead>
                     <TableHead>Status Negociação</TableHead>
-                    <TableHead>Pago</TableHead>
-                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -169,12 +158,6 @@ export function LeadsParcerriaPanel() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Switch
-                            checked={lead.contatado_whatsapp || false}
-                            onCheckedChange={(checked) => updateLeadStatus?.(lead.id, 'contatado_whatsapp', checked)}
-                          />
-                        </TableCell>
-                        <TableCell>
                           <Select
                             value={lead.status_negociacao || 'pendente'}
                             onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
@@ -192,24 +175,6 @@ export function LeadsParcerriaPanel() {
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell>
-                          <Switch
-                            checked={lead.cliente_pago || false}
-                            onCheckedChange={(checked) => updateLeadStatus?.(lead.id, 'cliente_pago', checked)}
-                            disabled={lead.status_negociacao === 'aceitou'} // Auto marcado quando aceita
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleViewDetails(lead)}
-                            className="flex items-center gap-2"
-                          >
-                            <Eye className="h-4 w-4" />
-                            Ver Detalhes
-                          </Button>
-                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -219,15 +184,6 @@ export function LeadsParcerriaPanel() {
           </CardContent>
         </Card>
       </div>
-
-      <LeadDetailsModal
-        lead={selectedLead}
-        isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          setSelectedLead(null);
-        }}
-      />
     </>
   );
 }
