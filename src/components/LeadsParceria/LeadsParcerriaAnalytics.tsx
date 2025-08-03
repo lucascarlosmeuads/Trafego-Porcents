@@ -172,22 +172,6 @@ export function LeadsParcerriaAnalytics() {
           <CardContent>
             <div className="space-y-3">
               <div className="text-2xl font-bold">{todayStats?.total || 0}</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <Mic className="h-3 w-3 text-green-600" />
-                    Com Áudio
-                  </span>
-                  <span className="font-medium">{todayStats?.comAudio || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3 text-blue-600" />
-                    Só Texto
-                  </span>
-                  <span className="font-medium">{todayStats?.semAudio || 0}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -208,22 +192,6 @@ export function LeadsParcerriaAnalytics() {
           <CardContent>
             <div className="space-y-3">
               <div className="text-2xl font-bold">{yesterdayStats?.total || 0}</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <Mic className="h-3 w-3 text-green-600" />
-                    Com Áudio
-                  </span>
-                  <span className="font-medium">{yesterdayStats?.comAudio || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3 text-blue-600" />
-                    Só Texto
-                  </span>
-                  <span className="font-medium">{yesterdayStats?.semAudio || 0}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -241,22 +209,6 @@ export function LeadsParcerriaAnalytics() {
           <CardContent>
             <div className="space-y-3">
               <div className="text-2xl font-bold">{dayBeforeStats?.total || 0}</div>
-              <div className="space-y-1 text-sm">
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <Mic className="h-3 w-3 text-green-600" />
-                    Com Áudio
-                  </span>
-                  <span className="font-medium">{dayBeforeStats?.comAudio || 0}</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3 text-blue-600" />
-                    Só Texto
-                  </span>
-                  <span className="font-medium">{dayBeforeStats?.semAudio || 0}</span>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>
@@ -276,32 +228,12 @@ export function LeadsParcerriaAnalytics() {
               <div className="text-2xl font-bold">
                 {(todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)}
               </div>
-              <div className="space-y-1 text-sm">
+              <div className="pt-1 border-t">
                 <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <Mic className="h-3 w-3 text-green-600" />
-                    Com Áudio
+                  <span className="text-muted-foreground">Média/Dia</span>
+                  <span className="font-medium text-orange-600">
+                    {Math.round(((todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)) / 3 * 100) / 100}
                   </span>
-                  <span className="font-medium">
-                    {(todayStats?.comAudio || 0) + (yesterdayStats?.comAudio || 0) + (dayBeforeStats?.comAudio || 0)}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1">
-                    <FileText className="h-3 w-3 text-blue-600" />
-                    Só Texto
-                  </span>
-                  <span className="font-medium">
-                    {(todayStats?.semAudio || 0) + (yesterdayStats?.semAudio || 0) + (dayBeforeStats?.semAudio || 0)}
-                  </span>
-                </div>
-                <div className="pt-1 border-t">
-                  <div className="flex items-center justify-between">
-                    <span className="text-muted-foreground">Média/Dia</span>
-                    <span className="font-medium text-orange-600">
-                      {Math.round(((todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)) / 3 * 100) / 100}
-                    </span>
-                  </div>
                 </div>
               </div>
             </div>
@@ -360,18 +292,10 @@ export function LeadsParcerriaAnalytics() {
             <p className="text-sm text-muted-foreground">{customDateStats.date}</p>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="text-center">
                 <div className="text-2xl font-bold text-indigo-600">{customDateStats.total}</div>
                 <div className="text-sm text-muted-foreground">Total Leads</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{customDateStats.comAudio}</div>
-                <div className="text-sm text-muted-foreground">Com Áudio</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{customDateStats.semAudio}</div>
-                <div className="text-sm text-muted-foreground">Só Texto</div>
               </div>
             </div>
             
