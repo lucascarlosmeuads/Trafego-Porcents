@@ -4,8 +4,9 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, BarChart3 } from 'lucide-react';
+import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye } from 'lucide-react';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
+import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -13,6 +14,8 @@ import { ptBR } from 'date-fns/locale';
 export function LeadsParcerriaPanel() {
   const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria();
   const [showAnalytics, setShowAnalytics] = useState(true);
+  const [selectedLead, setSelectedLead] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -122,6 +125,7 @@ export function LeadsParcerriaPanel() {
                       WhatsApp
                     </TableHead>
                     <TableHead>Status Negociação</TableHead>
+                    <TableHead>Ações</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -182,6 +186,19 @@ export function LeadsParcerriaPanel() {
                             </SelectContent>
                           </Select>
                         </TableCell>
+                        <TableCell>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedLead(lead);
+                              setIsModalOpen(true);
+                            }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     );
                   })}
@@ -191,6 +208,16 @@ export function LeadsParcerriaPanel() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modal de Detalhes */}
+      <LeadDetailsModal
+        lead={selectedLead}
+        isOpen={isModalOpen}
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedLead(null);
+        }}
+      />
     </>
   );
 }
