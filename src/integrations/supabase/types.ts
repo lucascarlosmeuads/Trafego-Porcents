@@ -1714,6 +1714,10 @@ export type Database = {
       }
     }
     Functions: {
+      aplicar_distribuicao_retroativa: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_parceria_by_email: {
         Args: { p_email: string }
         Returns: {
