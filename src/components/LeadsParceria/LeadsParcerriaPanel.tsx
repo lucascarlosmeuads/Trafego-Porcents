@@ -111,19 +111,10 @@ export function LeadsParcerriaPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="flex items-center gap-2">
-                      <Calendar className="h-4 w-4" />
-                      Data/Hora
-                    </TableHead>
+                    <TableHead>Data/Hora</TableHead>
                     <TableHead>Nome</TableHead>
-                    <TableHead className="flex items-center gap-2">
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </TableHead>
-                    <TableHead className="flex items-center gap-2">
-                      <Phone className="h-4 w-4" />
-                      WhatsApp
-                    </TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>WhatsApp</TableHead>
                     <TableHead>Vendedor Responsável</TableHead>
                     <TableHead>Status Negociação</TableHead>
                     <TableHead>Ações</TableHead>
