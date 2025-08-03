@@ -916,6 +916,72 @@ export type Database = {
           },
         ]
       }
+      kiwify_config: {
+        Row: {
+          account_id: string
+          ativa: boolean
+          client_id: string
+          client_secret: string
+          created_at: string
+          id: string
+          updated_at: string
+          webhook_url: string | null
+        }
+        Insert: {
+          account_id: string
+          ativa?: boolean
+          client_id: string
+          client_secret: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Update: {
+          account_id?: string
+          ativa?: boolean
+          client_id?: string
+          client_secret?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          webhook_url?: string | null
+        }
+        Relationships: []
+      }
+      kiwify_webhook_logs: {
+        Row: {
+          created_at: string
+          detalhes_erro: string | null
+          email_comprador: string | null
+          id: string
+          lead_encontrado: boolean | null
+          lead_id: string | null
+          status_processamento: string
+          webhook_data: Json
+        }
+        Insert: {
+          created_at?: string
+          detalhes_erro?: string | null
+          email_comprador?: string | null
+          id?: string
+          lead_encontrado?: boolean | null
+          lead_id?: string | null
+          status_processamento?: string
+          webhook_data: Json
+        }
+        Update: {
+          created_at?: string
+          detalhes_erro?: string | null
+          email_comprador?: string | null
+          id?: string
+          lead_encontrado?: boolean | null
+          lead_id?: string | null
+          status_processamento?: string
+          webhook_data?: Json
+        }
+        Relationships: []
+      }
       max_integration_config: {
         Row: {
           created_at: string
