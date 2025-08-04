@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +41,35 @@ interface ClienteParceiraDetalhesProps {
 export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: ClienteParceiraDetalhesProps) {
   const dados = dadosConsolidados || null;
 
+  // Move formatFieldName to the top
+  const formatFieldName = (key: string): string => {
+    const fieldNames: { [key: string]: string } = {
+      nome: 'Nome',
+      email: 'Email',
+      whatsapp: 'WhatsApp',
+      telefone: 'Telefone',
+      tipo_negocio: 'Tipo de Negócio',
+      produto_descricao: 'Produto/Serviço',
+      valor_medio_produto: 'Valor Médio',
+      ja_teve_vendas: 'Já teve vendas?',
+      visao_futuro_texto: 'Visão de Futuro',
+      audio_visao_futuro: 'Áudio - Visão',
+      planejamento_estrategico: 'Planejamento',
+      status_negociacao: 'Status',
+      vendedor_responsavel: 'Vendedor',
+      investimento_diario: 'Investimento Diário',
+      hasBM: 'Business Manager',
+      hasCheckout: 'Sistema de Checkout',
+      hasWhatsApp: 'WhatsApp Business',
+      hasImageCreatives: 'Criativos de Imagem (3 unidades)',
+      hasVideoCreatives: 'Criativos de Vídeo (3 unidades)',
+      hasSalesPage: 'Página de Vendas Simples',
+      hasWhatsAppAutomation: 'Funil de Mensagens Automáticas'
+    };
+    
+    return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
+  };
+
   const calcularCustos = () => {
     const respostas = dados?.dados_completos || formulario?.respostas || {};
     
@@ -72,85 +102,6 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
       hasDiscounts: totalEconomias > 0
     };
   };
-
-  const custosInfo = calcularCustos();
-
-  if (!dados && !formulario) {
-    return (
-      <div className="max-w-4xl mx-auto p-6">
-        <Card className="text-center">
-          <CardContent className="pt-12 pb-12">
-            <AlertCircle className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Dados não encontrados</h3>
-            <p className="text-muted-foreground">Não foi possível carregar suas informações de parceria.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  const porcentagemCompletude = dados?.porcentagem_completude || 0;
-
-  if (porcentagemCompletude < 80) {
-    const dadosDisponiveis = {
-      nome: dados?.nome_cliente || (formulario?.respostas?.nome) || 'Não informado',
-      email: dados?.email_cliente || formulario?.email_usuario || 'Não informado',
-      telefone: dados?.telefone || (formulario?.respostas?.telefone) || 'Não informado',
-      tipo_negocio: dados?.tipo_negocio || formulario?.tipo_negocio || 'service',
-    };
-
-    return (
-      <div className="max-w-4xl mx-auto p-6 space-y-6">
-        <Card className="border-amber-200 bg-amber-50">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-amber-800">
-              <AlertTriangle className="h-5 w-5" />
-              Formulário Incompleto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span>Progresso do formulário</span>
-                <span className="font-semibold">{porcentagemCompletude}%</span>
-              </div>
-              <Progress value={porcentagemCompletude} className="h-3" />
-            </div>
-            <p className="text-sm text-amber-700">
-              Complete seu formulário para ter acesso completo ao painel e receber seu planejamento estratégico personalizado.
-            </p>
-            <Button 
-              onClick={() => window.open('https://forms.gle/7bWM76eZV4JvnpHx7', '_blank')}
-              className="w-full"
-            >
-              <Edit3 className="h-4 w-4 mr-2" />
-              Completar Formulário
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <User className="h-5 w-5" />
-              Informações Básicas
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(dadosDisponiveis).map(([key, value]) => {
-              if (!value || value === 'Não informado') return null;
-              return (
-                <div key={key} className="flex justify-between items-center py-2 border-b border-muted/30 last:border-0">
-                  <span className="font-medium text-sm text-muted-foreground">{formatFieldName(key)}</span>
-                  <span className="text-sm font-medium">{renderValue(value, key)}</span>
-                </div>
-              );
-            })}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const renderValue = (value: any, fieldName?: string): React.ReactNode => {
     if (value === null || value === undefined || value === '') {
@@ -251,33 +202,84 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     return <span className="text-sm">{String(value)}</span>;
   };
 
-  const formatFieldName = (key: string): string => {
-    const fieldNames: { [key: string]: string } = {
-      nome: 'Nome',
-      email: 'Email',
-      whatsapp: 'WhatsApp',
-      telefone: 'Telefone',
-      tipo_negocio: 'Tipo de Negócio',
-      produto_descricao: 'Produto/Serviço',
-      valor_medio_produto: 'Valor Médio',
-      ja_teve_vendas: 'Já teve vendas?',
-      visao_futuro_texto: 'Visão de Futuro',
-      audio_visao_futuro: 'Áudio - Visão',
-      planejamento_estrategico: 'Planejamento',
-      status_negociacao: 'Status',
-      vendedor_responsavel: 'Vendedor',
-      investimento_diario: 'Investimento Diário',
-      hasBM: 'Business Manager',
-      hasCheckout: 'Sistema de Checkout',
-      hasWhatsApp: 'WhatsApp Business',
-      hasImageCreatives: 'Criativos de Imagem (3 unidades)',
-      hasVideoCreatives: 'Criativos de Vídeo (3 unidades)',
-      hasSalesPage: 'Página de Vendas Simples',
-      hasWhatsAppAutomation: 'Funil de Mensagens Automáticas'
+  const custosInfo = calcularCustos();
+
+  if (!dados && !formulario) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <Card className="text-center">
+          <CardContent className="pt-12 pb-12">
+            <AlertCircle className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Dados não encontrados</h3>
+            <p className="text-muted-foreground">Não foi possível carregar suas informações de parceria.</p>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const porcentagemCompletude = dados?.porcentagem_completude || 0;
+
+  if (porcentagemCompletude < 80) {
+    const dadosDisponiveis = {
+      nome: dados?.nome_cliente || (formulario?.respostas?.nome) || 'Não informado',
+      email: dados?.email_cliente || formulario?.email_usuario || 'Não informado',
+      telefone: dados?.telefone || (formulario?.respostas?.telefone) || 'Não informado',
+      tipo_negocio: dados?.tipo_negocio || formulario?.tipo_negocio || 'service',
     };
-    
-    return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-  };
+
+    return (
+      <div className="max-w-4xl mx-auto p-6 space-y-6">
+        <Card className="border-amber-200 bg-amber-50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-amber-800">
+              <AlertTriangle className="h-5 w-5" />
+              Formulário Incompleto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span>Progresso do formulário</span>
+                <span className="font-semibold">{porcentagemCompletude}%</span>
+              </div>
+              <Progress value={porcentagemCompletude} className="h-3" />
+            </div>
+            <p className="text-sm text-amber-700">
+              Complete seu formulário para ter acesso completo ao painel e receber seu planejamento estratégico personalizado.
+            </p>
+            <Button 
+              onClick={() => window.open('https://forms.gle/7bWM76eZV4JvnpHx7', '_blank')}
+              className="w-full"
+            >
+              <Edit3 className="h-4 w-4 mr-2" />
+              Completar Formulário
+            </Button>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Informações Básicas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {Object.entries(dadosDisponiveis).map(([key, value]) => {
+              if (!value || value === 'Não informado') return null;
+              return (
+                <div key={key} className="flex justify-between items-center py-2 border-b border-muted/30 last:border-0">
+                  <span className="font-medium text-sm text-muted-foreground">{formatFieldName(key)}</span>
+                  <span className="text-sm font-medium">{renderValue(value, key)}</span>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   const organizarDados = () => {
     const respostas = dados?.dados_completos || formulario?.respostas || {};
