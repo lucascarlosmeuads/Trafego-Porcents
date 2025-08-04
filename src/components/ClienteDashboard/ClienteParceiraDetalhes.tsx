@@ -670,4 +670,5 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
     <div className="space-y-6">
       {renderTabContent()}
     </div>
-}
+  );
+};
