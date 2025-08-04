@@ -1,6 +1,8 @@
 import React from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
 import { 
   Accordion,
   AccordionContent,
@@ -23,7 +25,9 @@ import {
   AlertCircle,
   Award,
   Briefcase,
-  Heart
+  Heart,
+  Edit3,
+  AlertTriangle
 } from 'lucide-react';
 import { FormularioParceiraData } from '@/hooks/useClienteParceiraData';
 
@@ -42,6 +46,144 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
           </div>
         </CardContent>
       </Card>
+    );
+  }
+
+  // Função para calcular completude do formulário
+  const calcularCompletude = () => {
+    const respostas = formulario.respostas || {};
+    const camposEsperados = [
+      'nome', 'whatsapp', 'telefone', 'comissao', 'investimentoDiario',
+      'hasBM', 'hasCheckout', 'hasWhatsApp', 'hasImageCreatives', 
+      'hasVideoCreatives', 'totalCost'
+    ];
+    
+    const camposPreenchidos = camposEsperados.filter(campo => {
+      const valor = respostas[campo];
+      return valor !== null && valor !== undefined && valor !== '';
+    });
+
+    const porcentagem = Math.round((camposPreenchidos.length / camposEsperados.length) * 100);
+    
+    return {
+      porcentagem,
+      camposPreenchidos: camposPreenchidos.length,
+      totalCampos: camposEsperados.length,
+      incompleto: porcentagem < 80
+    };
+  };
+
+  const completude = calcularCompletude();
+
+  // Se formulário está muito incompleto, mostrar interface especial
+  if (completude.incompleto) {
+    const respostas = formulario.respostas || {};
+    const dadosDisponiveis = {
+      nome: respostas.nome || 'Não informado',
+      email: formulario.email_usuario,
+      telefone: respostas.telefone,
+      tipo_negocio: formulario.tipo_negocio || 'service',
+    };
+
+    return (
+      <div className="space-y-6">
+        {/* Aviso de Formulário Incompleto */}
+        <Card className="border-orange-200 dark:border-orange-800 bg-orange-50 dark:bg-orange-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-orange-800 dark:text-orange-200">
+              <AlertTriangle className="h-5 w-5" />
+              Formulário Incompleto
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-4">
+              <div className="flex-1">
+                <div className="flex justify-between text-sm mb-2">
+                  <span>Progresso do formulário</span>
+                  <span className="font-medium">{completude.porcentagem}%</span>
+                </div>
+                <Progress value={completude.porcentagem} className="h-2" />
+              </div>
+            </div>
+            
+            <p className="text-sm text-muted-foreground">
+              Você precisa completar as informações do seu formulário para ter acesso completo 
+              ao painel e receber seu planejamento estratégico personalizado.
+            </p>
+            
+            <Button 
+              onClick={() => window.open('https://forms.gle/7bWM76eZV4JvnpHx7', '_blank')}
+              className="w-full gap-2"
+            >
+              <Edit3 className="h-4 w-4" />
+              Completar Formulário Agora
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Dados Disponíveis */}
+        <Card className="border-muted-foreground/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <User className="h-5 w-5" />
+              Suas Informações Básicas
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {Object.entries(dadosDisponiveis).map(([key, value]) => {
+              if (!value) return null;
+              return (
+                <div key={key} className="flex justify-between items-center p-3 bg-muted/20 rounded">
+                  <span className="font-medium text-sm">{formatFieldName(key)}:</span>
+                  <span className="text-sm">{renderValue(value, key)}</span>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+
+        {/* Próximos Passos */}
+        <Card className="border-blue-200 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/20">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-blue-800 dark:text-blue-200">
+              <Target className="h-5 w-5" />
+              Próximos Passos
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">1</div>
+              <div>
+                <h4 className="font-medium text-sm">Complete seu formulário</h4>
+                <p className="text-xs text-muted-foreground">Preencha todas as informações necessárias sobre seu negócio</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
+              <div>
+                <h4 className="font-medium text-sm">Receba seu planejamento</h4>
+                <p className="text-xs text-muted-foreground">Nossa IA criará um plano estratégico personalizado para você</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <div className="w-6 h-6 bg-blue-500 text-white rounded-full flex items-center justify-center text-xs font-bold">3</div>
+              <div>
+                <h4 className="font-medium text-sm">Comece a parceria</h4>
+                <p className="text-xs text-muted-foreground">Tenha acesso completo ao sistema e inicie sua jornada</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Info de Criação */}
+        <Card className="bg-muted/30 border-muted-foreground/20">
+          <CardContent className="pt-6">
+            <div className="text-center text-sm text-muted-foreground">
+              <p>Cadastro criado em: {format(new Date(formulario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
