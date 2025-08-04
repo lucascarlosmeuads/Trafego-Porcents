@@ -54,6 +54,18 @@ export function VendedorLeadsPanel() {
     return '';
   };
 
+  const getStatusBadge = (lead: any) => {
+    // Só mostra "automático" se foi realmente via webhook
+    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago && lead.webhook_automatico) {
+      return (
+        <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 ml-1">
+          automático
+        </Badge>
+      );
+    }
+    return null;
+  };
+
   const filteredLeads = statusFilter === 'todos' 
     ? leads 
     : leads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
@@ -199,20 +211,23 @@ export function VendedorLeadsPanel() {
                           )}
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={lead.status_negociacao}
-                            onValueChange={(value) => updateLeadNegociacao(lead.id, value as any)}
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                             <SelectContent>
-                               <SelectItem value="pendente">não chamei</SelectItem>
-                               <SelectItem value="pensando">chamei</SelectItem>
-                               <SelectItem value="aceitou">comprou</SelectItem>
-                               <SelectItem value="recusou">não quer</SelectItem>
-                             </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-1">
+                            <Select
+                              value={lead.status_negociacao}
+                              onValueChange={(value) => updateLeadNegociacao(lead.id, value as any)}
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                               <SelectContent>
+                                 <SelectItem value="pendente">não chamei</SelectItem>
+                                 <SelectItem value="pensando">chamei</SelectItem>
+                                 <SelectItem value="aceitou">comprou</SelectItem>
+                                 <SelectItem value="recusou">não quer</SelectItem>
+                               </SelectContent>
+                            </Select>
+                            {getStatusBadge(lead)}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Button

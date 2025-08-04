@@ -22,6 +22,7 @@ interface LeadParceria {
   status_negociacao: 'pendente' | 'aceitou' | 'recusou' | 'pensando';
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
+  webhook_automatico?: boolean;
 }
 
 export function useVendedorLeads() {
@@ -56,7 +57,29 @@ export function useVendedorLeads() {
         throw error;
       }
 
-      setLeads((data || []) as LeadParceria[]);
+      // Buscar logs de webhook para identificar vendas automáticas
+      const { data: webhookLogs } = await supabase
+        .from('kiwify_webhook_logs')
+        .select('email_comprador, webhook_data')
+        .eq('status_processamento', 'sucesso')
+        .eq('lead_encontrado', true);
+
+      // Mapear leads com informação de webhook automático
+      const leadsWithWebhookInfo = (data || []).map(lead => {
+        const webhookLog = webhookLogs?.find(log => {
+          const webhookData = log.webhook_data as any;
+          return log.email_comprador === lead.email_usuario &&
+            webhookData?.webhook_event_type === 'order_approved' &&
+            webhookData?.order_status === 'paid';
+        });
+        
+        return {
+          ...lead,
+          webhook_automatico: !!webhookLog
+        };
+      });
+
+      setLeads(leadsWithWebhookInfo as LeadParceria[]);
       setTotalLeads(count || 0);
     } catch (err: any) {
       console.error('Erro ao buscar leads do vendedor:', err);
