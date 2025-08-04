@@ -30,13 +30,13 @@ export function useLeadsAnalytics() {
   const [error, setError] = useState<string | null>(null);
 
   const getLeadsForDate = async (date: string): Promise<LeadsAnalytics> => {
-    console.log('🔍 [LeadsAnalytics] Buscando leads para data:', date);
+    console.log('🔍 [LeadsAnalytics] Buscando leads para data (BRT):', date);
     
     const { data, error } = await supabase
       .from('formularios_parceria')
       .select('*')
-      .gte('created_at', `${date} 00:00:00+00`)
-      .lt('created_at', `${date} 23:59:59+00`);
+      .gte('created_at', `${date}T00:00:00-03:00`)
+      .lt('created_at', `${date}T23:59:59-03:00`);
 
     if (error) {
       console.error('❌ [LeadsAnalytics] Erro na query:', error);
