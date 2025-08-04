@@ -21,6 +21,7 @@ interface LeadParceria {
   status_negociacao: 'pendente' | 'aceitou' | 'recusou' | 'pensando';
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
+  webhook_automatico?: boolean;
 }
 
 export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
@@ -44,25 +45,42 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       // Habilitar realtime para a tabela
       await enableRealtimeForTable('formularios_parceria');
 
-      // Construir query baseada no filtro de data
-      let query = supabase
+      // Buscar leads com informação se foi via webhook
+      let leadsQuery = supabase
         .from('formularios_parceria')
         .select('*', { count: 'exact' });
 
       // Aplicar filtro de data se fornecido
       if (dateFilter && dateFilter.startDate && dateFilter.endDate) {
-        query = query
+        leadsQuery = leadsQuery
           .gte('created_at', `${dateFilter.startDate}T00:00:00`)
           .lte('created_at', `${dateFilter.endDate}T23:59:59`);
       }
 
-      const { data, error, count } = await query.order('created_at', { ascending: false });
+      const { data: leadsData, error: leadsError, count } = await leadsQuery.order('created_at', { ascending: false });
 
-      if (error) {
-        throw error;
+      if (leadsError) {
+        throw leadsError;
       }
 
-      setLeads((data || []) as LeadParceria[]);
+      // Buscar logs de webhook para determinar quais foram automáticos
+      const { data: webhookLogs } = await supabase
+        .from('kiwify_webhook_logs')
+        .select('email_comprador, status_processamento')
+        .eq('status_processamento', 'sucesso');
+
+      // Criar set de emails que foram processados via webhook
+      const emailsWebhook = new Set(
+        (webhookLogs || []).map(log => log.email_comprador)
+      );
+
+      // Processar leads para incluir flag de webhook automático
+      const processedLeads = (leadsData || []).map(lead => ({
+        ...lead,
+        webhook_automatico: emailsWebhook.has(lead.email_usuario)
+      }));
+
+      setLeads(processedLeads as LeadParceria[]);
       setTotalLeads(count || 0);
     } catch (err: any) {
       console.error('Erro ao buscar leads de parceria:', err);

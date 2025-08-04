@@ -74,7 +74,8 @@ export function LeadsParcerriaPanel() {
   };
 
   const getStatusBadge = (lead: any) => {
-    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago) {
+    // Só mostra "Comprou (Automático)" se foi realmente via webhook
+    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago && lead.webhook_automatico) {
       return (
         <Badge className="bg-green-600 text-white">
           ✅ Comprou (Automático)
