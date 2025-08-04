@@ -1,10 +1,11 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { 
@@ -30,7 +31,9 @@ import {
   Calendar,
   MapPin,
   Star,
-  Activity
+  Activity,
+  Package,
+  Gamepad2
 } from 'lucide-react';
 import { FormularioParceiraData, ConsolidatedParceiraData } from '@/hooks/useClienteParceiraData';
 
@@ -403,191 +406,335 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
   );
 
 
-  const renderNegocioTab = () => (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Building2 className="h-5 w-5 text-green-600" />
-            Informações do Negócio
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(dadosNegocio).map(([key, value]) => {
-            if (value === null || value === undefined) return null;
-            return (
-              <div key={key} className="space-y-2">
-                <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                <div className="pl-2">{renderValue(value, key)}</div>
-              </div>
-            );
-          })}
-        </CardContent>
-      </Card>
+  const renderNegocioTab = () => {
+    if (!formulario?.respostas && !dados?.dados_completos) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">Nenhuma informação do negócio disponível.</p>
+        </div>
+      );
+    }
 
-      {/* Visão de Futuro */}
-      {(visaoFuturo.visao_futuro_texto || visaoFuturo.audio_visao_futuro) && (
+    const respostas = dados?.dados_completos || formulario?.respostas || {};
+    
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <User className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold">Meu Negócio</h2>
+        </div>
+        
+        <div className="grid gap-6 md:grid-cols-2">
+          {/* Dados Básicos */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <User className="h-5 w-5" />
+                Dados Básicos
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Object.entries(dadosBasicos).map(([key, value]) => {
+                if (!value) return null;
+                return (
+                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
+                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {renderValue(value, key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Informações do Negócio */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Informações do Negócio
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Object.entries(dadosNegocio).map(([key, value]) => {
+                if (value === null || value === undefined) return null;
+                return (
+                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
+                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {renderValue(value, key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Infraestrutura Disponível */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Infraestrutura Disponível
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {Object.entries(infraestrutura).map(([key, value]) => {
+                if (value === null || value === undefined) return null;
+                return (
+                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
+                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
+                    <span className="text-sm text-muted-foreground">
+                      {renderValue(value, key)}
+                    </span>
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+
+          {/* Visão de Futuro */}
+          {(visaoFuturo.visao_futuro_texto || visaoFuturo.audio_visao_futuro) && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Lightbulb className="h-5 w-5" />
+                  Visão de Futuro
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {visaoFuturo.visao_futuro_texto && (
+                  <div className="py-2 border-b border-border/50">
+                    <span className="font-medium text-sm block mb-2">Descrição:</span>
+                    <div className="text-sm text-muted-foreground">{renderValue(visaoFuturo.visao_futuro_texto)}</div>
+                  </div>
+                )}
+                {visaoFuturo.audio_visao_futuro && (
+                  <div className="py-2">
+                    <span className="font-medium text-sm block mb-2">Áudio:</span>
+                    <div>{renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}</div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderOrcamentoTab = () => {
+    // Estado para controlar os itens selecionados
+    const [selectedItems, setSelectedItems] = useState({
+      criativos3img: false,
+      criativos10img: false,
+      criativos3video: false,
+      site: false,
+      funilGamificado: false
+    });
+
+    // Tabela de preços conforme especificado
+    const precos = {
+      criativos3img: 50,
+      criativos10img: 100,
+      criativos3video: 80,
+      site: 200,
+      funilGamificado: 800
+    };
+
+    // Calcular total
+    const total = Object.entries(selectedItems)
+      .filter(([_, selected]) => selected)
+      .reduce((sum, [key, _]) => sum + precos[key as keyof typeof precos], 0);
+
+    const handleItemChange = (item: keyof typeof selectedItems, checked: boolean) => {
+      setSelectedItems(prev => ({
+        ...prev,
+        [item]: checked
+      }));
+    };
+
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-3">
+          <Calculator className="h-6 w-6 text-primary" />
+          <h2 className="text-xl font-semibold">Orçamento do Funil</h2>
+        </div>
+
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Lightbulb className="h-5 w-5 text-yellow-600" />
-              Visão de Futuro
+            <CardTitle className="flex items-center justify-between">
+              <span>Monte seu Orçamento Personalizado</span>
+              <Badge variant="default" className="text-lg px-3 py-1">
+                Total: R$ {total.toLocaleString('pt-BR')}
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {visaoFuturo.visao_futuro_texto && (
-              <div>
-                <span className="text-sm text-muted-foreground font-medium">Descrição</span>
-                <div className="mt-1">{renderValue(visaoFuturo.visao_futuro_texto)}</div>
-              </div>
-            )}
-            {visaoFuturo.audio_visao_futuro && (
-              <div>
-                <span className="text-sm text-muted-foreground font-medium">Áudio</span>
-                <div className="mt-1">{renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}</div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+          <CardContent className="space-y-6">
+            
+            {/* Seção Criativos */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Monitor className="h-5 w-5" />
+                Criativos
+              </h3>
+              
+              <div className="grid gap-3">
+                {/* 3 Criativos de Imagem */}
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={selectedItems.criativos3img}
+                      onCheckedChange={(checked) => handleItemChange('criativos3img', checked as boolean)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">3 Criativos de Imagem</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-semibold">
+                    R$ 50
+                  </Badge>
+                </div>
 
-  const renderOrcamentoTab = () => (
-    <div className="space-y-6">
-      {/* Orçamento Personalizado */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-lg">
-            <Calculator className="h-5 w-5 text-purple-600" />
-            Orçamento Personalizado
-            <Badge variant="outline" className="ml-auto text-lg font-bold">
-              <DollarSign className="w-4 h-4 mr-1" />
-              R$ {custosInfo.total.toLocaleString('pt-BR')}
-            </Badge>
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          
-          {/* Grid de Infraestrutura */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Criativos de Imagem */}
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Monitor className="w-4 h-4 text-blue-600" />
-                <span className="font-medium text-sm">Criativos de Imagem (3)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {infraestrutura.hasImageCreatives ? (
-                  <>
-                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                    <Badge variant="outline" className="text-green-600">-R$ 50</Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-red-600">+R$ 50</Badge>
-                )}
-              </div>
-            </div>
+                {/* 10 Criativos de Imagem */}
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={selectedItems.criativos10img}
+                      onCheckedChange={(checked) => handleItemChange('criativos10img', checked as boolean)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Package className="h-4 w-4 text-blue-600" />
+                      <span className="font-medium">10 Criativos de Imagem</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-semibold">
+                    R$ 100
+                  </Badge>
+                </div>
 
-            {/* Criativos de Vídeo */}
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Video className="w-4 h-4 text-purple-600" />
-                <span className="font-medium text-sm">Criativos de Vídeo (3)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {infraestrutura.hasVideoCreatives ? (
-                  <>
-                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                    <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Business Manager */}
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-2">
-                <Building2 className="w-4 h-4 text-orange-600" />
-                <span className="font-medium text-sm">Business Manager</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {infraestrutura.hasBM ? (
-                  <>
-                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                    <Badge variant="outline" className="text-green-600">-R$ 200</Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-red-600">+R$ 200</Badge>
-                )}
-              </div>
-            </div>
-
-            {/* Página de Vendas */}
-            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-              <div className="flex items-center gap-2">
-                <ShoppingCart className="w-4 h-4 text-blue-600" />
-                <span className="font-medium text-sm">Página de Vendas</span>
-              </div>
-              <div className="flex items-center gap-2">
-                {infraestrutura.hasSalesPage ? (
-                  <>
-                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                    <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Funil de Mensagens - Destaque Especial */}
-          <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-3">
-                <MessageSquare className="w-5 h-5 text-yellow-600" />
-                <div>
-                  <span className="font-semibold text-yellow-800">Funil de Mensagens Automáticas</span>
-                  <p className="text-sm text-yellow-600">💎 Nosso produto mais vendido!</p>
+                {/* 3 Criativos de Vídeo */}
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={selectedItems.criativos3video}
+                      onCheckedChange={(checked) => handleItemChange('criativos3video', checked as boolean)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Video className="h-4 w-4 text-purple-600" />
+                      <span className="font-medium">3 Criativos de Vídeo</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-semibold">
+                    R$ 80
+                  </Badge>
                 </div>
               </div>
-              <div className="flex items-center gap-2">
-                {infraestrutura.hasWhatsAppAutomation ? (
-                  <>
-                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                    <Badge variant="outline" className="text-green-600 font-bold">-R$ 700</Badge>
-                  </>
-                ) : (
-                  <Badge variant="outline" className="text-red-600 font-bold text-lg">+R$ 700</Badge>
-                )}
+            </div>
+
+            <Separator />
+
+            {/* Seção Desenvolvimento */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold flex items-center gap-2">
+                <Building2 className="h-5 w-5" />
+                Desenvolvimento
+              </h3>
+              
+              <div className="grid gap-3">
+                {/* Site */}
+                <div className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={selectedItems.site}
+                      onCheckedChange={(checked) => handleItemChange('site', checked as boolean)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Monitor className="h-4 w-4 text-green-600" />
+                      <span className="font-medium">Site Profissional</span>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-semibold">
+                    R$ 200
+                  </Badge>
+                </div>
+
+                {/* Funil Gamificado */}
+                <div className="flex items-center justify-between p-4 border-2 border-yellow-200 rounded-lg hover:bg-yellow-50/50 transition-colors bg-gradient-to-r from-yellow-50 to-orange-50">
+                  <div className="flex items-center space-x-3">
+                    <Checkbox 
+                      checked={selectedItems.funilGamificado}
+                      onCheckedChange={(checked) => handleItemChange('funilGamificado', checked as boolean)}
+                    />
+                    <div className="flex items-center gap-2">
+                      <Gamepad2 className="h-4 w-4 text-yellow-600" />
+                      <div>
+                        <span className="font-medium text-yellow-800">Funil de Venda Gamificado</span>
+                        <p className="text-xs text-yellow-600">🏆 Nosso produto premium!</p>
+                      </div>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="font-bold text-yellow-700 border-yellow-300">
+                    R$ 800
+                  </Badge>
+                </div>
               </div>
             </div>
-          </div>
 
-          <Separator />
+            <Separator />
 
-          {/* Resumo Financeiro */}
-          <div className="space-y-3">
-            {custosInfo.totalEconomias > 0 && (
-              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                <span className="font-medium text-green-800">💰 Economia Total (itens que você já possui)</span>
-                <span className="font-bold text-green-600">-R$ {custosInfo.totalEconomias.toLocaleString('pt-BR')}</span>
-              </div>
-            )}
-            
-            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-              <span className="font-bold text-blue-800 text-lg">Investimento Total Necessário</span>
-              <span className="font-bold text-blue-600 text-xl">R$ {custosInfo.total.toLocaleString('pt-BR')}</span>
+            {/* Resumo do Orçamento */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Resumo do Orçamento</h3>
+              
+              {Object.entries(selectedItems).filter(([_, selected]) => selected).length > 0 ? (
+                <div className="space-y-2">
+                  {Object.entries(selectedItems)
+                    .filter(([_, selected]) => selected)
+                    .map(([key, _]) => {
+                      const labels = {
+                        criativos3img: '3 Criativos de Imagem',
+                        criativos10img: '10 Criativos de Imagem',
+                        criativos3video: '3 Criativos de Vídeo',
+                        site: 'Site Profissional',
+                        funilGamificado: 'Funil de Venda Gamificado'
+                      };
+                      
+                      return (
+                        <div key={key} className="flex justify-between items-center py-2 border-b border-border/50">
+                          <span className="text-sm">{labels[key as keyof typeof labels]}</span>
+                          <span className="font-medium">R$ {precos[key as keyof typeof precos].toLocaleString('pt-BR')}</span>
+                        </div>
+                      );
+                    })}
+                  
+                  <div className="flex justify-between items-center pt-3 border-t-2 border-primary/20">
+                    <span className="text-lg font-bold">Total:</span>
+                    <span className="text-xl font-bold text-primary">R$ {total.toLocaleString('pt-BR')}</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-6 text-muted-foreground">
+                  <Calculator className="h-8 w-8 mx-auto mb-2" />
+                  <p>Selecione os itens acima para ver seu orçamento personalizado</p>
+                </div>
+              )}
+
+              {total > 0 && (
+                <Button className="w-full" size="lg">
+                  <MessageSquare className="h-4 w-4 mr-2" />
+                  Solicitar Orçamento (R$ {total.toLocaleString('pt-BR')})
+                </Button>
+              )}
             </div>
-          </div>
 
-        </CardContent>
-      </Card>
-    </div>
-  );
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
 
   const renderPlanejamentoTab = () => (
     <div className="space-y-6">
