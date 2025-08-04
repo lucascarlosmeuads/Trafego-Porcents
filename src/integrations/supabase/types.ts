@@ -1791,6 +1791,15 @@ export type Database = {
         Args: { event_type: string; details?: Json }
         Returns: undefined
       }
+      processar_leads_retroativos: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          leads_processados: number
+          clientes_criados: number
+          usuarios_auth_criados: number
+          detalhes: Json
+        }[]
+      }
       save_gestor_meta_ads_config: {
         Args: {
           p_email_usuario: string
