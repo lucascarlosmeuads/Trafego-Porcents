@@ -777,6 +777,8 @@ export type Database = {
           created_at: string
           distribuido_em: string | null
           email_usuario: string | null
+          exportado_em: string | null
+          exportado_por: string | null
           id: string
           ja_teve_vendas: boolean | null
           planejamento_estrategico: string | null
@@ -797,6 +799,8 @@ export type Database = {
           created_at?: string
           distribuido_em?: string | null
           email_usuario?: string | null
+          exportado_em?: string | null
+          exportado_por?: string | null
           id?: string
           ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null
@@ -817,6 +821,8 @@ export type Database = {
           created_at?: string
           distribuido_em?: string | null
           email_usuario?: string | null
+          exportado_em?: string | null
+          exportado_por?: string | null
           id?: string
           ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null

@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { MessageCircle, Calendar, User, Mail, Phone, Eye, AlertCircle, Users, DollarSign } from 'lucide-react';
 import { LeadDetailsModal } from '@/components/LeadsParceria/LeadDetailsModal';
+import { LeadsExportButton } from './LeadsExportButton';
 import { useVendedorLeads } from '@/hooks/useVendedorLeads';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -131,20 +132,23 @@ export function VendedorLeadsPanel() {
                 <Users className="h-5 w-5" />
                 Meus Leads Atribuídos
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filtrar por status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="pendente">não chamei</SelectItem>
-                    <SelectItem value="pensando">chamei</SelectItem>
-                    <SelectItem value="aceitou">comprou</SelectItem>
-                    <SelectItem value="recusou">não quer</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-4">
+                <LeadsExportButton />
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Filtrar por status:</span>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
+                      <SelectItem value="pendente">não chamei</SelectItem>
+                      <SelectItem value="pensando">chamei</SelectItem>
+                      <SelectItem value="aceitou">comprou</SelectItem>
+                      <SelectItem value="recusou">não quer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </CardTitle>
           </CardHeader>
