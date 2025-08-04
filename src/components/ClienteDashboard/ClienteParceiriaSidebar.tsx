@@ -11,11 +11,10 @@ import {
   SidebarFooter
 } from '@/components/ui/sidebar'
 import { 
-  Home, 
-  User, 
   Building2, 
   Calculator,
   Target,
+  DollarSign,
   Activity,
   LogOut,
   Loader2,
@@ -44,40 +43,34 @@ export function ClienteParceiriaSidebar({ activeTab, onTabChange }: ClienteParce
 
   const menuItems = [
     {
-      id: 'dashboard',
-      label: 'Dashboard',
-      icon: Home,
-      description: 'Visão geral dos dados'
-    },
-    {
-      id: 'perfil',
-      label: 'Meu Perfil',
-      icon: User,
-      description: 'Dados pessoais e contato'
-    },
-    {
       id: 'negocio',
       label: 'Meu Negócio',
       icon: Building2,
-      description: 'Produto e informações'
+      description: 'Respostas do formulário'
     },
     {
       id: 'orcamento',
-      label: 'Orçamento',
+      label: 'Orçamento do Funil',
       icon: Calculator,
-      description: 'Custos personalizados'
+      description: 'Custos e investimentos'
     },
     {
       id: 'planejamento',
-      label: 'Planejamento',
+      label: 'Planejamento Estratégico',
       icon: Target,
-      description: 'Estratégia e próximos passos'
+      description: 'Download do planejamento'
     },
     {
-      id: 'status',
-      label: 'Status',
+      id: 'comissoes',
+      label: 'Comissões',
+      icon: DollarSign,
+      description: 'Marcar vendas realizadas'
+    },
+    {
+      id: 'metricas',
+      label: 'Métricas da Campanha',
       icon: Activity,
-      description: 'Acompanhar projeto'
+      description: 'Resultados da campanha'
     }
   ]
 

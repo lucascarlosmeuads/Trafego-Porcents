@@ -326,107 +326,82 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case 'perfil':
-        return renderPerfilTab();
       case 'negocio':
         return renderNegocioTab();
       case 'orcamento':
         return renderOrcamentoTab();
       case 'planejamento':
         return renderPlanejamentoTab();
-      case 'status':
-        return renderStatusTab();
+      case 'comissoes':
+        return renderComissoesTab();
+      case 'metricas':
+        return renderMetricasTab();
       default:
-        return renderDashboardTab();
+        return renderNegocioTab();
     }
   };
 
-  const renderDashboardTab = () => (
-    <div className="space-y-6">
-      {/* Status e Progress */}
-      <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
-        <CardContent className="pt-6">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-500" />
-              <span className="font-semibold">Formulário Completo</span>
-            </div>
-            <Badge className="bg-green-100 text-green-800">
-              {porcentagemCompletude}% Completo
-            </Badge>
-          </div>
-          <Progress value={porcentagemCompletude} className="h-2" />
-        </CardContent>
-      </Card>
-
-      {/* Cards de Resumo */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
-              <User className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm">Perfil</h3>
-              <p className="text-xs text-muted-foreground">Dados pessoais completos</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-              <Building2 className="w-5 h-5 text-green-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm">Negócio</h3>
-              <p className="text-xs text-muted-foreground">
-                {dadosNegocio.produto_descricao ? 'Configurado' : 'Pendente'}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
-              <Calculator className="w-5 h-5 text-purple-600" />
-            </div>
-            <div>
-              <h3 className="font-semibold text-sm">Orçamento</h3>
-              <p className="text-xs text-muted-foreground">
-                R$ {custosInfo.total.toLocaleString('pt-BR')}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const renderPerfilTab = () => (
+  const renderComissoesTab = () => (
     <div className="space-y-6">
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <User className="h-5 w-5 text-blue-600" />
-            Dados Pessoais
+            <DollarSign className="w-5 h-5" />
+            Controle de Comissões
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          {Object.entries(dadosBasicos).map(([key, value]) => {
-            if (!value) return null;
-            return (
-              <div key={key} className="flex justify-between items-center py-3 border-b border-muted/30 last:border-0">
-                <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                <div className="text-right">{renderValue(value, key)}</div>
-              </div>
-            );
-          })}
+        <CardContent>
+          <div className="text-center py-8">
+            <DollarSign className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Sistema de Comissões</h3>
+            <p className="text-muted-foreground mb-4">
+              Em breve você poderá registrar suas vendas e acompanhar suas comissões aqui.
+            </p>
+            <Button disabled>
+              Registrar Venda
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
   );
+
+  const renderMetricasTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="w-5 h-5" />
+            Métricas da Campanha
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <Activity className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Métricas em Desenvolvimento</h3>
+            <p className="text-muted-foreground mb-4">
+              Em breve você terá acesso completo às métricas da sua campanha.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="p-4 border rounded-lg">
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-sm text-muted-foreground">Cliques</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-2xl font-bold">0</p>
+                <p className="text-sm text-muted-foreground">Impressões</p>
+              </div>
+              <div className="p-4 border rounded-lg">
+                <p className="text-2xl font-bold">0%</p>
+                <p className="text-sm text-muted-foreground">CTR</p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
 
   const renderNegocioTab = () => (
     <div className="space-y-6">
