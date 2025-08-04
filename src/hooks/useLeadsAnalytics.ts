@@ -49,8 +49,8 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
-    // Contar leads convertidos (status = 'aceitou' ou 'comprou')
-    const converted = data?.filter((lead: any) => ['aceitou', 'comprou'].includes(lead.status_negociacao)).length || 0;
+    // Contar leads convertidos (cliente_pago = true)
+    const converted = data?.filter((lead: any) => lead.cliente_pago === true).length || 0;
     const conversionRate = total > 0 ? (converted / total) * 100 : 0;
     
     // Contar por status de negociação
@@ -104,8 +104,8 @@ export function useLeadsAnalytics() {
     const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
     const semAudio = total - comAudio;
     
-    // Contar leads convertidos (status = 'aceitou' ou 'comprou')
-    const converted = data?.filter((lead: any) => ['aceitou', 'comprou'].includes(lead.status_negociacao)).length || 0;
+    // Contar leads convertidos (cliente_pago = true)
+    const converted = data?.filter((lead: any) => lead.cliente_pago === true).length || 0;
     const conversionRate = total > 0 ? (converted / total) * 100 : 0;
     
     // Contar por status de negociação
