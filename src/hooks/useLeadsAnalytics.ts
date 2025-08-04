@@ -20,11 +20,12 @@ interface DateRange {
 
 
 
-export function useLeadsAnalytics() {
+export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
   const [todayStats, setTodayStats] = useState<LeadsAnalytics | null>(null);
   const [yesterdayStats, setYesterdayStats] = useState<LeadsAnalytics | null>(null);
   const [dayBeforeStats, setDayBeforeStats] = useState<LeadsAnalytics | null>(null);
   const [customDateStats, setCustomDateStats] = useState<LeadsAnalytics | null>(null);
+  const [filteredStats, setFilteredStats] = useState<LeadsAnalytics | null>(null);
   
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -174,12 +175,23 @@ export function useLeadsAnalytics() {
     try {
       const customData = await getLeadsForDateRange(dateRange);
       setCustomDateStats(customData);
+      setFilteredStats(customData);
     } catch (err: any) {
       console.error('Erro ao buscar analytics personalizados:', err);
       setError(err.message || 'Erro ao carregar analytics personalizados');
     }
   };
 
+
+  useEffect(() => {
+    if (dateFilter && dateFilter.option && dateFilter.option !== 'hoje' && dateFilter.startDate && dateFilter.endDate) {
+      // Se há um filtro específico, usar ele
+      fetchCustomDateAnalytics({ startDate: dateFilter.startDate, endDate: dateFilter.endDate });
+    } else {
+      // Senão, buscar dados padrão
+      fetchAnalytics();
+    }
+  }, [dateFilter]);
 
   useEffect(() => {
     fetchAnalytics();
@@ -195,7 +207,11 @@ export function useLeadsAnalytics() {
           table: 'formularios_parceria',
         },
         () => {
-          fetchAnalytics();
+          if (dateFilter && dateFilter.option && dateFilter.option !== 'hoje' && dateFilter.startDate && dateFilter.endDate) {
+            fetchCustomDateAnalytics({ startDate: dateFilter.startDate, endDate: dateFilter.endDate });
+          } else {
+            fetchAnalytics();
+          }
         }
       )
       .subscribe();
@@ -203,7 +219,7 @@ export function useLeadsAnalytics() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [dateFilter]);
 
   const getTrend = (current: number, previous: number): 'up' | 'down' | 'stable' => {
     if (current > previous) return 'up';
@@ -221,6 +237,7 @@ export function useLeadsAnalytics() {
     yesterdayStats,
     dayBeforeStats,
     customDateStats,
+    filteredStats,
     
     loading,
     error,

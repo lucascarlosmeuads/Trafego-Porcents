@@ -1,130 +1,137 @@
-
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Calendar, RefreshCw } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { useGlobalDateFilter, type DateFilterOption } from '@/hooks/useGlobalDateFilter'
 
 interface DateRangeFilterProps {
-  onDateRangeChange: (startDate: string, endDate: string) => void
-  onRefresh: () => void
-  loading?: boolean
+  onFilterChange?: (startDate?: string, endDate?: string, option?: DateFilterOption) => void
+  className?: string
 }
 
-export function DateRangeFilter({ onDateRangeChange, onRefresh, loading }: DateRangeFilterProps) {
-  const [startDate, setStartDate] = useState(() => {
-    // Padrão: últimos 7 dias
-    const date = new Date()
-    date.setDate(date.getDate() - 7)
-    return date.toISOString().split('T')[0]
-  })
-  
-  const [endDate, setEndDate] = useState(() => {
-    // Padrão: hoje
-    return new Date().toISOString().split('T')[0]
-  })
+export function DateRangeFilter({ onFilterChange, className }: DateRangeFilterProps) {
+  const { currentFilter, applyFilter, isFilterActive } = useGlobalDateFilter()
+  const [customStartDate, setCustomStartDate] = useState('')
+  const [customEndDate, setCustomEndDate] = useState('')
+  const [showCustomInputs, setShowCustomInputs] = useState(false)
 
-  const handleQuickSelect = (days: number) => {
-    const end = new Date()
-    const start = new Date()
-    start.setDate(start.getDate() - days)
+  const handleQuickFilter = (option: DateFilterOption) => {
+    const filter = applyFilter(option)
+    onFilterChange?.(filter.startDate, filter.endDate, option)
     
-    const startStr = start.toISOString().split('T')[0]
-    const endStr = end.toISOString().split('T')[0]
-    
-    setStartDate(startStr)
-    setEndDate(endStr)
-    onDateRangeChange(startStr, endStr)
+    if (option !== 'personalizado') {
+      setShowCustomInputs(false)
+    } else {
+      setShowCustomInputs(true)
+    }
   }
 
-  const handleCustomRange = () => {
-    onDateRangeChange(startDate, endDate)
+  const handleCustomFilter = () => {
+    if (customStartDate && customEndDate) {
+      const filter = applyFilter('personalizado', customStartDate, customEndDate)
+      onFilterChange?.(filter.startDate, filter.endDate, 'personalizado')
+    }
+  }
+
+  const clearCustomFilter = () => {
+    setCustomStartDate('')
+    setCustomEndDate('')
+    setShowCustomInputs(false)
+    handleQuickFilter('hoje')
   }
 
   return (
-    <Card className="bg-gray-900 border-gray-800">
-      <CardHeader>
-        <CardTitle className="text-white flex items-center gap-2">
+    <Card className={cn("bg-background border", className)}>
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
           <Calendar className="h-5 w-5" />
           Filtros de Data
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {/* Botões de filtro rápido */}
         <div className="flex gap-2 flex-wrap">
           <Button
-            variant="outline"
+            variant={isFilterActive('hoje') ? 'default' : 'outline'}
             size="sm"
-            onClick={() => handleQuickSelect(1)}
-            className="text-white border-gray-700"
+            onClick={() => handleQuickFilter('hoje')}
           >
             Hoje
           </Button>
           <Button
-            variant="outline"
+            variant={isFilterActive('ontem') ? 'default' : 'outline'}
             size="sm"
-            onClick={() => handleQuickSelect(7)}
-            className="text-white border-gray-700"
+            onClick={() => handleQuickFilter('ontem')}
           >
-            7 dias
+            Ontem
           </Button>
           <Button
-            variant="outline"
+            variant={isFilterActive('anteontem') ? 'default' : 'outline'}
             size="sm"
-            onClick={() => handleQuickSelect(30)}
-            className="text-white border-gray-700"
+            onClick={() => handleQuickFilter('anteontem')}
           >
-            30 dias
+            Anteontem
           </Button>
           <Button
-            variant="outline"
+            variant={isFilterActive('personalizado') ? 'default' : 'outline'}
             size="sm"
-            onClick={() => handleQuickSelect(90)}
-            className="text-white border-gray-700"
+            onClick={() => handleQuickFilter('personalizado')}
           >
-            90 dias
+            Personalizado
           </Button>
         </div>
         
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="start-date" className="text-white">Data Inicial</Label>
-            <Input
-              id="start-date"
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white"
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="end-date" className="text-white">Data Final</Label>
-            <Input
-              id="end-date"
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-gray-800 border-gray-700 text-white"
-            />
-          </div>
-        </div>
+        {/* Inputs de data personalizada */}
+        {showCustomInputs && (
+          <>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="start-date">Data Inicial</Label>
+                <Input
+                  id="start-date"
+                  type="date"
+                  value={customStartDate}
+                  onChange={(e) => setCustomStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="end-date">Data Final</Label>
+                <Input
+                  id="end-date"
+                  type="date"
+                  value={customEndDate}
+                  onChange={(e) => setCustomEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-2">
+              <Button
+                onClick={handleCustomFilter}
+                className="flex-1"
+                disabled={!customStartDate || !customEndDate}
+              >
+                Aplicar Período
+              </Button>
+              <Button
+                onClick={clearCustomFilter}
+                variant="outline"
+              >
+                Limpar
+              </Button>
+            </div>
+          </>
+        )}
         
-        <div className="flex gap-2">
-          <Button
-            onClick={handleCustomRange}
-            className="flex-1"
-            disabled={loading}
-          >
-            Aplicar Filtro
-          </Button>
-          <Button
-            onClick={onRefresh}
-            variant="outline"
-            disabled={loading}
-            className="border-gray-700 text-white"
-          >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          </Button>
+        {/* Mostrar filtro ativo */}
+        <div className="pt-2 border-t">
+          <div className="text-sm text-muted-foreground">
+            <span className="font-medium">Filtro ativo: </span>
+            {currentFilter.label}
+          </div>
         </div>
       </CardContent>
     </Card>

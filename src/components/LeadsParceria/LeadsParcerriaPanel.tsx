@@ -4,19 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye } from 'lucide-react';
+import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle } from 'lucide-react';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
+import { DateRangeFilter } from '@/components/DateRangeFilter';
+import { useGlobalDateFilter, type DateFilterOption } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function LeadsParcerriaPanel() {
-  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria();
+  const { currentFilter, getFilterDates } = useGlobalDateFilter();
+  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria(getFilterDates());
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [currentDateFilter, setCurrentDateFilter] = useState<{startDate?: string, endDate?: string, option?: string}>(getFilterDates());
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -47,6 +51,9 @@ export function LeadsParcerriaPanel() {
   };
 
   const getRowClassName = (lead: any) => {
+    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago) {
+      return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900 ring-2 ring-green-300';
+    }
     if (lead.status_negociacao === 'aceitou') {
       return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
     }
@@ -57,6 +64,21 @@ export function LeadsParcerriaPanel() {
       return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
     }
     return '';
+  };
+
+  const getStatusBadge = (lead: any) => {
+    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago) {
+      return (
+        <Badge className="bg-green-600 text-white">
+          ✅ Comprou (Automático)
+        </Badge>
+      );
+    }
+    return null;
+  };
+
+  const handleDateFilterChange = (startDate?: string, endDate?: string, option?: DateFilterOption) => {
+    setCurrentDateFilter({ startDate, endDate, option });
   };
 
   const filteredLeads = statusFilter === 'todos' 
@@ -101,8 +123,11 @@ export function LeadsParcerriaPanel() {
           </div>
         </div>
 
+        {/* Filtro de Data Centralizado */}
+        <DateRangeFilter onFilterChange={handleDateFilterChange} />
+
         {/* Dashboard de Analytics */}
-        {showAnalytics && <LeadsParcerriaAnalytics />}
+        {showAnalytics && <LeadsParcerriaAnalytics dateFilter={currentDateFilter} />}
 
         <Card>
           <CardHeader>
@@ -183,7 +208,7 @@ export function LeadsParcerriaPanel() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="text-sm">
+                          <div className="text-sm flex items-center gap-2">
                             {lead.vendedor_responsavel ? (
                               <span>
                                 {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
@@ -195,25 +220,31 @@ export function LeadsParcerriaPanel() {
                             ) : (
                               <span className="text-muted-foreground">Não atribuído</span>
                             )}
+                            {lead.status_negociacao === 'aceitou' && lead.cliente_pago && (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Select
-                            value={lead.status_negociacao || 'pendente'}
-                            onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
-                              updateLeadNegociacao?.(lead.id, value)
-                            }
-                          >
-                            <SelectTrigger className="w-32">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pendente">não chamei</SelectItem>
-                              <SelectItem value="pensando">chamei</SelectItem>
-                              <SelectItem value="aceitou">comprou</SelectItem>
-                              <SelectItem value="recusou">não quer</SelectItem>
-                            </SelectContent>
-                          </Select>
+                          <div className="flex flex-col gap-1">
+                            <Select
+                              value={lead.status_negociacao || 'pendente'}
+                              onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
+                                updateLeadNegociacao?.(lead.id, value)
+                              }
+                            >
+                              <SelectTrigger className="w-32">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="pendente">não chamei</SelectItem>
+                                <SelectItem value="pensando">chamei</SelectItem>
+                                <SelectItem value="aceitou">comprou</SelectItem>
+                                <SelectItem value="recusou">não quer</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {getStatusBadge(lead)}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <Button

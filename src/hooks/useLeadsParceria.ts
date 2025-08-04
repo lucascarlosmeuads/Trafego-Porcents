@@ -23,7 +23,7 @@ interface LeadParceria {
   distribuido_em: string | null;
 }
 
-export function useLeadsParceria() {
+export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
   const [leads, setLeads] = useState<LeadParceria[]>([]);
   const [totalLeads, setTotalLeads] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -37,11 +37,19 @@ export function useLeadsParceria() {
       // Habilitar realtime para a tabela
       await enableRealtimeForTable('formularios_parceria');
 
-      // Buscar todos os leads
-      const { data, error, count } = await supabase
+      // Construir query baseada no filtro de data
+      let query = supabase
         .from('formularios_parceria')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false });
+        .select('*', { count: 'exact' });
+
+      // Aplicar filtro de data se fornecido
+      if (dateFilter && dateFilter.startDate && dateFilter.endDate) {
+        query = query
+          .gte('created_at', `${dateFilter.startDate}T00:00:00`)
+          .lte('created_at', `${dateFilter.endDate}T23:59:59`);
+      }
+
+      const { data, error, count } = await query.order('created_at', { ascending: false });
 
       if (error) {
         throw error;
@@ -81,7 +89,7 @@ export function useLeadsParceria() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [dateFilter]);
 
   const updateLeadStatus = async (leadId: string, field: 'cliente_pago' | 'contatado_whatsapp', value: boolean) => {
     try {

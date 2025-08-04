@@ -26,18 +26,23 @@ import { ptBR } from 'date-fns/locale';
 
 
 
-export function LeadsParcerriaAnalytics() {
+interface LeadsParcerriaAnalyticsProps {
+  dateFilter?: {startDate?: string, endDate?: string, option?: string}
+}
+
+export function LeadsParcerriaAnalytics({ dateFilter }: LeadsParcerriaAnalyticsProps = {}) {
   const {
     todayStats,
     yesterdayStats,
     dayBeforeStats,
     customDateStats,
+    filteredStats,
     
     loading,
     getTrend,
     getTrendPercentage,
     fetchCustomDateAnalytics,
-  } = useLeadsAnalytics();
+  } = useLeadsAnalytics(dateFilter);
 
   const [customStartDate, setCustomStartDate] = useState('');
   const [customEndDate, setCustomEndDate] = useState('');
@@ -100,9 +105,13 @@ export function LeadsParcerriaAnalytics() {
     );
   }
 
+  // Determinar quais dados usar baseado no filtro
+  const currentStats = filteredStats || todayStats;
+  const isFiltered = dateFilter && dateFilter.option && dateFilter.option !== 'hoje';
+  
   return (
     <div className="space-y-6">
-      {/* Header com botão de filtro personalizado */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-bold flex items-center gap-2">
@@ -110,60 +119,75 @@ export function LeadsParcerriaAnalytics() {
             Analytics de Leads
           </h2>
           <p className="text-muted-foreground">
-            Acompanhe o desempenho dos seus leads de parceria
+            {isFiltered && dateFilter ? `Filtrado por: ${dateFilter.option}` : 'Últimos 3 dias'}
           </p>
         </div>
-        <Button
-          variant="outline"
-          onClick={() => setShowCustomFilter(!showCustomFilter)}
-          className="flex items-center gap-2"
-        >
-          <Calendar className="h-4 w-4" />
-          Filtro Personalizado
-        </Button>
       </div>
 
-      {/* Filtro de data personalizada */}
-      {showCustomFilter && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">Período Personalizado</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col sm:flex-row gap-4 items-end">
-              <div className="flex-1">
-                <label className="text-sm font-medium">Data Inicial</label>
-                <Input
-                  type="date"
-                  value={customStartDate}
-                  onChange={(e) => setCustomStartDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <div className="flex-1">
-                <label className="text-sm font-medium">Data Final</label>
-                <Input
-                  type="date"
-                  value={customEndDate}
-                  onChange={(e) => setCustomEndDate(e.target.value)}
-                  className="mt-1"
-                />
-              </div>
-              <Button 
-                onClick={handleCustomDateSearch}
-                disabled={!customStartDate || !customEndDate}
-                className="flex items-center gap-2"
-              >
-                <Search className="h-4 w-4" />
-                Buscar
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Cards de métricas principais - Leads */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Exibir estatísticas com base no filtro ativo */}
+      {isFiltered && filteredStats ? (
+        // Modo filtrado - mostrar apenas dados do período selecionado
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4 text-blue-600" />
+                  Total Leads
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredStats.total}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                <span className="flex items-center gap-2">
+                  <DollarSign className="h-4 w-4 text-green-600" />
+                  Vendas
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{filteredStats.converted}</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                <span className="flex items-center gap-2">
+                  <Percent className="h-4 w-4 text-purple-600" />
+                  Taxa Conversão
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-600">{filteredStats.conversionRate.toFixed(1)}%</div>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-l-4 border-l-orange-500">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm font-medium">
+                <span className="flex items-center gap-2">
+                  <Mic className="h-4 w-4 text-orange-600" />
+                  Com Áudio
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{filteredStats.comAudio}</div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
+        // Modo padrão - mostrar dados dos últimos 3 dias
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Hoje */}
         <Card className="border-l-4 border-l-green-500">
           <CardHeader className="pb-3">
@@ -343,13 +367,15 @@ export function LeadsParcerriaAnalytics() {
           </CardContent>
         </Card>
       </div>
+        </>
+      )}
 
       {/* Relatório Meta Ads */}
-      {(todayStats || yesterdayStats || dayBeforeStats) && (
+      {(currentStats) && (
         <LeadsMetaAdsReport 
-          convertedLeads={(todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
-          totalLeads={(todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)}
-          conversionRate={(() => {
+          convertedLeads={isFiltered ? (filteredStats?.converted || 0) : (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0)}
+          totalLeads={isFiltered ? (filteredStats?.total || 0) : (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0)}
+          conversionRate={isFiltered ? (filteredStats?.conversionRate || 0) : (() => {
             const totalLeads = (todayStats?.total || 0) + (yesterdayStats?.total || 0) + (dayBeforeStats?.total || 0);
             const totalConverted = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
             return totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0;
@@ -358,7 +384,7 @@ export function LeadsParcerriaAnalytics() {
       )}
 
       {/* Cards de métricas adicionais */}
-      {(todayStats || yesterdayStats || dayBeforeStats) && (
+      {(currentStats) && (
         <div className="grid grid-cols-1 gap-6">
           {/* Tipos de Negócio */}
           <Card>
@@ -371,24 +397,33 @@ export function LeadsParcerriaAnalytics() {
             <CardContent>
               <div className="space-y-2">
                 {(() => {
-                  const todosTipos = { ...todayStats?.tiposNegocio, ...yesterdayStats?.tiposNegocio, ...dayBeforeStats?.tiposNegocio };
-                  const tiposConsolidados: { [key: string]: number } = {};
-                  
-                  // Consolidar contagens
-                  [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
-                    if (stats?.tiposNegocio) {
-                      Object.entries(stats.tiposNegocio).forEach(([tipo, count]) => {
-                        tiposConsolidados[tipo] = (tiposConsolidados[tipo] || 0) + count;
-                      });
-                    }
-                  });
+                  if (isFiltered && filteredStats) {
+                    // Mostrar dados filtrados
+                    return Object.entries(filteredStats.tiposNegocio).map(([tipo, count]) => (
+                      <div key={tipo} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <span className="capitalize">{tipo}</span>
+                        <Badge variant="outline">{count}</Badge>
+                      </div>
+                    ));
+                  } else {
+                    // Mostrar dados consolidados dos últimos 3 dias
+                    const tiposConsolidados: { [key: string]: number } = {};
+                    
+                    [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
+                      if (stats?.tiposNegocio) {
+                        Object.entries(stats.tiposNegocio).forEach(([tipo, count]) => {
+                          tiposConsolidados[tipo] = (tiposConsolidados[tipo] || 0) + count;
+                        });
+                      }
+                    });
 
-                  return Object.entries(tiposConsolidados).map(([tipo, count]) => (
-                    <div key={tipo} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                      <span className="capitalize">{tipo}</span>
-                      <Badge variant="outline">{count}</Badge>
-                    </div>
-                  ));
+                    return Object.entries(tiposConsolidados).map(([tipo, count]) => (
+                      <div key={tipo} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                        <span className="capitalize">{tipo}</span>
+                        <Badge variant="outline">{count}</Badge>
+                      </div>
+                    ));
+                  }
                 })()}
               </div>
             </CardContent>
@@ -405,17 +440,6 @@ export function LeadsParcerriaAnalytics() {
             <CardContent>
               <div className="space-y-2">
                 {(() => {
-                  const statusConsolidados: { [key: string]: number } = {};
-                  
-                  // Consolidar contagens de status
-                  [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
-                    if (stats?.statusBreakdown) {
-                      Object.entries(stats.statusBreakdown).forEach(([status, count]) => {
-                        statusConsolidados[status] = (statusConsolidados[status] || 0) + count;
-                      });
-                    }
-                  });
-
                   // Traduzir status
                   const statusTraduzidos: { [key: string]: string } = {
                     'pendente': 'Não chamei',
@@ -426,22 +450,53 @@ export function LeadsParcerriaAnalytics() {
                     'pensando': 'Pensando'
                   };
 
-                  return Object.entries(statusConsolidados).map(([status, count]) => {
-                    const statusDisplay = statusTraduzidos[status] || status;
-                    const isConverted = ['aceitou', 'comprou'].includes(status);
+                  if (isFiltered && filteredStats) {
+                    // Mostrar dados filtrados
+                    return Object.entries(filteredStats.statusBreakdown).map(([status, count]) => {
+                      const statusDisplay = statusTraduzidos[status] || status;
+                      const isConverted = ['aceitou', 'comprou'].includes(status);
+                      
+                      return (
+                        <div key={status} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                          <span className="capitalize">{statusDisplay}</span>
+                          <Badge 
+                            variant={isConverted ? "default" : "outline"}
+                            className={isConverted ? "bg-green-100 text-green-800 border-green-300" : ""}
+                          >
+                            {count}
+                          </Badge>
+                        </div>
+                      );
+                    });
+                  } else {
+                    // Mostrar dados consolidados dos últimos 3 dias
+                    const statusConsolidados: { [key: string]: number } = {};
                     
-                    return (
-                      <div key={status} className="flex items-center justify-between p-2 bg-muted/50 rounded">
-                        <span className="capitalize">{statusDisplay}</span>
-                        <Badge 
-                          variant={isConverted ? "default" : "outline"}
-                          className={isConverted ? "bg-green-100 text-green-800 border-green-300" : ""}
-                        >
-                          {count}
-                        </Badge>
-                      </div>
-                    );
-                  });
+                    [todayStats, yesterdayStats, dayBeforeStats].forEach(stats => {
+                      if (stats?.statusBreakdown) {
+                        Object.entries(stats.statusBreakdown).forEach(([status, count]) => {
+                          statusConsolidados[status] = (statusConsolidados[status] || 0) + count;
+                        });
+                      }
+                    });
+
+                    return Object.entries(statusConsolidados).map(([status, count]) => {
+                      const statusDisplay = statusTraduzidos[status] || status;
+                      const isConverted = ['aceitou', 'comprou'].includes(status);
+                      
+                      return (
+                        <div key={status} className="flex items-center justify-between p-2 bg-muted/50 rounded">
+                          <span className="capitalize">{statusDisplay}</span>
+                          <Badge 
+                            variant={isConverted ? "default" : "outline"}
+                            className={isConverted ? "bg-green-100 text-green-800 border-green-300" : ""}
+                          >
+                            {count}
+                          </Badge>
+                        </div>
+                      );
+                    });
+                  }
                 })()}
               </div>
             </CardContent>
