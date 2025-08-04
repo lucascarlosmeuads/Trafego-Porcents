@@ -1,13 +1,17 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useClienteParceiraData } from '@/hooks/useClienteParceiraData';
 import { ClienteParceiraDetalhes } from '@/components/ClienteDashboard/ClienteParceiraDetalhes';
+import { ClienteParceiriaSidebar } from '@/components/ClienteDashboard/ClienteParceiriaSidebar';
+import { ClienteParceiraHeader } from '@/components/ClienteDashboard/ClienteParceiraHeader';
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
 import { AlertCircle, Clock } from 'lucide-react';
 
 export default function ClienteParceiriaDashboard() {
   const { user } = useAuth();
   const { dadosConsolidados, loading, error } = useClienteParceiraData(user?.email || '');
+  const [activeTab, setActiveTab] = useState('dashboard');
 
   if (loading) {
     return (
@@ -44,12 +48,32 @@ export default function ClienteParceiriaDashboard() {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+  const renderContent = () => {
+    return (
       <ClienteParceiraDetalhes 
         formulario={null} 
         dadosConsolidados={dadosConsolidados} 
+        activeTab={activeTab}
       />
-    </div>
+    );
+  };
+
+  return (
+    <SidebarProvider>
+      <div className="min-h-screen flex w-full bg-background">
+        <ClienteParceiriaSidebar 
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+        />
+        
+        <SidebarInset className="flex-1 min-w-0 flex flex-col">
+          <ClienteParceiraHeader activeTab={activeTab} />
+
+          <main className="flex-1 overflow-auto py-4 sm:py-6 lg:py-8 px-4 sm:px-6 lg:px-8">
+            {renderContent()}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
 }

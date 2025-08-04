@@ -29,16 +29,18 @@ import {
   Video,
   Calendar,
   MapPin,
-  Star
+  Star,
+  Activity
 } from 'lucide-react';
 import { FormularioParceiraData, ConsolidatedParceiraData } from '@/hooks/useClienteParceiraData';
 
 interface ClienteParceiraDetalhesProps {
   formulario: FormularioParceiraData | null;
   dadosConsolidados?: ConsolidatedParceiraData | null;
+  activeTab?: string;
 }
 
-export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: ClienteParceiraDetalhesProps) {
+export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeTab = 'dashboard' }: ClienteParceiraDetalhesProps) {
   const dados = dadosConsolidados || null;
 
   // Function declaration for proper hoisting
@@ -322,14 +324,25 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
 
   const { dadosBasicos, dadosNegocio, infraestrutura, visaoFuturo, statusProjeto } = organizarDados();
 
-  return (
-    <div className="max-w-6xl mx-auto p-6 space-y-6">
-      {/* Header */}
-      <div className="text-center space-y-2">
-        <h1 className="text-3xl font-bold">Perfil de Parceria</h1>
-        <p className="text-muted-foreground">Suas informações e progresso na parceria de tráfego</p>
-      </div>
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'perfil':
+        return renderPerfilTab();
+      case 'negocio':
+        return renderNegocioTab();
+      case 'orcamento':
+        return renderOrcamentoTab();
+      case 'planejamento':
+        return renderPlanejamentoTab();
+      case 'status':
+        return renderStatusTab();
+      default:
+        return renderDashboardTab();
+    }
+  };
 
+  const renderDashboardTab = () => (
+    <div className="space-y-6">
       {/* Status e Progress */}
       <Card className="bg-gradient-to-r from-blue-50 to-indigo-50">
         <CardContent className="pt-6">
@@ -346,250 +359,315 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
         </CardContent>
       </Card>
 
-      {/* Grid Principal */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        
-        {/* Dados Básicos */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <User className="h-5 w-5 text-blue-600" />
-              Dados Básicos
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(dadosBasicos).map(([key, value]) => {
-              if (!value) return null;
-              return (
-                <div key={key} className="flex justify-between items-center py-2 border-b border-muted/30 last:border-0">
-                  <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                  <div className="text-right">{renderValue(value, key)}</div>
-                </div>
-              );
-            })}
-          </CardContent>
+      {/* Cards de Resumo */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+              <User className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Perfil</h3>
+              <p className="text-xs text-muted-foreground">Dados pessoais completos</p>
+            </div>
+          </div>
         </Card>
 
-        {/* Dados do Negócio */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Building2 className="h-5 w-5 text-green-600" />
-              Negócio
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(dadosNegocio).map(([key, value]) => {
-              if (value === null || value === undefined) return null;
-              return (
-                <div key={key} className="space-y-1">
-                  <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                  <div>{renderValue(value, key)}</div>
-                </div>
-              );
-            })}
-          </CardContent>
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+              <Building2 className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Negócio</h3>
+              <p className="text-xs text-muted-foreground">
+                {dadosNegocio.produto_descricao ? 'Configurado' : 'Pendente'}
+              </p>
+            </div>
+          </div>
         </Card>
 
-        {/* Orçamento Personalizado */}
-        <Card className="lg:col-span-2">
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Calculator className="h-5 w-5 text-purple-600" />
-              Orçamento Personalizado
-              <Badge variant="outline" className="ml-auto text-lg font-bold">
-                <DollarSign className="w-4 h-4 mr-1" />
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+              <Calculator className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <h3 className="font-semibold text-sm">Orçamento</h3>
+              <p className="text-xs text-muted-foreground">
                 R$ {custosInfo.total.toLocaleString('pt-BR')}
-              </Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            
-            {/* Grid de Infraestrutura */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Criativos de Imagem */}
-              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Monitor className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium text-sm">Criativos de Imagem (3)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {infraestrutura.hasImageCreatives ? (
-                    <>
-                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                      <Badge variant="outline" className="text-green-600">-R$ 50</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-red-600">+R$ 50</Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Criativos de Vídeo */}
-              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Video className="w-4 h-4 text-purple-600" />
-                  <span className="font-medium text-sm">Criativos de Vídeo (3)</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {infraestrutura.hasVideoCreatives ? (
-                    <>
-                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                      <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Business Manager */}
-              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <Building2 className="w-4 h-4 text-orange-600" />
-                  <span className="font-medium text-sm">Business Manager</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {infraestrutura.hasBM ? (
-                    <>
-                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                      <Badge variant="outline" className="text-green-600">-R$ 200</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-red-600">+R$ 200</Badge>
-                  )}
-                </div>
-              </div>
-
-              {/* Página de Vendas */}
-              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <ShoppingCart className="w-4 h-4 text-blue-600" />
-                  <span className="font-medium text-sm">Página de Vendas</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  {infraestrutura.hasSalesPage ? (
-                    <>
-                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                      <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
-                  )}
-                </div>
-              </div>
+              </p>
             </div>
-
-            {/* Funil de Mensagens - Destaque Especial */}
-            <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
-              <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                  <MessageSquare className="w-5 h-5 text-yellow-600" />
-                  <div>
-                    <span className="font-semibold text-yellow-800">Funil de Mensagens Automáticas</span>
-                    <p className="text-sm text-yellow-600">💎 Nosso produto mais vendido!</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  {infraestrutura.hasWhatsAppAutomation ? (
-                    <>
-                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
-                      <Badge variant="outline" className="text-green-600 font-bold">-R$ 700</Badge>
-                    </>
-                  ) : (
-                    <Badge variant="outline" className="text-red-600 font-bold text-lg">+R$ 700</Badge>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <Separator />
-
-            {/* Resumo Financeiro */}
-            <div className="space-y-3">
-              {custosInfo.totalEconomias > 0 && (
-                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
-                  <span className="font-medium text-green-800">💰 Economia Total (itens que você já possui)</span>
-                  <span className="font-bold text-green-600">-R$ {custosInfo.totalEconomias.toLocaleString('pt-BR')}</span>
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
-                <span className="font-bold text-blue-800 text-lg">Investimento Total Necessário</span>
-                <span className="font-bold text-blue-600 text-xl">R$ {custosInfo.total.toLocaleString('pt-BR')}</span>
-              </div>
-            </div>
-
-          </CardContent>
-        </Card>
-
-        {/* Status do Projeto */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
-              <Target className="h-5 w-5 text-orange-600" />
-              Status do Projeto
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(statusProjeto).map(([key, value]) => {
-              if (!value) return null;
-              return (
-                <div key={key} className="space-y-1">
-                  <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                  <div>{renderValue(value, key)}</div>
-                </div>
-              );
-            })}
-          </CardContent>
+          </div>
         </Card>
       </div>
+    </div>
+  );
+
+  const renderPerfilTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <User className="h-5 w-5 text-blue-600" />
+            Dados Pessoais
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(dadosBasicos).map(([key, value]) => {
+            if (!value) return null;
+            return (
+              <div key={key} className="flex justify-between items-center py-3 border-b border-muted/30 last:border-0">
+                <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
+                <div className="text-right">{renderValue(value, key)}</div>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderNegocioTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-green-600" />
+            Informações do Negócio
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(dadosNegocio).map(([key, value]) => {
+            if (value === null || value === undefined) return null;
+            return (
+              <div key={key} className="space-y-2">
+                <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
+                <div className="pl-2">{renderValue(value, key)}</div>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
 
       {/* Visão de Futuro */}
       {(visaoFuturo.visao_futuro_texto || visaoFuturo.audio_visao_futuro) && (
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="flex items-center gap-2 text-lg">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
               <Lightbulb className="h-5 w-5 text-yellow-600" />
               Visão de Futuro
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             {visaoFuturo.visao_futuro_texto && (
-              <div className="space-y-2">
+              <div>
                 <span className="text-sm text-muted-foreground font-medium">Descrição</span>
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <p className="text-sm leading-relaxed">{visaoFuturo.visao_futuro_texto}</p>
-                </div>
+                <div className="mt-1">{renderValue(visaoFuturo.visao_futuro_texto)}</div>
               </div>
             )}
             {visaoFuturo.audio_visao_futuro && (
-              <div className="space-y-2">
+              <div>
                 <span className="text-sm text-muted-foreground font-medium">Áudio</span>
-                {renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}
+                <div className="mt-1">{renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}</div>
               </div>
             )}
           </CardContent>
         </Card>
       )}
+    </div>
+  );
 
-      {/* Footer */}
-      <Card className="bg-muted/30">
-        <CardContent className="pt-6 text-center">
-          <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
-            <div className="flex items-center gap-1">
-              <Calendar className="h-4 w-4" />
-              <span>Criado em: {format(new Date(dados?.created_at || formulario?.created_at || new Date()), "dd/MM/yyyy", { locale: ptBR })}</span>
+  const renderOrcamentoTab = () => (
+    <div className="space-y-6">
+      {/* Orçamento Personalizado */}
+      <Card>
+        <CardHeader className="pb-3">
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <Calculator className="h-5 w-5 text-purple-600" />
+            Orçamento Personalizado
+            <Badge variant="outline" className="ml-auto text-lg font-bold">
+              <DollarSign className="w-4 h-4 mr-1" />
+              R$ {custosInfo.total.toLocaleString('pt-BR')}
+            </Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          
+          {/* Grid de Infraestrutura */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Criativos de Imagem */}
+            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-4 h-4 text-blue-600" />
+                <span className="font-medium text-sm">Criativos de Imagem (3)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {infraestrutura.hasImageCreatives ? (
+                  <>
+                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                    <Badge variant="outline" className="text-green-600">-R$ 50</Badge>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-red-600">+R$ 50</Badge>
+                )}
+              </div>
             </div>
-            {dados?.updated_at && dados.updated_at !== dados.created_at && (
-              <div className="flex items-center gap-1">
-                <Edit3 className="h-4 w-4" />
-                <span>Atualizado em: {format(new Date(dados.updated_at), "dd/MM/yyyy", { locale: ptBR })}</span>
+
+            {/* Criativos de Vídeo */}
+            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Video className="w-4 h-4 text-purple-600" />
+                <span className="font-medium text-sm">Criativos de Vídeo (3)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {infraestrutura.hasVideoCreatives ? (
+                  <>
+                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                    <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Business Manager */}
+            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Building2 className="w-4 h-4 text-orange-600" />
+                <span className="font-medium text-sm">Business Manager</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {infraestrutura.hasBM ? (
+                  <>
+                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                    <Badge variant="outline" className="text-green-600">-R$ 200</Badge>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-red-600">+R$ 200</Badge>
+                )}
+              </div>
+            </div>
+
+            {/* Página de Vendas */}
+            <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+              <div className="flex items-center gap-2">
+                <ShoppingCart className="w-4 h-4 text-blue-600" />
+                <span className="font-medium text-sm">Página de Vendas</span>
+              </div>
+              <div className="flex items-center gap-2">
+                {infraestrutura.hasSalesPage ? (
+                  <>
+                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                    <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Funil de Mensagens - Destaque Especial */}
+          <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <MessageSquare className="w-5 h-5 text-yellow-600" />
+                <div>
+                  <span className="font-semibold text-yellow-800">Funil de Mensagens Automáticas</span>
+                  <p className="text-sm text-yellow-600">💎 Nosso produto mais vendido!</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                {infraestrutura.hasWhatsAppAutomation ? (
+                  <>
+                    <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                    <Badge variant="outline" className="text-green-600 font-bold">-R$ 700</Badge>
+                  </>
+                ) : (
+                  <Badge variant="outline" className="text-red-600 font-bold text-lg">+R$ 700</Badge>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <Separator />
+
+          {/* Resumo Financeiro */}
+          <div className="space-y-3">
+            {custosInfo.totalEconomias > 0 && (
+              <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                <span className="font-medium text-green-800">💰 Economia Total (itens que você já possui)</span>
+                <span className="font-bold text-green-600">-R$ {custosInfo.totalEconomias.toLocaleString('pt-BR')}</span>
               </div>
             )}
+            
+            <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+              <span className="font-bold text-blue-800 text-lg">Investimento Total Necessário</span>
+              <span className="font-bold text-blue-600 text-xl">R$ {custosInfo.total.toLocaleString('pt-BR')}</span>
+            </div>
           </div>
+
         </CardContent>
       </Card>
     </div>
   );
+
+  const renderPlanejamentoTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-orange-600" />
+            Planejamento Estratégico
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {statusProjeto.planejamento_estrategico ? (
+            <div className="prose max-w-none">
+              <div dangerouslySetInnerHTML={{ __html: statusProjeto.planejamento_estrategico }} />
+            </div>
+          ) : (
+            <div className="text-center py-8">
+              <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Planejamento em Desenvolvimento</h3>
+              <p className="text-muted-foreground">
+                Seu planejamento estratégico personalizado será gerado após a análise completa dos seus dados.
+              </p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const renderStatusTab = () => (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-blue-600" />
+            Status do Projeto
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {Object.entries(statusProjeto).map(([key, value]) => {
+            if (!value) return null;
+            return (
+              <div key={key} className="space-y-2">
+                <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
+                <div className="pl-2">{renderValue(value, key)}</div>
+              </div>
+            );
+          })}
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  return (
+    <div className="space-y-6">
+      {renderTabContent()}
+    </div>
 }
