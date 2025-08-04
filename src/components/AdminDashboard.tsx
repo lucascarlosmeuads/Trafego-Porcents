@@ -21,6 +21,7 @@ import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDas
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { BulkCreateParceiraUsers } from './AdminDashboard/BulkCreateParceiraUsers'
+import { AutomaticUserCreationMonitor } from './AdminDashboard/AutomaticUserCreationMonitor'
 import { ErrorBoundary } from './ErrorBoundary'
 
 interface AdminDashboardProps {
@@ -79,8 +80,11 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
               />
             </div>
 
-            {/* EXECUTAR CORREÇÃO URGENTE */}
-            <BulkCreateParceiraUsers />
+            {/* CORREÇÃO COMPLETA: Criação automática de usuários */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <BulkCreateParceiraUsers />
+              <AutomaticUserCreationMonitor />
+            </div>
 
             {/* Configuração Meta Ads Global */}
             <AdminMetaAdsConfig />
