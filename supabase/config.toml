@@ -58,3 +58,9 @@ verify_jwt = true
 
 [functions.get-central-api-config]
 verify_jwt = true
+
+[functions.bulk-create-parceria-users]
+verify_jwt = false
+
+[functions.process-kiwify-retroactive]
+verify_jwt = false
