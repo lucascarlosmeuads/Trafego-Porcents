@@ -24,9 +24,10 @@ interface LeadsMetaAdsReportProps {
   convertedLeads: number;
   totalLeads: number;
   conversionRate: number;
+  dateFilter?: {startDate?: string, endDate?: string, option?: string};
 }
 
-export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate }: LeadsMetaAdsReportProps) {
+export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate, dateFilter }: LeadsMetaAdsReportProps) {
   const { 
     insights, 
     fetchingInsights, 
@@ -48,10 +49,21 @@ export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate 
   const roi = investimento > 0 ? ((receitaTotal - investimento) / investimento) * 100 : 0;
 
   useEffect(() => {
-    if (isConfigured) {
+    if (isConfigured && dateFilter) {
+      // Sincronizar com o filtro da página pai
+      if (dateFilter.option === 'hoje' || !dateFilter.option) {
+        fetchTodayInsights();
+      } else if (dateFilter.option === 'ontem') {
+        fetchInsightsWithPeriod('yesterday');
+      } else if (dateFilter.option === 'anteontem') {
+        fetchInsightsWithPeriod('last_7_days'); // Usar last_7_days como aproximação
+      } else if (dateFilter.option === 'personalizado' && dateFilter.startDate && dateFilter.endDate) {
+        fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
+      }
+    } else if (isConfigured) {
       fetchTodayInsights();
     }
-  }, [isConfigured]);
+  }, [isConfigured, dateFilter]);
 
   const handleDateRangeChange = async (startDate: string, endDate: string, preset?: string) => {
     setLastFetchInfo('');
@@ -135,12 +147,6 @@ export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate 
         </p>
       </div>
 
-      {/* Filtro de datas */}
-      <AdminMetaAdsDateFilter 
-        onDateRangeChange={handleDateRangeChange}
-        loading={fetchingInsights}
-        lastFetchInfo={lastFetchInfo}
-      />
 
       {/* Informações sobre os dados */}
       {lastFetchInfo && (

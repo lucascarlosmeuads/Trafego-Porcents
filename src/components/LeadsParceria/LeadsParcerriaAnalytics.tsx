@@ -380,6 +380,7 @@ export function LeadsParcerriaAnalytics({ dateFilter }: LeadsParcerriaAnalyticsP
             const totalConverted = (todayStats?.converted || 0) + (yesterdayStats?.converted || 0) + (dayBeforeStats?.converted || 0);
             return totalLeads > 0 ? (totalConverted / totalLeads) * 100 : 0;
           })()}
+          dateFilter={dateFilter}
         />
       )}
 
