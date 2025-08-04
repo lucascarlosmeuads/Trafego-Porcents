@@ -44,18 +44,32 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     const respostas = dados?.dados_completos || formulario?.respostas || {};
     
     const custos = {
-      bmCost: respostas.hasBM === false ? 500 : 0,
-      checkoutCost: respostas.hasCheckout === false ? 800 : 0,
-      creativeCost: (!respostas.hasImageCreatives && !respostas.hasVideoCreatives) ? 1200 : 0,
-      whatsappCost: respostas.hasWhatsApp === false ? 300 : 0
+      imageCreativesCost: respostas.hasImageCreatives === false ? 50 : 0,
+      videoCreativesCost: respostas.hasVideoCreatives === false ? 100 : 0,
+      bmCost: respostas.hasBM === false ? 200 : 0,
+      salesPageCost: respostas.hasSalesPage === false ? 100 : 0,
+      whatsappAutomationCost: respostas.hasWhatsAppAutomation === false ? 700 : 0
     };
     
     const total = Object.values(custos).reduce((sum, cost) => sum + cost, 0);
     
+    // Calcular economias (itens que o cliente já possui)
+    const economias = {
+      imageCreativesSavings: respostas.hasImageCreatives === true ? 50 : 0,
+      videoCreativesSavings: respostas.hasVideoCreatives === true ? 100 : 0,
+      bmSavings: respostas.hasBM === true ? 200 : 0,
+      salesPageSavings: respostas.hasSalesPage === true ? 100 : 0,
+      whatsappAutomationSavings: respostas.hasWhatsAppAutomation === true ? 700 : 0
+    };
+    
+    const totalEconomias = Object.values(economias).reduce((sum, saving) => sum + saving, 0);
+    
     return {
       ...custos,
+      ...economias,
       total,
-      hasDiscounts: respostas.hasBM || respostas.hasCheckout || respostas.hasImageCreatives || respostas.hasVideoCreatives || respostas.hasWhatsApp
+      totalEconomias,
+      hasDiscounts: totalEconomias > 0
     };
   };
 
@@ -256,8 +270,10 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
       hasBM: 'Business Manager',
       hasCheckout: 'Sistema de Checkout',
       hasWhatsApp: 'WhatsApp Business',
-      hasImageCreatives: 'Criativos de Imagem',
-      hasVideoCreatives: 'Criativos de Vídeo'
+      hasImageCreatives: 'Criativos de Imagem (3 unidades)',
+      hasVideoCreatives: 'Criativos de Vídeo (3 unidades)',
+      hasSalesPage: 'Página de Vendas Simples',
+      hasWhatsAppAutomation: 'Funil de Mensagens Automáticas'
     };
     
     return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
@@ -282,10 +298,10 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
 
     const infraestrutura = {
       hasBM: respostas.hasBM,
-      hasCheckout: respostas.hasCheckout,
-      hasWhatsApp: respostas.hasWhatsApp,
       hasImageCreatives: respostas.hasImageCreatives,
-      hasVideoCreatives: respostas.hasVideoCreatives
+      hasVideoCreatives: respostas.hasVideoCreatives,
+      hasSalesPage: respostas.hasSalesPage,
+      hasWhatsAppAutomation: respostas.hasWhatsAppAutomation
     };
 
     const visaoFuturo = {
@@ -373,46 +389,135 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
           </CardContent>
         </Card>
 
-        {/* Infraestrutura */}
-        <Card>
+        {/* Orçamento Personalizado */}
+        <Card className="lg:col-span-2">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Monitor className="h-5 w-5 text-purple-600" />
-              Infraestrutura
-              <Badge variant="outline" className="ml-auto text-xs">
-                <Calculator className="w-3 h-3 mr-1" />
-                R$ {custosInfo.total}
+              <Calculator className="h-5 w-5 text-purple-600" />
+              Orçamento Personalizado
+              <Badge variant="outline" className="ml-auto text-lg font-bold">
+                <DollarSign className="w-4 h-4 mr-1" />
+                R$ {custosInfo.total.toLocaleString('pt-BR')}
               </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {Object.entries(infraestrutura).map(([key, value]) => {
-              if (value === null || value === undefined) return null;
-              
-              const custoMap: { [k: string]: number } = {
-                hasBM: 500,
-                hasCheckout: 800,
-                hasImageCreatives: 600,
-                hasVideoCreatives: 600,
-                hasWhatsApp: 300
-              };
-              
-              const custo = value ? 0 : custoMap[key] || 0;
-              
-              return (
-                <div key={key} className="flex justify-between items-center py-2">
-                  <span className="text-sm text-muted-foreground font-medium">{formatFieldName(key)}</span>
-                  <div className="flex items-center gap-2">
-                    {renderValue(value, key)}
-                    {custo > 0 && (
-                      <Badge variant="outline" className="text-xs text-red-600">
-                        +R$ {custo}
-                      </Badge>
-                    )}
+          <CardContent className="space-y-4">
+            
+            {/* Grid de Infraestrutura */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {/* Criativos de Imagem */}
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Monitor className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-sm">Criativos de Imagem (3)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {infraestrutura.hasImageCreatives ? (
+                    <>
+                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                      <Badge variant="outline" className="text-green-600">-R$ 50</Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-red-600">+R$ 50</Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Criativos de Vídeo */}
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Video className="w-4 h-4 text-purple-600" />
+                  <span className="font-medium text-sm">Criativos de Vídeo (3)</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {infraestrutura.hasVideoCreatives ? (
+                    <>
+                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                      <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Business Manager */}
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Building2 className="w-4 h-4 text-orange-600" />
+                  <span className="font-medium text-sm">Business Manager</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {infraestrutura.hasBM ? (
+                    <>
+                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                      <Badge variant="outline" className="text-green-600">-R$ 200</Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-red-600">+R$ 200</Badge>
+                  )}
+                </div>
+              </div>
+
+              {/* Página de Vendas */}
+              <div className="flex justify-between items-center p-3 bg-muted/30 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <ShoppingCart className="w-4 h-4 text-blue-600" />
+                  <span className="font-medium text-sm">Página de Vendas</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  {infraestrutura.hasSalesPage ? (
+                    <>
+                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                      <Badge variant="outline" className="text-green-600">-R$ 100</Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-red-600">+R$ 100</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Funil de Mensagens - Destaque Especial */}
+            <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                  <MessageSquare className="w-5 h-5 text-yellow-600" />
+                  <div>
+                    <span className="font-semibold text-yellow-800">Funil de Mensagens Automáticas</span>
+                    <p className="text-sm text-yellow-600">💎 Nosso produto mais vendido!</p>
                   </div>
                 </div>
-              );
-            })}
+                <div className="flex items-center gap-2">
+                  {infraestrutura.hasWhatsAppAutomation ? (
+                    <>
+                      <Badge className="bg-green-100 text-green-800">✓ Possui</Badge>
+                      <Badge variant="outline" className="text-green-600 font-bold">-R$ 700</Badge>
+                    </>
+                  ) : (
+                    <Badge variant="outline" className="text-red-600 font-bold text-lg">+R$ 700</Badge>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Resumo Financeiro */}
+            <div className="space-y-3">
+              {custosInfo.totalEconomias > 0 && (
+                <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                  <span className="font-medium text-green-800">💰 Economia Total (itens que você já possui)</span>
+                  <span className="font-bold text-green-600">-R$ {custosInfo.totalEconomias.toLocaleString('pt-BR')}</span>
+                </div>
+              )}
+              
+              <div className="flex justify-between items-center p-4 bg-blue-50 rounded-lg">
+                <span className="font-bold text-blue-800 text-lg">Investimento Total Necessário</span>
+                <span className="font-bold text-blue-600 text-xl">R$ {custosInfo.total.toLocaleString('pt-BR')}</span>
+              </div>
+            </div>
+
           </CardContent>
         </Card>
 
