@@ -29,60 +29,40 @@ import {
   Edit3,
   AlertTriangle
 } from 'lucide-react';
-import { FormularioParceiraData } from '@/hooks/useClienteParceiraData';
+import { FormularioParceiraData, ConsolidatedParceiraData } from '@/hooks/useClienteParceiraData';
 
 interface ClienteParceiraDetalhesProps {
   formulario: FormularioParceiraData | null;
+  dadosConsolidados?: ConsolidatedParceiraData | null;
 }
 
-export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesProps) {
-  if (!formulario) {
+export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: ClienteParceiraDetalhesProps) {
+  // Usar dados consolidados se disponíveis, senão usar formulário original
+  const dados = dadosConsolidados || null
+  
+  if (!dados && !formulario) {
     return (
       <Card className="border-muted-foreground/20">
         <CardContent className="pt-6">
           <div className="text-center text-muted-foreground">
             <AlertCircle className="mx-auto h-12 w-12 mb-4" />
-            <p>Dados do formulário não encontrados</p>
+            <p>Dados não encontrados</p>
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  // Função para calcular completude do formulário
-  const calcularCompletude = () => {
-    const respostas = formulario.respostas || {};
-    const camposEsperados = [
-      'nome', 'whatsapp', 'telefone', 'comissao', 'investimentoDiario',
-      'hasBM', 'hasCheckout', 'hasWhatsApp', 'hasImageCreatives', 
-      'hasVideoCreatives', 'totalCost'
-    ];
-    
-    const camposPreenchidos = camposEsperados.filter(campo => {
-      const valor = respostas[campo];
-      return valor !== null && valor !== undefined && valor !== '';
-    });
-
-    const porcentagem = Math.round((camposPreenchidos.length / camposEsperados.length) * 100);
-    
-    return {
-      porcentagem,
-      camposPreenchidos: camposPreenchidos.length,
-      totalCampos: camposEsperados.length,
-      incompleto: porcentagem < 80
-    };
-  };
-
-  const completude = calcularCompletude();
+  // Usar completude dos dados consolidados se disponível
+  const porcentagemCompletude = dados?.porcentagem_completude || 0
 
   // Se formulário está muito incompleto, mostrar interface especial
-  if (completude.incompleto) {
-    const respostas = formulario.respostas || {};
+  if (porcentagemCompletude < 80) {
     const dadosDisponiveis = {
-      nome: respostas.nome || 'Não informado',
-      email: formulario.email_usuario,
-      telefone: respostas.telefone,
-      tipo_negocio: formulario.tipo_negocio || 'service',
+      nome: dados?.nome_cliente || (formulario?.respostas?.nome) || 'Não informado',
+      email: dados?.email_cliente || formulario?.email_usuario || 'Não informado',
+      telefone: dados?.telefone || (formulario?.respostas?.telefone) || 'Não informado',
+      tipo_negocio: dados?.tipo_negocio || formulario?.tipo_negocio || 'service',
     };
 
     return (
@@ -100,9 +80,9 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               <div className="flex-1">
                 <div className="flex justify-between text-sm mb-2">
                   <span>Progresso do formulário</span>
-                  <span className="font-medium">{completude.porcentagem}%</span>
+                  <span className="font-medium">{porcentagemCompletude}%</span>
                 </div>
-                <Progress value={completude.porcentagem} className="h-2" />
+                <Progress value={porcentagemCompletude} className="h-2" />
               </div>
             </div>
             
@@ -179,7 +159,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
         <Card className="bg-muted/30 border-muted-foreground/20">
           <CardContent className="pt-6">
             <div className="text-center text-sm text-muted-foreground">
-              <p>Cadastro criado em: {format(new Date(formulario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+              <p>Cadastro criado em: {format(new Date(dados?.created_at || formulario?.created_at || new Date()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
             </div>
           </CardContent>
         </Card>
@@ -334,24 +314,24 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
     );
   };
 
-  const respostas = formulario.respostas || {};
-  
-  // Organizar dados em seções estratégicas
+  // Organizar dados consolidados em seções estratégicas
   const organizarDadosEstrategicos = () => {
-    // Dados básicos diretamente do formulário
+    const respostas = dados?.dados_completos || formulario?.respostas || {};
+    
+    // Dados básicos
     const dadosBasicos = {
-      nome: respostas.nome || 'Não informado',
-      email: formulario.email_usuario,
+      nome: dados?.nome_cliente || respostas.nome || 'Não informado',
+      email: dados?.email_cliente || formulario?.email_usuario,
       whatsapp: respostas.whatsapp,
-      telefone: respostas.telefone,
+      telefone: dados?.telefone || respostas.telefone,
     };
 
     // Informações do negócio
     const negocio = {
-      tipo_negocio: formulario.tipo_negocio,
-      produto_descricao: formulario.produto_descricao,
-      valor_medio_produto: formulario.valor_medio_produto,
-      ja_teve_vendas: formulario.ja_teve_vendas,
+      tipo_negocio: dados?.tipo_negocio || formulario?.tipo_negocio,
+      produto_descricao: dados?.produto_descricao || formulario?.produto_descricao,
+      valor_medio_produto: dados?.valor_medio_produto || formulario?.valor_medio_produto,
+      ja_teve_vendas: dados?.ja_teve_vendas || formulario?.ja_teve_vendas,
       comissao: respostas.comissao,
       investimento_diario: respostas.investimentoDiario || respostas.investimento_diario,
     };
@@ -373,16 +353,16 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
 
     // Visão de futuro
     const visaoFuturo = {
-      visao_futuro_texto: formulario.visao_futuro_texto,
-      audio_visao_futuro: formulario.audio_visao_futuro,
+      visao_futuro_texto: dados?.visao_futuro_texto || formulario?.visao_futuro_texto,
+      audio_visao_futuro: dados?.audio_visao_futuro || formulario?.audio_visao_futuro,
     };
 
     // Status e controle
     const status = {
-      completo: formulario.completo,
-      cliente_pago: formulario.cliente_pago,
-      status_negociacao: formulario.status_negociacao,
-      vendedor_responsavel: formulario.vendedor_responsavel,
+      completo: dados?.completo || formulario?.completo,
+      cliente_pago: dados?.cliente_pago || formulario?.cliente_pago,
+      status_negociacao: dados?.status_negociacao || formulario?.status_negociacao,
+      vendedor_responsavel: dados?.vendedor_responsavel || formulario?.vendedor_responsavel,
     };
 
     return {
@@ -395,7 +375,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
     };
   };
 
-  const dados = organizarDadosEstrategicos();
+  const secoesDados = organizarDadosEstrategicos();
 
   return (
     <div className="space-y-6">
@@ -410,19 +390,19 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{formulario.tipo_negocio}</div>
+              <div className="text-2xl font-bold text-primary">{dados?.tipo_negocio || formulario?.tipo_negocio || 'N/A'}</div>
               <div className="text-sm text-muted-foreground">Tipo de Negócio</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-green-600">
-                {formulario.valor_medio_produto ? `R$ ${formulario.valor_medio_produto.toLocaleString('pt-BR')}` : 'N/A'}
+                {(dados?.valor_medio_produto || formulario?.valor_medio_produto) ? `R$ ${(dados?.valor_medio_produto || formulario?.valor_medio_produto)?.toLocaleString('pt-BR')}` : 'N/A'}
               </div>
               <div className="text-sm text-muted-foreground">Valor Médio do Produto</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold">
-                <Badge variant={formulario.cliente_pago ? 'default' : 'secondary'}>
-                  {formulario.cliente_pago ? 'PAGO' : 'PENDENTE'}
+                <Badge variant={(dados?.cliente_pago || formulario?.cliente_pago) ? 'default' : 'secondary'}>
+                  {(dados?.cliente_pago || formulario?.cliente_pago) ? 'PAGO' : 'PENDENTE'}
                 </Badge>
               </div>
               <div className="text-sm text-muted-foreground">Status do Pagamento</div>
@@ -432,7 +412,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
       </Card>
 
       {/* Planejamento Estratégico (se disponível) */}
-      {formulario.planejamento_estrategico && (
+      {(dados?.planejamento_estrategico || formulario?.planejamento_estrategico) && (
         <Card className="border-green-200 dark:border-green-800">
           <CardHeader className="bg-green-50 dark:bg-green-950/20">
             <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
@@ -443,7 +423,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
           <CardContent className="pt-4">
             <div className="prose prose-sm max-w-none dark:prose-invert">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                {formulario.planejamento_estrategico}
+                {dados?.planejamento_estrategico || formulario?.planejamento_estrategico}
               </div>
             </div>
           </CardContent>
@@ -452,7 +432,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
 
       {/* Seções Detalhadas */}
       <Accordion type="multiple" defaultValue={["dados", "negocio", "visao"]} className="space-y-4">
-        {dados.dadosBasicos && Object.keys(dados.dadosBasicos).length > 0 && (
+        {secoesDados.dadosBasicos && Object.keys(secoesDados.dadosBasicos).length > 0 && (
           <AccordionItem value="dados" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -461,12 +441,12 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.dadosBasicos, null)}
+              {renderSection('', secoesDados.dadosBasicos, null)}
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {dados.negocio && Object.keys(dados.negocio).length > 0 && (
+        {secoesDados.negocio && Object.keys(secoesDados.negocio).length > 0 && (
           <AccordionItem value="negocio" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -475,12 +455,12 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.negocio, null)}
+              {renderSection('', secoesDados.negocio, null)}
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {dados.infraestrutura && Object.keys(dados.infraestrutura).length > 0 && (
+        {secoesDados.infraestrutura && Object.keys(secoesDados.infraestrutura).length > 0 && (
           <AccordionItem value="infraestrutura" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -489,12 +469,12 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.infraestrutura, null)}
+              {renderSection('', secoesDados.infraestrutura, null)}
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {dados.financeiro && Object.keys(dados.financeiro).length > 0 && (
+        {secoesDados.financeiro && Object.keys(secoesDados.financeiro).length > 0 && (
           <AccordionItem value="financeiro" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -503,12 +483,12 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.financeiro, null)}
+              {renderSection('', secoesDados.financeiro, null)}
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {dados.visaoFuturo && Object.keys(dados.visaoFuturo).length > 0 && (
+        {secoesDados.visaoFuturo && Object.keys(secoesDados.visaoFuturo).length > 0 && (
           <AccordionItem value="visao" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -517,12 +497,12 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.visaoFuturo, null)}
+              {renderSection('', secoesDados.visaoFuturo, null)}
             </AccordionContent>
           </AccordionItem>
         )}
 
-        {dados.status && Object.keys(dados.status).length > 0 && (
+        {secoesDados.status && Object.keys(secoesDados.status).length > 0 && (
           <AccordionItem value="status" className="border rounded-lg">
             <AccordionTrigger className="px-4">
               <div className="flex items-center gap-2">
@@ -531,7 +511,7 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
               </div>
             </AccordionTrigger>
             <AccordionContent className="px-4 pb-4">
-              {renderSection('', dados.status, null)}
+              {renderSection('', secoesDados.status, null)}
             </AccordionContent>
           </AccordionItem>
         )}
@@ -541,9 +521,9 @@ export function ClienteParceiraDetalhes({ formulario }: ClienteParceiraDetalhesP
       <Card className="bg-muted/30 border-muted-foreground/20">
         <CardContent className="pt-6">
           <div className="text-center text-sm text-muted-foreground">
-            <p>Formulário preenchido em: {format(new Date(formulario.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
-            {formulario.updated_at !== formulario.created_at && (
-              <p>Última atualização: {format(new Date(formulario.updated_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+            <p>Formulário preenchido em: {format(new Date(dados?.created_at || formulario?.created_at || new Date()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
+            {(dados?.updated_at || formulario?.updated_at) !== (dados?.created_at || formulario?.created_at) && (
+              <p>Última atualização: {format(new Date(dados?.updated_at || formulario?.updated_at || new Date()), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</p>
             )}
           </div>
         </CardContent>

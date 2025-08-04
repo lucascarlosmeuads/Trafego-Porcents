@@ -18,7 +18,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
   const { user } = useAuth()
   const { cliente, briefing, arquivos, loading, refreshData } = useClienteData(user?.email || '')
   const { progresso, loading: progressoLoading, refetch: refetchProgresso } = useClienteProgresso(user?.email || '')
-  const { clienteParceria, formularioParceria, loading: parceiraLoading } = useClienteParceiraData(user?.email || '')
+  const { dadosConsolidados, formularioParceria, loading: parceiraLoading } = useClienteParceiraData(user?.email || '')
 
   console.log('🏠 [ClienteHomeDashboard] Estado atual:', {
     clienteEmail: user?.email,
@@ -148,10 +148,13 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
   }
 
   // Se é cliente parceria, mostrar dados específicos de parceria
-  if (formularioParceria || clienteParceria) {
+  if (dadosConsolidados) {
     return (
       <div className="p-6 space-y-6 min-h-screen">
-        <ClienteParceiraDetalhes formulario={formularioParceria} />
+        <ClienteParceiraDetalhes 
+          formulario={formularioParceria} 
+          dadosConsolidados={dadosConsolidados} 
+        />
       </div>
     )
   }
