@@ -41,8 +41,8 @@ interface ClienteParceiraDetalhesProps {
 export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: ClienteParceiraDetalhesProps) {
   const dados = dadosConsolidados || null;
 
-  // Move formatFieldName to the top
-  const formatFieldName = (key: string): string => {
+  // Function declaration for proper hoisting
+  function formatFieldName(key: string): string {
     const fieldNames: { [key: string]: string } = {
       nome: 'Nome',
       email: 'Email',
@@ -68,7 +68,7 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     };
     
     return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
-  };
+  }
 
   const calcularCustos = () => {
     const respostas = dados?.dados_completos || formulario?.respostas || {};
