@@ -27,7 +27,18 @@ import {
   Briefcase,
   Heart,
   Edit3,
-  AlertTriangle
+  AlertTriangle,
+  TrendingUp,
+  TrendingDown,
+  Calculator,
+  CreditCard,
+  ShoppingCart,
+  MessageSquare,
+  Monitor,
+  Camera,
+  Video,
+  Eye,
+  Minus
 } from 'lucide-react';
 import { FormularioParceiraData, ConsolidatedParceiraData } from '@/hooks/useClienteParceiraData';
 
@@ -39,6 +50,28 @@ interface ClienteParceiraDetalhesProps {
 export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: ClienteParceiraDetalhesProps) {
   // Usar dados consolidados se disponíveis, senão usar formulário original
   const dados = dadosConsolidados || null
+
+  // Sistema de cálculo de custos baseado nas respostas
+  const calcularCustos = () => {
+    const respostas = dados?.dados_completos || formulario?.respostas || {};
+    
+    const custos = {
+      bmCost: respostas.hasBM === false ? 500 : 0,
+      checkoutCost: respostas.hasCheckout === false ? 800 : 0,
+      creativeCost: (!respostas.hasImageCreatives && !respostas.hasVideoCreatives) ? 1200 : 0,
+      whatsappCost: respostas.hasWhatsApp === false ? 300 : 0
+    };
+    
+    const total = Object.values(custos).reduce((sum, cost) => sum + cost, 0);
+    
+    return {
+      ...custos,
+      total,
+      hasDiscounts: respostas.hasBM || respostas.hasCheckout || respostas.hasImageCreatives || respostas.hasVideoCreatives || respostas.hasWhatsApp
+    };
+  };
+
+  const custosInfo = calcularCustos();
   
   if (!dados && !formulario) {
     return (
@@ -167,13 +200,61 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     );
   }
 
+  // Componente para renderizar valor com indicação de custo
+  const renderValueWithCost = (value: any, fieldName: string): React.ReactNode => {
+    const isInfraField = ['hasBM', 'hasCheckout', 'hasImageCreatives', 'hasVideoCreatives', 'hasWhatsApp'].includes(fieldName);
+    
+    if (!isInfraField) {
+      return renderValue(value, fieldName);
+    }
+
+    const costInfo = {
+      hasBM: { cost: 500, label: 'Business Manager' },
+      hasCheckout: { cost: 800, label: 'Sistema de Checkout' },
+      hasImageCreatives: { cost: 600, label: 'Criativos de Imagem' },
+      hasVideoCreatives: { cost: 600, label: 'Criativos de Vídeo' },
+      hasWhatsApp: { cost: 300, label: 'WhatsApp Business' }
+    };
+
+    const info = costInfo[fieldName as keyof typeof costInfo];
+    const hasValue = value === true;
+    const actualCost = hasValue ? 0 : info?.cost || 0;
+
+    return (
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Badge 
+            variant={hasValue ? 'default' : 'secondary'} 
+            className={`text-xs ${hasValue ? 'bg-green-100 text-green-800 border-green-300' : 'bg-red-100 text-red-800 border-red-300'}`}
+          >
+            {hasValue ? 'Sim' : 'Não'}
+          </Badge>
+        </div>
+        
+        <div className="flex items-center gap-2">
+          {hasValue ? (
+            <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-300">
+              <TrendingDown className="w-3 h-3 mr-1" />
+              Economia
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-xs bg-red-50 text-red-700 border-red-300">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              + R$ {actualCost}
+            </Badge>
+          )}
+        </div>
+      </div>
+    );
+  };
+
   const renderValue = (value: any, fieldName?: string): React.ReactNode => {
     if (value === null || value === undefined) return <span className="text-muted-foreground italic">Não informado</span>;
     
     // Tratamento especial para áudio
     if (fieldName === 'audio_visao_futuro' && typeof value === 'string' && value) {
       return (
-        <div className="flex items-center gap-2 p-3 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+        <div className="flex items-center gap-2 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 border border-blue-200 dark:border-blue-700 rounded-lg">
           <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
           <span className="text-blue-700 dark:text-blue-300 font-medium">Áudio da visão de futuro</span>
           <audio controls className="ml-auto">
@@ -188,7 +269,14 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     
     if (typeof value === 'boolean') {
       return (
-        <Badge variant={value ? 'default' : 'secondary'} className="text-xs">
+        <Badge 
+          variant={value ? 'default' : 'secondary'} 
+          className={`text-xs font-medium ${
+            value 
+              ? 'bg-green-100 text-green-800 border-green-300' 
+              : 'bg-gray-100 text-gray-700 border-gray-300'
+          }`}
+        >
           {value ? 'Sim' : 'Não'}
         </Badge>
       );
@@ -285,26 +373,78 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
     return fieldNames[key] || key.replace(/([A-Z])/g, ' $1').replace(/^./, str => str.toUpperCase());
   };
 
-  const renderSection = (title: string, data: any, icon: React.ReactNode) => {
+  const getSectionTheme = (sectionType: string) => {
+    const themes = {
+      dadosBasicos: {
+        bg: 'bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/30 dark:to-cyan-950/30',
+        border: 'border-blue-200 dark:border-blue-700',
+        header: 'bg-blue-100 dark:bg-blue-900/50',
+        text: 'text-blue-800 dark:text-blue-200'
+      },
+      negocio: {
+        bg: 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30',
+        border: 'border-green-200 dark:border-green-700',
+        header: 'bg-green-100 dark:bg-green-900/50',
+        text: 'text-green-800 dark:text-green-200'
+      },
+      infraestrutura: {
+        bg: 'bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-950/30 dark:to-amber-950/30',
+        border: 'border-orange-200 dark:border-orange-700',
+        header: 'bg-orange-100 dark:bg-orange-900/50',
+        text: 'text-orange-800 dark:text-orange-200'
+      },
+      financeiro: {
+        bg: 'bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-950/30 dark:to-violet-950/30',
+        border: 'border-purple-200 dark:border-purple-700',
+        header: 'bg-purple-100 dark:bg-purple-900/50',
+        text: 'text-purple-800 dark:text-purple-200'
+      },
+      visaoFuturo: {
+        bg: 'bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-950/30 dark:to-rose-950/30',
+        border: 'border-pink-200 dark:border-pink-700',
+        header: 'bg-pink-100 dark:bg-pink-900/50',
+        text: 'text-pink-800 dark:text-pink-200'
+      },
+      status: {
+        bg: 'bg-gradient-to-br from-gray-50 to-slate-50 dark:from-gray-950/30 dark:to-slate-950/30',
+        border: 'border-gray-200 dark:border-gray-700',
+        header: 'bg-gray-100 dark:bg-gray-900/50',
+        text: 'text-gray-800 dark:text-gray-200'
+      }
+    };
+    
+    return themes[sectionType as keyof typeof themes] || themes.status;
+  };
+
+  const renderSection = (title: string, data: any, icon: React.ReactNode, sectionType: string) => {
     if (!data || Object.keys(data).length === 0) return null;
 
+    const theme = getSectionTheme(sectionType);
+    const isInfraSection = sectionType === 'infraestrutura';
+
     return (
-      <Card className="shadow-sm border-muted-foreground/20">
-        <CardHeader className="pb-3 bg-muted/50 border-b border-muted-foreground/20">
-          <CardTitle className="flex items-center gap-2 text-lg text-foreground">
+      <Card className={`shadow-lg ${theme.border} ${theme.bg} hover:shadow-xl transition-all duration-300`}>
+        <CardHeader className={`pb-4 ${theme.header} ${theme.border} border-b`}>
+          <CardTitle className={`flex items-center gap-3 text-lg font-bold ${theme.text}`}>
             {icon}
             {title}
+            {isInfraSection && (
+              <Badge variant="outline" className={`ml-auto text-xs ${theme.text} bg-white/50`}>
+                <Calculator className="w-3 h-3 mr-1" />
+                Custos Incluídos
+              </Badge>
+            )}
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4 pt-4">
-          {Object.entries(data).map(([key, value]) => (
-            <div key={key} className="border-b border-muted-foreground/20 pb-3 last:border-b-0 last:pb-0">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-2 bg-muted/20 p-3 rounded">
-                <div className="font-semibold text-sm text-foreground md:col-span-1">
-                  {formatFieldName(key)}:
+        <CardContent className="space-y-4 pt-6">
+          {Object.entries(data).map(([key, value], index) => (
+            <div key={key} className={`p-4 bg-white/60 dark:bg-black/20 rounded-lg border border-white/50 dark:border-gray-700/50 ${index !== Object.entries(data).length - 1 ? 'mb-3' : ''}`}>
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div className="font-semibold text-sm text-gray-900 dark:text-gray-100 min-w-0 flex-1">
+                  {formatFieldName(key)}
                 </div>
-                <div className="md:col-span-3 text-sm text-foreground">
-                  {renderValue(value, key)}
+                <div className="text-sm text-gray-800 dark:text-gray-200 flex-shrink-0">
+                  {isInfraSection ? renderValueWithCost(value, key) : renderValue(value, key)}
                 </div>
               </div>
             </div>
@@ -378,50 +518,127 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
   const secoesDados = organizarDadosEstrategicos();
 
   return (
-    <div className="space-y-6">
-      {/* Resumo Estratégico */}
-      <Card className="bg-gradient-to-r from-primary/10 to-secondary/10 border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-xl">
-            <Award className="h-6 w-6 text-primary" />
-            Resumo do Seu Perfil de Parceria
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-primary">{dados?.tipo_negocio || formulario?.tipo_negocio || 'N/A'}</div>
-              <div className="text-sm text-muted-foreground">Tipo de Negócio</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-green-600">
-                {(dados?.valor_medio_produto || formulario?.valor_medio_produto) ? `R$ ${(dados?.valor_medio_produto || formulario?.valor_medio_produto)?.toLocaleString('pt-BR')}` : 'N/A'}
+    <div className="space-y-8">
+      {/* Cabeçalho Melhorado com Progresso e Resumo Financeiro */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Resumo Estratégico */}
+        <Card className="bg-gradient-to-br from-blue-600 via-purple-600 to-indigo-700 text-white shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl font-bold">
+              <Award className="h-7 w-7" />
+              Perfil de Parceria
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <Building className="h-5 w-5 opacity-80" />
+                  <span className="text-sm font-medium opacity-90">Tipo</span>
+                </div>
+                <span className="font-bold">{dados?.tipo_negocio || formulario?.tipo_negocio || 'N/A'}</span>
               </div>
-              <div className="text-sm text-muted-foreground">Valor Médio do Produto</div>
-            </div>
-            <div className="text-center">
-              <div className="text-2xl font-bold">
-                <Badge variant={(dados?.cliente_pago || formulario?.cliente_pago) ? 'default' : 'secondary'}>
+              
+              <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <DollarSign className="h-5 w-5 opacity-80" />
+                  <span className="text-sm font-medium opacity-90">Valor Médio</span>
+                </div>
+                <span className="font-bold">
+                  {(dados?.valor_medio_produto || formulario?.valor_medio_produto) 
+                    ? `R$ ${(dados?.valor_medio_produto || formulario?.valor_medio_produto)?.toLocaleString('pt-BR')}` 
+                    : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex items-center justify-between p-3 bg-white/10 rounded-lg backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 opacity-80" />
+                  <span className="text-sm font-medium opacity-90">Status</span>
+                </div>
+                <Badge variant={(dados?.cliente_pago || formulario?.cliente_pago) ? 'default' : 'secondary'} 
+                       className={`font-bold ${(dados?.cliente_pago || formulario?.cliente_pago) 
+                         ? 'bg-green-500 text-white' 
+                         : 'bg-orange-500 text-white'}`}>
                   {(dados?.cliente_pago || formulario?.cliente_pago) ? 'PAGO' : 'PENDENTE'}
                 </Badge>
               </div>
-              <div className="text-sm text-muted-foreground">Status do Pagamento</div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        {/* Resumo Financeiro com Breakdown de Custos */}
+        <Card className="bg-gradient-to-br from-emerald-600 via-teal-600 to-cyan-700 text-white shadow-2xl">
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-3 text-xl font-bold">
+              <Calculator className="h-7 w-7" />
+              Resumo Financeiro
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="text-center p-4 bg-white/10 rounded-lg backdrop-blur-sm">
+              <div className="text-3xl font-bold mb-1">
+                R$ {custosInfo.total.toLocaleString('pt-BR')}
+              </div>
+              <div className="text-sm opacity-90">
+                {custosInfo.total > 0 ? 'Custos Adicionais' : 'Nenhum Custo Extra'}
+              </div>
+            </div>
+            
+            {custosInfo.total > 0 && (
+              <div className="space-y-2">
+                {custosInfo.bmCost > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">Business Manager</span>
+                    <span className="font-medium">+ R$ {custosInfo.bmCost}</span>
+                  </div>
+                )}
+                {custosInfo.checkoutCost > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">Sistema Checkout</span>
+                    <span className="font-medium">+ R$ {custosInfo.checkoutCost}</span>
+                  </div>
+                )}
+                {custosInfo.creativeCost > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">Criativos</span>
+                    <span className="font-medium">+ R$ {custosInfo.creativeCost}</span>
+                  </div>
+                )}
+                {custosInfo.whatsappCost > 0 && (
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="opacity-90">WhatsApp Business</span>
+                    <span className="font-medium">+ R$ {custosInfo.whatsappCost}</span>
+                  </div>
+                )}
+              </div>
+            )}
+            
+            {custosInfo.hasDiscounts && (
+              <div className="flex items-center gap-2 text-xs bg-white/10 p-2 rounded">
+                <CheckCircle className="h-4 w-4" />
+                <span>Você tem itens que geram economia!</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Planejamento Estratégico (se disponível) */}
       {(dados?.planejamento_estrategico || formulario?.planejamento_estrategico) && (
-        <Card className="border-green-200 dark:border-green-800">
-          <CardHeader className="bg-green-50 dark:bg-green-950/20">
-            <CardTitle className="flex items-center gap-2 text-green-800 dark:text-green-200">
-              <Lightbulb className="h-5 w-5" />
+        <Card className="bg-gradient-to-r from-yellow-50 to-amber-50 dark:from-yellow-950/30 dark:to-amber-950/30 border-yellow-200 dark:border-yellow-700 shadow-lg">
+          <CardHeader className="bg-gradient-to-r from-yellow-100 to-amber-100 dark:from-yellow-900/50 dark:to-amber-900/50 border-b border-yellow-200 dark:border-yellow-700">
+            <CardTitle className="flex items-center gap-3 text-yellow-800 dark:text-yellow-200 text-xl font-bold">
+              <Lightbulb className="h-6 w-6" />
               Seu Planejamento Estratégico Personalizado
+              <Badge variant="outline" className="ml-auto bg-yellow-200 text-yellow-800 border-yellow-300">
+                <Eye className="w-3 h-3 mr-1" />
+                IA Generated
+              </Badge>
             </CardTitle>
           </CardHeader>
-          <CardContent className="pt-4">
-            <div className="prose prose-sm max-w-none dark:prose-invert">
+          <CardContent className="pt-6">
+            <div className="prose prose-sm max-w-none dark:prose-invert bg-white/60 dark:bg-black/20 p-6 rounded-lg">
               <div className="whitespace-pre-wrap text-sm leading-relaxed">
                 {dados?.planejamento_estrategico || formulario?.planejamento_estrategico}
               </div>
@@ -430,92 +647,26 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados }: Clien
         </Card>
       )}
 
-      {/* Seções Detalhadas */}
-      <Accordion type="multiple" defaultValue={["dados", "negocio", "visao"]} className="space-y-4">
-        {secoesDados.dadosBasicos && Object.keys(secoesDados.dadosBasicos).length > 0 && (
-          <AccordionItem value="dados" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <User className="h-5 w-5" />
-                📋 Seus Dados Pessoais
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.dadosBasicos, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {secoesDados.negocio && Object.keys(secoesDados.negocio).length > 0 && (
-          <AccordionItem value="negocio" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <Building className="h-5 w-5" />
-                🏢 Informações do Seu Negócio
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.negocio, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {secoesDados.infraestrutura && Object.keys(secoesDados.infraestrutura).length > 0 && (
-          <AccordionItem value="infraestrutura" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <Settings className="h-5 w-5" />
-                ⚙️ Sua Infraestrutura Atual
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.infraestrutura, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {secoesDados.financeiro && Object.keys(secoesDados.financeiro).length > 0 && (
-          <AccordionItem value="financeiro" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <DollarSign className="h-5 w-5" />
-                💰 Situação Financeira
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.financeiro, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {secoesDados.visaoFuturo && Object.keys(secoesDados.visaoFuturo).length > 0 && (
-          <AccordionItem value="visao" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <Heart className="h-5 w-5" />
-                🚀 Sua Visão de Futuro
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.visaoFuturo, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-
-        {secoesDados.status && Object.keys(secoesDados.status).length > 0 && (
-          <AccordionItem value="status" className="border rounded-lg">
-            <AccordionTrigger className="px-4">
-              <div className="flex items-center gap-2">
-                <CheckCircle className="h-5 w-5" />
-                📊 Status e Controle
-              </div>
-            </AccordionTrigger>
-            <AccordionContent className="px-4 pb-4">
-              {renderSection('', secoesDados.status, null)}
-            </AccordionContent>
-          </AccordionItem>
-        )}
-      </Accordion>
+      {/* Detalhes Estruturados por Seções */}
+      <div className="space-y-6">
+        {secoesDados.dadosBasicos && Object.keys(secoesDados.dadosBasicos).length > 0 && 
+          renderSection("Dados Pessoais", secoesDados.dadosBasicos, <User className="h-6 w-6" />, "dadosBasicos")}
+        
+        {secoesDados.negocio && Object.keys(secoesDados.negocio).length > 0 && 
+          renderSection("Informações do Negócio", secoesDados.negocio, <Briefcase className="h-6 w-6" />, "negocio")}
+        
+        {secoesDados.infraestrutura && Object.keys(secoesDados.infraestrutura).length > 0 && 
+          renderSection("Infraestrutura & Ferramentas", secoesDados.infraestrutura, <Settings className="h-6 w-6" />, "infraestrutura")}
+        
+        {secoesDados.financeiro && Object.keys(secoesDados.financeiro).length > 0 && 
+          renderSection("Situação Financeira", secoesDados.financeiro, <DollarSign className="h-6 w-6" />, "financeiro")}
+        
+        {secoesDados.visaoFuturo && Object.keys(secoesDados.visaoFuturo).length > 0 && 
+          renderSection("Visão de Futuro", secoesDados.visaoFuturo, <Heart className="h-6 w-6" />, "visaoFuturo")}
+        
+        {secoesDados.status && Object.keys(secoesDados.status).length > 0 && 
+          renderSection("Status e Controle", secoesDados.status, <FileText className="h-6 w-6" />, "status")}
+      </div>
 
       {/* Informações de Preenchimento */}
       <Card className="bg-muted/30 border-muted-foreground/20">
