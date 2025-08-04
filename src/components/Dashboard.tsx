@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { 
   LazyAdminDashboard, 
@@ -28,6 +28,7 @@ export function Dashboard() {
     isSites,
     isRelatorios,
     isClienteNovo,
+    isClienteParceria,
     signOut
   } = useAuth()
 
@@ -136,6 +137,17 @@ export function Dashboard() {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <LazyClienteNovoDashboard />
+      </Suspense>
+    )
+  }
+
+  // Cliente Parceria Dashboard (NOVO)
+  if (isClienteParceria) {
+    console.log('✅ [Dashboard] Direcionando para ClienteParceiriaDashboard')
+    const ClienteParceiriaDashboard = React.lazy(() => import('./ClienteParceiriaDashboard'))
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <ClienteParceiriaDashboard />
       </Suspense>
     )
   }

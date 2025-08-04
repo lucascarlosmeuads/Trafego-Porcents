@@ -18,6 +18,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isSites,
     isRelatorios,
     isClienteNovo,
+    isClienteParceria,
     currentManagerName,
     updateUserType,
     resetUserState
@@ -226,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isSites,
       isRelatorios,
       isClienteNovo,
+      isClienteParceria,
       currentManagerName
     }}>
       {children}

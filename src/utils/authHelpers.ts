@@ -5,7 +5,7 @@ export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()
 }
 
-export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'clientenovo' | 'unauthorized' | 'error'> => {
+export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'clientenovo' | 'clienteparceria' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
   console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
   console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
@@ -61,7 +61,31 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'gestor'
     }
 
-    // VERIFICAÇÃO PARA CLIENTES - PRIORIDADE MÁXIMA (antes de sites)
+    // VERIFICAÇÃO PARA CLIENTES DE PARCERIA - NOVA PRIORIDADE
+    console.log('🔍 [authHelpers] Verificando se é cliente parceria na tabela clientes_parceria...')
+    
+    const { data: clienteParceria, error: clienteParceriaError } = await supabase
+      .from('clientes_parceria')
+      .select('id, email_cliente, nome_cliente')
+      .ilike('email_cliente', normalizedEmail)
+      .eq('ativo', true)
+      .single()
+
+    console.log('🔍 [authHelpers] Resultado da query cliente parceria:', {
+      data: clienteParceria,
+      error: clienteParceriaError
+    })
+
+    if (!clienteParceriaError && clienteParceria) {
+      console.log('✅ [authHelpers] CLIENTE PARCERIA ENCONTRADO NA TABELA!')
+      console.log('👤 [authHelpers] ID:', clienteParceria.id)
+      console.log('👤 [authHelpers] Nome:', clienteParceria.nome_cliente)
+      console.log('👤 [authHelpers] Email:', clienteParceria.email_cliente)
+      console.log('🎯 [authHelpers] DIRECIONANDO PARA PAINEL DE CLIENTE PARCERIA')
+      return 'clienteparceria'
+    }
+
+    // VERIFICAÇÃO PARA CLIENTES TRADICIONAIS
     console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
     console.log('🔍 [authHelpers] Fazendo query: SELECT id, email_cliente, nome_cliente FROM todos_clientes WHERE LOWER(email_cliente) = ?', normalizedEmail)
     
@@ -167,7 +191,18 @@ export const getManagerName = async (email: string): Promise<string> => {
       return gestorData.nome
     }
 
-    // Se não for gestor, tentar buscar nome do cliente (CASE-INSENSITIVE)
+    // Tentar buscar nome do cliente parceria primeiro
+    const { data: clienteParceriaData, error: clienteParceriaError } = await supabase
+      .from('clientes_parceria')
+      .select('nome_cliente')
+      .ilike('email_cliente', normalizedEmail)
+      .single()
+
+    if (!clienteParceriaError && clienteParceriaData) {
+      return clienteParceriaData.nome_cliente || 'Cliente Parceria'
+    }
+
+    // Se não for cliente parceria, tentar buscar nome do cliente tradicional
     const { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('nome_cliente')

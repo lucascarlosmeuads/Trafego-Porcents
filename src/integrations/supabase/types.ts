@@ -521,6 +521,57 @@ export type Database = {
         }
         Relationships: []
       }
+      clientes_parceria: {
+        Row: {
+          ativo: boolean | null
+          created_at: string
+          dados_formulario: Json | null
+          email_cliente: string
+          id: string
+          lead_id: string | null
+          nome_cliente: string | null
+          telefone: string | null
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string
+          dados_formulario?: Json | null
+          email_cliente: string
+          id?: string
+          lead_id?: string | null
+          nome_cliente?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string
+          dados_formulario?: Json | null
+          email_cliente?: string
+          id?: string
+          lead_id?: string | null
+          nome_cliente?: string | null
+          telefone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "clientes_parceria_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "formularios_parceria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "clientes_parceria_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "vw_parceria_completa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comentarios_cliente: {
         Row: {
           autor: string
