@@ -94,6 +94,12 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [success, setSuccess] = useState(false)
 
+  console.log('🔍 [TrafficManagementForm] === DEBUGGING FORM INIT ===')
+  console.log('📧 [TrafficManagementForm] Email cliente:', emailCliente)
+  console.log('📋 [TrafficManagementForm] Briefing recebido:', briefing)
+  console.log('📊 [TrafficManagementForm] Etapa atual:', currentStep)
+  console.log('💾 [TrafficManagementForm] Is submitting:', isSubmitting)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -122,37 +128,56 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
     },
   })
 
+  console.log('📝 [TrafficManagementForm] Form values atual:', form.getValues())
+  console.log('🔍 [TrafficManagementForm] Form errors:', form.formState.errors)
+
   // Calcular progresso
   const progress = (currentStep / 3) * 100
 
   // Validar etapa atual
   const validateCurrentStep = async () => {
+    console.log(`🔍 [TrafficManagementForm] Validando etapa ${currentStep}`)
     let isValid = false
     
-    if (currentStep === 1) {
-      const etapa1Values = {
-        nome_produto: form.getValues('nome_produto'),
-        nome_marca: form.getValues('nome_marca'),
-        descricao_resumida: form.getValues('descricao_resumida'),
-        publico_alvo: form.getValues('publico_alvo'),
-        diferencial: form.getValues('diferencial'),
-        observacoes_finais: form.getValues('observacoes_finais'),
-        quer_site: form.getValues('quer_site'),
+    try {
+      if (currentStep === 1) {
+        const etapa1Values = {
+          nome_produto: form.getValues('nome_produto'),
+          nome_marca: form.getValues('nome_marca'),
+          descricao_resumida: form.getValues('descricao_resumida'),
+          publico_alvo: form.getValues('publico_alvo'),
+          diferencial: form.getValues('diferencial'),
+          observacoes_finais: form.getValues('observacoes_finais'),
+          quer_site: form.getValues('quer_site'),
+        }
+        console.log('📝 [TrafficManagementForm] Valores etapa 1:', etapa1Values)
+        const result = etapa1Schema.safeParse(etapa1Values)
+        isValid = result.success
+        if (!result.success) {
+          console.error('❌ [TrafficManagementForm] Erros validação etapa 1:', result.error.issues)
+        }
+      } else if (currentStep === 2) {
+        const etapa2Values = {
+          investimento_diario: form.getValues('investimento_diario'),
+          direcionamento_campanha: form.getValues('direcionamento_campanha'),
+          abrangencia_atendimento: form.getValues('abrangencia_atendimento'),
+          forma_pagamento: form.getValues('forma_pagamento'),
+          possui_facebook: form.getValues('possui_facebook'),
+          possui_instagram: form.getValues('possui_instagram'),
+          utiliza_whatsapp_business: form.getValues('utiliza_whatsapp_business'),
+        }
+        console.log('📝 [TrafficManagementForm] Valores etapa 2:', etapa2Values)
+        const result = etapa2Schema.safeParse(etapa2Values)
+        isValid = result.success
+        if (!result.success) {
+          console.error('❌ [TrafficManagementForm] Erros validação etapa 2:', result.error.issues)
+        }
       }
-      const result = etapa1Schema.safeParse(etapa1Values)
-      isValid = result.success
-    } else if (currentStep === 2) {
-      const etapa2Values = {
-        investimento_diario: form.getValues('investimento_diario'),
-        direcionamento_campanha: form.getValues('direcionamento_campanha'),
-        abrangencia_atendimento: form.getValues('abrangencia_atendimento'),
-        forma_pagamento: form.getValues('forma_pagamento'),
-        possui_facebook: form.getValues('possui_facebook'),
-        possui_instagram: form.getValues('possui_instagram'),
-        utiliza_whatsapp_business: form.getValues('utiliza_whatsapp_business'),
-      }
-      const result = etapa2Schema.safeParse(etapa2Values)
-      isValid = result.success
+      
+      console.log(`✅ [TrafficManagementForm] Validação etapa ${currentStep}: ${isValid ? 'SUCESSO' : 'FALHOU'}`)
+    } catch (error) {
+      console.error('💥 [TrafficManagementForm] Erro na validação:', error)
+      isValid = false
     }
     
     return isValid
@@ -177,10 +202,25 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
 
   // Salvar dados
   async function onSubmit(values: z.infer<typeof formSchema>) {
+    console.log('💾 [TrafficManagementForm] === INICIANDO SUBMISSÃO ===')
+    console.log('📧 [TrafficManagementForm] Email cliente:', emailCliente)
+    console.log('📝 [TrafficManagementForm] Values recebidos:', values)
+    
     setIsSubmitting(true)
     setSuccess(false)
 
     try {
+      // Validação extra antes de salvar
+      if (!emailCliente || emailCliente.trim() === '') {
+        console.error('❌ [TrafficManagementForm] Email cliente vazio')
+        toast({
+          variant: "destructive",
+          title: "Erro de validação",
+          description: "Email do cliente não encontrado. Tente fazer logout e login novamente.",
+        })
+        return
+      }
+
       const briefingData = {
         email_cliente: emailCliente.trim().toLowerCase(),
         nome_produto: values.nome_produto.trim(),
@@ -209,6 +249,8 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         formulario_completo: true,
       }
 
+      console.log('📋 [TrafficManagementForm] Dados preparados para salvar:', briefingData)
+
       const { data, error } = await supabase
         .from('briefings_cliente')
         .upsert(briefingData, { 
@@ -218,7 +260,14 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         .select()
 
       if (error) {
-        console.error("Erro ao salvar o briefing:", error)
+        console.error("❌ [TrafficManagementForm] Erro Supabase:", error)
+        console.error("❌ [TrafficManagementForm] Detalhes do erro:", {
+          code: error.code,
+          message: error.message,
+          details: error.details,
+          hint: error.hint
+        })
+        
         toast({
           variant: "destructive",
           title: "Erro ao salvar.",
@@ -227,28 +276,33 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         return
       }
 
+      console.log('✅ [TrafficManagementForm] Briefing salvo com sucesso:', data)
+
       toast({
         title: "Sucesso!",
         description: "Formulário salvo! Gerando planejamento estratégico...",
       })
       
       setSuccess(true)
+      
+      console.log('🔄 [TrafficManagementForm] Chamando callback onBriefingUpdated')
       onBriefingUpdated()
 
       // Gerar planejamento estratégico automaticamente em background
       generatePlanejamento(emailCliente).catch(error => {
-        console.error('Erro ao gerar planejamento automático:', error)
+        console.error('⚠️ [TrafficManagementForm] Erro ao gerar planejamento automático:', error)
         // Não exibir erro para o usuário pois o formulário já foi salvo com sucesso
       })
 
     } catch (error) {
-      console.error("Erro inesperado:", error)
+      console.error("💥 [TrafficManagementForm] Erro inesperado:", error)
       toast({
         variant: "destructive",
         title: "Erro Inesperado.",
         description: "Ocorreu um erro inesperado. Tente novamente mais tarde.",
       })
     } finally {
+      console.log('🏁 [TrafficManagementForm] Finalizando submissão')
       setIsSubmitting(false)
     }
   }
