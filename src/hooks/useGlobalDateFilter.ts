@@ -74,7 +74,7 @@ export function useGlobalDateFilter() {
       startDate: currentFilter.startDate,
       endDate: currentFilter.endDate
     };
-  }, [currentFilter]);
+  }, [currentFilter.startDate, currentFilter.endDate]);
 
   const isFilterActive = useCallback((option: DateFilterOption) => {
     return currentFilter.option === option;

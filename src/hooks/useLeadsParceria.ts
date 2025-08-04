@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { enableRealtimeForTable } from '@/utils/realtimeUtils';
 
@@ -28,6 +28,13 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
   const [totalLeads, setTotalLeads] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Memoize the filter to prevent unnecessary re-renders
+  const stableFilter = useMemo(() => dateFilter, [
+    dateFilter?.startDate, 
+    dateFilter?.endDate, 
+    dateFilter?.option
+  ]);
 
   const fetchLeads = async () => {
     setLoading(true);
@@ -89,7 +96,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [dateFilter]);
+  }, [stableFilter]);
 
   const updateLeadStatus = async (leadId: string, field: 'cliente_pago' | 'contatado_whatsapp', value: boolean) => {
     try {

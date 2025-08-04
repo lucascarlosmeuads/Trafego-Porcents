@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -14,13 +14,20 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
 export function LeadsParcerriaPanel() {
-  const { currentFilter, getFilterDates } = useGlobalDateFilter();
-  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria(getFilterDates());
+  const { currentFilter } = useGlobalDateFilter();
+  
+  // Create stable filter object to prevent infinite loops
+  const stableFilterDates = useMemo(() => ({
+    startDate: currentFilter.startDate,
+    endDate: currentFilter.endDate,
+    option: currentFilter.option
+  }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option]);
+  
+  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria(stableFilterDates);
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
-  const [currentDateFilter, setCurrentDateFilter] = useState<{startDate?: string, endDate?: string, option?: string}>(getFilterDates());
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -77,9 +84,6 @@ export function LeadsParcerriaPanel() {
     return null;
   };
 
-  const handleDateFilterChange = (startDate?: string, endDate?: string, option?: DateFilterOption) => {
-    setCurrentDateFilter({ startDate, endDate, option });
-  };
 
   const filteredLeads = statusFilter === 'todos' 
     ? leads 
@@ -124,10 +128,10 @@ export function LeadsParcerriaPanel() {
         </div>
 
         {/* Filtro de Data Centralizado */}
-        <DateRangeFilter onFilterChange={handleDateFilterChange} />
+        <DateRangeFilter />
 
         {/* Dashboard de Analytics */}
-        {showAnalytics && <LeadsParcerriaAnalytics dateFilter={currentDateFilter} />}
+        {showAnalytics && <LeadsParcerriaAnalytics dateFilter={stableFilterDates} />}
 
         <Card>
           <CardHeader>
