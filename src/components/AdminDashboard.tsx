@@ -20,6 +20,7 @@ import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDashboardNew'
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
+import { BulkCreateParceiraUsers } from './AdminDashboard/BulkCreateParceiraUsers'
 import { ErrorBoundary } from './ErrorBoundary'
 
 interface AdminDashboardProps {
@@ -77,6 +78,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
                 isAdminContext={true}
               />
             </div>
+
+            {/* EXECUTAR CORREÇÃO URGENTE */}
+            <BulkCreateParceiraUsers />
 
             {/* Configuração Meta Ads Global */}
             <AdminMetaAdsConfig />
