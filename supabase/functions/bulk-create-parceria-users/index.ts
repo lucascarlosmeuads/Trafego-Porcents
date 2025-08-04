@@ -54,16 +54,29 @@ Deno.serve(async (req) => {
       try {
         console.log(`🔄 [bulk-create-parceria-users] Processando: ${cliente.email_cliente}`)
 
-        // Verificar se usuário já existe
-        const { data: existingUser } = await supabase.auth.admin.getUserByEmail(cliente.email_cliente)
+        // Verificar se usuário já existe usando listUsers
+        const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers()
         
-        if (existingUser.user) {
+        if (listError) {
+          console.error(`❌ [bulk-create-parceria-users] Erro ao buscar usuários: ${listError.message}`)
+          results.push({
+            email: cliente.email_cliente,
+            success: false,
+            message: `Erro ao verificar usuário: ${listError.message}`
+          })
+          falhas++
+          continue
+        }
+        
+        const existingUser = existingUsers.users?.find(user => user.email === cliente.email_cliente)
+        
+        if (existingUser) {
           console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${cliente.email_cliente}`)
           results.push({
             email: cliente.email_cliente,
             success: true,
             message: 'Usuário já existe',
-            user_id: existingUser.user.id
+            user_id: existingUser.id
           })
           sucessos++
           continue
