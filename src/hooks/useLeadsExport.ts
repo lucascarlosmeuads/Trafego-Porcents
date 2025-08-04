@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
@@ -31,7 +31,7 @@ export function useLeadsExport() {
   const [exportableCount, setExportableCount] = useState(0);
   const { user } = useAuth();
 
-  const getExportableLeadsCount = async (): Promise<number> => {
+  const getExportableLeadsCount = useCallback(async (): Promise<number> => {
     if (!user?.email) return 0;
 
     try {
@@ -52,7 +52,7 @@ export function useLeadsExport() {
       console.error('Erro ao contar leads exportáveis:', error);
       return 0;
     }
-  };
+  }, [user?.email]);
 
   const exportLeads = async (): Promise<void> => {
     if (!user?.email) {
@@ -170,10 +170,10 @@ export function useLeadsExport() {
     }
   };
 
-  const refreshExportableCount = async () => {
+  const refreshExportableCount = useCallback(async () => {
     const count = await getExportableLeadsCount();
     setExportableCount(count);
-  };
+  }, [getExportableLeadsCount]);
 
   return {
     isExporting,
