@@ -17,7 +17,9 @@ import {
 } from 'lucide-react';
 import { 
   getDateRangeFromPresetBrazil, 
-  getTodayBrazil
+  getTodayBrazil,
+  getBrazilDate,
+  formatDateBrazil
 } from '@/utils/timezoneUtils';
 
 interface LeadsMetaAdsReportProps {
@@ -50,38 +52,51 @@ export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate,
 
   useEffect(() => {
     if (isConfigured && dateFilter) {
+      console.log('📊 [LeadsMetaAdsReport] Sincronizando filtro:', dateFilter);
+      
       // Sincronizar com o filtro da página pai
       switch (dateFilter.option) {
         case 'hoje':
+          console.log('📅 Buscando dados de HOJE no Meta Ads');
           fetchTodayInsights();
           break;
         case 'ontem':
+          console.log('📅 Buscando dados de ONTEM no Meta Ads');
           fetchInsightsWithPeriod('yesterday');
           break;
         case 'anteontem':
-          // Para anteontem, usar data específica
-          if (dateFilter.startDate && dateFilter.endDate) {
-            fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
-          }
+          // Para anteontem, calcular data específica baseada no timezone brasileiro
+          const today = getBrazilDate();
+          const dayBeforeYesterday = new Date(today);
+          dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2);
+          const anteOntemDate = formatDateBrazil(dayBeforeYesterday);
+          
+          console.log('📅 Buscando dados de ANTEONTEM no Meta Ads:', anteOntemDate);
+          fetchInsightsWithPeriod('custom', anteOntemDate, anteOntemDate);
           break;
         case 'ultimos_7_dias':
+          console.log('📅 Buscando dados dos ÚLTIMOS 7 DIAS no Meta Ads');
           fetchInsightsWithPeriod('last_7_days');
           break;
         case 'ultimos_30_dias':
+          console.log('📅 Buscando dados dos ÚLTIMOS 30 DIAS no Meta Ads');
           fetchInsightsWithPeriod('last_30_days');
           break;
         case 'total':
           // Para total, usar período abrangente
           if (dateFilter.startDate && dateFilter.endDate) {
+            console.log('📅 Buscando dados TOTAL no Meta Ads:', dateFilter.startDate, 'até', dateFilter.endDate);
             fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
           }
           break;
         case 'personalizado':
           if (dateFilter.startDate && dateFilter.endDate) {
+            console.log('📅 Buscando dados PERSONALIZADOS no Meta Ads:', dateFilter.startDate, 'até', dateFilter.endDate);
             fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
           }
           break;
         default:
+          console.log('📅 Filtro não reconhecido, usando dados de HOJE');
           fetchTodayInsights();
       }
     } else if (isConfigured) {

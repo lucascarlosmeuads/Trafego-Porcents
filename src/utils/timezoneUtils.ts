@@ -69,6 +69,14 @@ export const getYesterdayBrazil = (): string => {
   return formatDateBrazil(yesterday)
 }
 
+// Obter data de anteontem no timezone brasileiro
+export const getDayBeforeYesterdayBrazil = (): string => {
+  const today = getBrazilDate()
+  const dayBeforeYesterday = new Date(today)
+  dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2)
+  return formatDateBrazil(dayBeforeYesterday)
+}
+
 // Calcular período baseado no preset (timezone brasileiro)
 export const getDateRangeFromPresetBrazil = (preset: string) => {
   const today = getBrazilDate()
@@ -92,6 +100,14 @@ export const getDateRangeFromPresetBrazil = (preset: string) => {
       return {
         startDate: yesterdayStr,
         endDate: yesterdayStr
+      }
+    case 'anteontem':
+      const dayBeforeYesterday = new Date(today)
+      dayBeforeYesterday.setDate(dayBeforeYesterday.getDate() - 2)
+      const anteOntemStr = formatDateBrazil(dayBeforeYesterday)
+      return {
+        startDate: anteOntemStr,
+        endDate: anteOntemStr
       }
     case 'last_7_days':
       const sevenDaysAgo = new Date(today)
