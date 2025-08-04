@@ -2,10 +2,12 @@
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
 import { useClienteProgresso } from '@/hooks/useClienteProgresso'
+import { useClienteParceiraData } from '@/hooks/useClienteParceiraData'
 import { ProgressTracker } from './ProgressTracker'
 import { StepCard } from './StepCard'
 import { GameElements } from './GameElements'
 import { ImportantReminders } from './ImportantReminders'
+import { ClienteParceiraDetalhes } from './ClienteParceiraDetalhes'
 import { Card, CardContent } from '@/components/ui/card'
 
 interface ClienteHomeDashboardProps {
@@ -16,6 +18,7 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
   const { user } = useAuth()
   const { cliente, briefing, arquivos, loading, refreshData } = useClienteData(user?.email || '')
   const { progresso, loading: progressoLoading, refetch: refetchProgresso } = useClienteProgresso(user?.email || '')
+  const { clienteParceria, formularioParceria, loading: parceiraLoading } = useClienteParceiraData(user?.email || '')
 
   console.log('🏠 [ClienteHomeDashboard] Estado atual:', {
     clienteEmail: user?.email,
@@ -136,10 +139,19 @@ export function ClienteHomeDashboard({ onTabChange }: ClienteHomeDashboardProps)
     }
   }
 
-  if (loading || progressoLoading) {
+  if (loading || progressoLoading || parceiraLoading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    )
+  }
+
+  // Se é cliente parceria, mostrar dados específicos de parceria
+  if (formularioParceria || clienteParceria) {
+    return (
+      <div className="p-6 space-y-6 min-h-screen">
+        <ClienteParceiraDetalhes formulario={formularioParceria} />
       </div>
     )
   }
