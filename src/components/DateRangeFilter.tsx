@@ -53,7 +53,7 @@ export function DateRangeFilter({ onFilterChange, className }: DateRangeFilterPr
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Botões de filtro rápido */}
-        <div className="flex gap-2 flex-wrap">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
           <Button
             variant={isFilterActive('hoje') ? 'default' : 'outline'}
             size="sm"
@@ -76,9 +76,31 @@ export function DateRangeFilter({ onFilterChange, className }: DateRangeFilterPr
             Anteontem
           </Button>
           <Button
+            variant={isFilterActive('ultimos_7_dias') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleQuickFilter('ultimos_7_dias')}
+          >
+            Últimos 7 dias
+          </Button>
+          <Button
+            variant={isFilterActive('ultimos_30_dias') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleQuickFilter('ultimos_30_dias')}
+          >
+            Últimos 30 dias
+          </Button>
+          <Button
+            variant={isFilterActive('total') ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => handleQuickFilter('total')}
+          >
+            Total
+          </Button>
+          <Button
             variant={isFilterActive('personalizado') ? 'default' : 'outline'}
             size="sm"
             onClick={() => handleQuickFilter('personalizado')}
+            className="col-span-2 sm:col-span-1"
           >
             Personalizado
           </Button>

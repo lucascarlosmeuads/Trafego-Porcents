@@ -51,14 +51,38 @@ export function LeadsMetaAdsReport({ convertedLeads, totalLeads, conversionRate,
   useEffect(() => {
     if (isConfigured && dateFilter) {
       // Sincronizar com o filtro da página pai
-      if (dateFilter.option === 'hoje' || !dateFilter.option) {
-        fetchTodayInsights();
-      } else if (dateFilter.option === 'ontem') {
-        fetchInsightsWithPeriod('yesterday');
-      } else if (dateFilter.option === 'anteontem') {
-        fetchInsightsWithPeriod('last_7_days'); // Usar last_7_days como aproximação
-      } else if (dateFilter.option === 'personalizado' && dateFilter.startDate && dateFilter.endDate) {
-        fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
+      switch (dateFilter.option) {
+        case 'hoje':
+          fetchTodayInsights();
+          break;
+        case 'ontem':
+          fetchInsightsWithPeriod('yesterday');
+          break;
+        case 'anteontem':
+          // Para anteontem, usar data específica
+          if (dateFilter.startDate && dateFilter.endDate) {
+            fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
+          }
+          break;
+        case 'ultimos_7_dias':
+          fetchInsightsWithPeriod('last_7_days');
+          break;
+        case 'ultimos_30_dias':
+          fetchInsightsWithPeriod('last_30_days');
+          break;
+        case 'total':
+          // Para total, usar período abrangente
+          if (dateFilter.startDate && dateFilter.endDate) {
+            fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
+          }
+          break;
+        case 'personalizado':
+          if (dateFilter.startDate && dateFilter.endDate) {
+            fetchInsightsWithPeriod('custom', dateFilter.startDate, dateFilter.endDate);
+          }
+          break;
+        default:
+          fetchTodayInsights();
       }
     } else if (isConfigured) {
       fetchTodayInsights();

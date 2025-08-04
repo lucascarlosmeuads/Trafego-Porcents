@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { format, startOfDay, endOfDay, subDays } from 'date-fns';
 
-export type DateFilterOption = 'hoje' | 'ontem' | 'anteontem' | 'personalizado';
+export type DateFilterOption = 'hoje' | 'ontem' | 'anteontem' | 'ultimos_7_dias' | 'ultimos_30_dias' | 'total' | 'personalizado';
 
 export interface GlobalDateFilter {
   option: DateFilterOption;
@@ -47,6 +47,36 @@ export function useGlobalDateFilter() {
           startDate: format(startOfDay(dayBefore), 'yyyy-MM-dd'),
           endDate: format(endOfDay(dayBefore), 'yyyy-MM-dd'),
           label: 'Anteontem'
+        };
+        break;
+      
+      case 'ultimos_7_dias':
+        const sevenDaysAgo = subDays(today, 6);
+        filter = {
+          option: 'ultimos_7_dias',
+          startDate: format(startOfDay(sevenDaysAgo), 'yyyy-MM-dd'),
+          endDate: format(endOfDay(today), 'yyyy-MM-dd'),
+          label: 'Últimos 7 dias'
+        };
+        break;
+      
+      case 'ultimos_30_dias':
+        const thirtyDaysAgo = subDays(today, 29);
+        filter = {
+          option: 'ultimos_30_dias',
+          startDate: format(startOfDay(thirtyDaysAgo), 'yyyy-MM-dd'),
+          endDate: format(endOfDay(today), 'yyyy-MM-dd'),
+          label: 'Últimos 30 dias'
+        };
+        break;
+      
+      case 'total':
+        const startOfYear = new Date(today.getFullYear(), 0, 1);
+        filter = {
+          option: 'total',
+          startDate: format(startOfDay(startOfYear), 'yyyy-MM-dd'),
+          endDate: format(endOfDay(today), 'yyyy-MM-dd'),
+          label: 'Total'
         };
         break;
       
