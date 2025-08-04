@@ -2,6 +2,7 @@ import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from '@/hooks/use-toast';
+import { extractLeadData, translateStatus } from '@/utils/leadDataExtractor';
 import Papa from 'papaparse';
 
 interface ExportableLead {
@@ -24,6 +25,8 @@ interface ExportData {
   'Status': string;
   'Descrição do Produto': string;
   'Valor Médio': string;
+  'Já Teve Vendas': string;
+  'Observações': string;
 }
 
 export function useLeadsExport() {
@@ -89,20 +92,30 @@ export function useLeadsExport() {
         return;
       }
 
-      // Formatar dados para exportação
+      // Formatar dados para exportação usando extração robusta
       const exportData: ExportData[] = leads.map((lead: ExportableLead) => {
+        const leadData = extractLeadData(lead);
         const respostas = lead.respostas || {};
-        const dadosPersonais = respostas.dadosPersonais || {};
+        
+        // Extrair observações adicionais
+        const observacoes = [
+          respostas.observacoes,
+          respostas.comentarios,
+          respostas.detalhes,
+          respostas.dadosPersonais?.observacoes
+        ].filter(Boolean).join('; ') || 'Nenhuma observação';
         
         return {
           'Data do Lead': new Date(lead.created_at).toLocaleDateString('pt-BR'),
-          'Nome': dadosPersonais.nome || 'Não informado',
-          'Email': lead.email_usuario || 'Não informado',
-          'WhatsApp': respostas.whatsapp || respostas.telefone || dadosPersonais.telefone || 'Não informado',
-          'Tipo de Negócio': translateTipoNegocio(lead.tipo_negocio),
+          'Nome': leadData.nome,
+          'Email': leadData.email,
+          'WhatsApp': leadData.whatsapp,
+          'Tipo de Negócio': leadData.tipoNegocio,
           'Status': translateStatus(lead.status_negociacao),
-          'Descrição do Produto': lead.produto_descricao || 'Não informado',
-          'Valor Médio': lead.valor_medio_produto ? `R$ ${lead.valor_medio_produto.toFixed(2)}` : 'Não informado'
+          'Descrição do Produto': leadData.produtoDescricao,
+          'Valor Médio': leadData.valorMedio,
+          'Já Teve Vendas': leadData.jaTevVendas,
+          'Observações': observacoes
         };
       });
 
@@ -183,26 +196,4 @@ export function useLeadsExport() {
   };
 }
 
-// Funções auxiliares
-const translateTipoNegocio = (tipo: string): string => {
-  const tipos: { [key: string]: string } = {
-    'digital': 'Digital',
-    'physical': 'Físico',
-    'service': 'Serviço',
-    'ecommerce': 'E-commerce',
-    'consultoria': 'Consultoria',
-    'curso': 'Curso Online',
-    'infoproduto': 'Infoproduto'
-  };
-  return tipos[tipo] || tipo || 'Não informado';
-};
-
-const translateStatus = (status: string): string => {
-  const statuses: { [key: string]: string } = {
-    'pendente': 'Pendente',
-    'aceitou': 'Comprou',
-    'recusou': 'Recusou',
-    'pensando': 'Pensando'
-  };
-  return statuses[status] || status || 'Pendente';
-};
+// As funções auxiliares agora estão no leadDataExtractor.ts

@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, Eye, AlertCircle, Users, DollarSign } from 'lucide-react';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { MessageCircle, Calendar, User, Mail, Phone, Eye, AlertCircle, Users, DollarSign, Package, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { LeadDetailsModal } from '@/components/LeadsParceria/LeadDetailsModal';
 import { LeadsExportButton } from './LeadsExportButton';
 import { useVendedorLeads } from '@/hooks/useVendedorLeads';
+import { extractLeadData, isLeadComplete, getLeadPriority, translateStatus } from '@/utils/leadDataExtractor';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -25,34 +27,22 @@ export function VendedorLeadsPanel() {
   };
 
   const getLeadData = (lead: any) => {
-    const respostas = lead.respostas || {};
-    return {
-      nome: respostas.dadosPersonais?.nome || 'Nome não encontrado',
-      email: lead.email_usuario || 'Email não informado',
-      whatsapp: respostas.whatsapp || respostas.telefone || 'Não informado'
-    };
-  };
-
-  const translateTipoNegocio = (tipo: string) => {
-    const traducoes = {
-      'digital': 'Digital',
-      'physical': 'Físico',
-      'service': 'Serviço'
-    };
-    return traducoes[tipo as keyof typeof traducoes] || tipo;
+    return extractLeadData(lead);
   };
 
   const getRowClassName = (lead: any) => {
+    const baseClass = isLeadComplete(lead) ? 'border-l-2 border-l-green-400' : 'border-l-2 border-l-gray-300';
+    
     if (lead.status_negociacao === 'aceitou') {
-      return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
+      return `bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900 ${baseClass}`;
     }
     if (lead.status_negociacao === 'pensando') {
-      return 'bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900';
+      return `bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900 ${baseClass}`;
     }
     if (lead.status_negociacao === 'recusou') {
-      return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
+      return `bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900 ${baseClass}`;
     }
-    return '';
+    return baseClass;
   };
 
   const getStatusBadge = (lead: any) => {
@@ -67,9 +57,16 @@ export function VendedorLeadsPanel() {
     return null;
   };
 
+  // Ordenar leads por prioridade (mais completos primeiro) e depois por data
+  const sortedLeads = [...leads].sort((a, b) => {
+    const priorityDiff = getLeadPriority(b) - getLeadPriority(a);
+    if (priorityDiff !== 0) return priorityDiff;
+    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+  });
+
   const filteredLeads = statusFilter === 'todos' 
-    ? leads 
-    : leads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
+    ? sortedLeads 
+    : sortedLeads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
 
   if (loading) {
     return (
@@ -181,6 +178,18 @@ export function VendedorLeadsPanel() {
                         WhatsApp
                       </div>
                     </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <Package className="h-4 w-4" />
+                        Produto
+                      </div>
+                    </TableHead>
+                    <TableHead>
+                      <div className="flex items-center gap-2">
+                        <DollarSign className="h-4 w-4" />
+                        Valor Médio
+                      </div>
+                    </TableHead>
                     <TableHead>Status Negociação</TableHead>
                     <TableHead>Ações</TableHead>
                   </TableRow>
@@ -194,7 +203,24 @@ export function VendedorLeadsPanel() {
                           {format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                         </TableCell>
                         <TableCell className="font-medium">
-                          {leadData.nome}
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="flex items-center gap-2">
+                                  {leadData.nome}
+                                  {isLeadComplete(lead) && (
+                                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                  )}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <div className="text-xs">
+                                  <p><strong>Tipo:</strong> {leadData.tipoNegocio}</p>
+                                  <p><strong>Vendas anteriores:</strong> {leadData.jaTevVendas}</p>
+                                </div>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
                         </TableCell>
                         <TableCell className="text-sm">
                           {leadData.email}
@@ -213,6 +239,26 @@ export function VendedorLeadsPanel() {
                           ) : (
                             <span className="text-muted-foreground text-xs">Não informado</span>
                           )}
+                        </TableCell>
+                        <TableCell className="text-sm max-w-32">
+                          <TooltipProvider>
+                            <Tooltip>
+                              <TooltipTrigger>
+                                <div className="truncate text-xs">
+                                  {leadData.produtoDescricao}
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p className="max-w-64 text-xs">{leadData.produtoDescricao}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        </TableCell>
+                        <TableCell className="text-sm">
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="h-3 w-3 text-green-600" />
+                            <span className="text-xs font-medium">{leadData.valorMedio}</span>
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex flex-col gap-1">
@@ -251,7 +297,7 @@ export function VendedorLeadsPanel() {
                   })}
                   {filteredLeads.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8 text-muted-foreground">
+                      <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
                         Nenhum lead atribuído a você ainda.
                       </TableCell>
                     </TableRow>
