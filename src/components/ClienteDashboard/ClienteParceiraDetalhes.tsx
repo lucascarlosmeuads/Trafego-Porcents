@@ -224,8 +224,19 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
   }
 
   const porcentagemCompletude = dados?.porcentagem_completude || 0;
+  
+  // Verificar se tem dados essenciais para exibir (incluindo visão de futuro)
+  const hasEssentialData = () => {
+    const respostas = dados?.dados_completos || formulario?.respostas || {};
+    const visaoFuturoText = dados?.visao_futuro_texto || formulario?.visao_futuro_texto || respostas.visaoFuturo?.texto;
+    const visaoFuturoAudio = dados?.audio_visao_futuro || formulario?.audio_visao_futuro;
+    
+    return (dados?.nome_cliente || respostas.nome) && 
+           (dados?.email_cliente || formulario?.email_usuario) && 
+           (visaoFuturoText || visaoFuturoAudio);
+  };
 
-  if (porcentagemCompletude < 80) {
+  if (porcentagemCompletude < 80 && !hasEssentialData()) {
     const dadosDisponiveis = {
       nome: dados?.nome_cliente || (formulario?.respostas?.nome) || 'Não informado',
       email: dados?.email_cliente || formulario?.email_usuario || 'Não informado',
@@ -312,8 +323,8 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
     };
 
     const visaoFuturo = {
-      visao_futuro_texto: dados?.visao_futuro_texto || respostas.visao_futuro_texto,
-      audio_visao_futuro: dados?.audio_visao_futuro || respostas.audio_visao_futuro
+      visao_futuro_texto: dados?.visao_futuro_texto || formulario?.visao_futuro_texto || respostas.visaoFuturo?.texto,
+      audio_visao_futuro: dados?.audio_visao_futuro || formulario?.audio_visao_futuro
     };
 
     const statusProjeto = {
