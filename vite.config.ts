@@ -10,6 +10,17 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
     hmr: {
       clientPort: 8080
+    },
+    watch: {
+      usePolling: false,
+      ignored: [
+        '**/node_modules/**',
+        '**/dist/**',
+        '**/.git/**',
+        '**/docs/**',
+        '**/supabase/migrations/**',
+        '**/public/lovable-uploads/**'
+      ]
     }
   },
   plugins: [
@@ -27,9 +38,15 @@ export default defineConfig(({ mode }) => ({
   },
   optimizeDeps: {
     include: ['pdfjs-dist'],
+    exclude: ['@supabase/supabase-js']
   },
   assetsInclude: ['**/*.worker.js'],
   worker: {
     format: 'es'
   },
+  build: {
+    rollupOptions: {
+      external: id => id.includes('node_modules')
+    }
+  }
 }));
