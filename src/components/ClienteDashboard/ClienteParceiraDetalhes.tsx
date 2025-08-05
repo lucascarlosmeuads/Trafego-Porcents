@@ -418,113 +418,207 @@ export function ClienteParceiraDetalhes({ formulario, dadosConsolidados, activeT
 
 
   const renderNegocioTab = () => {
-    if (!formulario?.respostas && !dados?.dados_completos) {
-      return (
-        <div className="text-center py-8">
-          <p className="text-muted-foreground">Nenhuma informação do negócio disponível.</p>
-        </div>
-      );
-    }
-
     const respostas = dados?.dados_completos || formulario?.respostas || {};
     
     return (
       <div className="space-y-6">
-        <div className="flex items-center gap-3">
-          <User className="h-6 w-6 text-primary" />
-          <h2 className="text-xl font-semibold">Meu Negócio</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <User className="h-6 w-6 text-primary" />
+            <h2 className="text-xl font-semibold">Meu Negócio</h2>
+          </div>
+          {hasEssentialData() && (
+            <Badge variant="default" className="bg-green-100 text-green-800 border-green-200">
+              <CheckCircle className="h-3 w-3 mr-1" />
+              Dados Suficientes
+            </Badge>
+          )}
         </div>
         
-        <div className="grid gap-6 md:grid-cols-2">
-          {/* Dados Básicos */}
-          <Card>
-            <CardHeader>
+        <div className="grid gap-6">
+          {/* Dados Pessoais */}
+          <Card className="border-l-4 border-l-blue-500">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <User className="h-5 w-5" />
-                Dados Básicos
+                <User className="h-5 w-5 text-blue-600" />
+                Dados Pessoais
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(dadosBasicos).map(([key, value]) => {
-                if (!value) return null;
-                return (
-                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
-                    <span className="text-sm text-muted-foreground">
-                      {renderValue(value, key)}
+            <CardContent className="space-y-4">
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">Nome:</span>
+                  </div>
+                  <span className="text-sm font-semibold">
+                    {dadosBasicos.nome || 'Não informado'}
+                  </span>
+                </div>
+                
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">Email:</span>
+                  </div>
+                  <span className="text-sm">
+                    {renderValue(dadosBasicos.email, 'email')}
+                  </span>
+                </div>
+                
+                {dadosBasicos.telefone && (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">WhatsApp:</span>
+                    </div>
+                    <span className="text-sm">
+                      {renderValue(dadosBasicos.telefone, 'whatsapp')}
                     </span>
                   </div>
-                );
-              })}
+                )}
+              </div>
             </CardContent>
           </Card>
 
           {/* Informações do Negócio */}
-          <Card>
-            <CardHeader>
+          <Card className="border-l-4 border-l-green-500">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Building2 className="h-5 w-5" />
-                Informações do Negócio
+                <Building2 className="h-5 w-5 text-green-600" />
+                Negócio
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(dadosNegocio).map(([key, value]) => {
-                if (value === null || value === undefined) return null;
-                return (
-                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
-                    <span className="text-sm text-muted-foreground">
-                      {renderValue(value, key)}
+            <CardContent className="space-y-4">
+              <div className="grid gap-3">
+                <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <Package className="h-4 w-4 text-muted-foreground" />
+                    <span className="font-medium text-sm">Tipo:</span>
+                  </div>
+                  <Badge variant="outline">
+                    {dadosBasicos.tipo_negocio === 'service' ? 'Serviços' : dadosBasicos.tipo_negocio || 'Não informado'}
+                  </Badge>
+                </div>
+                
+                {dadosNegocio.produto_descricao && (
+                  <div className="p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">Produto/Serviço:</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground pl-6">
+                      {dadosNegocio.produto_descricao}
+                    </p>
+                  </div>
+                )}
+                
+                {dadosNegocio.valor_medio_produto && (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">Valor Médio:</span>
+                    </div>
+                    <span className="text-sm font-semibold text-green-600">
+                      {renderValue(dadosNegocio.valor_medio_produto, 'valor_medio_produto')}
                     </span>
                   </div>
-                );
-              })}
+                )}
+                
+                {dadosNegocio.investimento_diario && (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">Investimento Diário:</span>
+                    </div>
+                    <span className="text-sm font-semibold text-blue-600">
+                      {renderValue(dadosNegocio.investimento_diario, 'investimento_diario')}
+                    </span>
+                  </div>
+                )}
+                
+                {dadosNegocio.ja_teve_vendas !== null && dadosNegocio.ja_teve_vendas !== undefined && (
+                  <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium text-sm">Já teve vendas:</span>
+                    </div>
+                    {renderValue(dadosNegocio.ja_teve_vendas)}
+                  </div>
+                )}
+              </div>
             </CardContent>
           </Card>
 
           {/* Infraestrutura Disponível */}
-          <Card>
-            <CardHeader>
+          <Card className="border-l-4 border-l-purple-500">
+            <CardHeader className="pb-3">
               <CardTitle className="text-lg flex items-center gap-2">
-                <Monitor className="h-5 w-5" />
+                <Monitor className="h-5 w-5 text-purple-600" />
                 Infraestrutura Disponível
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-3">
-              {Object.entries(infraestrutura).map(([key, value]) => {
-                if (value === null || value === undefined) return null;
-                return (
-                  <div key={key} className="flex justify-between items-center py-2 border-b border-border/50 last:border-0">
-                    <span className="font-medium text-sm">{formatFieldName(key)}:</span>
-                    <span className="text-sm text-muted-foreground">
-                      {renderValue(value, key)}
-                    </span>
-                  </div>
-                );
-              })}
+            <CardContent className="space-y-4">
+              <div className="grid gap-3">
+                {Object.entries(infraestrutura).map(([key, value]) => {
+                  if (value === null || value === undefined) return null;
+                  
+                  const icons = {
+                    hasBM: Monitor,
+                    hasImageCreatives: FileText,
+                    hasVideoCreatives: Video,
+                    hasSalesPage: ShoppingCart,
+                    hasWhatsAppAutomation: MessageSquare
+                  };
+                  
+                  const IconComponent = icons[key as keyof typeof icons] || FileText;
+                  
+                  return (
+                    <div key={key} className="flex items-center justify-between p-3 bg-muted/30 rounded-lg">
+                      <div className="flex items-center gap-2">
+                        <IconComponent className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">{formatFieldName(key)}:</span>
+                      </div>
+                      <Badge variant={value ? "default" : "secondary"} className={
+                        value ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"
+                      }>
+                        {value ? 'Possui' : 'Falta'}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
 
           {/* Visão de Futuro */}
           {(visaoFuturo.visao_futuro_texto || visaoFuturo.audio_visao_futuro) && (
-            <Card>
-              <CardHeader>
+            <Card className="border-l-4 border-l-amber-500 bg-amber-50/50">
+              <CardHeader className="pb-3">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <Lightbulb className="h-5 w-5" />
+                  <Lightbulb className="h-5 w-5 text-amber-600" />
                   Visão de Futuro
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 {visaoFuturo.visao_futuro_texto && (
-                  <div className="py-2 border-b border-border/50">
-                    <span className="font-medium text-sm block mb-2">Descrição:</span>
-                    <div className="text-sm text-muted-foreground">{renderValue(visaoFuturo.visao_futuro_texto)}</div>
+                  <div className="p-4 bg-amber-100 border border-amber-200 rounded-lg">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Star className="h-4 w-4 text-amber-600" />
+                      <span className="font-medium text-sm text-amber-800">Objetivo Principal:</span>
+                    </div>
+                    <p className="text-sm text-amber-900 leading-relaxed pl-6">
+                      "{visaoFuturo.visao_futuro_texto}"
+                    </p>
                   </div>
                 )}
+                
                 {visaoFuturo.audio_visao_futuro && (
-                  <div className="py-2">
-                    <span className="font-medium text-sm block mb-2">Áudio:</span>
-                    <div>{renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}</div>
+                  <div>
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="font-medium text-sm">Áudio da Visão:</span>
+                    </div>
+                    {renderValue(visaoFuturo.audio_visao_futuro, 'audio_visao_futuro')}
                   </div>
                 )}
               </CardContent>
