@@ -37,16 +37,10 @@ export default defineConfig(({ mode }) => ({
     __DEV__: mode === 'development',
   },
   optimizeDeps: {
-    include: ['pdfjs-dist'],
-    exclude: ['@supabase/supabase-js']
+    include: ['pdfjs-dist']
   },
   assetsInclude: ['**/*.worker.js'],
   worker: {
     format: 'es'
-  },
-  build: {
-    rollupOptions: {
-      external: id => id.includes('node_modules')
-    }
   }
 }));
