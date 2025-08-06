@@ -42,7 +42,7 @@ export function useLeadsExport() {
         .from('formularios_parceria')
         .select('*', { count: 'exact', head: true })
         .eq('vendedor_responsavel', user.email)
-        .neq('status_negociacao', 'aceitou')
+        .neq('status_negociacao', 'comprou')
         .is('exportado_em', null);
 
       if (error) {
@@ -75,7 +75,7 @@ export function useLeadsExport() {
         .from('formularios_parceria')
         .select('*')
         .eq('vendedor_responsavel', user.email)
-        .neq('status_negociacao', 'aceitou')
+        .neq('status_negociacao', 'comprou')
         .is('exportado_em', null)
         .order('created_at', { ascending: false });
 

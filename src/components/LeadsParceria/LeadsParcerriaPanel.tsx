@@ -58,14 +58,20 @@ export function LeadsParcerriaPanel() {
   };
 
   const getRowClassName = (lead: any) => {
-    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago) {
+    if (lead.status_negociacao === 'comprou' && lead.cliente_pago) {
       return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900 ring-2 ring-green-300';
     }
-    if (lead.status_negociacao === 'aceitou') {
+    if (lead.status_negociacao === 'comprou') {
       return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900';
     }
-    if (lead.status_negociacao === 'pensando') {
+    if (lead.status_negociacao === 'planejando') {
       return 'bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900';
+    }
+    if (lead.status_negociacao === 'planejamento_entregue') {
+      return 'bg-purple-100 hover:bg-purple-200 border-l-4 border-l-purple-500 text-purple-900';
+    }
+    if (lead.status_negociacao === 'upsell_pago') {
+      return 'bg-emerald-100 hover:bg-emerald-200 border-l-4 border-l-emerald-500 text-emerald-900';
     }
     if (lead.status_negociacao === 'recusou') {
       return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
@@ -75,7 +81,7 @@ export function LeadsParcerriaPanel() {
 
   const getStatusBadge = (lead: any) => {
     // Só mostra "Comprou (Automático)" se foi realmente via webhook
-    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago && lead.webhook_automatico) {
+    if (lead.status_negociacao === 'comprou' && lead.cliente_pago && lead.webhook_automatico) {
       return (
         <Badge className="bg-green-600 text-white">
           ✅ Comprou (Automático)
@@ -88,7 +94,7 @@ export function LeadsParcerriaPanel() {
 
   const filteredLeads = statusFilter === 'todos' 
     ? leads 
-    : leads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
+    : leads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
 
   if (loading) {
     return (
@@ -149,9 +155,11 @@ export function LeadsParcerriaPanel() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="pendente">não chamei</SelectItem>
-                    <SelectItem value="pensando">chamei</SelectItem>
-                    <SelectItem value="aceitou">comprou</SelectItem>
+                    <SelectItem value="lead">lead</SelectItem>
+                    <SelectItem value="planejando">planejando</SelectItem>
+                    <SelectItem value="comprou">comprou</SelectItem>
+                    <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                    <SelectItem value="upsell_pago">upsell pago</SelectItem>
                     <SelectItem value="recusou">não quer</SelectItem>
                   </SelectContent>
                 </Select>
@@ -225,7 +233,7 @@ export function LeadsParcerriaPanel() {
                             ) : (
                               <span className="text-muted-foreground">Não atribuído</span>
                             )}
-                            {lead.status_negociacao === 'aceitou' && lead.cliente_pago && (
+                            {lead.status_negociacao === 'comprou' && lead.cliente_pago && (
                               <CheckCircle className="h-4 w-4 text-green-600" />
                             )}
                           </div>
@@ -233,18 +241,20 @@ export function LeadsParcerriaPanel() {
                         <TableCell>
                           <div className="flex flex-col gap-1">
                             <Select
-                              value={lead.status_negociacao || 'pendente'}
-                              onValueChange={(value: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => 
+                              value={lead.status_negociacao || 'lead'}
+                              onValueChange={(value: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago') => 
                                 updateLeadNegociacao?.(lead.id, value)
                               }
                             >
-                              <SelectTrigger className="w-32">
+                              <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="pendente">não chamei</SelectItem>
-                                <SelectItem value="pensando">chamei</SelectItem>
-                                <SelectItem value="aceitou">comprou</SelectItem>
+                                <SelectItem value="lead">lead</SelectItem>
+                                <SelectItem value="planejando">planejando</SelectItem>
+                                <SelectItem value="comprou">comprou</SelectItem>
+                                <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                                <SelectItem value="upsell_pago">upsell pago</SelectItem>
                                 <SelectItem value="recusou">não quer</SelectItem>
                               </SelectContent>
                             </Select>

@@ -121,16 +121,18 @@ export function translateTipoNegocio(tipo: string): string {
 }
 
 export function translateStatus(status: string): string {
-  if (!status) return 'Pendente';
+  if (!status) return 'Lead';
   
   const statuses: { [key: string]: string } = {
-    'pendente': 'Não chamei',
-    'aceitou': 'Comprou',
+    'lead': 'Lead',
+    'comprou': 'Comprou',
     'recusou': 'Não quer',
-    'pensando': 'Chamei'
+    'planejando': 'Planejando',
+    'planejamento_entregue': 'Planejamento Entregue',
+    'upsell_pago': 'Upsell Pago'
   };
   
-  return statuses[status.toLowerCase()] || status || 'Pendente';
+  return statuses[status.toLowerCase()] || status || 'Lead';
 }
 
 // Função para verificar se um lead tem informações completas

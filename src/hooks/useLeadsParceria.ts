@@ -18,7 +18,7 @@ interface LeadParceria {
   visao_futuro_texto: string | null;
   cliente_pago: boolean;
   contatado_whatsapp: boolean;
-  status_negociacao: 'pendente' | 'aceitou' | 'recusou' | 'pensando';
+  status_negociacao: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago';
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
   webhook_automatico?: boolean;
@@ -135,17 +135,17 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     }
   };
 
-  const updateLeadNegociacao = async (leadId: string, status: 'pendente' | 'aceitou' | 'recusou' | 'pensando') => {
+  const updateLeadNegociacao = async (leadId: string, status: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago') => {
     try {
       const updates: any = { status_negociacao: status };
       
-      // Se aceitou, marcar como pago automaticamente
-      if (status === 'aceitou') {
+      // Se comprou, marcar como pago automaticamente
+      if (status === 'comprou') {
         updates.cliente_pago = true;
       }
       
-      // Se voltou para pendente, resetar o status de pago (exceto se foi marcado manualmente)
-      if (status === 'pendente') {
+      // Se voltou para lead, resetar o status de pago (exceto se foi marcado manualmente)
+      if (status === 'lead') {
         updates.cliente_pago = false;
       }
 

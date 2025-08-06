@@ -33,11 +33,17 @@ export function VendedorLeadsPanel() {
   const getRowClassName = (lead: any) => {
     const baseClass = isLeadComplete(lead) ? 'border-l-2 border-l-green-400' : 'border-l-2 border-l-gray-300';
     
-    if (lead.status_negociacao === 'aceitou') {
+    if (lead.status_negociacao === 'comprou') {
       return `bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900 ${baseClass}`;
     }
-    if (lead.status_negociacao === 'pensando') {
+    if (lead.status_negociacao === 'planejando') {
       return `bg-blue-100 hover:bg-blue-200 border-l-4 border-l-blue-500 text-blue-900 ${baseClass}`;
+    }
+    if (lead.status_negociacao === 'planejamento_entregue') {
+      return `bg-purple-100 hover:bg-purple-200 border-l-4 border-l-purple-500 text-purple-900 ${baseClass}`;
+    }
+    if (lead.status_negociacao === 'upsell_pago') {
+      return `bg-emerald-100 hover:bg-emerald-200 border-l-4 border-l-emerald-500 text-emerald-900 ${baseClass}`;
     }
     if (lead.status_negociacao === 'recusou') {
       return `bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900 ${baseClass}`;
@@ -47,7 +53,7 @@ export function VendedorLeadsPanel() {
 
   const getStatusBadge = (lead: any) => {
     // Só mostra "automático" se foi realmente via webhook
-    if (lead.status_negociacao === 'aceitou' && lead.cliente_pago && lead.webhook_automatico) {
+    if (lead.status_negociacao === 'comprou' && lead.cliente_pago && lead.webhook_automatico) {
       return (
         <Badge variant="secondary" className="text-xs bg-orange-100 text-orange-800 ml-1">
           automático
@@ -66,7 +72,7 @@ export function VendedorLeadsPanel() {
 
   const filteredLeads = statusFilter === 'todos' 
     ? sortedLeads 
-    : sortedLeads.filter(lead => (lead.status_negociacao || 'pendente') === statusFilter);
+    : sortedLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
 
   if (loading) {
     return (
@@ -137,13 +143,15 @@ export function VendedorLeadsPanel() {
                     <SelectTrigger className="w-40">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="todos">Todos</SelectItem>
-                      <SelectItem value="pendente">não chamei</SelectItem>
-                      <SelectItem value="pensando">chamei</SelectItem>
-                      <SelectItem value="aceitou">comprou</SelectItem>
-                      <SelectItem value="recusou">não quer</SelectItem>
-                    </SelectContent>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="lead">lead</SelectItem>
+                        <SelectItem value="planejando">planejando</SelectItem>
+                        <SelectItem value="comprou">comprou</SelectItem>
+                        <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                        <SelectItem value="upsell_pago">upsell pago</SelectItem>
+                        <SelectItem value="recusou">não quer</SelectItem>
+                      </SelectContent>
                   </Select>
                 </div>
               </div>
@@ -270,11 +278,13 @@ export function VendedorLeadsPanel() {
                                 <SelectValue />
                               </SelectTrigger>
                                <SelectContent>
-                                 <SelectItem value="pendente">não chamei</SelectItem>
-                                 <SelectItem value="pensando">chamei</SelectItem>
-                                 <SelectItem value="aceitou">comprou</SelectItem>
-                                 <SelectItem value="recusou">não quer</SelectItem>
-                               </SelectContent>
+                                  <SelectItem value="lead">lead</SelectItem>
+                                  <SelectItem value="planejando">planejando</SelectItem>
+                                  <SelectItem value="comprou">comprou</SelectItem>
+                                  <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                                  <SelectItem value="upsell_pago">upsell pago</SelectItem>
+                                  <SelectItem value="recusou">não quer</SelectItem>
+                                </SelectContent>
                             </Select>
                             {getStatusBadge(lead)}
                           </div>
