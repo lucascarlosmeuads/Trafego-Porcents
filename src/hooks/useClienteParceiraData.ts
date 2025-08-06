@@ -111,7 +111,7 @@ export function useClienteParceiraData(emailCliente: string) {
       ja_teve_vendas: formularioData?.ja_teve_vendas || dadosFormulario.ja_teve_vendas || null,
       
       cliente_pago: formularioData?.cliente_pago || false,
-      status_negociacao: formularioData?.status_negociacao || 'pendente',
+      status_negociacao: formularioData?.status_negociacao || 'lead',
       vendedor_responsavel: formularioData?.vendedor_responsavel || null,
       completo: formularioData?.completo || false,
       created_at: clienteData?.created_at || formularioData?.created_at || new Date().toISOString(),

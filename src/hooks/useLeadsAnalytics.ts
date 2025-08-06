@@ -57,7 +57,7 @@ export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: s
     // Contar por status de negociação
     const statusBreakdown: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
-      const status = lead.status_negociacao || 'pendente';
+      const status = lead.status_negociacao || 'lead';
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
     });
     
@@ -112,7 +112,7 @@ export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: s
     // Contar por status de negociação
     const statusBreakdown: { [key: string]: number } = {};
     data?.forEach((lead: any) => {
-      const status = lead.status_negociacao || 'pendente';
+      const status = lead.status_negociacao || 'lead';
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
     });
     

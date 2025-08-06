@@ -72,7 +72,7 @@ Deno.serve(async (req) => {
         }
 
         // Verificar se já está pago
-        if (lead.cliente_pago === true || lead.status_negociacao === 'aceitou') {
+        if (lead.cliente_pago === true || lead.status_negociacao === 'comprou') {
           console.log(`✅ Lead já estava pago para email: ${email}`);
           results.ja_pagos++;
           results.detalhes.push({
@@ -88,7 +88,7 @@ Deno.serve(async (req) => {
           .from('formularios_parceria')
           .update({
             cliente_pago: true,
-            status_negociacao: 'aceitou',
+            status_negociacao: 'comprou',
             updated_at: new Date().toISOString()
           })
           .eq('id', lead.id);

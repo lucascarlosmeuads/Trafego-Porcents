@@ -145,7 +145,7 @@ serve(async (req) => {
       .from('formularios_parceria')
       .update({
         cliente_pago: true,
-        status_negociacao: 'aceitou',
+        status_negociacao: 'comprou',
         updated_at: new Date().toISOString()
       })
       .eq('id', lead.id);
