@@ -32,109 +32,130 @@ Deno.serve(async (req) => {
       }
     })
 
-    // Buscar todos os clientes parceria que precisam de usuários Auth
+    // Buscar base de emails a processar de duas fontes: clientes_parceria e leads pagos
     console.log('📊 [bulk-create-parceria-users] Buscando clientes parceria...')
-    const { data: clientesParceria, error: queryError } = await supabase
+    const { data: clientesParceria, error: clientesError } = await supabase
       .from('clientes_parceria')
-      .select('email_cliente, nome_cliente')
+      .select('email_cliente, nome_cliente, lead_id, dados_formulario')
       .eq('ativo', true)
 
-    if (queryError) {
-      throw new Error(`Erro ao buscar clientes: ${queryError.message}`)
+    if (clientesError) {
+      throw new Error(`Erro ao buscar clientes: ${clientesError.message}`)
     }
 
-    console.log(`👥 [bulk-create-parceria-users] Encontrados ${clientesParceria?.length || 0} clientes para processar`)
+    console.log('📊 [bulk-create-parceria-users] Buscando leads pagos...')
+    const { data: leadsPagos, error: leadsError } = await supabase
+      .from('formularios_parceria')
+      .select('id, email_usuario, respostas, status_negociacao, cliente_pago')
+      .eq('cliente_pago', true)
+      .eq('status_negociacao', 'comprou')
+
+    if (leadsError) {
+      throw new Error(`Erro ao buscar leads pagos: ${leadsError.message}`)
+    }
+
+    // Unificar e normalizar emails
+    type Item = { email: string; nome?: string; lead_id?: string | null; respostas?: any }
+    const map = new Map<string, Item>()
+
+    for (const c of clientesParceria || []) {
+      const email = (c.email_cliente || '').toLowerCase().trim()
+      if (email) map.set(email, { email, nome: c.nome_cliente || undefined, lead_id: c.lead_id || null, respostas: c.dados_formulario })
+    }
+
+    for (const l of leadsPagos || []) {
+      const email = (l.email_usuario || '').toLowerCase().trim()
+      if (!email) continue
+      if (!map.has(email)) {
+        const nome = l.respostas?.nome || l.respostas?.['nome'] || 'Cliente Parceria'
+        map.set(email, { email, nome, lead_id: l.id, respostas: l.respostas })
+      }
+    }
+
+    const toProcess = Array.from(map.values())
+    console.log(`👥 [bulk-create-parceria-users] Total para processar: ${toProcess.length}`)
 
     const results: ProcessResult[] = []
     let sucessos = 0
     let falhas = 0
 
-    // Processar cada cliente
-    for (const cliente of clientesParceria || []) {
+    // Processar cada item
+    for (const item of toProcess) {
       try {
-        console.log(`🔄 [bulk-create-parceria-users] Processando: ${cliente.email_cliente}`)
+        console.log(`🔄 [bulk-create-parceria-users] Processando: ${item.email}`)
 
-        // Verificar se usuário já existe usando listUsers
-        const { data: existingUsers, error: listError } = await supabase.auth.admin.listUsers()
-        
-        if (listError) {
-          console.error(`❌ [bulk-create-parceria-users] Erro ao buscar usuários: ${listError.message}`)
-          results.push({
-            email: cliente.email_cliente,
-            success: false,
-            message: `Erro ao verificar usuário: ${listError.message}`
-          })
-          falhas++
-          continue
+        // Garantir registro em clientes_parceria
+        try {
+          const { data: existsCp } = await supabase
+            .from('clientes_parceria')
+            .select('id')
+            .eq('email_cliente', item.email)
+            .maybeSingle()
+          if (!existsCp) {
+            await supabase.from('clientes_parceria').insert({
+              email_cliente: item.email,
+              nome_cliente: item.nome || 'Cliente Parceria',
+              lead_id: item.lead_id || null,
+              dados_formulario: item.respostas || null,
+              ativo: true,
+            })
+            console.log('👤 [bulk-create-parceria-users] clientes_parceria garantido para', item.email)
+          }
+        } catch (cpErr) {
+          console.warn('⚠️ [bulk-create-parceria-users] Erro ao garantir clientes_parceria (ignorado):', cpErr)
         }
-        
-        const existingUser = existingUsers.users?.find(user => user.email === cliente.email_cliente)
-        
+
+        // Verificar se usuário já existe
+        const { data: userByEmail, error: getErr } = await supabase.auth.admin.getUserByEmail(item.email)
+        if (getErr) {
+          console.error('❌ [bulk-create-parceria-users] Erro ao verificar usuário:', getErr)
+        }
+        const existingUser = userByEmail?.user
         if (existingUser) {
-          console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${cliente.email_cliente}`)
-          results.push({
-            email: cliente.email_cliente,
-            success: true,
-            message: 'Usuário já existe',
-            user_id: existingUser.id
-          })
+          console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${item.email}`)
+          results.push({ email: item.email, success: true, message: 'Usuário já existe', user_id: existingUser.id })
           sucessos++
           continue
         }
 
         // Criar usuário no Supabase Auth
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
-          email: cliente.email_cliente,
+          email: item.email,
           password: 'soumilionario',
-          email_confirm: true, // Confirmar email automaticamente
+          email_confirm: true,
           user_metadata: {
             created_by: 'bulk_parceria_creation',
             created_at: new Date().toISOString(),
-            nome_cliente: cliente.nome_cliente
+            nome_cliente: item.nome || null
           }
         })
 
         if (createError) {
-          console.error(`❌ [bulk-create-parceria-users] Erro ao criar usuário ${cliente.email_cliente}:`, createError)
-          results.push({
-            email: cliente.email_cliente,
-            success: false,
-            message: `Falha: ${createError.message}`
-          })
+          console.error(`❌ [bulk-create-parceria-users] Erro ao criar usuário ${item.email}:`, createError)
+          results.push({ email: item.email, success: false, message: `Falha: ${createError.message}` })
           falhas++
           continue
         }
 
-        console.log(`✅ [bulk-create-parceria-users] Usuário criado: ${cliente.email_cliente} - ID: ${newUser.user?.id}`)
-        
+        console.log(`✅ [bulk-create-parceria-users] Usuário criado: ${item.email} - ID: ${newUser.user?.id}`)
+
         // Log da criação
         try {
-          await supabase
-            .from('client_user_creation_log')
-            .insert({
-              email_cliente: cliente.email_cliente,
-              operation_type: 'bulk_create_parceria_users',
-              result_message: `Usuário criado em massa. ID: ${newUser.user?.id}`
-            })
+          await supabase.from('client_user_creation_log').insert({
+            email_cliente: item.email,
+            operation_type: 'bulk_create_parceria_users',
+            result_message: `Usuário criado em massa. ID: ${newUser.user?.id}`
+          })
         } catch (logError) {
           console.warn('⚠️ [bulk-create-parceria-users] Erro ao inserir log (não crítico):', logError)
         }
 
-        results.push({
-          email: cliente.email_cliente,
-          success: true,
-          message: 'Usuário criado com sucesso',
-          user_id: newUser.user?.id
-        })
+        results.push({ email: item.email, success: true, message: 'Usuário criado com sucesso', user_id: newUser.user?.id })
         sucessos++
 
       } catch (error) {
-        console.error(`❌ [bulk-create-parceria-users] Erro ao processar ${cliente.email_cliente}:`, error)
-        results.push({
-          email: cliente.email_cliente,
-          success: false,
-          message: `Erro: ${error.message}`
-        })
+        console.error(`❌ [bulk-create-parceria-users] Erro ao processar ${item.email}:`, error)
+        results.push({ email: item.email, success: false, message: `Erro: ${error.message}` })
         falhas++
       }
     }
