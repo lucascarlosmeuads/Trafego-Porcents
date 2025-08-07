@@ -177,6 +177,47 @@ serve(async (req) => {
 
     console.log('🎉 Lead atualizado com sucesso! Agora está pago e aceito');
 
+    // Garantir que exista um registro em clientes_parceria
+    try {
+      const { data: existingCliente } = await supabase
+        .from('clientes_parceria')
+        .select('id')
+        .eq('email_cliente', emailComprador)
+        .maybeSingle();
+
+      if (!existingCliente) {
+        console.log('👤 Criando registro em clientes_parceria para', emailComprador);
+        await supabase
+          .from('clientes_parceria')
+          .insert({
+            email_cliente: emailComprador,
+            nome_cliente: (lead?.respostas?.nome || lead?.respostas?.['nome'] || 'Cliente Parceria'),
+            lead_id: lead.id,
+            dados_formulario: lead.respostas,
+          });
+      } else {
+        console.log('ℹ️ Cliente parceria já existe para', emailComprador);
+      }
+    } catch (cpErr) {
+      console.warn('⚠️ Erro ao garantir clientes_parceria (não crítico):', cpErr);
+    }
+
+    // Invocar Edge Function para criar usuário Auth imediatamente
+    try {
+      console.log('🔔 Invocando função create-parceria-user para', emailComprador);
+      const { data: createUserResp, error: createUserErr } = await supabase.functions.invoke('create-parceria-user', {
+        body: { email: emailComprador }
+      });
+
+      if (createUserErr) {
+        console.error('❌ Erro ao invocar create-parceria-user:', createUserErr);
+      } else {
+        console.log('✅ Resposta create-parceria-user:', createUserResp);
+      }
+    } catch (invokeErr) {
+      console.error('❌ Falha ao chamar create-parceria-user:', invokeErr);
+    }
+
     // Atualizar log com sucesso
     if (logId) {
       await supabase
