@@ -106,11 +106,51 @@ Deno.serve(async (req) => {
         }
 
         console.log(`✅ Lead atualizado com sucesso: ${email} (ID: ${lead.id})`);
+
+        // Garantir registro em clientes_parceria
+        try {
+          const { data: existingCliente } = await supabase
+            .from('clientes_parceria')
+            .select('id')
+            .eq('email_cliente', email.trim())
+            .maybeSingle();
+
+          if (!existingCliente) {
+            console.log('👤 Criando clientes_parceria para', email);
+            await supabase.from('clientes_parceria').insert({
+              email_cliente: email.trim(),
+              nome_cliente: 'Cliente Parceria',
+              lead_id: lead.id,
+              dados_formulario: null,
+            });
+          }
+        } catch (cpErr) {
+          console.warn('⚠️ Erro ao garantir clientes_parceria (não crítico):', cpErr);
+        }
+
+        // Criar usuário Auth automaticamente
+        let userCreateStatus: 'user_created' | 'user_create_failed' = 'user_created';
+        try {
+          const { data: createResp, error: createErr } = await supabase.functions.invoke('create-parceria-user', {
+            body: { email: email.trim() }
+          });
+          if (createErr) {
+            userCreateStatus = 'user_create_failed';
+            console.error('❌ Erro ao invocar create-parceria-user:', createErr);
+          } else {
+            console.log('✅ Usuário Auth criado/resolvido:', createResp);
+          }
+        } catch (invokeErr) {
+          userCreateStatus = 'user_create_failed';
+          console.error('❌ Falha ao chamar create-parceria-user:', invokeErr);
+        }
+
         results.atualizados++;
         results.detalhes.push({
           email,
           status: 'atualizado',
-          lead_id: lead.id
+          lead_id: lead.id,
+          auth_status: userCreateStatus,
         });
 
       } catch (error) {
