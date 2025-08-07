@@ -21,6 +21,7 @@ import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDas
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
+import { CreateParceiraUser } from './CreateParceiraUser'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -148,6 +149,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
 
       case 'leads-parceria':
         return <LeadsParcerriaPanel />
+      
+      case 'criar-usuario-parceria':
+        return <CreateParceiraUser />
       
       case 'clientes':
       default:

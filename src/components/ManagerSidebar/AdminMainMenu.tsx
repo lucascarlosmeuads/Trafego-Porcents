@@ -51,6 +51,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       icon: UserPlus,
       description: 'Leads interessados em parceria'
     },
+    {
+      id: 'criar-usuario-parceria',
+      label: 'Criar Usuário Auth',
+      icon: RefreshCw,
+      description: 'Criar usuário Auth para cliente parceria'
+    },
   ]
 
   if (isCollapsed) {
