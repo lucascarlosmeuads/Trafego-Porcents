@@ -22,6 +22,7 @@ import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
 import { CreateParceiraUser } from './CreateParceiraUser'
+import { BulkParceiraUserCreation } from './BulkParceiraUserCreation'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -152,6 +153,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
       
       case 'criar-usuario-parceria':
         return <CreateParceiraUser />
+      
+      case 'usuarios-auth-bulk':
+        return <BulkParceiraUserCreation />
       
       case 'clientes':
       default:
