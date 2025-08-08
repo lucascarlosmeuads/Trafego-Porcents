@@ -152,7 +152,7 @@ Siga EXATAMENTE esta estrutura em Markdown, com títulos e subtítulos muito bem
 Explique claramente o foco do funil: gerar muitos leads qualificados, conduzir o cliente a perceber conscientemente que está caminhando para uma compra, e – quando fizer sentido – vender um produto de entrada (ticket menor) para depois realizar um upsell para um produto de maior valor.
 
 3) CONCEITO E ESTRATÉGIA DO FUNIL INTERATIVO (H2)
-Descreva a lógica central do funil como uma jornada/diagnóstico interativo personalizado. NUNCA use a palavra "quiz" em nenhum momento; SEMPRE utilize "funil interativo". Foque em gerar curiosidade, comprometimento progressivo e percepção de valor.
+Descreva a lógica central do funil como uma jornada/diagnóstico interativo personalizado. Foque em gerar curiosidade, comprometimento progressivo e percepção de valor.
 
 4) ESTRUTURA DO FUNIL – ETAPA POR ETAPA (H2)
 - Anúncio (copy e ideia visual)
@@ -183,15 +183,6 @@ Sempre incluir um custo fixo total de R$ 1.500, sendo:
 - R$ 200 para configuração da Business Manager e trackeamento
 TOTAL: R$ 1.500 (SEM MENSALIDADE)
 
-9) DIRETRIZES DE REDAÇÃO (H2)
-- NUNCA use a palavra "quiz"; utilize sempre "funil interativo".
-- Não listar tecnologias ou ferramentas; nós cuidaremos disso internamente.
-- Linguagem estratégica, direta e prática. Sem promessas milagrosas.
-- Considere a realidade brasileira atual.
-
-10) INSTRUÇÃO FINAL (H2)
-Inclua ao final a frase: “Sem mensalidade fixa; trabalhamos por % sobre vendas”.
-
 ---
 
 INFORMAÇÕES DO CLIENTE (H2)
@@ -207,7 +198,19 @@ ${informacoesCliente}`;
       body: JSON.stringify({
         model: 'gpt-4o-mini',
         messages: [
-          { role: 'system', content: 'Responda sempre em português (Brasil). Seja estratégico, direto e prático.' },
+          { 
+            role: 'system', 
+            content: `Responda sempre em português (Brasil). Seja estratégico, direto e prático.
+
+DIRETRIZES OBRIGATÓRIAS:
+- NUNCA use a palavra "quiz"; utilize SEMPRE "funil interativo"
+- Não liste tecnologias ou ferramentas específicas; nós cuidaremos disso internamente
+- Use linguagem estratégica, direta e prática. Sem promessas milagrosas
+- Considere a realidade brasileira atual
+- Ao final do documento, inclua obrigatoriamente a frase: "Sem mensalidade fixa; trabalhamos por % sobre vendas."
+
+Estas diretrizes são instruções internas para você seguir, NÃO devem aparecer no documento final.`
+          },
           { role: 'user', content: userPrompt }
         ],
         temperature: 0.7,
