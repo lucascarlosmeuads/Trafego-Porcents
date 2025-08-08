@@ -43,7 +43,7 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
   );
 
   // Aguarda o render
-  await new Promise((r) => setTimeout(r, 120));
+  await new Promise((r) => setTimeout(r, 60));
 
   // Inserir quebras inteligentes para evitar tópicos começando no fim da página
   const pageHeightPx = Math.round(container.clientWidth * (297 / 210)); // A4 proporcional à largura usada
@@ -74,9 +74,9 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
   processHeadings();
 
   // Converte para canvas (otimizado para velocidade)
-  const dpr = Math.min(1.5, window.devicePixelRatio || 1);
+  const dpr = 1;
   const canvas = await html2canvas(container, { 
-    scale: dpr,
+    scale: 1,
     backgroundColor: '#ffffff', 
     useCORS: true,
     logging: false,
