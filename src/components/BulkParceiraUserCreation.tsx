@@ -50,36 +50,11 @@ export function BulkParceiraUserCreation() {
 
       console.log(`📊 Encontrados ${clientesParceria?.length || 0} clientes parceria`)
 
-      // Para cada cliente, verificar se tem usuário Auth
-      const clientesComStatus = await Promise.all(
-        (clientesParceria || []).map(async (cliente) => {
-          try {
-            // Verificar se usuário existe no Auth (usando admin.listUsers)
-            const { data: authUsers, error: authError } = await supabase.auth.admin.listUsers()
-            
-            if (authError) {
-              console.warn(`⚠️ Erro ao verificar Auth para ${cliente.email_cliente}:`, authError)
-              return {
-                ...cliente,
-                has_auth_user: false
-              }
-            }
-
-            const hasAuthUser = authUsers.users?.some((user: any) => user.email === cliente.email_cliente) || false
-            
-            return {
-              ...cliente,
-              has_auth_user: hasAuthUser
-            }
-          } catch (error) {
-            console.warn(`⚠️ Erro ao verificar ${cliente.email_cliente}:`, error)
-            return {
-              ...cliente,
-              has_auth_user: false
-            }
-          }
-        })
-      )
+      // Simplificar - assumir que todos precisam de usuário Auth para processo em massa
+      const clientesComStatus = (clientesParceria || []).map((cliente) => ({
+        ...cliente,
+        has_auth_user: false // Sempre mostrar como sem login para permitir criação em massa
+      }))
 
       setClientes(clientesComStatus)
       console.log('✅ Status dos clientes carregado')

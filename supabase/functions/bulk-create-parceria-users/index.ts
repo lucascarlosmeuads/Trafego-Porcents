@@ -105,20 +105,7 @@ Deno.serve(async (req) => {
           console.warn('⚠️ [bulk-create-parceria-users] Erro ao garantir clientes_parceria (ignorado):', cpErr)
         }
 
-        // Verificar se usuário já existe
-        const { data: userByEmail, error: getErr } = await supabase.auth.admin.getUserByEmail(item.email)
-        if (getErr) {
-          console.error('❌ [bulk-create-parceria-users] Erro ao verificar usuário:', getErr)
-        }
-        const existingUser = userByEmail?.user
-        if (existingUser) {
-          console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${item.email}`)
-          results.push({ email: item.email, success: true, message: 'Usuário já existe', user_id: existingUser.id })
-          sucessos++
-          continue
-        }
-
-        // Criar usuário no Supabase Auth
+        // Tentar criar usuário diretamente (se já existir, capturar erro)
         const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
           email: item.email,
           password: 'soumilionario',
@@ -131,10 +118,18 @@ Deno.serve(async (req) => {
         })
 
         if (createError) {
-          console.error(`❌ [bulk-create-parceria-users] Erro ao criar usuário ${item.email}:`, createError)
-          results.push({ email: item.email, success: false, message: `Falha: ${createError.message}` })
-          falhas++
-          continue
+          // Se erro for "usuário já existe", considerar como sucesso
+          if (createError.message?.includes('already exists') || createError.message?.includes('already registered')) {
+            console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${item.email}`)
+            results.push({ email: item.email, success: true, message: 'Usuário já existe' })
+            sucessos++
+            continue
+          } else {
+            console.error(`❌ [bulk-create-parceria-users] Erro ao criar usuário ${item.email}:`, createError)
+            results.push({ email: item.email, success: false, message: `Falha: ${createError.message}` })
+            falhas++
+            continue
+          }
         }
 
         console.log(`✅ [bulk-create-parceria-users] Usuário criado: ${item.email} - ID: ${newUser.user?.id}`)
