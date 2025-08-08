@@ -6,9 +6,67 @@ import remarkBreaks from 'remark-breaks';
 // Preprocessa o markdown para:
 // - Remover títulos (H1/H2) duplicados no topo
 // - Normalizar listas: converte linhas começando com ". " em "- " e garante espaço após número (ex: "1. texto")
+// - Remover instruções internas do texto para não aparecer ao cliente
 export function preprocessMarkdown(text: string): string {
   if (!text) return '';
-  const lines = text.split('\n');
+
+  // Remover possíveis instruções internas marcadas no conteúdo
+  const stripInternalNotes = (input: string) => {
+    const lines = input.split('\n');
+    const out: string[] = [];
+    let skipUntilFence = false; // ```internal ... ```
+    let skipUntilCommentEnd = false; // <!-- internal:start --> ... <!-- internal:end -->
+
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+
+      // Blocos de comentário HTML marcados como internos
+      if (/<!--\s*internal:(start|begin)\s*-->/i.test(line)) {
+        skipUntilCommentEnd = true;
+        continue;
+      }
+      if (skipUntilCommentEnd) {
+        if (/<!--\s*internal:(end|stop)\s*-->/i.test(line)) {
+          skipUntilCommentEnd = false;
+        }
+        continue;
+      }
+
+      // Blocos cercados por crases com marcador de interno
+      if (/^```.*(internal|instru)/i.test(line)) {
+        skipUntilFence = true;
+        continue;
+      }
+      if (skipUntilFence) {
+        if (/^```/.test(line)) {
+          skipUntilFence = false;
+        }
+        continue;
+      }
+
+      // Linhas de instruções internas do tipo "Instruções: ...", "Interno: ...", "Não mostrar: ..."
+      if (/^\s*(instru[cç][aã]o(?:es)?|instruções|instrucoes|intern[oa]|não mostrar|nao mostrar)\b.*:/i.test(line)) {
+        // pular esta linha e subsequentes indentadas até linha em branco
+        let j = i + 1;
+        while (j < lines.length && lines[j].trim() !== '' && /^\s+/.test(lines[j])) j++;
+        i = j - 1;
+        continue;
+      }
+
+      // Marcadores simples dentro de colchetes: [INTERNAL], [INSTRUÇÕES], etc.
+      if (/^\s*\[.*(internal|instru).*\]\s*$/i.test(line)) {
+        continue;
+      }
+
+      out.push(line);
+    }
+    return out.join('\n');
+  };
+
+  // 1) Sanitizar instruções internas
+  let sanitized = stripInternalNotes(text);
+
+  const lines = sanitized.split('\n');
 
   // Pular linhas em branco iniciais
   let i = 0;
@@ -51,7 +109,10 @@ export function preprocessMarkdown(text: string): string {
     normalized.push(curr);
   }
 
-  return normalized.join('\n');
+  // Reduzir espaçamentos exagerados em branco (no máximo 1 linha em branco consecutiva)
+  const finalText = normalized.join('\n').replace(/\n{3,}/g, '\n\n');
+
+  return finalText;
 }
 
 export const MarkdownRenderer: React.FC<{ content: string }>= ({ content }) => {
