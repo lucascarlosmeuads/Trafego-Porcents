@@ -5,20 +5,44 @@ import remarkBreaks from 'remark-breaks';
 
 // Preprocessa o markdown para:
 // - Remover títulos (H1/H2) duplicados no topo
-// - Normalizar listas: converte linhas começando com ". " em "- " e garante espaço após número (ex: "1. texto")
-// - Remover instruções internas do texto para não aparecer ao cliente
+// - Normalizar listas e melhorar formatação
+// - Remover instruções internas e diretrizes
+// - Aplicar diretrizes de redação (quiz -> funil interativo)
 export function preprocessMarkdown(text: string): string {
   if (!text) return '';
+
+  // Aplicar diretrizes de redação
+  let processedText = text
+    .replace(/\bquiz\b/gi, 'funil interativo')
+    .replace(/\bQuiz\b/g, 'Funil interativo')
+    .replace(/\bQUIZ\b/g, 'FUNIL INTERATIVO');
 
   // Remover possíveis instruções internas marcadas no conteúdo
   const stripInternalNotes = (input: string) => {
     const lines = input.split('\n');
     const out: string[] = [];
-    let skipUntilFence = false; // ```internal ... ```
-    let skipUntilCommentEnd = false; // <!-- internal:start --> ... <!-- internal:end -->
+    let skipUntilFence = false;
+    let skipUntilCommentEnd = false;
+    let skipDirectrizes = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
+
+      // Detectar início de diretrizes de redação
+      if (/^DIRETRIZES\s+DE\s+REDA[ÇC][ÃA]O/i.test(line.trim())) {
+        skipDirectrizes = true;
+        continue;
+      }
+
+      // Pular todo o bloco de diretrizes até encontrar uma linha que parece ser conteúdo real
+      if (skipDirectrizes) {
+        if (/^(##?\s|###\s|\*\*|\d+\.\s|•\s|-\s|[A-Z][a-z]+.*:(?!\s*(NUNCA|Não|Use)))/i.test(line.trim()) 
+            && !/(NUNCA|nunca|Não|não|Use|use|Considere|considere|Linguagem|linguagem)/i.test(line)) {
+          skipDirectrizes = false;
+        } else {
+          continue;
+        }
+      }
 
       // Blocos de comentário HTML marcados como internos
       if (/<!--\s*internal:(start|begin)\s*-->/i.test(line)) {
@@ -46,7 +70,6 @@ export function preprocessMarkdown(text: string): string {
 
       // Linhas de instruções internas do tipo "Instruções: ...", "Interno: ...", "Não mostrar: ..."
       if (/^\s*(instru[cç][aã]o(?:es)?|instruções|instrucoes|intern[oa]|não mostrar|nao mostrar)\b.*:/i.test(line)) {
-        // pular esta linha e subsequentes indentadas até linha em branco
         let j = i + 1;
         while (j < lines.length && lines[j].trim() !== '' && /^\s+/.test(lines[j])) j++;
         i = j - 1;
@@ -64,7 +87,7 @@ export function preprocessMarkdown(text: string): string {
   };
 
   // 1) Sanitizar instruções internas
-  let sanitized = stripInternalNotes(text);
+  let sanitized = stripInternalNotes(processedText);
 
   const lines = sanitized.split('\n');
 
@@ -86,30 +109,49 @@ export function preprocessMarkdown(text: string): string {
     }
   }
 
-  const rest = lines.slice(i).map((line) => {
+  // Melhorar formatação de listas e títulos
+  const rest = lines.slice(i).map((line, index) => {
     let l = line;
+    
     // Converter ". " em bullet real
     if (/^\s*\.\s+/.test(l)) {
       l = l.replace(/^\s*\.\s+/, '- ');
     }
+    
     // Garantir espaço após número do item: 1.Texto -> 1. Texto
     l = l.replace(/^(\s*)(\d+)\.(\S)/, '$1$2. $3');
+    
+    // Detectar títulos seguidos de listas e converter para formato inline
+    const nextLine = index + 1 < lines.slice(i).length ? lines.slice(i)[index + 1] : '';
+    const isTitle = /^[A-Z][^:]*:?\s*$/.test(l.trim()) && l.trim().length < 60;
+    const nextIsList = /^\s*[-*+•]\s/.test(nextLine) || /^\s*\d+\.\s/.test(nextLine);
+    
+    if (isTitle && nextIsList) {
+      // Converter título para negrito se seguido de lista
+      const title = l.trim().replace(/:$/, '');
+      return `**${title}:**`;
+    }
+    
     return l;
   });
 
-  // Inserir linha em branco antes de listas se necessário para melhor renderização Markdown
+  // Normalizar espaçamento - mais compacto como solicitado
   const normalized: string[] = [];
   for (let j = 0; j < rest.length; j++) {
     const curr = rest[j];
     const prev = normalized[normalized.length - 1] ?? '';
+    
+    // Não adicionar linha em branco antes de listas se o anterior for um título em negrito
     const startsList = /^(\s*)([-*+]\s|\d+\.\s)/.test(curr.trim());
-    if (startsList && prev.trim() !== '' && !/^(\s*)([-*+]\s|\d+\.\s)/.test(prev.trim())) {
+    const prevIsBoldTitle = /^\*\*.*\*\*:?\s*$/.test(prev.trim());
+    
+    if (startsList && prev.trim() !== '' && !prevIsBoldTitle && !/^(\s*)([-*+]\s|\d+\.\s)/.test(prev.trim())) {
       normalized.push('');
     }
     normalized.push(curr);
   }
 
-  // Reduzir espaçamentos exagerados em branco (no máximo 1 linha em branco consecutiva)
+  // Reduzir espaçamentos exagerados - máximo 1 linha em branco
   const finalText = normalized.join('\n').replace(/\n{3,}/g, '\n\n');
 
   return finalText;
@@ -122,25 +164,25 @@ export const MarkdownRenderer: React.FC<{ content: string }>= ({ content }) => {
       remarkPlugins={[remarkGfm, remarkBreaks]}
       components={{
         h1: ({ node, ...props }) => (
-          <h1 className="font-bold text-2xl mt-0 mb-2 leading-tight" {...props} />
+          <h1 className="font-bold text-2xl mt-0 mb-1 leading-tight" {...props} />
         ),
         h2: ({ node, ...props }) => (
-          <h2 className="font-semibold text-lg mt-3 mb-1 leading-snug" {...props} />
+          <h2 className="font-semibold text-lg mt-1.5 mb-0.5 leading-snug" {...props} />
         ),
         h3: ({ node, ...props }) => (
-          <h3 className="font-medium text-base mt-2 mb-1 leading-snug" {...props} />
+          <h3 className="font-medium text-base mt-1 mb-0.5 leading-snug" {...props} />
         ),
         p: ({ node, ...props }) => (
-          <p className="my-1 leading-relaxed" {...props} />
+          <p className="mb-0.5 leading-relaxed" {...props} />
         ),
         ul: ({ node, ...props }) => (
-          <ul className="my-2 list-disc list-outside pl-5" {...props} />
+          <ul className="mb-1 list-disc list-outside pl-4" {...props} />
         ),
         ol: ({ node, ...props }) => (
-          <ol className="my-2 list-decimal list-outside pl-5" {...props} />
+          <ol className="mb-1 list-decimal list-outside pl-4" {...props} />
         ),
         li: ({ node, ...props }) => (
-          <li className="my-0.5 leading-relaxed" {...props} />
+          <li className="leading-relaxed" {...props} />
         ),
         strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
         hr: ({ node, ...props }) => <hr className="my-4" {...props} />,
