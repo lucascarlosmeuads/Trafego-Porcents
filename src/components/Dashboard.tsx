@@ -33,7 +33,7 @@ export function Dashboard() {
   } = useAuth()
 
   const [selectedManager, setSelectedManager] = useState<string | null>(null)
-  const [activeTab, setActiveTab] = useState('dashboard')
+  const [activeTab, setActiveTab] = useState(isAdmin ? 'leads-parceria' : 'dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
   console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
@@ -52,7 +52,7 @@ export function Dashboard() {
 
   // Reset tab when user type changes
   useEffect(() => {
-    setActiveTab('dashboard')
+    setActiveTab(isAdmin ? 'leads-parceria' : 'dashboard')
     setSelectedManager(null)
   }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios, isClienteNovo])
 

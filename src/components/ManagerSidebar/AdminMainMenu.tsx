@@ -51,12 +51,14 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       icon: UserPlus,
       description: 'Leads interessados em parceria'
     },
-  ]
-
-  if (isCollapsed) {
+   ]
+ 
+   const visibleItems = menuItems.filter(item => !['dashboard', 'sac'].includes(item.id))
+ 
+   if (isCollapsed) {
     return (
       <div className="flex flex-col space-y-2">
-        {menuItems.map(item => (
+        {visibleItems.map(item => (
           <button
             key={item.id}
             className={`
@@ -86,7 +88,7 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
         Menu Principal
       </div>
       
-      {menuItems.map((item) => (
+      {visibleItems.map((item) => (
         <Button
           key={item.id}
           variant={activeTab === item.id ? "secondary" : "ghost"}

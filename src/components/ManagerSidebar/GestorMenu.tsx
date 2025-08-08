@@ -52,12 +52,14 @@ export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: Gest
       description: 'Melhorias do sistema',
       color: 'bg-pink-500/10 hover:bg-pink-500/20 border-pink-500/20'
     }
-  ]
-
-  if (isCollapsed) {
+   ]
+ 
+   const visibleItems = menuItems.filter(item => item.id !== 'sac')
+ 
+   if (isCollapsed) {
     return (
       <div className="flex flex-col space-y-2">
-        {menuItems.map(item => (
+          {visibleItems.map(item => (
           <button
             key={item.id}
             className={`
@@ -83,7 +85,7 @@ export function GestorMenu({ activeTab, onTabChange, isCollapsed = false }: Gest
 
   return (
     <div className="grid grid-cols-1 gap-3">
-      {menuItems.map(item => (
+      {visibleItems.map(item => (
         <button
           key={item.id}
           className={`
