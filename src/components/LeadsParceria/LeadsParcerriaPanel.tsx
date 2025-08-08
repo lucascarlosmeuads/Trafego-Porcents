@@ -5,7 +5,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { MessageCircle, User, Eye, CheckCircle, Wand2, Download } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
@@ -21,12 +22,12 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function LeadsParcerriaPanel() {
   // Filtro de data local: hoje, ontem, personalizado
-  const [dateOption, setDateOption] = useState<'hoje' | 'ontem' | 'personalizado'>('hoje');
+  const [dateOption, setDateOption] = useState<'todos' | 'hoje' | 'ontem' | 'personalizado'>('todos');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
 
   const makeRange = (
-    option: 'hoje' | 'ontem' | 'personalizado',
+    option: 'todos' | 'hoje' | 'ontem' | 'personalizado',
     start: string,
     end: string
   ) => {
@@ -34,6 +35,8 @@ export function LeadsParcerriaPanel() {
     const today = new Date();
     const yesterday = new Date();
     yesterday.setDate(today.getDate() - 1);
+
+    if (option === 'todos') return undefined;
 
     if (option === 'hoje') {
       const s = pad(today);
@@ -49,7 +52,7 @@ export function LeadsParcerriaPanel() {
 
   const filterToUse = useMemo(() => makeRange(dateOption, customStart, customEnd), [dateOption, customStart, customEnd]);
   
-  const { leads, loading, updateLeadNegociacao, refetch } = useLeadsParceria(filterToUse);
+  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(filterToUse);
   
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,7 +66,7 @@ export function LeadsParcerriaPanel() {
   const [bulkSize, setBulkSize] = useState<'todos' | '10' | '20'>('10');
   const [bulkLoading, setBulkLoading] = useState(false);
   const { toast } = useToast();
-
+  const [showNeedsInfoOnly, setShowNeedsInfoOnly] = useState(false);
   // Conjuntos e contadores por aba
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
   const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
@@ -142,13 +145,24 @@ export function LeadsParcerriaPanel() {
   }, [leads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {
-    if (activeTab === 'compraram') return baseLeads;
-    if (statusFilter === 'todos') return baseLeads;
-    return baseLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
-  }, [baseLeads, statusFilter, activeTab]);
+    let list = baseLeads;
+    if (activeTab !== 'compraram' && statusFilter === 'todos') {
+      // keep as is
+    } else if (activeTab !== 'compraram') {
+      list = list.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+    }
+    if (showNeedsInfoOnly) {
+      list = list.filter(lead => !!lead.precisa_mais_info);
+    }
+    return list;
+  }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly]);
 
   const handleBulkGenerate = async () => {
     try {
+      if (activeTab !== 'compraram') {
+        toast({ title: 'Disponível apenas em "Compraram"', description: 'Geração em lote só para clientes que compraram.' });
+        return;
+      }
       setBulkLoading(true);
       const size = bulkSize === 'todos' ? undefined : Number(bulkSize);
       const { data, error } = await supabase.functions.invoke('bulk-generate-parceria-plans', { body: { size } });
@@ -161,6 +175,62 @@ export function LeadsParcerriaPanel() {
     } finally {
       setBulkLoading(false);
     }
+  };
+
+  const handleGenerateUntilComplete = async () => {
+    try {
+      if (activeTab !== 'compraram') {
+        toast({ title: 'Disponível apenas em "Compraram"', description: 'Use esta opção apenas para quem comprou.' });
+        return;
+      }
+      setBulkLoading(true);
+      let totalProcessados = 0, totalGerados = 0, totalInsuf = 0, rodadas = 0;
+      while (true) {
+        const { data, error } = await supabase.functions.invoke('bulk-generate-parceria-plans', { body: { size: 20 } });
+        if (error) throw error;
+        const gerados = data?.gerados || 0;
+        const insuf = data?.marcadosInsuficiente || 0;
+        const processados = data?.processados || gerados + insuf;
+        totalProcessados += processados; totalGerados += gerados; totalInsuf += insuf; rodadas += 1;
+        // parar quando nada foi processado nesta rodada
+        if ((gerados + insuf) === 0) break;
+        // pequena pausa para evitar rate limiting
+        await new Promise(r => setTimeout(r, 600));
+      }
+      toast({ title: 'Geração contínua concluída', description: `Rodadas: ${rodadas} • Gerados: ${totalGerados} • Insuficientes: ${totalInsuf}` });
+      refetch?.();
+    } catch (err: any) {
+      console.error('Erro na geração contínua:', err);
+      toast({ title: 'Erro', description: err.message || 'Falha ao processar geração contínua', variant: 'destructive' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
+
+  const handleExportCSV = () => {
+    const items = leads.filter(l => l.precisa_mais_info);
+    const header = ['Data', 'Nome', 'Email', 'WhatsApp', 'Vendedor', 'Tipo Negócio', 'Status'];
+    const rows = items.map(l => {
+      const r = l.respostas || {};
+      const nome = r.dadosPersonais?.nome || r.nome || 'Não informado';
+      const email = r.dadosPersonais?.email || r.email || l.email_usuario || 'Não informado';
+      const whatsapp = r.dadosPersonais?.whatsapp || r.whatsapp || r.telefone || 'Não informado';
+      const vendedor = l.vendedor_responsavel || 'N/A';
+      const tipo = l.tipo_negocio || 'N/A';
+      const status = l.status_negociacao || 'lead';
+      const data = new Date(l.created_at).toLocaleDateString('pt-BR');
+      return [data, nome, email, whatsapp, vendedor, tipo, status];
+    });
+    const csv = [header, ...rows]
+      .map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'leads-precisa-mais-info.csv';
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleGeneratePlan = async (lead: any) => {
@@ -228,11 +298,12 @@ export function LeadsParcerriaPanel() {
                 </Tabs>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-muted-foreground">Período:</span>
-                  <Select value={dateOption} onValueChange={(v) => setDateOption(v as 'hoje' | 'ontem' | 'personalizado')}>
+                  <Select value={dateOption} onValueChange={(v) => setDateOption(v as any)}>
                     <SelectTrigger className="w-36">
                       <SelectValue placeholder="Período" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="todos">Todos</SelectItem>
                       <SelectItem value="hoje">Hoje</SelectItem>
                       <SelectItem value="ontem">Ontem</SelectItem>
                       <SelectItem value="personalizado">Personalizado</SelectItem>
@@ -245,22 +316,36 @@ export function LeadsParcerriaPanel() {
                     </>
                   )}
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Lote:</span>
-                  <Select value={bulkSize} onValueChange={(v) => setBulkSize(v as any)}>
-                    <SelectTrigger className="w-28">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="10">10</SelectItem>
-                      <SelectItem value="20">20</SelectItem>
-                      <SelectItem value="todos">Todos</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" variant="outline" onClick={handleBulkGenerate} disabled={bulkLoading}>
-                    {bulkLoading ? 'Gerando...' : 'Gerar planejamentos'}
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    <Checkbox id="needsInfoOnly" checked={showNeedsInfoOnly} onCheckedChange={(v) => setShowNeedsInfoOnly(!!v)} />
+                    <label htmlFor="needsInfoOnly" className="text-sm text-muted-foreground">Apenas "Precisa mais info"</label>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={handleExportCSV}>
+                    <Download className="h-4 w-4 mr-1" /> Exportar CSV
                   </Button>
                 </div>
+                {activeTab === 'compraram' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Lote:</span>
+                    <Select value={bulkSize} onValueChange={(v) => setBulkSize(v as any)}>
+                      <SelectTrigger className="w-28">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="10">10</SelectItem>
+                        <SelectItem value="20">20</SelectItem>
+                        <SelectItem value="todos">Todos</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button size="sm" variant="outline" onClick={handleBulkGenerate} disabled={bulkLoading}>
+                      {bulkLoading ? 'Gerando...' : 'Gerar planejamentos'}
+                    </Button>
+                    <Button size="sm" onClick={handleGenerateUntilComplete} disabled={bulkLoading}>
+                      {bulkLoading ? 'Aguarde...' : 'Gerar até concluir'}
+                    </Button>
+                  </div>
+                )}
                 {activeTab === 'leads' && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Filtrar por status:</span>
@@ -394,6 +479,15 @@ export function LeadsParcerriaPanel() {
                               title="Ver detalhes"
                             >
                               <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => updateLeadPrecisaMaisInfo?.(lead.id, !lead.precisa_mais_info)}
+                              className="h-8 w-8 p-0"
+                              title={lead.precisa_mais_info ? "Desmarcar 'Precisa mais info'" : "Marcar 'Precisa mais info'"}
+                            >
+                              <AlertCircle className={`h-4 w-4 ${lead.precisa_mais_info ? 'text-orange-600' : ''}`} />
                             </Button>
                             {lead.planejamento_estrategico ? (
                               <>

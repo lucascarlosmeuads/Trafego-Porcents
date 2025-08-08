@@ -27,11 +27,12 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    // Buscar leads de parceria sem planejamento ainda
+    // Buscar leads de parceria sem planejamento ainda e elegíveis (compraram)
     let query = supabase
       .from('formularios_parceria')
       .select('*')
       .is('planejamento_estrategico', null)
+      .in('status_negociacao', ['comprou','planejando','planejamento_entregue','upsell_pago'])
       .order('created_at', { ascending: true });
 
     if (size && size > 0) {

@@ -167,6 +167,24 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     }
   };
 
+  const updateLeadPrecisaMaisInfo = async (leadId: string, value: boolean) => {
+    try {
+      const { error } = await supabase
+        .from('formularios_parceria')
+        .update({ precisa_mais_info: value })
+        .eq('id', leadId);
+
+      if (error) throw error;
+
+      setLeads(prev => prev.map(lead => 
+        lead.id === leadId ? { ...lead, precisa_mais_info: value } : lead
+      ));
+    } catch (err: any) {
+      console.error('Erro ao atualizar precisa_mais_info:', err);
+      setError(err.message);
+    }
+  };
+
   const reatribuirLead = async (leadId: string, novoVendedor: string | null) => {
     try {
       const updates: any = { 
@@ -203,6 +221,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     refetch,
     updateLeadStatus,
     updateLeadNegociacao,
+    updateLeadPrecisaMaisInfo,
     reatribuirLead,
   };
 }
