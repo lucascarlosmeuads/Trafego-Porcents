@@ -1,0 +1,181 @@
+// deno-lint-ignore-file no-explicit-any
+import "https://deno.land/x/xhr@0.1.0/mod.ts";
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
+if (!OPENAI_API_KEY) {
+  console.warn('[generate-gamified-funnel] OPENAI_API_KEY não configurada');
+}
+
+serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const { leadId } = await req.json();
+    if (!leadId) {
+      return new Response(JSON.stringify({ success: false, error: 'leadId é obrigatório' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
+
+    // Buscar dados do lead
+    const { data: lead, error: leadError } = await supabase
+      .from('formularios_parceria')
+      .select('id, email_usuario, respostas, tipo_negocio, audio_visao_futuro, visao_futuro_texto, planejamento_estrategico, created_at')
+      .eq('id', leadId)
+      .maybeSingle();
+
+    if (leadError || !lead) {
+      console.error('[generate-gamified-funnel] Lead não encontrado:', leadError);
+      return new Response(JSON.stringify({ success: false, error: 'Lead não encontrado' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Extrair informações do cliente
+    const respostas = (lead as any).respostas || {};
+    const dados = respostas.dadosPersonais || respostas || {};
+    const nome = dados.nome || respostas.nome || 'Cliente';
+    const email = (lead as any).email_usuario || dados.email || 'Não informado';
+    const whatsapp = dados.whatsapp || dados.telefone || respostas.telefone || 'Não informado';
+    const tipoNegocio = (lead as any).tipo_negocio || respostas.tipo_negocio || 'não informado';
+    const valorMedio = respostas.valorMedioProduto || respostas.valor_medio_produto || 'não informado';
+    const jaTeveVendas = respostas.jaTeveVendas ?? respostas.ja_teve_vendas ?? 'não informado';
+    const visaoFuturoTexto = (lead as any).visao_futuro_texto || respostas.visaoFuturo?.texto || '';
+    const audioVisaoFuturo = (lead as any).audio_visao_futuro || respostas.visaoFuturo?.audio || '';
+
+    const informacoesCliente = `
+Nome: ${nome}
+Email: ${email}
+WhatsApp: ${whatsapp}
+Tipo de Negócio: ${tipoNegocio}
+Valor Médio do Produto/Serviço: ${valorMedio}
+Já Teve Vendas: ${jaTeveVendas}
+Data do Lead: ${lead.created_at}
+Visão de Futuro (texto): ${visaoFuturoTexto || '—'}
+Visão de Futuro (áudio/link): ${audioVisaoFuturo || '—'}
+`;
+
+    const tituloDocumento = `Consultoria Estratégica - Funil Interativo - ${nome}`;
+
+    const userPrompt = `Você é um gerador profissional de funis gamificados inteligentes e aplicáveis ao mercado brasileiro. Você foi treinado para atender qualquer tipo de negócio, incluindo produtos físicos, serviços locais, infoprodutos, consultorias, SaaS e profissionais autônomos. Sua missão é criar estruturas de funis gamificados práticas e eficazes, voltadas para o engajamento real do público e alta conversão, usando linguagem emocional e gatilhos mentais adaptados à cultura brasileira.
+
+Ao responder, siga exatamente esta estrutura:
+
+1) OBJETIVO DO FUNIL  
+Explique o foco principal do funil (gerar lead, venda, agendamento etc.).
+
+2) CONCEITO E ESTRATÉGIA GAMIFICADA  
+Crie a lógica central do funil como um mini-jogo, quiz, diagnóstico ou jornada personalizada.
+
+3) ESTRUTURA DO FUNIL (etapa por etapa)  
+- Anúncio (copy e ideia visual)  
+- Página de entrada (mensagem e sugestão visual)  
+- Etapas do quiz ou perguntas (com lógica condicional, se necessário)  
+- Tela de resultado (recompensa, urgência ou revelação personalizada)  
+- Redirecionamento (para WhatsApp, checkout, Calendly etc.)
+
+4) COPYS PRONTAS  
+- Anúncio para redes sociais (Facebook/Instagram)  
+- Página (mensagem inicial e CTA)  
+- WhatsApp (mensagem de entrada automatizada)
+
+5) INSTRUÇÕES DE TRÁFEGO  
+- Sugestão de investimento diário  
+- Público-alvo sugerido  
+- Objetivo da campanha no Gerenciador de Anúncios
+
+6) MÉTRICAS ESPERADAS  
+- CTR médio  
+- Custo por lead estimado  
+- Conversão ideal da página
+
+7) PLANEJAMENTO DE CUSTOS  
+Sempre incluir um custo fixo total de R$ 1.500, sendo:  
+- R$ 500 para baterias de criativos (vídeo e imagem)  
+- R$ 800 para montagem do funil  
+- R$ 200 para configuração da Business Manager e trackeamento  
+TOTAL: R$ 1.500 (SEM MENSALIDADE)
+
+8) TECNOLOGIAS SUGERIDAS (opcional)  
+Ferramentas compatíveis como Tally, Typeform, Cliktree, Zapier, Lovable, Notion etc.
+
+TOM DA RESPOSTA  
+Estratégico, direto e prático. Sem promessas milagrosas. Considerar a realidade brasileira atual. Você não executa; apenas monta a estratégia.
+
+INSTRUÇÃO FINAL  
+Ao final, inclua a frase: “Sem mensalidade fixa; trabalhamos por % sobre vendas”.
+
+NOME DO DOCUMENTO  
+"${tituloDocumento}".
+
+---
+
+INFORMAÇÕES DO CLIENTE  
+${informacoesCliente}
+`;
+
+    // Chamada OpenAI
+    const completion = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${OPENAI_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Responda sempre em português (Brasil). Seja estratégico, direto e prático.' },
+          { role: 'user', content: userPrompt }
+        ],
+        temperature: 0.7,
+      }),
+    });
+
+    const completionJson = await completion.json();
+    const planejamento = completionJson?.choices?.[0]?.message?.content as string;
+
+    if (!planejamento) {
+      console.error('[generate-gamified-funnel] Falha ao obter resposta do modelo:', completionJson);
+      return new Response(JSON.stringify({ success: false, error: 'Falha ao gerar planejamento' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Atualizar lead com planejamento e status
+    const { error: updateError } = await supabase
+      .from('formularios_parceria')
+      .update({ planejamento_estrategico: planejamento, status_negociacao: 'planejamento_entregue', updated_at: new Date().toISOString() })
+      .eq('id', leadId);
+
+    if (updateError) {
+      console.warn('[generate-gamified-funnel] Erro ao atualizar lead (não crítico):', updateError);
+    }
+
+    return new Response(JSON.stringify({ success: true, planejamento }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  } catch (error: any) {
+    console.error('[generate-gamified-funnel] Erro geral:', error);
+    return new Response(JSON.stringify({ success: false, error: error?.message || 'Erro interno' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
+  }
+});

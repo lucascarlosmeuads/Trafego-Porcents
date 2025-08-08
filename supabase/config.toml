@@ -67,3 +67,6 @@ verify_jwt = false
 
 [functions.create-parceria-user]
 verify_jwt = false
+
+[functions.generate-gamified-funnel]
+verify_jwt = false

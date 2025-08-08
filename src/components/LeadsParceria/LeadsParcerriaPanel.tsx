@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle } from 'lucide-react';
+import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle, Wand2 } from 'lucide-react';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
@@ -12,6 +12,9 @@ import { DateRangeFilter } from '@/components/DateRangeFilter';
 import { useGlobalDateFilter, type DateFilterOption } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
+import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
 
 export function LeadsParcerriaPanel() {
   const { currentFilter } = useGlobalDateFilter();
@@ -28,6 +31,11 @@ export function LeadsParcerriaPanel() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [generating, setGenerating] = useState<Record<string, boolean>>({});
+  const [planModalOpen, setPlanModalOpen] = useState(false);
+  const [planContent, setPlanContent] = useState<string | null>(null);
+  const [planClientName, setPlanClientName] = useState<string>('Cliente');
+  const { toast } = useToast();
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -95,6 +103,33 @@ export function LeadsParcerriaPanel() {
   const filteredLeads = statusFilter === 'todos' 
     ? leads 
     : leads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+
+  const handleGeneratePlan = async (lead: any) => {
+    try {
+      setGenerating(prev => ({ ...prev, [lead.id]: true }));
+
+      const { data, error } = await supabase.functions.invoke('generate-gamified-funnel', {
+        body: { leadId: lead.id }
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Falha ao gerar planejamento');
+
+      toast({ title: 'Planejamento gerado', description: 'Planejamento estratégico criado com sucesso.' });
+      setPlanContent(data.planejamento);
+      const leadData = getLeadData(lead);
+      setPlanClientName(leadData.nome || 'Cliente');
+      setPlanModalOpen(true);
+
+      // Atualiza status localmente
+      updateLeadNegociacao?.(lead.id, 'planejamento_entregue');
+    } catch (err: any) {
+      console.error('Erro ao gerar planejamento:', err);
+      toast({ title: 'Erro', description: 'Não foi possível gerar o planejamento.', variant: 'destructive' });
+    } finally {
+      setGenerating(prev => ({ ...prev, [lead.id]: false }));
+    }
+  };
 
   if (loading) {
     return (
@@ -262,17 +297,34 @@ export function LeadsParcerriaPanel() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedLead(lead);
-                              setIsModalOpen(true);
-                            }}
-                            className="h-8 w-8 p-0"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                setSelectedLead(lead);
+                                setIsModalOpen(true);
+                              }}
+                              className="h-8 w-8 p-0"
+                              title="Ver detalhes"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleGeneratePlan(lead)}
+                              disabled={!!generating[lead.id]}
+                              className="h-8 w-8 p-0"
+                              title={generating[lead.id] ? 'Gerando...' : 'Gerar Planejamento'}
+                            >
+                              {generating[lead.id] ? (
+                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                              ) : (
+                                <Wand2 className="h-4 w-4 text-purple-600" />
+                              )}
+                            </Button>
+                          </div>
                         </TableCell>
                       </TableRow>
                     );
@@ -292,6 +344,14 @@ export function LeadsParcerriaPanel() {
           setIsModalOpen(false);
           setSelectedLead(null);
         }}
+      />
+
+      {/* Modal de Planejamento */}
+      <PlanejamentoPreviewModal
+        isOpen={planModalOpen}
+        onOpenChange={setPlanModalOpen}
+        content={planContent || ''}
+        title={`Consultoria Estratégica - Funil Interativo - ${planClientName}`}
       />
     </>
   );
