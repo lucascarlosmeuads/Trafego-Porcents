@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { enableRealtimeForTable } from '@/utils/realtimeUtils';
 
@@ -31,6 +31,8 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
+  const refetchTimer = useRef<number | null>(null);
+
   // Memoize the filter to prevent unnecessary re-renders
   const stableFilter = useMemo(() => dateFilter, [
     dateFilter?.startDate, 
@@ -43,13 +45,9 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     setError(null);
 
     try {
-      // Habilitar realtime para a tabela
-      await enableRealtimeForTable('formularios_parceria');
-
-      // Buscar leads com informação se foi via webhook
       let leadsQuery = supabase
         .from('formularios_parceria')
-        .select('*', { count: 'exact' });
+        .select('id, created_at, tipo_negocio, email_usuario, planejamento_estrategico, respostas, completo, updated_at, audio_visao_futuro, produto_descricao, valor_medio_produto, ja_teve_vendas, visao_futuro_texto, cliente_pago, contatado_whatsapp, status_negociacao, vendedor_responsavel, distribuido_em, precisa_mais_info', { count: 'exact' });
 
       // Aplicar filtro de data se fornecido
       if (dateFilter && dateFilter.startDate && dateFilter.endDate) {
@@ -64,21 +62,22 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         throw leadsError;
       }
 
-      // Buscar logs de webhook para determinar quais foram automáticos
-      const { data: webhookLogs } = await supabase
-        .from('kiwify_webhook_logs')
-        .select('email_comprador, status_processamento')
-        .eq('status_processamento', 'sucesso');
-
-      // Criar set de emails que foram processados via webhook
-      const emailsWebhook = new Set(
-        (webhookLogs || []).map(log => log.email_comprador)
-      );
+      // Buscar somente logs de webhook relevantes para os emails carregados
+      const leadEmails = (leadsData || []).map((l: any) => l.email_usuario).filter((e: any) => typeof e === 'string' && e.length > 0);
+      let emailsWebhook = new Set<string>();
+      if (leadEmails.length > 0) {
+        const { data: webhookLogs } = await supabase
+          .from('kiwify_webhook_logs')
+          .select('email_comprador')
+          .eq('status_processamento', 'sucesso')
+          .in('email_comprador', leadEmails);
+        emailsWebhook = new Set((webhookLogs || []).map((log: any) => log.email_comprador));
+      }
 
       // Processar leads para incluir flag de webhook automático
-      const processedLeads = (leadsData || []).map(lead => ({
+      const processedLeads = (leadsData || []).map((lead: any) => ({
         ...lead,
-        webhook_automatico: emailsWebhook.has(lead.email_usuario)
+        webhook_automatico: emailsWebhook.has(lead.email_usuario as any)
       }));
 
       setLeads(processedLeads as LeadParceria[]);
@@ -90,6 +89,11 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       setLoading(false);
     }
   };
+
+  // Habilita realtime apenas uma vez
+  useEffect(() => {
+    enableRealtimeForTable('formularios_parceria').catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchLeads();

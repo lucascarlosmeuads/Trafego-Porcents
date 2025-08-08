@@ -58,7 +58,7 @@ export function LeadsParcerriaPanel() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
-  const [activeTab, setActiveTab] = useState<'leads' | 'compraram'>('leads');
+  const [activeTab, setActiveTab] = useState<'leads' | 'compraram'>('compraram');
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planContent, setPlanContent] = useState<string | null>(null);
