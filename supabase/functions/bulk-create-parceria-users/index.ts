@@ -119,8 +119,22 @@ Deno.serve(async (req) => {
 
         if (createError) {
           // Se erro for "usuário já existe", considerar como sucesso
-          if (createError.message?.includes('already exists') || createError.message?.includes('already registered')) {
+          if (createError.message?.includes('already exists') || 
+              createError.message?.includes('already registered') ||
+              createError.message?.includes('User already registered')) {
             console.log(`✅ [bulk-create-parceria-users] Usuário já existe: ${item.email}`)
+            
+            // Log da operação de usuário existente
+            try {
+              await supabase.from('client_user_creation_log').insert({
+                email_cliente: item.email,
+                operation_type: 'bulk_create_parceria_users',
+                result_message: 'Usuário já existia - considerado sucesso'
+              })
+            } catch (logError) {
+              console.warn('⚠️ [bulk-create-parceria-users] Erro ao inserir log (não crítico):', logError)
+            }
+            
             results.push({ email: item.email, success: true, message: 'Usuário já existe' })
             sucessos++
             continue

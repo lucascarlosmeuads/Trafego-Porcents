@@ -49,7 +49,9 @@ Deno.serve(async (req) => {
 
     if (createError) {
       // Se erro for "usuário já existe", considerar como sucesso
-      if (createError.message?.includes('already exists') || createError.message?.includes('already registered')) {
+      if (createError.message?.includes('already exists') || 
+          createError.message?.includes('already registered') ||
+          createError.message?.includes('User already registered')) {
         console.log('✅ [create-parceria-user] Usuário já existe no Supabase Auth:', email)
         
         // Log da operação
@@ -59,7 +61,7 @@ Deno.serve(async (req) => {
             .insert({
               email_cliente: email,
               operation_type: 'create_parceria_user',
-              result_message: 'Usuário já existia'
+              result_message: 'Usuário já existia - considerado sucesso'
             })
         } catch (logError) {
           console.warn('⚠️ [create-parceria-user] Erro ao inserir log (não crítico):', logError)
@@ -68,7 +70,7 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: true, 
-            message: 'Usuário já existe',
+            message: 'Usuário já existe - login habilitado',
             user_exists: true 
           }),
           { 
