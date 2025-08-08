@@ -141,62 +141,61 @@ Visão de Futuro (áudio/link): ${audioVisaoFuturo || '—'}
 
     const tituloDocumento = `Consultoria Estratégica - Funil Interativo - ${nome}`;
 
-    const userPrompt = `Você é um gerador profissional de funis gamificados inteligentes e aplicáveis ao mercado brasileiro. Você foi treinado para atender qualquer tipo de negócio, incluindo produtos físicos, serviços locais, infoprodutos, consultorias, SaaS e profissionais autônomos. Sua missão é criar estruturas de funis gamificados práticas e eficazes, voltadas para o engajamento real do público e alta conversão, usando linguagem emocional e gatilhos mentais adaptados à cultura brasileira.
+    const userPrompt = `Você é um estrategista especializado em funis interativos para o mercado brasileiro (produtos físicos, serviços locais, infoprodutos, consultorias, SaaS e autônomos). Sua missão é criar um FUNIL INTERATIVO prático e altamente conversivo, com linguagem emocional e gatilhos mentais adequados à cultura brasileira.
 
-Ao responder, siga exatamente esta estrutura:
+Siga EXATAMENTE esta estrutura em Markdown, com títulos e subtítulos muito bem organizados e espaçamentos claros:
 
-1) OBJETIVO DO FUNIL  
-Explique o foco principal do funil (gerar lead, venda, agendamento etc.).
+1) TÍTULO PRINCIPAL (H1)
+# Consultoria Estratégica – Funil Interativo – ${nome}
 
-2) CONCEITO E ESTRATÉGIA GAMIFICADA  
-Crie a lógica central do funil como um mini-jogo, quiz, diagnóstico ou jornada personalizada.
+2) OBJETIVO DO FUNIL (H2)
+Explique claramente o foco do funil: gerar muitos leads qualificados, conduzir o cliente a perceber conscientemente que está caminhando para uma compra, e – quando fizer sentido – vender um produto de entrada (ticket menor) para depois realizar um upsell para um produto de maior valor.
 
-3) ESTRUTURA DO FUNIL (etapa por etapa)  
-- Anúncio (copy e ideia visual)  
-- Página de entrada (mensagem e sugestão visual)  
-- Etapas do quiz ou perguntas (com lógica condicional, se necessário)  
-- Tela de resultado (recompensa, urgência ou revelação personalizada)  
-- Redirecionamento (para WhatsApp, checkout, Calendly etc.)
+3) CONCEITO E ESTRATÉGIA DO FUNIL INTERATIVO (H2)
+Descreva a lógica central do funil como uma jornada/diagnóstico interativo personalizado. NUNCA use a palavra "quiz" em nenhum momento; SEMPRE utilize "funil interativo". Foque em gerar curiosidade, comprometimento progressivo e percepção de valor.
 
-4) COPYS PRONTAS  
-- Anúncio para redes sociais (Facebook/Instagram)  
-- Página (mensagem inicial e CTA)  
+4) ESTRUTURA DO FUNIL – ETAPA POR ETAPA (H2)
+- Anúncio (copy e ideia visual)
+- Página de entrada (mensagem e sugestão visual)
+- Etapas interativas (com lógica condicional quando necessário)
+- Tela de resultado (recompensa, urgência ou revelação personalizada)
+- Redirecionamento (WhatsApp, checkout, Calendly etc.)
+
+5) COPYS PRONTAS (H2)
+- Anúncio para redes sociais (Facebook/Instagram)
+- Página (mensagem inicial e CTA)
 - WhatsApp (mensagem de entrada automatizada)
 
-5) INSTRUÇÕES DE TRÁFEGO  
-- Sugestão de investimento diário  
-- Público-alvo sugerido  
+6) INSTRUÇÕES DE TRÁFEGO (H2)
+- Sugestão de investimento diário
+- Público-alvo sugerido
 - Objetivo da campanha no Gerenciador de Anúncios
 
-6) MÉTRICAS ESPERADAS  
-- CTR médio  
-- Custo por lead estimado  
+7) MÉTRICAS ESPERADAS (H2)
+- CTR médio
+- Custo por lead estimado
 - Conversão ideal da página
 
-7) PLANEJAMENTO DE CUSTOS  
-Sempre incluir um custo fixo total de R$ 1.500, sendo:  
-- R$ 500 para baterias de criativos (vídeo e imagem)  
-- R$ 800 para montagem do funil  
-- R$ 200 para configuração da Business Manager e trackeamento  
+8) PLANEJAMENTO DE CUSTOS (H2)
+Sempre incluir um custo fixo total de R$ 1.500, sendo:
+- R$ 500 para baterias de criativos (vídeo e imagem)
+- R$ 800 para montagem do funil
+- R$ 200 para configuração da Business Manager e trackeamento
 TOTAL: R$ 1.500 (SEM MENSALIDADE)
 
-8) TECNOLOGIAS SUGERIDAS (opcional)  
-Ferramentas compatíveis como Tally, Typeform, Cliktree, Zapier, Lovable, Notion etc.
+9) DIRETRIZES DE REDAÇÃO (H2)
+- NUNCA use a palavra "quiz"; utilize sempre "funil interativo".
+- Não listar tecnologias ou ferramentas; nós cuidaremos disso internamente.
+- Linguagem estratégica, direta e prática. Sem promessas milagrosas.
+- Considere a realidade brasileira atual.
 
-TOM DA RESPOSTA  
-Estratégico, direto e prático. Sem promessas milagrosas. Considerar a realidade brasileira atual. Você não executa; apenas monta a estratégia.
-
-INSTRUÇÃO FINAL  
-Ao final, inclua a frase: “Sem mensalidade fixa; trabalhamos por % sobre vendas”.
-
-NOME DO DOCUMENTO  
-"${tituloDocumento}".
+10) INSTRUÇÃO FINAL (H2)
+Inclua ao final a frase: “Sem mensalidade fixa; trabalhamos por % sobre vendas”.
 
 ---
 
-INFORMAÇÕES DO CLIENTE  
-${informacoesCliente}
-`;
+INFORMAÇÕES DO CLIENTE (H2)
+${informacoesCliente}`;
 
     // Chamada OpenAI
     const completion = await fetch('https://api.openai.com/v1/chat/completions', {
