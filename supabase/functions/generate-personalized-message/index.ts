@@ -65,6 +65,14 @@ Deno.serve(async (req) => {
       .eq('email_cliente', emailCliente)
       .maybeSingle()
 
+    // Buscar nome no todos_clientes como fallback
+    const { data: clientesTodos } = await supabase
+      .from('todos_clientes')
+      .select('nome_cliente')
+      .eq('email_cliente', emailCliente)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
     const respostas = lead.respostas || {}
     const tipoNegocioRaw = lead.tipo_negocio || respostas.tipo_negocio || respostas.tipoNegocio || respostas.nicho || respostas.segmento || ''
     const produtoDescricao = lead.produto_descricao || respostas.produtoDescricao || respostas.produto_descricao || ''
@@ -103,12 +111,26 @@ Deno.serve(async (req) => {
 
     const nomeLead =
       clienteParceria?.nome_cliente ||
+      clientesTodos?.[0]?.nome_cliente ||
       respostas?.dadosPersonais?.nome ||
+      respostas?.dados_pessoais?.nome ||
+      respostas?.nome_cliente ||
+      respostas?.nomeCliente ||
+      respostas?.nome_completo ||
+      respostas?.nomeCompleto ||
+      respostas?.dados?.nome ||
+      respostas?.dadosGerais?.nome ||
+      respostas?.first_name ||
+      respostas?.primeiro_nome ||
+      respostas?.primeiroNome ||
       respostas?.nome ||
       'Cliente'
 
-    // extrair primeiro nome
-    const firstName = String(nomeLead).trim().split(' ')[0] || 'Cliente'
+    // extrair primeiro nome (evita "Cliente"; usa parte local do email se necessário)
+    const rawFirstName = String(nomeLead).trim().split(' ')[0]
+    const firstName = rawFirstName && rawFirstName.toLowerCase() !== 'cliente'
+      ? titleCase(rawFirstName)
+      : titleCase((emailCliente || '').split('@')[0])
 
     // telefone prioritário
     const telefone =
