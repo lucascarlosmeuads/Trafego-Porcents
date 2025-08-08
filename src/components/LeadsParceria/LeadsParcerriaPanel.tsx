@@ -416,8 +416,8 @@ export function LeadsParcerriaPanel() {
                        <SelectContent className="z-50 bg-background">
                         <SelectItem value="todos">Todos</SelectItem>
                         <SelectItem value="lead">lead</SelectItem>
-                        <SelectItem value="planejando">planj/gerado</SelectItem>
-                        <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                        <SelectItem value="planejando">planj/entregue</SelectItem>
+                        <SelectItem value="planejamento_entregue">planj/gerado</SelectItem>
                         <SelectItem value="upsell_pago">upsell pago</SelectItem>
                         <SelectItem value="recusou">não quer</SelectItem>
                       </SelectContent>
@@ -516,9 +516,9 @@ export function LeadsParcerriaPanel() {
                               </SelectTrigger>
                               <SelectContent className="z-50 bg-background">
                                 <SelectItem value="lead">lead</SelectItem>
-                                <SelectItem value="planejando">planj/gerado</SelectItem>
+                                <SelectItem value="planejando">planj/entregue</SelectItem>
                                 <SelectItem value="comprou">comprou</SelectItem>
-                                <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                                <SelectItem value="planejamento_entregue">planj/gerado</SelectItem>
                                 <SelectItem value="upsell_pago">upsell pago</SelectItem>
                                 <SelectItem value="recusou">não quer</SelectItem>
                               </SelectContent>
