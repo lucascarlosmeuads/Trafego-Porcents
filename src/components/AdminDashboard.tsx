@@ -4,7 +4,7 @@ import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
-import { OptimizedAdminDashboardMetrics } from './AdminDashboard/OptimizedAdminDashboardMetrics'
+
 import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAcervoIdeasDashboard } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
@@ -14,8 +14,6 @@ import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
-import { AdminMetaAdsConfig } from './AdminDashboard/AdminMetaAdsConfig'
-import { AdminMetaAdsMetrics } from './AdminDashboard/AdminMetaAdsMetrics'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
 import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDashboardNew'
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
@@ -23,9 +21,12 @@ import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
 import { DateRangeFilter } from './DateRangeFilter'
 import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter'
-import { LeadsParcerriaAnalytics } from './LeadsParceria/LeadsParcerriaAnalytics'
-import { LeadsMetaAdsReport } from './LeadsParceria/LeadsMetaAdsReport'
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics'
+import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { formatCurrency } from '@/lib/utils'
+import { DollarSign, Users as UsersIcon, PieChart } from 'lucide-react'
+
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -49,6 +50,30 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   const totalLeadsCount = analyticsBase?.total || 0
   const convertedLeadsCount = analyticsBase?.converted || 0
   const conversionRate = analyticsBase?.conversionRate || 0
+
+  const { insights, fetchingInsights, isConfigured, lastError, fetchTodayInsights, fetchInsightsWithPeriod } = useAdminMetaAds()
+  const spend = insights ? parseFloat(insights.spend || '0') : 0
+
+  useEffect(() => {
+    if (!isConfigured) return
+    switch (stableFilterDates.option) {
+      case 'hoje':
+      case undefined:
+      case null:
+        fetchTodayInsights()
+        break
+      case 'ontem':
+        fetchInsightsWithPeriod('yesterday')
+        break
+      case 'personalizado':
+        if (stableFilterDates.startDate && stableFilterDates.endDate) {
+          fetchInsightsWithPeriod('custom' as any, stableFilterDates.startDate, stableFilterDates.endDate)
+        }
+        break
+      default:
+        fetchTodayInsights()
+    }
+  }, [isConfigured, stableFilterDates, fetchTodayInsights, fetchInsightsWithPeriod])
   // Buscar dados dos clientes - sempre chamar o hook
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
     user?.email || 'fallback@example.com', 
@@ -84,43 +109,65 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
       case 'dashboard':
         return (
           <div className="space-y-6">
-            {/* Seletor de gestores */}
-            <div className="bg-card border rounded-lg p-4">
-              <ManagerSelector 
-                selectedManager={selectedManager}
-                onManagerSelect={onManagerSelect}
-                isAdminContext={true}
-              />
-            </div>
-
-
-            {/* Filtro de Data para Relatórios */}
+            {/* Filtro de Data */}
             <div className="bg-card border rounded-lg p-4">
               <DateRangeFilter />
             </div>
 
-            {/* Configuração Meta Ads Global */}
-            <AdminMetaAdsConfig />
+            {/* Cards Resumidos */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <DollarSign className="h-5 w-5" />
+                    Investimento Meta Ads
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{formatCurrency(spend)}</div>
+                  <p className="text-sm text-muted-foreground">Total investido no período selecionado</p>
+                </CardContent>
+              </Card>
 
-            {/* Analytics de Leads */}
-            <LeadsParcerriaAnalytics dateFilter={stableFilterDates} />
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <UsersIcon className="h-5 w-5" />
+                    Leads no período
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold">{totalLeadsCount}</div>
+                  <p className="text-sm text-muted-foreground">Quantidade de leads recebidos no período</p>
+                </CardContent>
+              </Card>
+            </div>
 
-            {/* Relatório Financeiro de Leads */}
-            <LeadsMetaAdsReport 
-              convertedLeads={convertedLeadsCount}
-              totalLeads={totalLeadsCount}
-              conversionRate={conversionRate}
-              dateFilter={stableFilterDates}
-            />
-
-            {/* Métricas Meta Ads */}
-            <AdminMetaAdsMetrics />
-            
-            {/* Métricas do Admin */}
-            <AdminDashboardMetrics 
-              clientes={gestorClientes} 
-              selectedManager={selectedManager}
-            />
+            {/* Resumo da Performance */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <PieChart className="h-5 w-5" />
+                  Resumo da Performance
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-primary">{totalLeadsCount}</div>
+                    <div className="text-sm text-muted-foreground">Total de Leads</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-green-600">{convertedLeadsCount}</div>
+                    <div className="text-sm text-muted-foreground">Leads Convertidos</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-2xl font-bold text-blue-600">{(conversionRate || 0).toFixed(1)}%</div>
+                    <div className="text-sm text-muted-foreground">Taxa de Conversão</div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         )
 
