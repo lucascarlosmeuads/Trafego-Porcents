@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle, Wand2 } from 'lucide-react';
+import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle, Wand2, Download } from 'lucide-react';
 import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
@@ -15,6 +15,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
+import { downloadPlanPdf } from '@/utils/planDownload';
 
 export function LeadsParcerriaPanel() {
   const { currentFilter } = useGlobalDateFilter();
@@ -26,7 +27,7 @@ export function LeadsParcerriaPanel() {
     option: currentFilter.option
   }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option]);
   
-  const { leads, loading, totalLeads, updateLeadNegociacao } = useLeadsParceria(stableFilterDates);
+  const { leads, loading, totalLeads, updateLeadNegociacao, refetch } = useLeadsParceria(stableFilterDates);
   const [showAnalytics, setShowAnalytics] = useState(true);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -35,6 +36,7 @@ export function LeadsParcerriaPanel() {
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planContent, setPlanContent] = useState<string | null>(null);
   const [planClientName, setPlanClientName] = useState<string>('Cliente');
+  const [planEmail, setPlanEmail] = useState<string | undefined>(undefined);
   const { toast } = useToast();
 
   const handleWhatsAppClick = (whatsapp: string) => {
@@ -119,8 +121,8 @@ export function LeadsParcerriaPanel() {
       setPlanContent(data.planejamento);
       const leadData = getLeadData(lead);
       setPlanClientName(leadData.nome || 'Cliente');
+      setPlanEmail(lead.email_usuario || undefined);
       setPlanModalOpen(true);
-
       // Atualiza status localmente
       updateLeadNegociacao?.(lead.id, 'planejamento_entregue');
     } catch (err: any) {
@@ -310,20 +312,52 @@ export function LeadsParcerriaPanel() {
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleGeneratePlan(lead)}
-                              disabled={!!generating[lead.id]}
-                              className="h-8 w-8 p-0"
-                              title={generating[lead.id] ? 'Gerando...' : 'Gerar Planejamento'}
-                            >
-                              {generating[lead.id] ? (
-                                <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                              ) : (
-                                <Wand2 className="h-4 w-4 text-purple-600" />
-                              )}
-                            </Button>
+                            {lead.planejamento_estrategico ? (
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setPlanContent(lead.planejamento_estrategico || '');
+                                    setPlanClientName(leadData.nome || 'Cliente');
+                                    setPlanEmail(lead.email_usuario || undefined);
+                                    setPlanModalOpen(true);
+                                  }}
+                                  className="h-8 px-2"
+                                  title="Ver/Editar Planejamento"
+                                >
+                                  Ver/Editar
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => downloadPlanPdf({
+                                    content: (lead.planejamento_estrategico as string) || '',
+                                    title: `Consultoria Estratégica - Funil Interativo - ${leadData.nome}`,
+                                    filename: `Planejamento-${leadData.nome}.pdf`
+                                  })}
+                                  className="h-8 px-2"
+                                  title="Download PDF"
+                                >
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleGeneratePlan(lead)}
+                                disabled={!!generating[lead.id]}
+                                className="h-8 w-8 p-0"
+                                title={generating[lead.id] ? 'Gerando...' : 'Gerar Planejamento'}
+                              >
+                                {generating[lead.id] ? (
+                                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
+                                ) : (
+                                  <Wand2 className="h-4 w-4 text-purple-600" />
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
@@ -352,6 +386,11 @@ export function LeadsParcerriaPanel() {
         onOpenChange={setPlanModalOpen}
         content={planContent || ''}
         title={`Consultoria Estratégica - Funil Interativo - ${planClientName}`}
+        emailCliente={planEmail}
+        onApproved={(finalContent) => {
+          setPlanContent(finalContent);
+          refetch?.();
+        }}
       />
     </>
   );
