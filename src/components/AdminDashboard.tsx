@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense, useMemo } from 'react'
+import { useState, useEffect, Suspense, useMemo, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
@@ -55,9 +55,15 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
 
   const { insights, fetchingInsights, isConfigured, lastError, fetchTodayInsights, fetchInsightsWithPeriod } = useAdminMetaAds()
   const spend = insights ? parseFloat(insights.spend || '0') : 0
+  const lastMetaKeyRef = useRef<string | null>(null)
 
   useEffect(() => {
     if (!isConfigured) return
+
+    const key = `${stableAppliedFilter.option ?? 'hoje'}|${stableAppliedFilter.startDate ?? ''}|${stableAppliedFilter.endDate ?? ''}`
+    if (lastMetaKeyRef.current === key) return
+    lastMetaKeyRef.current = key
+
     switch (stableAppliedFilter.option) {
       case 'hoje':
       case undefined:

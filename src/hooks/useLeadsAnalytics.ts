@@ -196,14 +196,14 @@ export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: s
 
 
   useEffect(() => {
-    if (dateFilter && dateFilter.option && dateFilter.option !== 'hoje' && dateFilter.startDate && dateFilter.endDate) {
-      // Se há um filtro específico, usar ele
+    if (dateFilter?.option && dateFilter.option !== 'hoje' && dateFilter.startDate && dateFilter.endDate) {
       fetchCustomDateAnalytics({ startDate: dateFilter.startDate, endDate: dateFilter.endDate });
     } else {
-      // Senão, buscar dados padrão
+      // Limpar filtro customizado para não "travar" no último período aplicado
+      setFilteredStats(null);
       fetchAnalytics();
     }
-  }, [dateFilter]);
+  }, [dateFilter?.option, dateFilter?.startDate, dateFilter?.endDate]);
 
   useEffect(() => {
     fetchAnalytics();
