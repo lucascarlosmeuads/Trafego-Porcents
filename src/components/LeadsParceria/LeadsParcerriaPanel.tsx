@@ -72,6 +72,22 @@ export function LeadsParcerriaPanel() {
   const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
   const compraramCount = useMemo(() => leads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
 
+  // Elegibilidade para geração (sem plano e com informação suficiente)
+  const compraramLeads = useMemo(
+    () => leads.filter(l => purchasedStatuses.has(l.status_negociacao)),
+    [leads, purchasedStatuses]
+  );
+  const isEligibleForPlan = (lead: any) => {
+    const hasPlan = (lead.planejamento_estrategico ?? '').toString().trim().length > 0;
+    const visaoLen = (lead.visao_futuro_texto ?? '').toString().trim().length;
+    const temAudio = !!lead.audio_visao_futuro;
+    const infoSuficiente = temAudio || visaoLen >= 40;
+    return !hasPlan && infoSuficiente;
+  };
+  const elegiveisCount = useMemo(
+    () => compraramLeads.filter(isEligibleForPlan).length,
+    [compraramLeads]
+  );
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
     const cleanNumber = whatsapp.replace(/\D/g, '');
@@ -163,11 +179,18 @@ export function LeadsParcerriaPanel() {
         toast({ title: 'Disponível apenas em "Compraram"', description: 'Geração em lote só para clientes que compraram.' });
         return;
       }
+      if (elegiveisCount === 0) {
+        toast({ title: 'Nenhum lead elegível', description: 'Todos já têm plano ou faltam informações suficientes.' });
+        return;
+      }
       setBulkLoading(true);
       const size = bulkSize === 'todos' ? undefined : Number(bulkSize);
+      toast({ title: 'Iniciando geração em lote', description: `Tamanho do lote: ${bulkSize} • Elegíveis: ${elegiveisCount}` });
       const { data, error } = await supabase.functions.invoke('bulk-generate-parceria-plans', { body: { size } });
       if (error) throw error;
-      toast({ title: 'Geração em lote concluída', description: `Gerados: ${data?.gerados || 0} • Insuficientes: ${data?.marcadosInsuficiente || 0}` });
+      const g = data?.gerados || 0;
+      const i = data?.marcadosInsuficiente || 0;
+      toast({ title: 'Geração em lote concluída', description: `Gerados: ${g} • Insuficientes: ${i}` });
       refetch?.();
     } catch (err: any) {
       console.error('Erro geração em lote:', err);
@@ -183,7 +206,12 @@ export function LeadsParcerriaPanel() {
         toast({ title: 'Disponível apenas em "Compraram"', description: 'Use esta opção apenas para quem comprou.' });
         return;
       }
+      if (elegiveisCount === 0) {
+        toast({ title: 'Nenhum lead elegível', description: 'Todos já têm plano ou faltam informações suficientes.' });
+        return;
+      }
       setBulkLoading(true);
+      toast({ title: 'Geração contínua iniciada', description: 'Processaremos em lotes até finalizar.' });
       let totalProcessados = 0, totalGerados = 0, totalInsuf = 0, rodadas = 0;
       while (true) {
         const { data, error } = await supabase.functions.invoke('bulk-generate-parceria-plans', { body: { size: 20 } });
@@ -192,9 +220,7 @@ export function LeadsParcerriaPanel() {
         const insuf = data?.marcadosInsuficiente || 0;
         const processados = data?.processados || gerados + insuf;
         totalProcessados += processados; totalGerados += gerados; totalInsuf += insuf; rodadas += 1;
-        // parar quando nada foi processado nesta rodada
         if ((gerados + insuf) === 0) break;
-        // pequena pausa para evitar rate limiting
         await new Promise(r => setTimeout(r, 600));
       }
       toast({ title: 'Geração contínua concluída', description: `Rodadas: ${rodadas} • Gerados: ${totalGerados} • Insuficientes: ${totalInsuf}` });
@@ -327,6 +353,9 @@ export function LeadsParcerriaPanel() {
                 </div>
                 {activeTab === 'compraram' && (
                   <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Elegíveis:</span>
+                    <Badge variant="secondary">{elegiveisCount}</Badge>
+                    <span className="mx-2 h-4 w-px bg-border" />
                     <span className="text-sm text-muted-foreground">Lote:</span>
                     <Select value={bulkSize} onValueChange={(v) => setBulkSize(v as any)}>
                       <SelectTrigger className="w-28">
@@ -338,10 +367,19 @@ export function LeadsParcerriaPanel() {
                         <SelectItem value="todos">Todos</SelectItem>
                       </SelectContent>
                     </Select>
-                    <Button size="sm" variant="outline" onClick={handleBulkGenerate} disabled={bulkLoading}>
-                      {bulkLoading ? 'Gerando...' : 'Gerar planejamentos'}
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={handleBulkGenerate}
+                      disabled={bulkLoading || elegiveisCount === 0}
+                    >
+                      {bulkLoading ? 'Gerando...' : `Gerar 1 lote (${bulkSize})`}
                     </Button>
-                    <Button size="sm" onClick={handleGenerateUntilComplete} disabled={bulkLoading}>
+                    <Button
+                      size="sm"
+                      onClick={handleGenerateUntilComplete}
+                      disabled={bulkLoading || elegiveisCount === 0}
+                    >
                       {bulkLoading ? 'Aguarde...' : 'Gerar até concluir'}
                     </Button>
                   </div>

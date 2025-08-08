@@ -70,3 +70,6 @@ verify_jwt = false
 
 [functions.generate-gamified-funnel]
 verify_jwt = false
+
+[functions.bulk-generate-parceria-plans]
+verify_jwt = false

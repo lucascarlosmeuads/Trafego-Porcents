@@ -31,7 +31,7 @@ serve(async (req) => {
     let query = supabase
       .from('formularios_parceria')
       .select('*')
-      .is('planejamento_estrategico', null)
+      .or('planejamento_estrategico.is.null,planejamento_estrategico.eq.')
       .in('status_negociacao', ['comprou','planejando','planejamento_entregue','upsell_pago'])
       .order('created_at', { ascending: true });
 
