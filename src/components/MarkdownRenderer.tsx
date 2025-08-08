@@ -24,21 +24,46 @@ export function preprocessMarkdown(text: string): string {
     let skipUntilFence = false;
     let skipUntilCommentEnd = false;
     let skipDirectrizes = false;
+    let skipInstrucaoFinal = false;
 
     for (let i = 0; i < lines.length; i++) {
       const line = lines[i];
 
-      // Detectar início de diretrizes de redação
-      if (/^DIRETRIZES\s+DE\s+REDA[ÇC][ÃA]O/i.test(line.trim())) {
+      // Detectar início de diretrizes de redação (mais robusto)
+      if (/^(DIRETRIZES\s+DE\s+REDA[ÇC][ÃA]O|diretrizes\s+de\s+reda[çc][ãa]o)/i.test(line.trim())) {
         skipDirectrizes = true;
         continue;
       }
 
-      // Pular todo o bloco de diretrizes até encontrar uma linha que parece ser conteúdo real
+      // Detectar início de instrução final
+      if (/^(INSTRU[ÇC][ÃA]O\s+FINAL|instru[çc][ãa]o\s+final)/i.test(line.trim())) {
+        skipInstrucaoFinal = true;
+        continue;
+      }
+
+      // Pular todo o bloco de diretrizes até encontrar linha que não seja diretriz
       if (skipDirectrizes) {
-        if (/^(##?\s|###\s|\*\*|\d+\.\s|•\s|-\s|[A-Z][a-z]+.*:(?!\s*(NUNCA|Não|Use)))/i.test(line.trim()) 
-            && !/(NUNCA|nunca|Não|não|Use|use|Considere|considere|Linguagem|linguagem)/i.test(line)) {
+        // Continuar pulando se a linha contém palavras típicas de diretrizes
+        const isDiretrizLine = /^(NUNCA|nunca|Não|não|Use|use|Considere|considere|Linguagem|linguagem|Evite|evite)/i.test(line.trim()) ||
+                              line.trim() === '' ||
+                              /^\s*[-*•]\s/.test(line);
+        
+        if (!isDiretrizLine && /^(##?\s|###\s|\*\*|[A-Z][a-z]+.*[^:]$)/i.test(line.trim())) {
           skipDirectrizes = false;
+        } else {
+          continue;
+        }
+      }
+
+      // Pular todo o bloco de instrução final
+      if (skipInstrucaoFinal) {
+        // Continuar pulando se a linha parece fazer parte da instrução final
+        const isInstrucaoLine = line.trim() === '' ||
+                               /^".*"$/.test(line.trim()) ||
+                               /mensalidade|vendas|trabalhamos/i.test(line);
+        
+        if (!isInstrucaoLine && /^(##?\s|###\s|\*\*|[A-Z][a-z]+.*[^:]$)/i.test(line.trim())) {
+          skipInstrucaoFinal = false;
         } else {
           continue;
         }
