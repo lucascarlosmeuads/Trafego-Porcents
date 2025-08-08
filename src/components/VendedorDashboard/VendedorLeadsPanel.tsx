@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -12,12 +12,14 @@ import { useVendedorLeads } from '@/hooks/useVendedorLeads';
 import { extractLeadData, isLeadComplete, getLeadPriority, translateStatus } from '@/utils/leadDataExtractor';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function VendedorLeadsPanel() {
   const { leads, loading, totalLeads, updateLeadNegociacao } = useVendedorLeads();
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [activeTab, setActiveTab] = useState<'leads' | 'compraram'>('leads');
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -70,9 +72,15 @@ export function VendedorLeadsPanel() {
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
-  const filteredLeads = statusFilter === 'todos' 
-    ? sortedLeads 
-    : sortedLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+  const baseLeads = useMemo(() => {
+    return sortedLeads.filter(l => (activeTab === 'compraram' ? (l.status_negociacao === 'comprou') : (l.status_negociacao !== 'comprou')));
+  }, [sortedLeads, activeTab]);
+
+  const filteredLeads = useMemo(() => {
+    if (activeTab === 'compraram') return baseLeads;
+    if (statusFilter === 'todos') return baseLeads;
+    return baseLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+  }, [baseLeads, statusFilter, activeTab]);
 
   if (loading) {
     return (
@@ -135,25 +143,34 @@ export function VendedorLeadsPanel() {
                 <Users className="h-5 w-5" />
                 Meus Leads Atribuídos
               </div>
-              <div className="flex items-center gap-4">
-                <LeadsExportButton />
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-muted-foreground">Filtrar por status:</span>
-                  <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue />
-                    </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos</SelectItem>
-                        <SelectItem value="lead">lead</SelectItem>
-                        <SelectItem value="planejando">planejando</SelectItem>
-                        <SelectItem value="comprou">comprou</SelectItem>
-                        <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
-                        <SelectItem value="upsell_pago">upsell pago</SelectItem>
-                        <SelectItem value="recusou">não quer</SelectItem>
-                      </SelectContent>
-                  </Select>
-                </div>
+              <div className="flex items-center gap-3">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
+                  <TabsList>
+                    <TabsTrigger value="leads">Leads</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                {activeTab === 'leads' && (
+                  <>
+                    <LeadsExportButton />
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">Filtrar por status:</span>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todos">Todos</SelectItem>
+                          <SelectItem value="lead">lead</SelectItem>
+                          <SelectItem value="planejando">planejando</SelectItem>
+                          <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                          <SelectItem value="upsell_pago">upsell pago</SelectItem>
+                          <SelectItem value="recusou">não quer</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                )}
               </div>
             </CardTitle>
           </CardHeader>

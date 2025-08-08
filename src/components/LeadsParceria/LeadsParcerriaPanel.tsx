@@ -16,6 +16,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
 import { downloadPlanPdf } from '@/utils/planDownload';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function LeadsParcerriaPanel() {
   const { currentFilter } = useGlobalDateFilter();
@@ -32,6 +33,7 @@ export function LeadsParcerriaPanel() {
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
+  const [activeTab, setActiveTab] = useState<'leads' | 'compraram'>('leads');
   const [generating, setGenerating] = useState<Record<string, boolean>>({});
   const [planModalOpen, setPlanModalOpen] = useState(false);
   const [planContent, setPlanContent] = useState<string | null>(null);
@@ -101,10 +103,15 @@ export function LeadsParcerriaPanel() {
     return null;
   };
 
+  const baseLeads = useMemo(() => {
+    return leads.filter(l => (activeTab === 'compraram' ? (l.status_negociacao === 'comprou') : (l.status_negociacao !== 'comprou')));
+  }, [leads, activeTab]);
 
-  const filteredLeads = statusFilter === 'todos' 
-    ? leads 
-    : leads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+  const filteredLeads = useMemo(() => {
+    if (activeTab === 'compraram') return baseLeads;
+    if (statusFilter === 'todos') return baseLeads;
+    return baseLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
+  }, [baseLeads, statusFilter, activeTab]);
 
   const handleGeneratePlan = async (lead: any) => {
     try {
@@ -162,22 +169,31 @@ export function LeadsParcerriaPanel() {
                 <User className="h-5 w-5" />
                 Lista de Leads
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Filtrar por status:</span>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todos">Todos</SelectItem>
-                    <SelectItem value="lead">lead</SelectItem>
-                    <SelectItem value="planejando">planejando</SelectItem>
-                    <SelectItem value="comprou">comprou</SelectItem>
-                    <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
-                    <SelectItem value="upsell_pago">upsell pago</SelectItem>
-                    <SelectItem value="recusou">não quer</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="flex items-center gap-3">
+                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
+                  <TabsList>
+                    <TabsTrigger value="leads">Leads</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram</TabsTrigger>
+                  </TabsList>
+                </Tabs>
+                {activeTab === 'leads' && (
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground">Filtrar por status:</span>
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-40">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos</SelectItem>
+                        <SelectItem value="lead">lead</SelectItem>
+                        <SelectItem value="planejando">planejando</SelectItem>
+                        <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
+                        <SelectItem value="upsell_pago">upsell pago</SelectItem>
+                        <SelectItem value="recusou">não quer</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
               </div>
             </CardTitle>
           </CardHeader>
