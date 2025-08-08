@@ -16,6 +16,47 @@ if (!OPENAI_API_KEY) {
   console.warn('[generate-gamified-funnel] OPENAI_API_KEY não configurada');
 }
 
+// Transcreve um áudio a partir de uma URL usando o OpenAI Whisper
+async function transcribeAudioFromUrl(audioUrl: string): Promise<string | null> {
+  try {
+    if (!audioUrl) return null;
+    const res = await fetch(audioUrl);
+    if (!res.ok) {
+      console.warn('[generate-gamified-funnel] Falha ao baixar áudio para transcrição:', audioUrl, res.status);
+      return null;
+    }
+
+    const contentType = res.headers.get('content-type') || 'audio/mpeg';
+    const arrayBuffer = await res.arrayBuffer();
+    const blob = new Blob([arrayBuffer], { type: contentType });
+
+    const form = new FormData();
+    const ext = (contentType.split('/')[1] || 'mp3').split(';')[0];
+    form.append('file', blob, `visao-futuro.${ext}`);
+    form.append('model', 'whisper-1');
+    form.append('language', 'pt');
+
+    const whisper = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${OPENAI_API_KEY}` },
+      body: form,
+    });
+
+    if (!whisper.ok) {
+      const txt = await whisper.text();
+      console.error('[generate-gamified-funnel] Erro na transcrição OpenAI:', txt);
+      return null;
+    }
+
+    const json = await whisper.json();
+    const text = json?.text as string | undefined;
+    return text?.trim() ? text.trim() : null;
+  } catch (e) {
+    console.error('[generate-gamified-funnel] Exceção na transcrição:', e);
+    return null;
+  }
+}
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -47,19 +88,46 @@ serve(async (req) => {
       });
     }
 
-    // Extrair informações do cliente
-    const respostas = (lead as any).respostas || {};
-    const dados = respostas.dadosPersonais || respostas || {};
-    const nome = dados.nome || respostas.nome || 'Cliente';
-    const email = (lead as any).email_usuario || dados.email || 'Não informado';
-    const whatsapp = dados.whatsapp || dados.telefone || respostas.telefone || 'Não informado';
-    const tipoNegocio = (lead as any).tipo_negocio || respostas.tipo_negocio || 'não informado';
-    const valorMedio = respostas.valorMedioProduto || respostas.valor_medio_produto || 'não informado';
-    const jaTeveVendas = respostas.jaTeveVendas ?? respostas.ja_teve_vendas ?? 'não informado';
-    const visaoFuturoTexto = (lead as any).visao_futuro_texto || respostas.visaoFuturo?.texto || '';
-    const audioVisaoFuturo = (lead as any).audio_visao_futuro || respostas.visaoFuturo?.audio || '';
+// Extrair informações do cliente
+const respostas = (lead as any).respostas || {};
+const dados = respostas.dadosPersonais || respostas || {};
+const nome = dados.nome || respostas.nome || 'Cliente';
+const email = (lead as any).email_usuario || dados.email || 'Não informado';
+const whatsapp = dados.whatsapp || dados.telefone || respostas.telefone || 'Não informado';
+const tipoNegocio = (lead as any).tipo_negocio || respostas.tipo_negocio || 'não informado';
+const valorMedio = respostas.valorMedioProduto || respostas.valor_medio_produto || 'não informado';
+const jaTeveVendas = respostas.jaTeveVendas ?? respostas.ja_teve_vendas ?? 'não informado';
+const visaoFuturoTexto = (lead as any).visao_futuro_texto || respostas.visaoFuturo?.texto || '';
+const audioVisaoFuturo = (lead as any).audio_visao_futuro || respostas.visaoFuturo?.audio || '';
 
-    const informacoesCliente = `
+let visaoFuturoTextoFinal = visaoFuturoTexto || '';
+
+if (audioVisaoFuturo) {
+  console.log('[generate-gamified-funnel] Áudio detectado para visão de futuro. Iniciando transcrição...');
+  const transcricao = await transcribeAudioFromUrl(audioVisaoFuturo);
+  if (transcricao) {
+    visaoFuturoTextoFinal = visaoFuturoTextoFinal
+      ? `${visaoFuturoTextoFinal}\n\n[Transcrição do áudio]\n${transcricao}`
+      : transcricao;
+
+    // Tentar salvar a transcrição no lead (best-effort)
+    try {
+      const { error: vfErr } = await supabase
+        .from('formularios_parceria')
+        .update({ visao_futuro_texto: visaoFuturoTextoFinal, updated_at: new Date().toISOString() })
+        .eq('id', leadId);
+      if (vfErr) {
+        console.warn('[generate-gamified-funnel] Falha ao salvar transcrição (não crítico):', vfErr);
+      }
+    } catch (e) {
+      console.warn('[generate-gamified-funnel] Exceção ao salvar transcrição (não crítico):', e);
+    }
+  } else {
+    console.warn('[generate-gamified-funnel] Transcrição não obtida, seguindo sem ela.');
+  }
+}
+
+const informacoesCliente = `
 Nome: ${nome}
 Email: ${email}
 WhatsApp: ${whatsapp}
@@ -67,7 +135,7 @@ Tipo de Negócio: ${tipoNegocio}
 Valor Médio do Produto/Serviço: ${valorMedio}
 Já Teve Vendas: ${jaTeveVendas}
 Data do Lead: ${lead.created_at}
-Visão de Futuro (texto): ${visaoFuturoTexto || '—'}
+Visão de Futuro (texto): ${visaoFuturoTextoFinal || '—'}
 Visão de Futuro (áudio/link): ${audioVisaoFuturo || '—'}
 `;
 
