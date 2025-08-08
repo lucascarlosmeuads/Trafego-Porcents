@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { MessageCircle, Calendar, User, Mail, Phone, Eye, AlertCircle, Users, DollarSign, Package, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { LeadDetailsModal } from '@/components/LeadsParceria/LeadDetailsModal';
@@ -20,6 +21,38 @@ export function VendedorLeadsPanel() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
   const [activeTab, setActiveTab] = useState<'leads' | 'compraram'>('leads');
+  // Filtro de data local
+  const [dateOption, setDateOption] = useState<'hoje' | 'ontem' | 'personalizado'>('hoje');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
+  const pad = (d: Date) => d.toISOString().slice(0, 10);
+  const range = useMemo(() => {
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+    if (dateOption === 'hoje') {
+      const s = pad(today); return { start: s, end: s };
+    }
+    if (dateOption === 'ontem') {
+      const s = pad(yesterday); return { start: s, end: s };
+    }
+    if (customStart && customEnd) { return { start: customStart, end: customEnd }; }
+    return undefined;
+  }, [dateOption, customStart, customEnd]);
+
+  const dateFilteredLeads = useMemo(() => {
+    if (!range) return leads;
+    const start = new Date(`${range.start}T00:00:00`);
+    const end = new Date(`${range.end}T23:59:59`);
+    return leads.filter(l => {
+      const d = new Date(l.created_at);
+      return d >= start && d <= end;
+    });
+  }, [leads, range]);
+
+  const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
+  const leadsCount = useMemo(() => dateFilteredLeads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [dateFilteredLeads, purchasedStatuses]);
+  const compraramCount = useMemo(() => dateFilteredLeads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [dateFilteredLeads, purchasedStatuses]);
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -66,15 +99,15 @@ export function VendedorLeadsPanel() {
   };
 
   // Ordenar leads por prioridade (mais completos primeiro) e depois por data
-  const sortedLeads = [...leads].sort((a, b) => {
+  const sortedLeads = [...dateFilteredLeads].sort((a, b) => {
     const priorityDiff = getLeadPriority(b) - getLeadPriority(a);
     if (priorityDiff !== 0) return priorityDiff;
     return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
   });
 
   const baseLeads = useMemo(() => {
-    return sortedLeads.filter(l => (activeTab === 'compraram' ? (l.status_negociacao === 'comprou') : (l.status_negociacao !== 'comprou')));
-  }, [sortedLeads, activeTab]);
+    return sortedLeads.filter(l => (activeTab === 'compraram' ? purchasedStatuses.has(l.status_negociacao) : !purchasedStatuses.has(l.status_negociacao)));
+  }, [sortedLeads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {
     if (activeTab === 'compraram') return baseLeads;
@@ -146,10 +179,29 @@ export function VendedorLeadsPanel() {
               <div className="flex items-center gap-3">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
-                    <TabsTrigger value="leads">Leads</TabsTrigger>
-                    <TabsTrigger value="compraram">Compraram</TabsTrigger>
+                    <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram ({compraramCount})</TabsTrigger>
                   </TabsList>
                 </Tabs>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Período:</span>
+                  <Select value={dateOption} onValueChange={(v) => setDateOption(v as 'hoje' | 'ontem' | 'personalizado')}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hoje">Hoje</SelectItem>
+                      <SelectItem value="ontem">Ontem</SelectItem>
+                      <SelectItem value="personalizado">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {dateOption === 'personalizado' && (
+                    <>
+                      <Input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-36" />
+                      <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-36" />
+                    </>
+                  )}
+                </div>
                 {activeTab === 'leads' && (
                   <>
                     <LeadsExportButton />

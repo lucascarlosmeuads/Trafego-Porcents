@@ -328,6 +328,7 @@ const { toast } = useToast();
                                   setActiveTab('leads');
                                 }
                               }}
+                            >
                               <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
