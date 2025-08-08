@@ -235,24 +235,40 @@ INSTRUÇÕES CRÍTICAS:
       throw new Error('Planejamento vazio retornado pela OpenAI');
     }
 
-    console.log('💾 Salvando planejamento no banco de dados...');
+console.log('💾 Salvando planejamento no banco de dados...');
 
-    // Salvar planejamento na tabela briefings_cliente
-    const { data: updateData, error } = await supabase
-      .from('briefings_cliente')
-      .update({ 
-        planejamento_estrategico: planejamento,
-        updated_at: new Date().toISOString()
-      })
-      .eq('email_cliente', emailCliente)
-      .select();
+// Salvar planejamento na tabela briefings_cliente
+const { data: updateData, error } = await supabase
+  .from('briefings_cliente')
+  .update({ 
+    planejamento_estrategico: planejamento,
+    updated_at: new Date().toISOString()
+  })
+  .eq('email_cliente', emailCliente)
+  .select();
 
-    if (error) {
-      console.error('❌ Erro ao salvar no banco:', error);
-      throw new Error(`Database error: ${error.message}`);
-    }
+if (error) {
+  console.error('❌ Erro ao salvar no banco:', error);
+  throw new Error(`Database error: ${error.message}`);
+}
 
-    console.log('✅ Planejamento salvo com sucesso');
+console.log('✅ Planejamento salvo com sucesso');
+
+// Atualizar status da campanha do cliente para "Planj/Gerado"
+try {
+  const { error: statusError } = await supabase
+    .from('todos_clientes')
+    .update({ status_campanha: 'Planj/Gerado' })
+    .eq('email_cliente', emailCliente);
+
+  if (statusError) {
+    console.warn('⚠️ Não foi possível atualizar status para Planj/Gerado:', statusError.message);
+  } else {
+    console.log('✅ Status do cliente atualizado para Planj/Gerado');
+  }
+} catch (e) {
+  console.warn('⚠️ Erro inesperado ao atualizar status do cliente:', e);
+}
 
     return new Response(
       JSON.stringify({ 

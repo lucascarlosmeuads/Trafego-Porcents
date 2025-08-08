@@ -19,7 +19,9 @@ export const CAMPAIGN_STATUS = {
   EM_ANDAMENTO: 'Em andamento',
   OFF: 'Off',
   NO_AR: 'No Ar',
-  CAMPANHA_NO_AR: 'Campanha no Ar'
+  CAMPANHA_NO_AR: 'Campanha no Ar',
+  PLANEJAMENTO_GERADO: 'Planejamento gerado',
+  PLANJ_GERADO: 'Planj/Gerado'
 } as const;
 
 export type StatusCampanha = typeof CAMPAIGN_STATUS[keyof typeof CAMPAIGN_STATUS];
@@ -66,7 +68,9 @@ export const STATUS_COLORS = {
   [CAMPAIGN_STATUS.EM_ANDAMENTO]: 'bg-blue-100 text-blue-800',
   [CAMPAIGN_STATUS.OFF]: 'bg-gray-300 text-gray-800',
   [CAMPAIGN_STATUS.NO_AR]: 'bg-green-200 text-green-800',
-  [CAMPAIGN_STATUS.CAMPANHA_NO_AR]: 'bg-green-200 text-green-800'
+  [CAMPAIGN_STATUS.CAMPANHA_NO_AR]: 'bg-green-200 text-green-800',
+  [CAMPAIGN_STATUS.PLANEJAMENTO_GERADO]: 'bg-green-800 text-green-50',
+  [CAMPAIGN_STATUS.PLANJ_GERADO]: 'bg-green-700 text-green-50'
 } as const;
 
 // Mensagens padrão

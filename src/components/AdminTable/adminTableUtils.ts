@@ -38,6 +38,10 @@ export const getStatusColor = (status: string) => {
       return 'bg-green-500/20 text-green-700 border border-green-500/30'
     case 'Otimização':
       return 'bg-emerald-500/20 text-emerald-700 border border-emerald-500/30'
+    case 'Planejamento gerado':
+      return 'bg-green-700/20 text-green-800 border border-green-700/30'
+    case 'Planj/Gerado':
+      return 'bg-green-600/20 text-green-800 border border-green-600/30'
     case 'Cliente Sumiu':
       return 'bg-slate-500/20 text-slate-700 border border-slate-500/30'
     case 'Reembolso':
