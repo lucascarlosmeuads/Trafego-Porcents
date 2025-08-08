@@ -53,7 +53,17 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
     },
    ]
  
-   const visibleItems = menuItems.filter(item => item.id !== 'sac')
+   const visibleItems = menuItems
+     .filter(item => item.id !== 'sac')
+     .sort((a, b) => {
+       const order: Record<string, number> = {
+         'dashboard': 0,
+         'leads-parceria': 1,
+         'clientes': 2,
+         'acervo-ideias': 3,
+       }
+       return (order[a.id] ?? 99) - (order[b.id] ?? 99)
+     })
  
    if (isCollapsed) {
     return (
