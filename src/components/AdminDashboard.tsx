@@ -20,7 +20,7 @@ import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
 import { DateRangeFilter } from './DateRangeFilter'
-import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter'
+
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
@@ -39,12 +39,12 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   // CORREÇÃO: Todos os hooks devem ser chamados PRIMEIRO, sem condições
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
-  const { currentFilter } = useGlobalDateFilter()
+  const [dashboardFilter, setDashboardFilter] = useState<{ startDate?: string; endDate?: string; option?: string }>({ option: 'hoje' })
   const stableFilterDates = useMemo(() => ({
-    startDate: currentFilter.startDate,
-    endDate: currentFilter.endDate,
-    option: currentFilter.option
-  }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option])
+    startDate: dashboardFilter.startDate,
+    endDate: dashboardFilter.endDate,
+    option: dashboardFilter.option
+  }), [dashboardFilter.startDate, dashboardFilter.endDate, dashboardFilter.option])
   const { todayStats, filteredStats } = useLeadsAnalytics(stableFilterDates)
   const analyticsBase = filteredStats || todayStats
   const totalLeadsCount = analyticsBase?.total || 0
@@ -65,9 +65,17 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
       case 'ontem':
         fetchInsightsWithPeriod('yesterday')
         break
+      case 'ultimos_7_dias':
+        fetchInsightsWithPeriod('last_7_days')
+        break
+      case 'ultimos_30_dias':
+        fetchInsightsWithPeriod('last_30_days')
+        break
+      case 'anteontem':
+      case 'total':
       case 'personalizado':
         if (stableFilterDates.startDate && stableFilterDates.endDate) {
-          fetchInsightsWithPeriod('custom' as any, stableFilterDates.startDate, stableFilterDates.endDate)
+          fetchInsightsWithPeriod('custom', stableFilterDates.startDate, stableFilterDates.endDate)
         }
         break
       default:
@@ -111,7 +119,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
           <div className="space-y-6">
             {/* Filtro de Data */}
             <div className="bg-card border rounded-lg p-4">
-              <DateRangeFilter />
+              <DateRangeFilter onFilterChange={(start, end, option) => setDashboardFilter({ startDate: start, endDate: end, option })} />
             </div>
 
             {/* Cards Resumidos */}
