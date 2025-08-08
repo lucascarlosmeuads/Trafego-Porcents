@@ -231,7 +231,7 @@ Estas diretrizes são instruções internas para você seguir, NÃO devem aparec
     // Atualizar lead com planejamento e status
     const { error: updateError } = await supabase
       .from('formularios_parceria')
-      .update({ planejamento_estrategico: planejamento, status_negociacao: 'planejamento_entregue', updated_at: new Date().toISOString() })
+      .update({ planejamento_estrategico: planejamento, status_negociacao: 'planejando', updated_at: new Date().toISOString() })
       .eq('id', leadId);
 
     if (updateError) {

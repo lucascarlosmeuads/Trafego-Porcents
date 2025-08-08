@@ -281,7 +281,7 @@ export function LeadsParcerriaPanel() {
       setPlanEmail(lead.email_usuario || undefined);
       setPlanModalOpen(true);
       // Atualiza status localmente
-      updateLeadNegociacao?.(lead.id, 'planejamento_entregue');
+      updateLeadNegociacao?.(lead.id, 'planejando');
     } catch (err: any) {
       console.error('Erro ao gerar planejamento:', err);
       toast({ title: 'Erro', description: 'Não foi possível gerar o planejamento.', variant: 'destructive' });
@@ -416,7 +416,7 @@ export function LeadsParcerriaPanel() {
                        <SelectContent className="z-50 bg-background">
                         <SelectItem value="todos">Todos</SelectItem>
                         <SelectItem value="lead">lead</SelectItem>
-                        <SelectItem value="planejando">planejando</SelectItem>
+                        <SelectItem value="planejando">planj/gerado</SelectItem>
                         <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
                         <SelectItem value="upsell_pago">upsell pago</SelectItem>
                         <SelectItem value="recusou">não quer</SelectItem>
@@ -516,7 +516,7 @@ export function LeadsParcerriaPanel() {
                               </SelectTrigger>
                               <SelectContent className="z-50 bg-background">
                                 <SelectItem value="lead">lead</SelectItem>
-                                <SelectItem value="planejando">planejando</SelectItem>
+                                <SelectItem value="planejando">planj/gerado</SelectItem>
                                 <SelectItem value="comprou">comprou</SelectItem>
                                 <SelectItem value="planejamento_entregue">planejamento entregue</SelectItem>
                                 <SelectItem value="upsell_pago">upsell pago</SelectItem>
