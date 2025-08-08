@@ -1,14 +1,12 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 
 interface DownloadPlanParams {
   content: string;
-  title: string;
+  title: string; // mantido por compatibilidade
   filename: string;
 }
 
@@ -20,21 +18,24 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
   container.style.top = '0';
   container.style.width = '794px'; // Aproximadamente A4 em 96dpi
   container.style.padding = '24px';
-  container.className = 'prose prose-sm sm:prose max-w-none whitespace-pre-wrap break-words leading-relaxed bg-white text-black';
+  container.className = 'max-w-none whitespace-pre-wrap break-words leading-relaxed bg-white text-black';
   document.body.appendChild(container);
 
   const root = ReactDOM.createRoot(container);
   root.render(
     <div>
-      <h1 className="font-bold text-2xl mb-4">{title}</h1>
-      <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-        {content}
-      </ReactMarkdown>
+      <h1 className="font-bold text-2xl mb-2 leading-tight">
+        planejamento estratégico feito por Lucas Carlos - Funil Magnético e Interativo
+      </h1>
+      <h2 className="font-semibold text-lg mb-2 leading-snug">
+        tráfego pago em troca de % sobre as vendas
+      </h2>
+      <MarkdownRenderer content={content} />
     </div>
   );
 
   // Aguarda o render
-  await new Promise((r) => setTimeout(r, 80));
+  await new Promise((r) => setTimeout(r, 100));
 
   // Converte para canvas
   const canvas = await html2canvas(container, { scale: 2, backgroundColor: '#ffffff', useCORS: true });

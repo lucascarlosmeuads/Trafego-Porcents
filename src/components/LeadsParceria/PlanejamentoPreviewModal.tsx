@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import remarkBreaks from 'remark-breaks';
+import { MarkdownRenderer } from '@/components/MarkdownRenderer';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
@@ -61,7 +59,12 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl font-bold">{title}</DialogTitle>
+          <DialogTitle className="text-xl font-bold leading-tight">
+            planejamento estratégico feito por Lucas Carlos - Funil Magnético e Interativo
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            tráfego pago em troca de % sobre as vendas
+          </p>
         </DialogHeader>
 
         {isEditing ? (
@@ -73,24 +76,9 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
             />
           </div>
         ) : (
-          <article className="prose prose-sm sm:prose dark:prose-invert max-w-none whitespace-pre-wrap break-words leading-relaxed">
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm, remarkBreaks]}
-              components={{
-                h1: ({ node, ...props }) => <h1 className="font-bold text-2xl mt-6 mb-3" {...props} />,
-                h2: ({ node, ...props }) => <h2 className="font-semibold text-xl mt-5 mb-3" {...props} />,
-                h3: ({ node, ...props }) => <h3 className="font-semibold text-lg mt-4 mb-2" {...props} />,
-                p: ({ node, ...props }) => <p className="mt-4 mb-4" {...props} />,
-                ul: ({ node, ...props }) => <ul className="mt-4 mb-4 list-disc pl-6" {...props} />,
-                ol: ({ node, ...props }) => <ol className="mt-4 mb-4 list-decimal pl-6" {...props} />,
-                li: ({ node, ...props }) => <li className="my-1" {...props} />,
-                strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
-                hr: ({ node, ...props }) => <hr className="my-6" {...props} />,
-              }}
-            >
-              {draft || content}
-            </ReactMarkdown>
-          </article>
+          <div className="max-w-none whitespace-pre-wrap break-words">
+            <MarkdownRenderer content={draft || content} />
+          </div>
         )}
 
         <DialogFooter className="mt-4">
