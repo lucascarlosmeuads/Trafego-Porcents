@@ -1,19 +1,16 @@
 
-import { useState, useEffect, Suspense, useMemo, useRef, lazy } from 'react'
+import { useState, useEffect, Suspense, useMemo, useRef } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
 import { AdminDashboardMetrics } from './AdminDashboard/AdminDashboardMetrics'
 
-// Local lazy wrappers (avoid circular dependency with LazyComponents)
-const DocumentationViewer = lazy(() => import('./Documentation/DocumentationViewer'));
-const SacGestorReport = lazy(() => import('./SAC/SacGestorReport'));
-const AcervoIdeasDashboard = lazy(() => import('./AcervoIdeias/AcervoIdeasDashboard').then(m => ({ default: m.AcervoIdeasDashboard })));
+import { LazyStatusFunnelDashboard, LazyDocumentationViewer, LazyAcervoIdeasDashboard } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
 import { ManagerSelector } from './ManagerSelector'
 import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
-// (removed circular import)
+import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
@@ -209,14 +206,14 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
       case 'sac-relatorio':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <SacGestorReport />
+            <LazyRelatorioSacGestores />
           </Suspense>
         )
 
       case 'documentacao':
         return (
           <Suspense fallback={<LoadingFallback />}>
-            <DocumentationViewer />
+            <LazyDocumentationViewer />
           </Suspense>
         )
 
@@ -245,7 +242,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
                   </p>
                 </div>
               </div>
-              <AcervoIdeasDashboard />
+              <LazyAcervoIdeasDashboard />
             </div>
           </Suspense>
         )
