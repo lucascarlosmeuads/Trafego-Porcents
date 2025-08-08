@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
 import { MessageCircle, User, Eye, CheckCircle, Wand2, Download } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
@@ -19,16 +20,36 @@ import { downloadPlanPdf } from '@/utils/planDownload';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function LeadsParcerriaPanel() {
-  const { currentFilter } = useGlobalDateFilter();
+  // Filtro de data local: hoje, ontem, personalizado
+  const [dateOption, setDateOption] = useState<'hoje' | 'ontem' | 'personalizado'>('hoje');
+  const [customStart, setCustomStart] = useState<string>('');
+  const [customEnd, setCustomEnd] = useState<string>('');
+
+  const makeRange = (
+    option: 'hoje' | 'ontem' | 'personalizado',
+    start: string,
+    end: string
+  ) => {
+    const pad = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (option === 'hoje') {
+      const s = pad(today);
+      return { startDate: s, endDate: s, option: 'hoje' };
+    }
+    if (option === 'ontem') {
+      const s = pad(yesterday);
+      return { startDate: s, endDate: s, option: 'ontem' };
+    }
+    if (start && end) return { startDate: start, endDate: end, option: 'personalizado' };
+    return undefined;
+  };
+
+  const filterToUse = useMemo(() => makeRange(dateOption, customStart, customEnd), [dateOption, customStart, customEnd]);
   
-  // Create stable filter object to prevent infinite loops
-  const stableFilterDates = useMemo(() => ({
-    startDate: currentFilter.startDate,
-    endDate: currentFilter.endDate,
-    option: currentFilter.option
-  }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option]);
-  
-  const { leads, loading, updateLeadNegociacao, refetch } = useLeadsParceria(stableFilterDates);
+  const { leads, loading, updateLeadNegociacao, refetch } = useLeadsParceria(filterToUse);
   
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,7 +60,12 @@ export function LeadsParcerriaPanel() {
   const [planContent, setPlanContent] = useState<string | null>(null);
   const [planClientName, setPlanClientName] = useState<string>('Cliente');
   const [planEmail, setPlanEmail] = useState<string | undefined>(undefined);
-  const { toast } = useToast();
+const { toast } = useToast();
+
+  // Conjuntos e contadores por aba
+  const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
+  const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
+  const compraramCount = useMemo(() => leads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -104,8 +130,10 @@ export function LeadsParcerriaPanel() {
   };
 
   const baseLeads = useMemo(() => {
-    return leads.filter(l => (activeTab === 'compraram' ? (l.status_negociacao === 'comprou') : (l.status_negociacao !== 'comprou')));
-  }, [leads, activeTab]);
+    return leads.filter(l => (activeTab === 'compraram'
+      ? purchasedStatuses.has(l.status_negociacao)
+      : !purchasedStatuses.has(l.status_negociacao)));
+  }, [leads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {
     if (activeTab === 'compraram') return baseLeads;
@@ -172,10 +200,29 @@ export function LeadsParcerriaPanel() {
               <div className="flex items-center gap-3">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
-                    <TabsTrigger value="leads">Leads</TabsTrigger>
-                    <TabsTrigger value="compraram">Compraram</TabsTrigger>
+                    <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram ({compraramCount})</TabsTrigger>
                   </TabsList>
                 </Tabs>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Período:</span>
+                  <Select value={dateOption} onValueChange={(v) => setDateOption(v as 'hoje' | 'ontem' | 'personalizado')}>
+                    <SelectTrigger className="w-36">
+                      <SelectValue placeholder="Período" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="hoje">Hoje</SelectItem>
+                      <SelectItem value="ontem">Ontem</SelectItem>
+                      <SelectItem value="personalizado">Personalizado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  {dateOption === 'personalizado' && (
+                    <>
+                      <Input type="date" value={customStart} onChange={(e) => setCustomStart(e.target.value)} className="w-36" />
+                      <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-36" />
+                    </>
+                  )}
+                </div>
                 {activeTab === 'leads' && (
                   <div className="flex items-center gap-2">
                     <span className="text-sm text-muted-foreground">Filtrar por status:</span>
@@ -273,10 +320,14 @@ export function LeadsParcerriaPanel() {
                           <div className="flex flex-col gap-1">
                             <Select
                               value={lead.status_negociacao || 'lead'}
-                              onValueChange={(value: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago') => 
-                                updateLeadNegociacao?.(lead.id, value)
-                              }
-                            >
+                              onValueChange={(value: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago') => {
+                                updateLeadNegociacao?.(lead.id, value);
+                                if (['comprou','planejando','planejamento_entregue','upsell_pago'].includes(value)) {
+                                  setActiveTab('compraram');
+                                } else {
+                                  setActiveTab('leads');
+                                }
+                              }}
                               <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
