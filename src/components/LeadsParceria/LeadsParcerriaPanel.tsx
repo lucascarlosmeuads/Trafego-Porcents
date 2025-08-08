@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle } from 'lucide-react';
+import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, MessageSquareText } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
@@ -17,6 +17,7 @@ import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
+import { PersonalizedMessageModal } from './PersonalizedMessageModal';
 import { downloadPlanPdf } from '@/utils/planDownload';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
@@ -67,6 +68,9 @@ export function LeadsParcerriaPanel() {
   const [bulkLoading, setBulkLoading] = useState(false);
   const { toast } = useToast();
   const [showNeedsInfoOnly, setShowNeedsInfoOnly] = useState(false);
+  const [messageModalOpen, setMessageModalOpen] = useState(false);
+  const [personalizedMessage, setPersonalizedMessage] = useState('');
+  const [personalizedClient, setPersonalizedClient] = useState<{ name?: string; phone?: string | null }>({});
   // Conjuntos e contadores por aba
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
   const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
@@ -283,6 +287,24 @@ export function LeadsParcerriaPanel() {
       toast({ title: 'Erro', description: 'Não foi possível gerar o planejamento.', variant: 'destructive' });
     } finally {
       setGenerating(prev => ({ ...prev, [lead.id]: false }));
+    }
+  };
+
+  const handleGeneratePersonalizedMessage = async (lead: any) => {
+    try {
+      toast({ title: 'Gerando mensagem', description: 'Preparando mensagem personalizada...' });
+      const { data, error } = await supabase.functions.invoke('generate-personalized-message', {
+        body: { leadId: lead.id }
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.error || 'Falha ao gerar mensagem');
+
+      setPersonalizedMessage(data.message as string);
+      setPersonalizedClient({ name: data.client_name as string, phone: data.phone as string | null });
+      setMessageModalOpen(true);
+    } catch (err: any) {
+      console.error('Erro ao gerar mensagem:', err);
+      toast({ title: 'Erro', description: err.message || 'Não foi possível gerar a mensagem.', variant: 'destructive' });
     }
   };
 
@@ -527,6 +549,15 @@ export function LeadsParcerriaPanel() {
                             >
                               <AlertCircle className={`h-4 w-4 ${lead.precisa_mais_info ? 'text-orange-600' : ''}`} />
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleGeneratePersonalizedMessage(lead)}
+                              className="h-8 w-8 p-0"
+                              title="Gerar mensagem personalizada"
+                            >
+                              <MessageSquareText className="h-4 w-4 text-green-700" />
+                            </Button>
                             {lead.planejamento_estrategico ? (
                               <>
                                 <Button
@@ -606,6 +637,14 @@ export function LeadsParcerriaPanel() {
           setPlanContent(finalContent);
           refetch?.();
         }}
+      />
+
+      <PersonalizedMessageModal
+        open={messageModalOpen}
+        onOpenChange={setMessageModalOpen}
+        message={personalizedMessage}
+        clientName={personalizedClient.name}
+        phone={personalizedClient.phone ?? null}
       />
     </>
   );

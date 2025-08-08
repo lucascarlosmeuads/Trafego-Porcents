@@ -73,3 +73,6 @@ verify_jwt = false
 
 [functions.bulk-generate-parceria-plans]
 verify_jwt = false
+
+[functions.generate-personalized-message]
+verify_jwt = false
