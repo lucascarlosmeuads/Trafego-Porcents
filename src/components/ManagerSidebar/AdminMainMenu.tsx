@@ -47,13 +47,13 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
     },
     {
       id: 'leads-parceria',
-      label: 'Leads Parceria',
+      label: 'Leads',
       icon: UserPlus,
       description: 'Leads interessados em parceria'
     },
    ]
  
-   const visibleItems = menuItems.filter(item => !['dashboard', 'sac'].includes(item.id))
+   const visibleItems = menuItems.filter(item => item.id !== 'sac')
  
    if (isCollapsed) {
     return (

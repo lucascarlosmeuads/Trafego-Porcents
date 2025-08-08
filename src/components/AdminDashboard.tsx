@@ -1,5 +1,5 @@
 
-import { useState, useEffect, Suspense } from 'react'
+import { useState, useEffect, Suspense, useMemo } from 'react'
 import { useAuth } from '@/hooks/useAuth'
 import { ClientesTable } from './ClientesTable'
 import { GestoresManagement } from './GestoresManagement'
@@ -21,6 +21,11 @@ import GeradorCriativosDashboardNew from './GeradorCriativos/GeradorCriativosDas
 import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
+import { DateRangeFilter } from './DateRangeFilter'
+import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter'
+import { LeadsParcerriaAnalytics } from './LeadsParceria/LeadsParcerriaAnalytics'
+import { LeadsMetaAdsReport } from './LeadsParceria/LeadsMetaAdsReport'
+import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics'
 
 interface AdminDashboardProps {
   selectedManager: string | null
@@ -33,7 +38,17 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   // CORREÇÃO: Todos os hooks devem ser chamados PRIMEIRO, sem condições
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
-  
+  const { currentFilter } = useGlobalDateFilter()
+  const stableFilterDates = useMemo(() => ({
+    startDate: currentFilter.startDate,
+    endDate: currentFilter.endDate,
+    option: currentFilter.option
+  }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option])
+  const { todayStats, filteredStats } = useLeadsAnalytics(stableFilterDates)
+  const analyticsBase = filteredStats || todayStats
+  const totalLeadsCount = analyticsBase?.total || 0
+  const convertedLeadsCount = analyticsBase?.converted || 0
+  const conversionRate = analyticsBase?.conversionRate || 0
   // Buscar dados dos clientes - sempre chamar o hook
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
     user?.email || 'fallback@example.com', 
@@ -79,8 +94,24 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
             </div>
 
 
+            {/* Filtro de Data para Relatórios */}
+            <div className="bg-card border rounded-lg p-4">
+              <DateRangeFilter />
+            </div>
+
             {/* Configuração Meta Ads Global */}
             <AdminMetaAdsConfig />
+
+            {/* Analytics de Leads */}
+            <LeadsParcerriaAnalytics dateFilter={stableFilterDates} />
+
+            {/* Relatório Financeiro de Leads */}
+            <LeadsMetaAdsReport 
+              convertedLeads={convertedLeadsCount}
+              totalLeads={totalLeadsCount}
+              conversionRate={conversionRate}
+              dateFilter={stableFilterDates}
+            />
 
             {/* Métricas Meta Ads */}
             <AdminMetaAdsMetrics />

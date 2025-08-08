@@ -4,12 +4,12 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { MessageCircle, Calendar, User, Mail, Phone, BarChart3, Eye, CheckCircle, Wand2, Download } from 'lucide-react';
-import { LeadsParcerriaAnalytics } from './LeadsParcerriaAnalytics';
+import { MessageCircle, User, Eye, CheckCircle, Wand2, Download } from 'lucide-react';
+
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
-import { DateRangeFilter } from '@/components/DateRangeFilter';
-import { useGlobalDateFilter, type DateFilterOption } from '@/hooks/useGlobalDateFilter';
+
+import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { supabase } from '@/integrations/supabase/client';
@@ -27,8 +27,8 @@ export function LeadsParcerriaPanel() {
     option: currentFilter.option
   }), [currentFilter.startDate, currentFilter.endDate, currentFilter.option]);
   
-  const { leads, loading, totalLeads, updateLeadNegociacao, refetch } = useLeadsParceria(stableFilterDates);
-  const [showAnalytics, setShowAnalytics] = useState(true);
+  const { leads, loading, updateLeadNegociacao, refetch } = useLeadsParceria(stableFilterDates);
+  
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -151,31 +151,9 @@ export function LeadsParcerriaPanel() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold">Leads de Parceria</h1>
-            <p className="text-muted-foreground">
-              Gerencie todos os leads interessados em parceria
-            </p>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              onClick={() => setShowAnalytics(!showAnalytics)}
-              className="flex items-center gap-2"
-            >
-              <BarChart3 className="h-4 w-4" />
-              {showAnalytics ? 'Ocultar' : 'Mostrar'} Analytics
-            </Button>
-            <Badge variant="secondary" className="text-lg px-4 py-2">
-              {totalLeads} {totalLeads === 1 ? 'Lead' : 'Leads'}
-            </Badge>
+            <h1 className="text-3xl font-bold">Leads</h1>
           </div>
         </div>
-
-        {/* Filtro de Data Centralizado */}
-        <DateRangeFilter />
-
-        {/* Dashboard de Analytics */}
-        {showAnalytics && <LeadsParcerriaAnalytics dateFilter={stableFilterDates} />}
 
         <Card>
           <CardHeader>
