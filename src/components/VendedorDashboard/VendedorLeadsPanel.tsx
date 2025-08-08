@@ -214,8 +214,8 @@ export function VendedorLeadsPanel() {
                         <SelectContent>
                           <SelectItem value="todos">Todos</SelectItem>
                           <SelectItem value="lead">lead</SelectItem>
-                           <SelectItem value="planejando">planj/entregue</SelectItem>
-                           <SelectItem value="planejamento_entregue">planj/gerado</SelectItem>
+                           <SelectItem value="planejando">planj/gerado</SelectItem>
+                           <SelectItem value="planejamento_entregue">planj/entregue</SelectItem>
                           <SelectItem value="upsell_pago">upsell pago</SelectItem>
                           <SelectItem value="recusou">não quer</SelectItem>
                         </SelectContent>
@@ -348,9 +348,9 @@ export function VendedorLeadsPanel() {
                               </SelectTrigger>
                                <SelectContent>
                                   <SelectItem value="lead">lead</SelectItem>
-                                   <SelectItem value="planejando">planj/entregue</SelectItem>
+                                   <SelectItem value="planejando">planj/gerado</SelectItem>
                                    <SelectItem value="comprou">comprou</SelectItem>
-                                   <SelectItem value="planejamento_entregue">planj/gerado</SelectItem>
+                                   <SelectItem value="planejamento_entregue">planj/entregue</SelectItem>
                                   <SelectItem value="upsell_pago">upsell pago</SelectItem>
                                   <SelectItem value="recusou">não quer</SelectItem>
                                 </SelectContent>

@@ -127,8 +127,8 @@ export function translateStatus(status: string): string {
     'lead': 'Lead',
     'comprou': 'Comprou',
     'recusou': 'Não quer',
-    'planejando': 'Planj/entregue',
-    'planejamento_entregue': 'Planj/gerado',
+    'planejando': 'Planj/gerado',
+    'planejamento_entregue': 'Planj/entregue',
     'upsell_pago': 'Upsell Pago'
   };
   
