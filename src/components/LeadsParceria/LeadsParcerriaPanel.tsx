@@ -60,7 +60,9 @@ export function LeadsParcerriaPanel() {
   const [planContent, setPlanContent] = useState<string | null>(null);
   const [planClientName, setPlanClientName] = useState<string>('Cliente');
   const [planEmail, setPlanEmail] = useState<string | undefined>(undefined);
-const { toast } = useToast();
+  const [bulkSize, setBulkSize] = useState<'todos' | '10' | '20'>('10');
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const { toast } = useToast();
 
   // Conjuntos e contadores por aba
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
@@ -118,7 +120,11 @@ const { toast } = useToast();
   };
 
   const getStatusBadge = (lead: any) => {
-    // Só mostra "Comprou (Automático)" se foi realmente via webhook
+    if (lead.precisa_mais_info) {
+      return (
+        <Badge className="bg-orange-500 text-white">Precisa mais info</Badge>
+      );
+    }
     if (lead.status_negociacao === 'comprou' && lead.cliente_pago && lead.webhook_automatico) {
       return (
         <Badge className="bg-green-600 text-white">
@@ -140,6 +146,22 @@ const { toast } = useToast();
     if (statusFilter === 'todos') return baseLeads;
     return baseLeads.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
   }, [baseLeads, statusFilter, activeTab]);
+
+  const handleBulkGenerate = async () => {
+    try {
+      setBulkLoading(true);
+      const size = bulkSize === 'todos' ? undefined : Number(bulkSize);
+      const { data, error } = await supabase.functions.invoke('bulk-generate-parceria-plans', { body: { size } });
+      if (error) throw error;
+      toast({ title: 'Geração em lote concluída', description: `Gerados: ${data?.gerados || 0} • Insuficientes: ${data?.marcadosInsuficiente || 0}` });
+      refetch?.();
+    } catch (err: any) {
+      console.error('Erro geração em lote:', err);
+      toast({ title: 'Erro na geração em lote', description: err.message || 'Falha ao gerar planejamentos', variant: 'destructive' });
+    } finally {
+      setBulkLoading(false);
+    }
+  };
 
   const handleGeneratePlan = async (lead: any) => {
     try {
@@ -222,6 +244,22 @@ const { toast } = useToast();
                       <Input type="date" value={customEnd} onChange={(e) => setCustomEnd(e.target.value)} className="w-36" />
                     </>
                   )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-muted-foreground">Lote:</span>
+                  <Select value={bulkSize} onValueChange={(v) => setBulkSize(v as any)}>
+                    <SelectTrigger className="w-28">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="10">10</SelectItem>
+                      <SelectItem value="20">20</SelectItem>
+                      <SelectItem value="todos">Todos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button size="sm" variant="outline" onClick={handleBulkGenerate} disabled={bulkLoading}>
+                    {bulkLoading ? 'Gerando...' : 'Gerar planejamentos'}
+                  </Button>
                 </div>
                 {activeTab === 'leads' && (
                   <div className="flex items-center gap-2">

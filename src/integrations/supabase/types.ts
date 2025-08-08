@@ -782,6 +782,7 @@ export type Database = {
           id: string
           ja_teve_vendas: boolean | null
           planejamento_estrategico: string | null
+          precisa_mais_info: boolean
           produto_descricao: string | null
           respostas: Json
           status_negociacao: string | null
@@ -804,6 +805,7 @@ export type Database = {
           id?: string
           ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null
+          precisa_mais_info?: boolean
           produto_descricao?: string | null
           respostas?: Json
           status_negociacao?: string | null
@@ -826,6 +828,7 @@ export type Database = {
           id?: string
           ja_teve_vendas?: boolean | null
           planejamento_estrategico?: string | null
+          precisa_mais_info?: boolean
           produto_descricao?: string | null
           respostas?: Json
           status_negociacao?: string | null

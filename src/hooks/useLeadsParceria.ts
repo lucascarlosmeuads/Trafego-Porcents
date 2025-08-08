@@ -22,6 +22,7 @@ interface LeadParceria {
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
   webhook_automatico?: boolean;
+  precisa_mais_info?: boolean;
 }
 
 export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
