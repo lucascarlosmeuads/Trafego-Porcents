@@ -32,9 +32,9 @@ export const PersonalizedMessageModal: React.FC<PersonalizedMessageModalProps> =
   const waText = encodeURIComponent(message);
   const cleanPhone = (phone || '').replace(/\D/g, '');
   const phoneWithCountry = cleanPhone ? (cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`) : '';
-  const waUrl = phoneWithCountry
-    ? `https://wa.me/${phoneWithCountry}?text=${waText}`
-    : `https://wa.me/?text=${waText}`;
+  const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+  const baseUrl = isMobile ? 'https://api.whatsapp.com/send' : 'https://web.whatsapp.com/send';
+  const waUrl = `${baseUrl}?${phoneWithCountry ? `phone=${phoneWithCountry}&` : ''}text=${waText}`;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

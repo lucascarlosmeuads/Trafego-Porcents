@@ -294,13 +294,25 @@ export function LeadsParcerriaPanel() {
     try {
       toast({ title: 'Gerando mensagem', description: 'Preparando mensagem personalizada...' });
       const { data, error } = await supabase.functions.invoke('generate-personalized-message', {
-        body: { leadId: lead.id }
+        body: { leadId: lead.id },
       });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Falha ao gerar mensagem');
 
-      setPersonalizedMessage(data.message as string);
-      setPersonalizedClient({ name: data.client_name as string, phone: data.phone as string | null });
+      const leadData = getLeadData(lead);
+      const fullName = String(leadData.nome || '').trim();
+      const serverName = String(data.client_name || '').trim();
+      const nameToUse = serverName && serverName.toLowerCase() !== 'cliente' ? serverName : fullName;
+      const firstName = (nameToUse || '').split(' ')[0] || 'Cliente';
+
+      let msg = String(data.message || '');
+      msg = msg.replace(/^Oi,\s*[^!]+!/i, `Oi, ${firstName}!`);
+
+      const phoneFromLead = leadData.whatsapp && leadData.whatsapp !== 'Não informado' ? leadData.whatsapp : null;
+      const phoneToUse = (data.phone as string | null) || (phoneFromLead as string | null) || null;
+
+      setPersonalizedMessage(msg);
+      setPersonalizedClient({ name: nameToUse || firstName, phone: phoneToUse });
       setMessageModalOpen(true);
     } catch (err: any) {
       console.error('Erro ao gerar mensagem:', err);
