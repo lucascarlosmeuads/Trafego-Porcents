@@ -96,22 +96,23 @@ Deno.serve(async (req) => {
       : ''
 
     const mensagem =
-      `E aí, tudo bem? ${firstName}, Lucas aqui. E aí, tudo bem? Lucas aqui.
-Já finalizei aqui o seu planejamento estratégico, baseado no que você preencheu lá no formulário e me falou aqui também. Esse planejamento tem como objetivo você entender o que a gente vai fazer para vender. Porque eu não posso perder tempo. Eu tenho que rodar uma oferta que realmente vende e depois eu vou ganhar só na comissão.
+      `Oi, ${firstName}! Lucas aqui.
 
-Então, o que a gente vai fazer vai ser um funil interativo. Esse funil interativo, eu chamo ele de magnético também, porque ele, desde o anúncio, vai chamar muita atenção de uma forma diferente do que o seu mercado está fazendo. Porque eu pesquisei aqui o seu nicho e percebi padrões claros${tipoTexto}${produtoTexto}
+Acabei de finalizar o seu planejamento estratégico com base no que você preencheu no formulário e no que conversamos. Este documento é a base para alinharmos a direção. Na hora de construir o funil, vou passar um pente fino em cada detalhe (copy, oferta, páginas, anúncios e métricas) para garantir máxima chance de conversão — sem perdermos tempo nem investimento.
 
-Além do anúncio ser diferente e chamar muita atenção, o funil vai fazer com que o cliente não perceba que ele vai fazer uma compra e vai chegar lá no final do funil de forma mais fácil. Então você vai ter um lead mais qualificado, que passou e mostrou interesse. Você não vai ficar falando com gente curiosa — esse ponto é bem importante.
+A proposta é um funil interativo (magnético):
+- Anúncios diferenciados para chamar atenção de um jeito que foge do padrão do mercado.
+- Jornada que conduz naturalmente até a conversão, filtrando curiosos e deixando só quem tem interesse real.
+- Quando fizer sentido, uma oferta de entrada de baixo ticket para aquecer e facilitar a venda do principal.
 
-Dependendo do caso, a gente pode até vender uma coisa baratinha ali no final do funil, para depois você vender o seu produto principal.
+Pesquisei o seu mercado e identifiquei padrões claros${tipoTexto}${produtoTexto}
 
-Esse planejamento aí é apenas uma base para você entender. Caso você prossiga para a construção do funil, que envolve criar uma página de venda e o funil gamificado (que é a parte da página para onde a gente manda o tráfego), precisamos ter os dois: a página de venda e o funil gamificado — igual ao funil que você passou por mim. Você passou pelo meu funil, mas eu tenho minha página de venda também: lucascarles.com.br. E o funil: funilmagnetico.traficoporcentos.com.
+Se você topar, em até 15 dias corridos colocamos a campanha no ar com tudo pronto.
 
-A ideia é fazer a mesma coisa no seu negócio para vender bem. Como eu falei, eu preciso que venda, senão eu não vou ganhar porcentagem sobre as vendas. Para construir esse funil, existe um custo inicial (detalhei no documento). Não é obrigatório fazer comigo: você pode fazer com a equipe que escolher, e eu posso orientar. Mas, se quiser fazer comigo, a gente já faz isso sempre aqui e entrega resultado (dá uma olhada nos destaques com depoimentos dos clientes).
+Sobre o modelo: trabalho com comissão de 10% sobre cada venda realizada. Se esse formato fizer sentido para você, me confirma por aqui. Se preferir outro modelo, me fala para alinharmos.
 
-Se você topar, em até 15 dias corridos no máximo a campanha já está no ar com o funil todo pronto.
+Fico à disposição para dúvidas. Assim que ler, me chama para alinharmos os próximos passos.`;
 
-Estou aqui para tirar qualquer dúvida. Assim que ler, me chama para a gente conversar.`;
 
     console.log('✅ [generate-personalized-message] message composed for', emailCliente)
 
