@@ -32,45 +32,50 @@ export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: s
 
   const getLeadsForDate = async (date: string): Promise<LeadsAnalytics> => {
     console.log('🔍 [LeadsAnalytics] Buscando leads para data (BRT):', date);
-    
-    const { data, error } = await supabase
-      .from('formularios_parceria')
-      .select('*')
-      .gte('created_at', `${date}T00:00:00-03:00`)
-      .lt('created_at', `${date}T23:59:59-03:00`);
 
-    if (error) {
-      console.error('❌ [LeadsAnalytics] Erro na query:', error);
-      throw error;
+    const pageSize = 1000;
+    let from = 0;
+    let all: any[] = [];
+
+    while (true) {
+      const to = from + pageSize - 1;
+      const { data, error } = await supabase
+        .from('formularios_parceria')
+        .select('id,audio_visao_futuro,cliente_pago,status_negociacao,tipo_negocio')
+        .gte('created_at', `${date}T00:00:00-03:00`)
+        .lt('created_at', `${date}T23:59:59-03:00`)
+        .range(from, to);
+
+      if (error) {
+        console.error('❌ [LeadsAnalytics] Erro na query:', error);
+        throw error;
+      }
+
+      all = all.concat(data || []);
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
     }
 
-    console.log('📊 [LeadsAnalytics] Dados retornados:', { date, count: data?.length || 0, leads: data });
-
-    const total = data?.length || 0;
-    const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
+    const total = all.length;
+    const comAudio = all.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length;
     const semAudio = total - comAudio;
-    
-    // Contar leads convertidos (cliente_pago = true)
-    const converted = data?.filter((lead: any) => lead.cliente_pago === true).length || 0;
+
+    const converted = all.filter((lead: any) => lead.cliente_pago === true).length;
     const conversionRate = total > 0 ? (converted / total) * 100 : 0;
-    
-    // Contar por status de negociação
+
     const statusBreakdown: { [key: string]: number } = {};
-    data?.forEach((lead: any) => {
+    all.forEach((lead: any) => {
       const status = lead.status_negociacao || 'lead';
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
     });
-    
-    // Contar tipos de negócio com tradução
+
     const tiposNegocio: { [key: string]: number } = {};
-    data?.forEach((lead: any) => {
+    all.forEach((lead: any) => {
       if (lead.tipo_negocio) {
         let tipo = lead.tipo_negocio;
-        // Traduzir tipos de negócio
         if (tipo === 'physical') tipo = 'físico';
         if (tipo === 'digital') tipo = 'digital';
         if (tipo === 'service') tipo = 'serviço';
-        
         tiposNegocio[tipo] = (tiposNegocio[tipo] || 0) + 1;
       }
     });
@@ -91,41 +96,48 @@ export function useLeadsAnalytics(dateFilter?: { startDate?: string; endDate?: s
   };
 
   const getLeadsForDateRange = async (dateRange: DateRange): Promise<LeadsAnalytics> => {
-    const { data, error } = await supabase
-      .from('formularios_parceria')
-      .select('*')
-      .gte('created_at', `${dateRange.startDate}T00:00:00`)
-      .lte('created_at', `${dateRange.endDate}T23:59:59`);
+    const pageSize = 1000;
+    let from = 0;
+    let all: any[] = [];
 
-    if (error) {
-      throw error;
+    while (true) {
+      const to = from + pageSize - 1;
+      const { data, error } = await supabase
+        .from('formularios_parceria')
+        .select('id,audio_visao_futuro,cliente_pago,status_negociacao,tipo_negocio')
+        .gte('created_at', `${dateRange.startDate}T00:00:00`)
+        .lte('created_at', `${dateRange.endDate}T23:59:59`)
+        .range(from, to);
+
+      if (error) {
+        throw error;
+      }
+
+      all = all.concat(data || []);
+      if (!data || data.length < pageSize) break;
+      from += pageSize;
     }
 
-    const total = data?.length || 0;
-    const comAudio = data?.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length || 0;
+    const total = all.length;
+    const comAudio = all.filter((lead: any) => lead.audio_visao_futuro && lead.audio_visao_futuro.trim() !== '').length;
     const semAudio = total - comAudio;
-    
-    // Contar leads convertidos (cliente_pago = true)
-    const converted = data?.filter((lead: any) => lead.cliente_pago === true).length || 0;
+
+    const converted = all.filter((lead: any) => lead.cliente_pago === true).length;
     const conversionRate = total > 0 ? (converted / total) * 100 : 0;
-    
-    // Contar por status de negociação
+
     const statusBreakdown: { [key: string]: number } = {};
-    data?.forEach((lead: any) => {
+    all.forEach((lead: any) => {
       const status = lead.status_negociacao || 'lead';
       statusBreakdown[status] = (statusBreakdown[status] || 0) + 1;
     });
-    
-    // Contar tipos de negócio com tradução
+
     const tiposNegocio: { [key: string]: number } = {};
-    data?.forEach((lead: any) => {
+    all.forEach((lead: any) => {
       if (lead.tipo_negocio) {
         let tipo = lead.tipo_negocio;
-        // Traduzir tipos de negócio
         if (tipo === 'physical') tipo = 'físico';
         if (tipo === 'digital') tipo = 'digital';
         if (tipo === 'service') tipo = 'serviço';
-        
         tiposNegocio[tipo] = (tiposNegocio[tipo] || 0) + 1;
       }
     });

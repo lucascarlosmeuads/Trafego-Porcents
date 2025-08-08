@@ -24,8 +24,9 @@ import { DateRangeFilter } from './DateRangeFilter'
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { formatCurrency } from '@/lib/utils'
-import { DollarSign, Users as UsersIcon, PieChart } from 'lucide-react'
+import { DollarSign, Users as UsersIcon, PieChart, RefreshCw } from 'lucide-react'
 
 
 interface AdminDashboardProps {
@@ -40,12 +41,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
   const { user, isAdmin } = useAuth()
   const [loading, setLoading] = useState(true)
   const [dashboardFilter, setDashboardFilter] = useState<{ startDate?: string; endDate?: string; option?: string }>({ option: 'hoje' })
-  const stableFilterDates = useMemo(() => ({
-    startDate: dashboardFilter.startDate,
-    endDate: dashboardFilter.endDate,
-    option: dashboardFilter.option
-  }), [dashboardFilter.startDate, dashboardFilter.endDate, dashboardFilter.option])
-  const { todayStats, filteredStats } = useLeadsAnalytics(stableFilterDates)
+  const [appliedFilter, setAppliedFilter] = useState<{ startDate?: string; endDate?: string; option?: string }>({ option: 'hoje' })
+  const stableAppliedFilter = useMemo(() => ({
+    startDate: appliedFilter.startDate,
+    endDate: appliedFilter.endDate,
+    option: appliedFilter.option
+  }), [appliedFilter.startDate, appliedFilter.endDate, appliedFilter.option])
+  const { todayStats, filteredStats } = useLeadsAnalytics(stableAppliedFilter)
   const analyticsBase = filteredStats || todayStats
   const totalLeadsCount = analyticsBase?.total || 0
   const convertedLeadsCount = analyticsBase?.converted || 0
@@ -56,7 +58,7 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
 
   useEffect(() => {
     if (!isConfigured) return
-    switch (stableFilterDates.option) {
+    switch (stableAppliedFilter.option) {
       case 'hoje':
       case undefined:
       case null:
@@ -74,14 +76,14 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
       case 'anteontem':
       case 'total':
       case 'personalizado':
-        if (stableFilterDates.startDate && stableFilterDates.endDate) {
-          fetchInsightsWithPeriod('custom', stableFilterDates.startDate, stableFilterDates.endDate)
+        if (stableAppliedFilter.startDate && stableAppliedFilter.endDate) {
+          fetchInsightsWithPeriod('custom', stableAppliedFilter.startDate, stableAppliedFilter.endDate)
         }
         break
       default:
         fetchTodayInsights()
     }
-  }, [isConfigured, stableFilterDates, fetchTodayInsights, fetchInsightsWithPeriod])
+  }, [isConfigured, stableAppliedFilter.option, stableAppliedFilter.startDate, stableAppliedFilter.endDate])
   // Buscar dados dos clientes - sempre chamar o hook
   const { clientes: gestorClientes, loading: clientesLoading } = useManagerData(
     user?.email || 'fallback@example.com', 
@@ -120,6 +122,13 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
             {/* Filtro de Data */}
             <div className="bg-card border rounded-lg p-4">
               <DateRangeFilter onFilterChange={(start, end, option) => setDashboardFilter({ startDate: start, endDate: end, option })} />
+            </div>
+
+            <div className="flex justify-end -mt-2">
+              <Button onClick={() => setAppliedFilter(dashboardFilter)} disabled={fetchingInsights} className="gap-2">
+                <RefreshCw className={`h-4 w-4 ${fetchingInsights ? 'animate-spin' : ''}`} />
+                Atualizar
+              </Button>
             </div>
 
             {/* Cards Resumidos */}
