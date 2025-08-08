@@ -66,8 +66,40 @@ Deno.serve(async (req) => {
       .maybeSingle()
 
     const respostas = lead.respostas || {}
-    const tipoNegocio = lead.tipo_negocio || respostas.tipo_negocio || ''
+    const tipoNegocioRaw = lead.tipo_negocio || respostas.tipo_negocio || respostas.tipoNegocio || respostas.nicho || respostas.segmento || ''
     const produtoDescricao = lead.produto_descricao || respostas.produtoDescricao || respostas.produto_descricao || ''
+    const publicoAlvo = respostas.publico_alvo || respostas.publicoAlvo || respostas.persona || respostas.audiencia || ''
+    const especialidade = respostas.especialidade || respostas.especializacao || ''
+
+    const formatTexto = (s: string) => String(s || '').replace(/_/g, ' ').trim()
+    const titleCase = (s: string) =>
+      formatTexto(s)
+        .toLowerCase()
+        .replace(/(^|[\s\/])([a-zá-ú])/g, (m, p1, p2) => p1 + p2.toUpperCase())
+
+    const translateTipoNegocio = (tipo: string) => {
+      const t = formatTexto(tipo).toLowerCase()
+      if (!t) return ''
+      if (t.includes('adv')) return 'Advocacia'
+      if (t.includes('corretor') && (t.includes('im') || t.includes('imó') || t.includes('imov'))) return 'Corretor de Imóveis'
+      if (t.includes('corretor')) return 'Corretor'
+      if (t.includes('imobili')) return 'Mercado Imobiliário'
+      if (t.includes('saúde') || t.includes('saude')) return 'Saúde'
+      return titleCase(t)
+    }
+
+    const baseTipo = translateTipoNegocio(tipoNegocioRaw)
+    let nichoEspecifico = baseTipo
+    if (especialidade) {
+      nichoEspecifico = nichoEspecifico
+        ? `${nichoEspecifico} de ${titleCase(especialidade)}`
+        : titleCase(especialidade)
+    }
+    if (publicoAlvo) {
+      nichoEspecifico = nichoEspecifico
+        ? `${nichoEspecifico} para ${titleCase(publicoAlvo)}`
+        : `Para ${titleCase(publicoAlvo)}`
+    }
 
     const nomeLead =
       clienteParceria?.nome_cliente ||
@@ -87,13 +119,12 @@ Deno.serve(async (req) => {
       null
 
     // Montar mensagem personalizada no estilo solicitado
-    const tipoTexto = tipoNegocio
-      ? ` do seu nicho (${tipoNegocio}).`
-      : '.'
-
     const produtoTexto = produtoDescricao
       ? ` Vi também que você trabalha com: ${produtoDescricao}.`
       : ''
+    const pesquisaTexto = nichoEspecifico
+      ? ` Pesquisei o mercado de ${nichoEspecifico} e identifiquei padrões claros.`
+      : ' Pesquisei seu mercado e identifiquei padrões claros.'
 
     const mensagem =
       `Oi, ${firstName}! Lucas aqui.
@@ -105,7 +136,7 @@ A proposta é um funil interativo (magnético):
 - Jornada que conduz naturalmente até a conversão, filtrando curiosos e deixando só quem tem interesse real.
 - Quando fizer sentido, uma oferta de entrada de baixo ticket para aquecer e facilitar a venda do principal.
 
-Pesquisei o seu mercado e identifiquei padrões claros${tipoTexto}${produtoTexto}
+${pesquisaTexto}${produtoTexto}
 
 Se você topar, em até 15 dias corridos colocamos a campanha no ar com tudo pronto.
 
