@@ -111,7 +111,7 @@ A ideia é fazer a mesma coisa no seu negócio para vender bem. Como eu falei, e
 
 Se você topar, em até 15 dias corridos no máximo a campanha já está no ar com o funil todo pronto.
 
-Estou aqui para tirar qualquer dúvida. Assim que ler, me chama para a gente conversar.`,
+Estou aqui para tirar qualquer dúvida. Assim que ler, me chama para a gente conversar.`;
 
     console.log('✅ [generate-personalized-message] message composed for', emailCliente)
 
