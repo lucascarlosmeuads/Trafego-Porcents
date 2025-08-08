@@ -284,12 +284,12 @@ export function LeadsParcerriaPanel() {
 
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center justify-between">
+            <CardTitle className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5" />
                 Lista de Leads
               </div>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 md:justify-end w-full md:w-auto">
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
                     <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
@@ -302,7 +302,7 @@ export function LeadsParcerriaPanel() {
                     <SelectTrigger className="w-36">
                       <SelectValue placeholder="Período" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-50 bg-background">
                       <SelectItem value="todos">Todos</SelectItem>
                       <SelectItem value="hoje">Hoje</SelectItem>
                       <SelectItem value="ontem">Ontem</SelectItem>
@@ -332,7 +332,7 @@ export function LeadsParcerriaPanel() {
                       <SelectTrigger className="w-28">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-50 bg-background">
                         <SelectItem value="10">10</SelectItem>
                         <SelectItem value="20">20</SelectItem>
                         <SelectItem value="todos">Todos</SelectItem>
@@ -353,7 +353,7 @@ export function LeadsParcerriaPanel() {
                       <SelectTrigger className="w-40">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                       <SelectContent className="z-50 bg-background">
                         <SelectItem value="todos">Todos</SelectItem>
                         <SelectItem value="lead">lead</SelectItem>
                         <SelectItem value="planejando">planejando</SelectItem>
@@ -454,7 +454,7 @@ export function LeadsParcerriaPanel() {
                               <SelectTrigger className="w-40">
                                 <SelectValue />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent className="z-50 bg-background">
                                 <SelectItem value="lead">lead</SelectItem>
                                 <SelectItem value="planejando">planejando</SelectItem>
                                 <SelectItem value="comprou">comprou</SelectItem>
