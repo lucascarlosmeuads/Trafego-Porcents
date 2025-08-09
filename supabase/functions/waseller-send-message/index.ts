@@ -142,25 +142,32 @@ async function logDispatch(
   supabase: ReturnType<typeof getSupabaseAdmin>,
   payload: {
     lead_id: string;
-    email?: string | null;
     phone?: string | null;
-    status: string;
-    success: boolean;
+    recipient_name?: string | null;
+    message_preview?: string | null;
+    status: "sent" | "failed" | "skipped" | string;
+    status_code?: number | null;
     error_message?: string | null;
-    request_payload: Record<string, unknown>;
+    trigger_type?: "manual" | "auto" | string;
+    requester_email?: string | null;
+    request_payload?: Record<string, unknown>;
     response_body?: unknown;
+    waseller_message_id?: string | null;
   }
 ) {
   const { error } = await supabase.from("waseller_dispatch_logs").insert({
     lead_id: payload.lead_id,
-    email: payload.email ?? null,
     phone: payload.phone ?? null,
+    recipient_name: payload.recipient_name ?? null,
+    message_preview: payload.message_preview ?? null,
     status: payload.status,
-    success: payload.success,
-    attempts: 1,
+    status_code: payload.status_code ?? null,
     error_message: payload.error_message ?? null,
-    request_payload: payload.request_payload,
+    trigger_type: payload.trigger_type ?? "manual",
+    requester_email: payload.requester_email ?? null,
+    request_payload: payload.request_payload ?? {},
     response_body: payload.response_body ?? null,
+    waseller_message_id: payload.waseller_message_id ?? null,
   } as any);
   if (error) {
     console.error("Failed to insert waseller log:", error);
@@ -239,11 +246,13 @@ serve(async (req: Request) => {
     if (!rawPhone) {
       await logDispatch(supabase, {
         lead_id: typedLead.id,
-        email,
         phone: null,
+        recipient_name: name ?? null,
+        message_preview: null,
         status: "skipped",
-        success: false,
+        status_code: null,
         error_message: "No phone found for lead",
+        requester_email: requesterEmail,
         request_payload: {},
       });
       return new Response(JSON.stringify({ error: "No phone found for lead" }), {
@@ -256,11 +265,12 @@ serve(async (req: Request) => {
     if (!normalized) {
       await logDispatch(supabase, {
         lead_id: typedLead.id,
-        email,
         phone: rawPhone,
+        recipient_name: name ?? null,
         status: "skipped",
-        success: false,
+        status_code: null,
         error_message: "Phone normalization failed",
+        requester_email: requesterEmail,
         request_payload: {},
       });
       return new Response(JSON.stringify({ error: "Phone normalization failed" }), {
@@ -290,18 +300,13 @@ serve(async (req: Request) => {
     };
     const finalMessage = applyTemplate(template, vars);
 
-    const payload: Record<string, unknown> = {
-      phone: normalized,
-      name,
-      email,
-      message: finalMessage,
-    };
-    if (cfg.campaign_id) payload["campaign_id"] = cfg.campaign_id;
+    const numeroDigits = toDigits(normalized);
 
-    const url = `${cfg.base_url}${cfg.endpoint_path}`;
+    const urlBase = `${cfg.base_url}${cfg.endpoint_path.replace('{token}', token)}`;
+    const postPayload = { numero: numeroDigits, mensagem: finalMessage } as Record<string, unknown>;
+
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
-      "Authorization": `Bearer ${token}`,
     };
 
     let respBody: unknown = null;
@@ -309,28 +314,45 @@ serve(async (req: Request) => {
     let ok = false;
 
     try {
-      const resp = await fetch(url, {
+      // Tenta POST primeiro
+      const resp = await fetch(urlBase, {
         method: "POST",
         headers,
-        body: JSON.stringify(payload),
+        body: JSON.stringify(postPayload),
       });
       httpStatus = resp.status;
-      const text = await resp.text();
+      let text = await resp.text();
       try {
         respBody = text ? JSON.parse(text) : null;
       } catch {
         respBody = text || null;
       }
       ok = resp.ok;
+
+      // Fallback: se falhar, tenta GET
+      if (!ok) {
+        const getUrl = `${urlBase}?numero=${numeroDigits}&mensagem=${encodeURIComponent(finalMessage)}`;
+        const resp2 = await fetch(getUrl, { method: "GET" });
+        httpStatus = resp2.status;
+        text = await resp2.text();
+        try {
+          respBody = text ? JSON.parse(text) : null;
+        } catch {
+          respBody = text || null;
+        }
+        ok = resp2.ok;
+      }
     } catch (e) {
       await logDispatch(supabase, {
         lead_id: typedLead.id,
-        email,
-        phone: normalized,
+        phone: numeroDigits,
+        recipient_name: name ?? null,
+        message_preview: finalMessage.slice(0, 200),
         status: "failed",
-        success: false,
+        status_code: null,
         error_message: `Network error: ${e instanceof Error ? e.message : String(e)}`,
-        request_payload: payload,
+        requester_email: requesterEmail,
+        request_payload: postPayload,
         response_body: null,
       });
       return new Response(
@@ -341,12 +363,14 @@ serve(async (req: Request) => {
 
     await logDispatch(supabase, {
       lead_id: typedLead.id,
-      email,
-      phone: normalized,
+      phone: numeroDigits,
+      recipient_name: name ?? null,
+      message_preview: finalMessage.slice(0, 200),
       status: ok ? "sent" : "failed",
-      success: ok,
+      status_code: httpStatus,
       error_message: ok ? null : `HTTP ${httpStatus}`,
-      request_payload: payload,
+      requester_email: requesterEmail,
+      request_payload: postPayload,
       response_body: respBody,
     });
 
