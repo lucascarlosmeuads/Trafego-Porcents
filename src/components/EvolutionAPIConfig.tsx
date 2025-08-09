@@ -211,8 +211,7 @@ export function EvolutionAPIConfig() {
         const createResult = await supabase.functions.invoke('evolution-create-instance');
         
         if (createResult.error || !createResult.data?.success) {
-          setConnectionStatus('error');
-          let errorTitle = "❌ Falha ao criar instância";
+          let errorTitle = "⚠️ Falha ao criar instância (tentaremos conectar mesmo assim)";
           let errorDescription = createResult.data?.error || createResult.error?.message || "Erro ao criar instância";
           
           // Add suggestion if available
@@ -225,7 +224,7 @@ export function EvolutionAPIConfig() {
             description: errorDescription,
             variant: "destructive"
           });
-          return;
+          // Prosseguir para tentativa de conexão mesmo com erro de criação
         }
         
         toast({
@@ -318,9 +317,10 @@ export function EvolutionAPIConfig() {
         }
       } else {
         setConnectionStatus('error');
+        const desc = (data?.error || "Servidor respondeu mas falhou ao conectar") + (data?.suggestion ? ` ${data.suggestion}` : '');
         toast({
           title: "❌ Falha na conexão",
-          description: data?.error || "Servidor respondeu mas falhou ao conectar",
+          description: desc,
           variant: "destructive"
         });
       }

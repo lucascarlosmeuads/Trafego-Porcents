@@ -196,6 +196,50 @@ serve(async (req: Request) => {
         }
       }
 
+      // Fallback: tentar criar via GET /instance/create/{instance}
+      try {
+        const fallbackUrl = `${config.server_url.replace(/\/$/, '')}/instance/create/${config.instance_name}`;
+        console.log("🧪 [evolution-create-instance] Tentando fallback GET:", fallbackUrl);
+        const controller2 = new AbortController();
+        const timeoutId2 = setTimeout(() => controller2.abort(), 10000);
+        const fallbackResp = await fetch(fallbackUrl, {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": apiKey,
+          },
+          signal: controller2.signal,
+        });
+        clearTimeout(timeoutId2);
+
+        let fbText = await fallbackResp.text();
+        let fbBody: any = null;
+        try {
+          fbBody = fbText ? JSON.parse(fbText) : null;
+        } catch {
+          fbBody = fbText;
+        }
+
+        console.log(`📥 [evolution-create-instance] Fallback response ${fallbackResp.status}:`, fbBody);
+
+        if (fallbackResp.ok) {
+          console.log("✅ [evolution-create-instance] Instância criada com sucesso via fallback GET!");
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: "Instância criada com sucesso (fallback)",
+              data: fbBody
+            }),
+            { 
+              status: 200, 
+              headers: { ...corsHeaders, "Content-Type": "application/json" } 
+            }
+          );
+        }
+      } catch (fbErr) {
+        console.warn("⚠️ [evolution-create-instance] Erro no fallback GET:", fbErr);
+      }
+
       // Check for specific server errors
       let errorMessage = `Falha ao criar instância: HTTP ${statusCode}`;
       if (statusCode === 500) {

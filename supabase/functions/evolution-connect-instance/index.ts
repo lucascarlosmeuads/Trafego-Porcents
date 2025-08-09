@@ -210,13 +210,22 @@ serve(async (req) => {
       const created = await tryCreateInstance(config.server_url, config.instance_name, evolutionApiKey)
 
       if (!created) {
+        const is500 = connectResponse.status >= 500
+        const isFindMany = typeof connectText === 'string' && connectText.includes('findMany')
+        const friendlyMsg = is500 && isFindMany
+          ? 'Erro interno no servidor Evolution API (banco de dados). Verifique o servidor e os logs.'
+          : `Falha ao conectar e criar instância: ${connectResponse.status}`
+        const suggestion = is500
+          ? 'Tente reiniciar o servidor Evolution API e conferir a conexão com o banco de dados.'
+          : undefined
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: `Falha ao conectar e criar instância: ${connectResponse.status}`,
-            raw_connect: connectText
+            error: friendlyMsg,
+            raw_connect: connectText,
+            suggestion
           }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: is500 ? 500 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
@@ -262,11 +271,20 @@ serve(async (req) => {
 
       if (!connectOk) {
         console.error('❌ Erro ao conectar (segunda tentativa):', connectText)
+        const is500 = connectResponse.status >= 500
+        const isFindMany = typeof connectText === 'string' && connectText.includes('findMany')
+        const friendlyMsg = is500 && isFindMany
+          ? 'Erro interno no servidor Evolution API (banco de dados). Verifique o servidor e os logs.'
+          : `Erro ao conectar instância: ${connectResponse.status}`
+        const suggestion = is500
+          ? 'Tente reiniciar o servidor Evolution API e conferir a conexão com o banco de dados.'
+          : undefined
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: `Erro ao conectar instância: ${connectResponse.status}`,
-            raw_connect: connectText
+            error: friendlyMsg,
+            raw_connect: connectText,
+            suggestion
           }),
           { status: connectResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
