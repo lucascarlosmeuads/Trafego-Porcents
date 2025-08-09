@@ -161,9 +161,9 @@ serve(async (req) => {
     const connectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
     console.log('🔌 [evolution-connect-instance] Conectando instância:', connectUrl)
 
-    // Adicionar timeout de 10 segundos
+    // Adicionar timeout de 20 segundos para conexão (pode ser mais lenta)
     const controller = new AbortController()
-    const timeoutId = setTimeout(() => controller.abort(), 10000)
+    const timeoutId = setTimeout(() => controller.abort(), 20000)
 
     let connectResponse
     try {
@@ -179,7 +179,7 @@ serve(async (req) => {
         return new Response(
           JSON.stringify({ 
             success: false, 
-            error: 'Timeout: Servidor Evolution API não está respondendo (10s). Verifique se o servidor está online e acessível.'
+            error: 'Timeout: Servidor Evolution API não está respondendo (20s). Verifique se o servidor está online e acessível.'
           }),
           { 
             status: 408, 
@@ -220,7 +220,7 @@ serve(async (req) => {
       // 3) Re-tentar conectar após criar
       console.log('🔁 Re-tentando conexão após criar a instância...')
       const controller2 = new AbortController()
-      const timeoutId2 = setTimeout(() => controller2.abort(), 10000)
+      const timeoutId2 = setTimeout(() => controller2.abort(), 20000)
 
       try {
         connectResponse = await fetch(connectUrl, {
@@ -235,7 +235,7 @@ serve(async (req) => {
           return new Response(
             JSON.stringify({ 
               success: false, 
-              error: 'Timeout na reconexão: Servidor Evolution API não está respondendo (10s)'
+              error: 'Timeout na reconexão: Servidor Evolution API não está respondendo (20s)'
             }),
             { 
               status: 408, 

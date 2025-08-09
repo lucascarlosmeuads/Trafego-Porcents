@@ -163,7 +163,42 @@ export function EvolutionAPIConfig() {
 
   const connectInstance = async () => {
     setConnectionStatus('connecting')
+    
+    // 1. Primeiro testar conectividade antes de tentar conectar
+    toast({
+      title: "Testando servidor...",
+      description: "Verificando se o servidor Evolution está acessível",
+    })
+
     try {
+      const connectivityTest = await supabase.functions.invoke('evolution-test-connectivity')
+      
+      if (connectivityTest.error || !connectivityTest.data?.success) {
+        setConnectionStatus('error')
+        toast({
+          title: "Servidor inacessível",
+          description: "O servidor Evolution API não está respondendo. Verifique a configuração e tente novamente.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      if (!connectivityTest.data.connectivity.reachable) {
+        setConnectionStatus('error')
+        toast({
+          title: "Servidor não responde",
+          description: `${connectivityTest.data.connectivity.error || 'Servidor offline'}. Verifique se o servidor está online.`,
+          variant: "destructive"
+        })
+        return
+      }
+
+      // 2. Se o servidor responde, tentar conectar
+      toast({
+        title: "Conectando ao WhatsApp...",
+        description: "Servidor acessível. Iniciando conexão...",
+      })
+
       const { data, error } = await supabase.functions.invoke('evolution-connect-instance')
 
       if (error) {
@@ -192,7 +227,7 @@ export function EvolutionAPIConfig() {
           // Verificar status periodicamente até conectar
           const checkInterval = setInterval(async () => {
             const statusResult = await supabase.functions.invoke('evolution-check-connection')
-            if (statusResult.data?.status === 'connected') {
+            if (statusResult.data?.success && statusResult.data?.status === 'connected') {
               setConnectionStatus('connected')
               setShowQrModal(false)
               setQrCodeData(null)
@@ -218,7 +253,7 @@ export function EvolutionAPIConfig() {
         setConnectionStatus('error')
         toast({
           title: "Erro ao conectar",
-          description: data?.error || "Erro desconhecido",
+          description: data?.error || "Servidor respondeu mas falhou ao conectar",
           variant: "destructive"
         })
       }
