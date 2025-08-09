@@ -20,6 +20,9 @@ import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
 import { PersonalizedMessageModal } from './PersonalizedMessageModal';
 import { downloadPlanPdf } from '@/utils/planDownload';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { RecoveryMessageSettings } from './RecoveryMessageSettings';
+import { useRecoveryTemplate, DEFAULT_RECOVERY_TEMPLATE } from '@/hooks/useRecoveryTemplate';
+import { applyTemplate, getFirstName } from '@/utils/templateUtils';
 
 export function LeadsParcerriaPanel() {
   // Filtro de data local: hoje, ontem, personalizado
@@ -308,6 +311,22 @@ export function LeadsParcerriaPanel() {
     }
   };
 
+  const { template: recoveryTemplate } = useRecoveryTemplate('leads_parceria');
+
+  const handleOpenRecoveryModal = (lead: any) => {
+    const leadData = getLeadData(lead);
+    const vars = {
+      nome: (leadData.nome || '').toString(),
+      primeiro_nome: getFirstName(leadData.nome || ''),
+      tipo_negocio: translateTipoNegocio(lead.tipo_negocio || ''),
+    };
+    const finalMessage = applyTemplate(recoveryTemplate || DEFAULT_RECOVERY_TEMPLATE, vars);
+
+    setPersonalizedMessage(finalMessage);
+    setPersonalizedClient({ name: leadData.nome, phone: leadData.whatsapp });
+    setMessageModalOpen(true);
+  };
+
   if (loading) {
     return (
       <Card>
@@ -338,6 +357,9 @@ export function LeadsParcerriaPanel() {
                 Lista de Leads
               </div>
               <div className="flex flex-wrap items-center gap-3 md:justify-end w-full md:w-auto">
+                {/* Botão para configurar a mensagem de recuperação */}
+                <RecoveryMessageSettings />
+
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
                     <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
@@ -604,6 +626,15 @@ export function LeadsParcerriaPanel() {
                                 )}
                               </Button>
                             )}
+                            <Button
+                              size="sm"
+                              variant="default"
+                              onClick={() => handleOpenRecoveryModal(lead)}
+                              className="h-8 px-2"
+                              title="Enviar mensagem de recuperação"
+                            >
+                              Recuperar
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
