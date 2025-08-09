@@ -6,6 +6,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { EvolutionAPITester } from "./EvolutionAPITester";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface EvolutionConfig {
   id: string;
@@ -170,11 +172,19 @@ export function EvolutionAPIConfig() {
   };
 
   return (
-    <Card className="w-full max-w-2xl">
-      <CardHeader>
-        <CardTitle>Configuração Evolution API</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="w-full max-w-4xl space-y-6">
+      <Tabs defaultValue="config" className="w-full">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="config">Configuração</TabsTrigger>
+          <TabsTrigger value="test">Testes</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="config">
+          <Card>
+            <CardHeader>
+              <CardTitle>Configuração Evolution API</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-6">
         <div className="flex items-center space-x-2">
           <Switch
             id="enabled"
@@ -251,7 +261,14 @@ export function EvolutionAPIConfig() {
             </p>
           </div>
         )}
-      </CardContent>
-    </Card>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="test">
+          <EvolutionAPITester />
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }

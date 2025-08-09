@@ -198,6 +198,39 @@ serve(async (req: Request) => {
 
   try {
     const supabase = getSupabaseAdmin();
+    const { leadId, testMode = false } = await req.json();
+    
+    // MODO DE TESTE - Simula envio sem chamar API real
+    if (testMode === true) {
+      console.log("🧪 [MODO TESTE] Simulando envio de mensagem");
+      
+      await logDispatch(supabase, {
+        lead_id: 'test-lead-id',
+        phone: '5511999999999',
+        recipient_name: 'Teste',
+        message_preview: 'Mensagem de teste do sistema',
+        status: "sent",
+        status_code: 200,
+        error_message: null,
+        trigger_type: "manual",
+        requester_email: null,
+        request_payload: { test: true, mode: 'simulation' },
+        response_body: { success: true, messageId: 'test-msg-123', simulation: true },
+        evolution_message_id: 'test-evolution-msg-123',
+      });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        status: "sent", 
+        messageId: 'test-evolution-msg-123',
+        testMode: true,
+        message: "✅ Teste realizado com sucesso! Sistema funcionando corretamente."
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    
     const apiKey = Deno.env.get("EVOLUTION_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "Missing EVOLUTION_API_KEY secret" }), {
@@ -214,7 +247,6 @@ serve(async (req: Request) => {
       });
     }
 
-    const { leadId } = await req.json();
     if (!leadId || typeof leadId !== "string") {
       return new Response(JSON.stringify({ error: "leadId is required" }), {
         status: 400,
