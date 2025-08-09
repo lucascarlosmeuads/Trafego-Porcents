@@ -206,6 +206,52 @@ serve(async (req) => {
     if (!connectOk) {
       console.error('❌ Erro ao conectar (primeira tentativa):', connectText)
 
+      // 1.1) Se o servidor não aceita POST, tentar fallback GET imediatamente
+      const shouldTryGet = (
+        connectResponse.status === 404 ||
+        connectResponse.status === 405 ||
+        (typeof connectText === 'string' && connectText.includes('Cannot POST'))
+      )
+
+      if (shouldTryGet) {
+        const controllerGet1 = new AbortController()
+        const timeoutGet1 = setTimeout(() => controllerGet1.abort(), 10000)
+        try {
+          const getConnectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
+          console.log('🔁 [fallback] Conectando instância (GET):', getConnectUrl)
+          const getResp = await fetch(getConnectUrl, {
+            method: 'GET',
+            headers: {
+              'Content-Type': 'application/json',
+              'apikey': evolutionApiKey
+            },
+            signal: controllerGet1.signal
+          })
+          clearTimeout(timeoutGet1)
+
+          const getText = await getResp.text()
+          let getData: any = null
+          try { getData = getText ? JSON.parse(getText) : null } catch {}
+
+          if (getResp.ok) {
+            console.log('✅ Conexão bem-sucedida via GET (fallback)')
+            return new Response(
+              JSON.stringify({ success: true, data: getData, instance_name: config.instance_name, server_url: config.server_url }),
+              { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            )
+          } else {
+            console.error('❌ Fallback GET também falhou:', getText)
+          }
+        } catch (e: any) {
+          clearTimeout(timeoutGet1)
+          if (e.name === 'AbortError') {
+            console.error('⏰ Timeout no fallback GET (primeira tentativa)')
+          } else {
+            console.error('⚠️ Erro no fallback GET (primeira tentativa):', e?.message || e)
+          }
+        }
+      }
+
       // 2) Se falhou, tentar criar a instância e reconectar
       const created = await tryCreateInstance(config.server_url, config.instance_name, evolutionApiKey)
 
@@ -217,7 +263,7 @@ serve(async (req) => {
           : `Falha ao conectar e criar instância: ${connectResponse.status}`
         const suggestion = is500
           ? 'Tente reiniciar o servidor Evolution API e conferir a conexão com o banco de dados.'
-          : undefined
+          : (shouldTryGet ? 'Seu servidor pode esperar GET em vez de POST no /instance/connect. Verifique a documentação/versão.' : undefined)
         return new Response(
           JSON.stringify({ 
             success: false, 
@@ -271,6 +317,52 @@ serve(async (req) => {
 
       if (!connectOk) {
         console.error('❌ Erro ao conectar (segunda tentativa):', connectText)
+
+        // 3.1) Se ainda falhou e parece ser método errado, tentar GET novamente
+        const shouldTryGet2 = (
+          connectResponse.status === 404 ||
+          connectResponse.status === 405 ||
+          (typeof connectText === 'string' && connectText.includes('Cannot POST'))
+        )
+        if (shouldTryGet2) {
+          const controllerGet2 = new AbortController()
+          const timeoutGet2 = setTimeout(() => controllerGet2.abort(), 10000)
+          try {
+            const getConnectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
+            console.log('🔁 [fallback] Conectando instância (GET - após criar):', getConnectUrl)
+            const getResp = await fetch(getConnectUrl, {
+              method: 'GET',
+              headers: {
+                'Content-Type': 'application/json',
+                'apikey': evolutionApiKey
+              },
+              signal: controllerGet2.signal
+            })
+            clearTimeout(timeoutGet2)
+
+            const getText = await getResp.text()
+            let getData: any = null
+            try { getData = getText ? JSON.parse(getText) : null } catch {}
+
+            if (getResp.ok) {
+              console.log('✅ Conexão bem-sucedida via GET (fallback após criação)')
+              return new Response(
+                JSON.stringify({ success: true, data: getData, instance_name: config.instance_name, server_url: config.server_url }),
+                { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+              )
+            } else {
+              console.error('❌ Fallback GET (após criação) também falhou:', getText)
+            }
+          } catch (e: any) {
+            clearTimeout(timeoutGet2)
+            if (e.name === 'AbortError') {
+              console.error('⏰ Timeout no fallback GET (após criação)')
+            } else {
+              console.error('⚠️ Erro no fallback GET (após criação):', e?.message || e)
+            }
+          }
+        }
+
         const is500 = connectResponse.status >= 500
         const isFindMany = typeof connectText === 'string' && connectText.includes('findMany')
         const friendlyMsg = is500 && isFindMany
@@ -278,7 +370,7 @@ serve(async (req) => {
           : `Erro ao conectar instância: ${connectResponse.status}`
         const suggestion = is500
           ? 'Tente reiniciar o servidor Evolution API e conferir a conexão com o banco de dados.'
-          : undefined
+          : (shouldTryGet2 ? 'Seu servidor pode esperar GET em vez de POST no /instance/connect. Verifique a documentação/versão.' : undefined)
         return new Response(
           JSON.stringify({ 
             success: false, 
