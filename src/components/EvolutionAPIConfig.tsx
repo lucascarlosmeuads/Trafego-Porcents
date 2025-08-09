@@ -34,13 +34,20 @@ export function EvolutionAPIConfig() {
     default_country_code: '+55',
     enabled: true
   });
-  const [openWhatsAppAfterSend, setOpenWhatsAppAfterSend] = useState<boolean>(() => {
-    try { return localStorage.getItem('openWhatsAppAfterSend') === 'true'; } catch { return false; }
-  });
+  const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error' | 'checking'>('checking')
+  const [qrCodeData, setQrCodeData] = useState<string | null>(null)
+  const [showQrModal, setShowQrModal] = useState(false)
 
   useEffect(() => {
     loadConfig();
   }, []);
+
+  useEffect(() => {
+    // Verificar status da conexão quando o componente carrega
+    if (config?.enabled && config?.server_url && config?.instance_name) {
+      checkConnectionStatus()
+    }
+  }, [config?.enabled, config?.server_url, config?.instance_name])
 
   const loadConfig = async () => {
     try {
@@ -50,7 +57,15 @@ export function EvolutionAPIConfig() {
         .eq('api_type', 'evolution')
         .maybeSingle();
 
-      if (error) throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.error('Erro ao carregar configuração:', error);
+        toast({
+          title: "Erro",
+          description: "Não foi possível carregar a configuração",
+          variant: "destructive",
+        });
+        return;
+      }
 
       if (data) {
         setConfig(data);
@@ -65,7 +80,7 @@ export function EvolutionAPIConfig() {
       console.error('Erro ao carregar configuração:', error);
       toast({
         title: "Erro",
-        description: "Falha ao carregar configuração da Evolution API",
+        description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
     }
@@ -74,8 +89,8 @@ export function EvolutionAPIConfig() {
   const saveConfig = async () => {
     if (!formData.server_url || !formData.instance_name) {
       toast({
-        title: "Campos obrigatórios",
-        description: "URL do servidor e nome da instância são obrigatórios",
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
         variant: "destructive",
       });
       return;
@@ -84,53 +99,143 @@ export function EvolutionAPIConfig() {
     setLoading(true);
     try {
       const configData = {
-        enabled: formData.enabled,
+        api_type: 'evolution',
+        base_url: formData.server_url,
         server_url: formData.server_url,
+        endpoint_path: '/message/sendText',
         instance_name: formData.instance_name,
         default_country_code: formData.default_country_code,
-        api_type: 'evolution',
-        base_url: formData.server_url, // Required field
-        endpoint_path: '/message/sendText', // Evolution API endpoint
-        updated_at: new Date().toISOString()
+        enabled: formData.enabled,
+        provider: 'evolution',
       };
 
+      let result;
       if (config?.id) {
-        // Update existing config
-        const { error } = await supabase
+        result = await supabase
           .from('waseller_dispatch_config')
           .update(configData)
           .eq('id', config.id);
-
-        if (error) throw error;
       } else {
-        // Create new config
-        const { error } = await supabase
+        result = await supabase
           .from('waseller_dispatch_config')
-          .insert({
-            ...configData,
-            created_at: new Date().toISOString()
-          });
+          .insert([configData]);
+      }
 
-        if (error) throw error;
+      if (result.error) {
+        throw result.error;
       }
 
       toast({
-        title: "Sucesso",
-        description: "Configuração da Evolution API salva com sucesso!",
+        title: "Sucesso!",
+        description: "Configuração salva com sucesso",
       });
-
+      
       await loadConfig();
     } catch (error: any) {
-      console.error('Erro ao salvar configuração:', error);
+      console.error('Erro ao salvar:', error);
       toast({
-        title: "Erro",
-        description: "Falha ao salvar configuração: " + error.message,
+        title: "Erro ao salvar",
+        description: error.message || "Erro desconhecido",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
+  const checkConnectionStatus = async () => {
+    setConnectionStatus('checking')
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-check-connection')
+
+      if (error) {
+        console.error('Erro ao verificar status:', error)
+        setConnectionStatus('error')
+        return
+      }
+
+      if (data?.success) {
+        setConnectionStatus(data.status)
+      } else {
+        setConnectionStatus('error')
+      }
+    } catch (err: any) {
+      console.error('Erro ao verificar status:', err)
+      setConnectionStatus('error')
+    }
+  }
+
+  const connectInstance = async () => {
+    setConnectionStatus('connecting')
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-connect-instance')
+
+      if (error) {
+        console.error('Erro ao conectar:', error)
+        toast({
+          title: "Erro ao conectar",
+          description: error.message || "Erro desconhecido",
+          variant: "destructive"
+        })
+        setConnectionStatus('error')
+        return
+      }
+
+      if (data?.success) {
+        // Se retornou QR code, exibir modal
+        if (data.data?.qrcode || data.data?.qr) {
+          setQrCodeData(data.data.qrcode || data.data.qr)
+          setShowQrModal(true)
+          setConnectionStatus('connecting')
+          
+          toast({
+            title: "QR Code gerado",
+            description: "Escaneie o QR Code com seu WhatsApp para conectar",
+          })
+          
+          // Verificar status periodicamente até conectar
+          const checkInterval = setInterval(async () => {
+            const statusResult = await supabase.functions.invoke('evolution-check-connection')
+            if (statusResult.data?.status === 'connected') {
+              setConnectionStatus('connected')
+              setShowQrModal(false)
+              setQrCodeData(null)
+              clearInterval(checkInterval)
+              toast({
+                title: "WhatsApp conectado!",
+                description: "Agora você pode enviar mensagens",
+              })
+            }
+          }, 3000)
+          
+          // Limpar interval após 2 minutos
+          setTimeout(() => clearInterval(checkInterval), 120000)
+        } else {
+          // Já conectado
+          setConnectionStatus('connected')
+          toast({
+            title: "WhatsApp já conectado!",
+            description: "Instância já está ativa",
+          })
+        }
+      } else {
+        setConnectionStatus('error')
+        toast({
+          title: "Erro ao conectar",
+          description: data?.error || "Erro desconhecido",
+          variant: "destructive"
+        })
+      }
+    } catch (err: any) {
+      console.error('Erro ao conectar:', err)
+      setConnectionStatus('error')
+      toast({
+        title: "Erro ao conectar",
+        description: err.message || "Erro desconhecido",
+        variant: "destructive"
+      })
+    }
+  }
 
   const testConnection = async () => {
     if (!formData.server_url || !formData.instance_name) {
@@ -199,23 +304,50 @@ export function EvolutionAPIConfig() {
           <Label htmlFor="enabled">API Habilitada</Label>
         </div>
 
-        <div className="flex items-center space-x-2">
-          <Switch
-            id="open_whatsapp"
-            checked={openWhatsAppAfterSend}
-            onCheckedChange={(checked) => {
-              setOpenWhatsAppAfterSend(!!checked);
-              try { localStorage.setItem('openWhatsAppAfterSend', String(!!checked)); } catch {}
-            }}
-          />
-          <Label htmlFor="open_whatsapp">Abrir WhatsApp Web após enviar</Label>
+        {/* Status da Conexão */}
+        <div className="border rounded-lg p-4 space-y-4">
+          <h3 className="text-lg font-semibold">Status da Conexão WhatsApp</h3>
+          
+          <div className="flex items-center space-x-2">
+            <div className={`w-3 h-3 rounded-full ${
+              connectionStatus === 'connected' ? 'bg-green-500' :
+              connectionStatus === 'connecting' ? 'bg-yellow-500 animate-pulse' :
+              connectionStatus === 'checking' ? 'bg-blue-500 animate-pulse' :
+              'bg-red-500'
+            }`} />
+            <span className="text-sm font-medium">
+              {connectionStatus === 'connected' ? 'Conectado' :
+               connectionStatus === 'connecting' ? 'Conectando...' :
+               connectionStatus === 'checking' ? 'Verificando...' :
+               'Desconectado'}
+            </span>
+          </div>
+
+          <div className="flex space-x-2">
+            <Button
+              onClick={connectInstance}
+              disabled={!formData.enabled || !formData.server_url || !formData.instance_name || connectionStatus === 'connecting'}
+              size="sm"
+            >
+              {connectionStatus === 'connecting' ? 'Conectando...' : 'Conectar WhatsApp'}
+            </Button>
+            
+            <Button
+              onClick={checkConnectionStatus}
+              variant="outline"
+              disabled={connectionStatus === 'checking'}
+              size="sm"
+            >
+              {connectionStatus === 'checking' ? 'Verificando...' : 'Verificar Status'}
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="server_url">URL do Servidor Evolution</Label>
+          <Label htmlFor="server_url">URL do Servidor *</Label>
           <Input
             id="server_url"
-            placeholder="https://api.evolution.com"
+            placeholder="https://your-evolution-api.com"
             value={formData.server_url}
             onChange={(e) =>
               setFormData(prev => ({ ...prev, server_url: e.target.value }))
@@ -224,7 +356,7 @@ export function EvolutionAPIConfig() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="instance_name">Nome da Instância</Label>
+          <Label htmlFor="instance_name">Nome da Instância *</Label>
           <Input
             id="instance_name"
             placeholder="minha-instancia"
@@ -236,9 +368,9 @@ export function EvolutionAPIConfig() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="country_code">Código do País Padrão</Label>
+          <Label htmlFor="default_country_code">Código de País Padrão</Label>
           <Input
-            id="country_code"
+            id="default_country_code"
             placeholder="+55"
             value={formData.default_country_code}
             onChange={(e) =>
@@ -247,35 +379,15 @@ export function EvolutionAPIConfig() {
           />
         </div>
 
-        <div className="flex gap-3">
-          <Button 
-            onClick={saveConfig} 
-            disabled={loading}
-            className="flex-1"
-          >
+        <div className="flex space-x-2">
+          <Button onClick={saveConfig} disabled={loading}>
             {loading ? 'Salvando...' : 'Salvar Configuração'}
           </Button>
           
-          <Button 
-            variant="outline" 
-            onClick={testConnection}
-            disabled={testing || !formData.enabled}
-            className="flex-1"
-          >
+          <Button onClick={testConnection} variant="outline" disabled={testing}>
             {testing ? 'Testando...' : 'Testar Conexão'}
           </Button>
         </div>
-
-        {config && (
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              Status: {config.enabled ? '✅ Ativa' : '❌ Inativa'}
-            </p>
-            <p className="text-xs text-muted-foreground">
-              Última atualização: {new Date(config.updated_at).toLocaleString('pt-BR')}
-            </p>
-          </div>
-        )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -284,6 +396,43 @@ export function EvolutionAPIConfig() {
           <EvolutionAPITester />
         </TabsContent>
       </Tabs>
+
+      {/* Modal do QR Code */}
+      {showQrModal && qrCodeData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-center">Escaneie o QR Code</h3>
+            <p className="text-sm text-muted-foreground mb-4 text-center">
+              Use seu WhatsApp para escanear este código e conectar a instância
+            </p>
+            
+            <div className="flex justify-center mb-4">
+              <img 
+                src={qrCodeData} 
+                alt="QR Code WhatsApp" 
+                className="max-w-full h-auto border rounded"
+                style={{ maxHeight: '300px' }}
+              />
+            </div>
+            
+            <div className="flex items-center justify-center space-x-2 mb-4">
+              <div className="w-2 h-2 bg-yellow-500 rounded-full animate-pulse" />
+              <span className="text-sm text-muted-foreground">Aguardando conexão...</span>
+            </div>
+            
+            <Button 
+              onClick={() => {
+                setShowQrModal(false)
+                setQrCodeData(null)
+              }}
+              variant="outline" 
+              className="w-full"
+            >
+              Fechar
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

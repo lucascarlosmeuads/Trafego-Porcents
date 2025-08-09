@@ -312,40 +312,54 @@ export function LeadsParcerriaPanel() {
 
   const { template: recoveryTemplate } = useRecoveryTemplate('leads_parceria');
 
-  const handleSendRecoveryAPI = async (lead: any) => {
-    try {
-      console.log('Iniciando envio via API para lead', lead?.id);
-      toast({ title: 'Enviando mensagem...', description: 'Conectando à API do WhatsApp.' });
+  const handleWhatsAppContact = async (lead: any) => {
+    if (!lead?.id) return;
 
-      const { data, error } = await supabase.functions.invoke('evolution-send-message', {
+    // Verificar se Evolution API está conectada antes de enviar
+    try {
+      const connectionCheck = await supabase.functions.invoke('evolution-check-connection');
+      
+      if (!connectionCheck.data?.success || connectionCheck.data?.status !== 'connected') {
+        toast({
+          title: 'WhatsApp não conectado',
+          description: 'Conecte o WhatsApp na configuração da Evolution API primeiro',
+          variant: 'destructive'
+        });
+        return;
+      }
+    } catch (err) {
+      console.error('Erro ao verificar conexão:', err);
+      toast({
+        title: 'Erro de conexão',
+        description: 'Não foi possível verificar status da conexão WhatsApp',
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    try {
+      const result = await supabase.functions.invoke('evolution-send-message', {
         body: { leadId: lead.id }
       });
 
-      if (error) throw error;
-      if (!data?.success) {
-        throw new Error(data?.error || 'Falha ao enviar via API');
+      if (result.error) {
+        console.error('Erro ao enviar mensagem:', result.error);
+        toast({
+          title: 'Erro ao enviar mensagem',
+          description: result.error.message || 'Erro desconhecido',
+          variant: 'destructive'
+        });
+        return;
       }
 
-      toast({ title: 'Mensagem enviada!', description: 'Lead marcado como contatado no WhatsApp.' });
-      // Abrir WhatsApp Web automaticamente, se habilitado
-      try {
-        const shouldOpen = localStorage.getItem('openWhatsAppAfterSend') === 'true';
-        if (shouldOpen) {
-          const { whatsapp } = getLeadData(lead);
-          if (whatsapp && whatsapp !== 'Não informado') {
-            const clean = String(whatsapp).replace(/\D/g, '');
-            const formatted = clean.startsWith('55') ? clean : `55${clean}`;
-            window.open(`https://wa.me/${formatted}`, '_blank', 'noopener,noreferrer');
-          }
-        }
-      } catch {}
+      toast({ title: 'Mensagem enviada!', description: 'Lead marcado como contatado via Evolution API.' });
       // Atualizar dados após envio
       refetch?.();
     } catch (err: any) {
-      console.error('Erro no envio via API:', err);
+      console.error('Erro ao contatar lead:', err);
       toast({
-        title: 'Falha no envio',
-        description: err?.message || 'Não foi possível enviar via API.',
+        title: 'Erro ao enviar mensagem',
+        description: err.message || 'Erro desconhecido',
         variant: 'destructive'
       });
     }
@@ -667,7 +681,7 @@ export function LeadsParcerriaPanel() {
                             <Button
                               size="sm"
                               variant="default"
-                              onClick={() => handleSendRecoveryAPI(lead)}
+                              onClick={() => handleWhatsAppContact(lead)}
                               className="h-8 px-2"
                               title="Enviar mensagem de recuperação via API"
                             >
