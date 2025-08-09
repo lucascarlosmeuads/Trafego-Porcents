@@ -40,6 +40,7 @@ export function EvolutionAPIConfig() {
   const [diagData, setDiagData] = useState<any | null>(null)
   const [showDiagModal, setShowDiagModal] = useState(false)
   const [diagLoading, setDiagLoading] = useState(false)
+  const [openingManager, setOpeningManager] = useState(false)
 
   useEffect(() => {
     loadConfig();
@@ -456,6 +457,52 @@ const copyToClipboard = async (text: string) => {
   }
 };
 
+const buildBaseUrl = (url: string, forceHttps = false) => {
+  try {
+    const u = new URL(url);
+    if (forceHttps) u.protocol = 'https:';
+    return u.toString().replace(/\/$/, '');
+  } catch {
+    let out = url || '';
+    if (forceHttps) out = out.replace(/^http:/, 'https:');
+    return out.replace(/\/$/, '');
+  }
+};
+
+const handleOpenManager = async (forceHttps = false) => {
+  if (!formData.server_url) {
+    toast({ title: 'URL ausente', description: 'Defina a URL do servidor', variant: 'destructive' });
+    return;
+  }
+  setOpeningManager(true);
+  try {
+    toast({ title: 'Verificando servidor...', description: 'Testando acessibilidade antes de abrir o Manager' });
+
+    const { data, error } = await supabase.functions.invoke('evolution-test-connectivity');
+    if (error || !data?.success) {
+      toast({ title: 'Servidor inacessível', description: error?.message || data?.error || 'Falha no teste de conectividade', variant: 'destructive' });
+      await diagnoseConnection();
+      return;
+    }
+    if (!data.connectivity?.reachable) {
+      const reason = data.connectivity?.error || 'Servidor offline';
+      toast({ title: 'Servidor não acessível', description: reason, variant: 'destructive' });
+      if (data.protocol_suggestion?.use_https && !forceHttps) {
+        toast({ title: 'Sugestão', description: data.protocol_suggestion?.message });
+      }
+      await diagnoseConnection();
+      return;
+    }
+
+    const base = buildBaseUrl(formData.server_url, forceHttps);
+    window.open(`${base}/manager`, '_blank');
+  } catch (e: any) {
+    toast({ title: 'Erro ao abrir', description: e.message || 'Erro desconhecido', variant: 'destructive' });
+  } finally {
+    setOpeningManager(false);
+  }
+};
+
 return (
   <div className="w-full max-w-4xl space-y-6">
       <Tabs defaultValue="config" className="w-full">
@@ -528,11 +575,20 @@ return (
             </Button>
 
             <Button
-              onClick={() => window.open(`${(formData.server_url || '').replace(/\/$/, '')}/manager`, '_blank')}
+              onClick={() => handleOpenManager(false)}
               variant="outline"
               size="sm"
+              disabled={openingManager}
             >
-              Abrir Manager
+              {openingManager ? 'Verificando...' : 'Abrir Manager'}
+            </Button>
+            <Button
+              onClick={() => handleOpenManager(true)}
+              variant="outline"
+              size="sm"
+              disabled={openingManager}
+            >
+              Abrir com HTTPS
             </Button>
           </div>
         </div>
