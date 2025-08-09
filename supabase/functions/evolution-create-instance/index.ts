@@ -195,12 +195,23 @@ serve(async (req: Request) => {
           );
         }
       }
+
+      // Check for specific server errors
+      let errorMessage = `Falha ao criar instância: HTTP ${statusCode}`;
+      if (statusCode === 500) {
+        if (typeof responseBody === 'object' && responseBody?.response?.message?.some?.((msg: string) => msg.includes('findMany'))) {
+          errorMessage = "Erro interno no servidor Evolution API. O servidor pode estar com problemas de banco de dados. Verifique se o Evolution API está funcionando corretamente.";
+        } else {
+          errorMessage = "Erro interno no servidor Evolution API (HTTP 500). Verifique se o servidor Evolution está online e funcionando.";
+        }
+      }
       
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: `Falha ao criar instância: HTTP ${statusCode}`,
-          details: responseBody
+          error: errorMessage,
+          details: responseBody,
+          suggestion: statusCode === 500 ? "Tente reiniciar o servidor Evolution API ou verifique os logs do servidor." : undefined
         }),
         { 
           status: statusCode >= 500 ? 500 : 400, 

@@ -212,9 +212,17 @@ export function EvolutionAPIConfig() {
         
         if (createResult.error || !createResult.data?.success) {
           setConnectionStatus('error');
+          let errorTitle = "❌ Falha ao criar instância";
+          let errorDescription = createResult.data?.error || createResult.error?.message || "Erro ao criar instância";
+          
+          // Add suggestion if available
+          if (createResult.data?.suggestion) {
+            errorDescription += ` ${createResult.data.suggestion}`;
+          }
+          
           toast({
-            title: "❌ Falha ao criar instância",
-            description: createResult.data?.error || createResult.error?.message || "Erro ao criar instância",
+            title: errorTitle,
+            description: errorDescription,
             variant: "destructive"
           });
           return;
