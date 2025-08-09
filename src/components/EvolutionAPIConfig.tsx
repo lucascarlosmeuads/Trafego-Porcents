@@ -37,6 +37,9 @@ export function EvolutionAPIConfig() {
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'connecting' | 'error' | 'checking'>('checking')
   const [qrCodeData, setQrCodeData] = useState<string | null>(null)
   const [showQrModal, setShowQrModal] = useState(false)
+  const [diagData, setDiagData] = useState<any | null>(null)
+  const [showDiagModal, setShowDiagModal] = useState(false)
+  const [diagLoading, setDiagLoading] = useState(false)
 
   useEffect(() => {
     loadConfig();
@@ -417,6 +420,27 @@ export function EvolutionAPIConfig() {
     }
   }
 
+  const diagnoseConnection = async () => {
+    if (diagLoading) return
+    setDiagLoading(true)
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-diagnose')
+      if (error) {
+        console.error('Erro no diagnóstico:', error)
+        toast({ title: 'Erro no diagnóstico', description: error.message || 'Falha ao executar diagnóstico', variant: 'destructive' })
+        return
+      }
+      setDiagData(data)
+      setShowDiagModal(true)
+      toast({ title: 'Diagnóstico concluído', description: 'Confira o relatório detalhado' })
+    } catch (err: any) {
+      console.error('Erro no diagnóstico:', err)
+      toast({ title: 'Erro inesperado', description: err.message || 'Falha ao executar diagnóstico', variant: 'destructive' })
+    } finally {
+      setDiagLoading(false)
+    }
+  }
+
   return (
     <div className="w-full max-w-4xl space-y-6">
       <Tabs defaultValue="config" className="w-full">
@@ -478,6 +502,15 @@ export function EvolutionAPIConfig() {
             >
               {connectionStatus === 'checking' ? 'Verificando...' : 'Verificar Status'}
             </Button>
+
+            <Button
+              onClick={diagnoseConnection}
+              variant="outline"
+              disabled={diagLoading}
+              size="sm"
+            >
+              {diagLoading ? 'Diagnosticando...' : 'Diagnosticar conexão'}
+            </Button>
           </div>
         </div>
 
@@ -534,6 +567,23 @@ export function EvolutionAPIConfig() {
           <EvolutionAPITester />
         </TabsContent>
       </Tabs>
+
+      {/* Modal de Diagnóstico */}
+      {showDiagModal && diagData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-center">Relatório de Diagnóstico Evolution API</h3>
+            <div className="max-h-[60vh] overflow-auto border rounded p-3 text-sm">
+              <pre className="whitespace-pre-wrap break-words">
+                {JSON.stringify(diagData, null, 2)}
+              </pre>
+            </div>
+            <div className="mt-4">
+              <Button onClick={() => setShowDiagModal(false)} className="w-full" variant="outline">Fechar</Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Modal do QR Code */}
       {showQrModal && qrCodeData && (

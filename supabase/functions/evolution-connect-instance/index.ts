@@ -73,21 +73,35 @@ async function tryCreateInstance(baseUrl: string, instance: string, apikey: stri
   
   clearTimeout(timeoutId)
 
-  if (postResp && postResp.ok) {
-    try {
-      const body = await postResp.json()
-      console.log('✅ Instância criada (POST):', body)
-      return body
-    } catch {
-      console.log('✅ Instância criada (POST) sem JSON legível')
-      return { success: true }
+  if (postResp) {
+    if (postResp.ok) {
+      try {
+        const body = await postResp.json()
+        console.log('✅ Instância criada (POST):', body)
+        return body
+      } catch {
+        console.log('✅ Instância criada (POST) sem JSON legível')
+        return { success: true }
+      }
+    } else {
+      let postText: string | null = null
+      let postBody: any = null
+      try {
+        postText = await postResp.text()
+        try { postBody = postText ? JSON.parse(postText) : null } catch { postBody = postText }
+      } catch {}
+      const msgStr = typeof postBody === 'string' ? postBody : JSON.stringify(postBody)
+      if ((postResp.status === 409 || postResp.status === 400) && msgStr && /already exists|exists/i.test(msgStr)) {
+        console.log('ℹ️ Instância já existe (POST):', postBody)
+        return { success: true, alreadyExists: true, data: postBody }
+      }
     }
   }
 
   // Fallback GET /instance/create/{instance}
   const createPathUrl = `${baseUrl.replace(/\/$/, '')}/instance/create/${instance}`
   console.log('🧪 Tentando criar instância (GET):', createPathUrl)
-  
+
   const controller2 = new AbortController()
   const timeoutId2 = setTimeout(() => controller2.abort(), 10000)
   

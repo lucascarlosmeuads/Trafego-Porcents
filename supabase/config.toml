@@ -172,3 +172,6 @@ verify_jwt = false
 
 [functions.evolution-connect-instance]
 verify_jwt = false
+
+[functions.evolution-diagnose]
+verify_jwt = false
