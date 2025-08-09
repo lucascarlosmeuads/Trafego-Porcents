@@ -25,7 +25,7 @@ async function fetchEvolutionConfig(supabase: ReturnType<typeof getSupabaseAdmin
   const { data, error } = await supabase
     .from('waseller_dispatch_config')
     .select('*')
-    .eq('provider', 'evolution')
+    .eq('api_type', 'evolution')
     .eq('enabled', true)
     .maybeSingle()
 

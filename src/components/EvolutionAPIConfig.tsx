@@ -106,7 +106,6 @@ export function EvolutionAPIConfig() {
         instance_name: formData.instance_name,
         default_country_code: formData.default_country_code,
         enabled: formData.enabled,
-        provider: 'evolution',
       };
 
       let result;

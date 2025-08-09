@@ -148,3 +148,9 @@ verify_jwt = false
 
 [functions.evolution-send-message]
 verify_jwt = false
+
+[functions.evolution-check-connection]
+verify_jwt = false
+
+[functions.evolution-connect-instance]
+verify_jwt = false
