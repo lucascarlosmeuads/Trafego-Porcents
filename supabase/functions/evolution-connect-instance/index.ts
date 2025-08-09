@@ -157,9 +157,9 @@ serve(async (req) => {
 
     console.log("🔑 [evolution-connect-instance] API Key encontrada:", evolutionApiKey ? "✅" : "❌");
 
-    // 1) Tentar conectar
+    // 1) Tentar conectar usando método POST correto
     const connectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
-    console.log('🔌 [evolution-connect-instance] Conectando instância:', connectUrl)
+    console.log('🔌 [evolution-connect-instance] Conectando instância (POST):', connectUrl)
 
     // Adicionar timeout de 20 segundos para conexão (pode ser mais lenta)
     const controller = new AbortController()
@@ -168,8 +168,11 @@ serve(async (req) => {
     let connectResponse
     try {
       connectResponse = await fetch(connectUrl, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey },
+        method: 'POST', // Método correto para Evolution API
+        headers: { 
+          'Content-Type': 'application/json', 
+          'apikey': evolutionApiKey 
+        },
         signal: controller.signal
       })
     } catch (error: any) {
@@ -224,8 +227,11 @@ serve(async (req) => {
 
       try {
         connectResponse = await fetch(connectUrl, {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey },
+          method: 'POST', // Usar POST também na reconexão
+          headers: { 
+            'Content-Type': 'application/json', 
+            'apikey': evolutionApiKey 
+          },
           signal: controller2.signal
         })
       } catch (error: any) {

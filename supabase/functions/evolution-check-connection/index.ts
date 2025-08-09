@@ -150,7 +150,8 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true, 
-        status: connectionStatus,
+        status: connectionStatus, // For backward compatibility
+        connectionStatus: connectionStatus, // UI expects this field
         state: statusData.state,
         instance_name: config.instance_name,
         server_url: config.server_url,

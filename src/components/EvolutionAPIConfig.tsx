@@ -162,111 +162,170 @@ export function EvolutionAPIConfig() {
   }
 
   const connectInstance = async () => {
-    setConnectionStatus('connecting')
+    setConnectionStatus('connecting');
     
-    // 1. Primeiro testar conectividade antes de tentar conectar
+    // Step 1: Test basic connectivity
     toast({
-      title: "Testando servidor...",
+      title: "🔄 Passo 1/4: Testando servidor...",
       description: "Verificando se o servidor Evolution está acessível",
-    })
+    });
 
     try {
-      const connectivityTest = await supabase.functions.invoke('evolution-test-connectivity')
+      const connectivityTest = await supabase.functions.invoke('evolution-test-connectivity');
       
       if (connectivityTest.error || !connectivityTest.data?.success) {
-        setConnectionStatus('error')
+        setConnectionStatus('error');
         toast({
-          title: "Servidor inacessível",
-          description: "O servidor Evolution API não está respondendo. Verifique a configuração e tente novamente.",
+          title: "❌ Servidor inacessível",
+          description: "O servidor Evolution API não está respondendo. Verifique a configuração.",
           variant: "destructive"
-        })
-        return
+        });
+        return;
       }
 
       if (!connectivityTest.data.connectivity.reachable) {
-        setConnectionStatus('error')
+        setConnectionStatus('error');
         toast({
-          title: "Servidor não responde",
+          title: "❌ Servidor não responde",
           description: `${connectivityTest.data.connectivity.error || 'Servidor offline'}. Verifique se o servidor está online.`,
           variant: "destructive"
-        })
-        return
+        });
+        return;
       }
 
-      // 2. Se o servidor responde, tentar conectar
+      // Step 2: Check if instance already exists
       toast({
-        title: "Conectando ao WhatsApp...",
-        description: "Servidor acessível. Iniciando conexão...",
-      })
+        title: "🔄 Passo 2/4: Verificando instância...",
+        description: "Verificando se a instância já existe",
+      });
 
-      const { data, error } = await supabase.functions.invoke('evolution-connect-instance')
+      const statusCheck = await supabase.functions.invoke('evolution-check-connection');
+      
+      // Step 3: Create instance if it doesn't exist
+      if (!statusCheck.data?.success || statusCheck.data?.status === 'disconnected') {
+        toast({
+          title: "🔄 Passo 3/4: Criando instância...",
+          description: "Criando instância no servidor Evolution",
+        });
+
+        const createResult = await supabase.functions.invoke('evolution-create-instance');
+        
+        if (createResult.error || !createResult.data?.success) {
+          setConnectionStatus('error');
+          toast({
+            title: "❌ Falha ao criar instância",
+            description: createResult.data?.error || createResult.error?.message || "Erro ao criar instância",
+            variant: "destructive"
+          });
+          return;
+        }
+        
+        toast({
+          title: "✅ Instância criada!",
+          description: "Prosseguindo para conexão WhatsApp...",
+        });
+      }
+
+      // Step 4: Connect to WhatsApp and get QR code
+      toast({
+        title: "🔄 Passo 4/4: Conectando WhatsApp...",
+        description: "Iniciando conexão com WhatsApp...",
+      });
+
+      const { data, error } = await supabase.functions.invoke('evolution-connect-instance');
 
       if (error) {
-        console.error('Erro ao conectar:', error)
+        console.error('Erro ao conectar:', error);
+        setConnectionStatus('error');
         toast({
-          title: "Erro ao conectar",
+          title: "❌ Erro ao conectar",
           description: error.message || "Erro desconhecido",
           variant: "destructive"
-        })
-        setConnectionStatus('error')
-        return
+        });
+        return;
       }
 
       if (data?.success) {
-        // Se retornou QR code, exibir modal
-        if (data.data?.qrcode || data.data?.qr) {
-          setQrCodeData(data.data.qrcode || data.data.qr)
-          setShowQrModal(true)
-          setConnectionStatus('connecting')
+        // If QR code is returned, show modal
+        if (data.data?.qrcode || data.data?.qr || data.data?.base64) {
+          const qrCode = data.data.qrcode || data.data.qr || data.data.base64;
+          
+          // Handle base64 QR code
+          const qrCodeToShow = qrCode.startsWith('data:image') ? qrCode : `data:image/png;base64,${qrCode}`;
+          
+          setQrCodeData(qrCodeToShow);
+          setShowQrModal(true);
+          setConnectionStatus('connecting');
           
           toast({
-            title: "QR Code gerado",
+            title: "📱 QR Code gerado!",
             description: "Escaneie o QR Code com seu WhatsApp para conectar",
-          })
+          });
           
-          // Verificar status periodicamente até conectar
+          // Poll for connection status every 2s for up to 60s
+          let pollAttempts = 0;
+          const maxPollAttempts = 30; // 30 attempts * 2s = 60s
+          
           const checkInterval = setInterval(async () => {
-            const statusResult = await supabase.functions.invoke('evolution-check-connection')
-            if (statusResult.data?.success && statusResult.data?.status === 'connected') {
-              setConnectionStatus('connected')
-              setShowQrModal(false)
-              setQrCodeData(null)
-              clearInterval(checkInterval)
+            pollAttempts++;
+            
+            const statusResult = await supabase.functions.invoke('evolution-check-connection');
+            
+            if (statusResult.data?.success && statusResult.data?.connectionStatus === 'connected') {
+              setConnectionStatus('connected');
+              setShowQrModal(false);
+              setQrCodeData(null);
+              clearInterval(checkInterval);
               toast({
-                title: "WhatsApp conectado!",
-                description: "Agora você pode enviar mensagens",
-              })
+                title: "✅ WhatsApp conectado!",
+                description: "Agora você pode enviar mensagens via Evolution API",
+              });
+            } else if (pollAttempts >= maxPollAttempts) {
+              clearInterval(checkInterval);
+              setConnectionStatus('error');
+              setShowQrModal(false);
+              setQrCodeData(null);
+              toast({
+                title: "⏰ Timeout de conexão",
+                description: "WhatsApp não foi conectado no tempo esperado. Tente novamente.",
+                variant: "destructive"
+              });
             }
-          }, 3000)
+          }, 2000);
           
-          // Limpar interval após 2 minutos
-          setTimeout(() => clearInterval(checkInterval), 120000)
-        } else {
-          // Já conectado
-          setConnectionStatus('connected')
+        } else if (data.data?.instance?.state === 'open') {
+          // Already connected
+          setConnectionStatus('connected');
           toast({
-            title: "WhatsApp já conectado!",
-            description: "Instância já está ativa",
-          })
+            title: "✅ WhatsApp já conectado!",
+            description: "A instância já está ativa e pronta para uso",
+          });
+        } else {
+          setConnectionStatus('error');
+          toast({
+            title: "❌ Resposta inesperada",
+            description: "O servidor respondeu mas não retornou QR code nem confirmação de conexão",
+            variant: "destructive"
+          });
         }
       } else {
-        setConnectionStatus('error')
+        setConnectionStatus('error');
         toast({
-          title: "Erro ao conectar",
+          title: "❌ Falha na conexão",
           description: data?.error || "Servidor respondeu mas falhou ao conectar",
           variant: "destructive"
-        })
+        });
       }
     } catch (err: any) {
-      console.error('Erro ao conectar:', err)
-      setConnectionStatus('error')
+      console.error('Erro ao conectar:', err);
+      setConnectionStatus('error');
       toast({
-        title: "Erro ao conectar",
-        description: err.message || "Erro desconhecido",
+        title: "❌ Erro inesperado",
+        description: err.message || "Erro desconhecido durante o processo de conexão",
         variant: "destructive"
-      })
+      });
     }
-  }
+  };
 
   const testConnection = async () => {
     if (testing) return

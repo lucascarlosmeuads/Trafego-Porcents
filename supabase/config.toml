@@ -1,6 +1,24 @@
 
 project_id = "rxpgqunqsegypssoqpyf"
 
+[functions.evolution-create-instance]
+verify_jwt = false
+
+[functions.evolution-connect-instance]
+verify_jwt = false
+
+[functions.evolution-check-connection]
+verify_jwt = false
+
+[functions.evolution-test-connectivity]
+verify_jwt = false
+
+[functions.evolution-send-message]
+verify_jwt = true
+
+[functions.admin-api-config]
+verify_jwt = true
+
 [api]
 enabled = true
 port = 54321

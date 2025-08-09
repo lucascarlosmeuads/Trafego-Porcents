@@ -48,33 +48,51 @@ async function fetchEvolutionConfig(supabase: ReturnType<typeof getSupabaseAdmin
   }
 }
 
-async function testServerConnectivity(serverUrl: string): Promise<{ reachable: boolean, responseTime: number, error?: string }> {
-  const startTime = Date.now()
-  const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 5000) // 5 segundos para teste básico
-  
+async function testServerConnectivity(serverUrl: string): Promise<{ reachable: boolean, responseTime?: number, status?: number, error?: string }> {
   try {
-    // Teste simples de conectividade - apenas HEAD request
-    const response = await fetch(serverUrl, {
-      method: 'HEAD',
-      signal: controller.signal
-    })
+    console.log(`🌐 Testando conectividade para: ${serverUrl}`)
     
+    // Primeiro tentar endpoint /health (padrão da Evolution API)
+    let testUrl = `${serverUrl.replace(/\/$/, '')}/health`;
+    
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 second timeout
+    
+    const start = Date.now()
+    let response;
+    
+    try {
+      response = await fetch(testUrl, {
+        method: 'GET',
+        signal: controller.signal
+      });
+    } catch (healthError) {
+      console.log(`💡 /health falhou, tentando endpoint raiz: ${serverUrl}`)
+      // Fallback para endpoint raiz
+      response = await fetch(serverUrl, {
+        method: 'HEAD',
+        signal: controller.signal
+      });
+    }
+    
+    const responseTime = Date.now() - start
     clearTimeout(timeoutId)
-    const responseTime = Date.now() - startTime
     
     return {
       reachable: true,
-      responseTime
+      responseTime,
+      status: response.status
     }
   } catch (error: any) {
-    clearTimeout(timeoutId)
-    const responseTime = Date.now() - startTime
-    
+    if (error.name === 'AbortError') {
+      return {
+        reachable: false,
+        error: 'Timeout: Servidor não responde em 10 segundos'
+      }
+    }
     return {
       reachable: false,
-      responseTime,
-      error: error.name === 'AbortError' ? 'Timeout (5s)' : error.message
+      error: error.message || String(error)
     }
   }
 }
