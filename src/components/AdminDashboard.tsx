@@ -12,6 +12,7 @@ import { useManagerData } from '@/hooks/useManagerData'
 import { SacDashboard } from './SAC/SacDashboard'
 import { LazyRelatorioSacGestores } from './LazyComponents'
 import { AdminSugestoes } from './AdminSugestoes'
+import { EvolutionAPIConfig } from './EvolutionAPIConfig'
 import { SiteRequestsDashboard } from './SiteRequests/SiteRequestsDashboard'
 import { MaxIntegrationDashboard } from './MaxIntegration/MaxIntegrationDashboard'
 import { OpenAICustosDashboard } from './AdminDashboard/OpenAICustosDashboard'
@@ -249,6 +250,21 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
 
       case 'leads-parceria':
         return <LeadsParcerriaPanel />
+
+      case 'evolution-api':
+        return (
+          <div className="space-y-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Evolution API</h1>
+                <p className="text-muted-foreground">
+                  Configure a integração com WhatsApp Evolution API
+                </p>
+              </div>
+            </div>
+            <EvolutionAPIConfig />
+          </div>
+        )
       
       case 'clientes':
       default:

@@ -317,7 +317,7 @@ export function LeadsParcerriaPanel() {
       console.log('Iniciando envio via API para lead', lead?.id);
       toast({ title: 'Enviando mensagem...', description: 'Conectando à API do WhatsApp.' });
 
-      const { data, error } = await supabase.functions.invoke('waseller-send-message', {
+      const { data, error } = await supabase.functions.invoke('evolution-send-message', {
         body: { leadId: lead.id }
       });
 

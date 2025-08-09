@@ -10,7 +10,8 @@ import {
   Wand2,
   Lightbulb,
   UserPlus,
-  RefreshCw
+  RefreshCw,
+  MessageSquare
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -51,17 +52,24 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       icon: UserPlus,
       description: 'Leads interessados em parceria'
     },
+    {
+      id: 'evolution-api',
+      label: 'Evolution API',
+      icon: MessageSquare,
+      description: 'Configurar WhatsApp Evolution API'
+    },
    ]
  
    const visibleItems = menuItems
      .filter(item => item.id !== 'sac')
      .sort((a, b) => {
-       const order: Record<string, number> = {
-         'dashboard': 0,
-         'leads-parceria': 1,
-         'clientes': 2,
-         'acervo-ideias': 3,
-       }
+        const order: Record<string, number> = {
+          'dashboard': 0,
+          'leads-parceria': 1,
+          'clientes': 2,
+          'acervo-ideias': 3,
+          'evolution-api': 4,
+        }
        return (order[a.id] ?? 99) - (order[b.id] ?? 99)
      })
  
