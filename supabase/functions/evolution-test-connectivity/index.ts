@@ -163,7 +163,7 @@ serve(async (req) => {
           error: 'Configuração Evolution API não encontrada ou não está ativa' 
         }),
         { 
-          status: 400, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -199,7 +199,7 @@ serve(async (req) => {
           api_key_status: 'not_configured'
         }),
         { 
-          status: 500, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -241,7 +241,7 @@ serve(async (req) => {
         error: `Erro interno: ${error.message}`
       }),
       { 
-        status: 500, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )

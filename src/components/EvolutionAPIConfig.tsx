@@ -227,10 +227,12 @@ export function EvolutionAPIConfig() {
           // Prosseguir para tentativa de conexão mesmo com erro de criação
         }
         
-        toast({
-          title: "✅ Instância criada!",
-          description: "Prosseguindo para conexão WhatsApp...",
-        });
+        if (createResult.data?.success) {
+          toast({
+            title: "✅ Instância criada!",
+            description: "Prosseguindo para conexão WhatsApp...",
+          });
+        }
       }
 
       // Step 4: Connect to WhatsApp and get QR code

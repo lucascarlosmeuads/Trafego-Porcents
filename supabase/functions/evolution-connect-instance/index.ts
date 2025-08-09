@@ -142,7 +142,7 @@ serve(async (req) => {
       console.error("❌ [evolution-connect-instance] Config não encontrada");
       return new Response(
         JSON.stringify({ success: false, error: 'Configuração Evolution API não encontrada ou não está ativa' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -151,7 +151,7 @@ serve(async (req) => {
       console.error('❌ [evolution-connect-instance] EVOLUTION_API_KEY não configurada')
       return new Response(
         JSON.stringify({ success: false, error: 'API Key Evolution não configurada' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -185,7 +185,7 @@ serve(async (req) => {
             error: 'Timeout: Servidor Evolution API não está respondendo (20s). Verifique se o servidor está online e acessível.'
           }),
           { 
-            status: 408, 
+            status: 200, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )
@@ -225,7 +225,7 @@ serve(async (req) => {
             raw_connect: connectText,
             suggestion
           }),
-          { status: is500 ? 500 : 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
 
@@ -253,7 +253,7 @@ serve(async (req) => {
               error: 'Timeout na reconexão: Servidor Evolution API não está respondendo (20s)'
             }),
             { 
-              status: 408, 
+              status: 200, 
               headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
             }
           )
@@ -286,7 +286,7 @@ serve(async (req) => {
             raw_connect: connectText,
             suggestion
           }),
-          { status: connectResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         )
       }
     }
@@ -307,7 +307,7 @@ serve(async (req) => {
     console.error('❌ Erro geral na função de conexão:', error)
     return new Response(
       JSON.stringify({ success: false, error: `Erro interno: ${error.message}` }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

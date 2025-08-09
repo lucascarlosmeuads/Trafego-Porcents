@@ -70,7 +70,7 @@ serve(async (req: Request) => {
           error: "Evolution API não configurada ou desabilitada" 
         }),
         { 
-          status: 400, 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
@@ -89,7 +89,7 @@ serve(async (req: Request) => {
           error: "EVOLUTION_API_KEY não configurada" 
         }),
         { 
-          status: 500, 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
@@ -130,7 +130,7 @@ serve(async (req: Request) => {
             error: "Timeout: Servidor Evolution API não está respondendo (15s). Verifique se o servidor está online."
           }),
           { 
-            status: 408, 
+            status: 200, 
             headers: { ...corsHeaders, "Content-Type": "application/json" } 
           }
         );
@@ -142,7 +142,7 @@ serve(async (req: Request) => {
           error: `Erro de rede: ${error instanceof Error ? error.message : String(error)}`
         }),
         { 
-          status: 500, 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
@@ -258,7 +258,7 @@ serve(async (req: Request) => {
           suggestion: statusCode === 500 ? "Tente reiniciar o servidor Evolution API ou verifique os logs do servidor." : undefined
         }),
         { 
-          status: statusCode >= 500 ? 500 : 400, 
+          status: 200, 
           headers: { ...corsHeaders, "Content-Type": "application/json" } 
         }
       );
@@ -272,7 +272,7 @@ serve(async (req: Request) => {
         error: error instanceof Error ? error.message : String(error) 
       }),
       { 
-        status: 500, 
+        status: 200, 
         headers: { ...corsHeaders, "Content-Type": "application/json" } 
       }
     );

@@ -67,7 +67,7 @@ serve(async (req) => {
           error: 'Configuração Evolution API não encontrada ou não está ativa' 
         }),
         { 
-          status: 400, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -78,7 +78,7 @@ serve(async (req) => {
       console.error('❌ EVOLUTION_API_KEY não configurada')
       return new Response(
         JSON.stringify({ success: false, error: 'API Key Evolution não configurada' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -117,7 +117,7 @@ serve(async (req) => {
             status: 'timeout'
           }),
           { 
-            status: 408, 
+            status: 200, 
             headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
           }
         )
@@ -132,7 +132,7 @@ serve(async (req) => {
           status: 'network_error'
         }),
         { 
-          status: 503, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -149,7 +149,7 @@ serve(async (req) => {
           status: 'error'
         }),
         { 
-          status: statusResponse.status, 
+          status: 200, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         }
       )
@@ -190,7 +190,7 @@ serve(async (req) => {
         status: 'error'
       }),
       { 
-        status: 500, 
+        status: 200, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
       }
     )
