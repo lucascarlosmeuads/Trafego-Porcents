@@ -647,6 +647,44 @@ return (
               </Button>
             </div>
 
+            {/* Aviso específico: erro findMany */}
+            {(() => {
+              const hasFindMany = JSON.stringify(diagData || {}).includes('findMany');
+              if (!hasFindMany) return null;
+              const fixCmds = [
+                { label: 'Aplicar migrações (Prisma)', cmd: 'npx prisma migrate deploy' },
+                { label: 'Gerar Prisma Client', cmd: 'npx prisma generate' },
+                { label: 'Reiniciar serviço (PM2)', cmd: 'pm2 restart all' },
+                { label: 'Reiniciar container (Docker)', cmd: 'docker ps --filter "name=evolution" --format "{{.ID}}" | xargs -r docker restart' },
+                { label: 'Verificar variáveis (.env)', cmd: 'echo $DATABASE_URL && echo $DATABASE_PROVIDER' },
+              ];
+              return (
+                <div className="border rounded p-3 mb-4 bg-red-50 border-red-200">
+                  <h4 className="font-semibold text-red-700 mb-1">Possível problema no banco de dados (erro "findMany")</h4>
+                  <p className="text-sm text-red-700/90">
+                    Seu servidor Evolution API retornou erro 500 envolvendo "findMany". Isso normalmente indica que o ORM/banco não foi inicializado.
+                  </p>
+                  <ul className="list-disc pl-5 mt-2 text-sm text-red-800 space-y-1">
+                    <li>Confirme DATABASE_URL e (se aplicável) DATABASE_PROVIDER</li>
+                    <li>Aplicar migrações do banco</li>
+                    <li>Gerar Prisma Client</li>
+                    <li>Reiniciar o serviço (PM2) ou container (Docker)</li>
+                  </ul>
+                  <div className="mt-3 space-y-2">
+                    {fixCmds.map((item) => (
+                      <div key={item.label} className="border rounded p-2 bg-background">
+                        <div className="flex items-center justify-between mb-2 text-sm font-medium">
+                          <span>{item.label}</span>
+                          <Button size="sm" variant="outline" onClick={() => copyToClipboard(item.cmd)}>Copiar</Button>
+                        </div>
+                        <pre className="text-xs whitespace-pre-wrap break-words font-mono bg-muted text-foreground p-2 rounded">{item.cmd}</pre>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })()}
+
             {/* Comandos cURL */}
             <div className="space-y-3 mb-4">
               <h4 className="font-semibold">Comandos cURL úteis</h4>
@@ -681,9 +719,13 @@ return (
 
             {/* JSON bruto */}
             <div className="max-h-[40vh] overflow-auto border rounded p-3 text-sm bg-muted">
-              <pre className="whitespace-pre-wrap break-words font-mono text-foreground">
-                {JSON.stringify(diagData, null, 2)}
-              </pre>
+              {(() => {
+                const json = JSON.stringify(diagData, null, 2) || '';
+                const html = json.replace(/findMany/g, '<mark class="bg-yellow-200 text-yellow-900 px-1 rounded">findMany</mark>');
+                return (
+                  <pre className="whitespace-pre-wrap break-words font-mono text-foreground" dangerouslySetInnerHTML={{ __html: html }} />
+                );
+              })()}
             </div>
 
             <div className="mt-4">
