@@ -320,15 +320,21 @@ export function EvolutionAPIConfig() {
             variant: "destructive"
           });
         }
-      } else {
-        setConnectionStatus('error');
-        const desc = (data?.error || "Servidor respondeu mas falhou ao conectar") + (data?.suggestion ? ` ${data.suggestion}` : '');
-        toast({
-          title: "❌ Falha na conexão",
-          description: desc,
-          variant: "destructive"
-        });
-      }
+        } else {
+          setConnectionStatus('error');
+          const errStr = String(data?.error || '');
+          const hasCannotPost = errStr.includes('Cannot POST');
+          const hasFindMany = errStr.includes('findMany') || JSON.stringify(data || {}).includes('findMany');
+          const extraHint = hasCannotPost
+            ? 'Usamos GET automaticamente para conectar, mas o servidor não aceitou. Se houver erro 500 com "findMany", ajuste o banco/ORM no servidor Evolution.'
+            : (data?.suggestion || '');
+          const desc = (data?.error || 'Servidor respondeu mas falhou ao conectar') + (extraHint ? ` ${extraHint}` : '');
+          toast({
+            title: '❌ Falha na conexão',
+            description: desc,
+            variant: 'destructive'
+          });
+        }
     } catch (err: any) {
       console.error('Erro ao conectar:', err);
       setConnectionStatus('error');
@@ -439,10 +445,19 @@ export function EvolutionAPIConfig() {
     } finally {
       setDiagLoading(false)
     }
-  }
+}
 
-  return (
-    <div className="w-full max-w-4xl space-y-6">
+const copyToClipboard = async (text: string) => {
+  try {
+    await navigator.clipboard.writeText(text);
+    toast({ title: 'Copiado', description: 'Comando copiado para a área de transferência' });
+  } catch {
+    toast({ title: 'Falha ao copiar', variant: 'destructive' });
+  }
+};
+
+return (
+  <div className="w-full max-w-4xl space-y-6">
       <Tabs defaultValue="config" className="w-full">
         <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="config">Configuração</TabsTrigger>
@@ -511,6 +526,14 @@ export function EvolutionAPIConfig() {
             >
               {diagLoading ? 'Diagnosticando...' : 'Diagnosticar conexão'}
             </Button>
+
+            <Button
+              onClick={() => window.open(`${(formData.server_url || '').replace(/\/$/, '')}/manager`, '_blank')}
+              variant="outline"
+              size="sm"
+            >
+              Abrir Manager
+            </Button>
           </div>
         </div>
 
@@ -571,13 +594,98 @@ export function EvolutionAPIConfig() {
       {/* Modal de Diagnóstico */}
       {showDiagModal && diagData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4">
+          <div className="bg-white rounded-lg p-6 max-w-3xl w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-center">Relatório de Diagnóstico Evolution API</h3>
-            <div className="max-h-[60vh] overflow-auto border rounded p-3 text-sm">
+
+            {/* Resumo */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-4 text-sm">
+              <div className="flex items-center justify-between border rounded px-3 py-2">
+                <span className="font-medium">Versão</span>
+                <span className="px-2 py-1 rounded bg-green-100 text-green-800">
+                  {diagData?.results?.root?.body?.version || '—'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border rounded px-3 py-2">
+                <span className="font-medium">Connect esperado</span>
+                <span className="px-2 py-1 rounded bg-blue-100 text-blue-800">
+                  {(() => {
+                    const cp = diagData?.results?.connectPost;
+                    const notAllowed = cp?.status === 404 || cp?.status === 405 || JSON.stringify(cp?.body || '').includes('Cannot POST');
+                    return notAllowed ? 'GET' : 'POST';
+                  })()}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border rounded px-3 py-2">
+                <span className="font-medium">API Key</span>
+                <span className={`px-2 py-1 rounded ${diagData?.config?.api_key_present ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                  {diagData?.config?.api_key_present ? 'Configurada' : 'Ausente'}
+                </span>
+              </div>
+              <div className="flex items-center justify-between border rounded px-3 py-2">
+                <span className="font-medium">Banco/ORM</span>
+                <span className={`px-2 py-1 rounded ${JSON.stringify(diagData?.results || {}).includes('findMany') ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`}>
+                  {JSON.stringify(diagData?.results || {}).includes('findMany') ? 'Erro (findMany)' : 'OK'}
+                </span>
+              </div>
+            </div>
+
+            {/* Ações rápidas */}
+            <div className="flex flex-wrap gap-2 mb-4">
+              <Button
+                variant="outline"
+                onClick={() => window.open(`${(diagData?.config?.base_url || formData.server_url || '').replace(/\/$/, '')}/manager`, '_blank')}
+                size="sm"
+              >
+                Abrir Manager
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => window.open(`${(diagData?.config?.base_url || formData.server_url || '').replace(/\/$/, '')}`, '_blank')}
+                size="sm"
+              >
+                Abrir Root
+              </Button>
+            </div>
+
+            {/* Comandos cURL */}
+            <div className="space-y-3 mb-4">
+              <h4 className="font-semibold">Comandos cURL úteis</h4>
+              {(() => {
+                const base = (diagData?.config?.base_url || formData.server_url || '').replace(/\/$/, '');
+                const inst = diagData?.config?.instance || formData.instance_name;
+                const apiHeader = "-H 'apikey: YOUR_API_KEY' -H 'Content-Type: application/json'";
+                const curlCreatePost = `curl -X POST ${apiHeader} ${base}/instance/create -d '{"instanceName":"${inst}"}'`;
+                const curlConnectGet = `curl -X GET ${apiHeader} ${base}/instance/connect/${inst}`;
+                const curlConnectPost = `curl -X POST ${apiHeader} ${base}/instance/connect/${inst}`;
+                const curlConnState = `curl -X GET ${apiHeader} ${base}/instance/connectionState/${inst}`;
+                return (
+                  <div className="space-y-2">
+                    {[
+                      { label: 'Criar instância (POST)', cmd: curlCreatePost },
+                      { label: 'Conectar (GET)', cmd: curlConnectGet },
+                      { label: 'Conectar (POST)', cmd: curlConnectPost },
+                      { label: 'Ver status (GET)', cmd: curlConnState },
+                    ].map((item) => (
+                      <div key={item.label} className="border rounded p-2">
+                        <div className="flex items-center justify-between mb-2 text-sm font-medium">
+                          <span>{item.label}</span>
+                          <Button size="sm" variant="outline" onClick={() => copyToClipboard(item.cmd)}>Copiar</Button>
+                        </div>
+                        <pre className="text-xs whitespace-pre-wrap break-words">{item.cmd}</pre>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* JSON bruto */}
+            <div className="max-h-[40vh] overflow-auto border rounded p-3 text-sm">
               <pre className="whitespace-pre-wrap break-words">
                 {JSON.stringify(diagData, null, 2)}
               </pre>
             </div>
+
             <div className="mt-4">
               <Button onClick={() => setShowDiagModal(false)} className="w-full" variant="outline">Fechar</Button>
             </div>
