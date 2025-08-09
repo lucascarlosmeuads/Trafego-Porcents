@@ -29,8 +29,8 @@ export function EvolutionAPIConfig() {
   const [testing, setTesting] = useState(false);
   
   const [formData, setFormData] = useState({
-    server_url: '',
-    instance_name: '',
+    server_url: 'http://72.60.7.194:8080',
+    instance_name: 'lucas',
     default_country_code: '+55',
     enabled: true
   });
@@ -70,10 +70,18 @@ export function EvolutionAPIConfig() {
       if (data) {
         setConfig(data);
         setFormData({
-          server_url: data.server_url || '',
-          instance_name: data.instance_name || '',
+          server_url: data.server_url || 'http://72.60.7.194:8080',
+          instance_name: data.instance_name || 'lucas',
           default_country_code: data.default_country_code || '+55',
           enabled: data.enabled || false
+        });
+      } else {
+        // Set default values if no config exists
+        setFormData({
+          server_url: 'http://72.60.7.194:8080',
+          instance_name: 'lucas',
+          default_country_code: '+55',
+          enabled: true
         });
       }
     } catch (error: any) {
