@@ -594,7 +594,7 @@ return (
       {/* Modal de Diagnóstico */}
       {showDiagModal && diagData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-3xl w-full mx-4">
+          <div className="bg-background text-foreground rounded-lg p-6 max-w-3xl w-full mx-4">
             <h3 className="text-lg font-semibold mb-4 text-center">Relatório de Diagnóstico Evolution API</h3>
 
             {/* Resumo */}
@@ -671,7 +671,7 @@ return (
                           <span>{item.label}</span>
                           <Button size="sm" variant="outline" onClick={() => copyToClipboard(item.cmd)}>Copiar</Button>
                         </div>
-                        <pre className="text-xs whitespace-pre-wrap break-words">{item.cmd}</pre>
+                        <pre className="text-xs whitespace-pre-wrap break-words font-mono bg-muted text-foreground p-2 rounded">{item.cmd}</pre>
                       </div>
                     ))}
                   </div>
@@ -680,8 +680,8 @@ return (
             </div>
 
             {/* JSON bruto */}
-            <div className="max-h-[40vh] overflow-auto border rounded p-3 text-sm">
-              <pre className="whitespace-pre-wrap break-words">
+            <div className="max-h-[40vh] overflow-auto border rounded p-3 text-sm bg-muted">
+              <pre className="whitespace-pre-wrap break-words font-mono text-foreground">
                 {JSON.stringify(diagData, null, 2)}
               </pre>
             </div>
@@ -696,7 +696,7 @@ return (
       {/* Modal do QR Code */}
       {showQrModal && qrCodeData && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md mx-4">
+          <div className="bg-background text-foreground rounded-lg p-6 max-w-md mx-4">
             <h3 className="text-lg font-semibold mb-4 text-center">Escaneie o QR Code</h3>
             <p className="text-sm text-muted-foreground mb-4 text-center">
               Use seu WhatsApp para escanear este código e conectar a instância
