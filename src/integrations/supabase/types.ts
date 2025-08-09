@@ -1703,6 +1703,8 @@ export type Database = {
       }
       waseller_dispatch_config: {
         Row: {
+          api_key: string | null
+          api_type: string | null
           base_url: string
           campaign_id: string | null
           created_at: string
@@ -1710,12 +1712,16 @@ export type Database = {
           enabled: boolean
           endpoint_path: string
           id: string
+          instance_name: string | null
           max_per_run: number
           min_lead_age_minutes: number
+          server_url: string | null
           target_statuses: string[]
           updated_at: string
         }
         Insert: {
+          api_key?: string | null
+          api_type?: string | null
           base_url: string
           campaign_id?: string | null
           created_at?: string
@@ -1723,12 +1729,16 @@ export type Database = {
           enabled?: boolean
           endpoint_path: string
           id?: string
+          instance_name?: string | null
           max_per_run?: number
           min_lead_age_minutes?: number
+          server_url?: string | null
           target_statuses?: string[]
           updated_at?: string
         }
         Update: {
+          api_key?: string | null
+          api_type?: string | null
           base_url?: string
           campaign_id?: string | null
           created_at?: string
@@ -1736,8 +1746,10 @@ export type Database = {
           enabled?: boolean
           endpoint_path?: string
           id?: string
+          instance_name?: string | null
           max_per_run?: number
           min_lead_age_minutes?: number
+          server_url?: string | null
           target_statuses?: string[]
           updated_at?: string
         }
