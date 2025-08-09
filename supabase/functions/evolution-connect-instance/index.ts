@@ -111,10 +111,19 @@ serve(async (req) => {
   }
 
   try {
+    console.log("📋 [evolution-connect-instance] Iniciando processo de conexão...");
+    
     const supabase = getSupabaseAdmin()
     const config = await fetchEvolutionConfig(supabase)
     
+    console.log("🔧 [evolution-connect-instance] Config obtida:", {
+      server_url: config?.server_url,
+      instance_name: config?.instance_name,
+      enabled: config?.enabled
+    });
+    
     if (!config) {
+      console.error("❌ [evolution-connect-instance] Config não encontrada");
       return new Response(
         JSON.stringify({ success: false, error: 'Configuração Evolution API não encontrada ou não está ativa' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -123,16 +132,18 @@ serve(async (req) => {
 
     const evolutionApiKey = Deno.env.get('EVOLUTION_API_KEY')
     if (!evolutionApiKey) {
-      console.error('❌ EVOLUTION_API_KEY não configurada')
+      console.error('❌ [evolution-connect-instance] EVOLUTION_API_KEY não configurada')
       return new Response(
         JSON.stringify({ success: false, error: 'API Key Evolution não configurada' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
+    console.log("🔑 [evolution-connect-instance] API Key encontrada:", evolutionApiKey ? "✅" : "❌");
+
     // 1) Tentar conectar
     const connectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
-    console.log('🔌 Conectando instância:', connectUrl)
+    console.log('🔌 [evolution-connect-instance] Conectando instância:', connectUrl)
 
     let connectResponse = await fetch(connectUrl, {
       method: 'GET',

@@ -52,6 +52,8 @@ serve(async (req: Request) => {
     const action = body?.action as string | undefined;
 
     if (action === "get_evolution_config") {
+      console.log("[admin-api-config] 🔍 Buscando configuração Evolution...");
+      
       const { data, error } = await supabase
         .from("waseller_dispatch_config")
         .select("*")
@@ -59,12 +61,14 @@ serve(async (req: Request) => {
         .maybeSingle();
 
       if (error) {
-        console.error("[admin-api-config] Erro ao buscar config:", error);
+        console.error("[admin-api-config] ❌ Erro ao buscar config:", error);
         return new Response(JSON.stringify({ success: false, error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      console.log("[admin-api-config] ✅ Config encontrada:", data);
 
       // Responder com defaults mínimos se não houver linha
       const payload = data ?? {
@@ -90,6 +94,8 @@ serve(async (req: Request) => {
     }
 
     if (action === "save_evolution_config") {
+      console.log("[admin-api-config] 💾 Salvando configuração:", body);
+      
       const p: SavePayload = {
         server_url: body?.server_url,
         instance_name: body?.instance_name,
@@ -97,35 +103,39 @@ serve(async (req: Request) => {
         enabled: body?.enabled ?? true,
       };
 
+      console.log("[admin-api-config] 📝 Payload processado:", p);
+
       if (!p.server_url || !p.instance_name) {
+        console.error("[admin-api-config] ❌ Campos obrigatórios ausentes:", p);
         return new Response(JSON.stringify({ success: false, error: "Campos obrigatórios ausentes" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Upsert por api_type (índice único já criado)
+      // Usar UPDATE direto já que sabemos que o registro existe
+      console.log("[admin-api-config] 🔄 Atualizando registro existente...");
+      
       const { error } = await supabase
         .from("waseller_dispatch_config")
-        .upsert(
-          {
-            api_type: "evolution",
-            enabled: p.enabled ?? true,
-            server_url: p.server_url,
-            instance_name: p.instance_name,
-            default_country_code: p.default_country_code ?? "+55",
-            updated_at: new Date().toISOString(),
-          } as any,
-          { onConflict: "api_type" },
-        );
+        .update({
+          enabled: p.enabled ?? true,
+          server_url: p.server_url,
+          instance_name: p.instance_name,
+          default_country_code: p.default_country_code ?? "+55",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("api_type", "evolution");
 
       if (error) {
-        console.error("[admin-api-config] Erro ao salvar config:", error);
+        console.error("[admin-api-config] ❌ Erro ao salvar config:", error);
         return new Response(JSON.stringify({ success: false, error: error.message }), {
           status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
+
+      console.log("[admin-api-config] ✅ Configuração salva com sucesso!");
 
       return new Response(JSON.stringify({ success: true }), {
         headers: { ...corsHeaders, "Content-Type": "application/json" },
