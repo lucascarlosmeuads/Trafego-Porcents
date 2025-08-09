@@ -327,6 +327,18 @@ export function LeadsParcerriaPanel() {
       }
 
       toast({ title: 'Mensagem enviada!', description: 'Lead marcado como contatado no WhatsApp.' });
+      // Abrir WhatsApp Web automaticamente, se habilitado
+      try {
+        const shouldOpen = localStorage.getItem('openWhatsAppAfterSend') === 'true';
+        if (shouldOpen) {
+          const { whatsapp } = getLeadData(lead);
+          if (whatsapp && whatsapp !== 'Não informado') {
+            const clean = String(whatsapp).replace(/\D/g, '');
+            const formatted = clean.startsWith('55') ? clean : `55${clean}`;
+            window.open(`https://wa.me/${formatted}`, '_blank', 'noopener,noreferrer');
+          }
+        }
+      } catch {}
       // Atualizar dados após envio
       refetch?.();
     } catch (err: any) {

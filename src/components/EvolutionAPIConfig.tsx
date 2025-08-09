@@ -34,6 +34,9 @@ export function EvolutionAPIConfig() {
     default_country_code: '+55',
     enabled: true
   });
+  const [openWhatsAppAfterSend, setOpenWhatsAppAfterSend] = useState<boolean>(() => {
+    try { return localStorage.getItem('openWhatsAppAfterSend') === 'true'; } catch { return false; }
+  });
 
   useEffect(() => {
     loadConfig();
@@ -194,6 +197,18 @@ export function EvolutionAPIConfig() {
             }
           />
           <Label htmlFor="enabled">API Habilitada</Label>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <Switch
+            id="open_whatsapp"
+            checked={openWhatsAppAfterSend}
+            onCheckedChange={(checked) => {
+              setOpenWhatsAppAfterSend(!!checked);
+              try { localStorage.setItem('openWhatsAppAfterSend', String(!!checked)); } catch {}
+            }}
+          />
+          <Label htmlFor="open_whatsapp">Abrir WhatsApp Web após enviar</Label>
         </div>
 
         <div className="space-y-2">
