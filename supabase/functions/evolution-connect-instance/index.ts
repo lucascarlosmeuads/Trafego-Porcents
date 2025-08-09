@@ -53,17 +53,25 @@ async function tryCreateInstance(baseUrl: string, instance: string, apikey: stri
   // Tentar POST /instance/create { instanceName }
   const createJsonUrl = `${baseUrl.replace(/\/$/, '')}/instance/create`
   console.log('🧪 Tentando criar instância (POST):', createJsonUrl)
+  
+  const controller = new AbortController()
+  const timeoutId = setTimeout(() => controller.abort(), 10000)
+  
   const postResp = await fetch(createJsonUrl, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
       'apikey': apikey
     },
-    body: JSON.stringify({ instanceName: instance })
+    body: JSON.stringify({ instanceName: instance }),
+    signal: controller.signal
   }).catch((e) => {
+    clearTimeout(timeoutId)
     console.warn('⚠️ Falha na tentativa POST create:', e)
     return null
   })
+  
+  clearTimeout(timeoutId)
 
   if (postResp && postResp.ok) {
     try {
@@ -79,16 +87,24 @@ async function tryCreateInstance(baseUrl: string, instance: string, apikey: stri
   // Fallback GET /instance/create/{instance}
   const createPathUrl = `${baseUrl.replace(/\/$/, '')}/instance/create/${instance}`
   console.log('🧪 Tentando criar instância (GET):', createPathUrl)
+  
+  const controller2 = new AbortController()
+  const timeoutId2 = setTimeout(() => controller2.abort(), 10000)
+  
   const getResp = await fetch(createPathUrl, {
     method: 'GET',
     headers: {
       'Content-Type': 'application/json',
       'apikey': apikey
-    }
+    },
+    signal: controller2.signal
   }).catch((e) => {
+    clearTimeout(timeoutId2)
     console.warn('⚠️ Falha na tentativa GET create:', e)
     return null
   })
+  
+  clearTimeout(timeoutId2)
 
   if (getResp && getResp.ok) {
     try {
@@ -145,10 +161,35 @@ serve(async (req) => {
     const connectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
     console.log('🔌 [evolution-connect-instance] Conectando instância:', connectUrl)
 
-    let connectResponse = await fetch(connectUrl, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey }
-    })
+    // Adicionar timeout de 10 segundos
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+    let connectResponse
+    try {
+      connectResponse = await fetch(connectUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey },
+        signal: controller.signal
+      })
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        console.error('⏰ Timeout ao conectar instância')
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Timeout: Servidor Evolution API não está respondendo (10s). Verifique se o servidor está online e acessível.'
+          }),
+          { 
+            status: 408, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
+      }
+      throw error
+    }
+    clearTimeout(timeoutId)
 
     let connectOk = connectResponse.ok
     let connectText = await connectResponse.text()
@@ -178,10 +219,33 @@ serve(async (req) => {
 
       // 3) Re-tentar conectar após criar
       console.log('🔁 Re-tentando conexão após criar a instância...')
-      connectResponse = await fetch(connectUrl, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey }
-      })
+      const controller2 = new AbortController()
+      const timeoutId2 = setTimeout(() => controller2.abort(), 10000)
+
+      try {
+        connectResponse = await fetch(connectUrl, {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey },
+          signal: controller2.signal
+        })
+      } catch (error: any) {
+        clearTimeout(timeoutId2)
+        if (error.name === 'AbortError') {
+          console.error('⏰ Timeout na reconexão após criar instância')
+          return new Response(
+            JSON.stringify({ 
+              success: false, 
+              error: 'Timeout na reconexão: Servidor Evolution API não está respondendo (10s)'
+            }),
+            { 
+              status: 408, 
+              headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+            }
+          )
+        }
+        throw error
+      }
+      clearTimeout(timeoutId2)
       connectOk = connectResponse.ok
       connectText = await connectResponse.text()
       try {

@@ -86,13 +86,39 @@ serve(async (req) => {
     const statusUrl = `${config.server_url.replace(/\/$/, '')}/instance/connectionState/${config.instance_name}`
     console.log('📶 Verificando status da instância:', statusUrl)
 
-    const statusResponse = await fetch(statusUrl, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
+    // Adicionar timeout de 10 segundos
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 10000)
+
+    let statusResponse
+    try {
+      statusResponse = await fetch(statusUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': evolutionApiKey
+        },
+        signal: controller.signal
+      })
+    } catch (error: any) {
+      clearTimeout(timeoutId)
+      if (error.name === 'AbortError') {
+        console.error('⏰ Timeout ao verificar status da instância')
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Timeout: Servidor Evolution API não está respondendo (10s)',
+            status: 'timeout'
+          }),
+          { 
+            status: 408, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        )
       }
-    })
+      throw error
+    }
+    clearTimeout(timeoutId)
 
     if (!statusResponse.ok) {
       const errorText = await statusResponse.text()

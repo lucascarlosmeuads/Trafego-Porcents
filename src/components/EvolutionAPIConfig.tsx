@@ -234,46 +234,68 @@ export function EvolutionAPIConfig() {
   }
 
   const testConnection = async () => {
-    if (!formData.server_url || !formData.instance_name) {
-      toast({
-        title: "Configuração incompleta",
-        description: "Configure primeiro a URL do servidor e nome da instância",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setTesting(true);
+    if (testing) return
+    setTesting(true)
+    
     try {
-      // Test with a sample lead ID - replace with actual test
-      const { data, error } = await supabase.functions.invoke('evolution-send-message', {
-        body: { 
-          leadId: 'test',
-          testMode: true 
-        }
-      });
-
-      if (error) throw error;
-
-      if (data?.success) {
+      const { data, error } = await supabase.functions.invoke('evolution-test-connectivity')
+      
+      if (error) {
+        console.error('Erro no teste de conectividade:', error)
         toast({
-          title: "Conexão bem-sucedida!",
-          description: "Evolution API está funcionando corretamente",
-        });
-      } else {
-        throw new Error(data?.error || 'Teste falhou');
+          title: "Erro no Teste",
+          description: `Erro ao testar conectividade: ${error.message}`,
+          variant: "destructive",
+        })
+        return
       }
-    } catch (error: any) {
-      console.error('Erro no teste:', error);
+
+      const result = data
+      console.log('📊 Resultado do teste:', result)
+
+      if (result.success) {
+        const isReachable = result.connectivity.reachable
+        const responseTime = result.connectivity.responseTime
+        
+        toast({
+          title: isReachable ? "Servidor Acessível" : "Servidor Inacessível",
+          description: isReachable 
+            ? `Servidor respondeu em ${responseTime}ms. ${result.recommendations.length ? 'Veja as recomendações no console.' : ''}`
+            : `Servidor não responde. ${result.connectivity.error || 'Verifique a configuração.'}`,
+          variant: isReachable ? "default" : "destructive",
+        })
+        
+        // Mostrar recomendações em console para debug
+        if (result.recommendations.length > 0) {
+          console.log('💡 Recomendações:', result.recommendations)
+        }
+        
+        if (result.protocol_suggestion) {
+          console.log('🔒 Sugestão de protocolo:', result.protocol_suggestion)
+          toast({
+            title: "Sugestão de HTTPS",
+            description: result.protocol_suggestion.message,
+            variant: "default",
+          })
+        }
+      } else {
+        toast({
+          title: "Erro no Teste",
+          description: result.error || "Erro desconhecido no teste",
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Erro no teste de conectividade:', error)
       toast({
-        title: "Teste falhou",
-        description: error.message || "Não foi possível conectar à Evolution API",
+        title: "Erro",
+        description: "Erro inesperado ao testar conectividade",
         variant: "destructive",
-      });
+      })
     } finally {
-      setTesting(false);
+      setTesting(false)
     }
-  };
+  }
 
   return (
     <div className="w-full max-w-4xl space-y-6">
@@ -380,8 +402,8 @@ export function EvolutionAPIConfig() {
             {loading ? 'Salvando...' : 'Salvar Configuração'}
           </Button>
           
-          <Button onClick={testConnection} variant="outline" disabled={testing}>
-            {testing ? 'Testando...' : 'Testar Conexão'}
+          <Button onClick={testConnection} variant="outline" disabled={testing || !formData.server_url}>
+            {testing ? 'Testando...' : 'Testar Conectividade'}
           </Button>
         </div>
             </CardContent>
