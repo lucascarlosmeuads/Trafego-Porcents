@@ -82,6 +82,12 @@ serve(async (req) => {
       )
     }
 
+    console.log('✅ Configuração Evolution encontrada:', {
+      server_url: config.server_url,
+      instance_name: config.instance_name,
+      api_key_available: !!evolutionApiKey
+    })
+
     // Verificar status da conexão - GET /instance/connectionState/{instance}
     const statusUrl = `${config.server_url.replace(/\/$/, '')}/instance/connectionState/${config.instance_name}`
     console.log('📶 Verificando status da instância:', statusUrl)
@@ -116,7 +122,20 @@ serve(async (req) => {
           }
         )
       }
-      throw error
+      
+      // Log mais detalhado do erro
+      console.error('❌ Erro de rede ao verificar status:', error.message)
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: `Erro de conectividade: ${error.message}. Verifique se o servidor Evolution está online.`,
+          status: 'network_error'
+        }),
+        { 
+          status: 503, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        }
+      )
     }
     clearTimeout(timeoutId)
 

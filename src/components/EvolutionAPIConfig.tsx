@@ -332,58 +332,74 @@ export function EvolutionAPIConfig() {
     setTesting(true)
     
     try {
+      console.log('🔍 Testando conectividade...', { server_url: formData.server_url })
       const { data, error } = await supabase.functions.invoke('evolution-test-connectivity')
       
       if (error) {
-        console.error('Erro no teste de conectividade:', error)
+        console.error('❌ Erro na função de teste:', error)
         toast({
           title: "Erro no Teste",
-          description: `Erro ao testar conectividade: ${error.message}`,
+          description: `Falha ao executar teste: ${error.message}`,
           variant: "destructive",
         })
         return
       }
 
-      const result = data
-      console.log('📊 Resultado do teste:', result)
+      console.log('📊 Resultado do teste:', data)
 
-      if (result.success) {
-        const isReachable = result.connectivity.reachable
-        const responseTime = result.connectivity.responseTime
+      if (data.success) {
+        const isReachable = data.connectivity.reachable
+        const responseTime = data.connectivity.responseTime
         
         toast({
-          title: isReachable ? "Servidor Acessível" : "Servidor Inacessível",
+          title: isReachable ? "Servidor Acessível ✅" : "Servidor Inacessível ❌",
           description: isReachable 
-            ? `Servidor respondeu em ${responseTime}ms. ${result.recommendations.length ? 'Veja as recomendações no console.' : ''}`
-            : `Servidor não responde. ${result.connectivity.error || 'Verifique a configuração.'}`,
+            ? `Servidor respondeu em ${responseTime}ms. API Key: ${data.api_key_status === 'configured' ? 'OK' : 'Não configurada'}`
+            : `${data.connectivity.error || 'Servidor offline'}`,
           variant: isReachable ? "default" : "destructive",
         })
         
-        // Mostrar recomendações em console para debug
-        if (result.recommendations.length > 0) {
-          console.log('💡 Recomendações:', result.recommendations)
+        // Mostrar recomendações
+        if (data.recommendations?.length > 0) {
+          console.log('💡 Recomendações:', data.recommendations)
+          data.recommendations.forEach((rec: string) => {
+            toast({
+              title: "💡 Recomendação",
+              description: rec,
+              variant: "default",
+            })
+          })
         }
         
-        if (result.protocol_suggestion) {
-          console.log('🔒 Sugestão de protocolo:', result.protocol_suggestion)
+        if (data.protocol_suggestion) {
+          console.log('🔒 Sugestão de protocolo:', data.protocol_suggestion)
           toast({
-            title: "Sugestão de HTTPS",
-            description: result.protocol_suggestion.message,
+            title: "💡 Sugestão de HTTPS",
+            description: data.protocol_suggestion.message,
             variant: "default",
           })
         }
       } else {
-        toast({
-          title: "Erro no Teste",
-          description: result.error || "Erro desconhecido no teste",
-          variant: "destructive",
-        })
+        // Erros específicos
+        if (data.error?.includes('API Key Evolution não configurada')) {
+          toast({
+            title: "❌ API Key Não Configurada",
+            description: "Configure a variável EVOLUTION_API_KEY no painel do Supabase (Edge Functions → Secrets)",
+            variant: "destructive",
+          })
+        } else {
+          toast({
+            title: "❌ Erro no Teste",
+            description: data.error || "Erro desconhecido no teste",
+            variant: "destructive",
+          })
+        }
       }
-    } catch (error) {
-      console.error('Erro no teste de conectividade:', error)
+    } catch (error: any) {
+      console.error('❌ Erro inesperado no teste:', error)
       toast({
-        title: "Erro",
-        description: "Erro inesperado ao testar conectividade",
+        title: "❌ Erro Inesperado", 
+        description: `Falha na comunicação: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive",
       })
     } finally {
