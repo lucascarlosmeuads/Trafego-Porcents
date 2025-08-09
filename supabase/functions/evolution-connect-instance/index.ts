@@ -1,3 +1,4 @@
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
 
@@ -40,36 +41,83 @@ async function fetchEvolutionConfig(supabase: ReturnType<typeof getSupabaseAdmin
   }
 
   return {
-    id: data.id,
-    enabled: data.enabled,
-    server_url: data.server_url,
-    instance_name: data.instance_name,
-    default_country_code: data.default_country_code
+    id: (data as any).id,
+    enabled: (data as any).enabled,
+    server_url: (data as any).server_url,
+    instance_name: (data as any).instance_name,
+    default_country_code: (data as any).default_country_code
   }
 }
 
+async function tryCreateInstance(baseUrl: string, instance: string, apikey: string) {
+  // Tentar POST /instance/create { instanceName }
+  const createJsonUrl = `${baseUrl.replace(/\/$/, '')}/instance/create`
+  console.log('🧪 Tentando criar instância (POST):', createJsonUrl)
+  const postResp = await fetch(createJsonUrl, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': apikey
+    },
+    body: JSON.stringify({ instanceName: instance })
+  }).catch((e) => {
+    console.warn('⚠️ Falha na tentativa POST create:', e)
+    return null
+  })
+
+  if (postResp && postResp.ok) {
+    try {
+      const body = await postResp.json()
+      console.log('✅ Instância criada (POST):', body)
+      return body
+    } catch {
+      console.log('✅ Instância criada (POST) sem JSON legível')
+      return { success: true }
+    }
+  }
+
+  // Fallback GET /instance/create/{instance}
+  const createPathUrl = `${baseUrl.replace(/\/$/, '')}/instance/create/${instance}`
+  console.log('🧪 Tentando criar instância (GET):', createPathUrl)
+  const getResp = await fetch(createPathUrl, {
+    method: 'GET',
+    headers: {
+      'Content-Type': 'application/json',
+      'apikey': apikey
+    }
+  }).catch((e) => {
+    console.warn('⚠️ Falha na tentativa GET create:', e)
+    return null
+  })
+
+  if (getResp && getResp.ok) {
+    try {
+      const body = await getResp.json()
+      console.log('✅ Instância criada (GET):', body)
+      return body
+    } catch {
+      console.log('✅ Instância criada (GET) sem JSON legível')
+      return { success: true }
+    }
+  }
+
+  console.error('❌ Não foi possível criar a instância via POST nem GET')
+  return null
+}
+
 serve(async (req) => {
-  // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
   }
 
   try {
     const supabase = getSupabaseAdmin()
-    
-    // Buscar configuração ativa da Evolution API
     const config = await fetchEvolutionConfig(supabase)
     
     if (!config) {
       return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: 'Configuração Evolution API não encontrada ou não está ativa' 
-        }),
-        { 
-          status: 400, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
+        JSON.stringify({ success: false, error: 'Configuração Evolution API não encontrada ou não está ativa' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
 
@@ -82,34 +130,68 @@ serve(async (req) => {
       )
     }
 
-    // Conectar instância - GET /instance/connect/{instance}
+    // 1) Tentar conectar
     const connectUrl = `${config.server_url.replace(/\/$/, '')}/instance/connect/${config.instance_name}`
     console.log('🔌 Conectando instância:', connectUrl)
 
-    const connectResponse = await fetch(connectUrl, {
+    let connectResponse = await fetch(connectUrl, {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'apikey': evolutionApiKey
-      }
+      headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey }
     })
 
-    if (!connectResponse.ok) {
-      const errorText = await connectResponse.text()
-      console.error('❌ Erro ao conectar instância:', errorText)
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Erro ao conectar instância: ${connectResponse.status} - ${errorText}` 
-        }),
-        { 
-          status: connectResponse.status, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        }
-      )
+    let connectOk = connectResponse.ok
+    let connectText = await connectResponse.text()
+    let connectData: any = null
+    try {
+      connectData = connectText ? JSON.parse(connectText) : null
+    } catch {
+      // se veio HTML (WordPress etc), connectData fica null
     }
 
-    const connectData = await connectResponse.json()
+    if (!connectOk) {
+      console.error('❌ Erro ao conectar (primeira tentativa):', connectText)
+
+      // 2) Se falhou, tentar criar a instância e reconectar
+      const created = await tryCreateInstance(config.server_url, config.instance_name, evolutionApiKey)
+
+      if (!created) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Falha ao conectar e criar instância: ${connectResponse.status}`,
+            raw_connect: connectText
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+
+      // 3) Re-tentar conectar após criar
+      console.log('🔁 Re-tentando conexão após criar a instância...')
+      connectResponse = await fetch(connectUrl, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json', 'apikey': evolutionApiKey }
+      })
+      connectOk = connectResponse.ok
+      connectText = await connectResponse.text()
+      try {
+        connectData = connectText ? JSON.parse(connectText) : null
+      } catch {
+        connectData = null
+      }
+
+      if (!connectOk) {
+        console.error('❌ Erro ao conectar (segunda tentativa):', connectText)
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Erro ao conectar instância: ${connectResponse.status}`,
+            raw_connect: connectText
+          }),
+          { status: connectResponse.status, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
+
     console.log('✅ Resposta da conexão:', connectData)
 
     return new Response(
@@ -119,22 +201,14 @@ serve(async (req) => {
         instance_name: config.instance_name,
         server_url: config.server_url
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('❌ Erro geral na função de conexão:', error)
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: `Erro interno: ${error.message}` 
-      }),
-      { 
-        status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      }
+      JSON.stringify({ success: false, error: `Erro interno: ${error.message}` }),
+      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     )
   }
 })

@@ -43,7 +43,6 @@ export function EvolutionAPIConfig() {
   }, []);
 
   useEffect(() => {
-    // Verificar status da conexão quando o componente carrega
     if (config?.enabled && config?.server_url && config?.instance_name) {
       checkConnectionStatus()
     }
@@ -51,14 +50,13 @@ export function EvolutionAPIConfig() {
 
   const loadConfig = async () => {
     try {
-      const { data, error } = await supabase
-        .from('waseller_dispatch_config')
-        .select('*')
-        .eq('api_type', 'evolution')
-        .maybeSingle();
+      // Buscar via Edge Function admin (ignora RLS)
+      const { data, error } = await supabase.functions.invoke('admin-api-config', {
+        body: { action: 'get_evolution_config' }
+      });
 
-      if (error && error.code !== 'PGRST116') {
-        console.error('Erro ao carregar configuração:', error);
+      if (error) {
+        console.error('Erro ao carregar configuração (admin-api-config):', error);
         toast({
           title: "Erro",
           description: "Não foi possível carregar a configuração",
@@ -67,16 +65,16 @@ export function EvolutionAPIConfig() {
         return;
       }
 
-      if (data) {
-        setConfig(data);
+      const cfg = data?.config;
+      if (cfg) {
+        setConfig(cfg);
         setFormData({
-          server_url: data.server_url || 'http://72.60.7.194:8080',
-          instance_name: data.instance_name || 'lucas',
-          default_country_code: data.default_country_code || '+55',
-          enabled: data.enabled || false
+          server_url: cfg.server_url || 'http://72.60.7.194:8080',
+          instance_name: cfg.instance_name || 'lucas',
+          default_country_code: cfg.default_country_code || '+55',
+          enabled: cfg.enabled ?? true
         });
       } else {
-        // Set default values if no config exists
         setFormData({
           server_url: 'http://72.60.7.194:8080',
           instance_name: 'lucas',
@@ -106,30 +104,21 @@ export function EvolutionAPIConfig() {
 
     setLoading(true);
     try {
-      const configData = {
-        api_type: 'evolution',
-        base_url: formData.server_url,
+      const payload = {
+        action: 'save_evolution_config',
         server_url: formData.server_url,
-        endpoint_path: '/message/sendText',
         instance_name: formData.instance_name,
-        default_country_code: formData.default_country_code,
+        default_country_code: formData.default_country_code || '+55',
         enabled: formData.enabled,
       };
 
-      let result;
-      if (config?.id) {
-        result = await supabase
-          .from('waseller_dispatch_config')
-          .update(configData)
-          .eq('id', config.id);
-      } else {
-        result = await supabase
-          .from('waseller_dispatch_config')
-          .insert([configData]);
-      }
+      const { data, error } = await supabase.functions.invoke('admin-api-config', { body: payload });
 
-      if (result.error) {
-        throw result.error;
+      if (error) {
+        throw error;
+      }
+      if (!data?.success) {
+        throw new Error(data?.error || 'Falha ao salvar configuração');
       }
 
       toast({
