@@ -31,23 +31,25 @@ export function useRecoveryTemplate(context: string = 'leads_parceria') {
         return;
       }
 
-      const { data, error } = await supabase
+      // Bypass strict typing for the custom table not present in generated types
+      const { data, error: qError } = await (supabase as any)
         .from('waseller_manual_templates')
         .select('id, email_usuario, context, template_text, is_active')
         .eq('email_usuario', user.email)
         .eq('context', context)
         .maybeSingle();
 
-      if (error) throw error;
+      if (qError) throw qError;
 
-      if (data?.template_text) {
-        setTemplate(data.template_text);
+      const rec = data as Partial<TemplateRecord> | null;
+      if (rec?.template_text && typeof rec.template_text === 'string') {
+        setTemplate(rec.template_text);
       } else {
         setTemplate(DEFAULT_RECOVERY_TEMPLATE);
       }
     } catch (e: any) {
       console.error('Erro ao carregar template de recuperação:', e);
-      setError(e.message || 'Falha ao carregar template');
+      setError(e?.message || 'Falha ao carregar template');
       setTemplate(DEFAULT_RECOVERY_TEMPLATE);
     } finally {
       setLoading(false);
@@ -71,15 +73,16 @@ export function useRecoveryTemplate(context: string = 'leads_parceria') {
         is_active: true,
       };
 
-      const { error } = await supabase
+      // Bypass strict typing for the custom table not present in generated types
+      const { error: upError } = await (supabase as any)
         .from('waseller_manual_templates')
         .upsert(record, { onConflict: 'email_usuario,context' });
 
-      if (error) throw error;
+      if (upError) throw upError;
       setTemplate(newText);
     } catch (e: any) {
       console.error('Erro ao salvar template de recuperação:', e);
-      setError(e.message || 'Falha ao salvar template');
+      setError(e?.message || 'Falha ao salvar template');
       throw e;
     } finally {
       setSaving(false);
