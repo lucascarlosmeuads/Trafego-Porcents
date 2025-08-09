@@ -1701,6 +1701,99 @@ export type Database = {
         }
         Relationships: []
       }
+      waseller_dispatch_config: {
+        Row: {
+          base_url: string
+          campaign_id: string | null
+          created_at: string
+          default_country_code: string
+          enabled: boolean
+          endpoint_path: string
+          id: string
+          max_per_run: number
+          min_lead_age_minutes: number
+          target_statuses: string[]
+          updated_at: string
+        }
+        Insert: {
+          base_url: string
+          campaign_id?: string | null
+          created_at?: string
+          default_country_code?: string
+          enabled?: boolean
+          endpoint_path: string
+          id?: string
+          max_per_run?: number
+          min_lead_age_minutes?: number
+          target_statuses?: string[]
+          updated_at?: string
+        }
+        Update: {
+          base_url?: string
+          campaign_id?: string | null
+          created_at?: string
+          default_country_code?: string
+          enabled?: boolean
+          endpoint_path?: string
+          id?: string
+          max_per_run?: number
+          min_lead_age_minutes?: number
+          target_statuses?: string[]
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      waseller_dispatch_logs: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          id: string
+          lead_id: string
+          message_preview: string | null
+          phone: string | null
+          recipient_name: string | null
+          request_payload: Json | null
+          requester_email: string | null
+          response_body: Json | null
+          status: string
+          status_code: number | null
+          trigger_type: string
+          waseller_message_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id: string
+          message_preview?: string | null
+          phone?: string | null
+          recipient_name?: string | null
+          request_payload?: Json | null
+          requester_email?: string | null
+          response_body?: Json | null
+          status: string
+          status_code?: number | null
+          trigger_type?: string
+          waseller_message_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          lead_id?: string
+          message_preview?: string | null
+          phone?: string | null
+          recipient_name?: string | null
+          request_payload?: Json | null
+          requester_email?: string | null
+          response_body?: Json | null
+          status?: string
+          status_code?: number | null
+          trigger_type?: string
+          waseller_message_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       vw_parceria_completa: {
