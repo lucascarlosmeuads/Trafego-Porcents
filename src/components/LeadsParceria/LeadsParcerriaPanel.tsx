@@ -105,7 +105,6 @@ export function LeadsParcerriaPanel() {
     window.open(`https://wa.me/${formattedNumber}`, '_blank');
   };
 
-
   const getLeadData = (lead: any) => {
     const respostas = lead.respostas || {};
     
@@ -312,6 +311,33 @@ export function LeadsParcerriaPanel() {
   };
 
   const { template: recoveryTemplate } = useRecoveryTemplate('leads_parceria');
+
+  const handleSendRecoveryAPI = async (lead: any) => {
+    try {
+      console.log('Iniciando envio via API para lead', lead?.id);
+      toast({ title: 'Enviando mensagem...', description: 'Conectando à API do WhatsApp.' });
+
+      const { data, error } = await supabase.functions.invoke('waseller-send-message', {
+        body: { leadId: lead.id }
+      });
+
+      if (error) throw error;
+      if (!data?.success) {
+        throw new Error(data?.error || 'Falha ao enviar via API');
+      }
+
+      toast({ title: 'Mensagem enviada!', description: 'Lead marcado como contatado no WhatsApp.' });
+      // Atualizar dados após envio
+      refetch?.();
+    } catch (err: any) {
+      console.error('Erro no envio via API:', err);
+      toast({
+        title: 'Falha no envio',
+        description: err?.message || 'Não foi possível enviar via API.',
+        variant: 'destructive'
+      });
+    }
+  };
 
   const handleOpenRecoveryModal = (lead: any) => {
     const leadData = getLeadData(lead);
@@ -629,9 +655,9 @@ export function LeadsParcerriaPanel() {
                             <Button
                               size="sm"
                               variant="default"
-                              onClick={() => handleOpenRecoveryModal(lead)}
+                              onClick={() => handleSendRecoveryAPI(lead)}
                               className="h-8 px-2"
-                              title="Enviar mensagem de recuperação"
+                              title="Enviar mensagem de recuperação via API"
                             >
                               Recuperar
                             </Button>

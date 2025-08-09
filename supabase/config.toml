@@ -71,8 +71,77 @@ verify_jwt = false
 [functions.generate-gamified-funnel]
 verify_jwt = false
 
-[functions.bulk-generate-parceria-plans]
+[functions.dall-e-generator]
 verify_jwt = false
 
 [functions.generate-personalized-message]
 verify_jwt = false
+
+[functions.bulk-generate-parceria-plans]
+verify_jwt = false
+
+[functions.meta-ads-api]
+verify_jwt = false
+
+[functions.voice-to-text]
+verify_jwt = false
+
+[functions.openai-usage-monitor]
+verify_jwt = false
+
+[functions.admin-api-config]
+verify_jwt = true
+
+[functions.get-central-api-config]
+verify_jwt = true
+
+[functions.kiwify-webhook]
+verify_jwt = false
+
+[functions.max-webhook]
+verify_jwt = false
+
+[functions.create-carol-gestor]
+verify_jwt = false
+
+[functions.delete-gestor]
+verify_jwt = false
+
+[functions.create-gestor]
+verify_jwt = false
+
+[functions.fix-client-auth]
+verify_jwt = false
+
+[functions.bulk-generate-plans]
+verify_jwt = false
+
+[functions.create-client-users]
+verify_jwt = false
+
+[functions.create-parceria-user]
+verify_jwt = false
+
+[functions.kiwify-webhook]
+verify_jwt = false
+
+[functions.max-webhook]
+verify_jwt = false
+
+[functions.whatsapp-waseller-auto-dispatch]
+verify_jwt = false
+
+[functions.process-kiwify-retroactive]
+verify_jwt = false
+
+[functions.get-central-api-config]
+verify_jwt = true
+
+[functions.admin-api-config]
+verify_jwt = true
+
+[functions.save-api-config]
+verify_jwt = true
+
+[functions.waseller-send-message]
+verify_jwt = true
