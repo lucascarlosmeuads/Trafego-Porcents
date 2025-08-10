@@ -207,7 +207,7 @@ function buildPromptLucas(briefing: any, campos: Record<string, unknown>) : stri
     ? `Entrada opcional (true): incluir ${Mini_Oferta_Nome} por ${Mini_Oferta_Preco} para dar resultado imediato e ajudar a pagar o tráfego.`
     : `Entrada opcional (false): foque em qualificar muito bem o lead e conduzir direto à oferta principal.`;
 
-  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras. Evite a palavra 'interativo'; mostre isso nos CTAs e formatos.`
+  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras. Evite a palavra 'interativo'; mostre isso nos CTAs e formatos.
 
 DADOS DE CONTEXTO
 - Cliente: ${Cliente_Nome}
