@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.evolution-discover-endpoints]
 verify_jwt = false
+
+[functions.evolution-send-text-lite]
+verify_jwt = false

@@ -20,6 +20,11 @@ export function EvolutionAPITester() {
   const { toast } = useToast();
   const [tests, setTests] = useState<TestResult[]>([
     {
+      id: 'edge_ping',
+      name: 'Ping Edge',
+      status: 'idle'
+    },
+    {
       id: 'discover_endpoints',
       name: 'Descobrir Endpoints',
       status: 'idle'
@@ -57,6 +62,9 @@ export function EvolutionAPITester() {
       let result;
       
       switch (testId) {
+        case 'edge_ping':
+          result = await testEdgePing();
+          break;
         case 'discover_endpoints':
           result = await testDiscoverEndpoints();
           break;
@@ -130,6 +138,19 @@ export function EvolutionAPITester() {
     };
   };
 
+  const testEdgePing = async () => {
+    const start = Date.now();
+    const { data, error } = await supabase.functions.invoke('evolution-test-connectivity', { body: {} });
+    const duration = Date.now() - start;
+    if (error) throw error;
+    return {
+      reachable: data?.server?.reachable ?? data?.reachable ?? true,
+      status: data?.server?.status ?? data?.status ?? 200,
+      responseTime: duration,
+      details: data,
+    };
+  };
+
   const testDiscoveredEndpoint = async () => {
     // Check discovered endpoints in database
     const { data: discoveredEndpoints, error } = await supabase
@@ -157,10 +178,8 @@ export function EvolutionAPITester() {
     
     for (const payload of payloads) {
       try {
-        const { data, error } = await invokeEdge('evolution-send-text', {
-          number: '5511999999999',
-          text: 'Teste via endpoint descoberto',
-          verbose: false
+        const { data, error } = await invokeEdge('evolution-send-text-lite', {
+          ...payload
         });
 
         results.push({
@@ -190,14 +209,23 @@ export function EvolutionAPITester() {
   };
 
   const testSendMessage = async () => {
-    const { data, error } = await invokeEdge('evolution-send-text', {
+    // Try lite function first
+    const lite = await invokeEdge('evolution-send-text-lite', {
       number: '5511999999999',
-      text: 'Teste de mensagem completo via Evolution API ✅',
-      verbose: false
+      text: 'Teste de mensagem completo via Evolution API ✅'
     });
 
-    if (error) throw error;
+    const chosen = !lite.error && lite.data?.success
+      ? lite
+      : await invokeEdge('evolution-send-text', {
+          number: '5511999999999',
+          text: 'Teste de mensagem completo via Evolution API ✅',
+          verbose: false
+        });
 
+    if (chosen.error) throw chosen.error;
+
+    const data = chosen.data as any;
     return {
       success: data?.success || false,
       status: data?.status,

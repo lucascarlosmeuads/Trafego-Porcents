@@ -190,16 +190,25 @@ export default function EvolutionTestes() {
     }
     setSending(true);
     try {
-      const { data, error } = await invokeEdge("evolution-send-text", {
+      // Tenta função lite primeiro
+      const lite = await invokeEdge("evolution-send-text-lite", {
         number: digits,
         text,
-        base_url: "http://72.60.7.194:8081",
-        verbose: false,
       });
-      if (error) throw error;
+
+      const chosen = !lite.error && (lite.data as any)?.success
+        ? lite
+        : await invokeEdge("evolution-send-text", {
+            number: digits,
+            text,
+            verbose: false,
+          });
+
+      if (chosen.error) throw chosen.error;
+      const data = chosen.data as any;
       setSendResult(data);
-      add({ time: new Date().toISOString(), action: "sendText", requestId: (data as any)?.requestId, info: { status: (data as any)?.status, ms: (data as any)?.responseTimeMs } });
-      toast({ title: (data as any)?.success ? "Enviado" : "Falhou", description: `HTTP ${(data as any)?.status} • ${(data as any)?.responseTimeMs}ms` });
+      add({ time: new Date().toISOString(), action: "sendText", requestId: data?.requestId, info: { status: data?.status, ms: data?.responseTimeMs } });
+      toast({ title: data?.success ? "Enviado" : "Falhou", description: `HTTP ${data?.status} • ${data?.responseTimeMs}ms` });
     } catch (e: any) {
       add({ time: new Date().toISOString(), action: "sendText:error", info: e?.message });
       toast({ title: "Erro no envio", description: e?.message || "Erro desconhecido", variant: "destructive" });

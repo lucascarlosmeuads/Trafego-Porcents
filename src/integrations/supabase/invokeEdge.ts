@@ -18,6 +18,7 @@ export async function invokeEdge<T = any>(name: string, body: any, opts?: { time
   const headersList: Array<Record<string, string>> = [
     { apikey: SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
     { Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, 'Content-Type': 'application/json' },
+    { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, 'Content-Type': 'application/json', 'x-client-info': 'lovable-app' },
   ];
 
   let lastErr: any = null;
