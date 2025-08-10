@@ -6,14 +6,14 @@ export const usePlanejamentoEstrategico = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
 
-  const generatePlanejamento = async (emailCliente: string) => {
+  const generatePlanejamento = async (emailCliente: string, campos?: Record<string, any>) => {
     setIsGenerating(true);
     
     try {
       console.log('🚀 Iniciando geração de planejamento para:', emailCliente);
       
       const { data, error } = await supabase.functions.invoke('generate-strategic-plan', {
-        body: { emailCliente }
+        body: { emailCliente, campos }
       });
       
       if (error) {

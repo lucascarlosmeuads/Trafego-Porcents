@@ -48,11 +48,11 @@ export const PlanejamentoDisplay = ({
     }
     setIsDownloading(true);
     try {
-      const clienteName = nomeCliente ? nomeCliente.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '-') : 'cliente';
-      const fileName = `planejamento-estrategico-${clienteName}-${new Date().toISOString().split('T')[0]}.pdf`;
+      const clienteName = (nomeCliente && nomeCliente.trim().length > 0) ? nomeCliente.trim() : 'Cliente';
+      const fileName = `Planejamento Estratégico – ${clienteName} (Funil Interativo & Magnético).pdf`;
       await downloadPlanPdf({
         content: displayedContent,
-        title: 'Planejamento Estratégico',
+        title: 'Planejamento Estratégico — Funil Interativo & Magnético',
         filename: fileName,
       });
       toast.success("PDF baixado com sucesso!", { description: `Arquivo ${fileName} foi baixado` });

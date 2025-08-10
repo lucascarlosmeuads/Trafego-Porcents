@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { FileText, Image, Video, Download, Eye, Calendar, User, Upload, Loader2, MessageSquare, CheckCircle, XCircle, Palette, Type, Monitor, Smartphone, Brain } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
@@ -82,6 +83,47 @@ export function BriefingMaterialsModal({
   const [open, setOpen] = useState(false)
   const { toast } = useToast()
   const { generatePlanejamento, isGenerating } = usePlanejamentoEstrategico()
+
+  // Campos de entrada para geração do planejamento
+  const formatDateBR = (d: Date) => {
+    const dd = String(d.getDate()).padStart(2, '0');
+    const mm = String(d.getMonth() + 1).padStart(2, '0');
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  }
+
+  const [campos, setCampos] = useState({
+    Cliente_Nome: nomeCliente || '',
+    Projeto_Titulo: '',
+    Data_De_Hoje: formatDateBR(new Date()),
+    Contato_Email: '',
+    Contato_WhatsApp: '',
+    Produto_Servico: '',
+    Avatar: '',
+    Investimento_Diario_Sugerido: '',
+    Modelo_Parceria: '% sobre as vendas, sem mensalidade',
+    Mini_Oferta_Ativa: false,
+    Mini_Oferta_Nome: '',
+    Mini_Oferta_Preco: '',
+    Curso_Preco_Faixa: '',
+    Canais: '',
+    Notas_Extras: '',
+  })
+
+  useEffect(() => {
+    if (!open) return;
+    setCampos((prev) => ({
+      ...prev,
+      Cliente_Nome: nomeCliente || prev.Cliente_Nome || '',
+      Projeto_Titulo: briefing?.nome_produto || prev.Projeto_Titulo || '',
+      Produto_Servico: briefing?.nome_produto || prev.Produto_Servico || '',
+      Avatar: briefing?.publico_alvo || prev.Avatar || '',
+      Investimento_Diario_Sugerido: (briefing?.investimento_diario ? `R$ ${briefing.investimento_diario}` : prev.Investimento_Diario_Sugerido || ''),
+      Canais: (briefing?.possui_facebook || briefing?.possui_instagram) ? 'Facebook e Instagram' : (prev.Canais || ''),
+    }))
+  }, [open, briefing, nomeCliente])
+
+  const onCampoChange = (key: string, value: any) => setCampos((prev) => ({ ...prev, [key]: value }))
 
   const fetchBriefing = async () => {
     if (!emailCliente) {
@@ -455,9 +497,8 @@ export function BriefingMaterialsModal({
       return
     }
 
-    const result = await generatePlanejamento(emailCliente)
+    const result = await generatePlanejamento(emailCliente, campos)
     if (result.success) {
-      // Recarregar o briefing para mostrar o planejamento atualizado
       await fetchBriefing()
     }
   }
@@ -890,6 +931,32 @@ export function BriefingMaterialsModal({
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
+                  {/* Campos de Entrada (opcional) */}
+                  <div className="mb-6 rounded-md border border-indigo-200 bg-indigo-50 p-4">
+                    <h4 className="font-medium text-indigo-700 mb-3">Campos de Entrada (opcional)</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <Input placeholder="Cliente_Nome" value={campos.Cliente_Nome} onChange={(e) => onCampoChange('Cliente_Nome', e.target.value)} />
+                      <Input placeholder="Projeto_Titulo" value={campos.Projeto_Titulo} onChange={(e) => onCampoChange('Projeto_Titulo', e.target.value)} />
+                      <Input placeholder="Data_De_Hoje" value={campos.Data_De_Hoje} onChange={(e) => onCampoChange('Data_De_Hoje', e.target.value)} />
+                      <Input placeholder="Contato_Email" value={campos.Contato_Email} onChange={(e) => onCampoChange('Contato_Email', e.target.value)} />
+                      <Input placeholder="Contato_WhatsApp" value={campos.Contato_WhatsApp} onChange={(e) => onCampoChange('Contato_WhatsApp', e.target.value)} />
+                      <Input placeholder="Produto_Servico" value={campos.Produto_Servico} onChange={(e) => onCampoChange('Produto_Servico', e.target.value)} />
+                      <Input placeholder="Avatar" value={campos.Avatar} onChange={(e) => onCampoChange('Avatar', e.target.value)} />
+                      <Input placeholder="Investimento_Diario_Sugerido" value={campos.Investimento_Diario_Sugerido} onChange={(e) => onCampoChange('Investimento_Diario_Sugerido', e.target.value)} />
+                      <Input placeholder="Modelo_Parceria" value={campos.Modelo_Parceria} onChange={(e) => onCampoChange('Modelo_Parceria', e.target.value)} />
+                      <div className="flex items-center gap-2">
+                        <input id="miniOferta" type="checkbox" checked={campos.Mini_Oferta_Ativa as boolean} onChange={(e) => onCampoChange('Mini_Oferta_Ativa', e.target.checked)} />
+                        <label htmlFor="miniOferta" className="text-sm text-indigo-700">Mini_Oferta_Ativa</label>
+                      </div>
+                      <Input placeholder="Mini_Oferta_Nome" value={campos.Mini_Oferta_Nome} onChange={(e) => onCampoChange('Mini_Oferta_Nome', e.target.value)} />
+                      <Input placeholder="Mini_Oferta_Preco" value={campos.Mini_Oferta_Preco} onChange={(e) => onCampoChange('Mini_Oferta_Preco', e.target.value)} />
+                      <Input placeholder="Curso_Preco_Faixa" value={campos.Curso_Preco_Faixa} onChange={(e) => onCampoChange('Curso_Preco_Faixa', e.target.value)} />
+                      <Input placeholder="Canais" value={campos.Canais} onChange={(e) => onCampoChange('Canais', e.target.value)} />
+                    </div>
+                    <div className="mt-3">
+                      <Textarea placeholder="Notas_Extras" value={campos.Notas_Extras} onChange={(e) => onCampoChange('Notas_Extras', e.target.value)} />
+                    </div>
+                  </div>
                   {briefing.planejamento_estrategico ? (
                     <PlanejamentoDisplay 
                       planejamento={briefing.planejamento_estrategico}

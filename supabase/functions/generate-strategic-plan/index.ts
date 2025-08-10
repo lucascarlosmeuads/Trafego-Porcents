@@ -15,8 +15,8 @@ serve(async (req) => {
   try {
     console.log('=== Iniciando geração de planejamento estratégico ===');
     
-    const { emailCliente } = await req.json();
-    console.log('Email do cliente:', emailCliente);
+    const { emailCliente, campos } = await req.json();
+    console.log('Email do cliente:', emailCliente, '\nCampos recebidos:', campos);
 
     // Verificar API Key
     const openAIApiKey = Deno.env.get('OPENAI_API_KEY');
@@ -59,8 +59,8 @@ serve(async (req) => {
       );
     }
 
-    // Construir prompt baseado nos dados do briefing
-    const prompt = buildPromptFromBriefing(briefing);
+    // Construir prompt baseado no briefing + campos de entrada
+    const prompt = buildPromptLucas(briefing, campos || {});
 
     // Payload para OpenAI
     const openAIPayload = {
@@ -68,122 +68,7 @@ serve(async (req) => {
       messages: [
         {
           role: 'system',
-         content: `Você é um estrategista de marketing digital da Tráfego Porcents. Crie um planejamento estratégico COMPLETO, MAGNETIZANTE e VISUAL, seguindo EXATAMENTE esta formatação markdown e limites de caracteres. O documento deve estar em PT-BR, com foco no mercado brasileiro, pronto para apresentação ao cliente e execução pela equipe.
- 
-# 📍 CONSULTORIA ESTRATÉGICA – [NOME_CLIENTE] – TRÁFEGO %
- 
-## 👋 Introdução Personalizada
-[Faça uma introdução calorosa e personalizada ao/à [NOME_CLIENTE], mencione o produto/serviço e mostre entendimento do contexto atual]
- 
-## 🎯 Público-alvo que será atingido
-[Detalhe demografia, comportamento, psicografia e momento de vida]
- 
-**Subgrupos estratégicos:**
-- **Subgrupo 1:** [descrição específica]
-- **Subgrupo 2:** [descrição específica]
-- **Subgrupo 3:** [descrição específica]
-- **Subgrupo 4:** [descrição específica]
- 
-## 😣 Dores desse público
-- **Dor Principal:** [dor específica]
-- **Dor Secundária:** [dor específica]
-- **Emocional:** [medo/ansiedade/culpa]
-- **Financeira:** [impacto no bolso]
-- **Social:** [impacto social/reputacional]
- 
-## 💭 Desejos desse público
-- **Principal:** [aspiração]
-- **Status:** [como quer ser visto]
-- **Transformação:** [antes → depois]
-- **Segurança:** [estabilidade]
-- **Reconhecimento:** [validação]
- 
----
- 
-## ✍️ Estratégia de Copy para Meta Ads (Deep Dive)
-- **Voz e Persona da Marca:** [tom, ritmo, vocabulário permitido e proibido]
-- **Big Ideas / Ângulos Criativos:** [3-5 ângulos com promessa central]
-- **Gatilhos Psicológicos Dominantes:** [ex.: prova, autoridade, urgência, exclusividade]
-- **Objeções e Respostas:** [lista de 5-7 objeções com contra-argumentos]
-- **Provas e Evidências a Usar:** [números, casos, depoimentos, selos]
-- **Guia de Linguagem:** [palavras que devemos enfatizar e evitar]
- 
-## 🧭 Matriz de Copies por Estágio do Funil (Meta Ads)
-| Estágio | Primário (≤125) | Headline (≤40) | Descrição (≤30) | CTA | Objetivo | Métrica foco |
-|---|---|---|---|---|---|---|
-| Descoberta | [texto] | [headline] | [desc] | [CTA] | Alcance + Cliques | CTR, CPM |
-| Consideração | [texto] | [headline] | [desc] | [CTA] | Tráfego qualificado | CTR, CPC, Tempo pág |
-| Conversão | [texto] | [headline] | [desc] | [CTA] | Leads/Vendas | CPA, ROAS |
-| Retenção/Recorrência | [texto] | [headline] | [desc] | [CTA] | LTV/Repeat | Frequência, LTV |
- 
-## 🚀 Pacote de Copies (Prontas para Meta Ads)
-### COPY 1 – Quebra de Objeção
-- **HEADLINE:** [30–40]
-- **CONCEITO VISUAL (contraintuitivo ≤80):** [descrição]
-- **DESCRIÇÃO (≤150):** [texto]
-- **CTA:** [ação]
- 
-### COPY 2 – Prova Social
-- **HEADLINE:** [30–40]
-- **CONCEITO VISUAL (≤80):** [descrição]
-- **DESCRIÇÃO (≤150):** [texto]
-- **CTA:** [ação]
- 
-### COPY 3 – Educacional + Curiosidade
-- **HEADLINE:** [30–40]
-- **CONCEITO VISUAL (≤80):** [descrição]
-- **DESCRIÇÃO (≤150):** [texto]
-- **CTA:** [ação]
- 
-## 📱 Títulos (≤40) e Descrições (≤125) – Meta Ads
-- Títulos: [5 opções curtas e específicas do nicho]
-- Descrições: [5 opções com gatilhos]
- 
----
- 
-## 🧩 Funil Interativo baseado nas Copies
-- **Estágios:** Descoberta → Consideração → Conversão → Onboarding → Retenção/Recorrência → Reativação
-- **Canais por estágio:** [Reels/Feed/Stories/WhatsApp/LP/Email]
-- **Criativo por estágio:** [tipo, duração, layout e razão de uso]
-- **Exemplo de Jornada:** [ex.: Reels → LP → WhatsApp → Fechamento]
-- **Critérios de avanço/retorno:** [regras objetivas por evento]
-- **KPIs por estágio:** [lista objetiva com meta]
-- **Automação/Follow-up:** [sequência de mensagens c/ timing]
- 
-## 🧪 Plano de “Pente Fino” (otimização palavra por palavra)
-1. Mapear termos “ancora” de conversão [lista]
-2. Testar variações semânticas (A/B/C) [plano]
-3. Substituir adjetivos fracos por específicos [tabela exemplos]
-4. Ajustar ordem de argumentos (priorizar benefícios “antes→depois”)
-5. Rotina semanal: coleta → hipótese → teste → aprendizagem
-6. Checklist final por peça: Promessa | Prova | Clareza | Atrito | CTA
- 
-## 🎨 Diretrizes Visuais
-- **Identidade:** [cores, tipografia, textura]
-- **Layout por formato:** [1:1, 4:5, 9:16, 16:9]
-- **Boas práticas:** [hierarquia, contraste, foco no 1º segundo]
-- **Var. de criativos a produzir:** [lista com contagem]
- 
-## ✅ Conformidade (Políticas Meta)
-- Evitar promessas absolutas e termos sensíveis
-- Focar em “resultados potenciais” e “educação”
-- Limitar claims numéricos a casos com prova
- 
----
- 
-### 📞 Contato
-**Nome:** [NOME_CLIENTE]  
-**Email:** [email_cliente]
- 
-> "Na revisão de pente fino, vamos escolher PALAVRA POR PALAVRA das peças do funil para maximizar conversão."  
-> Tráfego Porcents – Plataforma Estrategista de Tráfego
- 
-INSTRUÇÕES CRÍTICAS:
-- Use EXATAMENTE esta estrutura em markdown e preencha TODOS os placeholders
-- Respeite limites de caracteres indicados
-- Personalize cada item com base no briefing do cliente
-- Escreva em PT-BR com termos do mercado brasileiro
-- Seja específico, prático e pronto para execução`
+          content: `Você é o Lucas Carlos, estrategista de tráfego. Gere um documento curto (400–700 palavras), em 1ª pessoa (eu), PT-BR, com voz direta e motivadora, sem jargão. Siga exatamente a estrutura solicitada, detalhe mais "A Grande Ideia" e mantenha as demais seções objetivas em bullets. Use datas absolutas, não prometa resultados, use faixas/estimativas. Inclua a frase: "Eu mesmo vou escolher cada palavra do funil e dos anúncios — nada genérico. A copy é feita para vender e educar com leveza."`
         },
         {
           role: 'user',
@@ -294,52 +179,99 @@ try {
   }
 });
 
-function buildPromptFromBriefing(briefing: any): string {
-  const nomeCliente = briefing.nome_marca || briefing.nome_produto || 'Cliente';
-  
-  let prompt = `INFORMAÇÕES DO CLIENTE PARA PLANEJAMENTO ESTRATÉGICO:
+function buildPromptLucas(briefing: any, campos: Record<string, unknown>) : string {
+  const br = (s: any, fb: string) => (s !== undefined && s !== null && String(s).trim() !== '' ? String(s) : fb);
+  const hoje = new Date();
+  const dd = String(hoje.getDate()).padStart(2, '0');
+  const mm = String(hoje.getMonth() + 1).padStart(2, '0');
+  const yyyy = hoje.getFullYear();
+  const dataHoje = `${dd}/${mm}/${yyyy}`;
 
-NOME DO CLIENTE/EMPRESA: ${nomeCliente}
-PRODUTO/SERVIÇO: ${briefing.nome_produto || 'Não informado'}
+  const Cliente_Nome = br((campos as any).Cliente_Nome ?? briefing.nome_marca ?? briefing.nome_produto, '[Cliente]');
+  const Projeto_Titulo = br((campos as any).Projeto_Titulo ?? briefing.nome_produto, '[Projeto]');
+  const Data_De_Hoje = br((campos as any).Data_De_Hoje, dataHoje);
+  const Contato_Email = br((campos as any).Contato_Email, '[Email não informado]');
+  const Contato_WhatsApp = br((campos as any).Contato_WhatsApp, '[WhatsApp não informado]');
+  const Produto_Servico = br((campos as any).Produto_Servico ?? briefing.nome_produto, '[Produto/Serviço]');
+  const Avatar = br((campos as any).Avatar ?? briefing.publico_alvo, '[Avatar do cliente]');
+  const Investimento_Diario_Sugerido = br((campos as any).Investimento_Diario_Sugerido ?? (briefing.investimento_diario ? `R$ ${briefing.investimento_diario}` : ''), '[R$ 30,00/dia]');
+  const Modelo_Parceria = br((campos as any).Modelo_Parceria, '% sobre as vendas, sem mensalidade');
+  const Mini_Oferta_Ativa = String((campos as any).Mini_Oferta_Ativa ?? 'false').toLowerCase() === 'true' || (campos as any).Mini_Oferta_Ativa === true;
+  const Mini_Oferta_Nome = br((campos as any).Mini_Oferta_Nome, '[Nome da mini-oferta]');
+  const Mini_Oferta_Preco = br((campos as any).Mini_Oferta_Preco, '[Preço]');
+  const Curso_Preco_Faixa = br((campos as any).Curso_Preco_Faixa, '[R$ 297–497]');
+  const Canais = br((campos as any).Canais ?? ((briefing.possui_facebook || briefing.possui_instagram) ? 'Facebook e Instagram' : ''), '[Facebook e Instagram]');
+  const Notas_Extras = br((campos as any).Notas_Extras, '');
 
-DETALHES DO NEGÓCIO:
-- Descrição resumida: ${briefing.descricao_resumida || 'Não informado'}
-- Público-alvo: ${briefing.publico_alvo || 'Não informado'}
-- Diferencial: ${briefing.diferencial || 'Não informado'}
-- Investimento diário: ${briefing.investimento_diario ? `R$ ${briefing.investimento_diario}` : 'Não informado'}
-- Direcionamento da campanha: ${briefing.direcionamento_campanha || 'Não informado'}
-- Abrangência do atendimento: ${briefing.abrangencia_atendimento || 'Não informado'}
-- Localização para divulgação: ${briefing.localizacao_divulgacao || 'Não informado'}
-- Tipo de prestação de serviço: ${briefing.tipo_prestacao_servico || 'Não informado'}
-- Forma de pagamento: ${briefing.forma_pagamento || 'Não informado'}
+  const miniOfertaLinha = Mini_Oferta_Ativa
+    ? `Entrada opcional (true): incluir ${Mini_Oferta_Nome} por ${Mini_Oferta_Preco} para dar resultado imediato e ajudar a pagar o tráfego.`
+    : `Entrada opcional (false): foque em qualificar muito bem o lead e conduzir direto à oferta principal.`;
 
-CARACTERÍSTICAS CRIATIVAS:
-- Estilo visual: ${briefing.estilo_visual || 'Não informado'}
-- Cores desejadas: ${briefing.cores_desejadas || 'Não informado'}
-- Cores proibidas: ${briefing.cores_proibidas || 'Não informado'}
-- Tipo de fonte: ${briefing.tipo_fonte || 'Não informado'}
-- Fonte específica: ${briefing.fonte_especifica || 'Não informado'}
-- Tipos de imagens preferidas: ${briefing.tipos_imagens_preferidas ? briefing.tipos_imagens_preferidas.join(', ') : 'Não informado'}
+  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras.
 
-RECURSOS DISPONÍVEIS:
-- Possui Facebook: ${briefing.possui_facebook ? 'Sim' : 'Não'}
-- Possui Instagram: ${briefing.possui_instagram ? 'Sim' : 'Não'}
-- Utiliza WhatsApp Business: ${briefing.utiliza_whatsapp_business ? 'Sim' : 'Não'}
-- Criativos prontos: ${briefing.criativos_prontos ? 'Sim' : 'Não'}
-- Vídeos prontos: ${briefing.videos_prontos ? 'Sim' : 'Não'}
-- Quer site: ${briefing.quer_site ? 'Sim' : 'Não'}
+DADOS DE CONTEXTO
+- Cliente: ${Cliente_Nome}
+- Projeto: ${Projeto_Titulo}
+- Data: ${Data_De_Hoje}
+- Contato: ${Contato_Email} · WhatsApp: ${Contato_WhatsApp}
+- Produto/Serviço: ${Produto_Servico}
+- Avatar: ${Avatar}
+- Canais: ${Canais}
+- Investimento diário sugerido: ${Investimento_Diario_Sugerido}
+- Modelo de parceria: ${Modelo_Parceria}
+- Curso preço faixa: ${Curso_Preco_Faixa}
+- Mini_Oferta_Ativa: ${Mini_Oferta_Ativa}
+- Mini_Oferta_Nome: ${Mini_Oferta_Nome}
+- Mini_Oferta_Preco: ${Mini_Oferta_Preco}
+- Notas extras: ${Notas_Extras}
 
-OBSERVAÇÕES FINAIS:
-${briefing.observacoes_finais || 'Nenhuma observação adicional'}
+FORMATO DE SAÍDA (sem alterar a ordem):
 
-INSTRUÇÕES ESPECÍFICAS:
-- Use o nome "${nomeCliente}" no título e ao longo do texto
-- Baseie a persona no público-alvo e tipo de negócio informados
-- Crie títulos e descrições específicos para o nicho identificado
-- Seja específico sobre o público (ex: "mães que trabalham home office" ao invés de "mulheres")
-- Use dados concretos quando fornecidos
+Título
 
-OBJETIVO: Criar um mapeamento completo da persona ideal para este negócio.`;
+PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Interativo & Magnético)
 
-  return prompt;
+> Cliente: ${Cliente_Nome}
+> Projeto: ${Projeto_Titulo}
+> Data: ${Data_De_Hoje}
+> Contato: ${Contato_Email} • WhatsApp: ${Contato_WhatsApp}
+> Modelo: ${Modelo_Parceria}
+
+---
+
+1) A Grande Ideia (o coração da estratégia)
+- Nome interno da ideia: crie um nome memorável.
+- Tagline (1 linha): promessa simples e concreta.
+- Explicação (5–8 linhas, leiga): o que é; por que funciona; por que levou alguns dias; o que muda para o cliente.
+- Frase obrigatória: Eu mesmo vou escolher cada palavra do funil e dos anúncios — nada genérico. A copy é feita para vender e educar com leveza.
+
+2) O que eu vou fazer (até 7 dias corridos)
+- Publicar o diagnóstico interativo (etapas curtas e claras).
+- Construir página de entrada e tela de resultado.
+- Produzir criativos (3 vídeos 15–30s + 3 imagens) focados em conversão.
+- Configurar campanhas (${Canais}) e sequência de WhatsApp.
+- Entregar relatório D+7 com aprendizados e próximos testes.
+
+3) Como o funil vai funcionar (sem jargão)
+Anúncio → Página → Diagnóstico (3 min) → Resultado com plano prático → [Entrada opcional] → Oferta principal → Acompanhamento WhatsApp.
+- ${miniOfertaLinha}
+
+4) Investimentos e modelo
+- Setup único: Criativos R$ 500 • Funil R$ 800 • BM/trackeamento R$ 200.
+- Mídia: ${Investimento_Diario_Sugerido}/dia (ajustável).
+- Remuneração: ${Modelo_Parceria}.
+> Observação: Mídia é paga direto à plataforma. Setup ativa o projeto.
+
+5) Prazos e próximos passos
+- D+0 a D+7: construir e publicar tudo.
+- D+8 a D+14: otimizações rápidas conforme os primeiros números.
+Para iniciar agora: 1) OK no planejamento • 2) Enviar acesso à BM • 3) Pagamento do setup.
+
+---
+
+Fechamento
+Compromisso: clareza, simplicidade e velocidade. Vamos gerar resultado visível na primeira semana e usar isso como ponte natural para a oferta principal. Se estiver de acordo, eu começo hoje.
+
+— Lucas Carlos
+Estrategista — Funil Interativo & Magnético`;
 }
