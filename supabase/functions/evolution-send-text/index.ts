@@ -131,6 +131,38 @@ serve(async (req: Request) => {
       }
     }
 
+    // Additional common endpoint variants when previous attempts failed
+    if (!success) {
+      const altVariants = [
+        { method: "POST" as const, url: `${baseUrl}/message/sendText`, body: { session: instance, number: normalized, text }, headers: { apikey: apiKey, "Content-Type": "application/json" } },
+        { method: "POST" as const, url: `${baseUrl}/message/send`, body: { session: instance, number: normalized, text }, headers: { apikey: apiKey, "Content-Type": "application/json" } },
+        { method: "GET" as const, url: `${baseUrl}/message/sendText?session=${encodeURIComponent(instance)}&number=${normalized}&text=${encodeURIComponent(text)}`, headers: { apikey: apiKey } },
+      ];
+      for (const v of altVariants) {
+        try {
+          const init: RequestInit = v.method === "POST"
+            ? { method: "POST", headers: v.headers, body: JSON.stringify(v.body) }
+            : { method: "GET", headers: v.headers };
+          const { res, elapsed } = await timedFetch(v.url, init, 45000);
+          let bodyOut: any = null;
+          try {
+            bodyOut = await res.json();
+          } catch {
+            bodyOut = await res.text();
+          }
+          const record = { round: "alt", method: v.method, url: v.url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+          attempts.push(record);
+          if (res.ok && !success) {
+            success = true;
+            final = record;
+            break;
+          }
+        } catch (err: any) {
+          attempts.push({ round: "alt", method: v.method, url: v.url, status: null, ok: false, elapsed: null, error: err?.message || String(err) });
+        }
+      }
+    }
+
     const last = attempts[attempts.length - 1] || null;
     const chosen = final || last;
 
