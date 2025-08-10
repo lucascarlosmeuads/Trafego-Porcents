@@ -113,38 +113,83 @@ serve(async (req: Request) => {
     const attempts: any[] = [];
     let final: any = null;
     let success = false;
+
+    // Quick WPPConnect-style route tests first (common in forks)
+    const quickCandidates = Array.from(new Set([
+      `${baseUrl}${userPrefix}/api/${instance}/send-message`,
+      `${baseUrl}/api/${instance}/send-message`,
+      `${baseUrl}/api/v1/${instance}/send-message`,
+      `${baseUrl}/v1/api/${instance}/send-message`,
+    ]));
+
+    const quickPayloads = [
+      { phone: normalized, message: text },
+      { number: normalized, text },
+    ];
+
+    for (const url of quickCandidates) {
+      if (success) break;
+      for (const bodyVariant of quickPayloads) {
+        try {
+          console.log(`[evolution-send-text] Quick test: POST ${url}`);
+          const { res, elapsed } = await timedFetch(url, {
+            method: "POST",
+            headers: { apikey: apiKey, "Content-Type": "application/json" },
+            body: JSON.stringify(bodyVariant)
+          }, 15000);
+
+          let bodyOut: any = null;
+          try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+
+          const record = { round: 0, method: "POST", url, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(bodyVariant).join('+') };
+          attempts.push(record);
+
+          if (res.ok || res.status === 201) {
+            success = true;
+            final = record;
+            console.log(`[evolution-send-text] SUCCESS on quick route: ${url}`);
+            break;
+          }
+        } catch (err: any) {
+          const record = { round: 0, method: "POST", url, status: null, ok: false, elapsed: null, error: err?.message || String(err), payloadStyle: Object.keys(bodyVariant).join('+') };
+          attempts.push(record);
+        }
+      }
+    }
     
-    // Primary documented endpoint - try with extended timeout first
+    // Primary documented endpoint - try with extended timeout if quick scan didn't succeed
     const primaryEndpoint = `${baseUrl}/message/sendText/${instance}`;
     const payload = { number: normalized, text };
     
-    try {
-      console.log(`[evolution-send-text] Trying primary endpoint: POST ${primaryEndpoint}`);
-      const { res, elapsed } = await timedFetch(primaryEndpoint, {
-        method: "POST",
-        headers: { apikey: apiKey, "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
-      }, 60000); // 60 second timeout for primary endpoint
-
-      let bodyOut: any = null;
+    if (!success) {
       try {
-        bodyOut = await res.json();
-      } catch {
-        bodyOut = await res.text();
-      }
+        console.log(`[evolution-send-text] Trying primary endpoint: POST ${primaryEndpoint}`);
+        const { res, elapsed } = await timedFetch(primaryEndpoint, {
+          method: "POST",
+          headers: { apikey: apiKey, "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        }, 60000); // 60 second timeout for primary endpoint
 
-      const record = { round: 1, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut };
-      attempts.push(record);
+        let bodyOut: any = null;
+        try {
+          bodyOut = await res.json();
+        } catch {
+          bodyOut = await res.text();
+        }
 
-      if (res.ok) {
-        success = true;
-        final = record;
-        console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
+        const record = { round: 1, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+        attempts.push(record);
+
+        if (res.ok) {
+          success = true;
+          final = record;
+          console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
+        }
+      } catch (err: any) {
+        const record = { round: 1, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
+        attempts.push(record);
+        console.log(`[evolution-send-text] Primary endpoint failed:`, err?.message);
       }
-    } catch (err: any) {
-      const record = { round: 1, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
-      attempts.push(record);
-      console.log(`[evolution-send-text] Primary endpoint failed:`, err?.message);
     }
 
     // If primary failed, try alternative endpoints
