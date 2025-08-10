@@ -32,12 +32,7 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
       hr { page-break-after: avoid; margin: 12px 0; }
       .section { page-break-inside: avoid; break-inside: avoid; }
       `}</style>
-      <h1 className="font-bold text-2xl mb-2 leading-tight">
-        planejamento estratégico feito por Lucas Carlos - Funil Magnético e Interativo
-      </h1>
-      <h2 className="font-semibold text-lg mb-2 leading-snug">
-        tráfego pago em troca de % sobre as vendas
-      </h2>
+      {/* Títulos removidos para evitar duplicidade no PDF; usar apenas o conteúdo formatado */}
       <MarkdownRenderer content={content} />
     </div>
   );

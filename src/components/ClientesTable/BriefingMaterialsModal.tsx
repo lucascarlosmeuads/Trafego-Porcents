@@ -899,6 +899,8 @@ export function BriefingMaterialsModal({
                       emailGestor={user?.email}
                       emailCliente={emailCliente}
                       nomeCliente={nomeCliente}
+                      requireFormattingBeforeDownload={true}
+                      onFormatted={(novo) => setBriefing((prev) => prev ? { ...prev, planejamento_estrategico: novo } as BriefingData : prev)}
                     />
                   ) : (
                     <div className="text-center py-8">
