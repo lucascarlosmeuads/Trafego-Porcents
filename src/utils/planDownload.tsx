@@ -25,11 +25,15 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
   root.render(
     <div>
       <style>{`
+      /* PDF reset: force black text on white background */
       * { box-sizing: border-box; text-shadow: none !important; box-shadow: none !important; filter: none !important; }
+      html, body, div, span, h1, h2, h3, h4, h5, h6, p, a, li, ul, ol, strong, em, blockquote, code, pre, table, th, td { color: #000 !important; -webkit-text-fill-color: #000 !important; }
+      a { color: #000 !important; text-decoration: underline; }
+      code, pre { background: transparent !important; }
+      hr { page-break-after: avoid; margin: 12px 0; border-color: #000 !important; }
       h1,h2,h3 { page-break-inside: avoid; break-inside: avoid; page-break-after: avoid; margin-top: 0; margin-bottom: 8px; line-height: 1.25; }
       p, li { page-break-inside: avoid; break-inside: avoid; margin: 6px 0; line-height: 1.5; }
       ul, ol { page-break-inside: avoid; break-inside: avoid; margin: 8px 0 8px 20px; }
-      hr { page-break-after: avoid; margin: 12px 0; }
       .section { page-break-inside: avoid; break-inside: avoid; }
       `}</style>
       {/* Títulos removidos para evitar duplicidade no PDF; usar apenas o conteúdo formatado */}
