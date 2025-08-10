@@ -103,6 +103,7 @@ const rawPrefix = userPrefixRaw && typeof userPrefixRaw === 'string'
   : '';
 const allowedPrefixes = new Set(['', '/api', '/api/v1', '/v1', '/v1/api', '/evolution', '/evolution/api']);
 const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
+const verbose = Boolean((body as any)?.verbose);
 
     // Step 1: Check server health and instance status
     console.log(`[evolution-send-text] Checking server health: ${baseUrl}`);
@@ -157,6 +158,8 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
         { phone: normalized, message: text },
         { number: normalized, textMessage: { text } },
         { remoteJid: `${normalized}@s.whatsapp.net`, message: { text } },
+        { chatId: `${normalized}@s.whatsapp.net`, content: text },
+        { jid: `${normalized}@s.whatsapp.net`, message: { text } },
         { session: instance, number: normalized, text },
       ];
 
@@ -408,6 +411,14 @@ const prefixes = Array.from(new Set([
     const chosen = final || last;
     const positive = chosen ? isPositiveResponse(chosen.status ?? 0, Boolean(chosen.ok), chosen.body) : false;
 
+    const maxReturn = verbose ? 250 : 25;
+    const attemptsOut = attempts.slice(0, maxReturn);
+    const countsBySource = attempts.reduce((acc: Record<string, number>, a: any) => {
+      const k = a.source || 'unknown';
+      acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
     const result = {
       success: positive,
       status: chosen?.status ?? 0,
@@ -415,7 +426,12 @@ const prefixes = Array.from(new Set([
       requestId,
       endpoint: chosen?.url ?? null,
       body: chosen?.body ?? null,
-      attempts,
+      attempts: attemptsOut,
+      meta: {
+        totalAttempts: attempts.length,
+        returnedAttempts: attemptsOut.length,
+        countsBySource,
+      },
       // Diagnostics info
       diagnostics: {
         serverHealth: healthCheck.res?.status || null,

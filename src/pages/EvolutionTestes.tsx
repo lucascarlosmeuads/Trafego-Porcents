@@ -1,6 +1,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdge } from "@/integrations/supabase/invokeEdge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -189,13 +190,16 @@ export default function EvolutionTestes() {
     }
     setSending(true);
     try {
-      const { data, error } = await supabase.functions.invoke("evolution-send-text", {
-        body: { number: digits, text, base_url: "http://72.60.7.194:8081" },
+      const { data, error } = await invokeEdge("evolution-send-text", {
+        number: digits,
+        text,
+        base_url: "http://72.60.7.194:8081",
+        verbose: false,
       });
       if (error) throw error;
       setSendResult(data);
-      add({ time: new Date().toISOString(), action: "sendText", requestId: data?.requestId, info: { status: data?.status, ms: data?.responseTimeMs } });
-      toast({ title: data?.success ? "Enviado" : "Falhou", description: `HTTP ${data?.status} • ${data?.responseTimeMs}ms` });
+      add({ time: new Date().toISOString(), action: "sendText", requestId: (data as any)?.requestId, info: { status: (data as any)?.status, ms: (data as any)?.responseTimeMs } });
+      toast({ title: (data as any)?.success ? "Enviado" : "Falhou", description: `HTTP ${(data as any)?.status} • ${(data as any)?.responseTimeMs}ms` });
     } catch (e: any) {
       add({ time: new Date().toISOString(), action: "sendText:error", info: e?.message });
       toast({ title: "Erro no envio", description: e?.message || "Erro desconhecido", variant: "destructive" });

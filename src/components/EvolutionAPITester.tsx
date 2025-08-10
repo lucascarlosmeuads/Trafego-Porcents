@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { invokeEdge } from "@/integrations/supabase/invokeEdge";
 import { PlayCircle, TestTube, CheckCircle, XCircle, Clock } from 'lucide-react';
 
 interface TestResult {
@@ -156,11 +157,10 @@ export function EvolutionAPITester() {
     
     for (const payload of payloads) {
       try {
-        const { data, error } = await supabase.functions.invoke('evolution-send-text', {
-          body: {
-            number: '5511999999999',
-            text: 'Teste via endpoint descoberto'
-          }
+        const { data, error } = await invokeEdge('evolution-send-text', {
+          number: '5511999999999',
+          text: 'Teste via endpoint descoberto',
+          verbose: false
         });
 
         results.push({
@@ -190,11 +190,10 @@ export function EvolutionAPITester() {
   };
 
   const testSendMessage = async () => {
-    const { data, error } = await supabase.functions.invoke('evolution-send-text', {
-      body: { 
-        number: '5511999999999',
-        text: 'Teste de mensagem completo via Evolution API ✅'
-      }
+    const { data, error } = await invokeEdge('evolution-send-text', {
+      number: '5511999999999',
+      text: 'Teste de mensagem completo via Evolution API ✅',
+      verbose: false
     });
 
     if (error) throw error;
