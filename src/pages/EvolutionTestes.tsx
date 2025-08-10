@@ -73,6 +73,45 @@ export default function EvolutionTestes() {
   const [payloadOpen, setPayloadOpen] = useState(false);
   const [payloadJson, setPayloadJson] = useState<any>(null);
 
+  // Automação - fila de recuperação
+  const [autoRunning, setAutoRunning] = useState(false);
+  const [autoSummary, setAutoSummary] = useState<any>(null);
+  const [nextJobs, setNextJobs] = useState<any[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+
+  const runAutomation = async () => {
+    setAutoRunning(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('evolution-process-recovery-queue', { body: {} });
+      if (error) throw error;
+      setAutoSummary(data);
+      add({ time: new Date().toISOString(), action: 'automation:run', info: data });
+      toast({ title: 'Fila processada', description: `Processados: ${data?.processed} • Enviados: ${data?.sent}` });
+    } catch (e: any) {
+      add({ time: new Date().toISOString(), action: 'automation:error', info: e?.message });
+      toast({ title: 'Erro na automação', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+    } finally {
+      setAutoRunning(false);
+    }
+  };
+
+  const loadNextJobs = async () => {
+    setJobsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('evolution_recovery_queue')
+        .select('id, scheduled_at, status')
+        .order('scheduled_at', { ascending: true })
+        .limit(10);
+      if (error) throw error;
+      setNextJobs(data || []);
+    } catch (e: any) {
+      toast({ title: 'Erro ao carregar fila', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+    } finally {
+      setJobsLoading(false);
+    }
+  };
+
   const badgeVariant = useMemo(() => {
     switch (connState) {
       case "connected": return "default" as const;
@@ -151,7 +190,7 @@ export default function EvolutionTestes() {
     setSending(true);
     try {
       const { data, error } = await supabase.functions.invoke("evolution-send-text", {
-        body: { number: digits, text },
+        body: { number: digits, text, base_url: "http://72.60.7.194:8081" },
       });
       if (error) throw error;
       setSendResult(data);
@@ -270,6 +309,34 @@ export default function EvolutionTestes() {
                 <span className="text-sm text-muted-foreground">HTTP {sendResult?.status} • {sendResult?.responseTimeMs}ms</span>
               )}
             </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Automação (fila de recuperação)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Button onClick={runAutomation} disabled={autoRunning}>{autoRunning ? "Processando..." : "Executar agora (até 2)"}</Button>
+              {autoSummary && (
+                <span className="text-sm text-muted-foreground">processados: {autoSummary.processed} • enviados: {autoSummary.sent} • falhas: {autoSummary.failed} • pulados: {autoSummary.skipped}</span>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              <Button variant="outline" onClick={loadNextJobs} disabled={jobsLoading}>{jobsLoading ? "Carregando..." : "Próximos agendados"}</Button>
+              <span className="text-sm text-muted-foreground">{nextJobs.length} item(ns)</span>
+            </div>
+            {nextJobs.length > 0 && (
+              <div className="rounded-md border p-2 text-xs text-muted-foreground">
+                {nextJobs.slice(0,5).map(j => (
+                  <div key={j.id} className="flex items-center justify-between">
+                    <span>{new Date(j.scheduled_at).toLocaleString()}</span>
+                    <Badge variant="outline">{j.status}</Badge>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
