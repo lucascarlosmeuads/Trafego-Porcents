@@ -103,7 +103,7 @@ export const PlanejamentoDisplay = ({
       
       <CardContent className="space-y-6">
         {/* Conteúdo do Planejamento */}
-        <div ref={contentRef} className="prose prose-lg max-w-none dark:prose-invert">
+        <div ref={contentRef} className="prose prose-lg max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-li:marker:text-muted-foreground prose-hr:border-border">
           <MarkdownRenderer content={displayedContent} />
         </div>
 
