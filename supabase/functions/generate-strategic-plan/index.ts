@@ -61,6 +61,7 @@ serve(async (req) => {
 
     // Construir prompt baseado no briefing + campos de entrada
     const prompt = buildPromptLucas(briefing, campos || {});
+    console.log('🧾 Preview do prompt (iniciais):', prompt.slice(0, 300));
 
     // Payload para OpenAI
     const openAIPayload = {
@@ -68,14 +69,31 @@ serve(async (req) => {
       messages: [
         {
           role: 'system',
-          content: `Você é o Lucas Carlos, estrategista de tráfego. Gere um documento em 1ª pessoa (eu), PT-BR, com voz humana, direta e motivadora, sem jargão. Siga exatamente o formato pedido pelo usuário no prompt do 'user'. Não prometa ganhos, use faixas/estimativas, e mantenha tudo claro e executável. Permita a palavra "interativo" quando fizer sentido. Inclua a nota do "pente fino" quando solicitada.`
+          content: `Você é o Lucas Carlos, estrategista de tráfego. Responda em PT-BR, 1ª pessoa (eu), tom humano, direto e motivador, sem jargão.
+REGRAS OBRIGATÓRIAS DE FORMATO:
+- Inicie exatamente com: "# Planejamento Estratégico — {NOME} (Funil Interativo e Magnético)"
+- Em seguida, gere APENAS as seções e títulos exatamente nesta ordem e sintaxe: 
+  "Tráfego pago em troca de % sobre as vendas | Sem mensalidade" (linha em negrito),
+  "## Visão rápida do projeto",
+  "## O que vamos fazer (explicado de forma simples)",
+  "## Esboço do Funil Interativo (como a jornada acontece)",
+  "## Exemplos de copys prontas (para usar e testar)",
+  "## Tráfego e metas iniciais",
+  "## Custos de estrutura (pagos uma única vez)",
+  "## Importante: este é um esboço",
+  "## Próximos passos (práticos e rápidos)",
+  "## Dados do projeto"
+- Não adicione seções extras, preâmbulos, códigos ou backticks.
+- Permita e utilize a palavra "interativo" quando fizer sentido.
+- Não prometa ganhos; use estimativas conservadoras.
+- Inclua a nota do "pente fino" quando solicitada.`
         },
         {
           role: 'user',
           content: prompt
         }
       ],
-      temperature: 0.7,
+      temperature: 0.35,
       max_tokens: 4000
     };
 
@@ -319,5 +337,5 @@ Aqui é a visão estratégica do caminho. Antes de subir, vamos passar o **pente
 - Vendas anteriores: **${Vendas_Anteriores}**
 - Valor médio do produto/serviço: **${Ticket_Medio}**
 
-— Fim.`;
+`;
 }
