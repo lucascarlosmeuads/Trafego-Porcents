@@ -69,7 +69,7 @@ serve(async (req) => {
       messages: [
         {
           role: 'system',
-          content: `Você é o Lucas Carlos, estrategista de tráfego. Responda em PT-BR, 1ª pessoa (eu), tom humano, direto e motivador, sem jargão.
+          content: `Você é o Lucas Carlos, estrategista de tráfego. Responda em PT-BR, 1ª pessoa do plural (nós/“vamos”), tom humano, direto, comercial e assertivo, sem jargão.
 REGRAS OBRIGATÓRIAS DE FORMATO:
 - Inicie exatamente com: "# Planejamento Estratégico — {NOME} (Funil Interativo e Magnético)"
 - Em seguida, gere APENAS as seções e títulos exatamente nesta ordem e sintaxe: 
@@ -84,6 +84,9 @@ REGRAS OBRIGATÓRIAS DE FORMATO:
   "## Próximos passos (práticos e rápidos)",
   "## Dados do projeto"
 - Não adicione seções extras, preâmbulos, códigos ou backticks.
+- Não use tom instrucional nem verbos no imperativo (p.ex.: "utilize", "crie", "apresente", "direcione", "explique", "liste", "sugira").
+- Redija como decisões já tomadas e plano aprovado: use "vamos", "definimos", "já mapeamos", "direcionaremos".
+- Evite tratar o leitor como "você".
 - Permita e utilize a palavra "interativo" quando fizer sentido.
 - Não prometa ganhos; use estimativas conservadoras.
 - Inclua a nota do "pente fino" quando solicitada.`
@@ -238,7 +241,7 @@ function buildPromptLucas(briefing: any, campos: Record<string, unknown>) : stri
     ? `Entrada opcional (true): incluir ${Mini_Oferta_Nome} por ${Mini_Oferta_Preco} para dar resultado imediato e ajudar a pagar o tráfego.`
     : `Entrada opcional (false): foque em qualificar muito bem o lead e conduzir direto à oferta principal.`;
 
-  return `Gere o texto FINAL em markdown seguindo exatamente o FORMATO abaixo. Escreva em 1ª pessoa (eu, Lucas), tom humano, direto e motivador, sem jargão. Parágrafos curtos. Não prometa ganhos. Use exemplos específicos ao nicho real do cliente. Permita a palavra "interativo" quando fizer sentido. Se faltar dado, use [colchetes] com suposições conservadoras.
+  return `Gere o texto FINAL em markdown seguindo exatamente o FORMATO abaixo. Escreva em 1ª pessoa do plural (nós/“vamos”), tom humano, comercial, direto e assertivo, sem jargão. Parágrafos curtos. Não prometa ganhos. Use exemplos específicos ao nicho real do cliente. Sem tom instrucional; não use verbos no imperativo. Permita a palavra "interativo" quando fizer sentido. Se faltar dado, use [colchetes] com suposições conservadoras.
 
 TÍTULO E SUBTÍTULO
 - Título H1: # Planejamento Estratégico — ${Cliente_Nome} (Funil Interativo e Magnético)
@@ -258,35 +261,36 @@ TÍTULO E SUBTÍTULO
 ---
 
 ## O que vamos fazer (explicado de forma simples)
-Explique, de forma leiga, que validaremos um Funil Interativo que combina curiosidade, interação e conversão para ${Produto_Servico}. Contextualize com ${Nicho_Negocio} e ${Avatar}. Mostre por que isso é melhor do que página fria ou ir direto para o WhatsApp. Evite jargões.
+Vamos validar um Funil Interativo que combina curiosidade, interação e conversão para ${Produto_Servico}, direcionado a ${Avatar} em ${Nicho_Negocio}. Esse caminho supera página fria ou contato direto porque eleva o engajamento e a qualificação antes da abordagem comercial.
 
 ---
 
 ## Esboço do Funil Interativo (como a jornada acontece)
 
-### 1) Anúncio que chama para a ação certa
-- Ideia de copy curta (crie 1–2 variações específicas ao nicho): frase forte + sublinha.
-- Ângulos visuais sugeridos (3 bullets): provas sociais reais, rotina simples, benefício visual.
-- CTA: "Fazer o Teste Inteligente".
+### Anúncio — copy e ideia visual
+- Vamos utilizar 1–2 variações de copy específicas ao nicho, com frase forte e benefício principal.
+- Definimos ângulos visuais (3): provas sociais reais, rotina simples, benefício visual claro.
+- CTA definido: "Fazer o Teste Inteligente".
 
-### 2) Página de entrada que prende atenção
-- Mensagem inicial (1–2 linhas) alinhada ao nicho.
-- Mostrar 2–3 depoimentos e um contador leve.
+### Página de entrada — mensagem e visual
+- A mensagem inicial reforça o tema e o valor do teste para o lead.
+- Usaremos 2–3 depoimentos e um contador sutil para reforço social.
 - CTA único: Começar o Teste.
 
-### 3) Teste Inteligente (perguntas com lógica condicional)
-- Liste 5–7 perguntas segmentadoras e 3–4 lógicas relevantes ao ${Nicho_Negocio}/${Avatar}.
+### Teste Inteligente — perguntas com lógica condicional
+- Já mapeamos 5–7 perguntas segmentadoras e 3–4 lógicas que personalizam a experiência para ${Nicho_Negocio}/${Avatar}.
 
-### 4) Tela de resultado que entrega valor + urgência
-- Exemplo de resultado prático com benefício imediato (cupom/guia/grupo) e ações finais (WhatsApp, Calendly quando perfil de liderança).
+### Tela de resultado — entrega e urgência
+- Vamos entregar um diagnóstico/resumo personalizado e um próximo passo claro (cupom, guia, grupo ou convite).
+- Ações finais: direcionaremos para WhatsApp e, quando fizer sentido, Calendly/checkout.
 
 ---
 
 ## Exemplos de copys prontas (para usar e testar)
-- **Anúncio (Facebook/Instagram):** escreva 1–2 variações curtas, específicas ao nicho.
-- **Página (acima da dobra):** 1 variação forte que explique o teste e o benefício.
+- **Anúncio (Facebook/Instagram):** variações definidas (1–2) específicas ao nicho.
+- **Página (acima da dobra):** versão inicial aprovada explicando o teste e o benefício.
 - **WhatsApp (mensagem inicial):** mensagem humana com tag do segmento.
-> Observação: Evitar promessas irreais. Usar depoimentos e provas sociais sem garantir ganhos.
+> Observação: Evitamos promessas; usamos provas sociais reais sem garantir ganhos.
 
 ---
 
