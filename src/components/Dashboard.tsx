@@ -166,22 +166,20 @@ export function Dashboard() {
         
         <div className="flex-1 overflow-auto min-h-screen">
           <div className="p-6 w-full max-w-full">
-            <Suspense fallback={<LoadingFallback />}>
-              {/* Admin Dashboard */}
-              {isAdmin && (
-                <LazyAdminDashboard
-                  selectedManager={selectedManager}
-                  onManagerSelect={setSelectedManager}
-                  activeTab={activeTab}
-                  onTabChange={setActiveTab}
-                />
-              )}
-              
-              {/* Gestor Dashboard */}
-              {isGestor && (
-                <LazyGestorDashboard activeTab={activeTab} />
-              )}
-            </Suspense>
+            {/* Admin Dashboard */}
+            {isAdmin && (
+              <LazyAdminDashboard
+                selectedManager={selectedManager}
+                onManagerSelect={setSelectedManager}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+              />
+            )}
+            
+            {/* Gestor Dashboard */}
+            {isGestor && (
+              <LazyGestorDashboard activeTab={activeTab} />
+            )}
           </div>
         </div>
       </div>
