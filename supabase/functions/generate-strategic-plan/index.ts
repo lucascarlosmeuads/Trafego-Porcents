@@ -250,6 +250,7 @@ PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Magnético)
 - Construir página de entrada e tela de resultado.
 - Produzir criativos (3 vídeos 15–30s + 3 imagens) focados em conversão.
 - Configurar campanhas (${Canais}) e sequência de WhatsApp.
+- COPYS PRONTAS: não vou listar agora. Vamos criar copys focadas em clique certo (conduzindo ao teste/diagnóstico/desafio etc.), evitando cliques de curiosidade. Se houver um exemplo realmente forte, incluo UMA linha para ilustrar; caso contrário, explico a abordagem sem exemplo.
 - Entregar relatório D+7 com aprendizados e próximos testes.
 
 3) Como o funil vai funcionar (sem jargão)
@@ -257,7 +258,7 @@ Anúncio → Página → Diagnóstico (3 min) → Resultado com plano prático �
 - ${miniOfertaLinha}
 
 4) Investimentos e modelo
-- Setup único: Criativos R$ 500 • Funil R$ 800 • BM/trackeamento R$ 200.
+- Único investimento necessário para construir a estrutura: Criativos R$ 500 • Funil R$ 800 • BM/trackeamento R$ 200.
 - Mídia: ${Investimento_Diario_Sugerido}/dia (ajustável).
 - Remuneração: ${Modelo_Parceria}.
 > Observação: Mídia é paga direto à plataforma. Setup ativa o projeto.
