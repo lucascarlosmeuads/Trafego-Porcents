@@ -29,7 +29,7 @@ export function EvolutionAPIConfig() {
   const [testing, setTesting] = useState(false);
   
   const [formData, setFormData] = useState({
-    server_url: 'http://72.60.7.194:8080',
+    server_url: 'http://72.60.7.194:8081',
     instance_name: 'lucas',
     default_country_code: '+55',
     enabled: true
@@ -43,6 +43,8 @@ export function EvolutionAPIConfig() {
   const [openingManager, setOpeningManager] = useState(false)
   const [sendNumber, setSendNumber] = useState<string>('')
   const [sending, setSending] = useState(false)
+  const [sendText, setSendText] = useState<string>('Teste via Evolution ✅')
+  const [sendResult, setSendResult] = useState<any | null>(null)
   const [events, setEvents] = useState<any[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
 
@@ -77,14 +79,14 @@ export function EvolutionAPIConfig() {
       if (cfg) {
         setConfig(cfg);
         setFormData({
-          server_url: cfg.server_url || 'http://72.60.7.194:8080',
+          server_url: cfg.server_url || 'http://72.60.7.194:8081',
           instance_name: cfg.instance_name || 'lucas',
           default_country_code: cfg.default_country_code || '+55',
           enabled: cfg.enabled ?? true
         });
       } else {
         setFormData({
-          server_url: 'http://72.60.7.194:8080',
+          server_url: 'http://72.60.7.194:8081',
           instance_name: 'lucas',
           default_country_code: '+55',
           enabled: true
@@ -452,6 +454,23 @@ export function EvolutionAPIConfig() {
     }
 }
 
+const recoverConnection = async () => {
+  try {
+    toast({ title: 'Recuperando conexão...', description: 'Enfileirando processo e atualizando status' });
+    const { data, error } = await supabase.functions.invoke('evolution-recover-connection');
+    if (error) throw error;
+    if (data?.success) {
+      toast({ title: 'Recuperação iniciada', description: data?.message || 'Processo disparado' });
+    } else {
+      toast({ title: 'Falha na recuperação', description: data?.error || 'Erro desconhecido', variant: 'destructive' });
+    }
+  } catch (e: any) {
+    toast({ title: 'Erro na recuperação', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+  } finally {
+    checkConnectionStatus();
+  }
+}
+
 const sendTestMessage = async () => {
   const raw = sendNumber || '';
   const cleaned = raw.replace(/\D/g, '');
@@ -459,41 +478,29 @@ const sendTestMessage = async () => {
     toast({ title: 'Número inválido', description: 'Informe um número com DDI e DDD', variant: 'destructive' });
     return;
   }
+  if (!sendText?.trim()) {
+    toast({ title: 'Mensagem vazia', description: 'Digite a mensagem a ser enviada', variant: 'destructive' });
+    return;
+  }
   setSending(true);
+  setSendResult(null);
   try {
-    const { data, error } = await supabase.functions.invoke('evolution-verify', { body: { number: cleaned } });
+    const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText } });
     if (error) throw error;
-    const ok = data?.message?.success || data?.success;
-    if (ok) {
-      toast({ title: 'Mensagem enviada', description: `Solicitação enviada para ${cleaned}` });
+    setSendResult(data);
+    if (data?.success) {
+      toast({ title: 'Enviado ✅', description: `HTTP ${data.status} • ${data.responseTimeMs}ms` });
     } else {
-      toast({ title: 'Falha no disparo', description: data?.message?.error || data?.error || 'Erro desconhecido', variant: 'destructive' });
+      toast({ title: 'Falha no envio', description: data?.error || `HTTP ${data?.status} • ${data?.responseTimeMs}ms`, variant: 'destructive' });
     }
   } catch (e: any) {
-    toast({ title: 'Erro no disparo', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+    setSendResult({ success: false, error: e?.message });
+    toast({ title: 'Erro no envio', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
   } finally {
     setSending(false);
   }
 };
 
-// Disparo rápido usando o número padrão configurado na função (sem precisar digitar)
-const quickTestSend = async () => {
-  setSending(true);
-  try {
-    const { data, error } = await supabase.functions.invoke('evolution-verify', { body: {} });
-    if (error) throw error;
-    const ok = data?.message?.success || data?.success;
-    if (ok) {
-      toast({ title: 'Mensagem enviada', description: 'Teste solicitado com sucesso (número padrão).' });
-    } else {
-      toast({ title: 'Falha no disparo', description: data?.message?.error || data?.error || 'Erro desconhecido', variant: 'destructive' });
-    }
-  } catch (e: any) {
-    toast({ title: 'Erro no disparo', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
-  } finally {
-    setSending(false);
-  }
-};
 
 const fetchRecentEvents = async () => {
   setEventsLoading(true);
@@ -611,48 +618,40 @@ return (
             </span>
           </div>
 
-          <div className="flex space-x-2">
-            <Button
-              onClick={connectInstance}
-              disabled={!formData.enabled || !formData.server_url || !formData.instance_name || connectionStatus === 'connecting'}
-              size="sm"
-            >
-              {connectionStatus === 'connecting' ? 'Conectando...' : 'Conectar WhatsApp'}
-            </Button>
-            
+          <div className="flex flex-wrap gap-2">
+            {connectionStatus !== 'connected' && (
+              <Button
+                onClick={connectInstance}
+                disabled={!formData.enabled || !formData.server_url || !formData.instance_name || connectionStatus === 'connecting'}
+                size="sm"
+              >
+                {connectionStatus === 'connecting' ? 'Conectando...' : 'Conectar WhatsApp'}
+              </Button>
+            )}
             <Button
               onClick={checkConnectionStatus}
               variant="outline"
               disabled={connectionStatus === 'checking'}
               size="sm"
             >
-              {connectionStatus === 'checking' ? 'Verificando...' : 'Verificar Status'}
+              {connectionStatus === 'checking' ? 'Verificando...' : 'Atualizar status'}
             </Button>
-
-            <Button
-              onClick={diagnoseConnection}
-              variant="outline"
-              disabled={diagLoading}
-              size="sm"
-            >
-              {diagLoading ? 'Diagnosticando...' : 'Diagnosticar conexão'}
-            </Button>
-
+            {connectionStatus !== 'connected' && (
+              <Button
+                onClick={recoverConnection}
+                variant="outline"
+                size="sm"
+              >
+                Recuperar conexão
+              </Button>
+            )}
             <Button
               onClick={() => handleOpenManager(false)}
               variant="outline"
               size="sm"
               disabled={openingManager}
             >
-              {openingManager ? 'Verificando...' : 'Abrir Manager'}
-            </Button>
-            <Button
-              onClick={() => handleOpenManager(true)}
-              variant="outline"
-              size="sm"
-              disabled={openingManager}
-            >
-              Abrir com HTTPS
+              {openingManager ? 'Abrindo...' : 'Abrir Manager'}
             </Button>
           </div>
         </div>
@@ -713,12 +712,6 @@ return (
                 <CardTitle>Disparo de teste</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Button onClick={quickTestSend} disabled={sending}>
-                    {sending ? 'Enviando...' : 'Teste rápido no WhatsApp'}
-                  </Button>
-                  <span className="text-sm text-muted-foreground">Usa o número padrão configurado na função</span>
-                </div>
                 <Label htmlFor="send_number">Número (E.164 sem símbolos)</Label>
                 <Input
                   id="send_number"
@@ -726,12 +719,38 @@ return (
                   value={sendNumber}
                   onChange={(e) => setSendNumber(e.target.value)}
                 />
+                <Label htmlFor="send_text">Mensagem</Label>
+                <Input
+                  id="send_text"
+                  placeholder="Digite a mensagem"
+                  value={sendText}
+                  onChange={(e) => setSendText(e.target.value)}
+                />
                 <div className="flex gap-2">
                   <Button onClick={sendTestMessage} disabled={sending || !sendNumber}>
                     {sending ? 'Enviando...' : 'Enviar via Evolution'}
                   </Button>
-                  <Button variant="outline" onClick={() => setSendNumber('')}>Limpar</Button>
+                  <Button variant="outline" onClick={() => { setSendNumber(''); setSendText('Teste via Evolution ✅'); setSendResult(null); }}>Limpar</Button>
                 </div>
+                {sendResult && (
+                  <div className="text-xs border rounded p-3 bg-muted">
+                    <div className="mb-1">HTTP: {String(sendResult.status || '—')} • {String(sendResult.responseTimeMs || '—')}ms</div>
+                    {sendResult.endpoint && (
+                      <div className="mb-1 break-all">Endpoint: {String(sendResult.endpoint)}</div>
+                    )}
+                    {sendResult.error && (
+                      <div className="mb-1 text-destructive">Erro: {String(sendResult.error)}</div>
+                    )}
+                    <div className="font-mono whitespace-pre-wrap break-words">
+                      {(() => {
+                        try { return JSON.stringify(sendResult.body ?? sendResult, null, 2) } catch { return String(sendResult) }
+                      })()}
+                    </div>
+                    {sendResult.requestId && (
+                      <div className="mt-1 text-muted-foreground">requestId: {String(sendResult.requestId)}</div>
+                    )}
+                  </div>
+                )}
                 <p className="text-sm text-muted-foreground">Certifique-se de que o WhatsApp esteja conectado.</p>
               </CardContent>
             </Card>
