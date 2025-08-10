@@ -96,9 +96,9 @@ serve(async (req) => {
       },
       body: JSON.stringify({
         model: "gpt-4o",
-        temperature: 0.2,
+        temperature: 0.1,
         messages: [
-          { role: "system", content: "Você é um estrategista de marketing que reescreve planejamentos em Markdown claro, bonito e organizado." },
+          { role: "system", content: "Você formata planejamentos em Markdown sem alterar conteúdo. Regras: 1) NUNCA reduzir, resumir, cortar ou substituir números/valores; 2) Não criar novas seções; 3) Apenas organizar títulos (H1/H2/H3), listas e espaçamento; 4) Converter marcadores (•, –, —, ·) em '- ' alinhados; 5) Tom pessoal em primeira pessoa do plural, propositivo (Lucas), sem tom didático. Responda somente com o Markdown final." },
           { role: "user", content: prompt },
         ],
       }),
@@ -153,37 +153,25 @@ serve(async (req) => {
 function buildPrompt(data: Record<string, unknown>) {
   const { nome_marca, nome_produto, descricao_resumida, publico_alvo, diferencial, investimento_diario, resumo_conversa_vendedor, planejamento_estrategico } = data as any;
 
-  return `Reescreva e formate lindamente o planejamento estratégico abaixo em Markdown, seguindo esta estrutura:
+  return `REGRAS DE FORMATAÇÃO (NÃO ALTERE O CONTEÚDO):
+- Não reduzir, resumir ou remover nada do texto. Mantenha cada frase, parágrafo, número, valor, prazo e porcentagem exatamente como estão.
+- Não adicionar novas seções nem mudar a ordem. Apenas organize visualmente.
+- Ajustes permitidos: 
+  1) Hierarquia de títulos: aplique # H1 para o título principal, ## H2 para seções, ### H3 para subseções (quando fizer sentido).
+  2) Listas: converta marcadores soltos como •, –, —, · em "- " e alinhe corretamente (list-outside).
+  3) Espaçamento: padronize quebras de linha e insira linhas em branco apenas para melhorar a leitura, sem apagar conteúdo.
+  4) Tabelas ou blocos de citação: mantenha o conteúdo, apenas formate em Markdown se já estiver indicado.
+- Tom de voz: primeira pessoa do plural e pessoal/propositivo, assinatura e autoria de Lucas (sem parecer tutorial ou "como fazer"). Evite tom didático; escreva como proposta já decidida.
 
-# Planejamento Estratégico – ${nome_marca || nome_produto || "Marca/Produto"}
-
-## Visão Geral
-- Produto/Serviço: ${nome_produto || "n/d"}
+Metadados para contexto (não reescrever, só usar para título se couber):
+- Marca/Produto: ${nome_marca || nome_produto || "n/d"}
+- Descrição: ${descricao_resumida || "n/d"}
 - Público-alvo: ${publico_alvo || "n/d"}
 - Diferenciais: ${diferencial || "n/d"}
-- Investimento diário sugerido: ${investimento_diario || "n/d"}
+- Investimento diário: ${investimento_diario || "n/d"}
+- Observações do vendedor: ${resumo_conversa_vendedor || "n/d"}
 
-## Objetivos de Marketing
-(3–5 bullets claros)
-
-## Estratégia de Aquisição
-- Canais, funil, jornada resumida
-
-## Criativos & Mensagens
-- 2–4 variações com headline, subheadline e CTA
-
-## Estrutura de Campanhas
-- Campanhas, conjuntos, segmentações, orçamento
-
-## KPIs & Métricas
-- Principais indicadores e metas
-
-## Próximos Passos
-- Itens práticos para iniciar
-
+Agora, reentregue o conteúdo abaixo, apenas FORMATADO em Markdown dentro dessas regras. Retorne somente o Markdown final.
 ---
-
-Conteúdo original a ser reformatado:
-
 ${planejamento_estrategico}`;
 }
