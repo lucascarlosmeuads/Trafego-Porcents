@@ -768,6 +768,57 @@ export type Database = {
           },
         ]
       }
+      evolution_recovery_queue: {
+        Row: {
+          attempts: number
+          created_at: string
+          id: string
+          last_attempt_at: string | null
+          lead_id: string
+          result: Json
+          scheduled_at: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          lead_id: string
+          result?: Json
+          scheduled_at: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          attempts?: number
+          created_at?: string
+          id?: string
+          last_attempt_at?: string | null
+          lead_id?: string
+          result?: Json
+          scheduled_at?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "evolution_recovery_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "formularios_parceria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "evolution_recovery_queue_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "vw_parceria_completa"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       evolution_webhook_events: {
         Row: {
           created_at: string
