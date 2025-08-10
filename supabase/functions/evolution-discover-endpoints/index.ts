@@ -121,14 +121,25 @@ Deno.serve(async (req) => {
 
   try {
     const supabase = getSupabaseAdmin()
-    
+
+    // Parse optional options from request body
+    let body: any = {}
+    try {
+      if (req.method !== 'GET') body = await req.json()
+    } catch {}
+
+    const prefixOverride = (body?.prefix ?? '').toString().trim()
+    const perAttemptTimeout = Math.min(Math.max(Number(body?.timeoutMs) || 1200, 400), 5000)
+    const globalBudgetMs = Math.min(Math.max(Number(body?.budgetMs) || 12000, 3000), 25000)
+    const maxConcurrency = Math.min(Math.max(Number(body?.concurrency) || 6, 2), 10)
+
     // Get Evolution API configuration
     const config = await getActiveEvolutionConfig(supabase)
     if (!config || !config.enabled) {
       return new Response(
         JSON.stringify({ 
           success: false, 
-          error: 'Evolution API not configured or disabled' 
+          error: 'Evolution API não configurada ou desabilitada' 
         }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -140,7 +151,7 @@ Deno.serve(async (req) => {
     const API_KEY = Deno.env.get('EVOLUTION_API_KEY')
     if (!API_KEY) {
       return new Response(
-        JSON.stringify({ success: false, error: 'Evolution API key not configured' }),
+        JSON.stringify({ success: false, error: 'EVOLUTION_API_KEY não configurada' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 400 
@@ -151,64 +162,68 @@ Deno.serve(async (req) => {
     const baseUrl = withoutTrailingSlash(config.server_url)
     const instance = config.instance_name
 
-    console.log(`[evolution-discover] Starting endpoint discovery for: ${baseUrl}`)
+    console.log(`[evolution-discover] init base=${baseUrl} instance=${instance} perAttempt=${perAttemptTimeout}ms budget=${globalBudgetMs}ms`)
 
-    // Step 1: Check if server has documentation endpoint
-    const docEndpoints = ['/', '/docs', '/api-docs', '/swagger', '/health', '/status']
-    const docResults = []
-    
-    for (const endpoint of docEndpoints) {
-      const result = await timedFetch(`${baseUrl}${endpoint}`, {
-        method: 'GET',
-        headers: { apikey: API_KEY }
-      })
-      docResults.push({ endpoint, ...result })
-    }
+    const startTime = Date.now()
+    const spent = () => Date.now() - startTime
 
-    // Step 2: Test known message sending endpoints with common prefixes
-    const endpointResults: Array<any> = []
-    const testPayload = { number: '5511999999999', text: 'test' }
+    // Step 1: Probe documentation/health endpoints concurrently (short timeouts)
+    const docEndpoints = ['/', '/docs', '/swagger', '/api-docs', '/health', '/status']
+    const docPromises = docEndpoints.map((endpoint) =>
+      timedFetch(`${baseUrl}${endpoint}`, { method: 'GET', headers: { apikey: API_KEY } }, Math.min(perAttemptTimeout, 800))
+        .then(r => ({ endpoint, ...r }))
+    )
+    const docResults = await Promise.allSettled(docPromises).then(all => all.map((r, i) => r.status === 'fulfilled' ? r.value : { endpoint: docEndpoints[i], success: false, status: 0, data: null, time: 0, error: (r as any).reason?.message || 'failed' }))
 
-    const prefixes = ['', '/api', '/evolution', '/evolution/api', '/v1', '/api/v1']
+    // Step 2: Build candidate endpoints matrix
+    const prefixes = prefixOverride ? [prefixOverride] : ['', '/api', '/api/v1', '/v1', '/evolution', '/evolution/api']
+
+    type Candidate = { url: string; pattern: string; method: string; type: string; priority: number; prefix: string }
+    const candidates: Candidate[] = []
 
     for (const prefix of prefixes) {
       for (const pattern of ENDPOINT_PATTERNS) {
         const fullPattern = `${prefix}${pattern.pattern}`
         const url = `${baseUrl}${fullPattern.replace('{instance}', instance)}`
-
-        console.log(`[evolution-discover] Testing ${pattern.method} ${url}`)
-
-        const result = await timedFetch(url, {
-          method: pattern.method as any,
-          headers: {
-            'Content-Type': 'application/json',
-            apikey: API_KEY
-          },
-          body: JSON.stringify(testPayload)
-        }, 3000)
-
-        endpointResults.push({
-          url,
-          pattern: fullPattern,
-          method: pattern.method,
-          type: pattern.type,
-          priority: pattern.priority,
-          prefix,
-          ...result
-        })
+        candidates.push({ url, pattern: fullPattern, method: pattern.method, type: pattern.type, priority: pattern.priority, prefix })
       }
     }
 
-    // Step 3: Analyze results and identify working endpoints
-    const workingEndpoints = endpointResults.filter(result => 
-      result.success || 
-      result.status === 400 || // Bad request might mean endpoint exists but wrong payload
-      result.status === 401 || // Unauthorized means endpoint exists
-      result.status === 422    // Validation error means endpoint exists
-    ).sort((a, b) => a.priority - b.priority)
+    // Sort by priority then by prefix order
+    const prefixOrder = new Map(prefixes.map((p, i) => [p, i] as const))
+    candidates.sort((a, b) => a.priority - b.priority || (prefixOrder.get(a.prefix)! - prefixOrder.get(b.prefix)!))
 
-    const recommendations = []
-    
+    const testPayload = { number: '5511999999999', text: 'test' }
+
+    // Concurrency runner with global time budget
+    const results: any[] = []
+    let cursor = 0
+
+    async function worker() {
+      while (cursor < candidates.length && spent() < globalBudgetMs) {
+        const idx = cursor++
+        const c = candidates[idx]
+        console.log(`[evolution-discover] test ${c.method} ${c.url}`)
+        const res = await timedFetch(c.url, {
+          method: c.method as any,
+          headers: { 'Content-Type': 'application/json', apikey: API_KEY },
+          body: JSON.stringify(testPayload)
+        }, perAttemptTimeout)
+        results.push({ ...c, ...res })
+      }
+    }
+
+    const workers = Array.from({ length: maxConcurrency }, () => worker())
+    await Promise.race([
+      Promise.all(workers),
+      new Promise((resolve) => setTimeout(resolve, globalBudgetMs))
+    ])
+
+    // Step 3: Analyze results
+    const workingEndpoints = results.filter(r => r.success || [400,401,422].includes(r.status))
+      .sort((a, b) => a.priority - b.priority)
+
+    const recommendations: any[] = []
     if (workingEndpoints.length > 0) {
       const best = workingEndpoints[0]
       recommendations.push({
@@ -216,12 +231,11 @@ Deno.serve(async (req) => {
         endpoint: best.pattern,
         method: best.method,
         apiType: best.type,
-        reason: `Endpoint responded with status ${best.status}`,
+        reason: `Endpoint respondeu com status ${best.status}`,
         testUrl: best.url
       })
     }
 
-    // Check for alternative working endpoints
     const alternatives = workingEndpoints.slice(1, 3)
     alternatives.forEach(alt => {
       recommendations.push({
@@ -229,57 +243,55 @@ Deno.serve(async (req) => {
         endpoint: alt.pattern,
         method: alt.method,
         apiType: alt.type,
-        reason: `Alternative endpoint (status ${alt.status})`,
+        reason: `Alternativo (status ${alt.status})`,
         testUrl: alt.url
       })
     })
 
-    // Step 4: Generate diagnostic information
     const diagnostic = {
       serverInfo: {
         baseUrl,
         instance,
-        serverResponsive: docResults.some(r => r.success),
-        documentationEndpoints: docResults.filter(r => r.success)
+        serverResponsive: docResults.some((r: any) => r.success),
+        documentationEndpoints: docResults.filter((r: any) => r.success),
+        spentMs: spent(),
+        budgetMs: globalBudgetMs,
+        prefixOverride: prefixOverride || null
       },
       endpointTesting: {
-        totalTested: endpointResults.length,
+        totalTested: results.length,
         workingCount: workingEndpoints.length,
-        results: endpointResults
+        results
       },
       recommendations,
-      suggestedPayload: {
-        number: "5511999999999",
-        text: "Test message"
-      }
+      suggestedPayload: testPayload
     }
 
-    console.log(`[evolution-discover] Discovery complete. Found ${workingEndpoints.length} working endpoints`)
+    const responsePayload: any = {
+      success: workingEndpoints.length > 0,
+      diagnostic,
+      workingEndpoints: workingEndpoints.slice(0, 5),
+      timestamp: new Date().toISOString()
+    }
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        diagnostic,
-        workingEndpoints: workingEndpoints.slice(0, 5), // Top 5 results
-        timestamp: new Date().toISOString()
-      }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-      }
-    )
+    if (workingEndpoints.length === 0) {
+      responsePayload.error = spent() >= globalBudgetMs 
+        ? 'Tempo limite atingido antes de encontrar um endpoint compatível' 
+        : 'Nenhum endpoint conhecido respondeu de forma compatível'
+    }
+
+    console.log(`[evolution-discover] done working=${workingEndpoints.length} tested=${results.length} spent=${spent()}ms`)
+
+    return new Response(JSON.stringify(responsePayload), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })
 
   } catch (error) {
     console.error('[evolution-discover] Error:', error)
-    
     return new Response(
       JSON.stringify({ 
         success: false, 
         error: error instanceof Error ? error.message : 'Unknown error' 
       }),
-      { 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        status: 500 
-      }
+      { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     )
   }
 })

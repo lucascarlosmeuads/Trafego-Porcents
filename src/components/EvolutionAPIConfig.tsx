@@ -484,7 +484,14 @@ const discoverEndpoints = async () => {
   setDiscoveryResult(null);
 
   try {
-    const { data, error } = await supabase.functions.invoke('evolution-discover-endpoints', {});
+    const { data, error } = await supabase.functions.invoke('evolution-discover-endpoints', {
+      body: {
+        prefix: prefixOverride || undefined,
+        timeoutMs: 1200,
+        budgetMs: 12000,
+        concurrency: 6,
+      },
+    });
     
     if (error) {
       throw new Error(error.message);
@@ -493,15 +500,16 @@ const discoverEndpoints = async () => {
     setDiscoveryResult(data);
     setShowDiscovery(true);
     
-    if (data.success && data.recommendations?.length > 0) {
+    if (data?.success && ((data?.diagnostic?.recommendations?.length ?? 0) > 0 || (data?.workingEndpoints?.length ?? 0) > 0)) {
       toast({
         title: "✅ Descoberta concluída",
-        description: `Encontrados ${data.workingEndpoints?.length || 0} endpoints funcionais`,
+        description: `Encontrados ${data?.workingEndpoints?.length || 0} endpoints`,
       });
     } else {
+      const msg = data?.error || "Nenhum endpoint funcional foi encontrado automaticamente";
       toast({
         title: "⚠️ Nenhum endpoint encontrado",
-        description: "Nenhum endpoint funcional foi encontrado automaticamente",
+        description: msg,
         variant: "destructive"
       });
     }

@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.evolution-process-recovery-queue]
 verify_jwt = false
+
+[functions.evolution-discover-endpoints]
+verify_jwt = false
