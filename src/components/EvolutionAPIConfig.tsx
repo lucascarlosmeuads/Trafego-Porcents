@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { EvolutionAPITester } from "./EvolutionAPITester";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, XCircle, MessageCircle, Wifi, X } from 'lucide-react';
+import { CheckCircle, XCircle, MessageCircle, Wifi, X, Search, Loader2 } from 'lucide-react';
 
 interface EvolutionConfig {
   id: string;
@@ -51,6 +51,9 @@ export function EvolutionAPIConfig() {
   const [eventsLoading, setEventsLoading] = useState(false)
   const [testProgress, setTestProgress] = useState<string>('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
+  const [discovering, setDiscovering] = useState(false)
+  const [discoveryResult, setDiscoveryResult] = useState<any>(null)
+  const [showDiscovery, setShowDiscovery] = useState(false)
 
   useEffect(() => {
     loadConfig();
@@ -475,6 +478,45 @@ const recoverConnection = async () => {
   }
 }
 
+const discoverEndpoints = async () => {
+  setDiscovering(true);
+  setDiscoveryResult(null);
+
+  try {
+    const { data, error } = await supabase.functions.invoke('evolution-discover-endpoints', {});
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    setDiscoveryResult(data);
+    setShowDiscovery(true);
+    
+    if (data.success && data.recommendations?.length > 0) {
+      toast({
+        title: "✅ Descoberta concluída",
+        description: `Encontrados ${data.workingEndpoints?.length || 0} endpoints funcionais`,
+      });
+    } else {
+      toast({
+        title: "⚠️ Nenhum endpoint encontrado",
+        description: "Nenhum endpoint funcional foi encontrado automaticamente",
+        variant: "destructive"
+      });
+    }
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : 'Erro desconhecido';
+    setDiscoveryResult({ success: false, error: errorMsg });
+    toast({
+      title: "❌ Erro na descoberta",
+      description: `Erro na descoberta: ${errorMsg}`,
+      variant: "destructive"
+    });
+  } finally {
+    setDiscovering(false);
+  }
+};
+
 const sendTestMessage = async () => {
   const raw = sendNumber || '';
   const cleaned = raw.replace(/\D/g, '');
@@ -731,6 +773,17 @@ return (
           <Button onClick={testConnection} variant="outline" disabled={testing || !formData.server_url}>
             {testing ? 'Testando...' : 'Testar Conectividade'}
           </Button>
+          
+          <Button 
+            onClick={discoverEndpoints} 
+            disabled={discovering || !formData.server_url}
+            variant="secondary"
+            className="flex items-center gap-2"
+          >
+            {discovering && <Loader2 className="h-4 w-4 animate-spin" />}
+            <Search className="h-4 w-4" />
+            Descobrir Endpoints
+          </Button>
         </div>
             </CardContent>
           </Card>
@@ -945,6 +998,80 @@ return (
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Discovery Results */}
+      {discoveryResult && showDiscovery && (
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Search className="h-5 w-5" />
+              Descoberta de Endpoints
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDiscovery(false)}
+                className="ml-auto"
+              >
+                ×
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {discoveryResult.success ? (
+              <div className="space-y-4">
+                {discoveryResult.recommendations?.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Endpoints Recomendados:</h4>
+                    <div className="space-y-2">
+                      {discoveryResult.recommendations.map((rec: any, index: number) => (
+                        <div key={index} className="border rounded p-3">
+                          <div className="flex items-center gap-2 mb-1">
+                            <Badge variant={rec.type === 'primary' ? 'default' : 'secondary'}>
+                              {rec.type === 'primary' ? 'Principal' : 'Alternativo'}
+                            </Badge>
+                            <code className="text-sm bg-muted px-2 py-1 rounded">
+                              {rec.method} {rec.endpoint}
+                            </code>
+                          </div>
+                          <div className="text-sm text-muted-foreground">
+                            Tipo: {rec.apiType} • {rec.reason}
+                          </div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            URL: {rec.testUrl}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {discoveryResult.workingEndpoints?.length > 0 && (
+                  <div>
+                    <h4 className="font-medium mb-2">Todos os Endpoints Funcionais:</h4>
+                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                      {discoveryResult.workingEndpoints.map((endpoint: any, index: number) => (
+                        <div key={index} className="text-sm flex justify-between items-center p-2 bg-muted rounded">
+                          <span>{endpoint.method} {endpoint.pattern}</span>
+                          <Badge variant="outline">Status: {endpoint.status}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                <div className="text-sm text-muted-foreground">
+                  <strong>Resumo:</strong> Testados {discoveryResult.diagnostic?.endpointTesting?.totalTested} endpoints, 
+                  encontrados {discoveryResult.diagnostic?.endpointTesting?.workingCount} funcionais.
+                </div>
+              </div>
+            ) : (
+              <div className="text-red-600">
+                <strong>Erro na descoberta:</strong> {discoveryResult.error}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Modal de Diagnóstico */}
       {showDiagModal && diagData && (
