@@ -165,32 +165,38 @@ Deno.serve(async (req) => {
       docResults.push({ endpoint, ...result })
     }
 
-    // Step 2: Test known message sending endpoints
-    const endpointResults = []
+    // Step 2: Test known message sending endpoints with common prefixes
+    const endpointResults: Array<any> = []
     const testPayload = { number: '5511999999999', text: 'test' }
 
-    for (const pattern of ENDPOINT_PATTERNS) {
-      const url = `${baseUrl}${pattern.pattern.replace('{instance}', instance)}`
-      
-      console.log(`[evolution-discover] Testing ${pattern.method} ${url}`)
-      
-      const result = await timedFetch(url, {
-        method: pattern.method,
-        headers: {
-          'Content-Type': 'application/json',
-          apikey: API_KEY
-        },
-        body: JSON.stringify(testPayload)
-      }, 3000)
+    const prefixes = ['', '/api', '/evolution', '/evolution/api', '/v1', '/api/v1']
 
-      endpointResults.push({
-        url,
-        pattern: pattern.pattern,
-        method: pattern.method,
-        type: pattern.type,
-        priority: pattern.priority,
-        ...result
-      })
+    for (const prefix of prefixes) {
+      for (const pattern of ENDPOINT_PATTERNS) {
+        const fullPattern = `${prefix}${pattern.pattern}`
+        const url = `${baseUrl}${fullPattern.replace('{instance}', instance)}`
+
+        console.log(`[evolution-discover] Testing ${pattern.method} ${url}`)
+
+        const result = await timedFetch(url, {
+          method: pattern.method as any,
+          headers: {
+            'Content-Type': 'application/json',
+            apikey: API_KEY
+          },
+          body: JSON.stringify(testPayload)
+        }, 3000)
+
+        endpointResults.push({
+          url,
+          pattern: fullPattern,
+          method: pattern.method,
+          type: pattern.type,
+          priority: pattern.priority,
+          prefix,
+          ...result
+        })
+      }
     }
 
     // Step 3: Analyze results and identify working endpoints

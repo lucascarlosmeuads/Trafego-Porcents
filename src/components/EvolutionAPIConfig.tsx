@@ -54,6 +54,7 @@ export function EvolutionAPIConfig() {
   const [discovering, setDiscovering] = useState(false)
   const [discoveryResult, setDiscoveryResult] = useState<any>(null)
   const [showDiscovery, setShowDiscovery] = useState(false)
+  const [prefixOverride, setPrefixOverride] = useState<string>('')
 
   useEffect(() => {
     loadConfig();
@@ -538,7 +539,7 @@ const sendTestMessage = async () => {
   try {
     const base_url = (config?.server_url || formData.server_url || '').replace(/\/$/, '');
     const instance = config?.instance_name || formData.instance_name || 'lucas';
-    const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText, base_url, instance } });
+    const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText, base_url, instance, prefix: prefixOverride } });
     if (error) throw error;
     setSendResult(data);
     
@@ -802,6 +803,13 @@ return (
                   placeholder="Ex: 5548999999999"
                   value={sendNumber}
                   onChange={(e) => setSendNumber(e.target.value)}
+                />
+                <Label htmlFor="prefix_override">Prefixo de caminho (opcional)</Label>
+                <Input
+                  id="prefix_override"
+                  placeholder="/api"
+                  value={prefixOverride}
+                  onChange={(e) => setPrefixOverride(e.target.value)}
                 />
                 <Label htmlFor="send_text">Mensagem</Label>
                 <Input

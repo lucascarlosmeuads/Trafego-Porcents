@@ -81,6 +81,10 @@ serve(async (req: Request) => {
 
     const baseUrl = withoutTrailingSlash(cfg?.server_url || body.base_url || "http://72.60.7.194:8081");
     const instance = body.instance || cfg?.instance_name || "lucas";
+    const userPrefixRaw = (body && ((body as any).prefix ?? (body as any).base_path_prefix)) as string | undefined;
+    const userPrefix = userPrefixRaw && typeof userPrefixRaw === 'string' 
+      ? (userPrefixRaw.startsWith('/') ? userPrefixRaw.replace(/\/$/, '') : `/${userPrefixRaw.replace(/\/$/, '')}`)
+      : '';
 
     // Step 1: Check server health and instance status
     console.log(`[evolution-send-text] Checking server health: ${baseUrl}`);
@@ -146,26 +150,72 @@ serve(async (req: Request) => {
     // If primary failed, try alternative endpoints
     if (!success) {
       console.log(`[evolution-send-text] Primary failed, trying alternatives...`);
-      const alternativeEndpoints = [
-        { method: "GET" as const, url: `${baseUrl}/message/sendText/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` },
-        { method: "POST" as const, url: `${baseUrl}/message/send/${instance}`, body: { number: normalized, text } },
-        { method: "GET" as const, url: `${baseUrl}/message/send/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` },
-        { method: "POST" as const, url: `${baseUrl}/message/sendText`, body: { session: instance, number: normalized, text } },
-        { method: "POST" as const, url: `${baseUrl}/message/send`, body: { session: instance, number: normalized, text } },
-        { method: "GET" as const, url: `${baseUrl}/message/sendText?session=${encodeURIComponent(instance)}&number=${normalized}&text=${encodeURIComponent(text)}` },
+      
+      // Build a wider matrix of endpoint variations (prefixes, paths, methods, payload styles)
+      const prefixes = Array.from(new Set([
+        userPrefix || '',
+        '',
+        '/api',
+        '/evolution',
+        '/evolution/api',
+        '/v1',
+        '/api/v1'
+      ]));
+
+      const routes = [
+        // By instance in path
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/sendText/${instance}`, body: { number: normalized, text } }),
+        (p: string) => ({ method: "GET"  as const, url: `${baseUrl}${p}/message/sendText/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/send/${instance}`, body: { number: normalized, text } }),
+        (p: string) => ({ method: "GET"  as const, url: `${baseUrl}${p}/message/send/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` }),
+        // With session in body/query
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/sendText`, body: { session: instance, number: normalized, text } }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/send`, body: { session: instance, number: normalized, text } }),
+        (p: string) => ({ method: "GET"  as const, url: `${baseUrl}${p}/message/sendText?session=${encodeURIComponent(instance)}&number=${normalized}&text=${encodeURIComponent(text)}` }),
+        // Plural variants
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/messages/sendText/${instance}`, body: { number: normalized, text } }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/messages/send/${instance}`, body: { number: normalized, text } }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/messages/sendText`, body: { session: instance, number: normalized, text } }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/messages/send`, body: { session: instance, number: normalized, text } }),
+        // Kebab-case variants seen in some forks
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/send-text/${instance}`, body: { number: normalized, text } }),
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/message/send-text`, body: { session: instance, number: normalized, text } }),
+        // Generic chat/send
+        (p: string) => ({ method: "POST" as const, url: `${baseUrl}${p}/chat/send`, body: { session: instance, number: normalized, text } }),
       ];
+
+      // Generate attempts with JSON and x-www-form-urlencoded payloads
+      const alternativeEndpoints: Array<{ method: 'GET'|'POST'; url: string; body?: Record<string, any>; contentType?: string }> = [];
+      for (const prefix of prefixes) {
+        for (const build of routes) {
+          const attempt = build(prefix);
+          alternativeEndpoints.push(attempt); // JSON default
+          if (attempt.method === 'POST' && attempt.body) {
+            alternativeEndpoints.push({ ...attempt, contentType: 'application/x-www-form-urlencoded' });
+          }
+        }
+      }
 
       for (const endpoint of alternativeEndpoints) {
         if (success) break;
-        
         try {
-          const headers = { apikey: apiKey, "Content-Type": "application/json" };
-          const init: RequestInit = endpoint.method === "POST"
-            ? { method: "POST", headers, body: JSON.stringify(endpoint.body) }
-            : { method: "GET", headers };
+          const headers: Record<string, string> = { apikey: apiKey } as const;
+          let init: RequestInit;
+
+          if (endpoint.method === 'POST') {
+            const isForm = endpoint.contentType === 'application/x-www-form-urlencoded';
+            headers['Content-Type'] = isForm ? 'application/x-www-form-urlencoded' : 'application/json';
+            const bodyStr = isForm
+              ? new URLSearchParams(Object.entries(endpoint.body || {}).map(([k, v]) => [k, String(v)])).toString()
+              : JSON.stringify(endpoint.body);
+            init = { method: 'POST', headers, body: bodyStr };
+          } else {
+            headers['Content-Type'] = 'application/json';
+            init = { method: 'GET', headers };
+          }
 
           const { res, elapsed } = await timedFetch(endpoint.url, init, 30000);
-          
+
           let bodyOut: any = null;
           try {
             bodyOut = await res.json();
@@ -173,7 +223,7 @@ serve(async (req: Request) => {
             bodyOut = await res.text();
           }
 
-          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut, contentTypeTried: headers['Content-Type'] };
           attempts.push(record);
 
           if (res.ok && !success) {
