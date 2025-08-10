@@ -81,10 +81,12 @@ serve(async (req: Request) => {
 
     const baseUrl = withoutTrailingSlash(cfg?.server_url || body.base_url || "http://72.60.7.194:8081");
     const instance = body.instance || cfg?.instance_name || "lucas";
-    const userPrefixRaw = (body && ((body as any).prefix ?? (body as any).base_path_prefix)) as string | undefined;
-    const userPrefix = userPrefixRaw && typeof userPrefixRaw === 'string' 
-      ? (userPrefixRaw.startsWith('/') ? userPrefixRaw.replace(/\/$/, '') : `/${userPrefixRaw.replace(/\/$/, '')}`)
-      : '';
+const userPrefixRaw = (body && ((body as any).prefix ?? (body as any).base_path_prefix)) as string | undefined;
+const rawPrefix = userPrefixRaw && typeof userPrefixRaw === 'string' 
+  ? (userPrefixRaw.startsWith('/') ? userPrefixRaw.replace(/\/$/, '') : `/${userPrefixRaw.replace(/\/$/, '')}`)
+  : '';
+const allowedPrefixes = new Set(['', '/api', '/api/v1', '/v1', '/v1/api', '/evolution', '/evolution/api']);
+const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
 
     // Step 1: Check server health and instance status
     console.log(`[evolution-send-text] Checking server health: ${baseUrl}`);
@@ -197,15 +199,16 @@ serve(async (req: Request) => {
       console.log(`[evolution-send-text] Primary failed, trying alternatives...`);
       
       // Build a wider matrix of endpoint variations (prefixes, paths, methods, payload styles)
-      const prefixes = Array.from(new Set([
-        userPrefix || '',
-        '',
-        '/api',
-        '/evolution',
-        '/evolution/api',
-        '/v1',
-        '/api/v1'
-      ]));
+const prefixes = Array.from(new Set([
+  userPrefix || '',
+  '',
+  '/api',
+  '/evolution',
+  '/evolution/api',
+  '/v1',
+  '/api/v1',
+  '/v1/api'
+]));
 
       const routes = [
         // By instance in path

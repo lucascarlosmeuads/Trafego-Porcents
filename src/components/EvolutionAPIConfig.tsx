@@ -51,14 +51,21 @@ export function EvolutionAPIConfig() {
   const [eventsLoading, setEventsLoading] = useState(false)
   const [testProgress, setTestProgress] = useState<string>('')
   const [abortController, setAbortController] = useState<AbortController | null>(null)
-  const [discovering, setDiscovering] = useState(false)
-  const [discoveryResult, setDiscoveryResult] = useState<any>(null)
-  const [showDiscovery, setShowDiscovery] = useState(false)
-  const [prefixOverride, setPrefixOverride] = useState<string>('')
+const [discovering, setDiscovering] = useState(false)
+const [discoveryResult, setDiscoveryResult] = useState<any>(null)
+const [showDiscovery, setShowDiscovery] = useState(false)
+const [prefixOverride, setPrefixOverride] = useState<string>('')
 
-  useEffect(() => {
-    loadConfig();
-  }, []);
+// Normaliza e valida prefixos permitidos para evitar varreduras longas com valores inválidos
+const allowedPrefixes = ['', '/api', '/api/v1', '/v1', '/v1/api', '/evolution', '/evolution/api'] as const
+const normalizeAllowedPrefix = (p: string): string => {
+  const trimmed = (p || '').trim()
+  if (!trimmed) return ''
+  const withSlash = trimmed.startsWith('/') ? trimmed : `/${trimmed}`
+  const noTrailing = withSlash.replace(/\/$/, '')
+  return allowedPrefixes.includes(noTrailing as any) ? noTrailing : ''
+}
+
 
   useEffect(() => {
     if (config?.enabled && config?.server_url && config?.instance_name) {
@@ -486,7 +493,7 @@ const discoverEndpoints = async () => {
   try {
     const { data, error } = await supabase.functions.invoke('evolution-discover-endpoints', {
       body: {
-        prefix: prefixOverride || undefined,
+        prefix: normalizeAllowedPrefix(prefixOverride) || undefined,
         timeoutMs: 1200,
         budgetMs: 12000,
         concurrency: 6,

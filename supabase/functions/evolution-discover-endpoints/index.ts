@@ -23,9 +23,9 @@ async function getActiveEvolutionConfig(supabase: any): Promise<EvolutionConfig 
   const { data, error } = await supabase
     .from('waseller_dispatch_config')
     .select('*')
-    .eq('config_type', 'evolution')
+    .eq('api_type', 'evolution')
     .eq('enabled', true)
-    .single()
+    .maybeSingle()
 
   if (error || !data) return null
   
@@ -90,15 +90,16 @@ async function timedFetch(
 // Known endpoint patterns for different Evolution API versions and forks
 const ENDPOINT_PATTERNS = [
   // Evolution API v1
-  { pattern: '/message/sendText/{instance}', method: 'POST', type: 'evolution-v1', priority: 1 },
-  { pattern: '/message/sendText', method: 'POST', type: 'evolution-v1-alt', priority: 2 },
+  { pattern: '/message/sendText/{instance}', method: 'POST', type: 'evolution-v1', priority: 2 },
+  { pattern: '/message/sendText', method: 'POST', type: 'evolution-v1-alt', priority: 3 },
   
   // Evolution API v2
-  { pattern: '/chat/sendText/{instance}', method: 'POST', type: 'evolution-v2', priority: 1 },
-  { pattern: '/chat/sendText', method: 'POST', type: 'evolution-v2-alt', priority: 2 },
+  { pattern: '/chat/sendText/{instance}', method: 'POST', type: 'evolution-v2', priority: 2 },
+  { pattern: '/chat/sendText', method: 'POST', type: 'evolution-v2-alt', priority: 3 },
   
-  // CodeChat/Wppconnect style
-  { pattern: '/api/{instance}/send-text', method: 'POST', type: 'codechat', priority: 3 },
+  // WPPConnect/CodeChat style (very common in forks)
+  { pattern: '/api/{instance}/send-message', method: 'POST', type: 'wppconnect-send-message', priority: 1 },
+  { pattern: '/api/{instance}/send-text', method: 'POST', type: 'codechat', priority: 2 },
   { pattern: '/api/sendText', method: 'POST', type: 'wppconnect', priority: 3 },
   
   // Baileys style
@@ -128,10 +129,18 @@ Deno.serve(async (req) => {
       if (req.method !== 'GET') body = await req.json()
     } catch {}
 
-    const prefixOverride = (body?.prefix ?? '').toString().trim()
-    const perAttemptTimeout = Math.min(Math.max(Number(body?.timeoutMs) || 1200, 400), 5000)
-    const globalBudgetMs = Math.min(Math.max(Number(body?.budgetMs) || 12000, 3000), 25000)
-    const maxConcurrency = Math.min(Math.max(Number(body?.concurrency) || 6, 2), 10)
+const rawPrefix = (body?.prefix ?? '').toString().trim()
+const normalizePrefix = (p: string) => {
+  if (!p) return ''
+  let s = p.startsWith('/') ? p : `/${p}`
+  s = s.replace(/\/$/, '')
+  const allowed = new Set(['', '/api', '/api/v1', '/v1', '/v1/api', '/evolution', '/evolution/api'])
+  return allowed.has(s) ? s : ''
+}
+const prefixOverride = normalizePrefix(rawPrefix)
+const perAttemptTimeout = Math.min(Math.max(Number(body?.timeoutMs) || 1200, 400), 5000)
+const globalBudgetMs = Math.min(Math.max(Number(body?.budgetMs) || 12000, 3000), 25000)
+const maxConcurrency = Math.min(Math.max(Number(body?.concurrency) || 6, 2), 10)
 
     // Get Evolution API configuration
     const config = await getActiveEvolutionConfig(supabase)
@@ -176,7 +185,7 @@ Deno.serve(async (req) => {
     const docResults = await Promise.allSettled(docPromises).then(all => all.map((r, i) => r.status === 'fulfilled' ? r.value : { endpoint: docEndpoints[i], success: false, status: 0, data: null, time: 0, error: (r as any).reason?.message || 'failed' }))
 
     // Step 2: Build candidate endpoints matrix
-    const prefixes = prefixOverride ? [prefixOverride] : ['', '/api', '/api/v1', '/v1', '/evolution', '/evolution/api']
+    const prefixes = prefixOverride ? [prefixOverride] : ['', '/api', '/api/v1', '/v1', '/v1/api', '/evolution', '/evolution/api']
 
     type Candidate = { url: string; pattern: string; method: string; type: string; priority: number; prefix: string }
     const candidates: Candidate[] = []
