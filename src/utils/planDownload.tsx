@@ -3,14 +3,16 @@ import ReactDOM from 'react-dom/client';
 import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 import { MarkdownRenderer } from '@/components/MarkdownRenderer';
+import { normalizePlanTitle } from '@/utils/templateUtils';
 
 interface DownloadPlanParams {
   content: string;
   title: string; // mantido por compatibilidade
   filename: string;
+  nomeCliente?: string;
 }
 
-export async function downloadPlanPdf({ content, title, filename }: DownloadPlanParams) {
+export async function downloadPlanPdf({ content, title, filename, nomeCliente }: DownloadPlanParams) {
   // Cria um container temporário fora da tela
   const container = document.createElement('div');
   container.style.position = 'fixed';
@@ -22,6 +24,7 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
   document.body.appendChild(container);
 
   const root = ReactDOM.createRoot(container);
+  const processedContent = normalizePlanTitle(content, nomeCliente);
   root.render(
     <div>
       <style>{`
@@ -37,7 +40,7 @@ export async function downloadPlanPdf({ content, title, filename }: DownloadPlan
       .section { page-break-inside: avoid; break-inside: avoid; }
       `}</style>
       {/* Títulos removidos para evitar duplicidade no PDF; usar apenas o conteúdo formatado */}
-      <MarkdownRenderer content={content} />
+      <MarkdownRenderer content={processedContent} />
     </div>
   );
 

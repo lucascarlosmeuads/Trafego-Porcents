@@ -18,3 +18,17 @@ export function getFirstName(name?: string | null) {
 function escapeRegExp(str: string) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+export function normalizePlanTitle(markdown: string, nomeCliente?: string) {
+  if (!nomeCliente || !nomeCliente.trim()) return markdown;
+  const lines = markdown.split(/\r?\n/);
+  const maxScan = Math.min(lines.length, 10);
+  for (let i = 0; i < maxScan; i++) {
+    const line = lines[i];
+    if (/^#\s+/.test(line) && /\bcliente\b/i.test(line)) {
+      lines[i] = line.replace(/\bcliente\b/gi, nomeCliente.trim());
+      return lines.join("\n");
+    }
+  }
+  return markdown;
+}

@@ -6,6 +6,7 @@ import { FileText, Download, RefreshCw, Loader2, Wand2 } from "lucide-react";
 import { downloadPlanPdf } from "@/utils/planDownload";
 import { toast } from "sonner";
 import { CriativosFromPlanejamento } from "@/components/GeradorCriativos/CriativosFromPlanejamento";
+import { normalizePlanTitle } from "@/utils/templateUtils";
 
 interface PlanejamentoDisplayProps {
   planejamento: string;
@@ -54,6 +55,7 @@ export const PlanejamentoDisplay = ({
         content: displayedContent,
         title: 'Planejamento Estratégico — Funil Interativo & Magnético',
         filename: fileName,
+        nomeCliente,
       });
       toast.success("PDF baixado com sucesso!", { description: `Arquivo ${fileName} foi baixado` });
     } catch (error) {
@@ -104,7 +106,7 @@ export const PlanejamentoDisplay = ({
       <CardContent className="space-y-6">
         {/* Conteúdo do Planejamento */}
         <div ref={contentRef} className="prose prose-lg max-w-none prose-headings:text-foreground prose-p:text-muted-foreground prose-strong:text-foreground prose-li:marker:text-muted-foreground prose-hr:border-border">
-          <MarkdownRenderer content={displayedContent} />
+          <MarkdownRenderer content={normalizePlanTitle(displayedContent, nomeCliente)} />
         </div>
 
         {/* Gerador de Criativos */}
