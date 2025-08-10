@@ -68,7 +68,7 @@ serve(async (req) => {
       messages: [
         {
           role: 'system',
-          content: `Você é o Lucas Carlos, estrategista de tráfego. Gere um documento curto (400–700 palavras), em 1ª pessoa (eu), PT-BR, com voz direta e motivadora, sem jargão. Siga exatamente a estrutura solicitada, detalhe mais "A Grande Ideia" e mantenha as demais seções objetivas em bullets. Use datas absolutas, não prometa resultados, use faixas/estimativas. Inclua a frase: "Eu mesmo vou escolher cada palavra do funil e dos anúncios — nada genérico. A copy é feita para vender e educar com leveza."`
+          content: `Você é o Lucas Carlos, estrategista de tráfego. Gere um documento em 1ª pessoa (eu), PT-BR, com voz humana, direta e motivadora, sem jargão. Siga exatamente o formato pedido pelo usuário no prompt do 'user'. Não prometa ganhos, use faixas/estimativas, e mantenha tudo claro e executável. Permita a palavra "interativo" quando fizer sentido. Inclua a nota do "pente fino" quando solicitada.`
         },
         {
           role: 'user',
@@ -203,76 +203,121 @@ function buildPromptLucas(briefing: any, campos: Record<string, unknown>) : stri
   const Canais = br((campos as any).Canais ?? ((briefing.possui_facebook || briefing.possui_instagram) ? 'Facebook e Instagram' : ''), '[Facebook e Instagram]');
   const Notas_Extras = br((campos as any).Notas_Extras, '');
 
+  const Nicho_Negocio = br((campos as any).Nicho_Negocio ?? briefing.nicho ?? briefing.tipo_negocio ?? briefing.segmento ?? briefing.nome_marca, '[Negócio do cliente]');
+  const Objetivo_Imediato = br((campos as any).Objetivo_Imediato ?? briefing.objetivo_principal ?? briefing.objetivo, '[Objetivo resumido]');
+  const Investimento_Inicial = br((campos as any).Investimento_Inicial ?? briefing.investimento_inicial, '');
+  const Data_Lead = br((campos as any).Data_Lead ?? briefing.data_lead ?? briefing.created_at, dataHoje);
+  const WhatsApp_Principal = br((campos as any).Contato_WhatsApp ?? briefing.whatsapp ?? briefing.telefone, Contato_WhatsApp);
+
+  const Custo_Criativos = br((campos as any).Custo_Criativos, 'R$ 500');
+  const Custo_Funil = br((campos as any).Custo_Funil, 'R$ 800');
+  const Custo_BM_Track = br((campos as any).Custo_BM_Track ?? (campos as any).Custo_BM ?? (campos as any).Custo_Track, 'R$ 200');
+  const Custos_Total = br((campos as any).Custos_Total, 'R$ 1.500');
+  const Vendas_Anteriores = br((campos as any).Vendas_Anteriores ?? briefing.vendas_anteriores, 'não informado');
+  const Ticket_Medio = br((campos as any).Ticket_Medio ?? briefing.valor_medio ?? briefing.ticket_medio, 'não informado');
+
   const miniOfertaLinha = Mini_Oferta_Ativa
     ? `Entrada opcional (true): incluir ${Mini_Oferta_Nome} por ${Mini_Oferta_Preco} para dar resultado imediato e ajudar a pagar o tráfego.`
     : `Entrada opcional (false): foque em qualificar muito bem o lead e conduzir direto à oferta principal.`;
 
-  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras. Evite a palavra 'interativo'; mostre isso nos CTAs e formatos.
+  return `Gere o texto FINAL em markdown seguindo exatamente o FORMATO abaixo. Escreva em 1ª pessoa (eu, Lucas), tom humano, direto e motivador, sem jargão. Parágrafos curtos. Não prometa ganhos. Use exemplos específicos ao nicho real do cliente. Permita a palavra "interativo" quando fizer sentido. Se faltar dado, use [colchetes] com suposições conservadoras.
 
-DADOS DE CONTEXTO
-- Cliente: ${Cliente_Nome}
-- Projeto: ${Projeto_Titulo}
-- Data: ${Data_De_Hoje}
-- Contato: ${Contato_Email} · WhatsApp: ${Contato_WhatsApp}
-- Produto/Serviço: ${Produto_Servico}
-- Avatar: ${Avatar}
-- Canais: ${Canais}
-- Investimento diário sugerido: ${Investimento_Diario_Sugerido}
-- Modelo de parceria: ${Modelo_Parceria}
-- Curso preço faixa: ${Curso_Preco_Faixa}
-- Mini_Oferta_Ativa: ${Mini_Oferta_Ativa}
-- Mini_Oferta_Nome: ${Mini_Oferta_Nome}
-- Mini_Oferta_Preco: ${Mini_Oferta_Preco}
-- Notas extras: ${Notas_Extras}
-
-FORMATO DE SAÍDA (sem alterar a ordem):
-
-Título
-
-PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Magnético)
-
-> Cliente: ${Cliente_Nome}
-> Projeto: ${Projeto_Titulo}
-> Data: ${Data_De_Hoje}
-> Contato: ${Contato_Email} • WhatsApp: ${Contato_WhatsApp}
-> Modelo: ${Modelo_Parceria}
+TÍTULO E SUBTÍTULO
+- Título H1: # Planejamento Estratégico — ${Cliente_Nome} (Funil Interativo e Magnético)
+- Sub: **Tráfego pago em troca de % sobre as vendas | Sem mensalidade**
 
 ---
 
-1) A Grande Ideia (o coração da estratégia)
-- Nome interno da ideia: crie um nome memorável.
-- Tagline (1 linha): promessa simples e concreta.
-- Explicação (5–8 linhas, leiga): o que é; por que funciona; por que levou alguns dias; o que muda para o cliente.
-- Ganchos de Copy (mostrar, não dizer — evite a palavra 'interativo'): liste 5–7 bullets curtos com CTAs que impliquem clique e conduzam a formatos como teste relâmpago/quiz ("descubra em 60s seu [perfil/score]"), diagnóstico em X passos com entrega imediata, desafio de 3 dias com mini vitória clara, "responda X para ganhar Y" (ex.: responda 6 perguntas e receba um roteiro pronto), joguinho/pontuação (marque seus pontos e veja onde está perdendo performance), simulação/roteiro (gere sua melhor oferta de hoje) e resposta inteligente de IA para seu caso em 60s. Adapte cada bullet a ${Produto_Servico} e ${Avatar}.
-- Frase obrigatória: Eu mesmo vou escolher cada palavra do funil e dos anúncios — nada genérico. A copy é feita para vender e educar com leveza.
-2) O que eu vou fazer (até 7 dias corridos)
-- Publicar o diagnóstico (etapas curtas e claras).
-- Construir página de entrada e tela de resultado.
-- Produzir criativos (3 vídeos 15–30s + 3 imagens) focados em conversão.
-- Configurar campanhas (${Canais}) e sequência de WhatsApp.
-- COPYS PRONTAS: não vou listar agora. Vamos criar copys focadas em clique certo (conduzindo ao teste/diagnóstico/desafio etc.), evitando cliques de curiosidade. Se houver um exemplo realmente forte, incluo UMA linha para ilustrar; caso contrário, explico a abordagem sem exemplo.
-- Entregar relatório D+7 com aprendizados e próximos testes.
+## Visão rápida do projeto
 
-3) Como o funil vai funcionar (sem jargão)
-Anúncio → Página → Diagnóstico (3 min) → Resultado com plano prático → [Entrada opcional] → Oferta principal → Acompanhamento WhatsApp.
-- ${miniOfertaLinha}
-
-4) Investimentos e modelo
-- Único investimento necessário para construir a estrutura: Criativos R$ 500 • Funil R$ 800 • BM/trackeamento R$ 200.
-- Mídia: ${Investimento_Diario_Sugerido}/dia (ajustável).
-- Remuneração: ${Modelo_Parceria}.
-> Observação: Mídia é paga direto à plataforma. Setup ativa o projeto.
-
-5) Prazos e próximos passos
-- D+0 a D+7: construir e publicar tudo.
-- D+8 a D+14: otimizações rápidas conforme os primeiros números.
-Para iniciar agora: 1) OK no planejamento • 2) Enviar acesso à BM • 3) Pagamento do setup.
+- **Cliente:** ${Cliente_Nome}
+- **Negócio:** ${Nicho_Negocio}
+- **Objetivo imediato:** ${Objetivo_Imediato}
+- ${Investimento_Inicial && String(Investimento_Inicial).trim() !== '' ? `**Investimento inicial citado:** ${Investimento_Inicial}` : ''}
+- **Contatos:** ${Contato_Email} | WhatsApp: ${WhatsApp_Principal}
+- **Data do lead:** ${Data_Lead}
 
 ---
 
-Fechamento
-Compromisso: clareza, simplicidade e velocidade. Vamos gerar resultado visível na primeira semana e usar isso como ponte natural para a oferta principal. Se estiver de acordo, eu começo hoje.
+## O que vamos fazer (explicado de forma simples)
+Explique, de forma leiga, que validaremos um Funil Interativo que combina curiosidade, interação e conversão para ${Produto_Servico}. Contextualize com ${Nicho_Negocio} e ${Avatar}. Mostre por que isso é melhor do que página fria ou ir direto para o WhatsApp. Evite jargões.
 
-— Lucas Carlos
-Estrategista — Funil Magnético`;
+---
+
+## Esboço do Funil Interativo (como a jornada acontece)
+
+### 1) Anúncio que chama para a ação certa
+- Ideia de copy curta (crie 1–2 variações específicas ao nicho): frase forte + sublinha.
+- Ângulos visuais sugeridos (3 bullets): provas sociais reais, rotina simples, benefício visual.
+- CTA: "Fazer o Teste Inteligente".
+
+### 2) Página de entrada que prende atenção
+- Mensagem inicial (1–2 linhas) alinhada ao nicho.
+- Mostrar 2–3 depoimentos e um contador leve.
+- CTA único: Começar o Teste.
+
+### 3) Teste Inteligente (perguntas com lógica condicional)
+- Liste 5–7 perguntas segmentadoras e 3–4 lógicas relevantes ao ${Nicho_Negocio}/${Avatar}.
+
+### 4) Tela de resultado que entrega valor + urgência
+- Exemplo de resultado prático com benefício imediato (cupom/guia/grupo) e ações finais (WhatsApp, Calendly quando perfil de liderança).
+
+---
+
+## Exemplos de copys prontas (para usar e testar)
+- **Anúncio (Facebook/Instagram):** escreva 1–2 variações curtas, específicas ao nicho.
+- **Página (acima da dobra):** 1 variação forte que explique o teste e o benefício.
+- **WhatsApp (mensagem inicial):** mensagem humana com tag do segmento.
+> Observação: Evitar promessas irreais. Usar depoimentos e provas sociais sem garantir ganhos.
+
+---
+
+## Tráfego e metas iniciais
+- **Orçamento sugerido:** ${Investimento_Diario_Sugerido}/dia para validar ângulos e público.
+- **Objetivo de campanha:** Conversões (lead qualificado do teste).
+- **Públicos:** interesses do nicho, lookalikes a partir dos primeiros leads, geolocal quando fizer sentido.
+- **Métricas de referência:** CTR 2%–3% • CPL estimado R$ 5–10 • Conversão da página 20%–30% (estimativas para a fase de teste).
+
+---
+
+## Custos de estrutura (pagos uma única vez)
+- **${Custo_Criativos}** — baterias de criativos (vídeo e imagem)
+- **${Custo_Funil}** — montagem do funil interativo
+- **${Custo_BM_Track}** — configuração da Business Manager e trackeamento
+**TOTAL: ${Custos_Total} (SEM MENSALIDADE)**
+Gestão de tráfego por **${Modelo_Parceria}**.
+
+---
+
+## Importante: este é um esboço
+Aqui é a visão estratégica do caminho. Antes de subir, vamos passar o **pente fino** em cada palavra, ordem das telas, CTAs e sequência de mensagens, ajustando por **dados**, **compliance** e **voz da marca**.
+
+---
+
+## Próximos passos (práticos e rápidos)
+**Macro (Empresarial)**
+1. Aprovar o conceito de Funil Interativo para ${Nicho_Negocio}.
+2. Confirmar oferta de entrada e upsell.
+
+**Médio (Empresarial)**
+3) Enviar depoimentos/imagens reais permitidos pela marca.
+4) Liberar acesso à BM/Pixel e domínio.
+5) Definir agenda/Calendly para perfis de liderança.
+
+**Micro (Empresarial)**
+6) Validar mensagem do WhatsApp de boas-vindas (com tags por segmento).
+7) Aprovar 3 variações de criativos e 2 ângulos de copy.
+8) Subir campanha de teste (${Investimento_Diario_Sugerido}/dia), monitorar 3–5 dias e otimizar.
+
+---
+
+## Dados do projeto
+- Nome: **${Cliente_Nome}**
+- Email: **${Contato_Email}**
+- WhatsApp: **${WhatsApp_Principal}**
+- Tipo de negócio: **${Nicho_Negocio}**
+- Vendas anteriores: **${Vendas_Anteriores}**
+- Valor médio do produto/serviço: **${Ticket_Medio}**
+
+— Fim.`;
 }
