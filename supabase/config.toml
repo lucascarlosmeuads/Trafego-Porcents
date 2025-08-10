@@ -1,4 +1,3 @@
-
 project_id = "rxpgqunqsegypssoqpyf"
 
 [functions.evolution-webhook]
@@ -19,3 +18,8 @@ verify_jwt = false
 [functions.evolution-diagnose]
 verify_jwt = false
 
+[functions.evolution-send-message]
+verify_jwt = false
+
+[functions.evolution-process-recovery-queue]
+verify_jwt = false
