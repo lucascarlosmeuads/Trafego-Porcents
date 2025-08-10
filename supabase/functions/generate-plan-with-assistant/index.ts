@@ -37,7 +37,9 @@ serve(async (req) => {
       .from('formularios_parceria')
       .select('*')
       .eq('email_usuario', emailCliente)
-      .single();
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
     if (formularioError || !formulario) {
       console.error('❌ Erro ao buscar formulário:', formularioError);
@@ -203,27 +205,28 @@ Por favor, gere um planejamento estratégico completo e personalizado baseado ne
     console.log('📄 Planejamento gerado com sucesso');
 
     // Salvar no banco
+    let warningMessage: string | null = null;
     const { error: updateError } = await supabase
       .from('formularios_parceria')
       .update({
         planejamento_estrategico: planejamentoGerado,
-        planejamento_gerado_em: new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('email_usuario', emailCliente);
 
     if (updateError) {
       console.error('❌ Erro ao salvar no banco:', updateError);
-      throw updateError;
+      warningMessage = 'Falha ao salvar planejamento no banco. Retornando conteúdo mesmo assim.';
+    } else {
+      console.log('💾 Planejamento salvo no banco de dados');
     }
-
-    console.log('💾 Planejamento salvo no banco de dados');
 
     return new Response(JSON.stringify({
       success: true,
       planejamento: planejamentoGerado,
       threadId: thread.id,
-      message: 'Planejamento estratégico gerado com sucesso usando assistente personalizado!'
+      message: 'Planejamento estratégico gerado com sucesso usando assistente personalizado!',
+      warning: warningMessage || undefined
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
