@@ -41,7 +41,7 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
       if (emailCliente) {
         const { error } = await supabase
           .from('formularios_parceria')
-          .update({ planejamento_estrategico: finalContent, status_negociacao: 'planejamento_entregue' })
+          .update({ planejamento_estrategico: finalContent, status_negociacao: 'planejando' })
           .eq('email_usuario', emailCliente);
         if (error) throw error;
       }
