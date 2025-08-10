@@ -41,6 +41,22 @@ async function timedFetch(input: RequestInfo | URL, init?: RequestInit, timeoutM
   }
 }
 
+function isPositiveResponse(status: number, ok: boolean, body: any): boolean {
+  if (ok || [200, 201, 202].includes(status)) return true;
+  try {
+    const text = typeof body === 'string' ? body.toLowerCase() : JSON.stringify(body || {}).toLowerCase();
+    return (
+      (typeof body === 'object' && body && (body.success === true || body.sent === true)) ||
+      text.includes('sent') ||
+      text.includes('queued') ||
+      text.includes('success') ||
+      text.includes('sucesso')
+    );
+  } catch {
+    return false;
+  }
+}
+
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -109,6 +125,12 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
       console.log(`[evolution-send-text] Could not parse instance status:`, e);
     }
 
+    const headerVariants: Array<Record<string, string>> = [
+      { apikey: apiKey, "Content-Type": "application/json" },
+      { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+      { apikey: apiKey, Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
+    ];
+
     // Step 2: Check for previously discovered endpoints
     console.log(`[evolution-send-text] Checking for discovered endpoints for ${baseUrl}/${instance}`);
     const { data: discoveredEndpoints } = await supabase
@@ -140,56 +162,58 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
 
       for (const endpoint of discoveredEndpoints) {
         if (success) break;
-        
         const fullUrl = `${baseUrl}${endpoint.endpoint_path.replace('{instance}', instance)}`;
-        
-        for (const payload of payloadFormats) {
+
+        for (const authHeaders of headerVariants) {
           if (success) break;
-          
-          try {
-            console.log(`[evolution-send-text] Testing discovered endpoint: ${endpoint.method} ${fullUrl} with payload style: ${Object.keys(payload).join('+')}`);
-            
-            const { res, elapsed } = await timedFetch(fullUrl, {
-              method: endpoint.method,
-              headers: { apikey: apiKey, "Content-Type": "application/json" },
-              body: JSON.stringify(payload)
-            }, 15000);
+          for (const payload of payloadFormats) {
+            if (success) break;
+            try {
+              console.log(`[evolution-send-text] Testing discovered endpoint: ${endpoint.method} ${fullUrl} with headers: ${Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+')} and payload: ${Object.keys(payload).join('+')}`);
+              const { res, elapsed } = await timedFetch(fullUrl, {
+                method: endpoint.method,
+                headers: authHeaders,
+                body: JSON.stringify(payload)
+              }, 15000);
 
-            let bodyOut: any = null;
-            try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+              let bodyOut: any = null;
+              try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
 
-            const record = { 
-              round: 0, 
-              method: endpoint.method, 
-              url: fullUrl, 
-              status: res.status, 
-              ok: res.ok, 
-              elapsed, 
-              body: bodyOut, 
-              payloadStyle: Object.keys(payload).join('+'),
-              source: 'discovered'
-            };
-            attempts.push(record);
+              const record = {
+                round: 0,
+                method: endpoint.method,
+                url: fullUrl,
+                status: res.status,
+                ok: res.ok,
+                elapsed,
+                body: bodyOut,
+                payloadStyle: Object.keys(payload).join('+'),
+                headersTried: Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+') || 'none',
+                source: 'discovered'
+              };
+              attempts.push(record);
 
-            if (res.ok || res.status === 201) {
-              success = true;
-              final = record;
-              console.log(`[evolution-send-text] SUCCESS on discovered endpoint: ${fullUrl}`);
-              break;
+              if (isPositiveResponse(res.status, res.ok, bodyOut)) {
+                success = true;
+                final = record;
+                console.log(`[evolution-send-text] SUCCESS on discovered endpoint: ${fullUrl}`);
+                break;
+              }
+            } catch (err: any) {
+              const record = {
+                round: 0,
+                method: endpoint.method,
+                url: fullUrl,
+                status: null,
+                ok: false,
+                elapsed: null,
+                error: err?.message || String(err),
+                payloadStyle: Object.keys(payload).join('+'),
+                headersTried: Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+') || 'none',
+                source: 'discovered'
+              };
+              attempts.push(record);
             }
-          } catch (err: any) {
-            const record = { 
-              round: 0, 
-              method: endpoint.method, 
-              url: fullUrl, 
-              status: null, 
-              ok: false, 
-              elapsed: null, 
-              error: err?.message || String(err), 
-              payloadStyle: Object.keys(payload).join('+'),
-              source: 'discovered'
-            };
-            attempts.push(record);
           }
         }
       }
@@ -208,66 +232,78 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
       const quickPayloads = [
         { phone: normalized, message: text },
         { number: normalized, text },
+        { to: normalized, content: text },
       ];
 
       for (const url of quickCandidates) {
         if (success) break;
-        for (const bodyVariant of quickPayloads) {
-          try {
-            console.log(`[evolution-send-text] Quick test: POST ${url}`);
-            const { res, elapsed } = await timedFetch(url, {
-              method: "POST",
-              headers: { apikey: apiKey, "Content-Type": "application/json" },
-              body: JSON.stringify(bodyVariant)
-            }, 15000);
+        for (const authHeaders of headerVariants) {
+          if (success) break;
+          for (const bodyVariant of quickPayloads) {
+            try {
+              console.log(`[evolution-send-text] Quick test: POST ${url}`);
+              const { res, elapsed } = await timedFetch(url, {
+                method: "POST",
+                headers: authHeaders,
+                body: JSON.stringify(bodyVariant)
+              }, 15000);
 
-            let bodyOut: any = null;
-            try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+              let bodyOut: any = null;
+              try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
 
-            const record = { round: 1, method: "POST", url, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(bodyVariant).join('+'), source: 'quick' };
-            attempts.push(record);
+              const record = { round: 1, method: "POST", url, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(bodyVariant).join('+'), headersTried: Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+') || 'none', source: 'quick' };
+              attempts.push(record);
 
-            if (res.ok || res.status === 201) {
-              success = true;
-              final = record;
-              console.log(`[evolution-send-text] SUCCESS on quick route: ${url}`);
-              break;
+              if (isPositiveResponse(res.status, res.ok, bodyOut)) {
+                success = true;
+                final = record;
+                console.log(`[evolution-send-text] SUCCESS on quick route: ${url}`);
+                break;
+              }
+            } catch (err: any) {
+              const record = { round: 1, method: "POST", url, status: null, ok: false, elapsed: null, error: err?.message || String(err), payloadStyle: Object.keys(bodyVariant).join('+'), headersTried: Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+') || 'none', source: 'quick' };
+              attempts.push(record);
             }
-          } catch (err: any) {
-            const record = { round: 1, method: "POST", url, status: null, ok: false, elapsed: null, error: err?.message || String(err), payloadStyle: Object.keys(bodyVariant).join('+'), source: 'quick' };
-            attempts.push(record);
           }
         }
       }
     }
     
-    // Primary documented endpoint - try with extended timeout if quick scan didn't succeed
-    const primaryEndpoint = `${baseUrl}/message/sendText/${instance}`;
-    const payload = { number: normalized, text };
-    
     if (!success) {
+      const primaryEndpoint = `${baseUrl}/message/sendText/${instance}`;
+      const primaryPayloads = [
+        { number: normalized, text },
+        { phone: normalized, message: text },
+      ];
       try {
-        console.log(`[evolution-send-text] Trying primary endpoint: POST ${primaryEndpoint}`);
-        const { res, elapsed } = await timedFetch(primaryEndpoint, {
-          method: "POST",
-          headers: { apikey: apiKey, "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
-        }, 60000); // 60 second timeout for primary endpoint
+        console.log(`[evolution-send-text] Trying primary endpoint variants: POST ${primaryEndpoint}`);
+        for (const authHeaders of headerVariants) {
+          if (success) break;
+          for (const payloadVariant of primaryPayloads) {
+            try {
+              const { res, elapsed } = await timedFetch(primaryEndpoint, {
+                method: "POST",
+                headers: authHeaders,
+                body: JSON.stringify(payloadVariant)
+              }, 60000);
 
-        let bodyOut: any = null;
-        try {
-          bodyOut = await res.json();
-        } catch {
-          bodyOut = await res.text();
-        }
+              let bodyOut: any = null;
+              try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
 
-        const record = { round: 2, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut, source: 'primary' };
-        attempts.push(record);
+              const record = { round: 2, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(payloadVariant).join('+'), headersTried: Object.keys(authHeaders).filter(k=>k!=="Content-Type").join('+') || 'none', source: 'primary' };
+              attempts.push(record);
 
-        if (res.ok) {
-          success = true;
-          final = record;
-          console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
+              if (isPositiveResponse(res.status, res.ok, bodyOut)) {
+                success = true;
+                final = record;
+                console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
+                break;
+              }
+            } catch (err: any) {
+              const record = { round: 2, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'primary' };
+              attempts.push(record);
+            }
+          }
         }
       } catch (err: any) {
         const record = { round: 2, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'primary' };
@@ -328,52 +364,52 @@ const prefixes = Array.from(new Set([
 
       for (const endpoint of alternativeEndpoints) {
         if (success) break;
-        try {
-          const headers: Record<string, string> = { apikey: apiKey } as const;
-          let init: RequestInit;
-
-          if (endpoint.method === 'POST') {
-            const isForm = endpoint.contentType === 'application/x-www-form-urlencoded';
-            headers['Content-Type'] = isForm ? 'application/x-www-form-urlencoded' : 'application/json';
-            const bodyStr = isForm
-              ? new URLSearchParams(Object.entries(endpoint.body || {}).map(([k, v]) => [k, String(v)])).toString()
-              : JSON.stringify(endpoint.body);
-            init = { method: 'POST', headers, body: bodyStr };
-          } else {
-            headers['Content-Type'] = 'application/json';
-            init = { method: 'GET', headers };
-          }
-
-          const { res, elapsed } = await timedFetch(endpoint.url, init, 30000);
-
-          let bodyOut: any = null;
+        for (const baseHeaders of headerVariants) {
+          if (success) break;
           try {
-            bodyOut = await res.json();
-          } catch {
-            bodyOut = await res.text();
-          }
+            const headers: Record<string, string> = { ...baseHeaders };
+            let init: RequestInit;
 
-          const record = { round: 3, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut, contentTypeTried: headers['Content-Type'], source: 'alternative' };
-          attempts.push(record);
+            if (endpoint.method === 'POST') {
+              const isForm = endpoint.contentType === 'application/x-www-form-urlencoded';
+              headers['Content-Type'] = isForm ? 'application/x-www-form-urlencoded' : 'application/json';
+              const bodyStr = isForm
+                ? new URLSearchParams(Object.entries(endpoint.body || {}).map(([k, v]) => [k, String(v)])).toString()
+                : JSON.stringify(endpoint.body);
+              init = { method: 'POST', headers, body: bodyStr };
+            } else {
+              headers['Content-Type'] = 'application/json';
+              init = { method: 'GET', headers };
+            }
 
-          if (res.ok && !success) {
-            success = true;
-            final = record;
-            console.log(`[evolution-send-text] SUCCESS on alternative: ${endpoint.method} ${endpoint.url}`);
-            break;
+            const { res, elapsed } = await timedFetch(endpoint.url, init, 30000);
+
+            let bodyOut: any = null;
+            try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+
+            const record = { round: 3, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut, contentTypeTried: headers['Content-Type'], headersTried: Object.keys(baseHeaders).filter(k=>k!=="Content-Type").join('+') || 'none', source: 'alternative' };
+            attempts.push(record);
+
+            if (isPositiveResponse(res.status, res.ok, bodyOut) && !success) {
+              success = true;
+              final = record;
+              console.log(`[evolution-send-text] SUCCESS on alternative: ${endpoint.method} ${endpoint.url}`);
+              break;
+            }
+          } catch (err: any) {
+            const record = { round: 3, method: endpoint.method, url: endpoint.url, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'alternative' };
+            attempts.push(record);
           }
-        } catch (err: any) {
-          const record = { round: 3, method: endpoint.method, url: endpoint.url, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'alternative' };
-          attempts.push(record);
         }
       }
     }
 
     const last = attempts[attempts.length - 1] || null;
     const chosen = final || last;
+    const positive = chosen ? isPositiveResponse(chosen.status ?? 0, Boolean(chosen.ok), chosen.body) : false;
 
     const result = {
-      success: Boolean(final?.ok),
+      success: positive,
       status: chosen?.status ?? 0,
       responseTimeMs: chosen?.elapsed ?? null,
       requestId,
