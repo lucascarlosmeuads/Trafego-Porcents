@@ -82,83 +82,109 @@ serve(async (req: Request) => {
     const baseUrl = withoutTrailingSlash(cfg?.server_url || body.base_url || "http://72.60.7.194:8081");
     const instance = body.instance || cfg?.instance_name || "lucas";
 
-    type Attempt = { method: "GET" | "POST"; path: string };
-    const steps: Attempt[] = [
-      { method: "POST", path: "/message/sendText" },
-      { method: "GET", path: "/message/sendText" },
-      { method: "POST", path: "/message/send" },
-      { method: "GET", path: "/message/send" },
-    ];
+    // Step 1: Check server health and instance status
+    console.log(`[evolution-send-text] Checking server health: ${baseUrl}`);
+    const healthCheck = await timedFetch(`${baseUrl}`, { method: 'GET', headers: { apikey: apiKey } }, 10000);
+    
+    console.log(`[evolution-send-text] Checking instance status: ${instance}`);
+    const statusCheck = await timedFetch(`${baseUrl}/instance/connectionState/${instance}`, { 
+      method: 'GET', 
+      headers: { apikey: apiKey, 'Content-Type': 'application/json' }
+    }, 10000);
 
+    let instanceState = 'unknown';
+    let instanceReady = false;
+    try {
+      const statusData = await statusCheck.res.json();
+      instanceState = statusData?.instance?.state || 'unknown';
+      instanceReady = instanceState === 'open';
+      console.log(`[evolution-send-text] Instance '${instance}' state: ${instanceState}, ready: ${instanceReady}`);
+    } catch (e) {
+      console.log(`[evolution-send-text] Could not parse instance status:`, e);
+    }
+
+    // Step 2: Try sending message with prioritized approach
+    console.log(`[evolution-send-text] Attempting to send message. Instance ready: ${instanceReady}`);
+    
     const attempts: any[] = [];
     let final: any = null;
     let success = false;
+    
+    // Primary documented endpoint - try with extended timeout first
+    const primaryEndpoint = `${baseUrl}/message/sendText/${instance}`;
+    const payload = { number: normalized, text };
+    
+    try {
+      console.log(`[evolution-send-text] Trying primary endpoint: POST ${primaryEndpoint}`);
+      const { res, elapsed } = await timedFetch(primaryEndpoint, {
+        method: "POST",
+        headers: { apikey: apiKey, "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }, 60000); // 60 second timeout for primary endpoint
 
-    for (let round = 0; round < 2 && !success; round++) {
-      for (const step of steps) {
-        const url = `${baseUrl}${step.path}/${encodeURIComponent(instance)}` +
-          (step.method === "GET" ? `?number=${normalized}&text=${encodeURIComponent(text)}` : "");
-
-        try {
-          const init: RequestInit = step.method === "POST"
-            ? { method: "POST", headers: { apikey: apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ number: normalized, text }) }
-            : { method: "GET", headers: { apikey: apiKey } };
-
-          const { res, elapsed } = await timedFetch(url, init, 45000);
-          let bodyOut: any = null;
-          try {
-            bodyOut = await res.json();
-          } catch {
-            bodyOut = await res.text();
-          }
-
-          const record = { round: round + 1, method: step.method, url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
-          attempts.push(record);
-
-          if (res.ok && !success) {
-            success = true;
-            final = record;
-            break;
-          }
-        } catch (err: any) {
-          attempts.push({ round: round + 1, method: step.method, url, status: null, ok: false, elapsed: null, error: err?.message || String(err) });
-        }
+      let bodyOut: any = null;
+      try {
+        bodyOut = await res.json();
+      } catch {
+        bodyOut = await res.text();
       }
 
-      if (!success && round === 0) {
-        // pequeno backoff antes da segunda rodada
-        await new Promise((r) => setTimeout(r, 1500));
+      const record = { round: 1, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+      attempts.push(record);
+
+      if (res.ok) {
+        success = true;
+        final = record;
+        console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
       }
+    } catch (err: any) {
+      const record = { round: 1, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
+      attempts.push(record);
+      console.log(`[evolution-send-text] Primary endpoint failed:`, err?.message);
     }
 
-    // Additional common endpoint variants when previous attempts failed
+    // If primary failed, try alternative endpoints
     if (!success) {
-      const altVariants = [
-        { method: "POST" as const, url: `${baseUrl}/message/sendText`, body: { session: instance, number: normalized, text }, headers: { apikey: apiKey, "Content-Type": "application/json" } },
-        { method: "POST" as const, url: `${baseUrl}/message/send`, body: { session: instance, number: normalized, text }, headers: { apikey: apiKey, "Content-Type": "application/json" } },
-        { method: "GET" as const, url: `${baseUrl}/message/sendText?session=${encodeURIComponent(instance)}&number=${normalized}&text=${encodeURIComponent(text)}`, headers: { apikey: apiKey } },
+      console.log(`[evolution-send-text] Primary failed, trying alternatives...`);
+      const alternativeEndpoints = [
+        { method: "GET" as const, url: `${baseUrl}/message/sendText/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` },
+        { method: "POST" as const, url: `${baseUrl}/message/send/${instance}`, body: { number: normalized, text } },
+        { method: "GET" as const, url: `${baseUrl}/message/send/${instance}?number=${normalized}&text=${encodeURIComponent(text)}` },
+        { method: "POST" as const, url: `${baseUrl}/message/sendText`, body: { session: instance, number: normalized, text } },
+        { method: "POST" as const, url: `${baseUrl}/message/send`, body: { session: instance, number: normalized, text } },
+        { method: "GET" as const, url: `${baseUrl}/message/sendText?session=${encodeURIComponent(instance)}&number=${normalized}&text=${encodeURIComponent(text)}` },
       ];
-      for (const v of altVariants) {
+
+      for (const endpoint of alternativeEndpoints) {
+        if (success) break;
+        
         try {
-          const init: RequestInit = v.method === "POST"
-            ? { method: "POST", headers: v.headers, body: JSON.stringify(v.body) }
-            : { method: "GET", headers: v.headers };
-          const { res, elapsed } = await timedFetch(v.url, init, 45000);
+          const headers = { apikey: apiKey, "Content-Type": "application/json" };
+          const init: RequestInit = endpoint.method === "POST"
+            ? { method: "POST", headers, body: JSON.stringify(endpoint.body) }
+            : { method: "GET", headers };
+
+          const { res, elapsed } = await timedFetch(endpoint.url, init, 30000);
+          
           let bodyOut: any = null;
           try {
             bodyOut = await res.json();
           } catch {
             bodyOut = await res.text();
           }
-          const record = { round: "alt", method: v.method, url: v.url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+
+          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
           attempts.push(record);
+
           if (res.ok && !success) {
             success = true;
             final = record;
+            console.log(`[evolution-send-text] SUCCESS on alternative: ${endpoint.method} ${endpoint.url}`);
             break;
           }
         } catch (err: any) {
-          attempts.push({ round: "alt", method: v.method, url: v.url, status: null, ok: false, elapsed: null, error: err?.message || String(err) });
+          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
+          attempts.push(record);
         }
       }
     }
@@ -174,6 +200,13 @@ serve(async (req: Request) => {
       endpoint: chosen?.url ?? null,
       body: chosen?.body ?? null,
       attempts,
+      // Diagnostics info
+      diagnostics: {
+        serverHealth: healthCheck.res?.status || null,
+        instanceState,
+        instanceReady,
+        recommendations: !instanceReady ? ['Instance is not in "open" state. Try reconnecting first.'] : []
+      }
     };
 
     console.log("[evolution-send-text]", JSON.stringify({ requestId, success: result.success, totalAttempts: attempts.length, endpoint: result.endpoint, status: result.status }));

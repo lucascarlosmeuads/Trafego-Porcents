@@ -8,6 +8,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { EvolutionAPITester } from "./EvolutionAPITester";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle, XCircle, MessageCircle, Wifi, X } from 'lucide-react';
 
 interface EvolutionConfig {
   id: string;
@@ -47,6 +49,8 @@ export function EvolutionAPIConfig() {
   const [sendResult, setSendResult] = useState<any | null>(null)
   const [events, setEvents] = useState<any[]>([])
   const [eventsLoading, setEventsLoading] = useState(false)
+  const [testProgress, setTestProgress] = useState<string>('')
+  const [abortController, setAbortController] = useState<AbortController | null>(null)
 
   useEffect(() => {
     loadConfig();
@@ -484,22 +488,47 @@ const sendTestMessage = async () => {
   }
   setSending(true);
   setSendResult(null);
+  setTestProgress('Verificando servidor e instância...');
+  
+  const controller = new AbortController();
+  setAbortController(controller);
+  
   try {
     const base_url = (config?.server_url || formData.server_url || '').replace(/\/$/, '');
     const instance = config?.instance_name || formData.instance_name || 'lucas';
     const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText, base_url, instance } });
     if (error) throw error;
     setSendResult(data);
+    
+    if (data?.diagnostics?.recommendations?.length > 0) {
+      setTestProgress('Teste concluído com recomendações');
+    } else if (data?.success) {
+      setTestProgress('Mensagem enviada com sucesso!');
+    } else {
+      setTestProgress('Falha no envio da mensagem');
+    }
+    
     if (data?.success) {
       toast({ title: 'Enviado ✅', description: `HTTP ${data.status} • ${data.responseTimeMs}ms` });
     } else {
       toast({ title: 'Falha no envio', description: data?.error || `HTTP ${data?.status} • ${data?.responseTimeMs}ms`, variant: 'destructive' });
     }
   } catch (e: any) {
-    setSendResult({ success: false, error: e?.message });
+    setSendResult({ success: false, error: e?.message, diagnostics: null });
+    setTestProgress('Erro na comunicação');
     toast({ title: 'Erro no envio', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
   } finally {
     setSending(false);
+    setAbortController(null);
+  }
+};
+
+const cancelTest = () => {
+  if (abortController) {
+    abortController.abort();
+    setAbortController(null);
+    setSending(false);
+    setTestProgress('Teste cancelado');
   }
 };
 
@@ -728,44 +757,153 @@ return (
                   value={sendText}
                   onChange={(e) => setSendText(e.target.value)}
                 />
-                <div className="flex gap-2">
-                  <Button onClick={sendTestMessage} disabled={sending || !sendNumber}>
-                    {sending ? 'Enviando...' : 'Enviar via Evolution'}
-                  </Button>
-                  <Button variant="outline" onClick={() => { setSendNumber(''); setSendText('Teste via Evolution ✅'); setSendResult(null); }}>Limpar</Button>
-                </div>
-                {sendResult && (
-                  <div className="text-xs border rounded p-3 bg-muted">
-                    <div className="mb-1">HTTP: {String(sendResult.status || '—')} • {String(sendResult.responseTimeMs || '—')}ms</div>
-                    {sendResult.endpoint && (
-                      <div className="mb-1 break-all">Endpoint: {String(sendResult.endpoint)}</div>
+                <div className="flex items-center gap-2">
+                  <Button onClick={sendTestMessage} disabled={sending || !sendNumber} className="flex items-center gap-2">
+                    {sending ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="h-4 w-4" />
+                        Enviar via Evolution
+                      </>
                     )}
-                    {Array.isArray(sendResult.attempts) && (
-                      <div className="mb-2 space-y-1">
-                        <div className="font-medium">Tentativas ({sendResult.attempts.length}):</div>
-                        <div className="space-y-1 max-h-40 overflow-auto pr-1">
-                          {sendResult.attempts.map((att: any, idx: number) => (
-                            <div key={idx} className="border rounded px-2 py-1 bg-background">
-                              <div className="flex justify-between">
-                                <span>#{idx + 1} • R{String(att.round || 1)} • {String(att.method)} • {String(att.status ?? '—')}</span>
-                                <span>{String(att.elapsed ?? '—')}ms</span>
-                              </div>
-                              <div className="text-muted-foreground break-all truncate">{String(att.url || '')}</div>
+                  </Button>
+                  
+                  {sending && (
+                    <Button 
+                      onClick={cancelTest}
+                      variant="outline"
+                      size="sm"
+                      className="flex items-center gap-2"
+                    >
+                      <X className="h-4 w-4" />
+                      Cancelar
+                    </Button>
+                  )}
+                  
+                  <Button variant="outline" onClick={() => { setSendNumber(''); setSendText('Teste via Evolution ✅'); setSendResult(null); setTestProgress(''); }}>Limpar</Button>
+                </div>
+                
+                {testProgress && (
+                  <div className="text-sm text-muted-foreground">
+                    {testProgress}
+                  </div>
+                )}
+                {sendResult && (
+                  <div className="border rounded p-4 bg-muted">
+                    <div className="flex items-center gap-2 mb-2">
+                      {sendResult.success ? (
+                        <CheckCircle className="h-5 w-5 text-green-600" />
+                      ) : (
+                        <XCircle className="h-5 w-5 text-red-600" />
+                      )}
+                      <span className="font-medium">
+                        {sendResult.success ? 'Sucesso' : 'Falha'}
+                      </span>
+                      {sendResult.status && (
+                        <Badge variant="outline">
+                          HTTP: {sendResult.status} • {sendResult.responseTimeMs || 0}ms
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Diagnostics Section */}
+                    {sendResult.diagnostics && (
+                      <div className="mb-3 p-3 bg-blue-50 rounded border">
+                        <div className="text-sm font-medium mb-2 text-blue-900">Diagnóstico da Instância</div>
+                        <div className="space-y-1 text-sm">
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-700">Servidor:</span>
+                            <Badge variant={sendResult.diagnostics.serverHealth === 200 ? "default" : "destructive"}>
+                              {sendResult.diagnostics.serverHealth || 'N/A'}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-blue-700">Estado da Instância:</span>
+                            <Badge variant={sendResult.diagnostics.instanceReady ? "default" : "secondary"}>
+                              {sendResult.diagnostics.instanceState}
+                            </Badge>
+                            {sendResult.diagnostics.instanceReady ? (
+                              <span className="text-green-600 text-xs">✓ Pronta</span>
+                            ) : (
+                              <span className="text-orange-600 text-xs">⚠ Não pronta</span>
+                            )}
+                          </div>
+                        </div>
+                        
+                        {sendResult.diagnostics.recommendations?.length > 0 && (
+                          <div className="mt-2 p-2 bg-orange-50 rounded border-l-4 border-orange-400">
+                            <div className="text-sm font-medium text-orange-800">Recomendações:</div>
+                            <ul className="text-sm text-orange-700 mt-1">
+                              {sendResult.diagnostics.recommendations.map((rec: string, i: number) => (
+                                <li key={i} className="flex items-start gap-1">
+                                  <span>•</span>
+                                  <span>{rec}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    
+                    {sendResult.endpoint && (
+                      <div className="text-sm text-muted-foreground mb-2">
+                        <strong>Endpoint:</strong> {sendResult.endpoint}
+                      </div>
+                    )}
+                    
+                    {Array.isArray(sendResult.attempts) && sendResult.attempts.length > 0 && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium mb-2">
+                          Tentativas ({sendResult.attempts.length}):
+                        </div>
+                        <div className="space-y-1 text-xs font-mono bg-muted p-2 rounded max-h-32 overflow-auto">
+                          {sendResult.attempts.map((attempt: any, i: number) => (
+                            <div key={i} className="flex items-center gap-2">
+                              <span className="text-blue-600">#{i + 1}</span>
+                              <span className="text-purple-600">•</span>
+                              <span className="text-orange-600">R{attempt.round}</span>
+                              <span className="text-purple-600">•</span>
+                              <span className="text-green-600">{attempt.method}</span>
+                              <span className="text-purple-600">•</span>
+                              <span className={attempt.ok ? "text-green-600" : "text-red-600"}>
+                                {attempt.status || '—'}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {attempt.elapsed || '—'}ms
+                              </span>
+                              <span className="text-xs text-muted-foreground truncate">
+                                {attempt.url}
+                              </span>
                             </div>
                           ))}
                         </div>
                       </div>
                     )}
+                    
                     {sendResult.error && (
-                      <div className="mb-1 text-destructive">Erro: {String(sendResult.error)}</div>
+                      <div className="mb-3 text-sm text-red-600 bg-red-50 p-2 rounded">
+                        <strong>Erro:</strong> {sendResult.error}
+                      </div>
                     )}
-                    <div className="font-mono whitespace-pre-wrap break-words">
-                      {(() => {
-                        try { return JSON.stringify(sendResult.body ?? sendResult, null, 2) } catch { return String(sendResult) }
-                      })()}
-                    </div>
+                    
+                    {sendResult.body && (
+                      <div className="mb-3">
+                        <div className="text-sm font-medium mb-1">Resposta:</div>
+                        <pre className="text-xs bg-muted p-2 rounded overflow-auto max-h-32">
+                          {JSON.stringify(sendResult.body, null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    
                     {sendResult.requestId && (
-                      <div className="mt-1 text-muted-foreground">requestId: {String(sendResult.requestId)}</div>
+                      <div className="text-xs text-muted-foreground">
+                        ID: {sendResult.requestId}
+                      </div>
                     )}
                   </div>
                 )}
