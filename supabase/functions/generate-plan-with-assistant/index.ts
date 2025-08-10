@@ -130,7 +130,7 @@ Por favor, gere um planejamento estratégico completo e personalizado baseado ne
         'OpenAI-Beta': 'assistants=v2'
       },
       body: JSON.stringify({
-        assistant_id: 'asst_u7rMlg4yvT70SF0P9TsVCR3uy'
+        assistant_id: 'asst_u7mMg4yvf70SF0P9TsVCR3uy'
       })
     });
 
