@@ -289,6 +289,42 @@ const maxConcurrency = Math.min(Math.max(Number(body?.concurrency) || 6, 2), 10)
         : 'Nenhum endpoint conhecido respondeu de forma compatível'
     }
 
+    // Save discovered endpoints to database
+    if (workingEndpoints.length > 0) {
+      try {
+        // Clear previous discoveries for this server/instance
+        await supabase
+          .from('evolution_discovered_endpoints')
+          .delete()
+          .eq('server_url', baseUrl)
+          .eq('instance_name', instance)
+
+        // Insert new discoveries
+        const endpointsToInsert = workingEndpoints.slice(0, 5).map((endpoint, index) => ({
+          server_url: baseUrl,
+          instance_name: instance,
+          endpoint_path: endpoint.pattern,
+          method: endpoint.method,
+          status_code: endpoint.status,
+          payload_format: { number: '5511999999999', text: 'test' },
+          is_working: endpoint.success || [400, 401, 422].includes(endpoint.status),
+          priority: endpoint.priority + index,
+        }))
+
+        const { error: insertError } = await supabase
+          .from('evolution_discovered_endpoints')
+          .insert(endpointsToInsert)
+
+        if (insertError) {
+          console.log('[evolution-discover] Failed to save endpoints:', insertError)
+        } else {
+          console.log('[evolution-discover] Saved', endpointsToInsert.length, 'discovered endpoints')
+        }
+      } catch (error) {
+        console.log('[evolution-discover] Error saving endpoints:', error)
+      }
+    }
+
     console.log(`[evolution-discover] done working=${workingEndpoints.length} tested=${results.length} spent=${spent()}ms`)
 
     return new Response(JSON.stringify(responsePayload), { headers: { ...corsHeaders, 'Content-Type': 'application/json' } })

@@ -768,6 +768,54 @@ export type Database = {
           },
         ]
       }
+      evolution_discovered_endpoints: {
+        Row: {
+          created_at: string
+          discovered_at: string
+          endpoint_path: string
+          id: string
+          instance_name: string
+          is_working: boolean | null
+          last_tested_at: string | null
+          method: string
+          payload_format: Json | null
+          priority: number | null
+          server_url: string
+          status_code: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          discovered_at?: string
+          endpoint_path: string
+          id?: string
+          instance_name: string
+          is_working?: boolean | null
+          last_tested_at?: string | null
+          method?: string
+          payload_format?: Json | null
+          priority?: number | null
+          server_url: string
+          status_code: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          discovered_at?: string
+          endpoint_path?: string
+          id?: string
+          instance_name?: string
+          is_working?: boolean | null
+          last_tested_at?: string | null
+          method?: string
+          payload_format?: Json | null
+          priority?: number | null
+          server_url?: string
+          status_code?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       evolution_recovery_queue: {
         Row: {
           attempts: number

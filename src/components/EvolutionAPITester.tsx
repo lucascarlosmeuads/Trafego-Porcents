@@ -19,23 +19,23 @@ export function EvolutionAPITester() {
   const { toast } = useToast();
   const [tests, setTests] = useState<TestResult[]>([
     {
-      id: 'connection',
-      name: 'Teste de Conexão',
+      id: 'discover_endpoints',
+      name: 'Descobrir Endpoints',
       status: 'idle'
     },
     {
-      id: 'message_format',
-      name: 'Formato de Mensagem',
+      id: 'test_discovered_endpoint',
+      name: 'Testar Endpoint Descoberto',
+      status: 'idle'
+    },
+    {
+      id: 'send_test_message',
+      name: 'Enviar Mensagem de Teste',
       status: 'idle'
     },
     {
       id: 'phone_validation',
       name: 'Validação de Telefone',
-      status: 'idle'
-    },
-    {
-      id: 'template_processing',
-      name: 'Processamento de Template',
       status: 'idle'
     }
   ]);
@@ -56,17 +56,17 @@ export function EvolutionAPITester() {
       let result;
       
       switch (testId) {
-        case 'connection':
-          result = await testConnection();
+        case 'discover_endpoints':
+          result = await testDiscoverEndpoints();
           break;
-        case 'message_format':
-          result = await testMessageFormat();
+        case 'test_discovered_endpoint':
+          result = await testDiscoveredEndpoint();
+          break;
+        case 'send_test_message':
+          result = await testSendMessage();
           break;
         case 'phone_validation':
           result = await testPhoneValidation();
-          break;
-        case 'template_processing':
-          result = await testTemplateProcessing();
           break;
         default:
           throw new Error('Teste não encontrado');
@@ -113,46 +113,100 @@ export function EvolutionAPITester() {
     });
   };
 
-  const testConnection = async () => {
-    const { data, error } = await supabase.functions.invoke('evolution-send-message', {
+  const testDiscoverEndpoints = async () => {
+    const { data, error } = await supabase.functions.invoke('evolution-discover-endpoints', {
+      body: { prefix: '', timeoutMs: 5000, budgetMs: 15000 }
+    });
+
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.error || 'Nenhum endpoint compatível encontrado');
+
+    return {
+      workingEndpoints: data.workingEndpoints?.length || 0,
+      recommendations: data.diagnostic?.recommendations || [],
+      serverInfo: data.diagnostic?.serverInfo,
+      endpointTesting: data.diagnostic?.endpointTesting
+    };
+  };
+
+  const testDiscoveredEndpoint = async () => {
+    // Check discovered endpoints in database
+    const { data: discoveredEndpoints, error } = await supabase
+      .from('evolution_discovered_endpoints')
+      .select('*')
+      .eq('is_working', true)
+      .order('priority', { ascending: true })
+      .limit(1);
+
+    if (error) throw error;
+    if (!discoveredEndpoints || discoveredEndpoints.length === 0) {
+      throw new Error('Nenhum endpoint descoberto encontrado. Execute "Descobrir Endpoints" primeiro.');
+    }
+
+    const endpoint = discoveredEndpoints[0];
+    
+    // Test the discovered endpoint with different payloads
+    const payloads = [
+      { number: '5511999999999', text: 'Teste via endpoint descoberto' },
+      { phone: '5511999999999', message: 'Teste via endpoint descoberto' },
+      { number: '5511999999999', textMessage: { text: 'Teste via endpoint descoberto' } }
+    ];
+
+    const results = [];
+    
+    for (const payload of payloads) {
+      try {
+        const { data, error } = await supabase.functions.invoke('evolution-send-text', {
+          body: {
+            number: '5511999999999',
+            text: 'Teste via endpoint descoberto'
+          }
+        });
+
+        results.push({
+          payloadStyle: Object.keys(payload).join('+'),
+          success: !error && data?.success,
+          status: data?.status,
+          endpoint: data?.endpoint,
+          error: error?.message || data?.error
+        });
+      } catch (err: any) {
+        results.push({
+          payloadStyle: Object.keys(payload).join('+'),
+          success: false,
+          error: err.message
+        });
+      }
+    }
+
+    return {
+      discoveredEndpoint: endpoint,
+      testResults: results,
+      summary: {
+        total: results.length,
+        successful: results.filter(r => r.success).length
+      }
+    };
+  };
+
+  const testSendMessage = async () => {
+    const { data, error } = await supabase.functions.invoke('evolution-send-text', {
       body: { 
-        leadId: 'test-connection',
-        testMode: true 
+        number: '5511999999999',
+        text: 'Teste de mensagem completo via Evolution API ✅'
       }
     });
 
     if (error) throw error;
-    if (!data?.success) throw new Error(data?.error || 'Falha na conexão');
 
     return {
-      status: 'connected',
-      messageId: data.messageId,
-      testMode: data.testMode
-    };
-  };
-
-  const testMessageFormat = async () => {
-    // Simula teste de formato de mensagem
-    const mockLead = {
-      id: 'test-format',
-      telefone: '11999999999',
-      respostas: {
-        nome: 'João Silva',
-        tipo_negocio: 'digital'
-      }
-    };
-
-    // Teste local do formato
-    const phoneFormatted = normalizePhoneLocal('11999999999', '+55');
-    const templateProcessed = applyTemplateLocal(
-      'Olá {{primeiro_nome}}! Tudo bem?',
-      { primeiro_nome: 'João', nome: 'João Silva' }
-    );
-
-    return {
-      phoneFormatted,
-      templateProcessed,
-      leadData: mockLead
+      success: data?.success || false,
+      status: data?.status,
+      endpoint: data?.endpoint,
+      responseTime: data?.responseTimeMs,
+      attempts: data?.attempts?.length || 0,
+      diagnostics: data?.diagnostics,
+      error: data?.error
     };
   };
 
@@ -182,28 +236,6 @@ export function EvolutionAPITester() {
     return results;
   };
 
-  const testTemplateProcessing = async () => {
-    const template = 'Olá {{primeiro_nome}}! Seu negócio {{tipo_negocio}} tem potencial.';
-    const vars = {
-      primeiro_nome: 'Maria',
-      nome: 'Maria Silva',
-      tipo_negocio: 'digital'
-    };
-
-    const processed = applyTemplateLocal(template, vars);
-    const expected = 'Olá Maria! Seu negócio digital tem potencial.';
-
-    if (processed !== expected) {
-      throw new Error(`Template processado incorretamente. Esperado: "${expected}", Recebido: "${processed}"`);
-    }
-
-    return {
-      template,
-      vars,
-      processed,
-      expected
-    };
-  };
 
   // Funções auxiliares para teste local (simulam as da edge function)
   const normalizePhoneLocal = (phone: string, countryCode: string): string => {
@@ -259,7 +291,7 @@ export function EvolutionAPITester() {
         <div>
           <h2 className="text-2xl font-bold">Testador Evolution API</h2>
           <p className="text-muted-foreground">
-            Teste o sistema completo sem precisar da API Evolution real
+            Teste descoberta de endpoints e envio de mensagens reais
           </p>
         </div>
         <Button onClick={runAllTests} className="gap-2">
@@ -325,8 +357,8 @@ export function EvolutionAPITester() {
             <div>
               <h3 className="font-medium text-blue-900">Modo de Teste</h3>
               <p className="text-sm text-blue-700 mt-1">
-                Todos os testes são executados em modo simulação, sem fazer chamadas reais para a API Evolution.
-                Isso permite validar o sistema completo de forma segura.
+                Os testes de descoberta de endpoints e envio de mensagens fazem chamadas reais para a Evolution API.
+                Execute primeiro "Descobrir Endpoints" para encontrar endpoints compatíveis.
               </p>
             </div>
           </div>

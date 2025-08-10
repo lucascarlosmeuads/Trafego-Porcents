@@ -109,52 +109,134 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
       console.log(`[evolution-send-text] Could not parse instance status:`, e);
     }
 
-    // Step 2: Try sending message with prioritized approach
-    console.log(`[evolution-send-text] Attempting to send message. Instance ready: ${instanceReady}`);
+    // Step 2: Check for previously discovered endpoints
+    console.log(`[evolution-send-text] Checking for discovered endpoints for ${baseUrl}/${instance}`);
+    const { data: discoveredEndpoints } = await supabase
+      .from('evolution_discovered_endpoints')
+      .select('*')
+      .eq('server_url', baseUrl)
+      .eq('instance_name', instance)
+      .eq('is_working', true)
+      .order('priority', { ascending: true })
+      .limit(3);
+
+    console.log(`[evolution-send-text] Found ${discoveredEndpoints?.length || 0} discovered endpoints`);
     
     const attempts: any[] = [];
     let final: any = null;
     let success = false;
 
-    // Quick WPPConnect-style route tests first (common in forks)
-    const quickCandidates = Array.from(new Set([
-      `${baseUrl}${userPrefix}/api/${instance}/send-message`,
-      `${baseUrl}/api/${instance}/send-message`,
-      `${baseUrl}/api/v1/${instance}/send-message`,
-      `${baseUrl}/v1/api/${instance}/send-message`,
-    ]));
+    // Try discovered endpoints first with multiple payload formats
+    if (discoveredEndpoints && discoveredEndpoints.length > 0) {
+      console.log(`[evolution-send-text] Trying discovered endpoints first`);
+      
+      const payloadFormats = [
+        { number: normalized, text },
+        { phone: normalized, message: text },
+        { number: normalized, textMessage: { text } },
+        { remoteJid: `${normalized}@s.whatsapp.net`, message: { text } },
+        { session: instance, number: normalized, text },
+      ];
 
-    const quickPayloads = [
-      { phone: normalized, message: text },
-      { number: normalized, text },
-    ];
+      for (const endpoint of discoveredEndpoints) {
+        if (success) break;
+        
+        const fullUrl = `${baseUrl}${endpoint.endpoint_path.replace('{instance}', instance)}`;
+        
+        for (const payload of payloadFormats) {
+          if (success) break;
+          
+          try {
+            console.log(`[evolution-send-text] Testing discovered endpoint: ${endpoint.method} ${fullUrl} with payload style: ${Object.keys(payload).join('+')}`);
+            
+            const { res, elapsed } = await timedFetch(fullUrl, {
+              method: endpoint.method,
+              headers: { apikey: apiKey, "Content-Type": "application/json" },
+              body: JSON.stringify(payload)
+            }, 15000);
 
-    for (const url of quickCandidates) {
-      if (success) break;
-      for (const bodyVariant of quickPayloads) {
-        try {
-          console.log(`[evolution-send-text] Quick test: POST ${url}`);
-          const { res, elapsed } = await timedFetch(url, {
-            method: "POST",
-            headers: { apikey: apiKey, "Content-Type": "application/json" },
-            body: JSON.stringify(bodyVariant)
-          }, 15000);
+            let bodyOut: any = null;
+            try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
 
-          let bodyOut: any = null;
-          try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+            const record = { 
+              round: 0, 
+              method: endpoint.method, 
+              url: fullUrl, 
+              status: res.status, 
+              ok: res.ok, 
+              elapsed, 
+              body: bodyOut, 
+              payloadStyle: Object.keys(payload).join('+'),
+              source: 'discovered'
+            };
+            attempts.push(record);
 
-          const record = { round: 0, method: "POST", url, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(bodyVariant).join('+') };
-          attempts.push(record);
-
-          if (res.ok || res.status === 201) {
-            success = true;
-            final = record;
-            console.log(`[evolution-send-text] SUCCESS on quick route: ${url}`);
-            break;
+            if (res.ok || res.status === 201) {
+              success = true;
+              final = record;
+              console.log(`[evolution-send-text] SUCCESS on discovered endpoint: ${fullUrl}`);
+              break;
+            }
+          } catch (err: any) {
+            const record = { 
+              round: 0, 
+              method: endpoint.method, 
+              url: fullUrl, 
+              status: null, 
+              ok: false, 
+              elapsed: null, 
+              error: err?.message || String(err), 
+              payloadStyle: Object.keys(payload).join('+'),
+              source: 'discovered'
+            };
+            attempts.push(record);
           }
-        } catch (err: any) {
-          const record = { round: 0, method: "POST", url, status: null, ok: false, elapsed: null, error: err?.message || String(err), payloadStyle: Object.keys(bodyVariant).join('+') };
-          attempts.push(record);
+        }
+      }
+    }
+
+    // Quick WPPConnect-style route tests (fallback if no discovered endpoints worked)
+    if (!success) {
+      console.log(`[evolution-send-text] Trying quick WPPConnect-style routes`);
+      const quickCandidates = Array.from(new Set([
+        `${baseUrl}${userPrefix}/api/${instance}/send-message`,
+        `${baseUrl}/api/${instance}/send-message`,
+        `${baseUrl}/api/v1/${instance}/send-message`,
+        `${baseUrl}/v1/api/${instance}/send-message`,
+      ]));
+
+      const quickPayloads = [
+        { phone: normalized, message: text },
+        { number: normalized, text },
+      ];
+
+      for (const url of quickCandidates) {
+        if (success) break;
+        for (const bodyVariant of quickPayloads) {
+          try {
+            console.log(`[evolution-send-text] Quick test: POST ${url}`);
+            const { res, elapsed } = await timedFetch(url, {
+              method: "POST",
+              headers: { apikey: apiKey, "Content-Type": "application/json" },
+              body: JSON.stringify(bodyVariant)
+            }, 15000);
+
+            let bodyOut: any = null;
+            try { bodyOut = await res.json(); } catch { bodyOut = await res.text(); }
+
+            const record = { round: 1, method: "POST", url, status: res.status, ok: res.ok, elapsed, body: bodyOut, payloadStyle: Object.keys(bodyVariant).join('+'), source: 'quick' };
+            attempts.push(record);
+
+            if (res.ok || res.status === 201) {
+              success = true;
+              final = record;
+              console.log(`[evolution-send-text] SUCCESS on quick route: ${url}`);
+              break;
+            }
+          } catch (err: any) {
+            const record = { round: 1, method: "POST", url, status: null, ok: false, elapsed: null, error: err?.message || String(err), payloadStyle: Object.keys(bodyVariant).join('+'), source: 'quick' };
+            attempts.push(record);
+          }
         }
       }
     }
@@ -179,7 +261,7 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
           bodyOut = await res.text();
         }
 
-        const record = { round: 1, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+        const record = { round: 2, method: "POST", url: primaryEndpoint, status: res.status, ok: res.ok, elapsed, body: bodyOut, source: 'primary' };
         attempts.push(record);
 
         if (res.ok) {
@@ -188,7 +270,7 @@ const userPrefix = allowedPrefixes.has(rawPrefix) ? rawPrefix : '';
           console.log(`[evolution-send-text] SUCCESS on primary endpoint: ${primaryEndpoint}`);
         }
       } catch (err: any) {
-        const record = { round: 1, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
+        const record = { round: 2, method: "POST", url: primaryEndpoint, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'primary' };
         attempts.push(record);
         console.log(`[evolution-send-text] Primary endpoint failed:`, err?.message);
       }
@@ -271,7 +353,7 @@ const prefixes = Array.from(new Set([
             bodyOut = await res.text();
           }
 
-          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut, contentTypeTried: headers['Content-Type'] };
+          const record = { round: 3, method: endpoint.method, url: endpoint.url, status: res.status, ok: res.ok, elapsed, body: bodyOut, contentTypeTried: headers['Content-Type'], source: 'alternative' };
           attempts.push(record);
 
           if (res.ok && !success) {
@@ -281,7 +363,7 @@ const prefixes = Array.from(new Set([
             break;
           }
         } catch (err: any) {
-          const record = { round: 2, method: endpoint.method, url: endpoint.url, status: null, ok: false, elapsed: null, error: err?.message || String(err) };
+          const record = { round: 3, method: endpoint.method, url: endpoint.url, status: null, ok: false, elapsed: null, error: err?.message || String(err), source: 'alternative' };
           attempts.push(record);
         }
       }
@@ -303,6 +385,8 @@ const prefixes = Array.from(new Set([
         serverHealth: healthCheck.res?.status || null,
         instanceState,
         instanceReady,
+        discoveredEndpointsFound: discoveredEndpoints?.length || 0,
+        discoveredEndpointsUsed: attempts.filter(a => a.source === 'discovered').length,
         recommendations: !instanceReady ? ['Instance is not in "open" state. Try reconnecting first.'] : []
       }
     };
