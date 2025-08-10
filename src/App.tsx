@@ -10,6 +10,7 @@ import Index from "./pages/Index";
 import ResetPassword from "./pages/ResetPassword";
 import TermosRejeitados from "./pages/TermosRejeitados";
 import NotFound from "./pages/NotFound";
+import EvolutionTestes from "./pages/EvolutionTestes";
 
 const queryClient = new QueryClient();
 
@@ -23,6 +24,11 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/termos-rejeitados" element={<TermosRejeitados />} />
+              <Route path="/evolution/testes" element={
+                // Carrega página dedicada de testes Evolution
+                // ... keep existing code (other routes remain unchanged)
+                <EvolutionTestes />
+              } />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

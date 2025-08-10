@@ -10,3 +10,12 @@ verify_jwt = false
 [functions.evolution-recover-connection]
 verify_jwt = false
 
+[functions.evolution-send-text]
+verify_jwt = false
+
+[functions.evolution-check-connection]
+verify_jwt = false
+
+[functions.evolution-diagnose]
+verify_jwt = false
+
