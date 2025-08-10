@@ -207,7 +207,7 @@ function buildPromptLucas(briefing: any, campos: Record<string, unknown>) : stri
     ? `Entrada opcional (true): incluir ${Mini_Oferta_Nome} por ${Mini_Oferta_Preco} para dar resultado imediato e ajudar a pagar o tráfego.`
     : `Entrada opcional (false): foque em qualificar muito bem o lead e conduzir direto à oferta principal.`;
 
-  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras.
+  return `Gere o texto FINAL em markdown seguindo exatamente as regras abaixo. Escreva em 1ª pessoa (eu, Lucas), tom direto e motivador, sem jargão. 400–700 palavras. Nada de apêndice técnico. Parágrafos curtos. Se faltar dado, use [colchetes] com suposições conservadoras. Evite a palavra 'interativo'; mostre isso nos CTAs e formatos.`
 
 DADOS DE CONTEXTO
 - Cliente: ${Cliente_Nome}
@@ -229,7 +229,7 @@ FORMATO DE SAÍDA (sem alterar a ordem):
 
 Título
 
-PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Interativo & Magnético)
+PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Magnético)
 
 > Cliente: ${Cliente_Nome}
 > Projeto: ${Projeto_Titulo}
@@ -243,10 +243,10 @@ PLANEJAMENTO ESTRATÉGICO — ${Cliente_Nome} (Funil Interativo & Magnético)
 - Nome interno da ideia: crie um nome memorável.
 - Tagline (1 linha): promessa simples e concreta.
 - Explicação (5–8 linhas, leiga): o que é; por que funciona; por que levou alguns dias; o que muda para o cliente.
+- Ganchos de Copy (mostrar, não dizer — evite a palavra 'interativo'): liste 5–7 bullets curtos com CTAs que impliquem clique e conduzam a formatos como teste relâmpago/quiz ("descubra em 60s seu [perfil/score]"), diagnóstico em X passos com entrega imediata, desafio de 3 dias com mini vitória clara, "responda X para ganhar Y" (ex.: responda 6 perguntas e receba um roteiro pronto), joguinho/pontuação (marque seus pontos e veja onde está perdendo performance), simulação/roteiro (gere sua melhor oferta de hoje) e resposta inteligente de IA para seu caso em 60s. Adapte cada bullet a ${Produto_Servico} e ${Avatar}.
 - Frase obrigatória: Eu mesmo vou escolher cada palavra do funil e dos anúncios — nada genérico. A copy é feita para vender e educar com leveza.
-
 2) O que eu vou fazer (até 7 dias corridos)
-- Publicar o diagnóstico interativo (etapas curtas e claras).
+- Publicar o diagnóstico (etapas curtas e claras).
 - Construir página de entrada e tela de resultado.
 - Produzir criativos (3 vídeos 15–30s + 3 imagens) focados em conversão.
 - Configurar campanhas (${Canais}) e sequência de WhatsApp.
@@ -273,5 +273,5 @@ Fechamento
 Compromisso: clareza, simplicidade e velocidade. Vamos gerar resultado visível na primeira semana e usar isso como ponte natural para a oferta principal. Se estiver de acordo, eu começo hoje.
 
 — Lucas Carlos
-Estrategista — Funil Interativo & Magnético`;
+Estrategista — Funil Magnético`;
 }
