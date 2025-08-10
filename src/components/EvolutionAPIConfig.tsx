@@ -476,6 +476,25 @@ const sendTestMessage = async () => {
   }
 };
 
+// Disparo rápido usando o número padrão configurado na função (sem precisar digitar)
+const quickTestSend = async () => {
+  setSending(true);
+  try {
+    const { data, error } = await supabase.functions.invoke('evolution-verify', { body: {} });
+    if (error) throw error;
+    const ok = data?.message?.success || data?.success;
+    if (ok) {
+      toast({ title: 'Mensagem enviada', description: 'Teste solicitado com sucesso (número padrão).' });
+    } else {
+      toast({ title: 'Falha no disparo', description: data?.message?.error || data?.error || 'Erro desconhecido', variant: 'destructive' });
+    }
+  } catch (e: any) {
+    toast({ title: 'Erro no disparo', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+  } finally {
+    setSending(false);
+  }
+};
+
 const fetchRecentEvents = async () => {
   setEventsLoading(true);
   try {
@@ -694,6 +713,12 @@ return (
                 <CardTitle>Disparo de teste</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Button onClick={quickTestSend} disabled={sending}>
+                    {sending ? 'Enviando...' : 'Teste rápido no WhatsApp'}
+                  </Button>
+                  <span className="text-sm text-muted-foreground">Usa o número padrão configurado na função</span>
+                </div>
                 <Label htmlFor="send_number">Número (E.164 sem símbolos)</Label>
                 <Input
                   id="send_number"
