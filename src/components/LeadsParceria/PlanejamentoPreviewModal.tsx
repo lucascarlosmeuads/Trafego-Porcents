@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/components/ui/use-toast';
 import { supabase } from '@/integrations/supabase/client';
+import { reformatSinglePlan } from '@/utils/reformatSinglePlan';
 
 interface PlanejamentoPreviewModalProps {
   isOpen: boolean;
@@ -26,6 +27,7 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [isFormatting, setIsFormatting] = useState(false);
   const [draft, setDraft] = useState(content);
 
   useEffect(() => {
@@ -52,6 +54,25 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
       toast({ title: 'Erro ao publicar', description: e.message || 'Tente novamente.', variant: 'destructive' });
     } finally {
       setIsPublishing(false);
+    }
+  };
+
+  const handleFormat = async () => {
+    if (!emailCliente) {
+      toast({ title: 'Email do cliente ausente', description: 'Não foi possível formatar sem email do cliente.', variant: 'destructive' });
+      return;
+    }
+    setIsFormatting(true);
+    try {
+      const formatted = await reformatSinglePlan(emailCliente);
+      setDraft(formatted);
+      setIsEditing(false);
+      toast({ title: 'Formatado', description: 'Planejamento reformatado automaticamente.' });
+    } catch (e: any) {
+      console.error('Erro ao formatar planejamento:', e);
+      toast({ title: 'Erro ao formatar', description: e.message || 'Tente novamente.', variant: 'destructive' });
+    } finally {
+      setIsFormatting(false);
     }
   };
 
@@ -89,6 +110,9 @@ export const PlanejamentoPreviewModal: React.FC<PlanejamentoPreviewModalProps> =
                 setIsEditing((v) => !v);
               }}>
                 {isEditing ? 'Cancelar edição' : 'Editar'}
+              </Button>
+              <Button variant="secondary" onClick={handleFormat} disabled={isFormatting || !emailCliente}>
+                {isFormatting ? 'Formatando...' : 'Formatar'}
               </Button>
               {isEditing && (
                 <Button variant="secondary" onClick={() => setIsEditing(false)}>
