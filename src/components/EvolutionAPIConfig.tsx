@@ -41,6 +41,10 @@ export function EvolutionAPIConfig() {
   const [showDiagModal, setShowDiagModal] = useState(false)
   const [diagLoading, setDiagLoading] = useState(false)
   const [openingManager, setOpeningManager] = useState(false)
+  const [sendNumber, setSendNumber] = useState<string>('')
+  const [sending, setSending] = useState(false)
+  const [events, setEvents] = useState<any[]>([])
+  const [eventsLoading, setEventsLoading] = useState(false)
 
   useEffect(() => {
     loadConfig();
@@ -448,6 +452,47 @@ export function EvolutionAPIConfig() {
     }
 }
 
+const sendTestMessage = async () => {
+  const raw = sendNumber || '';
+  const cleaned = raw.replace(/\D/g, '');
+  if (!cleaned) {
+    toast({ title: 'Número inválido', description: 'Informe um número com DDI e DDD', variant: 'destructive' });
+    return;
+  }
+  setSending(true);
+  try {
+    const { data, error } = await supabase.functions.invoke('evolution-verify', { body: { number: cleaned } });
+    if (error) throw error;
+    const ok = data?.message?.success || data?.success;
+    if (ok) {
+      toast({ title: 'Mensagem enviada', description: `Solicitação enviada para ${cleaned}` });
+    } else {
+      toast({ title: 'Falha no disparo', description: data?.message?.error || data?.error || 'Erro desconhecido', variant: 'destructive' });
+    }
+  } catch (e: any) {
+    toast({ title: 'Erro no disparo', description: e?.message || 'Erro desconhecido', variant: 'destructive' });
+  } finally {
+    setSending(false);
+  }
+};
+
+const fetchRecentEvents = async () => {
+  setEventsLoading(true);
+  try {
+    const { data, error } = await supabase
+      .from('evolution_webhook_events')
+      .select('id, created_at, event_type, instance_name, status')
+      .order('created_at', { ascending: false })
+      .limit(20);
+    if (error) throw error;
+    setEvents(data || []);
+  } catch (e: any) {
+    toast({ title: 'Sem permissão ou erro', description: e?.message || 'Não foi possível carregar eventos', variant: 'destructive' });
+  } finally {
+    setEventsLoading(false);
+  }
+};
+
 const copyToClipboard = async (text: string) => {
   try {
     await navigator.clipboard.writeText(text);
@@ -643,7 +688,61 @@ return (
         </TabsContent>
         
         <TabsContent value="test">
-          <EvolutionAPITester />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader>
+                <CardTitle>Disparo de teste</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Label htmlFor="send_number">Número (E.164 sem símbolos)</Label>
+                <Input
+                  id="send_number"
+                  placeholder="Ex: 5548999999999"
+                  value={sendNumber}
+                  onChange={(e) => setSendNumber(e.target.value)}
+                />
+                <div className="flex gap-2">
+                  <Button onClick={sendTestMessage} disabled={sending || !sendNumber}>
+                    {sending ? 'Enviando...' : 'Enviar via Evolution'}
+                  </Button>
+                  <Button variant="outline" onClick={() => setSendNumber('')}>Limpar</Button>
+                </div>
+                <p className="text-sm text-muted-foreground">Certifique-se de que o WhatsApp esteja conectado.</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Eventos recentes (webhook)</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" onClick={fetchRecentEvents} disabled={eventsLoading}>
+                    {eventsLoading ? 'Carregando...' : 'Atualizar'}
+                  </Button>
+                </div>
+                <div className="space-y-2 max-h-64 overflow-auto">
+                  {events.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">Sem eventos carregados. Clique em Atualizar.</p>
+                  ) : (
+                    events.map((ev) => (
+                      <div key={ev.id} className="border rounded px-3 py-2 text-sm">
+                        <div className="flex justify-between">
+                          <span className="font-medium">{ev.event_type || 'event'}</span>
+                          <span className="text-muted-foreground">{new Date(ev.created_at).toLocaleString()}</span>
+                        </div>
+                        <div className="text-muted-foreground">Instância: {ev.instance_name || '—'} | Status: {ev.status || '—'}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="mt-4">
+            <EvolutionAPITester />
+          </div>
         </TabsContent>
       </Tabs>
 

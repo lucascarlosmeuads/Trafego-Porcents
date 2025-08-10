@@ -3,3 +3,10 @@ project_id = "rxpgqunqsegypssoqpyf"
 
 [functions.evolution-webhook]
 verify_jwt = false
+
+[functions.evolution-verify]
+verify_jwt = false
+
+[functions.evolution-recover-connection]
+verify_jwt = false
+
