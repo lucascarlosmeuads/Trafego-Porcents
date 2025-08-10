@@ -1,0 +1,61 @@
+
+### Evolution API - cURL/HTTP Collection
+### Substitua os valores se quiser apontar para outra instância
+
+@baseUrl = http://72.60.7.194:8081
+@apikey = 51bf0f74a62dac67f6ad9f45ae2c319a
+@instance = lucas
+@testNumber = 554892095244
+@json = application/json
+
+### Healthcheck
+GET {{baseUrl}}/
+apikey: {{apikey}}
+Content-Type: {{json}}
+
+### Verificar estado da instância
+GET {{baseUrl}}/instance/connectionState/{{instance}}
+apikey: {{apikey}}
+Content-Type: {{json}}
+
+### Enviar mensagem de teste
+POST {{baseUrl}}/message/sendText/{{instance}}
+apikey: {{apikey}}
+Content-Type: {{json}}
+
+{
+  "number": "{{testNumber}}",
+  "text": "Teste via Evolution ✅"
+}
+
+### Logout (recuperação)
+DELETE {{baseUrl}}/instance/logout/{{instance}}
+apikey: {{apikey}}
+Content-Type: {{json}}
+
+### Connect (recuperação)
+GET {{baseUrl}}/instance/connect/{{instance}}?number={{testNumber}}
+apikey: {{apikey}}
+Content-Type: {{json}}
+
+### Supabase Edge Functions auxiliares
+
+### evolution-verify (requer JWT salvo pelo cliente; corpo opcional)
+POST https://rxpgqunqsegypssoqpyf.functions.supabase.co/evolution-verify
+Content-Type: {{json}}
+
+{
+  "base_url": "{{baseUrl}}",
+  "instance": "{{instance}}",
+  "number": "{{testNumber}}"
+}
+
+### evolution-recover-connection (requer JWT salvo pelo cliente; corpo opcional)
+POST https://rxpgqunqsegypssoqpyf.functions.supabase.co/evolution-recover-connection
+Content-Type: {{json}}
+
+{
+  "base_url": "{{baseUrl}}",
+  "instance": "{{instance}}",
+  "number": "{{testNumber}}"
+}

@@ -768,6 +768,42 @@ export type Database = {
           },
         ]
       }
+      evolution_webhook_events: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event_type: string | null
+          headers: Json | null
+          id: string
+          instance_name: string | null
+          payload: Json
+          query: Json | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string | null
+          headers?: Json | null
+          id?: string
+          instance_name?: string | null
+          payload: Json
+          query?: Json | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event_type?: string | null
+          headers?: Json | null
+          id?: string
+          instance_name?: string | null
+          payload?: Json
+          query?: Json | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       formularios_parceria: {
         Row: {
           audio_visao_futuro: string | null
