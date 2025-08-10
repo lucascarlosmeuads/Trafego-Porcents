@@ -269,14 +269,14 @@ export function LeadsParcerriaPanel() {
     try {
       setGenerating(prev => ({ ...prev, [lead.id]: true }));
 
-      const { data, error } = await supabase.functions.invoke('generate-gamified-funnel', {
-        body: { leadId: lead.id }
+      const { data, error } = await supabase.functions.invoke('generate-plan-with-assistant', {
+        body: { emailCliente: lead.email_usuario }
       });
 
       if (error) throw error;
       if (!data?.success) throw new Error(data?.error || 'Falha ao gerar planejamento');
 
-      toast({ title: 'Planejamento gerado', description: 'Planejamento estratégico criado com sucesso.' });
+      toast({ title: 'Planejamento gerado', description: 'Planejamento estratégico criado com sucesso usando assistente personalizado!' });
       setPlanContent(data.planejamento);
       const leadData = getLeadData(lead);
       setPlanClientName(leadData.nome || 'Cliente');
