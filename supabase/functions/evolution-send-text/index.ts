@@ -27,7 +27,7 @@ function withoutTrailingSlash(base: string) {
   return base.replace(/\/$/, "");
 }
 
-async function timedFetch(input: RequestInfo | URL, init?: RequestInit, timeoutMs = 15000) {
+async function timedFetch(input: RequestInfo | URL, init?: RequestInit, timeoutMs = 45000) {
   const start = Date.now();
   const controller = new AbortController();
   const t = setTimeout(() => controller.abort(), timeoutMs);
@@ -82,31 +82,69 @@ serve(async (req: Request) => {
     const baseUrl = withoutTrailingSlash(cfg?.server_url || body.base_url || "http://72.60.7.194:8081");
     const instance = body.instance || cfg?.instance_name || "lucas";
 
-    const url = `${baseUrl}/message/sendText/${encodeURIComponent(instance)}`;
+    type Attempt = { method: "GET" | "POST"; path: string };
+    const steps: Attempt[] = [
+      { method: "POST", path: "/message/sendText" },
+      { method: "GET", path: "/message/sendText" },
+      { method: "POST", path: "/message/send" },
+      { method: "GET", path: "/message/send" },
+    ];
 
-    const { res, elapsed } = await timedFetch(url, {
-      method: "POST",
-      headers: { apikey: apiKey, "Content-Type": "application/json" },
-      body: JSON.stringify({ number: normalized, text }),
-    });
+    const attempts: any[] = [];
+    let final: any = null;
+    let success = false;
 
-    let responseBody: any = null;
-    try {
-      responseBody = await res.json();
-    } catch {
-      responseBody = await res.text();
+    for (let round = 0; round < 2 && !success; round++) {
+      for (const step of steps) {
+        const url = `${baseUrl}${step.path}/${encodeURIComponent(instance)}` +
+          (step.method === "GET" ? `?number=${normalized}&text=${encodeURIComponent(text)}` : "");
+
+        try {
+          const init: RequestInit = step.method === "POST"
+            ? { method: "POST", headers: { apikey: apiKey, "Content-Type": "application/json" }, body: JSON.stringify({ number: normalized, text }) }
+            : { method: "GET", headers: { apikey: apiKey } };
+
+          const { res, elapsed } = await timedFetch(url, init, 45000);
+          let bodyOut: any = null;
+          try {
+            bodyOut = await res.json();
+          } catch {
+            bodyOut = await res.text();
+          }
+
+          const record = { round: round + 1, method: step.method, url, status: res.status, ok: res.ok, elapsed, body: bodyOut };
+          attempts.push(record);
+
+          if (res.ok && !success) {
+            success = true;
+            final = record;
+            break;
+          }
+        } catch (err: any) {
+          attempts.push({ round: round + 1, method: step.method, url, status: null, ok: false, elapsed: null, error: err?.message || String(err) });
+        }
+      }
+
+      if (!success && round === 0) {
+        // pequeno backoff antes da segunda rodada
+        await new Promise((r) => setTimeout(r, 1500));
+      }
     }
 
+    const last = attempts[attempts.length - 1] || null;
+    const chosen = final || last;
+
     const result = {
-      success: res.ok,
-      status: res.status,
-      responseTimeMs: elapsed,
+      success: Boolean(final?.ok),
+      status: chosen?.status ?? 0,
+      responseTimeMs: chosen?.elapsed ?? null,
       requestId,
-      endpoint: url,
-      body: responseBody,
+      endpoint: chosen?.url ?? null,
+      body: chosen?.body ?? null,
+      attempts,
     };
 
-    console.log("[evolution-send-text]", JSON.stringify(result));
+    console.log("[evolution-send-text]", JSON.stringify({ requestId, success: result.success, totalAttempts: attempts.length, endpoint: result.endpoint, status: result.status }));
 
     return new Response(JSON.stringify(result), {
       status: 200,

@@ -485,7 +485,9 @@ const sendTestMessage = async () => {
   setSending(true);
   setSendResult(null);
   try {
-    const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText } });
+    const base_url = (config?.server_url || formData.server_url || '').replace(/\/$/, '');
+    const instance = config?.instance_name || formData.instance_name || 'lucas';
+    const { data, error } = await supabase.functions.invoke('evolution-send-text', { body: { number: cleaned, text: sendText, base_url, instance } });
     if (error) throw error;
     setSendResult(data);
     if (data?.success) {
@@ -737,6 +739,22 @@ return (
                     <div className="mb-1">HTTP: {String(sendResult.status || '—')} • {String(sendResult.responseTimeMs || '—')}ms</div>
                     {sendResult.endpoint && (
                       <div className="mb-1 break-all">Endpoint: {String(sendResult.endpoint)}</div>
+                    )}
+                    {Array.isArray(sendResult.attempts) && (
+                      <div className="mb-2 space-y-1">
+                        <div className="font-medium">Tentativas ({sendResult.attempts.length}):</div>
+                        <div className="space-y-1 max-h-40 overflow-auto pr-1">
+                          {sendResult.attempts.map((att: any, idx: number) => (
+                            <div key={idx} className="border rounded px-2 py-1 bg-background">
+                              <div className="flex justify-between">
+                                <span>#{idx + 1} • R{String(att.round || 1)} • {String(att.method)} • {String(att.status ?? '—')}</span>
+                                <span>{String(att.elapsed ?? '—')}ms</span>
+                              </div>
+                              <div className="text-muted-foreground break-all truncate">{String(att.url || '')}</div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     )}
                     {sendResult.error && (
                       <div className="mb-1 text-destructive">Erro: {String(sendResult.error)}</div>
