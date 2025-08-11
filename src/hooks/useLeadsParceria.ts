@@ -25,7 +25,7 @@ interface LeadParceria {
   precisa_mais_info?: boolean;
 }
 
-export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
+export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string; searchTerm?: string }) {
   const [leads, setLeads] = useState<LeadParceria[]>([]);
   const [totalLeads, setTotalLeads] = useState<number>(0);
   const [loading, setLoading] = useState<boolean>(true);
@@ -35,9 +35,10 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
 
   // Memoize the filter to prevent unnecessary re-renders
   const stableFilter = useMemo(() => dateFilter, [
-    dateFilter?.startDate, 
-    dateFilter?.endDate, 
-    dateFilter?.option
+    dateFilter?.startDate,
+    dateFilter?.endDate,
+    dateFilter?.option,
+    dateFilter?.searchTerm
   ]);
 
   const fetchLeads = async () => {
@@ -56,6 +57,24 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         countQuery = countQuery
           .gte('created_at', `${dateFilter.startDate}T00:00:00`)
           .lte('created_at', `${dateFilter.endDate}T23:59:59`);
+      }
+
+      const rawTerm = (dateFilter?.searchTerm || '').trim();
+      if (rawTerm && rawTerm.length >= 2) {
+        const term = rawTerm.replace(/,/g, ' ');
+        const digits = term.replace(/\D/g, '');
+        const phoneTerm = digits.length >= 4 ? digits : term;
+        const orParts = [
+          `email_usuario.ilike.%${term}%`,
+          `respostas->>nome.ilike.%${term}%`,
+          `respostas->dadosPersonais->>nome.ilike.%${term}%`,
+          `respostas->>email.ilike.%${term}%`,
+          `respostas->dadosPersonais->>email.ilike.%${term}%`,
+          `respostas->>whatsapp.ilike.%${phoneTerm}%`,
+          `respostas->dadosPersonais->>whatsapp.ilike.%${phoneTerm}%`,
+          `respostas->>telefone.ilike.%${phoneTerm}%`
+        ].join(',');
+        countQuery = countQuery.or(orParts);
       }
 
       const { count: total, error: countError } = await countQuery;
@@ -82,6 +101,24 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
             pageQuery = pageQuery
               .gte('created_at', `${dateFilter.startDate}T00:00:00`)
               .lte('created_at', `${dateFilter.endDate}T23:59:59`);
+          }
+
+          const rawTerm = (dateFilter?.searchTerm || '').trim();
+          if (rawTerm && rawTerm.length >= 2) {
+            const term = rawTerm.replace(/,/g, ' ');
+            const digits = term.replace(/\D/g, '');
+            const phoneTerm = digits.length >= 4 ? digits : term;
+            const orParts = [
+              `email_usuario.ilike.%${term}%`,
+              `respostas->>nome.ilike.%${term}%`,
+              `respostas->dadosPersonais->>nome.ilike.%${term}%`,
+              `respostas->>email.ilike.%${term}%`,
+              `respostas->dadosPersonais->>email.ilike.%${term}%`,
+              `respostas->>whatsapp.ilike.%${phoneTerm}%`,
+              `respostas->dadosPersonais->>whatsapp.ilike.%${phoneTerm}%`,
+              `respostas->>telefone.ilike.%${phoneTerm}%`
+            ].join(',');
+            pageQuery = pageQuery.or(orParts);
           }
 
           pagePromises.push(pageQuery);

@@ -23,12 +23,14 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { RecoveryMessageSettings } from './RecoveryMessageSettings';
 import { useRecoveryTemplate, DEFAULT_RECOVERY_TEMPLATE } from '@/hooks/useRecoveryTemplate';
 import { applyTemplate, getFirstName } from '@/utils/templateUtils';
+import { useDebounce } from '@/hooks/useDebounce';
 
 export function LeadsParcerriaPanel() {
   // Filtro de data local: hoje, ontem, personalizado
   const [dateOption, setDateOption] = useState<'todos' | 'hoje' | 'ontem' | 'personalizado'>('todos');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const makeRange = (
     option: 'todos' | 'hoje' | 'ontem' | 'personalizado',
@@ -54,7 +56,12 @@ export function LeadsParcerriaPanel() {
     return undefined;
   };
 
-  const filterToUse = useMemo(() => makeRange(dateOption, customStart, customEnd), [dateOption, customStart, customEnd]);
+  const debouncedSearch = useDebounce(searchTerm, 300);
+  const filterToUse = useMemo(() => {
+    const base = makeRange(dateOption, customStart, customEnd);
+    const term = (debouncedSearch || '').trim();
+    return term.length >= 2 ? { ...(base || {}), searchTerm: term } : base;
+  }, [dateOption, customStart, customEnd, debouncedSearch]);
   
   const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(filterToUse);
   
@@ -409,6 +416,12 @@ export function LeadsParcerriaPanel() {
                 Lista de Leads
               </div>
               <div className="flex flex-wrap items-center gap-3 md:justify-end w-full md:w-auto">
+                <Input
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Buscar por nome, email ou telefone"
+                  className="w-72"
+                />
                 {/* Botão para configurar a mensagem de recuperação */}
                 <RecoveryMessageSettings />
 
