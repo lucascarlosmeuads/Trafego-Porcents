@@ -9,14 +9,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/comp
 import { MessageCircle, Calendar, User, Mail, Phone, Eye, AlertCircle, Users, DollarSign, Package, TrendingUp, CheckCircle2 } from 'lucide-react';
 import { LeadDetailsModal } from '@/components/LeadsParceria/LeadDetailsModal';
 import { LeadsExportButton } from './LeadsExportButton';
-import { useVendedorLeads } from '@/hooks/useVendedorLeads';
+import { useLeadsParceriaPaginated } from '@/hooks/useLeadsParceriaPaginated';
 import { extractLeadData, isLeadComplete, getLeadPriority, translateStatus } from '@/utils/leadDataExtractor';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoadingMoreButton } from '@/components/ui/loading-more-button';
 
 export function VendedorLeadsPanel() {
-  const { leads, loading, totalLeads, updateLeadNegociacao } = useVendedorLeads();
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -25,6 +25,7 @@ export function VendedorLeadsPanel() {
   const [dateOption, setDateOption] = useState<'hoje' | 'ontem' | 'personalizado'>('hoje');
   const [customStart, setCustomStart] = useState<string>('');
   const [customEnd, setCustomEnd] = useState<string>('');
+  
   const pad = (d: Date) => d.toISOString().slice(0, 10);
   const range = useMemo(() => {
     const today = new Date();
@@ -39,6 +40,28 @@ export function VendedorLeadsPanel() {
     if (customStart && customEnd) { return { start: customStart, end: customEnd }; }
     return undefined;
   }, [dateOption, customStart, customEnd]);
+
+  // Use hook paginado para melhor performance  
+  const dateFilter = useMemo(() => {
+    if (!range) return undefined;
+    return {
+      startDate: range.start,
+      endDate: range.end,
+      option: 'created_at'
+    };
+  }, [range]);
+  
+  const { 
+    leads, 
+    loading, 
+    totalLeads, 
+    pagination, 
+    loadMore, 
+    updateLeadNegociacao 
+  } = useLeadsParceriaPaginated({ 
+    dateFilter, 
+    initialLimit: 50 
+  });
 
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
 
@@ -413,6 +436,14 @@ export function VendedorLeadsPanel() {
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Load More Button */}
+            <LoadingMoreButton
+              onClick={loadMore}
+              loading={loading}
+              hasMore={pagination.hasMore}
+              className="border-t"
+            />
           </CardContent>
         </Card>
       </div>

@@ -9,7 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, MessageSquareText } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
-import { useLeadsParceria } from '@/hooks/useLeadsParceria';
+import { useLeadsParceriaPaginated } from '@/hooks/useLeadsParceriaPaginated';
 import { DebugDashboard } from './DebugDashboard';
 import { DataCompraColumn } from './DataCompraColumn';
 
@@ -22,6 +22,7 @@ import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
 import { PersonalizedMessageModal } from './PersonalizedMessageModal';
 import { downloadPlanPdf } from '@/utils/planDownload';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { LoadingMoreButton } from '@/components/ui/loading-more-button';
 import { RecoveryMessageSettings } from './RecoveryMessageSettings';
 import { useRecoveryTemplate, DEFAULT_RECOVERY_TEMPLATE } from '@/hooks/useRecoveryTemplate';
 import { applyTemplate, getFirstName } from '@/utils/templateUtils';
@@ -79,7 +80,20 @@ export function LeadsParcerriaPanel() {
     return null;
   }, [dateOption, customStart, customEnd]);
   
-  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch, reprocessWebhooks, syncKiwifyApprovedOrders } = useLeadsParceria(undefined);
+  const { 
+    leads, 
+    loading, 
+    pagination, 
+    loadMore, 
+    updateLeadNegociacao, 
+    updateLeadPrecisaMaisInfo, 
+    refetch,
+    reprocessWebhooks,
+    syncKiwifyApprovedOrders
+  } = useLeadsParceriaPaginated({ 
+    dateFilter: filterToUse, 
+    initialLimit: 100 
+  });
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -819,6 +833,14 @@ export function LeadsParcerriaPanel() {
                 </TableBody>
               </Table>
             </div>
+            
+            {/* Load More Button */}
+            <LoadingMoreButton
+              onClick={loadMore}
+              loading={loading}
+              hasMore={pagination.hasMore}
+              className="border-t"
+            />
           </CardContent>
         </Card>
       </div>
