@@ -6,6 +6,7 @@ import { useAuth } from '@/hooks/useAuth';
 interface LeadParceria {
   id: string;
   created_at: string;
+  data_compra?: string | null;
   tipo_negocio: string;
   email_usuario: string | null;
   planejamento_estrategico: string | null;
@@ -24,6 +25,7 @@ interface LeadParceria {
   distribuido_em: string | null;
   webhook_automatico?: boolean;
 }
+
 
 export function useVendedorLeads() {
   const [leads, setLeads] = useState<LeadParceria[]>([]);
@@ -138,9 +140,10 @@ export function useVendedorLeads() {
     try {
       const updates: any = { status_negociacao: status };
       
-      // Se comprou, marcar como pago automaticamente
+      // Se comprou, marcar como pago automaticamente e registrar data_compra
       if (status === 'comprou') {
         updates.cliente_pago = true;
+        updates.data_compra = new Date().toISOString();
       }
       
       // Se voltou para lead, resetar o status de pago (exceto se foi marcado manualmente)

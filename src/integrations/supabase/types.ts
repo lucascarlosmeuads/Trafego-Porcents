@@ -910,6 +910,7 @@ export type Database = {
           completo: boolean
           contatado_whatsapp: boolean | null
           created_at: string
+          data_compra: string | null
           distribuido_em: string | null
           email_usuario: string | null
           exportado_em: string | null
@@ -933,6 +934,7 @@ export type Database = {
           completo?: boolean
           contatado_whatsapp?: boolean | null
           created_at?: string
+          data_compra?: string | null
           distribuido_em?: string | null
           email_usuario?: string | null
           exportado_em?: string | null
@@ -956,6 +958,7 @@ export type Database = {
           completo?: boolean
           contatado_whatsapp?: boolean | null
           created_at?: string
+          data_compra?: string | null
           distribuido_em?: string | null
           email_usuario?: string | null
           exportado_em?: string | null

@@ -40,7 +40,9 @@ export function VendedorLeadsPanel() {
     return undefined;
   }, [dateOption, customStart, customEnd]);
 
-  const dateFilteredLeads = useMemo(() => {
+  const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
+
+  const dateFilteredByCreated = useMemo(() => {
     if (!range) return leads;
     const start = new Date(`${range.start}T00:00:00`);
     const end = new Date(`${range.end}T23:59:59`);
@@ -50,9 +52,25 @@ export function VendedorLeadsPanel() {
     });
   }, [leads, range]);
 
-  const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
-  const leadsCount = useMemo(() => dateFilteredLeads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [dateFilteredLeads, purchasedStatuses]);
-  const compraramCount = useMemo(() => dateFilteredLeads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [dateFilteredLeads, purchasedStatuses]);
+  const dateFilteredByCompra = useMemo(() => {
+    if (!range) return leads;
+    const start = new Date(`${range.start}T00:00:00`);
+    const end = new Date(`${range.end}T23:59:59`);
+    return leads.filter(l => {
+      const baseDateStr = l.data_compra || l.updated_at || l.created_at;
+      const d = new Date(baseDateStr);
+      return d >= start && d <= end;
+    });
+  }, [leads, range]);
+
+  const leadsCount = useMemo(
+    () => dateFilteredByCreated.filter(l => !purchasedStatuses.has(l.status_negociacao)).length,
+    [dateFilteredByCreated, purchasedStatuses]
+  );
+  const compraramCount = useMemo(
+    () => dateFilteredByCompra.filter(l => purchasedStatuses.has(l.status_negociacao)).length,
+    [dateFilteredByCompra, purchasedStatuses]
+  );
 
   const handleWhatsAppClick = (whatsapp: string) => {
     // Remove todos os caracteres não numéricos
@@ -99,10 +117,17 @@ export function VendedorLeadsPanel() {
   };
 
   // Ordenar leads por prioridade (mais completos primeiro) e depois por data
-  const sortedLeads = [...dateFilteredLeads].sort((a, b) => {
+  const activeDateFiltered = useMemo(
+    () => (activeTab === 'compraram' ? dateFilteredByCompra : dateFilteredByCreated),
+    [activeTab, dateFilteredByCompra, dateFilteredByCreated]
+  );
+
+  const sortedLeads = [...activeDateFiltered].sort((a, b) => {
     const priorityDiff = getLeadPriority(b) - getLeadPriority(a);
     if (priorityDiff !== 0) return priorityDiff;
-    return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    const dateA = new Date(activeTab === 'compraram' ? (a.data_compra || a.updated_at || a.created_at) : a.created_at).getTime();
+    const dateB = new Date(activeTab === 'compraram' ? (b.data_compra || b.updated_at || b.created_at) : b.created_at).getTime();
+    return dateB - dateA;
   });
 
   const baseLeads = useMemo(() => {
@@ -277,7 +302,7 @@ export function VendedorLeadsPanel() {
                     return (
                       <TableRow key={lead.id} className={getRowClassName(lead)}>
                         <TableCell className="text-sm">
-                          {format(new Date(lead.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                          {format(new Date(activeTab === 'compraram' ? (lead.data_compra || lead.updated_at || lead.created_at) : lead.created_at), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
                         </TableCell>
                         <TableCell className="font-medium">
                           <TooltipProvider>
