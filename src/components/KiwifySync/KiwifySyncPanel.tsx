@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, Download, Calendar, CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { invokeEdge } from '@/integrations/supabase/invokeEdge';
 
 interface SyncResult {
   totalFetched: number;
@@ -56,28 +57,21 @@ export const KiwifySyncPanel = () => {
     try {
       console.log('Iniciando sincronização Kiwify:', { startDate, endDate });
       
-      const { data, error: syncError } = await supabase.functions.invoke('kiwify-sync-approved-orders', {
-        body: {
-          start_date: startDate,
-          end_date: endDate
-        }
+      const res = await invokeEdge<SyncResult>('kiwify-sync-approved-orders', {
+        start_date: startDate,
+        end_date: endDate,
       });
 
-      if (syncError) {
-        console.error('Erro na sincronização:', syncError);
-        setError(`Erro na sincronização: ${syncError.message}`);
-        toast.error('Erro ao executar sincronização');
+      if (res.error || !res.data) {
+        console.error('Erro na sincronização:', res.error);
+        setError(`Erro na sincronização: ${res.error?.message || 'Falha ao chamar a Edge Function'}`);
+        toast.error(res.error?.message || 'Erro ao executar sincronização');
         return;
       }
 
-      console.log('Resultado da sincronização:', data);
+      const data = res.data;
       
-      if (data.error) {
-        setError(`Erro da API Kiwify: ${data.error}`);
-        toast.error('Erro de credenciais Kiwify. Verifique as configurações.');
-        return;
-      }
-      
+      // OK
       setSyncResult(data);
       
       toast.success(data.summary || `Sincronização concluída! ${data.updated} atualizados, ${data.inserted} inseridos`);
