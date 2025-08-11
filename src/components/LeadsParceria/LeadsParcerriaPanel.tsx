@@ -653,6 +653,7 @@ export function LeadsParcerriaPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
+                    <TableHead>#</TableHead>
                     <TableHead>{activeTab === 'compraram' ? 'Data Compra' : 'Data/Hora'}</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
@@ -663,11 +664,17 @@ export function LeadsParcerriaPanel() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLeads.map((lead) => {
+                  {filteredLeads.map((lead, index) => {
                     const leadData = getLeadData(lead);
+                    const leadNumber = (pagination.page - 1) * pagination.limit + index + 1;
                     
                     return (
                       <TableRow key={lead.id} className={getRowClassName(lead)}>
+                        <TableCell>
+                          <div className="font-mono text-sm text-muted-foreground">
+                            #{leadNumber.toString().padStart(3, '0')}
+                          </div>
+                        </TableCell>
                         <DataCompraColumn lead={lead} activeTab={activeTab} />
                         <TableCell>
                           <div className="font-medium">{leadData.nome}</div>
@@ -834,13 +841,27 @@ export function LeadsParcerriaPanel() {
               </Table>
             </div>
             
-            {/* Load More Button */}
-            <LoadingMoreButton
-              onClick={loadMore}
-              loading={loading}
-              hasMore={pagination.hasMore}
-              className="border-t"
-            />
+            {/* Paginação com números */}
+            <div className="flex items-center justify-between px-2 py-4 border-t">
+              <div className="text-sm text-muted-foreground">
+                Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, filteredLeads.length)} de {filteredLeads.length} resultados
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={loadMore}
+                  disabled={!pagination.hasMore || loading}
+                >
+                  {loading ? 'Carregando...' : pagination.hasMore ? 'Próxima página' : 'Sem mais dados'}
+                </Button>
+                
+                <div className="text-sm text-muted-foreground">
+                  Página {pagination.page}
+                </div>
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>
