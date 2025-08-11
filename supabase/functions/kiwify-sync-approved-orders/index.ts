@@ -82,7 +82,11 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     let totalFetched = 0;
     let updated = 0;
     let inserted = 0;
+    let alreadySynced = 0;
+    let skipped = 0;
     const details: any[] = [];
+    
+    console.log(`Starting Kiwify sync for period: ${startISO} to ${endISO}`);
 
     while (true) {
       url.searchParams.set('page', String(page));
@@ -110,6 +114,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
         const paidAt = paidAtRaw ? new Date(paidAtRaw).toISOString() : new Date().toISOString();
 
         if (!email) {
+          skipped++;
           details.push({ skipped: true, reason: 'no_email', order_id: order?.id });
           continue;
         }
@@ -125,6 +130,14 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
         }
 
         if (existing?.id) {
+          // Check if already synced to avoid unnecessary updates
+          if (existing.cliente_pago === true && existing.status_negociacao === 'comprou') {
+            alreadySynced++;
+            details.push({ email, order_id: order?.id, action: 'already_synced', existing_data: existing });
+            continue;
+          }
+          
+          console.log(`Updating existing lead: ${email} (ID: ${existing.id})`);
           const { error: updErr } = await supabase
             .from('formularios_parceria')
             .update({
@@ -138,28 +151,34 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
             details.push({ email, order_id: order?.id, action: 'update_failed', error: updErr?.message });
           } else {
             updated++;
-            details.push({ email, order_id: order?.id, action: 'updated' });
+            details.push({ email, order_id: order?.id, action: 'updated', lead_id: existing.id });
           }
         } else {
-          // Insert minimal purchased lead
-          const { error: insErr } = await supabase
+          // Insert minimal purchased lead for new Kiwify customers
+          console.log(`Creating new lead for Kiwify customer: ${email}`);
+          const { data: newLead, error: insErr } = await supabase
             .from('formularios_parceria')
             .insert({
               email_usuario: email,
               tipo_negocio: 'digital',
-              respostas: {},
-              produto_descricao: 'Compra via Kiwify',
+              respostas: {
+                nome: order?.buyer_name || order?.customer?.name || 'Cliente Kiwify',
+                origem: 'kiwify_sync'
+              },
+              produto_descricao: `Compra via Kiwify - Produto: ${order?.product?.name || 'Produto Kiwify'}`,
               cliente_pago: true,
               status_negociacao: 'comprou',
               data_compra: paidAt,
               completo: false,
-            });
+            })
+            .select('id')
+            .single();
           if (insErr) {
             console.error('Insert error', insErr);
             details.push({ email, order_id: order?.id, action: 'insert_failed', error: insErr?.message });
           } else {
             inserted++;
-            details.push({ email, order_id: order?.id, action: 'inserted' });
+            details.push({ email, order_id: order?.id, action: 'inserted', lead_id: newLead?.id });
           }
         }
       }
@@ -170,7 +189,18 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
       page += 1;
     }
 
-    const result = { totalFetched, updated, inserted, start_date: body.start_date, end_date: body.end_date, details };
+    const result = { 
+      totalFetched, 
+      updated, 
+      inserted, 
+      alreadySynced,
+      skipped,
+      start_date: body.start_date, 
+      end_date: body.end_date, 
+      summary: `Processadas ${totalFetched} vendas da Kiwify: ${updated} atualizadas, ${inserted} inseridas, ${alreadySynced} já sincronizadas, ${skipped} ignoradas`,
+      details 
+    };
+    console.log('Sync completed:', result.summary);
     return new Response(JSON.stringify(result), { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   } catch (e: any) {
     console.error('Sync error', e);

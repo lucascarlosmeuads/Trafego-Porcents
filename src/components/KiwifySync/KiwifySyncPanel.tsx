@@ -13,9 +13,21 @@ interface SyncResult {
   totalFetched: number;
   updated: number;
   inserted: number;
+  alreadySynced: number;
+  skipped: number;
   start_date: string;
   end_date: string;
-  details: any[];
+  summary: string;
+  details: Array<{
+    email?: string;
+    order_id?: string;
+    action?: string;
+    error?: string;
+    skipped?: boolean;
+    reason?: string;
+    lead_id?: string;
+    existing_data?: any;
+  }>;
 }
 
 export const KiwifySyncPanel = () => {
@@ -59,9 +71,16 @@ export const KiwifySyncPanel = () => {
       }
 
       console.log('Resultado da sincronização:', data);
+      
+      if (data.error) {
+        setError(`Erro da API Kiwify: ${data.error}`);
+        toast.error('Erro de credenciais Kiwify. Verifique as configurações.');
+        return;
+      }
+      
       setSyncResult(data);
       
-      toast.success(`Sincronização concluída! ${data.updated} atualizados, ${data.inserted} inseridos`);
+      toast.success(data.summary || `Sincronização concluída! ${data.updated} atualizados, ${data.inserted} inseridos`);
       
     } catch (err: any) {
       console.error('Erro inesperado:', err);
@@ -164,18 +183,26 @@ export const KiwifySyncPanel = () => {
                         <span className="font-medium">Sincronização Concluída</span>
                       </div>
                       
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 text-sm">
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-primary">{syncResult.totalFetched}</div>
-                          <div className="text-muted-foreground">Vendas Encontradas</div>
+                          <div className="text-xl font-bold text-primary">{syncResult.totalFetched}</div>
+                          <div className="text-xs text-muted-foreground">Vendas Kiwify</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-green-600">{syncResult.updated}</div>
-                          <div className="text-muted-foreground">Leads Atualizados</div>
+                          <div className="text-xl font-bold text-green-600">{syncResult.updated}</div>
+                          <div className="text-xs text-muted-foreground">Atualizados</div>
                         </div>
                         <div className="text-center">
-                          <div className="text-2xl font-bold text-blue-600">{syncResult.inserted}</div>
-                          <div className="text-muted-foreground">Novos Registros</div>
+                          <div className="text-xl font-bold text-blue-600">{syncResult.inserted}</div>
+                          <div className="text-xs text-muted-foreground">Inseridos</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-yellow-600">{syncResult.alreadySynced || 0}</div>
+                          <div className="text-xs text-muted-foreground">Já Sync.</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-xl font-bold text-gray-500">{syncResult.skipped || 0}</div>
+                          <div className="text-xs text-muted-foreground">Ignorados</div>
                         </div>
                       </div>
                       
@@ -197,10 +224,23 @@ export const KiwifySyncPanel = () => {
                           <div key={index} className="text-xs py-1 flex items-center gap-2">
                             {detail.action === 'updated' && <CheckCircle className="h-3 w-3 text-green-600" />}
                             {detail.action === 'inserted' && <CheckCircle className="h-3 w-3 text-blue-600" />}
-                            {detail.skipped && <AlertTriangle className="h-3 w-3 text-yellow-600" />}
-                            <span>{detail.email}</span>
-                            <Badge variant="outline" className="text-xs">
-                              {detail.action || (detail.skipped ? 'ignorado' : 'processado')}
+                            {detail.action === 'already_synced' && <CheckCircle className="h-3 w-3 text-yellow-600" />}
+                            {detail.action?.includes('failed') && <XCircle className="h-3 w-3 text-red-600" />}
+                            {detail.skipped && <AlertTriangle className="h-3 w-3 text-gray-600" />}
+                            <span className="flex-1 truncate">{detail.email}</span>
+                            <Badge variant="outline" className={`text-xs ${
+                              detail.action === 'updated' ? 'bg-green-50 text-green-700' :
+                              detail.action === 'inserted' ? 'bg-blue-50 text-blue-700' :
+                              detail.action === 'already_synced' ? 'bg-yellow-50 text-yellow-700' :
+                              detail.action?.includes('failed') ? 'bg-red-50 text-red-700' :
+                              'bg-gray-50 text-gray-700'
+                            }`}>
+                              {detail.action === 'updated' ? 'Atualizado' :
+                               detail.action === 'inserted' ? 'Novo Lead' :
+                               detail.action === 'already_synced' ? 'Já Sincronizado' :
+                               detail.action?.includes('failed') ? 'Erro' :
+                               detail.skipped ? 'Ignorado' :
+                               detail.action || 'Processado'}
                             </Badge>
                           </div>
                         ))}
