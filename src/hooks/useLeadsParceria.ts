@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { enableRealtimeForTable } from '@/utils/realtimeUtils';
@@ -49,7 +50,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     try {
       const columns = 'id, created_at, data_compra, tipo_negocio, email_usuario, planejamento_estrategico, respostas, completo, updated_at, audio_visao_futuro, produto_descricao, valor_medio_produto, ja_teve_vendas, visao_futuro_texto, cliente_pago, contatado_whatsapp, status_negociacao, vendedor_responsavel, distribuido_em, precisa_mais_info';
 
-      // 1) Buscar apenas a contagem total com o mesmo filtro
+      // 1) Buscar apenas a contagem total com o mesmo filtro (por created_at)
       let countQuery = supabase
         .from('formularios_parceria')
         .select('id', { count: 'exact', head: true });
@@ -66,7 +67,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       const totalToFetch = total || 0;
       const pageSize = 1000;
 
-      // 2) Buscar todas as páginas em paralelo respeitando o filtro
+      // 2) Buscar todas as páginas em paralelo respeitando o filtro por created_at
       const pagePromises: any[] = [];
       if (totalToFetch > 0) {
         const pages = Math.ceil(totalToFetch / pageSize);
@@ -206,7 +207,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         }
       }
 
-      // 4) Processar leads para incluir flag de webhook automático e data do webhook
+      // 4) Processar leads para incluir flag de webhook automático e data do webhook, e auto-sync quando necessário
       const processedLeads = (leadsData || []).map((lead: any) => {
         const emailNorm = normalizeEmail(lead.email_usuario);
         let webhookDate = emailNorm ? (emailToWebhookDate.get(emailNorm) || null) : null;
@@ -257,8 +258,48 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         };
       });
 
-      setLeads(processedLeads as LeadParceria[]);
-      setTotalLeads(totalToFetch);
+      // 5) Filtro por "vendas de hoje" (por data de compra) quando solicitado
+      const option = dateFilter?.option?.toLowerCase();
+      const getPurchaseDateIso = (l: any) => l?.data_compra || l?.webhook_data_compra || null;
+
+      if (option === 'purchase' || option === 'data_compra' || option === 'paid') {
+        // Determinar range: se não vier range, assumir "hoje"
+        const now = new Date();
+        const start = dateFilter?.startDate ? new Date(`${dateFilter.startDate}T00:00:00`) : new Date(now);
+        const end = dateFilter?.endDate ? new Date(`${dateFilter.endDate}T23:59:59`) : new Date(now);
+        if (!dateFilter?.startDate && !dateFilter?.endDate) {
+          start.setHours(0, 0, 0, 0);
+          end.setHours(23, 59, 59, 999);
+        }
+
+        console.log('🗂️ Aplicando filtro por data de compra:', {
+          start: start.toISOString(),
+          end: end.toISOString(),
+          originalCount: processedLeads.length,
+        });
+
+        // Apenas leads com compra efetiva no intervalo
+        const finalLeads = (processedLeads as LeadParceria[])
+          .filter((l) => {
+            const iso = getPurchaseDateIso(l);
+            if (!iso) return false;
+            const dt = new Date(iso);
+            return dt >= start && dt <= end && (l.cliente_pago === true || l.status_negociacao === 'comprou');
+          })
+          .sort((a, b) => {
+            const da = new Date(getPurchaseDateIso(a) || 0).getTime();
+            const db = new Date(getPurchaseDateIso(b) || 0).getTime();
+            return db - da;
+          });
+
+        console.log('✅ Filtro por compra aplicado. Exibindo:', finalLeads.length);
+        setLeads(finalLeads);
+        setTotalLeads(finalLeads.length);
+      } else {
+        // Comportamento padrão: sem filtro especial por compra
+        setLeads(processedLeads as LeadParceria[]);
+        setTotalLeads(totalToFetch);
+      }
     } catch (err: any) {
       console.error('Erro ao buscar leads de parceria:', err);
       setError(err.message || 'Erro ao carregar os leads');
