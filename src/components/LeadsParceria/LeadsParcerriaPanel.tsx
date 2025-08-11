@@ -9,9 +9,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, MessageSquareText } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
-import { useLeadsParceriaPaginated } from '@/hooks/useLeadsParceriaPaginated';
-import { DebugDashboard } from './DebugDashboard';
-import { DataCompraColumn } from './DataCompraColumn';
+import { useLeadsParceria } from '@/hooks/useLeadsParceria';
 
 import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
@@ -22,7 +20,6 @@ import { PlanejamentoPreviewModal } from './PlanejamentoPreviewModal';
 import { PersonalizedMessageModal } from './PersonalizedMessageModal';
 import { downloadPlanPdf } from '@/utils/planDownload';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { LoadingMoreButton } from '@/components/ui/loading-more-button';
 import { RecoveryMessageSettings } from './RecoveryMessageSettings';
 import { useRecoveryTemplate, DEFAULT_RECOVERY_TEMPLATE } from '@/hooks/useRecoveryTemplate';
 import { applyTemplate, getFirstName } from '@/utils/templateUtils';
@@ -59,41 +56,8 @@ export function LeadsParcerriaPanel() {
 
   const filterToUse = useMemo(() => makeRange(dateOption, customStart, customEnd), [dateOption, customStart, customEnd]);
   
-  const computedRange = useMemo(() => {
-    if (dateOption === 'todos') return null as null | { start: number; end: number };
-    const today = new Date();
-    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
-    const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return x; };
-
-    if (dateOption === 'hoje') {
-      return { start: startOfDay(today).getTime(), end: endOfDay(today).getTime() };
-    }
-    if (dateOption === 'ontem') {
-      const y = new Date(); y.setDate(today.getDate() - 1);
-      return { start: startOfDay(y).getTime(), end: endOfDay(y).getTime() };
-    }
-    if (dateOption === 'personalizado' && customStart && customEnd) {
-      const s = startOfDay(new Date(customStart));
-      const e = endOfDay(new Date(customEnd));
-      return { start: s.getTime(), end: e.getTime() };
-    }
-    return null;
-  }, [dateOption, customStart, customEnd]);
+  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(filterToUse);
   
-  const { 
-    leads, 
-    loading, 
-    pagination, 
-    loadMore, 
-    updateLeadNegociacao, 
-    updateLeadPrecisaMaisInfo, 
-    refetch,
-    reprocessWebhooks,
-    syncKiwifyApprovedOrders
-  } = useLeadsParceriaPaginated({ 
-    dateFilter: filterToUse, 
-    initialLimit: 100 
-  });
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -112,37 +76,8 @@ export function LeadsParcerriaPanel() {
   const [personalizedClient, setPersonalizedClient] = useState<{ name?: string; phone?: string | null }>({});
   // Conjuntos e contadores por aba
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
-  const leadsCount = useMemo(() => {
-    const base = leads.filter(l => !purchasedStatuses.has(l.status_negociacao));
-    if (!computedRange) return base.length;
-    const { start, end } = computedRange;
-    return base.filter((l: any) => {
-      const t = new Date(l.created_at).getTime();
-      return t >= start && t <= end;
-    }).length;
-  }, [leads, purchasedStatuses, computedRange]);
-
-  const webhookComprasCount = useMemo(() => {
-    const base = leads.filter(l => l.webhook_automatico);
-    if (!computedRange) return base.length;
-    const { start, end } = computedRange;
-    return base.filter((l: any) => {
-      const dtStr = (l.webhook_data_compra || l.data_compra) as string | null;
-      const dt = dtStr ? new Date(dtStr).getTime() : NaN;
-      return !isNaN(dt) && dt >= start && dt <= end;
-    }).length;
-  }, [leads, computedRange]);
-
-  const systemCompraramCount = useMemo(() => {
-    const base = leads.filter(l => purchasedStatuses.has(l.status_negociacao) && l.cliente_pago);
-    if (!computedRange) return base.length;
-    const { start, end } = computedRange;
-    return base.filter((l: any) => {
-      const dtStr = (l.data_compra || l.webhook_data_compra) as string | null;
-      const dt = dtStr ? new Date(dtStr).getTime() : NaN;
-      return !isNaN(dt) && dt >= start && dt <= end;
-    }).length;
-  }, [leads, purchasedStatuses, computedRange]);
+  const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
+  const compraramCount = useMemo(() => leads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
 
   // Elegibilidade para geração (sem plano e com informação suficiente)
   const compraramLeads = useMemo(
@@ -222,99 +157,27 @@ export function LeadsParcerriaPanel() {
         </Badge>
       );
     }
-    if (lead.webhook_data_compra) {
-      return (
-        <Badge className="bg-emerald-600 text-white">
-          Aprovado (Webhook)
-        </Badge>
-      );
-    }
     return null;
   };
 
   const baseLeads = useMemo(() => {
     return leads.filter(l => (activeTab === 'compraram'
-      ? ((purchasedStatuses.has(l.status_negociacao) && l.cliente_pago) || !!l.webhook_data_compra)
+      ? purchasedStatuses.has(l.status_negociacao)
       : !purchasedStatuses.has(l.status_negociacao)));
   }, [leads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {
-    let list: any[] = baseLeads as any[];
-
-    // Aplicar filtro de data: created_at para Leads, data_compra para Compraram
-    if (computedRange) {
-      const { start, end } = computedRange;
-      if (activeTab === 'compraram') {
-        list = list.filter((lead: any) => {
-          const dtStr = (lead.data_compra || lead.webhook_data_compra) as string | null;
-          const dt = dtStr ? new Date(dtStr).getTime() : NaN;
-          return !isNaN(dt) && dt >= start && dt <= end;
-        });
-      } else {
-        list = list.filter((lead: any) => {
-          const t = new Date(lead.created_at).getTime();
-          return t >= start && t <= end;
-        });
-      }
-    }
-
-    if (activeTab !== 'compraram' && statusFilter !== 'todos') {
+    let list = baseLeads;
+    if (activeTab !== 'compraram' && statusFilter === 'todos') {
+      // keep as is
+    } else if (activeTab !== 'compraram') {
       list = list.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
     }
-
     if (showNeedsInfoOnly) {
       list = list.filter(lead => !!lead.precisa_mais_info);
     }
-
-    if (activeTab === 'compraram') {
-      list = [...list].sort((a, b) => {
-        const aDtStr = (a.data_compra || a.webhook_data_compra || a.created_at) as string;
-        const bDtStr = (b.data_compra || b.webhook_data_compra || b.created_at) as string;
-        const aDt = aDtStr ? new Date(aDtStr).getTime() : 0;
-        const bDt = bDtStr ? new Date(bDtStr).getTime() : 0;
-        return bDt - aDt;
-      });
-    }
-
     return list;
-  }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly, computedRange]);
-
-  const getSelectedRangeStrings = () => {
-    const pad = (d: Date) => d.toISOString().slice(0, 10);
-    const today = new Date();
-    const yesterday = new Date();
-    yesterday.setDate(today.getDate() - 1);
-
-    if (dateOption === 'hoje') {
-      const s = pad(today);
-      return { startDate: s, endDate: s };
-    }
-    if (dateOption === 'ontem') {
-      const s = pad(yesterday);
-      return { startDate: s, endDate: s };
-    }
-    if (dateOption === 'personalizado' && customStart && customEnd) {
-      return { startDate: customStart, endDate: customEnd };
-    }
-    return null;
-  };
-
-  const handleReprocessToday = async () => {
-    const today = new Date().toISOString().slice(0, 10);
-    return await reprocessWebhooks({ startDate: today, endDate: today });
-  };
-
-  const handleReprocessRange = async () => {
-    const range = getSelectedRangeStrings();
-    if (!range) return await handleReprocessToday();
-    return await reprocessWebhooks(range);
-  };
-
-  const handleSyncRange = async () => {
-    const range = getSelectedRangeStrings();
-    if (!range) return await syncKiwifyApprovedOrders({ startDate: new Date().toISOString().slice(0,10), endDate: new Date().toISOString().slice(0,10) });
-    return await syncKiwifyApprovedOrders(range);
-  };
+  }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly]);
 
   const handleBulkGenerate = async () => {
     try {
@@ -538,16 +401,6 @@ export function LeadsParcerriaPanel() {
           </div>
         </div>
 
-        {dateOption !== 'todos' && (
-          <DebugDashboard 
-            leads={leads} 
-            dateRange={computedRange} 
-            onReprocessRange={handleReprocessRange}
-            onSyncRange={handleSyncRange}
-            periodLabel={dateOption === 'hoje' ? 'hoje' : (dateOption === 'ontem' ? 'ontem' : 'período')}
-          />
-        )}
-
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -562,7 +415,7 @@ export function LeadsParcerriaPanel() {
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
                     <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
-                    <TabsTrigger value="compraram">Compraram (Sist {systemCompraramCount} | Webhook {webhookComprasCount})</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram ({compraramCount})</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <div className="flex items-center gap-2">
@@ -653,8 +506,7 @@ export function LeadsParcerriaPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>#</TableHead>
-                    <TableHead>{activeTab === 'compraram' ? 'Data Compra' : 'Data/Hora'}</TableHead>
+                    <TableHead>Data/Hora</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>WhatsApp</TableHead>
@@ -664,18 +516,21 @@ export function LeadsParcerriaPanel() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredLeads.map((lead, index) => {
+                  {filteredLeads.map((lead) => {
                     const leadData = getLeadData(lead);
-                    const leadNumber = (pagination.page - 1) * pagination.limit + index + 1;
                     
                     return (
                       <TableRow key={lead.id} className={getRowClassName(lead)}>
                         <TableCell>
-                          <div className="font-mono text-sm text-muted-foreground">
-                            #{leadNumber.toString().padStart(3, '0')}
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {format(new Date(lead.created_at), 'dd/MM/yyyy', { locale: ptBR })}
+                            </div>
+                            <div className="text-muted-foreground">
+                              {format(new Date(lead.created_at), 'HH:mm', { locale: ptBR })}
+                            </div>
                           </div>
                         </TableCell>
-                        <DataCompraColumn lead={lead} activeTab={activeTab} />
                         <TableCell>
                           <div className="font-medium">{leadData.nome}</div>
                           <div className="text-sm text-muted-foreground">
@@ -839,28 +694,6 @@ export function LeadsParcerriaPanel() {
                   })}
                 </TableBody>
               </Table>
-            </div>
-            
-            {/* Paginação com números */}
-            <div className="flex items-center justify-between px-2 py-4 border-t">
-              <div className="text-sm text-muted-foreground">
-                Mostrando {((pagination.page - 1) * pagination.limit) + 1} a {Math.min(pagination.page * pagination.limit, filteredLeads.length)} de {filteredLeads.length} resultados
-              </div>
-              
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={loadMore}
-                  disabled={!pagination.hasMore || loading}
-                >
-                  {loading ? 'Carregando...' : pagination.hasMore ? 'Próxima página' : 'Sem mais dados'}
-                </Button>
-                
-                <div className="text-sm text-muted-foreground">
-                  Página {pagination.page}
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

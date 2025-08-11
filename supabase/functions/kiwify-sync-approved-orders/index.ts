@@ -50,8 +50,22 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
       client_secret: KIWIFY_CLIENT_SECRET,
     }).toString();
 
-    // Multiple OAuth endpoints to try
     const tokenAttempts = [
+      {
+        url: 'https://public-api.kiwify.com/v1/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
+      {
+        url: 'https://api.kiwify.com/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
+      {
+        url: 'https://api.kiwify.com/v1/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
       {
         url: 'https://api.kiwify.com/oauth/token',
         headers: {
@@ -60,20 +74,6 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
           Authorization: `Basic ${btoa(`${KIWIFY_CLIENT_ID}:${KIWIFY_CLIENT_SECRET}`)}`,
         },
         body: new URLSearchParams({ grant_type: 'client_credentials' }).toString(),
-      },
-      {
-        url: 'https://public-api.kiwify.com/v1/oauth/token',
-        headers: { 
-          'Content-Type': 'application/x-www-form-urlencoded', 
-          Accept: 'application/json',
-          'User-Agent': 'Supabase-EdgeFunction/1.0'
-        },
-        body: formBody,
-      },
-      {
-        url: 'https://api.kiwify.com/v1/oauth/token',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
-        body: formBody,
       },
     ];
 
@@ -117,35 +117,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 
     console.log('OAuth token obtained successfully');
 
-    // Fetch approved orders from Kiwify API with enhanced error handling
-    console.log(`Requesting Kiwify orders: ${startISO} to ${endISO}`);
-    const baseUrls = [
-      'https://api.kiwify.com/v1/orders',
-      'https://public-api.kiwify.com/v1/orders'
-    ];
-    
-    let selectedUrl = baseUrls[0];
-    for (const baseUrl of baseUrls) {
-      try {
-        const testResp = await fetch(`${baseUrl}?page_size=1`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            'Content-Type': 'application/json',
-            'x-kiwify-account-id': KIWIFY_ACCOUNT_ID,
-            'User-Agent': 'Supabase-EdgeFunction/1.0'
-          },
-        });
-        if (testResp.ok) {
-          selectedUrl = baseUrl;
-          console.log(`Using Kiwify API endpoint: ${selectedUrl}`);
-          break;
-        }
-      } catch (e) {
-        console.log(`Failed to connect to ${baseUrl}:`, e);
-      }
-    }
-
-    const url = new URL(selectedUrl);
+    // Fetch approved orders from Kiwify API
+    const url = new URL('https://api.kiwify.com/v1/orders');
     url.searchParams.set('status', 'approved');
     url.searchParams.set('start_date', startISO);
     url.searchParams.set('end_date', endISO);
@@ -165,14 +138,11 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 
     while (true) {
       url.searchParams.set('page', String(page));
-      console.log(`Fetching page ${page} from ${url.toString()}`);
       const resp = await fetch(url.toString(), {
         headers: {
           Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
           'x-kiwify-account-id': KIWIFY_ACCOUNT_ID,
-          'User-Agent': 'Supabase-EdgeFunction/1.0',
-          'Accept': 'application/json'
         },
       });
       if (!resp.ok) {

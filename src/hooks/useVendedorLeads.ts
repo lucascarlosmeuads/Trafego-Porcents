@@ -24,7 +24,6 @@ interface LeadParceria {
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
   webhook_automatico?: boolean;
-  webhook_data_compra?: string | null;
 }
 
 
@@ -46,9 +45,8 @@ export function useVendedorLeads() {
         return;
       }
 
-      // Habilitar realtime para as tabelas necessárias
+      // Habilitar realtime para a tabela
       await enableRealtimeForTable('formularios_parceria');
-      await enableRealtimeForTable('kiwify_webhook_logs');
 
       // Buscar apenas leads atribuídos ao vendedor logado
       const { data, error, count } = await supabase
@@ -97,8 +95,8 @@ export function useVendedorLeads() {
   useEffect(() => {
     fetchLeads();
 
-    // Realtime: mudanças no formulário
-    const formsChannel = supabase
+    // Configurar escuta de eventos em tempo real
+    const channel = supabase
       .channel('vendedor_leads_changes')
       .on(
         'postgres_changes',
@@ -108,33 +106,15 @@ export function useVendedorLeads() {
           table: 'formularios_parceria',
         },
         () => {
-          console.log('📡 Realtime vendedor: mudança em formularios_parceria -> refetch');
+          // Quando houver qualquer mudança, recarregar os dados
           fetchLeads();
         }
       )
       .subscribe();
 
-    // Realtime: novos webhooks (pagos) chegando
-    const webhookChannel = supabase
-      .channel('vendedor_webhook_inserts')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'kiwify_webhook_logs',
-        },
-        (payload) => {
-          const email = (payload?.new as any)?.email_comprador;
-          console.log('🧲 Realtime vendedor: novo webhook recebido para', email, '-> refetch');
-          fetchLeads();
-        }
-      )
-      .subscribe();
-
+    // Limpar a inscrição quando o componente for desmontado
     return () => {
-      supabase.removeChannel(formsChannel);
-      supabase.removeChannel(webhookChannel);
+      supabase.removeChannel(channel);
     };
   }, [user?.email]);
 
