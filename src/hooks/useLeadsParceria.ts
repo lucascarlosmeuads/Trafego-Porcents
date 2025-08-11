@@ -24,6 +24,7 @@ interface LeadParceria {
   distribuido_em: string | null;
   webhook_automatico?: boolean;
   precisa_mais_info?: boolean;
+  webhook_data_compra?: string | null;
 }
 
 export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: string; option?: string }) {
@@ -103,6 +104,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         .filter((e: any) => typeof e === 'string' && e.length > 0);
 
       let emailsWebhook = new Set<string>();
+      const emailToWebhookDate = new Map<string, string>();
       if (leadEmails.length > 0) {
         const chunkSize = 300;
         const chunks: string[][] = [];
@@ -113,7 +115,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         const webhookPromises: any[] = chunks.map(chunk =>
           supabase
             .from('kiwify_webhook_logs')
-            .select('email_comprador')
+            .select('email_comprador, webhook_data, created_at')
             .eq('status_processamento', 'sucesso')
             .in('email_comprador', chunk)
         );
@@ -125,14 +127,51 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         }
 
         const webhookData = webhookResults.flatMap(r => ((r as any).data || []));
+        // Mapear email -> última data de compra extraída do payload do webhook
+        const emailToWebhookDate = new Map<string, string>();
+        const extractDateIso = (...vals: any[]) => {
+          for (const v of vals) {
+            if (v && typeof v === 'string' && v.trim().length > 0) {
+              const d = new Date(v);
+              if (!isNaN(d.getTime())) return d.toISOString();
+            }
+          }
+          return null as string | null;
+        };
+        for (const log of webhookData) {
+          const wd = log?.webhook_data || {};
+          const dt = extractDateIso(
+            wd?.approved_at,
+            wd?.paid_at,
+            wd?.created_at,
+            wd?.order?.approved_at,
+            wd?.order?.paid_at,
+            wd?.order?.created_at,
+            wd?.data?.approved_at,
+            wd?.data?.paid_at,
+            wd?.data?.created_at,
+          ) || (log?.created_at ? new Date(log.created_at).toISOString() : null);
+          if (!dt) continue;
+          const email = log?.email_comprador as string | undefined;
+          if (!email) continue;
+          const prev = emailToWebhookDate.get(email);
+          if (!prev || new Date(dt).getTime() > new Date(prev).getTime()) {
+            emailToWebhookDate.set(email, dt);
+          }
+        }
         emailsWebhook = new Set((webhookData || []).map((log: any) => log.email_comprador));
       }
 
-      // 4) Processar leads para incluir flag de webhook automático
-      const processedLeads = (leadsData || []).map((lead: any) => ({
-        ...lead,
-        webhook_automatico: emailsWebhook.has(lead.email_usuario as any)
-      }));
+      // 4) Processar leads para incluir flag de webhook automático e data do webhook
+      const processedLeads = (leadsData || []).map((lead: any) => {
+        const email = lead.email_usuario as string | null;
+        const webhookDate = email ? (emailToWebhookDate.get(email) || null) : null;
+        return {
+          ...lead,
+          webhook_automatico: emailsWebhook.has(email as any),
+          webhook_data_compra: webhookDate,
+        };
+      });
 
       setLeads(processedLeads as LeadParceria[]);
       setTotalLeads(totalToFetch);

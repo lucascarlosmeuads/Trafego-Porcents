@@ -105,12 +105,25 @@ export function LeadsParcerriaPanel() {
       return t >= start && t <= end;
     }).length;
   }, [leads, purchasedStatuses, computedRange]);
-  const compraramCount = useMemo(() => {
+
+  const webhookComprasCount = useMemo(() => {
+    const base = leads.filter(l => l.webhook_automatico);
+    if (!computedRange) return base.length;
+    const { start, end } = computedRange;
+    return base.filter((l: any) => {
+      const dtStr = (l.webhook_data_compra || l.data_compra) as string | null;
+      const dt = dtStr ? new Date(dtStr).getTime() : NaN;
+      return !isNaN(dt) && dt >= start && dt <= end;
+    }).length;
+  }, [leads, computedRange]);
+
+  const systemCompraramCount = useMemo(() => {
     const base = leads.filter(l => purchasedStatuses.has(l.status_negociacao) && l.cliente_pago);
     if (!computedRange) return base.length;
     const { start, end } = computedRange;
     return base.filter((l: any) => {
-      const dt = l.data_compra ? new Date(l.data_compra).getTime() : NaN;
+      const dtStr = (l.data_compra || l.webhook_data_compra) as string | null;
+      const dt = dtStr ? new Date(dtStr).getTime() : NaN;
       return !isNaN(dt) && dt >= start && dt <= end;
     }).length;
   }, [leads, purchasedStatuses, computedRange]);
