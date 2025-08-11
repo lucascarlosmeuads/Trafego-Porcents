@@ -11,6 +11,7 @@ import ResetPassword from "./pages/ResetPassword";
 import TermosRejeitados from "./pages/TermosRejeitados";
 import NotFound from "./pages/NotFound";
 import EvolutionTestes from "./pages/EvolutionTestes";
+import { KiwifySync } from "@/components/KiwifySync";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ const App = () => (
                 // ... keep existing code (other routes remain unchanged)
                 <EvolutionTestes />
               } />
+              <Route path="/kiwify-sync" element={<KiwifySync />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

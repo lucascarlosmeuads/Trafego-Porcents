@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.kiwify-sync-approved-orders]
 verify_jwt = true
+
+[functions.reprocess-kiwify-webhooks]
+verify_jwt = true
