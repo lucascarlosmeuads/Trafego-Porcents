@@ -39,8 +39,9 @@ export async function invokeEdge<T = any>(name: string, body: any, opts?: { time
       let data: any = null;
       try { data = JSON.parse(text); } catch { data = text; }
       if (!res.ok) {
-        const err = new Error(typeof data === 'object' ? (data?.error || `HTTP ${res.status}`) : `HTTP ${res.status}`);
-        return { data: null, error: err, status: res.status, via: 'fetch', attempt: i + 1 };
+        const errMsg = typeof data === 'object' ? (data?.error || `HTTP ${res.status}`) : `HTTP ${res.status}`;
+        const err = new Error(errMsg);
+        return { data: data as T, error: err, status: res.status, via: 'fetch', attempt: i + 1 };
       }
       return { data: data as T, error: null, status: res.status, via: 'fetch', attempt: i + 1 };
     } catch (e: any) {

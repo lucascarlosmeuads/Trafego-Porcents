@@ -41,32 +41,73 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     const startISO = `${body.start_date}T00:00:00Z`;
     const endISO = `${body.end_date}T23:59:59Z`;
 
-    // First, get OAuth Bearer token
+    // First, get OAuth Bearer token (use robust fallbacks)
     console.log('Getting OAuth token from Kiwify...');
-    const tokenResp = await fetch('https://api.kiwify.com/v1/oauth/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        grant_type: 'client_credentials',
-        client_id: KIWIFY_CLIENT_ID,
-        client_secret: KIWIFY_CLIENT_SECRET,
-      }),
-    });
 
-    if (!tokenResp.ok) {
-      const tokenError = await tokenResp.text();
-      console.error('Kiwify OAuth error', tokenResp.status, tokenError);
-      return new Response(JSON.stringify({ error: 'Failed to get Kiwify OAuth token', status: tokenResp.status, body: tokenError }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    const formBody = new URLSearchParams({
+      grant_type: 'client_credentials',
+      client_id: KIWIFY_CLIENT_ID,
+      client_secret: KIWIFY_CLIENT_SECRET,
+    }).toString();
+
+    const tokenAttempts = [
+      {
+        url: 'https://api.kiwify.com/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
+      {
+        url: 'https://api.kiwify.com/v1/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
+      {
+        url: 'https://api.kiwify.com/oauth/token',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+          Accept: 'application/json',
+          Authorization: `Basic ${btoa(`${KIWIFY_CLIENT_ID}:${KIWIFY_CLIENT_SECRET}`)}`,
+        },
+        body: new URLSearchParams({ grant_type: 'client_credentials' }).toString(),
+      },
+    ];
+
+    let accessToken: string | null = null;
+    let lastStatus: number | null = null;
+    let lastBody: string | null = null;
+
+    for (const attempt of tokenAttempts) {
+      try {
+        const resp = await fetch(attempt.url, {
+          method: 'POST',
+          headers: attempt.headers,
+          body: attempt.body,
+        });
+        lastStatus = resp.status;
+        const text = await resp.text();
+        lastBody = text;
+        if (!resp.ok) {
+          console.error('Kiwify OAuth error', resp.status, text);
+          continue;
+        }
+        try {
+          const json = JSON.parse(text);
+          accessToken = json?.access_token || null;
+          if (accessToken) break;
+          console.error('Kiwify OAuth: no access_token in response', json);
+        } catch {
+          console.error('Kiwify OAuth: invalid JSON response', text);
+        }
+      } catch (err) {
+        console.error('Kiwify OAuth fetch failed', err);
+      }
     }
 
-    const tokenData = await tokenResp.json();
-    const accessToken = tokenData.access_token;
-
     if (!accessToken) {
-      console.error('No access token in response', tokenData);
-      return new Response(JSON.stringify({ error: 'No access token received from Kiwify OAuth' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+      return new Response(
+        JSON.stringify({ error: 'Failed to get Kiwify OAuth token', status: lastStatus, body: lastBody }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('OAuth token obtained successfully');

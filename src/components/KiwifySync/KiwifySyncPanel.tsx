@@ -62,12 +62,15 @@ export const KiwifySyncPanel = () => {
         end_date: endDate,
       });
 
-      if (res.error || !res.data) {
-        console.error('Erro na sincronização:', res.error);
-        setError(`Erro na sincronização: ${res.error?.message || 'Falha ao chamar a Edge Function'}`);
-        toast.error(res.error?.message || 'Erro ao executar sincronização');
-        return;
-      }
+        if (res.error || !res.data) {
+          console.error('Erro na sincronização:', res.error, res.status, res.data);
+          const serverDetails = typeof res.data === 'string' ? res.data : (res.data as any)?.body || (res.data as any)?.error || '';
+          const statusPart = res.status ? ` (HTTP ${res.status})` : '';
+          const msg = `${res.error?.message || 'Falha ao chamar a Edge Function'}${statusPart}${serverDetails ? ` - ${serverDetails}` : ''}`;
+          setError(`Erro na sincronização: ${msg}`);
+          toast.error(msg);
+          return;
+        }
 
       const data = res.data;
       
