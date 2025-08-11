@@ -128,7 +128,6 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
 
         const webhookData = webhookResults.flatMap(r => ((r as any).data || []));
         // Mapear email -> última data de compra extraída do payload do webhook
-        const emailToWebhookDate = new Map<string, string>();
         const extractDateIso = (...vals: any[]) => {
           for (const v of vals) {
             if (v && typeof v === 'string' && v.trim().length > 0) {

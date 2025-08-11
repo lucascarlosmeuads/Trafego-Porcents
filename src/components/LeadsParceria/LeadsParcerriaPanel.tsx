@@ -223,7 +223,8 @@ export function LeadsParcerriaPanel() {
       const { start, end } = computedRange;
       if (activeTab === 'compraram') {
         list = list.filter((lead: any) => {
-          const dt = lead.data_compra ? new Date(lead.data_compra).getTime() : NaN;
+          const dtStr = (lead.data_compra || lead.webhook_data_compra) as string | null;
+          const dt = dtStr ? new Date(dtStr).getTime() : NaN;
           return !isNaN(dt) && dt >= start && dt <= end;
         });
       } else {
@@ -481,7 +482,7 @@ export function LeadsParcerriaPanel() {
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'leads' | 'compraram')}>
                   <TabsList>
                     <TabsTrigger value="leads">Leads ({leadsCount})</TabsTrigger>
-                    <TabsTrigger value="compraram">Compraram ({compraramCount})</TabsTrigger>
+                    <TabsTrigger value="compraram">Compraram (Sist {systemCompraramCount} | Webhook {webhookComprasCount})</TabsTrigger>
                   </TabsList>
                 </Tabs>
                 <div className="flex items-center gap-2">
