@@ -206,12 +206,19 @@ export function LeadsParcerriaPanel() {
         </Badge>
       );
     }
+    if (lead.webhook_data_compra) {
+      return (
+        <Badge className="bg-emerald-600 text-white">
+          Aprovado (Webhook)
+        </Badge>
+      );
+    }
     return null;
   };
 
   const baseLeads = useMemo(() => {
     return leads.filter(l => (activeTab === 'compraram'
-      ? (purchasedStatuses.has(l.status_negociacao) && l.cliente_pago)
+      ? ((purchasedStatuses.has(l.status_negociacao) && l.cliente_pago) || !!l.webhook_data_compra)
       : !purchasedStatuses.has(l.status_negociacao)));
   }, [leads, activeTab, purchasedStatuses]);
 
@@ -241,6 +248,16 @@ export function LeadsParcerriaPanel() {
 
     if (showNeedsInfoOnly) {
       list = list.filter(lead => !!lead.precisa_mais_info);
+    }
+
+    if (activeTab === 'compraram') {
+      list = [...list].sort((a, b) => {
+        const aDtStr = (a.data_compra || a.webhook_data_compra || a.created_at) as string;
+        const bDtStr = (b.data_compra || b.webhook_data_compra || b.created_at) as string;
+        const aDt = aDtStr ? new Date(aDtStr).getTime() : 0;
+        const bDt = bDtStr ? new Date(bDtStr).getTime() : 0;
+        return bDt - aDt;
+      });
     }
 
     return list;
