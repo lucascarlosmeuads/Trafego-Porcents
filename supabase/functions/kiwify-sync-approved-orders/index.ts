@@ -52,6 +52,11 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
 
     const tokenAttempts = [
       {
+        url: 'https://public-api.kiwify.com/v1/oauth/token',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
+        body: formBody,
+      },
+      {
         url: 'https://api.kiwify.com/oauth/token',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded', Accept: 'application/json' },
         body: formBody,
