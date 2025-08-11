@@ -156,8 +156,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
         const webhookPromises: any[] = chunks.map(chunk =>
           supabase
             .from('kiwify_webhook_logs')
-            .select('email_comprador, webhook_data, created_at')
-            .eq('status_processamento', 'sucesso')
+            .select('email_comprador, webhook_data, created_at, status_processamento')
             .in('email_comprador', chunk)
         );
 
@@ -178,16 +177,16 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
             };
             for (const log of webhookData) {
               const wd = log?.webhook_data || {};
+              const statusStr = (wd?.order_status || wd?.status || '').toString().toLowerCase();
+              const isPaidEvent = statusStr === 'paid' || !!(wd?.approved_at || wd?.paid_at || wd?.order?.approved_at || wd?.order?.paid_at || wd?.data?.approved_at || wd?.data?.paid_at);
+              if (!isPaidEvent) continue;
               const dt = extractDateIso(
                 wd?.approved_at,
                 wd?.paid_at,
-                wd?.created_at,
                 wd?.order?.approved_at,
                 wd?.order?.paid_at,
-                wd?.order?.created_at,
                 wd?.data?.approved_at,
                 wd?.data?.paid_at,
-                wd?.data?.created_at,
               ) || (log?.created_at ? new Date(log.created_at).toISOString() : null);
               if (!dt) continue;
               const rawEmail = log?.email_comprador as string | undefined;
@@ -198,7 +197,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
                 emailToWebhookDate.set(emailNorm, dt);
               }
             }
-            emailsWebhookNormalized = new Set((webhookData || []).map((log: any) => normalizeEmail(log.email_comprador)));
+            emailsWebhookNormalized = new Set(Array.from(emailToWebhookDate.keys()));
           } else {
             console.warn('Ignorando erros ao buscar logs Kiwify:', webhookErrors[0]);
           }

@@ -25,7 +25,6 @@ serve(async (req) => {
     let webhookQuery = supabaseClient
       .from('kiwify_webhook_logs')
       .select('*')
-      .eq('status_processamento', 'sucesso')
 
     if (dateRange?.startDate && dateRange?.endDate) {
       webhookQuery = webhookQuery
@@ -36,13 +35,24 @@ serve(async (req) => {
     const { data: webhooks, error: webhookError } = await webhookQuery
     if (webhookError) throw webhookError
 
-    console.log(`📊 Encontrados ${webhooks?.length || 0} webhooks para reprocessar`)
+    console.log(`📊 Encontrados ${webhooks?.length || 0} webhooks no período`)
+
+    // Filtrar apenas eventos pagos/aprovados
+    const paidWebhooks = (webhooks || []).filter((w: any) => {
+      const wd = w?.webhook_data || {};
+      const status = (wd?.order_status || wd?.status || '').toString().toLowerCase();
+      const isPaidStatus = status === 'paid';
+      const hasPaidDates = !!(wd?.approved_at || wd?.paid_at || wd?.order?.approved_at || wd?.order?.paid_at || wd?.data?.approved_at || wd?.data?.paid_at);
+      return isPaidStatus || hasPaidDates;
+    });
+
+    console.log(`🧮 Reprocessando ${paidWebhooks.length} webhooks pagos/aprovados`)
 
     let processed = 0
     let updated = 0
     let created = 0
 
-    for (const webhook of webhooks || []) {
+    for (const webhook of paidWebhooks) {
       if (!webhook.email_comprador) continue
 
       const normalizeEmail = (email: string) => 
