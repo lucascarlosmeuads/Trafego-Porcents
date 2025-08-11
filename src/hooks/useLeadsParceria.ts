@@ -99,7 +99,47 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       const leadsData = pageResults.flatMap(r => ((r as any).data || []));
 
       // 3) Buscar logs de webhook relevantes em lotes para evitar limites de URL
-      const normalizeEmail = (e: any) => (typeof e === 'string' ? e.trim().toLowerCase() : '');
+      const normalizeEmail = (e: any) => {
+        if (typeof e !== 'string') return '';
+        // Normalização robusta: corrigir typos comuns e limpar formato
+        return e.trim().toLowerCase()
+          .replace('hotmil.com', 'hotmail.com')
+          .replace('gmai.com', 'gmail.com')
+          .replace('outlok.com', 'outlook.com')
+          .replace(/\s+/g, '');
+      };
+      
+      const findSimilarEmail = (searchEmail: string, emailList: string[]): string | null => {
+        const normalized = normalizeEmail(searchEmail);
+        if (!normalized) return null;
+        
+        // Busca exata primeiro
+        const exact = emailList.find(e => normalizeEmail(e) === normalized);
+        if (exact) return exact;
+        
+        // Busca por similaridade (diferença de 1-2 caracteres)
+        const [user, domain] = normalized.split('@');
+        if (!user || !domain) return null;
+        
+        for (const email of emailList) {
+          const normEmail = normalizeEmail(email);
+          const [emailUser, emailDomain] = normEmail.split('@');
+          if (!emailUser || !emailDomain) continue;
+          
+          // Mesmo domínio, usuário similar
+          if (emailDomain === domain && Math.abs(emailUser.length - user.length) <= 2) {
+            let diffs = 0;
+            const minLen = Math.min(emailUser.length, user.length);
+            for (let i = 0; i < minLen; i++) {
+              if (emailUser[i] !== user[i]) diffs++;
+              if (diffs > 2) break;
+            }
+            if (diffs <= 2) return email;
+          }
+        }
+        return null;
+      };
+      
       const leadEmailsRaw = (leadsData || [])
         .map((l: any) => l.email_usuario)
         .filter((e: any) => typeof e === 'string' && e.length > 0);
@@ -170,10 +210,50 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       // 4) Processar leads para incluir flag de webhook automático e data do webhook
       const processedLeads = (leadsData || []).map((lead: any) => {
         const emailNorm = normalizeEmail(lead.email_usuario);
-        const webhookDate = emailNorm ? (emailToWebhookDate.get(emailNorm) || null) : null;
+        let webhookDate = emailNorm ? (emailToWebhookDate.get(emailNorm) || null) : null;
+        let isWebhookMatch = emailNorm ? emailsWebhookNormalized.has(emailNorm) : false;
+        
+        // Se não encontrou match direto, tenta busca por similaridade
+        if (!isWebhookMatch && emailNorm) {
+          const webhookEmails = Array.from(emailsWebhookNormalized);
+          const similarEmail = findSimilarEmail(emailNorm, webhookEmails);
+          if (similarEmail) {
+            isWebhookMatch = true;
+            webhookDate = emailToWebhookDate.get(normalizeEmail(similarEmail)) || null;
+          }
+        }
+        
+        // Sincronização automática de status
+        let updatedLead = { ...lead };
+        if (isWebhookMatch && webhookDate && !lead.cliente_pago) {
+          updatedLead = {
+            ...updatedLead,
+            cliente_pago: true,
+            status_negociacao: 'comprou',
+            data_compra: webhookDate
+          };
+          
+          // Atualizar no banco (silent update)
+          (async () => {
+            try {
+              await supabase
+                .from('formularios_parceria')
+                .update({ 
+                  cliente_pago: true, 
+                  status_negociacao: 'comprou',
+                  data_compra: webhookDate 
+                })
+                .eq('id', lead.id);
+              console.log('✅ Auto-sync:', lead.email_usuario);
+            } catch (err: any) {
+              console.warn('⚠️ Auto-sync failed:', err);
+            }
+          })();
+        }
+        
         return {
-          ...lead,
-          webhook_automatico: emailNorm ? emailsWebhookNormalized.has(emailNorm) : false,
+          ...updatedLead,
+          webhook_automatico: isWebhookMatch,
           webhook_data_compra: webhookDate,
         };
       });
@@ -311,6 +391,24 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     }
   };
 
+  const reprocessWebhooks = async (dateRange?: { startDate: string; endDate: string }) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('reprocess-kiwify-webhooks', {
+        body: { dateRange }
+      });
+      
+      if (error) throw error;
+      
+      console.log('✅ Reprocessamento concluído:', data);
+      await fetchLeads(); // Recarregar dados
+      
+      return data;
+    } catch (err: any) {
+      console.error('❌ Erro no reprocessamento:', err);
+      throw err;
+    }
+  };
+
   const refetch = () => {
     fetchLeads();
   };
@@ -325,5 +423,6 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     updateLeadNegociacao,
     updateLeadPrecisaMaisInfo,
     reatribuirLead,
+    reprocessWebhooks,
   };
 }

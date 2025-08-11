@@ -10,6 +10,8 @@ import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, Me
 
 import { LeadDetailsModal } from './LeadDetailsModal';
 import { useLeadsParceria } from '@/hooks/useLeadsParceria';
+import { DebugDashboard } from './DebugDashboard';
+import { DataCompraColumn } from './DataCompraColumn';
 
 import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
@@ -77,7 +79,7 @@ export function LeadsParcerriaPanel() {
     return null;
   }, [dateOption, customStart, customEnd]);
   
-  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(undefined);
+  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch, reprocessWebhooks } = useLeadsParceria(undefined);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -262,6 +264,11 @@ export function LeadsParcerriaPanel() {
 
     return list;
   }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly, computedRange]);
+
+  const handleReprocessToday = async () => {
+    const today = new Date().toISOString().slice(0, 10);
+    return await reprocessWebhooks({ startDate: today, endDate: today });
+  };
 
   const handleBulkGenerate = async () => {
     try {
@@ -485,6 +492,14 @@ export function LeadsParcerriaPanel() {
           </div>
         </div>
 
+        {dateOption === 'hoje' && (
+          <DebugDashboard 
+            leads={leads} 
+            dateRange={computedRange} 
+            onReprocess={handleReprocessToday}
+          />
+        )}
+
         <Card>
           <CardHeader>
             <CardTitle className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -590,7 +605,7 @@ export function LeadsParcerriaPanel() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>{activeTab === 'compraram' ? 'Data Compra' : 'Data/Hora'}</TableHead>
                     <TableHead>Nome</TableHead>
                     <TableHead>Email</TableHead>
                     <TableHead>WhatsApp</TableHead>
@@ -605,16 +620,7 @@ export function LeadsParcerriaPanel() {
                     
                     return (
                       <TableRow key={lead.id} className={getRowClassName(lead)}>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-medium">
-                              {format(new Date(lead.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {format(new Date(lead.created_at), 'HH:mm', { locale: ptBR })}
-                            </div>
-                          </div>
-                        </TableCell>
+                        <DataCompraColumn lead={lead} activeTab={activeTab} />
                         <TableCell>
                           <div className="font-medium">{leadData.nome}</div>
                           <div className="text-sm text-muted-foreground">
