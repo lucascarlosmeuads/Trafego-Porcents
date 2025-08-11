@@ -64,11 +64,11 @@ export function VendedorLeadsPanel() {
   }, [leads, range]);
 
   const leadsCount = useMemo(
-    () => dateFilteredByCreated.filter(l => !purchasedStatuses.has(l.status_negociacao)).length,
+    () => dateFilteredByCreated.filter(l => !(purchasedStatuses.has(l.status_negociacao) || l.cliente_pago)).length,
     [dateFilteredByCreated, purchasedStatuses]
   );
   const compraramCount = useMemo(
-    () => dateFilteredByCompra.filter(l => purchasedStatuses.has(l.status_negociacao)).length,
+    () => dateFilteredByCompra.filter(l => (purchasedStatuses.has(l.status_negociacao) || l.cliente_pago)).length,
     [dateFilteredByCompra, purchasedStatuses]
   );
 
@@ -131,7 +131,11 @@ export function VendedorLeadsPanel() {
   });
 
   const baseLeads = useMemo(() => {
-    return sortedLeads.filter(l => (activeTab === 'compraram' ? purchasedStatuses.has(l.status_negociacao) : !purchasedStatuses.has(l.status_negociacao)));
+    return sortedLeads.filter(l => (
+      activeTab === 'compraram'
+        ? (purchasedStatuses.has(l.status_negociacao) || l.cliente_pago)
+        : !(purchasedStatuses.has(l.status_negociacao) || l.cliente_pago)
+    ));
   }, [sortedLeads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {

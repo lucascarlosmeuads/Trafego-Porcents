@@ -53,6 +53,7 @@ export function useVendedorLeads() {
         .from('formularios_parceria')
         .select('*', { count: 'exact' })
         .eq('vendedor_responsavel', user.email)
+        .range(0, 4999)
         .order('created_at', { ascending: false });
 
       if (error) {
