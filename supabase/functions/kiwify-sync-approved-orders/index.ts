@@ -16,16 +16,18 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SERVICE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-  const KIWIFY_API_TOKEN = Deno.env.get('KIWIFY_API_TOKEN');
+  const KIWIFY_CLIENT_ID = Deno.env.get('KIWIFY_CLIENT_ID');
+  const KIWIFY_CLIENT_SECRET = Deno.env.get('KIWIFY_CLIENT_SECRET');
+  const KIWIFY_ACCOUNT_ID = Deno.env.get('KIWIFY_ACCOUNT_ID');
 
   if (!SUPABASE_URL || !SERVICE_KEY) {
     return new Response(JSON.stringify({ error: 'Missing Supabase service credentials' }), { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
-  if (!KIWIFY_API_TOKEN) {
-    return new Response(JSON.stringify({ error: 'Missing KIWIFY_API_TOKEN secret' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+  if (!KIWIFY_CLIENT_ID || !KIWIFY_CLIENT_SECRET || !KIWIFY_ACCOUNT_ID) {
+    return new Response(JSON.stringify({ error: 'Missing Kiwify credentials (CLIENT_ID, CLIENT_SECRET, ACCOUNT_ID)' }), { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
   }
 
   const supabase = createClient(SUPABASE_URL, SERVICE_KEY);
@@ -39,8 +41,37 @@ Deno.serve(async (req) => {
     const startISO = `${body.start_date}T00:00:00Z`;
     const endISO = `${body.end_date}T23:59:59Z`;
 
+    // First, get OAuth Bearer token
+    console.log('Getting OAuth token from Kiwify...');
+    const tokenResp = await fetch('https://api.kiwify.com/v1/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        grant_type: 'client_credentials',
+        client_id: KIWIFY_CLIENT_ID,
+        client_secret: KIWIFY_CLIENT_SECRET,
+      }),
+    });
+
+    if (!tokenResp.ok) {
+      const tokenError = await tokenResp.text();
+      console.error('Kiwify OAuth error', tokenResp.status, tokenError);
+      return new Response(JSON.stringify({ error: 'Failed to get Kiwify OAuth token', status: tokenResp.status, body: tokenError }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    const tokenData = await tokenResp.json();
+    const accessToken = tokenData.access_token;
+
+    if (!accessToken) {
+      console.error('No access token in response', tokenData);
+      return new Response(JSON.stringify({ error: 'No access token received from Kiwify OAuth' }), { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } });
+    }
+
+    console.log('OAuth token obtained successfully');
+
     // Fetch approved orders from Kiwify API
-    // NOTE: Endpoint/shape may vary. Adjust as needed to your Kiwify account.
     const url = new URL('https://api.kiwify.com/v1/orders');
     url.searchParams.set('status', 'approved');
     url.searchParams.set('start_date', startISO);
@@ -57,8 +88,9 @@ Deno.serve(async (req) => {
       url.searchParams.set('page', String(page));
       const resp = await fetch(url.toString(), {
         headers: {
-          Authorization: `Bearer ${KIWIFY_API_TOKEN}`,
+          Authorization: `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
+          'x-kiwify-account-id': KIWIFY_ACCOUNT_ID,
         },
       });
       if (!resp.ok) {
