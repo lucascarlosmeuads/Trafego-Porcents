@@ -15,10 +15,17 @@ export async function invokeEdge<T = any>(name: string, body: any, opts?: { time
 
   // Fallback to direct fetch with two header strategies
   const url = `${SUPABASE_URL}/functions/v1/${name}`;
+  // Try to use the current user's JWT for authenticated functions
+  const { data: authData } = await supabase.auth.getSession();
+  const userJwt = authData?.session?.access_token || '';
+
   const headersList: Array<Record<string, string>> = [
-    { apikey: SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json' },
-    { Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, 'Content-Type': 'application/json' },
+    // Prefer real user JWT + apikey
+    { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${userJwt}`, 'Content-Type': 'application/json', 'x-client-info': 'lovable-app' },
+    // Some projects accept anon key as bearer as fallback
     { apikey: SUPABASE_PUBLISHABLE_KEY, Authorization: `Bearer ${SUPABASE_PUBLISHABLE_KEY}`, 'Content-Type': 'application/json', 'x-client-info': 'lovable-app' },
+    // Pure apikey fallback
+    { apikey: SUPABASE_PUBLISHABLE_KEY, 'Content-Type': 'application/json', 'x-client-info': 'lovable-app' },
   ];
 
   let lastErr: any = null;

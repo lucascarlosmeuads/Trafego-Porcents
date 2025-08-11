@@ -29,3 +29,6 @@ verify_jwt = false
 
 [functions.evolution-send-text-lite]
 verify_jwt = false
+
+[functions.kiwify-sync-approved-orders]
+verify_jwt = true
