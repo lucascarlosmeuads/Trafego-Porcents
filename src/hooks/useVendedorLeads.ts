@@ -46,8 +46,9 @@ export function useVendedorLeads() {
         return;
       }
 
-      // Habilitar realtime para a tabela
+      // Habilitar realtime para as tabelas necessárias
       await enableRealtimeForTable('formularios_parceria');
+      await enableRealtimeForTable('kiwify_webhook_logs');
 
       // Buscar apenas leads atribuídos ao vendedor logado
       const { data, error, count } = await supabase
@@ -96,8 +97,8 @@ export function useVendedorLeads() {
   useEffect(() => {
     fetchLeads();
 
-    // Configurar escuta de eventos em tempo real
-    const channel = supabase
+    // Realtime: mudanças no formulário
+    const formsChannel = supabase
       .channel('vendedor_leads_changes')
       .on(
         'postgres_changes',
@@ -107,15 +108,33 @@ export function useVendedorLeads() {
           table: 'formularios_parceria',
         },
         () => {
-          // Quando houver qualquer mudança, recarregar os dados
+          console.log('📡 Realtime vendedor: mudança em formularios_parceria -> refetch');
           fetchLeads();
         }
       )
       .subscribe();
 
-    // Limpar a inscrição quando o componente for desmontado
+    // Realtime: novos webhooks (pagos) chegando
+    const webhookChannel = supabase
+      .channel('vendedor_webhook_inserts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'kiwify_webhook_logs',
+        },
+        (payload) => {
+          const email = (payload?.new as any)?.email_comprador;
+          console.log('🧲 Realtime vendedor: novo webhook recebido para', email, '-> refetch');
+          fetchLeads();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(formsChannel);
+      supabase.removeChannel(webhookChannel);
     };
   }, [user?.email]);
 

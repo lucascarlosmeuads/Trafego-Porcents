@@ -311,13 +311,15 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
   // Habilita realtime apenas uma vez
   useEffect(() => {
     enableRealtimeForTable('formularios_parceria').catch(() => {});
+    // Garantir realtime para logs do webhook também
+    enableRealtimeForTable('kiwify_webhook_logs').catch(() => {});
   }, []);
 
   useEffect(() => {
     fetchLeads();
 
-    // Configurar escuta de eventos em tempo real
-    const channel = supabase
+    // Realtime: mudanças em formularios_parceria
+    const formsChannel = supabase
       .channel('formularios_parceria_changes')
       .on(
         'postgres_changes',
@@ -327,15 +329,53 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
           table: 'formularios_parceria',
         },
         () => {
-          // Quando houver qualquer mudança, recarregar os dados
+          console.log('📡 Realtime update em formularios_parceria -> refetch');
           fetchLeads();
         }
       )
       .subscribe();
 
-    // Limpar a inscrição quando o componente for desmontado
+    // Realtime: novos webhooks pagos chegando em kiwify_webhook_logs
+    const webhookChannel = supabase
+      .channel('kiwify_webhook_logs_inserts')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'kiwify_webhook_logs',
+        },
+        (payload) => {
+          const email = (payload?.new as any)?.email_comprador;
+          const wd = (payload?.new as any)?.webhook_data;
+          console.log('🧲 Novo webhook recebido:', { email, status: wd?.order_status, type: wd?.webhook_event_type });
+          // Sempre refaz a busca — o trigger no banco já atualiza o lead
+          fetchLeads();
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(formsChannel);
+      supabase.removeChannel(webhookChannel);
+    };
+  }, [stableFilter]);
+
+  // Polling de fallback a cada 30s (cobre qualquer perda de evento)
+  useEffect(() => {
+    if (refetchTimer.current) {
+      clearInterval(refetchTimer.current);
+    }
+    refetchTimer.current = window.setInterval(() => {
+      console.log('⏱️ Polling de leads (fallback a cada 30s)');
+      fetchLeads();
+    }, 30000);
+
+    return () => {
+      if (refetchTimer.current) {
+        clearInterval(refetchTimer.current);
+        refetchTimer.current = null;
+      }
     };
   }, [stableFilter]);
 
