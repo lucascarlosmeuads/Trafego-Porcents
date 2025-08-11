@@ -85,6 +85,8 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
     let alreadySynced = 0;
     let skipped = 0;
     const details: any[] = [];
+
+    const newlyCreatedEmails = new Set<string>();
     
     console.log(`Starting Kiwify sync for period: ${startISO} to ${endISO}`);
 
@@ -154,7 +156,13 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
             details.push({ email, order_id: order?.id, action: 'updated', lead_id: existing.id });
           }
         } else {
-          // Insert minimal purchased lead for new Kiwify customers
+          // Insert minimal purchased lead for new Kiwify customers, avoiding duplicates in the same run
+          if (newlyCreatedEmails.has(email)) {
+            alreadySynced++;
+            details.push({ email, order_id: order?.id, action: 'already_synced_in_run' });
+            continue;
+          }
+
           console.log(`Creating new lead for Kiwify customer: ${email}`);
           const { data: newLead, error: insErr } = await supabase
             .from('formularios_parceria')
@@ -177,6 +185,7 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
             console.error('Insert error', insErr);
             details.push({ email, order_id: order?.id, action: 'insert_failed', error: insErr?.message });
           } else {
+            newlyCreatedEmails.add(email);
             inserted++;
             details.push({ email, order_id: order?.id, action: 'inserted', lead_id: newLead?.id });
           }
