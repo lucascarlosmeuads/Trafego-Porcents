@@ -21,6 +21,7 @@ import { IdeiasDashboard } from './AcervoIdeias/IdeiasDashboard'
 import { LeadsParcerriaPanel } from './LeadsParceria/LeadsParcerriaPanel'
 import { ErrorBoundary } from './ErrorBoundary'
 import { DateRangeFilter } from './DateRangeFilter'
+import { KiwifySyncPanel } from './KiwifySync/KiwifySyncPanel'
 
 import { useLeadsAnalytics } from '@/hooks/useLeadsAnalytics'
 import { useAdminMetaAds } from '@/hooks/useAdminMetaAds'
@@ -250,6 +251,9 @@ export function AdminDashboard({ selectedManager, onManagerSelect, activeTab, on
 
       case 'leads-parceria':
         return <LeadsParcerriaPanel />
+
+      case 'kiwify-sync':
+        return <KiwifySyncPanel />
 
       case 'evolution-api':
         return (

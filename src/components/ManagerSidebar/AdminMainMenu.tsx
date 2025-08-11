@@ -11,7 +11,8 @@ import {
   Lightbulb,
   UserPlus,
   RefreshCw,
-  MessageSquare
+  MessageSquare,
+  Download
 } from 'lucide-react'
 
 interface AdminMainMenuProps {
@@ -53,6 +54,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       description: 'Leads interessados em parceria'
     },
     {
+      id: 'kiwify-sync',
+      label: 'Kiwify Sync',
+      icon: Download,
+      description: 'Sincronizar vendas aprovadas'
+    },
+    {
       id: 'evolution-api',
       label: 'Evolution API',
       icon: MessageSquare,
@@ -66,9 +73,10 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
         const order: Record<string, number> = {
           'dashboard': 0,
           'leads-parceria': 1,
-          'clientes': 2,
-          'acervo-ideias': 3,
-          'evolution-api': 4,
+          'kiwify-sync': 2,
+          'clientes': 3,
+          'acervo-ideias': 4,
+          'evolution-api': 5,
         }
        return (order[a.id] ?? 99) - (order[b.id] ?? 99)
      })
