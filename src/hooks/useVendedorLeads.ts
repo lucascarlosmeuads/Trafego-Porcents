@@ -24,6 +24,7 @@ interface LeadParceria {
   vendedor_responsavel: string | null;
   distribuido_em: string | null;
   webhook_automatico?: boolean;
+  webhook_data_compra?: string | null;
 }
 
 

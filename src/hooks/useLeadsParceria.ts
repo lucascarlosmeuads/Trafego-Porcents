@@ -99,17 +99,18 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
       const leadsData = pageResults.flatMap(r => ((r as any).data || []));
 
       // 3) Buscar logs de webhook relevantes em lotes para evitar limites de URL
-      const leadEmails = (leadsData || [])
+      const normalizeEmail = (e: any) => (typeof e === 'string' ? e.trim().toLowerCase() : '');
+      const leadEmailsRaw = (leadsData || [])
         .map((l: any) => l.email_usuario)
         .filter((e: any) => typeof e === 'string' && e.length > 0);
 
-      let emailsWebhook = new Set<string>();
+      let emailsWebhookNormalized = new Set<string>();
       const emailToWebhookDate = new Map<string, string>();
-      if (leadEmails.length > 0) {
+      if (leadEmailsRaw.length > 0) {
         const chunkSize = 300;
         const chunks: string[][] = [];
-        for (let i = 0; i < leadEmails.length; i += chunkSize) {
-          chunks.push(leadEmails.slice(i, i + chunkSize));
+        for (let i = 0; i < leadEmailsRaw.length; i += chunkSize) {
+          chunks.push(leadEmailsRaw.slice(i, i + chunkSize));
         }
 
         const webhookPromises: any[] = chunks.map(chunk =>
@@ -120,54 +121,59 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
             .in('email_comprador', chunk)
         );
 
-        const webhookResults = await Promise.all(webhookPromises);
-        const webhookErrors = webhookResults.map(r => (r as any).error).filter(Boolean);
-        if (webhookErrors.length > 0) {
-          throw webhookErrors[0];
-        }
-
-        const webhookData = webhookResults.flatMap(r => ((r as any).data || []));
-        // Mapear email -> última data de compra extraída do payload do webhook
-        const extractDateIso = (...vals: any[]) => {
-          for (const v of vals) {
-            if (v && typeof v === 'string' && v.trim().length > 0) {
-              const d = new Date(v);
-              if (!isNaN(d.getTime())) return d.toISOString();
+        try {
+          const webhookResults = await Promise.all(webhookPromises);
+          const webhookErrors = webhookResults.map(r => (r as any).error).filter(Boolean);
+          if (webhookErrors.length === 0) {
+            const webhookData = webhookResults.flatMap(r => ((r as any).data || []));
+            // Mapear email normalizado -> última data de compra extraída do payload do webhook
+            const extractDateIso = (...vals: any[]) => {
+              for (const v of vals) {
+                if (v && typeof v === 'string' && v.trim().length > 0) {
+                  const d = new Date(v);
+                  if (!isNaN(d.getTime())) return d.toISOString();
+                }
+              }
+              return null as string | null;
+            };
+            for (const log of webhookData) {
+              const wd = log?.webhook_data || {};
+              const dt = extractDateIso(
+                wd?.approved_at,
+                wd?.paid_at,
+                wd?.created_at,
+                wd?.order?.approved_at,
+                wd?.order?.paid_at,
+                wd?.order?.created_at,
+                wd?.data?.approved_at,
+                wd?.data?.paid_at,
+                wd?.data?.created_at,
+              ) || (log?.created_at ? new Date(log.created_at).toISOString() : null);
+              if (!dt) continue;
+              const rawEmail = log?.email_comprador as string | undefined;
+              if (!rawEmail) continue;
+              const emailNorm = normalizeEmail(rawEmail);
+              const prev = emailToWebhookDate.get(emailNorm);
+              if (!prev || new Date(dt).getTime() > new Date(prev).getTime()) {
+                emailToWebhookDate.set(emailNorm, dt);
+              }
             }
+            emailsWebhookNormalized = new Set((webhookData || []).map((log: any) => normalizeEmail(log.email_comprador)));
+          } else {
+            console.warn('Ignorando erros ao buscar logs Kiwify:', webhookErrors[0]);
           }
-          return null as string | null;
-        };
-        for (const log of webhookData) {
-          const wd = log?.webhook_data || {};
-          const dt = extractDateIso(
-            wd?.approved_at,
-            wd?.paid_at,
-            wd?.created_at,
-            wd?.order?.approved_at,
-            wd?.order?.paid_at,
-            wd?.order?.created_at,
-            wd?.data?.approved_at,
-            wd?.data?.paid_at,
-            wd?.data?.created_at,
-          ) || (log?.created_at ? new Date(log.created_at).toISOString() : null);
-          if (!dt) continue;
-          const email = log?.email_comprador as string | undefined;
-          if (!email) continue;
-          const prev = emailToWebhookDate.get(email);
-          if (!prev || new Date(dt).getTime() > new Date(prev).getTime()) {
-            emailToWebhookDate.set(email, dt);
-          }
+        } catch (we) {
+          console.warn('Falha ao buscar logs Kiwify, seguiremos sem enriquecimento:', we);
         }
-        emailsWebhook = new Set((webhookData || []).map((log: any) => log.email_comprador));
       }
 
       // 4) Processar leads para incluir flag de webhook automático e data do webhook
       const processedLeads = (leadsData || []).map((lead: any) => {
-        const email = lead.email_usuario as string | null;
-        const webhookDate = email ? (emailToWebhookDate.get(email) || null) : null;
+        const emailNorm = normalizeEmail(lead.email_usuario);
+        const webhookDate = emailNorm ? (emailToWebhookDate.get(emailNorm) || null) : null;
         return {
           ...lead,
-          webhook_automatico: emailsWebhook.has(email as any),
+          webhook_automatico: emailNorm ? emailsWebhookNormalized.has(emailNorm) : false,
           webhook_data_compra: webhookDate,
         };
       });

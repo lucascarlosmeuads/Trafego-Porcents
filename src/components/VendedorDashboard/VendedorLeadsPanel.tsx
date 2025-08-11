@@ -57,7 +57,7 @@ export function VendedorLeadsPanel() {
     const start = new Date(`${range.start}T00:00:00`);
     const end = new Date(`${range.end}T23:59:59`);
     return leads.filter(l => {
-      const baseDateStr = l.data_compra || l.updated_at || l.created_at;
+      const baseDateStr = l.data_compra || l.webhook_data_compra || l.updated_at || l.created_at;
       const d = new Date(baseDateStr);
       return d >= start && d <= end;
     });
