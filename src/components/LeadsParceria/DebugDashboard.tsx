@@ -8,11 +8,14 @@ import { useToast } from '@/hooks/use-toast';
 interface DebugDashboardProps {
   leads: any[];
   dateRange: { start: number; end: number } | null;
-  onReprocess: () => Promise<any>;
+  onReprocessRange: () => Promise<any>;
+  onSyncRange: () => Promise<any>;
+  periodLabel?: string;
 }
 
-export function DebugDashboard({ leads, dateRange, onReprocess }: DebugDashboardProps) {
+export function DebugDashboard({ leads, dateRange, onReprocessRange, onSyncRange, periodLabel = 'período' }: DebugDashboardProps) {
   const [reprocessing, setReprocessing] = useState(false);
+  const [syncing, setSyncing] = useState(false);
   const { toast } = useToast();
 
   const stats = {
@@ -49,23 +52,33 @@ export function DebugDashboard({ leads, dateRange, onReprocess }: DebugDashboard
     ).length
   };
 
-  const handleReprocess = async () => {
+const handleReprocess = async () => {
     try {
       setReprocessing(true);
-      const result = await onReprocess();
-      
+      const result = await (onReprocessRange?.());
       toast({
         title: 'Reprocessamento concluído',
         description: `Processados: ${result?.processed || 0} | Atualizados: ${result?.updated || 0}`
       });
     } catch (err: any) {
-      toast({
-        title: 'Erro no reprocessamento',
-        description: err.message,
-        variant: 'destructive'
-      });
+      toast({ title: 'Erro no reprocessamento', description: err.message, variant: 'destructive' });
     } finally {
       setReprocessing(false);
+    }
+  };
+
+  const handleSync = async () => {
+    try {
+      setSyncing(true);
+      const result = await (onSyncRange?.());
+      toast({
+        title: 'Sincronização concluída',
+        description: `Atualizados: ${result?.updated || 0} | Inseridos: ${result?.inserted || 0} | Já sincronizados: ${result?.already_synced || 0}`
+      });
+    } catch (err: any) {
+      toast({ title: 'Erro na sincronização', description: err.message, variant: 'destructive' });
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -119,7 +132,7 @@ export function DebugDashboard({ leads, dateRange, onReprocess }: DebugDashboard
           </div>
         )}
         
-        <div className="flex gap-2">
+<div className="flex flex-wrap gap-2">
           <Button 
             variant="outline" 
             size="sm" 
@@ -128,9 +141,18 @@ export function DebugDashboard({ leads, dateRange, onReprocess }: DebugDashboard
             className="gap-1"
           >
             <RefreshCw className={`h-4 w-4 ${reprocessing ? 'animate-spin' : ''}`} />
-            {reprocessing ? 'Reprocessando...' : 'Reprocessar Hoje'}
+            {reprocessing ? 'Reprocessando...' : `Reprocessar ${periodLabel}`}
           </Button>
-          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleSync}
+            disabled={syncing}
+            className="gap-1"
+          >
+            <RefreshCw className={`h-4 w-4 ${syncing ? 'animate-spin' : ''}`} />
+            {syncing ? 'Sincronizando...' : `Sincronizar ${periodLabel} (Kiwify)`}
+          </Button>
           {stats.vendasWebhook === stats.vendasSistema && stats.leadsPagosDesatualizados === 0 && (
             <Badge variant="default" className="gap-1 bg-green-100 text-green-800">
               <CheckCircle className="h-3 w-3" />

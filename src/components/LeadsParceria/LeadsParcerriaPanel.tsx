@@ -79,7 +79,7 @@ export function LeadsParcerriaPanel() {
     return null;
   }, [dateOption, customStart, customEnd]);
   
-  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch, reprocessWebhooks } = useLeadsParceria(undefined);
+  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch, reprocessWebhooks, syncKiwifyApprovedOrders } = useLeadsParceria(undefined);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -265,9 +265,41 @@ export function LeadsParcerriaPanel() {
     return list;
   }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly, computedRange]);
 
+  const getSelectedRangeStrings = () => {
+    const pad = (d: Date) => d.toISOString().slice(0, 10);
+    const today = new Date();
+    const yesterday = new Date();
+    yesterday.setDate(today.getDate() - 1);
+
+    if (dateOption === 'hoje') {
+      const s = pad(today);
+      return { startDate: s, endDate: s };
+    }
+    if (dateOption === 'ontem') {
+      const s = pad(yesterday);
+      return { startDate: s, endDate: s };
+    }
+    if (dateOption === 'personalizado' && customStart && customEnd) {
+      return { startDate: customStart, endDate: customEnd };
+    }
+    return null;
+  };
+
   const handleReprocessToday = async () => {
     const today = new Date().toISOString().slice(0, 10);
     return await reprocessWebhooks({ startDate: today, endDate: today });
+  };
+
+  const handleReprocessRange = async () => {
+    const range = getSelectedRangeStrings();
+    if (!range) return await handleReprocessToday();
+    return await reprocessWebhooks(range);
+  };
+
+  const handleSyncRange = async () => {
+    const range = getSelectedRangeStrings();
+    if (!range) return await syncKiwifyApprovedOrders({ startDate: new Date().toISOString().slice(0,10), endDate: new Date().toISOString().slice(0,10) });
+    return await syncKiwifyApprovedOrders(range);
   };
 
   const handleBulkGenerate = async () => {
@@ -492,11 +524,13 @@ export function LeadsParcerriaPanel() {
           </div>
         </div>
 
-        {dateOption === 'hoje' && (
+        {dateOption !== 'todos' && (
           <DebugDashboard 
             leads={leads} 
             dateRange={computedRange} 
-            onReprocess={handleReprocessToday}
+            onReprocessRange={handleReprocessRange}
+            onSyncRange={handleSyncRange}
+            periodLabel={dateOption === 'hoje' ? 'hoje' : (dateOption === 'ontem' ? 'ontem' : 'período')}
           />
         )}
 

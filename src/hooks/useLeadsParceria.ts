@@ -493,6 +493,21 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     fetchLeads();
   };
 
+  const syncKiwifyApprovedOrders = async (dateRange?: { startDate: string; endDate: string }) => {
+    try {
+      const { data, error } = await supabase.functions.invoke('kiwify-sync-approved-orders', {
+        body: { start_date: dateRange?.startDate, end_date: dateRange?.endDate }
+      });
+      if (error) throw error;
+      console.log('✅ Sincronização Kiwify concluída:', data);
+      await fetchLeads();
+      return data;
+    } catch (err: any) {
+      console.error('❌ Erro na sincronização Kiwify:', err);
+      throw err;
+    }
+  };
+
   return {
     leads,
     totalLeads,
@@ -504,5 +519,6 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     updateLeadPrecisaMaisInfo,
     reatribuirLead,
     reprocessWebhooks,
+    syncKiwifyApprovedOrders,
   };
 }
