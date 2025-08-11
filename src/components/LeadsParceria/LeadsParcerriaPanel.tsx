@@ -56,8 +56,28 @@ export function LeadsParcerriaPanel() {
 
   const filterToUse = useMemo(() => makeRange(dateOption, customStart, customEnd), [dateOption, customStart, customEnd]);
   
-  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(filterToUse);
+  const computedRange = useMemo(() => {
+    if (dateOption === 'todos') return null as null | { start: number; end: number };
+    const today = new Date();
+    const startOfDay = (d: Date) => { const x = new Date(d); x.setHours(0,0,0,0); return x; };
+    const endOfDay = (d: Date) => { const x = new Date(d); x.setHours(23,59,59,999); return x; };
+
+    if (dateOption === 'hoje') {
+      return { start: startOfDay(today).getTime(), end: endOfDay(today).getTime() };
+    }
+    if (dateOption === 'ontem') {
+      const y = new Date(); y.setDate(today.getDate() - 1);
+      return { start: startOfDay(y).getTime(), end: endOfDay(y).getTime() };
+    }
+    if (dateOption === 'personalizado' && customStart && customEnd) {
+      const s = startOfDay(new Date(customStart));
+      const e = endOfDay(new Date(customEnd));
+      return { start: s.getTime(), end: e.getTime() };
+    }
+    return null;
+  }, [dateOption, customStart, customEnd]);
   
+  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(undefined);
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>('todos');
@@ -76,8 +96,24 @@ export function LeadsParcerriaPanel() {
   const [personalizedClient, setPersonalizedClient] = useState<{ name?: string; phone?: string | null }>({});
   // Conjuntos e contadores por aba
   const purchasedStatuses = useMemo(() => new Set(['comprou','planejando','planejamento_entregue','upsell_pago']), []);
-  const leadsCount = useMemo(() => leads.filter(l => !purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
-  const compraramCount = useMemo(() => leads.filter(l => purchasedStatuses.has(l.status_negociacao)).length, [leads, purchasedStatuses]);
+  const leadsCount = useMemo(() => {
+    const base = leads.filter(l => !purchasedStatuses.has(l.status_negociacao));
+    if (!computedRange) return base.length;
+    const { start, end } = computedRange;
+    return base.filter((l: any) => {
+      const t = new Date(l.created_at).getTime();
+      return t >= start && t <= end;
+    }).length;
+  }, [leads, purchasedStatuses, computedRange]);
+  const compraramCount = useMemo(() => {
+    const base = leads.filter(l => purchasedStatuses.has(l.status_negociacao) && l.cliente_pago);
+    if (!computedRange) return base.length;
+    const { start, end } = computedRange;
+    return base.filter((l: any) => {
+      const dt = l.data_compra ? new Date(l.data_compra).getTime() : NaN;
+      return !isNaN(dt) && dt >= start && dt <= end;
+    }).length;
+  }, [leads, purchasedStatuses, computedRange]);
 
   // Elegibilidade para geração (sem plano e com informação suficiente)
   const compraramLeads = useMemo(
@@ -162,22 +198,39 @@ export function LeadsParcerriaPanel() {
 
   const baseLeads = useMemo(() => {
     return leads.filter(l => (activeTab === 'compraram'
-      ? purchasedStatuses.has(l.status_negociacao)
+      ? (purchasedStatuses.has(l.status_negociacao) && l.cliente_pago)
       : !purchasedStatuses.has(l.status_negociacao)));
   }, [leads, activeTab, purchasedStatuses]);
 
   const filteredLeads = useMemo(() => {
-    let list = baseLeads;
-    if (activeTab !== 'compraram' && statusFilter === 'todos') {
-      // keep as is
-    } else if (activeTab !== 'compraram') {
+    let list: any[] = baseLeads as any[];
+
+    // Aplicar filtro de data: created_at para Leads, data_compra para Compraram
+    if (computedRange) {
+      const { start, end } = computedRange;
+      if (activeTab === 'compraram') {
+        list = list.filter((lead: any) => {
+          const dt = lead.data_compra ? new Date(lead.data_compra).getTime() : NaN;
+          return !isNaN(dt) && dt >= start && dt <= end;
+        });
+      } else {
+        list = list.filter((lead: any) => {
+          const t = new Date(lead.created_at).getTime();
+          return t >= start && t <= end;
+        });
+      }
+    }
+
+    if (activeTab !== 'compraram' && statusFilter !== 'todos') {
       list = list.filter(lead => (lead.status_negociacao || 'lead') === statusFilter);
     }
+
     if (showNeedsInfoOnly) {
       list = list.filter(lead => !!lead.precisa_mais_info);
     }
+
     return list;
-  }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly]);
+  }, [baseLeads, statusFilter, activeTab, showNeedsInfoOnly, computedRange]);
 
   const handleBulkGenerate = async () => {
     try {

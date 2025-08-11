@@ -140,16 +140,39 @@ serve(async (req) => {
 
     console.log('✅ Lead encontrado:', lead.id);
 
-    // Atualizar lead: marcar como pago e aceito
+    // Tentar extrair data de compra do payload (approved_at/paid_at/created_at)
+    const extractDateIso = (...vals: any[]) => {
+      for (const v of vals) {
+        if (v && typeof v === 'string' && v.trim().length > 0) {
+          const d = new Date(v);
+          if (!isNaN(d.getTime())) return d.toISOString();
+        }
+      }
+      return new Date().toISOString();
+    };
+
+    const dataCompra = extractDateIso(
+      webhookData?.approved_at,
+      webhookData?.paid_at,
+      webhookData?.created_at,
+      webhookData?.order?.approved_at,
+      webhookData?.order?.paid_at,
+      webhookData?.order?.created_at,
+      webhookData?.data?.approved_at,
+      webhookData?.data?.paid_at,
+      webhookData?.data?.created_at,
+    );
+
+    // Atualizar lead: marcar como pago e aceito, e salvar data_compra
     const { error: updateError } = await supabase
       .from('formularios_parceria')
       .update({
         cliente_pago: true,
         status_negociacao: 'comprou',
+        data_compra: dataCompra,
         updated_at: new Date().toISOString()
       })
       .eq('id', lead.id);
-
     if (updateError) {
       console.error('❌ Erro ao atualizar lead:', updateError);
       

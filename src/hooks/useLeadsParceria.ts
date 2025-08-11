@@ -5,6 +5,7 @@ import { enableRealtimeForTable } from '@/utils/realtimeUtils';
 interface LeadParceria {
   id: string;
   created_at: string;
+  data_compra: string | null;
   tipo_negocio: string;
   email_usuario: string | null;
   planejamento_estrategico: string | null;
@@ -45,7 +46,7 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
     setError(null);
 
     try {
-      const columns = 'id, created_at, tipo_negocio, email_usuario, planejamento_estrategico, respostas, completo, updated_at, audio_visao_futuro, produto_descricao, valor_medio_produto, ja_teve_vendas, visao_futuro_texto, cliente_pago, contatado_whatsapp, status_negociacao, vendedor_responsavel, distribuido_em, precisa_mais_info';
+      const columns = 'id, created_at, data_compra, tipo_negocio, email_usuario, planejamento_estrategico, respostas, completo, updated_at, audio_visao_futuro, produto_descricao, valor_medio_produto, ja_teve_vendas, visao_futuro_texto, cliente_pago, contatado_whatsapp, status_negociacao, vendedor_responsavel, distribuido_em, precisa_mais_info';
 
       // 1) Buscar apenas a contagem total com o mesmo filtro
       let countQuery = supabase
