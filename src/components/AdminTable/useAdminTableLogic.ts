@@ -17,16 +17,20 @@ export function useAdminTableLogic() {
     fetchGestores()
   }, [])
 
-  const ensureCarolInGestoresList = (gestoresList: Array<{ email: string, nome: string }>) => {
-    const hasCarol = gestoresList.some(g => g.email === 'carol@trafegoporcents.com')
+  const ensureRequiredGestoresInList = (gestoresList: Array<{ email: string, nome: string }>) => {
+    const requiredGestores = [
+      { email: 'carol@trafegoporcents.com', nome: 'Carol' },
+      { email: 'emily@trafegoporcents.com', nome: 'Emily' }
+    ]
     
-    if (!hasCarol) {
-      console.log('⚠️ [AdminTable] Carol não encontrada na lista, adicionando...')
-      gestoresList.push({
-        email: 'carol@trafegoporcents.com',
-        nome: 'Carol'
-      })
-    }
+    requiredGestores.forEach(required => {
+      const exists = gestoresList.some(g => g.email === required.email)
+      
+      if (!exists) {
+        console.log(`⚠️ [AdminTable] ${required.nome} não encontrada na lista, adicionando...`)
+        gestoresList.push(required)
+      }
+    })
     
     return gestoresList
   }
@@ -45,7 +49,8 @@ export function useAdminTableLogic() {
         console.error('❌ [AdminTable] Erro ao buscar gestores:', error)
         const fallbackGestores = [
           { email: 'carol@trafegoporcents.com', nome: 'Carol' },
-          { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
+          { email: 'andreza@trafegoporcents.com', nome: 'Andreza' },
+          { email: 'emily@trafegoporcents.com', nome: 'Emily' }
         ]
         console.log('🔄 [AdminTable] Usando fallback de gestores:', fallbackGestores)
         setGestores(fallbackGestores)
@@ -53,16 +58,17 @@ export function useAdminTableLogic() {
         const gestoresData = data || []
         console.log('✅ [AdminTable] Gestores carregados:', gestoresData.length)
         
-        const gestoresComCarol = ensureCarolInGestoresList([...gestoresData])
-        console.log('✅ [AdminTable] Lista final com Carol:', gestoresComCarol)
+        const gestoresCompletos = ensureRequiredGestoresInList([...gestoresData])
+        console.log('✅ [AdminTable] Lista final de gestores:', gestoresCompletos)
         
-        setGestores(gestoresComCarol)
+        setGestores(gestoresCompletos)
       }
     } catch (error) {
       console.error('💥 [AdminTable] Erro na consulta de gestores:', error)
       const fallbackGestores = [
         { email: 'carol@trafegoporcents.com', nome: 'Carol' },
-        { email: 'andreza@trafegoporcents.com', nome: 'Andreza' }
+        { email: 'andreza@trafegoporcents.com', nome: 'Andreza' },
+        { email: 'emily@trafegoporcents.com', nome: 'Emily' }
       ]
       console.log('🔄 [AdminTable] Usando fallback após erro:', fallbackGestores)
       setGestores(fallbackGestores)
