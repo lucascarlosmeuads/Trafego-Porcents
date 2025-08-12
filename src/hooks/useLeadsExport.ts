@@ -1,3 +1,4 @@
+
 import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,6 +44,7 @@ export function useLeadsExport() {
         .select('*', { count: 'exact', head: true })
         .eq('vendedor_responsavel', user.email)
         .neq('status_negociacao', 'comprou')
+        .eq('cliente_pago', false) // Garantir que não conte leads pagos
         .is('exportado_em', null);
 
       if (error) {
@@ -76,6 +78,7 @@ export function useLeadsExport() {
         .select('*')
         .eq('vendedor_responsavel', user.email)
         .neq('status_negociacao', 'comprou')
+        .eq('cliente_pago', false) // Garantir que não exporte leads pagos
         .is('exportado_em', null)
         .order('created_at', { ascending: false });
 
