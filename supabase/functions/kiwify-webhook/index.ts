@@ -44,21 +44,33 @@ serve(async (req) => {
     const webhookData = await req.json();
     console.log('📦 Dados do webhook:', JSON.stringify(webhookData, null, 2));
 
-    // Extrair email do comprador
-    let emailComprador = null;
-    
-    // Possíveis campos onde o email pode estar (baseado na estrutura comum da Kiwify)
-    if (webhookData.Customer?.email) {
-      emailComprador = webhookData.Customer.email;
-    } else if (webhookData.customer?.email) {
-      emailComprador = webhookData.customer.email;
-    } else if (webhookData.email) {
-      emailComprador = webhookData.email;
-    } else if (webhookData.buyer_email) {
-      emailComprador = webhookData.buyer_email;
-    }
+    // Extrair email do comprador (várias estruturas possíveis) e normalizar
+    const rawEmail = (
+      webhookData?.Customer?.email ||
+      webhookData?.customer?.email ||
+      webhookData?.buyer?.email ||
+      webhookData?.data?.customer?.email ||
+      webhookData?.payload?.customer?.email ||
+      webhookData?.checkout?.customer?.email ||
+      webhookData?.buyer_email ||
+      webhookData?.email ||
+      ''
+    );
+    const emailComprador: string | null =
+      typeof rawEmail === 'string' && rawEmail.includes('@')
+        ? rawEmail.toLowerCase().trim()
+        : null;
 
-    console.log('📧 Email do comprador extraído:', emailComprador);
+    // Melhor estimativa da data de pagamento
+    const paidAtGuess: string | null = (
+      webhookData?.approved_at ||
+      webhookData?.approved_date ||
+      webhookData?.paid_at ||
+      webhookData?.created_at ||
+      null
+    );
+
+    console.log('📧 Email do comprador extraído:', emailComprador, ' | paidAtGuess:', paidAtGuess);
 
     // Criar log inicial
     const { data: logData, error: logError } = await supabase
@@ -103,11 +115,13 @@ serve(async (req) => {
       );
     }
 
-    // Buscar lead na tabela formularios_parceria
+    // Buscar lead mais recente para este email (case-insensitive)
     const { data: lead, error: leadError } = await supabase
       .from('formularios_parceria')
-      .select('*')
-      .eq('email_usuario', emailComprador)
+      .select('id, respostas, data_compra')
+      .ilike('email_usuario', emailComprador!)
+      .order('created_at', { ascending: false })
+      .limit(1)
       .single();
 
     if (leadError || !lead) {
@@ -140,12 +154,12 @@ serve(async (req) => {
 
     console.log('✅ Lead encontrado:', lead.id);
 
-    // Atualizar lead: marcar como pago e aceito
     const { error: updateError } = await supabase
       .from('formularios_parceria')
       .update({
         cliente_pago: true,
         status_negociacao: 'comprou',
+        data_compra: lead?.data_compra ?? paidAtGuess ?? new Date().toISOString(),
         updated_at: new Date().toISOString()
       })
       .eq('id', lead.id);

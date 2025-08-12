@@ -12,7 +12,17 @@ import TermosRejeitados from "./pages/TermosRejeitados";
 import NotFound from "./pages/NotFound";
 import EvolutionTestes from "./pages/EvolutionTestes";
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000, // 5 minutes cache
+      refetchOnWindowFocus: false,
+      refetchOnReconnect: false,
+      refetchOnMount: false,
+      retry: 1,
+    },
+  },
+});
 
 const App = () => (
   <QueryClientProvider client={queryClient}>

@@ -60,30 +60,9 @@ export function useVendedorLeads() {
         throw error;
       }
 
-      // Buscar logs de webhook para identificar vendas automáticas
-      const { data: webhookLogs } = await supabase
-        .from('kiwify_webhook_logs')
-        .select('email_comprador, webhook_data')
-        .eq('status_processamento', 'sucesso')
-        .eq('lead_encontrado', true);
-
-      // Mapear leads com informação de webhook automático
-      const leadsWithWebhookInfo = (data || []).map(lead => {
-        const webhookLog = webhookLogs?.find(log => {
-          const webhookData = log.webhook_data as any;
-          return log.email_comprador === lead.email_usuario &&
-            webhookData?.webhook_event_type === 'order_approved' &&
-            webhookData?.order_status === 'paid';
-        });
-        
-        return {
-          ...lead,
-          webhook_automatico: !!webhookLog
-        };
-      });
-
-      setLeads(leadsWithWebhookInfo as LeadParceria[]);
-      setTotalLeads(count || 0);
+      // Usar dados diretamente; venda automática agora é refletida em cliente_pago/status_negociacao
+      setLeads((data || []) as LeadParceria[])
+      setTotalLeads(count || 0)
     } catch (err: any) {
       console.error('Erro ao buscar leads do vendedor:', err);
       setError(err.message || 'Erro ao carregar os leads');
@@ -95,20 +74,18 @@ export function useVendedorLeads() {
   useEffect(() => {
     fetchLeads();
 
-    // Configurar escuta de eventos em tempo real
+    // Configurar escuta de eventos em tempo real (INSERT/UPDATE específicos)
     const channel = supabase
       .channel('vendedor_leads_changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'formularios_parceria',
-        },
-        () => {
-          // Quando houver qualquer mudança, recarregar os dados
-          fetchLeads();
-        }
+        { event: 'INSERT', schema: 'public', table: 'formularios_parceria' },
+        () => fetchLeads()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'formularios_parceria' },
+        () => fetchLeads()
       )
       .subscribe();
 

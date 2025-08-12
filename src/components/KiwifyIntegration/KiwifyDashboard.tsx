@@ -144,19 +144,18 @@ export default function KiwifyDashboard() {
 
     loadData();
 
-    // Configurar realtime para logs
+    // Configurar realtime para logs (apenas inserts e updates)
     const channel = supabase
       .channel('kiwify_logs')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'kiwify_webhook_logs',
-        },
-        () => {
-          fetchLogs();
-        }
+        { event: 'INSERT', schema: 'public', table: 'kiwify_webhook_logs' },
+        () => fetchLogs()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'kiwify_webhook_logs' },
+        () => fetchLogs()
       )
       .subscribe();
 

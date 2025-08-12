@@ -181,18 +181,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log('🚪 [useAuth] Fazendo logout no Supabase')
       await supabase.auth.signOut({ scope: 'global' })
       
-      console.log('✅ [useAuth] Logout concluído, redirecionando...')
-      
-      // Forçar reload da página para limpar completamente o estado
-      setTimeout(() => {
-        window.location.href = '/'
-      }, 100)
-      
+      console.log('✅ [useAuth] Logout concluído (sem reload forçado)')
     } catch (error) {
       console.error('❌ [useAuth] Erro no logout:', error)
-      // Em caso de erro, forçar redirecionamento mesmo assim
-      console.log('🚪 [useAuth] Forçando redirecionamento por erro')
-      window.location.href = '/'
+    } finally {
+      setLoading(false)
     }
   }
 

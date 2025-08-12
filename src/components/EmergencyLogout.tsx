@@ -31,9 +31,8 @@ export function EmergencyLogout() {
     } catch (error) {
       console.error('❌ [EmergencyLogout] Erro no logout:', error)
     } finally {
-      // Em qualquer caso, forçar redirecionamento
-      console.log('🔄 [EmergencyLogout] Forçando redirecionamento')
-      window.location.href = '/'
+      // Não forçar redirecionamento; UI reagirá ao estado de auth
+      console.log('✅ [EmergencyLogout] Logout finalizado sem reload forçado')
     }
   }
 

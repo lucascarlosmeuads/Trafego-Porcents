@@ -133,42 +133,9 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
 
       const leadsData = pageResults.flatMap(r => ((r as any).data || []));
 
-      // 3) Buscar logs de webhook relevantes em lotes para evitar limites de URL
-      const leadEmails = (leadsData || [])
-        .map((l: any) => l.email_usuario)
-        .filter((e: any) => typeof e === 'string' && e.length > 0);
+      // 3) Processar leads sem consultas pesadas a logs
+      const processedLeads = (leadsData || []);
 
-      let emailsWebhook = new Set<string>();
-      if (leadEmails.length > 0) {
-        const chunkSize = 300;
-        const chunks: string[][] = [];
-        for (let i = 0; i < leadEmails.length; i += chunkSize) {
-          chunks.push(leadEmails.slice(i, i + chunkSize));
-        }
-
-        const webhookPromises: any[] = chunks.map(chunk =>
-          supabase
-            .from('kiwify_webhook_logs')
-            .select('email_comprador')
-            .eq('status_processamento', 'sucesso')
-            .in('email_comprador', chunk)
-        );
-
-        const webhookResults = await Promise.all(webhookPromises);
-        const webhookErrors = webhookResults.map(r => (r as any).error).filter(Boolean);
-        if (webhookErrors.length > 0) {
-          throw webhookErrors[0];
-        }
-
-        const webhookData = webhookResults.flatMap(r => ((r as any).data || []));
-        emailsWebhook = new Set((webhookData || []).map((log: any) => log.email_comprador));
-      }
-
-      // 4) Processar leads para incluir flag de webhook automático
-      const processedLeads = (leadsData || []).map((lead: any) => ({
-        ...lead,
-        webhook_automatico: emailsWebhook.has(lead.email_usuario as any)
-      }));
 
       setLeads(processedLeads as LeadParceria[]);
       setTotalLeads(totalToFetch);
@@ -188,20 +155,18 @@ export function useLeadsParceria(dateFilter?: { startDate?: string; endDate?: st
   useEffect(() => {
     fetchLeads();
 
-    // Configurar escuta de eventos em tempo real
+    // Configurar escuta de eventos em tempo real (INSERT/UPDATE específicos)
     const channel = supabase
       .channel('formularios_parceria_changes')
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'formularios_parceria',
-        },
-        () => {
-          // Quando houver qualquer mudança, recarregar os dados
-          fetchLeads();
-        }
+        { event: 'INSERT', schema: 'public', table: 'formularios_parceria' },
+        () => fetchLeads()
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'formularios_parceria' },
+        () => fetchLeads()
       )
       .subscribe();
 
