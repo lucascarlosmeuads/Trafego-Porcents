@@ -65,7 +65,7 @@ const TableRowMemo = memo(({
   translateTipoNegocio,
   getRowClassName,
   getStatusBadge,
-  generating,
+  isGenerating,
   activeTab 
 }: {
   lead: Lead;
@@ -80,11 +80,10 @@ const TableRowMemo = memo(({
   translateTipoNegocio: (tipo: string) => string;
   getRowClassName: (lead: Lead) => string;
   getStatusBadge: (lead: Lead) => React.ReactNode;
-  generating: Record<string, boolean>;
+  isGenerating: boolean;
   activeTab: 'leads' | 'compraram';
 }) => {
   const leadData = useMemo(() => getLeadData(lead), [lead, getLeadData]);
-  const isGenerating = generating[lead.id];
   const isEligible = useMemo(() => isEligibleForPlan(lead), [lead, isEligibleForPlan]);
 
   const handleViewDetails = useCallback(() => onViewDetails(lead), [lead, onViewDetails]);
@@ -293,7 +292,7 @@ export const OptimizedLeadsTable = memo(({
             translateTipoNegocio={translateTipoNegocio}
             getRowClassName={getRowClassName}
             getStatusBadge={getStatusBadge}
-            generating={generating}
+            isGenerating={!!generating[lead.id]}
           />
         ))}
       </TableBody>

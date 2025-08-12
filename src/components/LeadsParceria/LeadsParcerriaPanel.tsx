@@ -72,7 +72,8 @@ export function LeadsParcerriaPanel() {
     fetchMore,
     updateLeadNegociacao, 
     updateLeadPrecisaMaisInfo, 
-    refetch 
+    refetch,
+    backgroundUpdating,
   } = useInfiniteLeadsParceria(filterToUse);
   
   const [selectedLead, setSelectedLead] = useState(null);
@@ -101,13 +102,13 @@ export function LeadsParcerriaPanel() {
     () => leads.filter(l => purchasedStatuses.has(l.status_negociacao)),
     [leads, purchasedStatuses]
   );
-  const isEligibleForPlan = (lead: any) => {
+  const isEligibleForPlan = useCallback((lead: any) => {
     const hasPlan = (lead.planejamento_estrategico ?? '').toString().trim().length > 0;
     const visaoLen = (lead.visao_futuro_texto ?? '').toString().trim().length;
     const temAudio = !!lead.audio_visao_futuro;
     const infoSuficiente = temAudio || visaoLen >= 40;
     return !hasPlan && infoSuficiente;
-  };
+  }, []);
   const elegiveisCount = useMemo(
     () => compraramLeads.filter(isEligibleForPlan).length,
     [compraramLeads]
@@ -150,14 +151,14 @@ export function LeadsParcerriaPanel() {
     };
   }, []);
 
-  const translateTipoNegocio = (tipo: string) => {
+  const translateTipoNegocio = useCallback((tipo: string) => {
     if (tipo === 'physical') return 'físico';
     if (tipo === 'digital') return 'digital';
     if (tipo === 'service') return 'serviço';
     return tipo;
-  };
+  }, []);
 
-  const getRowClassName = (lead: any) => {
+  const getRowClassName = useCallback((lead: any) => {
     if (lead.status_negociacao === 'comprou' && lead.cliente_pago) {
       return 'bg-green-100 hover:bg-green-200 border-l-4 border-l-green-500 text-green-900 ring-2 ring-green-300';
     }
@@ -177,9 +178,9 @@ export function LeadsParcerriaPanel() {
       return 'bg-red-100 hover:bg-red-200 border-l-4 border-l-red-500 text-red-900';
     }
     return '';
-  };
+  }, []);
 
-  const getStatusBadge = (lead: any) => {
+  const getStatusBadge = useCallback((lead: any) => {
     if (lead.precisa_mais_info) {
       return (
         <Badge className="bg-orange-500 text-white">Precisa mais info</Badge>
@@ -193,7 +194,7 @@ export function LeadsParcerriaPanel() {
       );
     }
     return null;
-  };
+  }, []);
 
   const baseLeads = useMemo(() => {
     return leads.filter(l => (activeTab === 'compraram'
@@ -484,6 +485,14 @@ export function LeadsParcerriaPanel() {
                   <Button size="sm" variant="outline" onClick={handleExportCSV}>
                     <Download className="h-4 w-4 mr-1" /> Exportar CSV
                   </Button>
+                  <div className="flex items-center gap-2">
+                    {backgroundUpdating && (
+                      <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" aria-label="Atualizando" />
+                    )}
+                    <Button size="sm" variant="outline" onClick={() => refetch?.()} disabled={backgroundUpdating}>
+                      Atualizar
+                    </Button>
+                  </div>
                 </div>
                 {activeTab === 'compraram' && (
                   <div className="flex items-center gap-2">

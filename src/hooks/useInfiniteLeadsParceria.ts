@@ -97,6 +97,7 @@ export function useInfiniteLeadsParceria(options: UseInfiniteLeadsOptions = {}) 
     hasNextPage,
     isFetching,
     isFetchingNextPage,
+    isLoading,
     refetch,
   } = useInfiniteQuery({
     queryKey,
@@ -105,6 +106,8 @@ export function useInfiniteLeadsParceria(options: UseInfiniteLeadsOptions = {}) 
     getNextPageParam: (lastPage) => lastPage.nextCursor,
     staleTime: 30 * 1000, // 30 seconds
     gcTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 
   // Flatten all pages into a single array
@@ -183,33 +186,9 @@ export function useInfiniteLeadsParceria(options: UseInfiniteLeadsOptions = {}) 
     },
   });
 
-  // Real-time updates - optimized to only listen for new inserts
-  useEffect(() => {
-    const channel = supabase
-      .channel('formularios_parceria_inserts')
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'formularios_parceria'
-        },
-        (payload) => {
-          console.log('🔔 [useInfiniteLeadsParceria] New lead inserted:', payload.new);
-          
-          // Only invalidate and refetch if we're on the first page
-          // This prevents disrupting users browsing older pages
-          if (data?.pages.length === 1 || !data?.pages.length) {
-            queryClient.invalidateQueries({ queryKey });
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [queryClient, queryKey, data?.pages.length]);
+  // Realtime disabled to avoid list flicker during browsing
+  // If needed later, we can append new items to cache without invalidating the whole list.
+  // useEffect(() => {}, []);
 
   const updateLeadStatus = useCallback((
     leadId: string, 
@@ -233,7 +212,8 @@ export function useInfiniteLeadsParceria(options: UseInfiniteLeadsOptions = {}) 
   return {
     leads: allLeads,
     totalLeads: totalCount,
-    loading: isFetching && !isFetchingNextPage,
+    loading: isLoading,
+    backgroundUpdating: isFetching && !isFetchingNextPage && !isLoading,
     loadingMore: isFetchingNextPage,
     error: error?.message || null,
     hasMore: hasNextPage,
