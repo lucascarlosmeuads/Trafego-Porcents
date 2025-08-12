@@ -1,15 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
-import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, MessageSquareText } from 'lucide-react';
+import { MessageCircle, User, Eye, CheckCircle, Wand2, Download, AlertCircle, MessageSquareText, Loader2 } from 'lucide-react';
 
 import { LeadDetailsModal } from './LeadDetailsModal';
-import { useLeadsParceria } from '@/hooks/useLeadsParceria';
+import { useInfiniteLeadsParceria } from '@/hooks/useInfiniteLeadsParceria';
+import { OptimizedLeadsTable } from './OptimizedLeadsTable';
 
 import { useGlobalDateFilter } from '@/hooks/useGlobalDateFilter';
 import { format } from 'date-fns';
@@ -63,7 +63,17 @@ export function LeadsParcerriaPanel() {
     return term.length >= 2 ? { ...(base || {}), searchTerm: term } : base;
   }, [dateOption, customStart, customEnd, debouncedSearch]);
   
-  const { leads, loading, updateLeadNegociacao, updateLeadPrecisaMaisInfo, refetch } = useLeadsParceria(filterToUse);
+  const { 
+    leads, 
+    totalLeads,
+    loading, 
+    loadingMore,
+    hasMore,
+    fetchMore,
+    updateLeadNegociacao, 
+    updateLeadPrecisaMaisInfo, 
+    refetch 
+  } = useInfiniteLeadsParceria(filterToUse);
   
   const [selectedLead, setSelectedLead] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -112,15 +122,33 @@ export function LeadsParcerriaPanel() {
     window.open(`https://wa.me/${formattedNumber}`, '_blank');
   };
 
-  const getLeadData = (lead: any) => {
+  const getLeadData = useCallback((lead: any) => {
     const respostas = lead.respostas || {};
     
-    return {
-      nome: respostas.dadosPersonais?.nome || respostas.nome || 'Não informado',
-      email: respostas.dadosPersonais?.email || respostas.email || 'Não informado',
-      whatsapp: respostas.dadosPersonais?.whatsapp || respostas.whatsapp || respostas.telefone || 'Não informado'
+    // Safe property access for JSONB fields
+    const getDadosPersonais = (field: string) => {
+      if (typeof respostas === 'object' && respostas !== null && 'dadosPersonais' in respostas) {
+        const dadosPersonais = respostas.dadosPersonais;
+        if (typeof dadosPersonais === 'object' && dadosPersonais !== null && field in dadosPersonais) {
+          return (dadosPersonais as any)[field];
+        }
+      }
+      return null;
     };
-  };
+
+    const getDirectField = (field: string) => {
+      if (typeof respostas === 'object' && respostas !== null && field in respostas) {
+        return (respostas as any)[field];
+      }
+      return null;
+    };
+    
+    return {
+      nome: getDadosPersonais('nome') || getDirectField('nome') || 'Não informado',
+      email: getDadosPersonais('email') || getDirectField('email') || lead.email_usuario || 'Não informado',
+      telefone: getDadosPersonais('whatsapp') || getDadosPersonais('telefone') || getDirectField('whatsapp') || getDirectField('telefone') || 'Não informado'
+    };
+  }, []);
 
   const translateTipoNegocio = (tipo: string) => {
     if (tipo === 'physical') return 'físico';
@@ -250,15 +278,12 @@ export function LeadsParcerriaPanel() {
     const items = leads.filter(l => l.precisa_mais_info);
     const header = ['Data', 'Nome', 'Email', 'WhatsApp', 'Vendedor', 'Tipo Negócio', 'Status'];
     const rows = items.map(l => {
-      const r = l.respostas || {};
-      const nome = r.dadosPersonais?.nome || r.nome || 'Não informado';
-      const email = r.dadosPersonais?.email || r.email || l.email_usuario || 'Não informado';
-      const whatsapp = r.dadosPersonais?.whatsapp || r.whatsapp || r.telefone || 'Não informado';
+      const leadData = getLeadData(l);
       const vendedor = l.vendedor_responsavel || 'N/A';
       const tipo = l.tipo_negocio || 'N/A';
       const status = l.status_negociacao || 'lead';
       const data = new Date(l.created_at).toLocaleDateString('pt-BR');
-      return [data, nome, email, whatsapp, vendedor, tipo, status];
+      return [data, leadData.nome, leadData.email, leadData.telefone, vendedor, tipo, status];
     });
     const csv = [header, ...rows]
       .map(row => row.map(v => `"${String(v ?? '').replace(/"/g, '""')}"`).join(','))
@@ -382,7 +407,7 @@ export function LeadsParcerriaPanel() {
     const finalMessage = applyTemplate(recoveryTemplate || DEFAULT_RECOVERY_TEMPLATE, vars);
 
     setPersonalizedMessage(finalMessage);
-    setPersonalizedClient({ name: leadData.nome, phone: leadData.whatsapp });
+    setPersonalizedClient({ name: leadData.nome, phone: leadData.telefone });
     setMessageModalOpen(true);
   };
 
@@ -515,199 +540,55 @@ export function LeadsParcerriaPanel() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Data/Hora</TableHead>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>Email</TableHead>
-                    <TableHead>WhatsApp</TableHead>
-                    <TableHead>Vendedor Responsável</TableHead>
-                    <TableHead>Status Negociação</TableHead>
-                    <TableHead>Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredLeads.map((lead) => {
-                    const leadData = getLeadData(lead);
-                    
-                    return (
-                      <TableRow key={lead.id} className={getRowClassName(lead)}>
-                        <TableCell>
-                          <div className="text-sm">
-                            <div className="font-medium">
-                              {format(new Date(lead.created_at), 'dd/MM/yyyy', { locale: ptBR })}
-                            </div>
-                            <div className="text-muted-foreground">
-                              {format(new Date(lead.created_at), 'HH:mm', { locale: ptBR })}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="font-medium">{leadData.nome}</div>
-                          <div className="text-sm text-muted-foreground">
-                            {translateTipoNegocio(lead.tipo_negocio)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm">{leadData.email}</div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm">{leadData.whatsapp}</span>
-                            {leadData.whatsapp !== 'Não informado' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleWhatsAppClick(leadData.whatsapp)}
-                                className="h-8 w-8 p-0"
-                              >
-                                <MessageCircle className="h-4 w-4 text-green-600" />
-                              </Button>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="text-sm flex items-center gap-2">
-                            {lead.vendedor_responsavel ? (
-                              <span>
-                                {lead.vendedor_responsavel === 'vendedoredu@trafegoporcents.com' 
-                                  ? 'Edu' 
-                                  : lead.vendedor_responsavel === 'vendedoritamar@trafegoporcents.com'
-                                  ? 'Itamar'
-                                  : 'João'}
-                              </span>
-                            ) : (
-                              <span className="text-muted-foreground">Não atribuído</span>
-                            )}
-                            {lead.status_negociacao === 'comprou' && lead.cliente_pago && (
-                              <CheckCircle className="h-4 w-4 text-green-600" />
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-col gap-1">
-                            <Select
-                              value={lead.status_negociacao || 'lead'}
-                              onValueChange={(value: 'lead' | 'comprou' | 'recusou' | 'planejando' | 'planejamento_entregue' | 'upsell_pago') => {
-                                updateLeadNegociacao?.(lead.id, value);
-                                if (['comprou','planejando','planejamento_entregue','upsell_pago'].includes(value)) {
-                                  setActiveTab('compraram');
-                                } else {
-                                  setActiveTab('leads');
-                                }
-                              }}>
-                              <SelectTrigger className="w-40">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent className="z-50 bg-background">
-                                <SelectItem value="lead">lead</SelectItem>
-                                <SelectItem value="planejando">planj/gerado</SelectItem>
-                                <SelectItem value="comprou">comprou</SelectItem>
-                                <SelectItem value="planejamento_entregue">planj/entregue</SelectItem>
-                                <SelectItem value="upsell_pago">upsell pago</SelectItem>
-                                <SelectItem value="recusou">não quer</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {getStatusBadge(lead)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setIsModalOpen(true);
-                              }}
-                              className="h-8 w-8 p-0"
-                              title="Ver detalhes"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => updateLeadPrecisaMaisInfo?.(lead.id, !lead.precisa_mais_info)}
-                              className="h-8 w-8 p-0"
-                              title={lead.precisa_mais_info ? "Desmarcar 'Precisa mais info'" : "Marcar 'Precisa mais info'"}
-                            >
-                              <AlertCircle className={`h-4 w-4 ${lead.precisa_mais_info ? 'text-orange-600' : ''}`} />
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleGeneratePersonalizedMessage(lead)}
-                              className="h-8 w-8 p-0"
-                              title="Gerar mensagem personalizada"
-                            >
-                              <MessageSquareText className="h-4 w-4 text-green-700" />
-                            </Button>
-                            {lead.planejamento_estrategico ? (
-                              <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setPlanContent(lead.planejamento_estrategico || '');
-                                    setPlanClientName(leadData.nome || 'Cliente');
-                                    setPlanEmail(lead.email_usuario || undefined);
-                                    setPlanModalOpen(true);
-                                  }}
-                                  className="h-8 px-2"
-                                  title="Ver/Editar Planejamento"
-                                >
-                                  Ver/Editar
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => downloadPlanPdf({
-                                    content: (lead.planejamento_estrategico as string) || '',
-                                    title: `Consultoria Estratégica - Funil Interativo - ${leadData.nome}`,
-                                    filename: `Planejamento-${leadData.nome}.pdf`
-                                  })}
-                                  className="h-8 px-2"
-                                  title="Download PDF"
-                                >
-                                  <Download className="h-4 w-4" />
-                                </Button>
-                              </>
-                            ) : (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => handleGeneratePlan(lead)}
-                                disabled={!!generating[lead.id]}
-                                className="h-8 w-8 p-0"
-                                title={generating[lead.id] ? 'Gerando...' : 'Gerar Planejamento'}
-                              >
-                                {generating[lead.id] ? (
-                                  <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
-                                ) : (
-                                  <Wand2 className="h-4 w-4 text-purple-600" />
-                                )}
-                              </Button>
-                            )}
-                            <Button
-                              size="sm"
-                              variant="default"
-                              onClick={() => handleWhatsAppContact(lead)}
-                              className="h-8 px-2"
-                              title="Enviar mensagem de recuperação via API"
-                            >
-                              Recuperar
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </div>
+            <OptimizedLeadsTable
+              leads={leads}
+              activeTab={activeTab}
+              statusFilter={statusFilter}
+              showNeedsInfoOnly={showNeedsInfoOnly}
+              purchasedStatuses={purchasedStatuses}
+              onViewDetails={(lead) => {
+                setSelectedLead(lead);
+                setIsModalOpen(true);
+              }}
+              onToggleNeedsInfo={updateLeadPrecisaMaisInfo}
+              onGeneratePlan={handleGeneratePlan}
+              onGenerateMessage={handleGeneratePersonalizedMessage}
+              onWhatsAppContact={handleWhatsAppContact}
+              onOpenRecoveryModal={handleOpenRecoveryModal}
+              isEligibleForPlan={isEligibleForPlan}
+              getLeadData={getLeadData}
+              translateTipoNegocio={translateTipoNegocio}
+              getRowClassName={getRowClassName}
+              getStatusBadge={getStatusBadge}
+              generating={generating}
+            />
+            
+            {/* Load More Button */}
+            {hasMore && (
+              <div className="flex justify-center mt-6">
+                <Button 
+                  onClick={() => fetchMore()}
+                  disabled={loadingMore}
+                  variant="outline"
+                  size="lg"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : (
+                    `Carregar mais leads (${totalLeads - leads.length} restantes)`
+                  )}
+                </Button>
+              </div>
+            )}
+            
+            {leads.length === 0 && !loading && (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Nenhum lead encontrado com os filtros aplicados.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
