@@ -2052,6 +2052,13 @@ export type Database = {
           detalhes: Json
         }[]
       }
+      reprocess_kiwify_webhooks_interval: {
+        Args: { p_start_date: string; p_end_date?: string }
+        Returns: {
+          updated_leads: number
+          processed_logs: number
+        }[]
+      }
       save_gestor_meta_ads_config: {
         Args: {
           p_email_usuario: string
