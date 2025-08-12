@@ -1,7 +1,7 @@
 
 import { lazy, Suspense } from 'react'
 import { LoadingFallback } from './LoadingFallback'
-import { SacDashboard } from './SAC/SacDashboard'
+
 import { TermosProtection } from './ClienteDashboard/TermosProtection'
 
 // Lazy components principais
@@ -51,11 +51,6 @@ export const LazyGestoresManagement = () => (
   </Suspense>
 )
 
-export const LazySacDashboard = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <SacDashboard />
-  </Suspense>
-)
 
 export const LazyDocumentationViewer = () => (
   <Suspense fallback={<LoadingFallback />}>
@@ -84,11 +79,3 @@ export const LazyAcervoIdeasDashboard = () => (
   </Suspense>
 )
 
-// Cliente Novo Dashboard
-const ClienteNovoDashboard = lazy(() => import('./ClienteNovoDashboard/ClienteNovoDashboard').then(module => ({ default: module.ClienteNovoDashboard })));
-
-export const LazyClienteNovoDashboard = () => (
-  <Suspense fallback={<LoadingFallback />}>
-    <ClienteNovoDashboard />
-  </Suspense>
-)

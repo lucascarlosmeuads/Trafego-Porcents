@@ -4,14 +4,9 @@ import { useAuth } from '@/hooks/useAuth'
 import { 
   LazyAdminDashboard, 
   LazyGestorDashboard, 
-  LazyClienteDashboard,
-  LazyClienteNovoDashboard 
+  LazyClienteDashboard
 } from './LazyComponents'
 import { LoadingFallback } from './LoadingFallback'
-import { VendedorDashboard } from './VendedorDashboard'
-import { SimpleVendedorDashboard } from './SimpleVendedorDashboard'
-import { SitesDashboard } from './SitesDashboard'
-import { MetaAdsDashboard } from './MetaAdsDashboard'
 import { ManagerSidebar } from './ManagerSidebar'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -24,11 +19,6 @@ export function Dashboard() {
     isAdmin, 
     isGestor,
     isCliente,
-    isVendedor,
-    isSites,
-    isRelatorios,
-    isClienteNovo,
-    isClienteParceria,
     signOut
   } = useAuth()
 
@@ -36,25 +26,20 @@ export function Dashboard() {
   const [activeTab, setActiveTab] = useState(isAdmin ? 'leads-parceria' : 'dashboard')
   const [loggingOut, setLoggingOut] = useState(false)
 
-  console.log('🔍 [Dashboard] === DEBUGGING ROTEAMENTO DE DASHBOARD ===')
+  console.log('🔍 [Dashboard] === SISTEMA LIMPO - APENAS ESSENCIAIS ===')
   console.log('🔍 [Dashboard] Estado de autenticação:', {
     userEmail: user?.email,
-    userEmailRaw: user?.email ? `"${user.email}"` : 'null',
     loading,
     isAdmin,
     isGestor,
-    isCliente,
-    isVendedor,
-    isSites,
-    isRelatorios,
-    isClienteNovo
+    isCliente
   })
 
   // Reset tab when user type changes
   useEffect(() => {
     setActiveTab(isAdmin ? 'leads-parceria' : 'dashboard')
     setSelectedManager(null)
-  }, [isAdmin, isGestor, isCliente, isVendedor, isSites, isRelatorios, isClienteNovo])
+  }, [isAdmin, isGestor, isCliente])
 
   const handleSignOut = async () => {
     console.log('🚪 [Dashboard] Iniciando logout do botão de erro')
@@ -88,11 +73,7 @@ export function Dashboard() {
   console.log('🎯 [Dashboard] Tipos de usuário detectados:', {
     isAdmin: isAdmin ? '✅' : '❌',
     isGestor: isGestor ? '✅' : '❌', 
-    isCliente: isCliente ? '✅' : '❌',
-    isVendedor: isVendedor ? '✅' : '❌',
-    isSites: isSites ? '✅' : '❌',
-    isRelatorios: isRelatorios ? '✅' : '❌',
-    isClienteNovo: isClienteNovo ? '✅' : '❌'
+    isCliente: isCliente ? '✅' : '❌'
   })
 
   // Cliente Dashboard
@@ -101,53 +82,6 @@ export function Dashboard() {
     return (
       <Suspense fallback={<LoadingFallback />}>
         <LazyClienteDashboard />
-      </Suspense>
-    )
-  }
-
-  // Vendedor Dashboards (não lazy por enquanto para evitar erros)
-  if (isVendedor) {
-    console.log('✅ [Dashboard] Direcionando para VendedorDashboard')
-    const isSimpleVendedor = user.email?.includes('simple') || false
-    
-    if (isSimpleVendedor) {
-      console.log('🎯 [Dashboard] Usuário é vendedor simples')
-      return <SimpleVendedorDashboard />
-    }
-    
-    console.log('🎯 [Dashboard] Usuário é vendedor padrão')
-    return <VendedorDashboard />
-  }
-
-  // Sites Dashboard (não lazy por enquanto)
-  if (isSites) {
-    console.log('✅ [Dashboard] Direcionando para SitesDashboard')
-    return <SitesDashboard />
-  }
-
-  // Meta Ads Dashboard (NOVO)
-  if (isRelatorios) {
-    console.log('✅ [Dashboard] Direcionando para MetaAdsDashboard')
-    return <MetaAdsDashboard />
-  }
-
-  // Cliente Novo Dashboard (NOVO)
-  if (isClienteNovo) {
-    console.log('✅ [Dashboard] Direcionando para ClienteNovoDashboard')
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <LazyClienteNovoDashboard />
-      </Suspense>
-    )
-  }
-
-  // Cliente Parceria Dashboard (NOVO)
-  if (isClienteParceria) {
-    console.log('✅ [Dashboard] Direcionando para ClienteParceiriaDashboard')
-    const ClienteParceiriaDashboard = React.lazy(() => import('./ClienteParceiriaDashboard'))
-    return (
-      <Suspense fallback={<LoadingFallback />}>
-        <ClienteParceiriaDashboard />
       </Suspense>
     )
   }

@@ -5,7 +5,7 @@ export const normalizeEmail = (email: string): string => {
   return email.toLowerCase().trim()
 }
 
-export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'vendedor' | 'sites' | 'relatorios' | 'clientenovo' | 'clienteparceria' | 'unauthorized' | 'error'> => {
+export const checkUserType = async (email: string): Promise<'admin' | 'gestor' | 'cliente' | 'unauthorized' | 'error'> => {
   console.log('🔍 [authHelpers] === VERIFICAÇÃO DE TIPO DE USUÁRIO ===')
   console.log('🔍 [authHelpers] Email autenticado:', `"${email}"`)
   console.log('🔍 [authHelpers] IMPORTANTE: Este usuário JÁ foi autenticado pelo Supabase Auth')
@@ -20,40 +20,6 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'admin'
     }
 
-    // VERIFICAÇÃO PARA RELATÓRIOS - NOVA
-    if (normalizedEmail.includes('@relatorios.com')) {
-      console.log('📊 [authHelpers] Usuário é RELATÓRIOS (domínio @relatorios.com)')
-      return 'relatorios'
-    }
-
-    // VERIFICAÇÃO PARA CLIENTE NOVO - NOVA
-    if (normalizedEmail === 'clientenovo@trafegoporcents.com') {
-      console.log('🆕 [authHelpers] Usuário é CLIENTE NOVO (email específico)')
-      return 'clientenovo'
-    }
-
-    // VERIFICAÇÃO RESTRITIVA PARA CRIADORES DE SITES - MOVIDA PARA CIMA
-    console.log('🔍 [authHelpers] Verificando se é criador de sites autorizado...')
-    const emailsAutorizadosSites = [
-      'criadordesite@trafegoporcents.com'
-    ]
-    
-    if (emailsAutorizadosSites.includes(normalizedEmail)) {
-      console.log('🌐 [authHelpers] ✅ USUÁRIO É SITES (email autorizado na whitelist)')
-      console.log('🌐 [authHelpers] 🎯 Email específico autorizado:', normalizedEmail)
-      console.log('🔒 [authHelpers] WHITELIST DE SITES:', emailsAutorizadosSites)
-      return 'sites'
-    } else {
-      console.log('❌ [authHelpers] Email NÃO está na whitelist de criadores de sites')
-      console.log('🔒 [authHelpers] Emails autorizados para sites:', emailsAutorizadosSites)
-      console.log('🚫 [authHelpers] Email testado:', normalizedEmail)
-    }
-
-    // Verificação para vendedores
-    if (normalizedEmail.startsWith('vendedor') && normalizedEmail.includes('@trafegoporcents.com')) {
-      console.log('💼 [authHelpers] Usuário é VENDEDOR (vendedor*@trafegoporcents.com)')
-      return 'vendedor'
-    }
 
     // Verificação para gestores (@trafegoporcents.com mas não vendedor e não criador de sites)
     if (normalizedEmail.includes('@trafegoporcents.com')) {
@@ -61,29 +27,6 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
       return 'gestor'
     }
 
-    // VERIFICAÇÃO PARA CLIENTES DE PARCERIA - NOVA PRIORIDADE
-    console.log('🔍 [authHelpers] Verificando se é cliente parceria na tabela clientes_parceria...')
-    
-    const { data: clienteParceria, error: clienteParceriaError } = await supabase
-      .from('clientes_parceria')
-      .select('id, email_cliente, nome_cliente')
-      .ilike('email_cliente', normalizedEmail)
-      .eq('ativo', true)
-      .single()
-
-    console.log('🔍 [authHelpers] Resultado da query cliente parceria:', {
-      data: clienteParceria,
-      error: clienteParceriaError
-    })
-
-    if (!clienteParceriaError && clienteParceria) {
-      console.log('✅ [authHelpers] CLIENTE PARCERIA ENCONTRADO NA TABELA!')
-      console.log('👤 [authHelpers] ID:', clienteParceria.id)
-      console.log('👤 [authHelpers] Nome:', clienteParceria.nome_cliente)
-      console.log('👤 [authHelpers] Email:', clienteParceria.email_cliente)
-      console.log('🎯 [authHelpers] DIRECIONANDO PARA PAINEL DE CLIENTE PARCERIA')
-      return 'clienteparceria'
-    }
 
     // VERIFICAÇÃO PARA CLIENTES TRADICIONAIS
     console.log('🔍 [authHelpers] Verificando se é cliente na tabela todos_clientes...')
@@ -140,9 +83,6 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
     console.log('❌ [authHelpers] Email não encontrado em nenhuma tabela do sistema')
     console.log('❌ [authHelpers] Resumo das verificações:')
     console.log('   - Admin (@admin): NÃO')
-    console.log('   - Relatórios (@relatorios.com): NÃO')
-    console.log('   - Sites (whitelist específica): NÃO AUTORIZADO')
-    console.log('   - Vendedor (vendedor*@trafegoporcents.com): NÃO')
     console.log('   - Gestor (@trafegoporcents.com): NÃO ou INATIVO')
     console.log('   - Cliente (tabela todos_clientes): NÃO ENCONTRADO')
     console.log('   - Gestor (tabela gestores): NÃO ENCONTRADO OU INATIVO')
@@ -159,25 +99,6 @@ export const checkUserType = async (email: string): Promise<'admin' | 'gestor' |
 export const getManagerName = async (email: string): Promise<string> => {
   const normalizedEmail = normalizeEmail(email)
   
-  // Para usuários de relatórios, retornar nome específico
-  if (normalizedEmail.includes('@relatorios.com')) {
-    return 'Analista de Relatórios'
-  }
-  
-  // Para usuário Cliente Novo, retornar nome específico
-  if (normalizedEmail === 'clientenovo@trafegoporcents.com') {
-    return 'Cliente Novo'
-  }
-  
-  // Para usuários de sites, retornar nome específico APENAS para emails autorizados
-  const emailsAutorizadosSites = [
-    'criadordesite@trafegoporcents.com'
-  ]
-  
-  if (emailsAutorizadosSites.includes(normalizedEmail)) {
-    return 'Criador de Sites'
-  }
-  
   try {
     // Tentar buscar nome do gestor primeiro (CASE-INSENSITIVE)
     const { data: gestorData, error: gestorError } = await supabase
@@ -191,18 +112,7 @@ export const getManagerName = async (email: string): Promise<string> => {
       return gestorData.nome
     }
 
-    // Tentar buscar nome do cliente parceria primeiro
-    const { data: clienteParceriaData, error: clienteParceriaError } = await supabase
-      .from('clientes_parceria')
-      .select('nome_cliente')
-      .ilike('email_cliente', normalizedEmail)
-      .single()
-
-    if (!clienteParceriaError && clienteParceriaData) {
-      return clienteParceriaData.nome_cliente || 'Cliente Parceria'
-    }
-
-    // Se não for cliente parceria, tentar buscar nome do cliente tradicional
+    // Tentar buscar nome do cliente tradicional
     const { data: clienteData, error: clienteError } = await supabase
       .from('todos_clientes')
       .select('nome_cliente')

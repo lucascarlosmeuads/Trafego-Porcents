@@ -30,6 +30,12 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       description: 'Visão geral e métricas'
     },
     {
+      id: 'leads-parceria',
+      label: 'Leads',
+      icon: UserPlus,
+      description: 'Leads interessados em parceria'
+    },
+    {
       id: 'clientes',
       label: 'Clientes',
       icon: Users,
@@ -40,43 +46,16 @@ export function AdminMainMenu({ activeTab, onTabSelect, isCollapsed = false }: A
       label: 'Acervo de Ideias',
       icon: Lightbulb,
       description: 'Ideias extraídas dos briefings'
-    },
-    {
-      id: 'sac',
-      label: 'SAC',
-      icon: Headphones,
-      description: 'Central de atendimento'
-    },
-    {
-      id: 'leads-parceria',
-      label: 'Leads',
-      icon: UserPlus,
-      description: 'Leads interessados em parceria'
-    },
-    {
-      id: 'kiwify-sync',
-      label: 'Kiwify Sync',
-      icon: Download,
-      description: 'Sincronizar vendas aprovadas'
-    },
-    {
-      id: 'evolution-api',
-      label: 'Evolution API',
-      icon: MessageSquare,
-      description: 'Configurar WhatsApp Evolution API'
-    },
+    }
    ]
  
    const visibleItems = menuItems
-     .filter(item => item.id !== 'sac')
      .sort((a, b) => {
         const order: Record<string, number> = {
           'dashboard': 0,
           'leads-parceria': 1,
-          'kiwify-sync': 2,
-          'clientes': 3,
-          'acervo-ideias': 4,
-          'evolution-api': 5,
+          'clientes': 2,
+          'acervo-ideias': 3
         }
        return (order[a.id] ?? 99) - (order[b.id] ?? 99)
      })

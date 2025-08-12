@@ -14,11 +14,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isAdmin,
     isGestor,
     isCliente,
-    isVendedor,
-    isSites,
-    isRelatorios,
-    isClienteNovo,
-    isClienteParceria,
     currentManagerName,
     updateUserType,
     resetUserState
@@ -207,10 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   console.log('🔍 [useAuth] Tipos de usuário:', {
     isAdmin,
     isGestor,
-    isCliente,
-    isVendedor,
-    isSites,
-    isRelatorios
+    isCliente
   })
 
   return (
@@ -223,11 +215,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAdmin, 
       isGestor,
       isCliente,
-      isVendedor,
-      isSites,
-      isRelatorios,
-      isClienteNovo,
-      isClienteParceria,
       currentManagerName
     }}>
       {children}
