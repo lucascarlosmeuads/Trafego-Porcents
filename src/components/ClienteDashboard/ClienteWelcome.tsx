@@ -1,7 +1,7 @@
 
 import { useAuth } from '@/hooks/useAuth'
 import { useClienteData } from '@/hooks/useClienteData'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { OnboardingSteps } from './OnboardingSteps'
 import { MobileOnboardingSteps } from './MobileOnboardingSteps'
 import { AvisoMudancaAtendimento } from './AvisoMudancaAtendimento'

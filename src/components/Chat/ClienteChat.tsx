@@ -1,6 +1,6 @@
 
 import { useAuth } from '@/hooks/useAuth'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { ChatInterface } from './ChatInterface'
 import { MobileChatInterface } from './Mobile/MobileChatInterface'
 

@@ -14,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useClientSiteRequest } from '@/hooks/useClientSiteRequest'
 import { useToast } from '@/hooks/use-toast'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 export function ClienteSiteDescricao() {
   const { status, loading, requestSite, accessForm, getStatusMessage } = useClientSiteRequest()

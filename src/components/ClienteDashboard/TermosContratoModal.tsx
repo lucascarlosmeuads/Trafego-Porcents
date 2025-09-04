@@ -7,7 +7,7 @@ import { Separator } from '@/components/ui/separator'
 import { CheckCircle2, FileText, AlertTriangle, X, DollarSign, Zap, Shield, Users, Clock, Eye, Lock } from 'lucide-react'
 import { useAuth } from '@/hooks/useAuth'
 import { toast } from '@/hooks/use-toast'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useTermosAceitos } from '@/hooks/useTermosAceitos'
 
 interface TermosContratoModalProps {

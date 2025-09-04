@@ -6,7 +6,7 @@ import { TermosContratoModal } from './TermosContratoModal'
 import { Card, CardContent } from '@/components/ui/card'
 import { FileText, Heart, RotateCcw, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface TermosProtectionProps {
   children: React.ReactNode

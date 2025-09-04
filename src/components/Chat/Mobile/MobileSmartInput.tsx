@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Send, Mic, Lock } from 'lucide-react'
 import { MobileAudioRecorder } from './MobileAudioRecorder'
-import { useIsMobile } from '@/hooks/useIsMobile'
+import { useIsMobile } from '@/hooks/use-mobile'
 
 interface MobileSmartInputProps {
   onSendMessage: (content: string, type?: 'texto' | 'audio') => Promise<void>
