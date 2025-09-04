@@ -172,6 +172,23 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
         if (!result.success) {
           console.error('❌ [TrafficManagementForm] Erros validação etapa 2:', result.error.issues)
         }
+      } else if (currentStep === 3) {
+        const etapa3Values = {
+          criativos_prontos: form.getValues('criativos_prontos'),
+          videos_prontos: form.getValues('videos_prontos'),
+          cores_desejadas: form.getValues('cores_desejadas'),
+          tipo_fonte: form.getValues('tipo_fonte'),
+          cores_proibidas: form.getValues('cores_proibidas'),
+          fonte_especifica: form.getValues('fonte_especifica'),
+          estilo_visual: form.getValues('estilo_visual'),
+          tipos_imagens_preferidas: form.getValues('tipos_imagens_preferidas'),
+        }
+        console.log('📝 [TrafficManagementForm] Valores etapa 3:', etapa3Values)
+        const result = etapa3Schema.safeParse(etapa3Values)
+        isValid = result.success
+        if (!result.success) {
+          console.error('❌ [TrafficManagementForm] Erros validação etapa 3:', result.error.issues)
+        }
       }
       
       console.log(`✅ [TrafficManagementForm] Validação etapa ${currentStep}: ${isValid ? 'SUCESSO' : 'FALHOU'}`)
@@ -185,11 +202,35 @@ export function TrafficManagementForm({ briefing, emailCliente, onBriefingUpdate
 
   // Avançar etapa
   const nextStep = async () => {
+    console.log(`🚀 [TrafficManagementForm] Tentando avançar da etapa ${currentStep}`)
+    
     const isValid = await validateCurrentStep()
+    
     if (isValid && currentStep < 3) {
+      console.log(`✅ [TrafficManagementForm] Validação passou, avançando para etapa ${currentStep + 1}`)
       setCurrentStep(currentStep + 1)
-    } else {
-      form.trigger()
+    } else if (!isValid) {
+      console.log(`❌ [TrafficManagementForm] Validação falhou na etapa ${currentStep}`)
+      
+      // Trigger form validation to show field errors
+      await form.trigger()
+      
+      // Show toast with specific error message based on current step
+      let errorMessage = "Por favor, corrija os campos obrigatórios em vermelho."
+      
+      if (currentStep === 1) {
+        errorMessage = "Por favor, preencha todos os campos obrigatórios da etapa 1 (nome do produto, marca, descrição, público alvo, diferencial e se quer site)."
+      } else if (currentStep === 2) {
+        errorMessage = "Por favor, preencha todos os campos obrigatórios da etapa 2 (investimento diário, direcionamento, abrangência e forma de pagamento)."
+      } else if (currentStep === 3) {
+        errorMessage = "Por favor, preencha todos os campos obrigatórios da etapa 3 (cores desejadas, tipo de fonte, estilo visual e pelo menos um tipo de imagem)."
+      }
+      
+      toast({
+        variant: "destructive",
+        title: "Campos obrigatórios não preenchidos",
+        description: errorMessage,
+      })
     }
   }
 
